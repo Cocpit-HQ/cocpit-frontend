@@ -215,6 +215,21 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [isNoteExpanded, setIsNoteExpanded] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+
+  const t = {
+    bg: isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]',
+    text: isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]',
+    textMuted: isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]',
+    border: isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]',
+    borderLight: isCompanyMode ? 'dark:border-[#16365F]' : 'dark:border-[#252E54]',
+    primary: isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]',
+    primaryBg: isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]',
+    primaryHover: isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#6366F1]',
+    card: isCompanyMode ? 'dark:bg-[#1A2435]' : 'dark:bg-[#252E54]',
+    ultraLight: isCompanyMode ? 'dark:bg-[#121B2B]' : 'dark:bg-[#1C2340]',
+    modalBg: isCompanyMode ? 'dark:bg-[#1A2435]' : 'dark:bg-[#1C2340]',
+  };
 
   // Real data state
   const [candidateDetail, setCandidateDetail] = useState<any>(null);
@@ -382,8 +397,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const filteredCandidates = candidates;
 
   return (
+    <>
+    {/* DESKTOP LAYOUT */}
     <div 
-      className="w-[998px] bg-white flex flex-col items-center pt-0 px-0 pb-[80px] gap-[24px] overflow-y-auto scrollbar-none animate-in fade-in duration-300 mx-auto relative font-['Poppins'] box-border"
+      className={`hidden md:flex w-[998px] bg-white ${t.card} ${t.bg} flex-col items-center pt-0 px-0 pb-[80px] gap-[24px] overflow-y-auto scrollbar-none animate-in fade-in duration-300 mx-auto relative font-['Poppins'] box-border`}
       style={{
         height: '1189px',
         scrollbarWidth: 'none',
@@ -391,26 +408,26 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     >
       {/* Back button and message frame (Frame 2608623) */}
       <div 
-        className="flex flex-row items-center p-0 gap-[16px] w-[998px] h-[48px] flex-none order-0 self-stretch grow-0"
+        className={`flex flex-row items-center p-0 gap-[16px] w-[998px] h-[48px] flex-none order-0 self-stretch grow-0`}
       >
         {/* Same back button that we build everywhere in jobs */}
         <button
           onClick={onBack}
           type="button"
-          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm flex-shrink-0"
+          className={`w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] ${t.border} backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 ${t.ultraLight} transition-colors active:scale-95 text-gray-500 ${t.textMuted} shadow-sm flex-shrink-0`}
         >
-          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
+          <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${t.textMuted}`} />
         </button>
 
         {/* Message frame (Frame 2608578) */}
-        <div className="flex flex-col items-start p-0 w-[343px] h-[42px] flex-none order-1 grow-0">
+        <div className={`flex flex-col items-start p-0 w-[343px] h-[42px] flex-none order-1 grow-0`}>
           <span
-            className="w-[100px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-black flex items-center justify-start text-left flex-none order-0 grow-0"
+            className={`w-[100px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-black ${t.text} flex items-center justify-start text-left flex-none order-0 grow-0`}
           >
             Applicants
           </span>
           <span
-            className="w-[343px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center justify-start text-left flex-none order-1 grow-0"
+            className={`w-[343px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center justify-start text-left flex-none order-1 grow-0`}
           >
             Review and shortlist candidates with AI-powered insights
           </span>
@@ -418,64 +435,64 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       </div>
 
       {/* Horizontal Stats Bar (Frame 2609091) */}
-      <div className="box-border flex flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-[998px] h-[100px] border-b border-[#EEF2FF] flex-none self-stretch grow-0">
+      <div className={`box-border flex flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-[998px] h-[100px] border-b border-[#EEF2FF] ${t.borderLight} flex-none self-stretch grow-0`}>
         
         {/* Role details (Frame 2608946) */}
-        <div className="flex flex-col items-start p-0 gap-[8px] flex-1 h-[52px] order-0">
-          <span className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black truncate capitalize">
+        <div className={`flex flex-col items-start p-0 gap-[8px] flex-1 h-[52px] order-0`}>
+          <span className={`w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${t.text} truncate capitalize`}>
             {listing.title}
           </span>
-          <span className="w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate">
+          <span className={`w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] ${t.textMuted} truncate`}>
             Posted {listing.posted_at || '2 hours ago'}
           </span>
         </div>
 
         {/* Applications (Frame 2609054) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-1 self-stretch mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-1 self-stretch mx-auto`}>
+          <span className={`font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black ${t.text}`}>
             {appCount}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
             Applications
           </span>
         </div>
 
         {/* Shortlisted (Frame 2609055) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-2 self-stretch mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-2 self-stretch mx-auto`}>
+          <span className={`font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black ${t.text}`}>
             {shortlistCount}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
             Shortlisted
           </span>
         </div>
 
         {/* Offer sent (Frame 2609056) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-3 self-stretch mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-3 self-stretch mx-auto`}>
+          <span className={`font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black ${t.text}`}>
             {listing.offers_count || 0}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
             Offer sent
           </span>
         </div>
 
         {/* Status (Frame 2609057) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-4 self-stretch mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[12px] leading-[20px] text-center text-[#22C55E] uppercase tracking-wide">
+        <div className={`flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white ${t.card} rounded-[24px] order-4 self-stretch mx-auto`}>
+          <span className={`font-['Poppins'] font-semibold text-[12px] leading-[20px] text-center text-[#22C55E] uppercase tracking-wide`}>
             ACTIVE
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] ${t.textMuted}`}>
             Status
           </span>
         </div>
 
         {/* View job details Button */}
-        <div className="flex flex-col justify-center items-end p-[8px_16px] flex-1 h-[60px] order-5 self-stretch mx-auto">
+        <div className={`flex flex-col justify-center items-end p-[8px_16px] flex-1 h-[60px] order-5 self-stretch mx-auto`}>
           <button
             onClick={onViewDetails}
             type="button"
-            className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-auto h-[40px] rounded-[24px] active:scale-95"
+            className={`box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-auto h-[40px] rounded-[24px] active:scale-95`}
           >
             <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center whitespace-nowrap ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
               View job details
@@ -485,81 +502,81 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       </div>
 
       {isLoadingList ? (
-        <div className={`w-[998px] h-[300px] flex items-center justify-center bg-white border rounded-[24px] flex-none order-3 self-stretch grow-0 ${isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'}`}>
+        <div className={`w-[998px] h-[300px] flex items-center justify-center bg-white ${t.card} border rounded-[24px] flex-none order-3 self-stretch grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`}`}>
           <Icon icon="svg-spinners:180-ring" className={`w-8 h-8 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} />
         </div>
       ) : candidates.length === 0 ? (
-        <div className={`w-[998px] h-[300px] bg-white border rounded-[24px] flex flex-col items-center justify-center gap-4 text-center flex-none order-3 self-stretch grow-0 ${isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'}`}>
+        <div className={`w-[998px] h-[300px] bg-white ${t.card} border rounded-[24px] flex flex-col items-center justify-center gap-4 text-center flex-none order-3 self-stretch grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`}`}>
           <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isCompanyMode ? 'bg-blue-50 text-[#1A73E8]' : 'bg-indigo-50 text-indigo-500'}`}>
-            <Icon icon="hugeicons:job-search" className="w-6 h-6" />
+            <Icon icon="hugeicons:job-search" className={`w-6 h-6`} />
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-black text-base font-semibold font-['Poppins']">No applicants yet</span>
-            <span className="text-gray-400 text-xs font-['Poppins'] font-normal">Candidates who apply to this listing will appear here.</span>
+          <div className={`flex flex-col gap-1`}>
+            <span className={`text-black ${t.text} text-base font-semibold font-['Poppins']`}>No applicants yet</span>
+            <span className={`text-gray-400 text-xs font-['Poppins'] font-normal`}>Candidates who apply to this listing will appear here.</span>
           </div>
         </div>
       ) : (
         <div 
-          className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
+          className={`flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0`}
         >
         {/* Left Column: Candidates list (Frame 2609067) */}
         <div
-          className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border rounded-[24px] flex-none order-0 grow-0 ${isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'}`}
+          className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border rounded-[24px] flex-none order-0 grow-0 ${isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`}`}
         >
           {/* Header Container */}
           <div
-            className="flex flex-row justify-between items-center p-0 w-[270px] h-[40px] flex-none order-0 self-stretch grow-0"
+            className={`flex flex-row justify-between items-center p-0 w-[270px] h-[40px] flex-none order-0 self-stretch grow-0`}
           >
             {/* Title and pagination frame (Frame 2609111) */}
             <div
-              className="flex flex-row justify-between items-center p-0 gap-[8px] w-[214px] h-[20px] flex-none order-0 grow-[1]"
+              className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[214px] h-[20px] flex-none order-0 grow-[1]`}
             >
               <span
-                className="w-[86px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000] flex-none order-0 grow-0"
+                className={`w-[86px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000] ${t.text} flex-none order-0 grow-0`}
               >
                 CANDIDATES
               </span>
 
               {/* Pagination Next */}
               <div
-                className="flex flex-row justify-end items-center p-0 gap-[8px] w-[66px] h-[16px] rounded-[8px] flex-none order-1 grow-0"
+                className={`flex flex-row justify-end items-center p-0 gap-[8px] w-[66px] h-[16px] rounded-[8px] flex-none order-1 grow-0`}
               >
                 {/* Arrow Left */}
                 <button
                   type="button"
-                  className="w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-0 grow-0 text-slate-300"
+                  className={`w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 ${t.ultraLight} rounded flex-none order-0 grow-0 text-slate-300`}
                 >
-                  <Icon icon="lucide:chevron-left" className="w-[16px] h-[16px]" />
+                  <Icon icon="lucide:chevron-left" className={`w-[16px] h-[16px]`} />
                 </button>
                 {/* Page Count */}
                 <span
-                  className="w-[18px] h-[16px] font-['Inter'] font-normal text-[16px] leading-[16px] text-[#1E1E1E] flex items-center justify-center flex-none order-1 grow-0"
+                  className={`w-[18px] h-[16px] font-['Inter'] font-normal text-[16px] leading-[16px] text-[#1E1E1E] ${t.text} flex items-center justify-center flex-none order-1 grow-0`}
                 >
                   01
                 </span>
                 {/* Arrow Right */}
                 <button
                   type="button"
-                  className={`w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-2 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
+                  className={`w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 ${t.ultraLight} rounded flex-none order-2 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
                 >
-                  <Icon icon="lucide:chevron-right" className="w-[16px] h-[16px]" />
+                  <Icon icon="lucide:chevron-right" className={`w-[16px] h-[16px]`} />
                 </button>
               </div>
             </div>
 
             {/* Filter Toggle Icon (Frame 2608536) */}
-            <div ref={dropdownRef} className="relative flex-none order-1 grow-0">
+            <div ref={dropdownRef} className={`relative flex-none order-1 grow-0`}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 type="button"
-                className="relative w-[56px] h-[40px] flex items-center justify-center hover:bg-slate-50 rounded-[24px] transition-all active:scale-95"
+                className={`relative w-[56px] h-[40px] flex items-center justify-center hover:bg-slate-50 ${t.ultraLight} rounded-[24px] transition-all active:scale-95`}
               >
-                <Icon icon="iconoir:filter-list" className="w-[24px] h-[24px] text-black" />
+                <Icon icon="iconoir:filter-list" className={`w-[24px] h-[24px] text-black ${t.text}`} />
               </button>
 
               {/* Candidates List Filter Dropdown */}
               {isDropdownOpen && (
-                <div className={`absolute right-0 top-[45px] z-50 w-32 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
+                <div className={`absolute right-0 top-[45px] z-50 w-32 p-2 bg-white ${t.card} ${t.modalBg} rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
                   isCompanyMode ? 'outline-blue-50 shadow-[0_12px_32px_rgba(26,115,232,0.1)]' : 'outline-indigo-50 shadow-[0_12px_32px_rgba(99,102,241,0.1)]'
                 }`}>
                   {(['Top match', 'Recent', 'Shortlisted', 'Noted', 'Pending'] as FilterOption[]).map(
@@ -573,12 +590,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                             setIsDropdownOpen(false);
                           }}
                           className={`self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer transition-colors ${
-                            isCompanyMode ? 'hover:bg-blue-50/25' : 'hover:bg-indigo-50/25'
+                            isCompanyMode ? `hover:bg-blue-50/25 dark:hover:bg-[#16365F]/50` : `hover:bg-indigo-50/25 dark:hover:bg-[#252E54]/50`
                           }`}
                         >
                           <span
                             className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                              isOptActive ? (isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500') : 'text-black'
+                              isOptActive ? (isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500') : 'text-black ${t.text}'
                             }`}
                           >
                             {opt}
@@ -594,13 +611,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Candidate Card List (Frame 2609108) */}
           <div
-            className="flex flex-col items-start p-0 gap-[16px] w-[270px] h-[356px] flex-none order-1 grow-0 overflow-y-auto scrollbar-none"
+            className={`flex flex-col items-start p-0 gap-[16px] w-[270px] h-[356px] flex-none order-1 grow-0 overflow-y-auto scrollbar-none`}
             style={{ scrollbarWidth: 'none' }}
           >
             {filteredCandidates.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-2 text-center w-full">
-                <span className="text-gray-400 text-xs font-semibold font-['Poppins']">No candidates</span>
-                <span className="text-gray-400 text-[10px] font-['Poppins']">No applications match filter</span>
+              <div className={`py-12 flex flex-col items-center justify-center gap-2 text-center w-full`}>
+                <span className={`text-gray-400 text-xs font-semibold font-['Poppins']`}>No candidates</span>
+                <span className={`text-gray-400 text-[10px] font-['Poppins']`}>No applications match filter</span>
               </div>
             ) : (
               filteredCandidates.map((cand) => {
@@ -609,7 +626,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   <div
                     key={cand.applicationId}
                     onClick={() => setSelectedCandId(cand.applicationId)}
-                    className="box-border flex flex-row items-center p-[12px] gap-[8px] w-[270px] h-[78px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer transition-all duration-200"
+                    className={`box-border flex flex-row items-center p-[12px] gap-[8px] w-[270px] h-[78px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer transition-all duration-200`}
                     style={{
                       backgroundColor: isSelected ? (isCompanyMode ? '#E8F0FE' : '#EEF2FF') : '#FFFFFF',
                     }}
@@ -617,36 +634,36 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     {/* Ellipse 2 (User avatar) */}
                     {cand.avatarUrl ? (
                       <img
-                        className="w-[50px] h-[50px] rounded-full object-cover flex-none order-0 grow-0"
+                        className={`w-[50px] h-[50px] rounded-full object-cover flex-none order-0 grow-0`}
                         src={cand.avatarUrl}
                         alt={cand.name}
                       />
                     ) : (
-                      <div className="w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold font-['Poppins'] text-sm flex-none order-0 grow-0">
+                      <div className={`w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 ${t.textMuted} font-semibold font-['Poppins'] text-sm flex-none order-0 grow-0`}>
                         {cand.name.substring(0, 2).toUpperCase()}
                       </div>
                     )}
 
                     {/* Text block */}
-                    <div className="flex flex-col justify-center items-start p-0 gap-[4px] flex-1 min-w-0 h-[50px]">
+                    <div className={`flex flex-col justify-center items-start p-0 gap-[4px] flex-1 min-w-0 h-[50px]`}>
                       <span
-                        className="w-full text-black text-[16px] font-medium font-['Poppins'] leading-[24px] truncate flex items-center capitalize"
+                        className={`w-full text-black ${t.text} text-[16px] font-medium font-['Poppins'] leading-[24px] truncate flex items-center capitalize`}
                       >
                         {cand.name}
                       </span>
 
-                      <div className="flex flex-row items-center p-0 gap-[4px] w-[97px] h-[26px] flex-none">
+                      <div className={`flex flex-row items-center p-0 gap-[4px] w-[97px] h-[26px] flex-none`}>
                         {cand.matchScore != null ? (
                           <>
                             <span className={`w-[38px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
                               {cand.matchScore}%
                             </span>
-                            <span className="w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]">
+                            <span className={`w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted}`}>
                               AI match
                             </span>
                           </>
                         ) : (
-                          <span className="text-[#6B7280] text-[11px] font-normal font-['Poppins'] leading-[16px] flex items-center">
+                          <span className={`text-[#6B7280] ${t.textMuted} text-[11px] font-normal font-['Poppins'] leading-[16px] flex items-center`}>
                             Pending analysis
                           </span>
                         )}
@@ -661,50 +678,50 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
         {/* Right Column: Candidate detail panel (Frame 2609089) */}
         <div 
-          className="flex flex-col items-start p-0 gap-[16px] w-[688px] rounded-[24px] flex-none order-1 grow-[1] min-w-0"
+          className={`flex flex-col items-start p-0 gap-[16px] w-[688px] rounded-[24px] flex-none order-1 grow-[1] min-w-0`}
         >
           {/* Header metadata row / Frame 2608732 */}
           <div 
-            className="flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0"
+            className={`flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0`}
           >
             {/* User details / Frame 2608774 */}
-            <div className="flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0">
+            <div className={`flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0`}>
               {/* Ellipse 3 (Avatar) */}
               {candidateDetail?.avatarUrl ? (
                 <img
-                  className="w-[44px] h-[44px] rounded-full object-cover flex-none order-0 self-stretch grow-0"
+                  className={`w-[44px] h-[44px] rounded-full object-cover flex-none order-0 self-stretch grow-0`}
                   src={candidateDetail?.avatarUrl}
                   alt={candidateDetail?.name}
                 />
               ) : (
-                <div className="w-[44px] h-[44px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold font-['Poppins'] text-sm flex-none order-0 self-stretch grow-0">
+                <div className={`w-[44px] h-[44px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 ${t.textMuted} font-semibold font-['Poppins'] text-sm flex-none order-0 self-stretch grow-0`}>
                   {candidateDetail?.name.substring(0, 2).toUpperCase()}
                 </div>
               )}
 
               {/* Frame 2609009 */}
-              <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[44px] flex-none order-1 grow-0">
+              <div className={`flex flex-col items-start p-0 gap-[4px] w-auto h-[44px] flex-none order-1 grow-0`}>
                 {/* Name */}
                 <span
-                  className="w-auto h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] text-black flex items-center text-left whitespace-nowrap"
+                  className={`w-auto h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${t.text} flex items-center text-left whitespace-nowrap`}
                 >
                   {candidateDetail?.name}
                 </span>
 
                 {/* Frame 2609097 */}
-                <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-auto h-[16px] flex-none order-1 grow-0">
+                <div className={`flex flex-row justify-start items-center p-0 gap-[8px] w-auto h-[16px] flex-none order-1 grow-0`}>
                   {/* Role */}
                   <span
-                    className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center truncate"
+                    className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center truncate`}
                     style={{ maxWidth: '88px' }}
                   >
                     {candidateDetail?.headline}
                   </span>
                   {/* Badge (Ellipse 15) */}
-                  <div className="w-[6px] h-[6px] bg-[#6B7280] rounded-full flex-none grow-0" />
+                  <div className={`w-[6px] h-[6px] bg-[#6B7280] rounded-full flex-none grow-0`} />
                   {/* Location */}
                   <span
-                    className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center truncate"
+                    className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center truncate`}
                     style={{ maxWidth: '76px' }}
                   >
                     {candidateDetail?.location}
@@ -715,7 +732,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
             {/* Match count frame (Frame 2609066) */}
             {candidateAnalysis?.matchScore != null && (
-              <div className="flex flex-col justify-center items-start p-0 gap-[4px] w-[55px] h-[52px] flex-none order-1 grow-0">
+              <div className={`flex flex-col justify-center items-start p-0 gap-[4px] w-[55px] h-[52px] flex-none order-1 grow-0`}>
                 {/* Score text */}
                 <span
                   className={`w-[51px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center flex-none order-0 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
@@ -724,7 +741,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </span>
                 {/* AI match text */}
                 <span
-                  className="w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 grow-0"
+                  className={`w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted} flex-none order-1 grow-0`}
                 >
                   AI match
                 </span>
@@ -734,23 +751,23 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Action frame (Frame 2609102) */}
           <div 
-            className="flex flex-row justify-between items-center p-0 gap-[8px] w-[688px] h-[40px] flex-none order-1 self-stretch grow-0"
+            className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[688px] h-[40px] flex-none order-1 self-stretch grow-0`}
           >
             {/* Add a note button / Frame 2608618 */}
             <button
               onClick={openNoteModal}
               type="button"
-              className="flex flex-row justify-center items-center p-0 gap-[10px] w-[77px] h-[20px] rounded-[24px] flex-none order-0 grow-0 cursor-pointer"
+              className={`flex flex-row justify-center items-center p-0 gap-[10px] w-[77px] h-[20px] rounded-[24px] flex-none order-0 grow-0 cursor-pointer`}
             >
               <span
-                className="w-[77px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#000000] flex-none order-0 grow-0"
+                className={`w-[77px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#000000] ${t.text} flex-none order-0 grow-0`}
               >
                 Add a note
               </span>
             </button>
 
             {/* Action Buttons — conditional on application status */}
-            <div className="flex flex-row items-center p-0 gap-[16px] w-auto h-[40px] flex-none order-1 grow-0">
+            <div className={`flex flex-row items-center p-0 gap-[16px] w-auto h-[40px] flex-none order-1 grow-0`}>
               {candidateDetail?.status === 'Shortlisted' ? (
                 // Shortlisted: hide Decline, show disabled Shortlisted pill + Chat
                 <>
@@ -762,7 +779,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
                     }`}
                   >
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap">
+                    <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap`}>
                       Shortlisted
                     </span>
                   </button>
@@ -770,7 +787,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   <button
                     onClick={() => router.push(`/messaging?userId=${candidateDetail.applicantId}&jobContext=${listing.id}`)}
                     type="button"
-                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 hover:bg-slate-50 transition-all active:scale-95 ${
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 hover:bg-slate-50 ${t.ultraLight} transition-all active:scale-95 ${
                       isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
                     }`}
                   >
@@ -803,7 +820,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   <button
                     onClick={() => handleDecline(selectedCandidate?.applicationId)}
                     type="button"
-                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all active:scale-95 ${
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 ${t.ultraLight} transition-all active:scale-95 ${
                       isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
                     }`}
                   >
@@ -822,7 +839,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
                     }`}
                   >
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap">
+                    <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap`}>
                       Shortlist
                     </span>
                   </button>
@@ -834,11 +851,11 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* Self Note Frame / Frame 2609091 */}
           {candidateDetail?.selfNote && (
             <div 
-              className="flex flex-col items-start p-0 gap-[8px] w-[688px] flex-none order-2 self-stretch grow-0"
+              className={`flex flex-col items-start p-0 gap-[8px] w-[688px] flex-none order-2 self-stretch grow-0`}
             >
               {/* Title */}
               <span
-                className="w-[80px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-left text-black flex items-center"
+                className={`w-[80px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-left text-black ${t.text} flex items-center`}
               >
                 Self Note
               </span>
@@ -850,7 +867,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 }`}
               >
                 <span 
-                  className={`w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex-none order-0 self-stretch grow-0 whitespace-pre-wrap break-words ${isNoteExpanded ? '' : 'line-clamp-2'}`}
+                  className={`w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex-none order-0 self-stretch grow-0 whitespace-pre-wrap break-words ${isNoteExpanded ? '' : 'line-clamp-2'}`}
                 >
                   {candidateDetail?.selfNote}
                 </span>
@@ -868,28 +885,28 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Resume PDF Frame / Frame 2608977 */}
           <div 
-            className="flex flex-row justify-between items-center py-0 pr-[8px] pl-0 gap-[16px] w-[688px] h-[40px] rounded-[12px] flex-none order-3 self-stretch grow-0"
+            className={`flex flex-row justify-between items-center py-0 pr-[8px] pl-0 gap-[16px] w-[688px] h-[40px] rounded-[12px] flex-none order-3 self-stretch grow-0`}
           >
             {/* Doc Frame / Frame 2608990 */}
-            <div className="flex flex-row items-center p-0 gap-[8px] w-[178px] h-[40px] flex-none order-0 grow-0">
+            <div className={`flex flex-row items-center p-0 gap-[8px] w-[178px] h-[40px] flex-none order-0 grow-0`}>
               {/* Icon Frame / Frame 2608983 */}
               <div
-                className="flex flex-row justify-center items-center p-0 gap-[10px] w-[40px] h-[40px] rounded-[12px] bg-[#FFF5F5] flex-none order-0 grow-0 text-[#FF6B6B]"
+                className={`flex flex-row justify-center items-center p-0 gap-[10px] w-[40px] h-[40px] rounded-[12px] bg-[#FFF5F5] flex-none order-0 grow-0 text-[#FF6B6B]`}
               >
-                <Icon icon="lucide:file-text" className="w-[20px] h-[26px]" />
+                <Icon icon="lucide:file-text" className={`w-[20px] h-[26px]`} />
               </div>
 
               {/* Name frame / Frame 2608938 */}
-              <div className="flex flex-col justify-center items-start p-0 gap-[4px] w-[130px] h-[40px] flex-none order-1 grow-0">
+              <div className={`flex flex-col justify-center items-start p-0 gap-[4px] w-[130px] h-[40px] flex-none order-1 grow-0`}>
                 <span
-                  className="w-[130px] h-[20px] font-['Poppins'] font-semibold text-[14px] text-left leading-[20px] text-black flex items-center truncate"
+                  className={`w-[130px] h-[20px] font-['Poppins'] font-semibold text-[14px] text-left leading-[20px] text-black ${t.text} flex items-center truncate`}
                 >
                   {candidateDetail?.resumeName}
                 </span>
 
                 {/* Frame 2608988 */}
-                <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[63px] h-[16px] flex-none order-1 grow-0">
-                  <span className="text-[#6B7280] text-[10px] font-medium font-['Poppins'] uppercase">
+                <div className={`flex flex-row justify-start items-center p-0 gap-[8px] w-[63px] h-[16px] flex-none order-1 grow-0`}>
+                  <span className={`text-[#6B7280] ${t.textMuted} text-[10px] font-medium font-['Poppins'] uppercase`}>
                     Document
                   </span>
                 </div>
@@ -906,9 +923,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 }
               }}
               type="button"
-              className="w-[24px] h-[24px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-1 grow-0"
+              className={`w-[24px] h-[24px] flex items-center justify-center p-0 hover:bg-slate-50 ${t.ultraLight} rounded flex-none order-1 grow-0`}
             >
-              <Icon icon="lucide:eye" className="w-[24px] h-[24px] text-black" />
+              <Icon icon="lucide:eye" className={`w-[24px] h-[24px] text-black ${t.text}`} />
             </button>
           </div>
 
@@ -916,16 +933,16 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {candidateAnalysis && (
             <div 
               className={`flex flex-col items-start p-[16px] gap-[16px] w-[688px] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border ${
-                isCompanyMode ? 'bg-[#F4F8FF]' : 'bg-[#F9FAFF]'
+                `${isCompanyMode ? "bg-[#F4F8FF]" : "bg-[#F9FAFF]"} ${t.card}`
               }`}
             >
               {/* Title frame */}
-              <div className="flex flex-row items-center p-0 gap-[8px] w-[656px] h-auto flex-none order-0 self-stretch grow-0 flex-wrap">
+              <div className={`flex flex-row items-center p-0 gap-[8px] w-[656px] h-auto flex-none order-0 self-stretch grow-0 flex-wrap`}>
                 {/* AI Icon */}
-                <img src="/assets/AI 2.svg" alt="AI Icon" className="w-[20px] h-[20px] flex-none" />
+                <img src="/assets/AI 2.svg" alt="AI Icon" className={`w-[20px] h-[20px] flex-none`} />
 
                 {/* Heading */}
-                <div className="flex flex-col items-start p-0 h-[16px] flex-none order-1 grow-0">
+                <div className={`flex flex-col items-start p-0 h-[16px] flex-none order-1 grow-0`}>
                   <span
                     className={`h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center uppercase tracking-wider whitespace-nowrap ${
                       isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
@@ -937,7 +954,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                 {/* Fallback Badge */}
                 {candidateAnalysis.analysisType === 'BACKEND' && (
-                  <span className="text-[10px] text-amber-500 font-medium px-2 py-0.5 bg-amber-50 rounded-full border border-amber-200 ml-2 font-['Poppins']">
+                  <span className={`text-[10px] text-amber-500 font-medium px-2 py-0.5 bg-amber-50 rounded-full border border-amber-200 ml-2 font-['Poppins']`}>
                     System Match Fallback
                   </span>
                 )}
@@ -946,21 +963,21 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               {candidateAnalysis.summary?.strengths ? (
                 <>
                   {/* Details container */}
-                  <div className="flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-auto flex-none order-1 self-stretch grow-0 flex-wrap md:flex-nowrap">
+                  <div className={`flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-auto flex-none order-1 self-stretch grow-0 flex-wrap md:flex-nowrap`}>
                     {/* Left frame (strengths) */}
-                    <div className="flex flex-col items-start p-0 gap-[12px] w-[320px] h-auto flex-none order-0 self-stretch grow-[1]">
+                    <div className={`flex flex-col items-start p-0 gap-[12px] w-[320px] h-auto flex-none order-0 self-stretch grow-[1]`}>
                       <span 
-                        className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider"
+                        className={`w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider`}
                       >
                         Strengths
                       </span>
 
                       {/* Frame 2609109 */}
-                      <div className="flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]">
+                      <div className={`flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]`}>
                         {candidateAnalysis.summary.strengths.map((str: string, idx: number) => (
                           <span
                             key={idx}
-                            className="w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                            className={`w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black ${t.text}`}
                           >
                             • {str}
                           </span>
@@ -969,18 +986,18 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     </div>
 
                     {/* Right frame (concerns) */}
-                    <div className="flex flex-col items-start p-0 pb-[12px] gap-[12px] w-[320px] h-auto flex-none order-1 self-stretch grow-[1]">
+                    <div className={`flex flex-col items-start p-0 pb-[12px] gap-[12px] w-[320px] h-auto flex-none order-1 self-stretch grow-[1]`}>
                       <span 
-                        className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider"
+                        className={`w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider`}
                       >
                         Concerns
                       </span>
 
-                      <div className="flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]">
+                      <div className={`flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]`}>
                         {candidateAnalysis.summary.concerns.map((con: string, idx: number) => (
                           <span
                             key={idx}
-                            className="w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                            className={`w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black ${t.text}`}
                           >
                             • {con}
                           </span>
@@ -995,21 +1012,21 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       isCompanyMode ? 'border-t-[#E8F0FE]' : 'border-t-[#E0E7FF]'
                     }`}
                   >
-                    <div className="w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
+                    <div className={`w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black ${t.text} text-left`}>
                       <span className={`font-semibold mr-1 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>Recommendation:</span>
                       <span>{candidateAnalysis.summary.recommendation}</span>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className={`flex flex-col items-center justify-center py-[24px] gap-[16px] w-[656px] border border-dashed rounded-[16px] bg-white ${
+                <div className={`flex flex-col items-center justify-center py-[24px] gap-[16px] w-[656px] border border-dashed rounded-[16px] bg-white ${t.card} ${
                   isCompanyMode ? 'border-[#ADCCFF]' : 'border-[#C7D2FE]'
                 }`}>
                   <div className={`flex flex-row items-center gap-[8px] ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
-                    <Icon icon="lucide:sparkles" className="w-[20px] h-[20px] animate-pulse" />
-                    <span className="font-semibold text-xs uppercase tracking-wider font-['Poppins']">AI Insight Pending</span>
+                    <Icon icon="lucide:sparkles" className={`w-[20px] h-[20px] animate-pulse`} />
+                    <span className={`font-semibold text-xs uppercase tracking-wider font-['Poppins']`}>AI Insight Pending</span>
                   </div>
-                  <p className="text-[12px] text-gray-500 text-center max-w-[420px] font-['Poppins'] leading-[18px] px-[16px]">
+                  <p className={`text-[12px] text-gray-500 ${t.textMuted} text-center max-w-[420px] font-['Poppins'] leading-[18px] px-[16px]`}>
                     AI analysis was deferred for this application due to the minimum application pool gate. Generate it manually to see strengths, concerns, and matching recommendations.
                   </p>
                   <button
@@ -1021,8 +1038,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     }`}
                   >
                     {isAnalyzing ? (
-                      <div className="flex flex-row items-center gap-[8px]">
-                        <Icon icon="lucide:loader-2" className="w-[14px] h-[14px] animate-spin" />
+                      <div className={`flex flex-row items-center gap-[8px]`}>
+                        <Icon icon="lucide:loader-2" className={`w-[14px] h-[14px] animate-spin`} />
                         <span>Analyzing...</span>
                       </div>
                     ) : (
@@ -1030,7 +1047,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     )}
                   </button>
                   {analyzeError && (
-                    <p className="text-[11px] text-red-400 text-center font-['Poppins'] mt-[-8px]">{analyzeError}</p>
+                    <p className={`text-[11px] text-red-400 text-center font-['Poppins'] mt-[-8px]`}>{analyzeError}</p>
                   )}
                 </div>
               )}
@@ -1040,14 +1057,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* Skills match / Skills Match */}
           {(candidateAnalysis?.skills || (candidateDetail?.skills && candidateDetail.skills.length > 0)) && (
             <div 
-              className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white border rounded-[24px] flex-none order-4 self-stretch grow-0 ${
-                isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'
+              className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white ${t.card} border rounded-[24px] flex-none order-4 self-stretch grow-0 ${
+                isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`
               }`}
             >
               {/* Title frame / Frame 2609098 */}
-              <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[662px] h-[31px] flex-none self-stretch grow-0">
+              <div className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[662px] h-[31px] flex-none self-stretch grow-0`}>
                 <span 
-                  className="w-[40px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black"
+                  className={`w-[40px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black ${t.text}`}
                 >
                   Skills
                 </span>
@@ -1061,33 +1078,41 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               </div>
 
               {/* Skills chip frame / Container */}
-              <div className="flex flex-row items-center p-0 gap-[8px] w-[662px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap">
+              <div className={`flex flex-row items-center p-0 gap-[8px] w-[662px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap`}>
                 {candidateAnalysis?.skills?.tags
                   ? candidateAnalysis.skills.tags.map((tag: { name: string; matched: boolean }, idx: number) => (
                       <div 
                         key={idx}
-                        className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
-                        style={{ backgroundColor: tag.matched ? (isCompanyMode ? '#E8F0FE' : '#EEF2FF') : '#FFF1F1' }}
+                        className={`flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none ${
+    tag.matched 
+      ? (isCompanyMode ? 'bg-[#E8F0FE] dark:bg-[#16365F]' : 'bg-[#EEF2FF] dark:bg-[#252E54]') 
+      : 'bg-[#FFF1F1] dark:bg-[#4A1C1C]'
+  }`}
                       >
                         <span 
-                          className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
-                          style={{ color: tag.matched ? (isCompanyMode ? '#1A73E8' : '#6366F1') : '#FF6B6B' }}
+                          className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center ${
+    tag.matched 
+      ? (isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') 
+      : 'text-[#FF6B6B] dark:text-[#F87171]'
+  }`}
                         >
                           {tag.name}
                         </span>
-                      </div>
+                                            </div>
                     ))
                   : candidateDetail?.skills?.map((t: string | any, idx: number) => {
                       const skillName = typeof t === 'string' ? t : t.name;
                       return (
                         <div 
                           key={idx}
-                          className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
-                          style={{ backgroundColor: isCompanyMode ? '#E8F0FE' : '#EEF2FF' }}
+                          className={`flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none ${
+                            isCompanyMode ? 'bg-[#E8F0FE] dark:bg-[#16365F]' : 'bg-[#EEF2FF] dark:bg-[#252E54]'
+                          }`}
                         >
                           <span 
-                            className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
-                            style={{ color: isCompanyMode ? '#1A73E8' : '#6366F1' }}
+                            className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center ${
+                              isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'
+                            }`}
                           >
                             {skillName}
                           </span>
@@ -1099,7 +1124,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Summary text */}
               <span 
-                className="w-auto font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
+                className={`w-auto font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black ${t.text}`}
               >
                 {candidateAnalysis?.skills?.summary ?? "Candidate's listed skills."}
               </span>
@@ -1109,17 +1134,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Meta section (Experience & Qualification side-by-side) / Frame 2609110 */}
           {candidateAnalysis?.experience && candidateAnalysis?.qualification && (
-            <div className="flex flex-row items-start p-0 gap-[16px] w-[688px] h-[197px] flex-none order-5 self-stretch grow-0">
+            <div className={`flex flex-row items-start p-0 gap-[16px] w-[688px] h-[197px] flex-none order-5 self-stretch grow-0`}>
               {/* Left Experience frame / Experience Match */}
               <div 
-                className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border rounded-[16px] flex-none order-0 self-stretch grow-[1] ${
-                  isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'
+                className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white ${t.card} border rounded-[16px] flex-none order-0 self-stretch grow-[1] ${
+                  isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`
                 }`}
               >
                 {/* Title frame */}
-                <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0">
+                <div className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0`}>
                   <span 
-                    className="w-[88px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black"
+                    className={`w-[88px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black ${t.text}`}
                   >
                     Experience
                   </span>
@@ -1135,16 +1160,16 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </div>
 
                 {/* Exp match frame */}
-                <div className="flex flex-row justify-between items-center py-[8px] px-0 gap-[5.3px] w-[310px] h-[68px] flex-none self-stretch grow-0">
+                <div className={`flex flex-row justify-between items-center py-[8px] px-0 gap-[5.3px] w-[310px] h-[68px] flex-none self-stretch grow-0`}>
                   {/* Required box */}
-                  <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-0 grow-0">
+                  <div className={`flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-0 grow-0`}>
                     <span 
-                      className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]"
+                      className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted}`}
                     >
                       REQUIRED
                     </span>
-                    <div className="flex flex-col items-start p-0 opacity-50 flex-none order-1 grow-0">
-                      <span className="h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black whitespace-nowrap">
+                    <div className={`flex flex-col items-start p-0 opacity-50 flex-none order-1 grow-0`}>
+                      <span className={`h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black ${t.text} whitespace-nowrap`}>
                         {candidateAnalysis.experience.required}
                       </span>
                     </div>
@@ -1152,17 +1177,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                   {/* Arrow */}
                   <div className={`flex flex-col justify-end items-center p-0 pb-[6px] h-[52px] flex-none order-1 grow-0 ${isCompanyMode ? 'text-[#ADCCFF]' : 'text-[#C7D2FE]'}`}>
-                    <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+                    <Icon icon="lucide:arrow-right" className={`w-5 h-5`} />
                   </div>
 
                   {/* Actual box */}
-                  <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-2 grow-0">
+                  <div className={`flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-2 grow-0`}>
                     <span 
-                      className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000]"
+                      className={`font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000] ${t.text}`}
                     >
                       ACTUAL
                     </span>
-                    <span className="h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black whitespace-nowrap">
+                    <span className={`h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black ${t.text} whitespace-nowrap`}>
                       {candidateAnalysis.experience.actual}
                     </span>
                   </div>
@@ -1170,7 +1195,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                 {/* Exceeds text */}
                 <span 
-                  className="w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
+                  className={`w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black ${t.text}`}
                 >
                   {candidateAnalysis.experience.summary}
                 </span>
@@ -1178,14 +1203,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Right Qualification frame / Education Match */}
               <div 
-                className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border rounded-[16px] flex-none order-1 self-stretch grow-[1] ${
-                  isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'
+                className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white ${t.card} border rounded-[16px] flex-none order-1 self-stretch grow-[1] ${
+                  isCompanyMode ? `border-[#E8F0FE] ${t.borderLight}` : `border-[#EEF2FF] ${t.borderLight}`
                 }`}
               >
                 {/* Title frame */}
-                <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0">
+                <div className={`flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0`}>
                   <span 
-                    className="w-[103px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black"
+                    className={`w-[103px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black ${t.text}`}
                   >
                     Qualification
                   </span>
@@ -1201,14 +1226,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </div>
 
                 {/* Top education frame / Margin */}
-                <div className="flex flex-col items-start p-0 w-[310px] h-[60px] flex-none self-stretch grow-0">
+                <div className={`flex flex-col items-start p-0 w-[310px] h-[60px] flex-none self-stretch grow-0`}>
                   <span 
-                    className="w-[294px] h-[24px] font-['Poppins'] font-normal text-[16px] leading-[24px] flex items-center text-black truncate"
+                    className={`w-[294px] h-[24px] font-['Poppins'] font-normal text-[16px] leading-[24px] flex items-center text-black ${t.text} truncate`}
                   >
                     {candidateAnalysis.qualification.degree}
                   </span>
                   <span 
-                    className="w-[294px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] uppercase mt-[4px]"
+                    className={`w-[294px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] ${t.textMuted} uppercase mt-[4px]`}
                   >
                     {candidateAnalysis.qualification.class}
                   </span>
@@ -1216,7 +1241,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                 {/* Aligns text */}
                 <span 
-                  className="w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
+                  className={`w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black ${t.text}`}
                 >
                   {candidateAnalysis.qualification.summary}
                 </span>
@@ -1226,30 +1251,343 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         </div>
       </div>
       )}
+    </div>
+    {/* MOBILE LAYOUT */}
+    <div className="flex md:hidden flex-col w-full min-h-[100dvh] bg-white dark:bg-[#0F1115] pb-[100px] animate-in fade-in duration-300">
+      {mobileView === 'list' ? (
+        <>
+          {/* Mobile List Header */}
+          <div className="flex flex-row items-center p-4 gap-4 w-full">
+            <button
+              onClick={onBack}
+              type="button"
+              className={`size-12 p-2 rounded-[100px] border border-zinc-300 ${t.border} flex justify-center items-center gap-2.5 active:scale-95`}
+            >
+              <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${t.textMuted}`} />
+            </button>
+            <div className="flex flex-col">
+              <span className={`text-lg font-medium ${t.text}`}>Applicants</span>
+              <span className={`text-xs ${t.textMuted}`}>Review and shortlist candidates with AI</span>
+            </div>
+          </div>
+
+          {/* Mobile Job Info Card */}
+          <div className="px-4 w-full mb-6">
+            <div className={`w-full p-4 bg-white ${t.card} ${t.bg} rounded-2xl border border-zinc-200 ${t.border} shadow-sm flex flex-col gap-4`}>
+              {/* Logo & Title */}
+              <div className="flex flex-row items-center gap-3">
+                <div className="w-12 h-12 bg-black rounded-xl overflow-hidden flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                  {(listing as any).company_logo ? <img src={(listing as any).company_logo} alt="" className="w-full h-full object-cover" /> : '∞'}
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className={`text-base font-medium ${t.text} truncate`}>{listing.title}</span>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[#22C55E] font-medium">Active</span>
+                    <span className={`${t.textMuted}`}>•</span>
+                    <span className={`${t.textMuted} truncate`}>Posted {listing.posted_at || '2h ago'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Stats */}
+              <div className="flex flex-row justify-between pt-2">
+                <div className="flex flex-col">
+                  <span className={`text-base font-semibold ${t.text}`}>{appCount}</span>
+                  <span className={`text-xs ${t.textMuted}`}>Applications</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-base font-semibold ${t.text}`}>{shortlistCount}</span>
+                  <span className={`text-xs ${t.textMuted}`}>Shortlisted</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-base font-semibold ${t.text}`}>{listing.offers_count || 0}</span>
+                  <span className={`text-xs ${t.textMuted}`}>Offer sent</span>
+                </div>
+              </div>
+
+              {/* Action Link */}
+              <div className="w-full text-center mt-2">
+                <button onClick={onViewDetails} className={`text-sm font-medium ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
+                  View job details
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Candidates Header */}
+          <div className="flex flex-row items-center justify-between px-4 mb-4">
+            <span className={`text-sm font-medium tracking-wider ${t.text}`}>CANDIDATES</span>
+            <button 
+              onClick={() => setIsDropdownOpen(true)}
+              className={`p-2 active:scale-95`}
+            >
+              <Icon icon="iconoir:filter-list" className={`w-6 h-6 ${t.text}`} />
+            </button>
+          </div>
+
+          {/* Mobile Candidates List */}
+          <div className="flex flex-col px-4 gap-4">
+            {filteredCandidates.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-2 text-center w-full">
+                <span className={`text-xs font-semibold ${t.textMuted}`}>No candidates</span>
+              </div>
+            ) : (
+              filteredCandidates.map((cand) => (
+                <div
+                  key={cand.applicationId}
+                  onClick={() => {
+                    setSelectedCandId(cand.applicationId);
+                    setMobileView('detail');
+                  }}
+                  className="flex flex-row items-center gap-3 w-full active:scale-95 transition-transform"
+                >
+                  {cand.avatarUrl ? (
+                    <img src={cand.avatarUrl} alt={cand.name} className="w-[50px] h-[50px] rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold text-sm flex-shrink-0">
+                      {cand.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className={`text-base font-medium ${t.text} truncate capitalize`}>{cand.name}</span>
+                    {cand.matchScore != null ? (
+                      <div className="flex items-center gap-1">
+                        <span className={`font-medium text-sm ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>{cand.matchScore}%</span>
+                        <span className={`text-xs ${t.textMuted}`}>AI match</span>
+                      </div>
+                    ) : (
+                      <span className={`text-xs ${t.textMuted}`}>Pending analysis</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Mobile Filter Bottom Sheet */}
+          {isDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-[79] bg-black/50" onClick={() => setIsDropdownOpen(false)} />
+              <div className={`fixed inset-x-0 bottom-0 z-[80] bg-white ${t.card} ${t.bg} rounded-t-[32px] pt-8 pb-12 px-6 flex flex-col gap-6 animate-in slide-in-from-bottom-full duration-300`}>
+                {(['Top match', 'Recent', 'Shortlisted', 'Noted', 'Pending'] as FilterOption[]).map(opt => (
+                  <button
+                    key={opt}
+                    onClick={() => {
+                      setFilter(opt);
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`text-left text-lg font-medium ${filter === opt ? (isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]') : t.text}`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Mobile Detail View */}
+          <div className="flex flex-row items-center p-4 gap-4 w-full">
+            <button
+              onClick={() => setMobileView('list')}
+              type="button"
+              className={`size-12 p-2 rounded-[100px] border border-zinc-300 ${t.border} flex justify-center items-center gap-2.5 active:scale-95`}
+            >
+              <Icon icon="lucide:chevron-left" className={`w-6 h-6 text-gray-500 ${t.textMuted}`} />
+            </button>
+            <div className="flex flex-col">
+              <span className={`text-lg font-medium ${t.text}`}>Candidate detail</span>
+              <span className={`text-xs ${t.textMuted}`}>Shortlist the best match</span>
+            </div>
+          </div>
+
+          {candidateDetail && (
+            <div className="flex flex-col w-full px-4 gap-6">
+              
+              {/* Profile Header */}
+              <div className="flex flex-row justify-between items-start w-full">
+                <div className="flex flex-row items-center gap-3">
+                  {candidateDetail.avatarUrl ? (
+                    <img src={candidateDetail.avatarUrl} alt={candidateDetail.name} className="w-[50px] h-[50px] rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold text-sm flex-shrink-0">
+                      {candidateDetail.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <span className={`text-base font-medium ${t.text}`}>{candidateDetail.name}</span>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className={`truncate max-w-[100px] ${t.textMuted}`}>{candidateDetail.headline}</span>
+                      <span className={`${t.textMuted}`}>•</span>
+                      <span className={`truncate max-w-[80px] ${t.textMuted}`}>{candidateDetail.location}</span>
+                    </div>
+                  </div>
+                </div>
+                {candidateAnalysis?.matchScore != null && (
+                  <div className="flex flex-col items-end">
+                    <span className={`text-lg font-medium ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>{candidateAnalysis.matchScore}%</span>
+                    <span className={`text-[10px] ${t.textMuted}`}>AI match</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Action Row */}
+              <div className="flex flex-row items-center gap-2 w-full">
+                <button onClick={openNoteModal} className={`text-sm font-medium whitespace-nowrap ${t.text}`}>
+                  Add a note
+                </button>
+                <div className="flex-1" />
+                <button className={`px-4 py-2 rounded-full border border-[#1A73E8] text-[#1A73E8] ${isCompanyMode ? '' : 'border-indigo-500 text-indigo-500'} text-sm font-medium`}>
+                  Decline
+                </button>
+                <button className={`px-4 py-2 rounded-full ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-indigo-500'} text-white text-sm font-medium`}>
+                  Shortlist
+                </button>
+              </div>
+
+              {/* Self Note Card (If exists) */}
+              {candidateDetail.selfNote && (
+                <div className={`w-full p-4 rounded-xl bg-[#F8FAFC] ${t.ultraLight} flex flex-col gap-2`}>
+                   <span className={`text-sm font-semibold ${t.text}`}>Self Note</span>
+                   <span className={`text-sm ${t.textMuted}`}>
+                     {candidateDetail.selfNote}
+                   </span>
+                </div>
+              )}
+
+              {/* Resume Card */}
+              {candidateDetail.resume && (
+                <div className="flex flex-row items-center justify-between w-full">
+                  <div className="flex flex-row items-center gap-3">
+                    <Icon icon="carbon:document-pdf" className="w-8 h-8 text-[#FF6B6B]" />
+                    <div className="flex flex-col">
+                      <span className={`text-sm font-medium ${t.text}`}>{candidateDetail.name.split(' ')[0]}.cv.pdf</span>
+                      <span className={`text-[10px] uppercase ${t.textMuted}`}>DOCUMENT</span>
+                    </div>
+                  </div>
+                  <Icon icon="lucide:eye" className={`w-5 h-5 ${t.text}`} />
+                </div>
+              )}
+
+              {/* AI Summary Card */}
+              {candidateAnalysis && (
+                <div className={`w-full p-4 rounded-xl bg-white ${t.card} border border-[#EEF2FF] ${t.bg} ${t.borderLight} shadow-sm flex flex-col gap-4`}>
+                  <div className="flex items-center gap-2">
+                    <Icon icon="hugeicons:sparkles" className={`w-4 h-4 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`} />
+                    <span className={`text-xs font-semibold tracking-wider uppercase ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`}>AI Executive Summary</span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-[#22C55E] tracking-wider">STRENGTHS</span>
+                    <ul className={`list-disc pl-4 text-xs leading-5 ${t.text}`}>
+                      {candidateAnalysis.summary.strengths.map((str: string, i: number) => (
+                        <li key={i}>{str}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-[#FF6B6B] tracking-wider">CONCERNS</span>
+                    <ul className={`list-disc pl-4 text-xs leading-5 ${t.text}`}>
+                      {candidateAnalysis.summary.concerns.map((c: string, i: number) => (
+                        <li key={i}>{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className={`pt-4 border-t border-[#EEF2FF] ${t.borderLight}`}>
+                    <span className={`text-xs leading-5 ${t.textMuted}`}>
+                      <span className={`font-medium ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`}>Recommendation: </span>
+                      {candidateAnalysis.summary.recommendation}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Skills Card */}
+              {candidateAnalysis?.skills && (
+                <div className="w-full flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm font-medium ${t.text}`}>Skills</span>
+                    <span className={`text-[10px] font-bold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'} tracking-wider uppercase`}>{candidateAnalysis.skills.match}% MATCH</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {candidateAnalysis.skills.tags.map((tag: any, i: number) => (
+                      <div key={i} className={`px-3 py-1 rounded-full text-xs font-medium ${tag.matched ? (isCompanyMode ? 'bg-[#E8F0FE] text-[#1A73E8]' : 'bg-indigo-50 text-indigo-500') : 'bg-red-50 text-red-400'}`}>
+                        {tag.name}
+                      </div>
+                    ))}
+                  </div>
+                  <span className={`text-sm ${t.text}`}>{candidateAnalysis.skills.summary}</span>
+                </div>
+              )}
+
+              {/* Experience Card */}
+              {candidateAnalysis?.experience && (
+                <div className="w-full flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm font-medium ${t.text}`}>Experience</span>
+                    <span className={`text-[10px] font-bold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'} tracking-wider uppercase`}>{candidateAnalysis.experience.status}</span>
+                  </div>
+                  <div className="flex flex-row items-end justify-between w-full">
+                    <div className="flex flex-col">
+                      <span className={`text-xs ${t.textMuted}`}>REQUIRED</span>
+                      <span className={`text-2xl font-semibold ${t.text}`}>{candidateAnalysis.experience.required}</span>
+                    </div>
+                    <Icon icon="lucide:arrow-right" className="w-5 h-5 text-[#C7D2FE] mb-2" />
+                    <div className="flex flex-col">
+                      <span className={`text-xs ${t.textMuted}`}>ACTUAL</span>
+                      <span className={`text-2xl font-semibold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500'}`}>{candidateAnalysis.experience.actual}</span>
+                    </div>
+                  </div>
+                  <span className={`text-sm ${t.text}`}>{candidateAnalysis.experience.summary}</span>
+                </div>
+              )}
+
+              {/* Education Card */}
+              {candidateAnalysis?.qualification && (
+                <div className="w-full flex flex-col gap-3 mb-12">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm font-medium ${t.text}`}>Education</span>
+                    <span className={`text-[10px] font-bold ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'} tracking-wider uppercase`}>{candidateAnalysis.qualification.status}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className={`text-base ${t.text}`}>{candidateAnalysis.qualification.degree}</span>
+                    <span className={`text-xs ${t.textMuted} uppercase`}>{candidateAnalysis.qualification.class}</span>
+                  </div>
+                  <span className={`text-sm ${t.text}`}>{candidateAnalysis.qualification.summary}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
 
       {/* Add a note modal */}
       {isNoteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-96 p-4 bg-white rounded-3xl inline-flex flex-col justify-start items-center overflow-hidden border border-zinc-100 shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 px-4">
+          <div className={`w-full max-w-sm md:w-96 p-4 bg-white ${t.modalBg} rounded-3xl inline-flex flex-col justify-start items-center overflow-hidden border border-zinc-100 ${t.border} shadow-2xl animate-in zoom-in-95 duration-200`}>
             <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
               <button
                 onClick={() => setIsNoteModalOpen(false)}
                 type="button"
-                className="w-6 h-6 flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors"
+                className={`w-6 h-6 flex items-center justify-center hover:bg-slate-50 ${isCompanyMode ? 'dark:hover:bg-blue-900/20' : 'dark:hover:bg-indigo-900/20'} rounded-full transition-colors`}
               >
                 <Icon icon="lucide:x" className="w-[18px] h-[18px] text-[#FF6B6B]" />
               </button>
             </div>
-            <div className="w-72 flex flex-col justify-start items-center gap-4">
+            <div className="w-full md:w-72 flex flex-col justify-start items-center gap-4">
               <div className="flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Add a note</div>
-                <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Include a note for reference.</div>
+                <div className={`text-center justify-start text-lg font-medium font-['Poppins'] leading-6 ${t.text}`}>Add a note</div>
+                <div className={`text-center justify-start text-xs font-normal font-['Poppins'] leading-4 ${t.textMuted}`}>Include a note for reference.</div>
               </div>
               <textarea
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Add a personal note...."
-                className={`self-stretch h-32 px-4 py-2 bg-white rounded-2xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-black text-sm font-normal font-['Poppins'] leading-5 resize-none focus:outline-none ${
+                className={`self-stretch h-32 px-4 py-2 bg-white ${t.bg} rounded-2xl outline outline-1 outline-offset-[-1px] outline-zinc-200 ${t.borderLight} text-sm font-normal font-['Poppins'] leading-5 resize-none focus:outline-none ${t.text} ${
                   isCompanyMode ? 'focus:outline-blue-400' : 'focus:outline-indigo-400'
                 }`}
               />
@@ -1257,17 +1595,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 <button
                   onClick={() => setIsNoteModalOpen(false)}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 transition-colors active:scale-95 ${
-                    isCompanyMode ? 'outline-blue-400 hover:bg-blue-50/10' : 'outline-indigo-400 hover:bg-indigo-50/10'
+                  className={`flex-1 h-10 px-4 py-2 bg-white ${t.bg} rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 transition-colors active:scale-95 ${
+                    isCompanyMode ? `outline-blue-400 hover:bg-blue-50/10 ${t.primaryHover}` : `outline-indigo-400 hover:bg-indigo-50/10 ${t.primaryHover}`
                   }`}
                 >
-                  <span className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-400'}`}>Cancel</span>
+                  <span className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${t.primary}`}>Cancel</span>
                 </button>
                 <button
                   onClick={handleSaveNote}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 transition-colors active:scale-95 shadow-sm ${
-                    isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
+                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white ${t.borderLight} flex justify-center items-center gap-2.5 transition-colors active:scale-95 shadow-sm ${
+                    isCompanyMode ? `bg-[#1A73E8] hover:bg-[#1557B0]` : `bg-indigo-500 hover:bg-indigo-600`
                   }`}
                 >
                   <span className="text-center justify-start text-white text-sm font-normal font-['Poppins'] leading-5">Save</span>
@@ -1277,8 +1615,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           </div>
         </div>
       )}
-    </div>
+
+    </>
   );
 };
-
 export default ApplicantsDashboard;

@@ -61,7 +61,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     } else {
       params.set('subtab', tab);
     }
-    router.replace(`/jobs?${params.toString()}`);
+    router.replace(`${window.location.pathname}?${params.toString()}`);
   }, [router]);
   const {
     listings, isLoading, isFetchingMore, hasMore, counts,
@@ -77,7 +77,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     } else {
       params.set('filter', status);
     }
-    router.replace(`/jobs?${params.toString()}`);
+    router.replace(`${window.location.pathname}?${params.toString()}`);
   }, [setStatusFilterRaw, router]);
 
   const [initialOfferJobId, setInitialOfferJobId] = useState<string | undefined>(undefined);
@@ -115,7 +115,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         params.delete('title');
       }
     }
-    router.replace(`/jobs?${params.toString()}`);
+    router.replace(`${window.location.pathname}?${params.toString()}`);
   }, [router]);
 
   // Synchronize local view state with URL view parameter (browser navigation)
@@ -130,6 +130,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   // Resolve selectedListing if urlJobId is present in URL
   useEffect(() => {
+    if (view === 'view-listing' && !urlJobId) return; // Prevent race condition where stale url clears state
     if (urlJobId && listings.length > 0) {
       const matched = listings.find(l => l.id === urlJobId);
       if (matched) {
@@ -138,7 +139,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     } else if (!urlJobId) {
       setSelectedListing(null);
     }
-  }, [urlJobId, listings]);
+  }, [urlJobId, listings, view]);
 
   const handleCreateJob = useCallback(async (title: string, status: string, details?: Partial<JobListing>) => {
     try {
@@ -250,12 +251,13 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         }}
         onViewListingDetails={() => {
           const matchingListing = listings.find(
-            (l) => l.title.toLowerCase() === selectedOfferGroup.title.toLowerCase()
+            (l) => l.title?.toLowerCase() === selectedOfferGroup.title?.toLowerCase()
           );
           if (typeof window !== 'undefined') {
             sessionStorage.setItem('coming_from_send_offer_details', 'true');
           }
           if (matchingListing) {
+            setSelectedListing(matchingListing);
             transitionTo('view-listing', matchingListing.id);
           } else {
             const mockListing: JobListing = {
@@ -266,7 +268,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               posted_at: 'Posted 2 hours ago',
             };
             setSelectedListing(mockListing);
-            transitionTo('view-listing');
+            transitionTo('view-listing', 'list-mock');
           }
         }}
       />
@@ -355,7 +357,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 setIsSendOfferModalOpen(true);
               }
             }}
-            className={`px-6 py-2.5 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
+            className={`w-full md:w-auto px-6 py-2.5 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
               isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
             }`}
           >
@@ -377,20 +379,20 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       </div>
 
       {/* Sub-Tabs Row */}
-      <div className="w-full flex justify-start items-center gap-4">
+      <div className="w-full flex justify-start items-center gap-4 overflow-x-auto no-scrollbar pb-1 md:overflow-visible md:pb-0 md:flex-wrap">
         {(['Job listings', 'Sent offers'] as SubTab[]).map(tab => {
           const isActive = activeSubTab === tab;
           return (
             <button
               key={tab}
               onClick={() => setActiveSubTab(tab)}
-              className={`h-10 px-5 py-1.5 rounded-full flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
+              className={`h-9 px-4 rounded-full flex justify-center items-center text-sm font-medium font-['Poppins'] transition-all duration-200 active:scale-95 border ${
                 isActive
-                  ? (isCompanyMode ? 'bg-blue-50 dark:bg-[#1A2435] border-blue-200 dark:border-[#2A2D35] text-[#1A73E8] dark:text-[#4D9CFF]' : 'bg-indigo-50 dark:bg-[#1C2340] border-indigo-200 dark:border-[#2E3445] text-indigo-500 dark:text-[#818CF8]')
-                  : `bg-white border-transparent text-gray-500 hover:text-black hover:bg-gray-50 ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#2A2D35] dark:text-[#A1A8B3] dark:hover:text-[#FFFFFF]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#2E3445] dark:text-[#9CA3AF] dark:hover:text-[#F9FAFB]'}`
+                  ? (isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] border-transparent text-white' : 'bg-[#6366F1] dark:bg-[#818CF8] border-transparent text-white')
+                  : `bg-white dark:bg-[#0B0F19] ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 text-[#1A73E8] dark:text-[#4D9CFF] hover:bg-[#1A73E8]/5' : 'border-[#6366F1]/30 dark:border-[#818CF8]/30 text-[#6366F1] dark:text-[#818CF8] hover:bg-[#6366F1]/5'}`
               }`}
             >
-              {tab}
+              {tab === 'Sent offers' ? 'Sent offer' : tab}
             </button>
           );
         })}
@@ -478,6 +480,18 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         }}
         initialJobId={initialOfferJobId}
       />
+      
+      {/* Mobile FAB for Create Job */}
+      {view === 'dashboard' && activeSubTab === 'Job listings' && (
+        <button
+          onClick={() => transitionTo('create-job')}
+          className={`md:hidden fixed bottom-20 right-4 z-[60] w-14 h-14 rounded-full shadow-lg flex justify-center items-center text-white active:scale-95 transition-all ${
+            isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
+          }`}
+        >
+          <Icon icon="lucide:plus" className="w-6 h-6" />
+        </button>
+      )}
     </>
   );
 };

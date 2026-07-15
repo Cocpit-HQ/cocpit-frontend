@@ -195,56 +195,77 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
             <div
               key={`${item.id}-${index}`}
               onClick={() => handleSelectGroup(item)}
-              className="w-full flex flex-row items-center justify-between py-4 px-4 gap-4 bg-white dark:bg-[#0B0F19] h-[88px] flex-none border-b border-[#EEF2FF]/60 dark:border-[#2E3445]/60 last:border-b-0 hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors cursor-pointer"
+              className="w-full bg-white dark:bg-[#0B0F19] border-b border-[#EEF2FF]/60 dark:border-[#2E3445]/60 last:border-b-0 hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors cursor-pointer"
             >
-              {/* Job Title & Company */}
-              <div className="flex flex-col items-start gap-1 w-[30%] min-w-[200px]">
-                <span className={`font-['Poppins'] font-semibold text-sm text-black capitalize truncate w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-                  {item.title}
-                </span>
-                <span className={`font-['Poppins'] font-normal text-xs text-gray-500 truncate w-full ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                  {item.company}
-                </span>
+              {/* Desktop View */}
+              <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[88px] w-full">
+                {/* Job Title & Company */}
+                <div className="flex flex-col items-start gap-1 w-[30%] min-w-[200px]">
+                  <span className={`font-['Poppins'] font-semibold text-sm text-black capitalize truncate w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                    {item.title}
+                  </span>
+                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 truncate w-full ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                    {item.company}
+                  </span>
+                </div>
+
+                {/* Sent candidates */}
+                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[100px]">
+                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                    {item.sentCount}
+                  </span>
+                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                    Sent candidates
+                  </span>
+                </div>
+
+                {/* Accepted */}
+                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
+                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                    {item.acceptedCount}
+                  </span>
+                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                    Accepted
+                  </span>
+                </div>
+
+                {/* Pending */}
+                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
+                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                    {item.pendingCount}
+                  </span>
+                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                    Pending
+                  </span>
+                </div>
+
+                {/* Declined */}
+                <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
+                  <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+                    {item.declinedCount}
+                  </span>
+                  <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+                    Declined
+                  </span>
+                </div>
               </div>
 
-              {/* Sent candidates */}
-              <div className="flex flex-col items-start gap-1 w-[15%] min-w-[100px]">
-                <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-                  {item.sentCount}
-                </span>
-                <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                  Sent candidates
-                </span>
-              </div>
-
-              {/* Accepted */}
-              <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
-                <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-                  {item.acceptedCount}
-                </span>
-                <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                  Accepted
-                </span>
-              </div>
-
-              {/* Pending */}
-              <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
-                <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-                  {item.pendingCount}
-                </span>
-                <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                  Pending
-                </span>
-              </div>
-
-              {/* Declined */}
-              <div className="flex flex-col items-start gap-1 w-[15%] min-w-[90px]">
-                <span className={`font-['Poppins'] font-bold text-sm text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
-                  {item.declinedCount}
-                </span>
-                <span className={`font-['Poppins'] font-normal text-xs text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
-                  Declined
-                </span>
+              {/* Mobile View */}
+              <div className="flex md:hidden flex-row items-center py-4 px-1 gap-4 w-full">
+                {/* Logo Placeholder */}
+                <div className="w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white shadow-sm border border-slate-100 dark:border-[#2E3445]">
+                  <Icon icon="lucide:infinity" className="w-8 h-8 text-white" />
+                </div>
+                
+                {/* Info */}
+                <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
+                    {item.title}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 dark:text-[#9CA3AF] truncate w-full mt-0.5">
+                    Sent to {item.sentCount} candidates • {item.acceptedCount} accepted
+                  </span>
+                </div>
               </div>
             </div>
           ))

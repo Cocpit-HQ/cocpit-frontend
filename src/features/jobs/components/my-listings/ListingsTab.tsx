@@ -26,6 +26,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 }) => {
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [jobToClose, setJobToClose] = useState<string | null>(null);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [mobileActionJob, setMobileActionJob] = useState<JobListing | null>(null);
 
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
@@ -103,7 +105,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
       className="w-full max-w-[998px] h-[708px] bg-white dark:bg-[#0B0F19] rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
     >
       {/* Heading Frame */}
-      <div className="w-full flex flex-col gap-[4px] px-0">
+      <div className="w-full hidden md:flex flex-col gap-[4px] px-0">
         <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black dark:text-[#F9FAFB] capitalize">
           {statusFilter === 'All' ? 'All Jobs' : statusFilter === 'Drafts' ? 'Drafts' : `${statusFilter} Jobs`}
         </h3>
@@ -112,8 +114,29 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         </span>
       </div>
 
-      {/* Filter Row Frame (Frame 2608535) */}
-      <div className="w-full flex flex-col items-start p-0 gap-[16px] flex-none self-stretch">
+      {/* Mobile Heading & Filter Icon */}
+      <div className="w-full flex md:hidden justify-between items-center px-0 mb-2">
+        <div className="flex flex-col gap-1">
+          <h3 className="font-['Poppins'] font-medium text-[20px] leading-[28px] text-black dark:text-[#F9FAFB] capitalize">
+            {statusFilter === 'All' ? 'All jobs' : statusFilter === 'Drafts' ? 'Drafts' : `${statusFilter} jobs`}
+          </h3>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF]">
+            Total jobs - {filterChips.find(c => c.label.toLowerCase() === statusFilter.toLowerCase())?.count || 0}
+          </span>
+        </div>
+        <button 
+          onClick={() => setIsFilterSheetOpen(true)}
+          className="p-2 relative hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-full transition-colors active:scale-95"
+        >
+          <Icon icon="lucide:list-filter" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
+          {statusFilter !== 'All' && (
+            <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white dark:border-[#0B0F19]" />
+          )}
+        </button>
+      </div>
+
+      {/* Filter Row Frame (Frame 2608535) - Desktop Only */}
+      <div className="w-full hidden md:flex flex-col items-start p-0 gap-[16px] flex-none self-stretch">
         <div className="w-full flex flex-row items-center gap-[8px] border-b border-transparent">
           {filterChips.map((chip) => {
             const isSelected = statusFilter.toLowerCase() === chip.label.toLowerCase();
@@ -140,19 +163,35 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
           [1, 2, 3, 4].map((n) => (
               <div
               key={n}
-              className="w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white dark:bg-[#0B0F19] h-[92px] flex-none rounded-[12px] animate-pulse border border-slate-100 dark:border-[#2E3445]"
+              className="w-full bg-white dark:bg-[#0B0F19] flex-none rounded-[12px] animate-pulse border border-slate-100 dark:border-[#2E3445]"
             >
-              <div className="flex flex-col items-start gap-2 w-1/4 h-[48px] justify-center">
-                <div className="w-3/4 h-5 bg-slate-200 dark:bg-[#2E3445] rounded" />
-                <div className="w-1/2 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
+              {/* Desktop Skeleton */}
+              <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[92px] w-full">
+                <div className="flex flex-col items-start gap-2 w-1/4 h-[48px] justify-center">
+                  <div className="w-3/4 h-5 bg-slate-200 dark:bg-[#2E3445] rounded" />
+                  <div className="w-1/2 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
+                </div>
+                <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
+                <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
+                <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
+                <div className="w-[12%] h-[31px] bg-slate-200 dark:bg-[#2E3445] rounded-full" />
+                <div className="w-[104px] flex justify-end gap-4">
+                  <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
+                  <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
+                </div>
               </div>
-              <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
-              <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
-              <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
-              <div className="w-[12%] h-[31px] bg-slate-200 dark:bg-[#2E3445] rounded-full" />
-              <div className="w-[104px] flex justify-end gap-4">
-                <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
-                <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
+              {/* Mobile Skeleton */}
+              <div className="flex md:hidden flex-row items-center py-3 px-1 gap-4 w-full">
+                {/* Logo */}
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1C2340] shrink-0" />
+                {/* Info */}
+                <div className="flex-1 flex flex-col gap-2 min-w-0">
+                  <div className="w-3/4 h-5 bg-slate-200 dark:bg-[#2E3445] rounded" />
+                  <div className="w-1/2 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
+                  <div className="w-2/3 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
+                </div>
+                {/* 3 Dots */}
+                <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full shrink-0" />
               </div>
             </div>
           ))
@@ -168,87 +207,129 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             <div
               key={item.id || `listing-${index}`}
               onClick={() => onSelectListing && onSelectListing(item)}
-              className={`w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white dark:bg-[#0B0F19] h-[92px] flex-none rounded-[12px] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors ${
+              className={`w-full bg-white dark:bg-[#0B0F19] rounded-[12px] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors border border-transparent md:border-none md:bg-transparent ${
                 onSelectListing ? 'cursor-pointer' : ''
               }`}
             >
-              {/* Job Title & Date */}
-              <div className="flex flex-col items-start gap-2 w-1/4 min-w-[140px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
-                  {item.title}
-                </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF] truncate w-full">
-                  {item.posted_at || item.last_edited || 'Posted recently'}
-                </span>
+              {/* Desktop View */}
+              <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[92px] w-full">
+                {/* Job Title & Date */}
+                <div className="flex flex-col items-start gap-2 w-1/4 min-w-[140px] justify-center shrink-0">
+                  <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
+                    {item.title}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF] truncate w-full">
+                    {item.posted_at || item.last_edited || 'Posted recently'}
+                  </span>
+                </div>
+
+                {/* Applications */}
+                <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
+                  <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
+                    {item.applicants_count || 0}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+                    Applications
+                  </span>
+                </div>
+
+                {/* Shortlisted */}
+                <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
+                  <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
+                    {item.shortlisted_count || 0}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+                    Shortlisted
+                  </span>
+                </div>
+
+                {/* Offer sent */}
+                <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
+                  <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
+                    {item.offers_count || 0}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+                    Offer sent
+                  </span>
+                </div>
+
+                {/* Status */}
+                <div className="flex flex-col items-start gap-[10px] w-[12%] min-w-[80px] justify-center shrink-0">
+                  <span className="font-['Poppins'] font-medium text-[10px] leading-[15px] uppercase" style={{
+                    color: item.status?.toUpperCase() === 'ACTIVE' ? '#22C55E' : 
+                           item.status?.toUpperCase() === 'IN REVIEW' ? '#4338CA' : 
+                           item.status?.toUpperCase() === 'CLOSED' ? '#EAB308' : '#6B7280'
+                  }}>
+                    {item.status || 'DRAFT'}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+                    Status
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-4 w-[104px] h-[60px] shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {item.status?.toUpperCase() === 'ACTIVE' && (
+                    <>
+                      <button 
+                        onClick={() => onSendOffer && onSendOffer(item)}
+                        className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                      >
+                        <Icon icon="lucide:gift" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setJobToClose(item.id); }}
+                        className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                      >
+                        <Icon icon="lucide:x-circle" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
+                      </button>
+                    </>
+                  )}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setJobToDelete(item.id); }}
+                    className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                  >
+                    <Icon icon="fluent:delete-16-regular" className="w-5 h-5 text-[#FF6B6B] dark:text-[#F87171]" />
+                  </button>
+                </div>
               </div>
 
-              {/* Applications */}
-              <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
-                  {item.applicants_count || 0}
-                </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                  Applications
-                </span>
-              </div>
+              {/* Mobile View */}
+              <div className="flex md:hidden flex-row items-center py-3 px-1 gap-4 w-full bg-transparent">
+                {/* Logo */}
+                <div className="w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white shadow-sm border border-slate-100 dark:border-[#2E3445]">
+                  <Icon icon="lucide:infinity" className="w-8 h-8 text-white" />
+                </div>
+                
+                {/* Info */}
+                <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
+                    {item.title}
+                  </span>
+                  <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 dark:text-[#9CA3AF] truncate w-full mt-0.5">
+                    {item.applicants_count || 0} applicants
+                  </span>
+                  <div className="flex items-center gap-1 mt-1 text-[12px] leading-[16px]">
+                    <span className="font-['Poppins'] font-medium capitalize" style={{
+                      color: item.status?.toUpperCase() === 'ACTIVE' ? '#22C55E' : 
+                             item.status?.toUpperCase() === 'IN REVIEW' ? '#4338CA' : 
+                             item.status?.toUpperCase() === 'CLOSED' ? '#EAB308' : '#6B7280'
+                    }}>
+                      {item.status || 'Draft'}
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <span className="font-['Poppins'] font-normal text-gray-500 dark:text-[#9CA3AF] truncate">
+                      {item.status?.toUpperCase() === 'ACTIVE' ? 'Posted' : item.status?.toUpperCase() === 'IN REVIEW' ? 'Submitted' : item.status?.toUpperCase() === 'CLOSED' ? 'Closed' : 'Last edited'} {item.posted_at?.replace('Posted ', '').replace('Submitted ', '').replace('Last edited ', '') || '2h ago'}
+                    </span>
+                  </div>
+                </div>
 
-              {/* Shortlisted */}
-              <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
-                  {item.shortlisted_count || 0}
-                </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                  Shortlisted
-                </span>
-              </div>
-
-              {/* Offer sent */}
-              <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
-                  {item.offers_count || 0}
-                </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                  Offer sent
-                </span>
-              </div>
-
-              {/* Status */}
-              <div className="flex flex-col items-start gap-[10px] w-[12%] min-w-[80px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-medium text-[10px] leading-[15px] uppercase" style={{
-                  color: item.status?.toUpperCase() === 'ACTIVE' ? '#22C55E' : 
-                         item.status?.toUpperCase() === 'IN REVIEW' ? '#4338CA' : 
-                         item.status?.toUpperCase() === 'CLOSED' ? '#EAB308' : '#6B7280'
-                }}>
-                  {item.status || 'DRAFT'}
-                </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
-                  Status
-                </span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-4 w-[104px] h-[60px] shrink-0" onClick={(e) => e.stopPropagation()}>
-                {item.status?.toUpperCase() === 'ACTIVE' && (
-                  <>
-                    <button 
-                      onClick={() => onSendOffer && onSendOffer(item)}
-                      className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
-                    >
-                      <Icon icon="lucide:gift" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setJobToClose(item.id); }}
-                      className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
-                    >
-                      <Icon icon="lucide:x-circle" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
-                    </button>
-                  </>
-                )}
+                {/* 3 Dots */}
                 <button 
-                  onClick={(e) => { e.stopPropagation(); setJobToDelete(item.id); }}
-                  className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                  onClick={(e) => { e.stopPropagation(); setMobileActionJob(item); }}
+                  className="p-2 shrink-0 hover:bg-slate-100 dark:hover:bg-[#2E3445] rounded-full transition-colors active:scale-95"
                 >
-                  <Icon icon="fluent:delete-16-regular" className="w-5 h-5 text-[#FF6B6B] dark:text-[#F87171]" />
+                  <Icon icon="lucide:more-vertical" className="w-5 h-5 text-black dark:text-[#F9FAFB]" />
                 </button>
               </div>
             </div>
@@ -341,6 +422,89 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Mobile Action Bottom Sheet */}
+      {mobileActionJob && (
+        <div 
+          className="fixed md:hidden inset-0 z-[70] bg-black/40 backdrop-blur-sm animate-in fade-in flex flex-col justify-end"
+          onClick={() => setMobileActionJob(null)}
+        >
+          <div 
+            className="w-full bg-white dark:bg-[#0B0F19] rounded-t-3xl p-6 pb-8 flex flex-col gap-2 animate-in slide-in-from-bottom"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-[#2E3445] rounded-full self-center mb-4" />
+            <div className="mb-4">
+              <h4 className="font-['Poppins'] font-semibold text-lg text-black dark:text-[#F9FAFB]">{mobileActionJob.title}</h4>
+              <p className="text-sm text-gray-500 dark:text-[#9CA3AF]">Choose an action</p>
+            </div>
+            
+            {mobileActionJob.status?.toUpperCase() === 'ACTIVE' && (
+              <>
+                <button 
+                  onClick={() => { onSendOffer && onSendOffer(mobileActionJob); setMobileActionJob(null); }}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-2xl transition-colors active:scale-95 text-left"
+                >
+                  <Icon icon="lucide:gift" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
+                  <span className="font-['Poppins'] font-medium text-black dark:text-[#F9FAFB]">Send offer</span>
+                </button>
+                <button 
+                  onClick={() => { setJobToClose(mobileActionJob.id); setMobileActionJob(null); }}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-2xl transition-colors active:scale-95 text-left"
+                >
+                  <Icon icon="lucide:x-circle" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
+                  <span className="font-['Poppins'] font-medium text-black dark:text-[#F9FAFB]">Close job</span>
+                </button>
+              </>
+            )}
+            <button 
+              onClick={() => { setJobToDelete(mobileActionJob.id); setMobileActionJob(null); }}
+              className="w-full flex items-center gap-4 p-4 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-colors active:scale-95 text-left"
+            >
+              <Icon icon="fluent:delete-16-regular" className="w-6 h-6 text-[#FF6B6B]" />
+              <span className="font-['Poppins'] font-medium text-[#FF6B6B]">Delete job</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Filter Bottom Sheet */}
+      {isFilterSheetOpen && (
+        <div 
+          className="fixed md:hidden inset-0 z-[70] bg-black/40 backdrop-blur-sm animate-in fade-in flex flex-col justify-end"
+          onClick={() => setIsFilterSheetOpen(false)}
+        >
+          <div 
+            className="w-full bg-white dark:bg-[#0B0F19] rounded-t-3xl p-6 pb-8 flex flex-col gap-2 animate-in slide-in-from-bottom"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-[#2E3445] rounded-full self-center mb-4" />
+            <div className="mb-2 px-2">
+              <h4 className="font-['Poppins'] font-medium text-[20px] text-indigo-500 dark:text-[#818CF8]">All jobs</h4>
+            </div>
+            
+            <div className="flex flex-col gap-1 w-full mt-2">
+              {filterChips.map(chip => (
+                <button
+                  key={chip.label}
+                  onClick={() => {
+                    onStatusFilterChange(chip.label);
+                    setIsFilterSheetOpen(false);
+                  }}
+                  className="w-full flex items-center p-4 hover:bg-slate-50 dark:hover:bg-[#2E3445] rounded-2xl transition-colors text-left"
+                >
+                  <span className={`font-['Poppins'] text-[18px] ${
+                    statusFilter.toLowerCase() === chip.label.toLowerCase()
+                      ? 'font-medium text-indigo-500 dark:text-[#818CF8]' 
+                      : 'font-normal text-black dark:text-[#F9FAFB]'
+                  }`}>
+                    {chip.label === 'Drafts' ? 'Draft' : chip.label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </div>

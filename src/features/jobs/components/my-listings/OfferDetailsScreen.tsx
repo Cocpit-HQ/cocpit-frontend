@@ -134,99 +134,165 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
 
   return (
-    <div className="w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-[16px] overflow-hidden animate-in fade-in duration-300">
+    <div className="w-full max-w-[960px] mx-auto bg-white dark:bg-[#0B0F19] md:dark:bg-white flex flex-col justify-start items-start md:items-center gap-[16px] overflow-x-hidden animate-in fade-in duration-300 px-4 md:px-0">
 
       {/* Header Row (Frame 2608623) */}
-      <div className="w-[998px] h-[48px] self-stretch flex flex-row items-center p-0 gap-[16px]">
+      <div className="w-full h-[48px] self-stretch flex flex-row items-center p-0 gap-[16px] mt-4 md:mt-0">
         <button
           onClick={onBack}
           type="button"
-          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm"
+          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] dark:border-[#2E3445] md:dark:border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-[#1C2340] md:dark:hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm"
         >
           <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
         <div className="flex flex-col items-start p-0 gap-0">
-          <div className="text-left text-[#000000] text-[18px] font-medium font-['Poppins'] leading-[26px]">Offer details</div>
-          <div className="text-left text-[#6B7280] text-[12px] font-normal font-['Poppins'] leading-[16px]">View, and manage this listing</div>
+          <div className="text-left text-[#000000] dark:text-[#F9FAFB] md:dark:text-[#000000] text-[18px] font-medium font-['Poppins'] leading-[26px]">Offer details</div>
+          <div className="text-left text-[#6B7280] hidden md:block text-[12px] font-normal font-['Poppins'] leading-[16px]">View, and manage this listing</div>
+          <div className="text-left text-[#6B7280] dark:text-[#9CA3AF] block md:hidden text-[12px] font-normal font-['Poppins'] leading-[16px]">View the offer details and status.</div>
         </div>
       </div>
 
-      {/* Horizontal Stats Bar (Frame 2609091) */}
-      <div className="box-border flex flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-[998px] h-[100px] border-b border-[#EEF2FF] flex-none self-stretch grow-0">
+      {/* Desktop Horizontal Stats Bar */}
+      <div className="hidden md:flex box-border flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-full h-[100px] border-b border-[#EEF2FF] dark:border-[#2E3445] flex-none self-stretch grow-0">
         
-        {/* Role details (Frame 2608946) */}
-        <div className="flex flex-col items-start p-0 gap-[8px] w-[192px] h-[52px] flex-none order-0 grow-[1]">
-          <span className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black truncate capitalize">
+        {/* Role details */}
+        <div className="flex flex-col items-start p-0 gap-[4px] flex-1">
+          <span className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] truncate capitalize">
             {offerGroup.title}
           </span>
-          <span className="w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate">
+          <span className="w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] dark:text-[#9CA3AF] truncate">
             {offerGroup.company}
           </span>
         </div>
 
-        {/* Sent candidates (Frame 2609054) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-1 self-stretch grow-[1] mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        {/* Sent candidates */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[4px] flex-1">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black dark:text-[#F9FAFB]">
             {offerGroup.sentCount}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] dark:text-[#9CA3AF]">
             Sent candidates
           </span>
         </div>
 
-        {/* Accepted (Frame 2609055) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-2 self-stretch grow-[1] mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        {/* Accepted */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[4px] flex-1">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black dark:text-[#F9FAFB]">
             {offerGroup.acceptedCount}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] dark:text-[#9CA3AF]">
             Accepted
           </span>
         </div>
 
-        {/* Pending (Frame 2609056) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-3 self-stretch grow-[1] mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        {/* Pending */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[4px] flex-1">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black dark:text-[#F9FAFB]">
             {offerGroup.pendingCount}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] dark:text-[#9CA3AF]">
             Pending
           </span>
         </div>
 
-        {/* Declined (Frame 2609057) */}
-        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-4 self-stretch grow-[1] mx-auto">
-          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+        {/* Declined */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[4px] flex-1">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black dark:text-[#F9FAFB]">
             {offerGroup.declinedCount}
           </span>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] dark:text-[#9CA3AF]">
             Declined
           </span>
         </div>
+
+        {/* View job details link */}
+        <div className="flex flex-row justify-end items-center p-[8px_0px] gap-[10px] w-[110px] flex-none">
+          <button 
+            onClick={onViewListingDetails}
+            className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-right text-[#818CF8] hover:underline"
+          >
+            View job details
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Job Info Card */}
+      <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#0B0F19] rounded-[24px] shadow-sm border border-[#EEF2FF] dark:border-[#2E3445] p-5 gap-4">
+        {/* Title & Logo */}
+        <div className="flex flex-row items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white">
+            <Icon icon="lucide:infinity" className="w-8 h-8 text-white" />
+          </div>
+          <div className="flex-1 flex flex-col justify-center min-w-0">
+            <span className="font-['Poppins'] font-semibold text-[18px] leading-[26px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
+              {offerGroup.title}
+            </span>
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 dark:text-[#9CA3AF] truncate w-full">
+              {offerGroup.company}
+            </span>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="flex flex-row items-center justify-between mt-2 px-1">
+          <div className="flex flex-col items-start gap-1">
+            <span className="font-['Poppins'] font-bold text-[16px] leading-[24px] text-black dark:text-[#F9FAFB]">
+              {offerGroup.acceptedCount}
+            </span>
+            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+              Accepted
+            </span>
+          </div>
+          <div className="flex flex-col items-start gap-1">
+            <span className="font-['Poppins'] font-bold text-[16px] leading-[24px] text-black dark:text-[#F9FAFB]">
+              {offerGroup.pendingCount}
+            </span>
+            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+              Pending
+            </span>
+          </div>
+          <div className="flex flex-col items-start gap-1">
+            <span className="font-['Poppins'] font-bold text-[16px] leading-[24px] text-black dark:text-[#F9FAFB]">
+              {offerGroup.declinedCount}
+            </span>
+            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
+              Declined
+            </span>
+          </div>
+        </div>
+
+        {/* View job details link */}
+        <button 
+          type="button"
+          onClick={onViewListingDetails}
+          className="w-full pt-5 pb-1 mt-1 border-t border-[#EEF2FF] dark:border-[#2E3445] font-['Poppins'] font-normal text-[14px] text-indigo-500 dark:text-[#818CF8] cursor-pointer relative z-10 active:scale-95 transition-transform"
+        >
+          View job details
+        </button>
       </div>
 
       {/* Note section removed here to display per-candidate notes below */}
 
       {/* Candidates List Section (Frame 2609090) */}
-      <div className="w-[998px] flex flex-col items-start p-0 gap-[16px]">
+      <div className="w-full flex flex-col items-start p-0 gap-[16px]">
         {/* Header Row (Frame 2608889) */}
-        <div className="w-[166px] h-[32px] flex flex-row items-center p-0 gap-[16px]">
+        <div className="w-full md:w-[166px] h-[32px] flex flex-row items-center p-0 gap-[16px]">
           {/* Title */}
-          <div className="w-[107px] h-[26px] py-[3px] flex items-center justify-center">
-            <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black">
+          <div className="w-auto md:w-[107px] h-[26px] py-[3px] flex items-center justify-center">
+            <span className="font-['Poppins'] font-semibold md:font-medium text-[20px] md:text-[18px] leading-[26px] text-center text-black dark:text-[#F9FAFB]">
               Candidates
             </span>
           </div>
           {/* Count Badge Frame 2608517 */}
-          <div className="box-sizing: border-box w-[43px] h-[32px] bg-white border border-[#EEF2FF] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
-            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6366F1]">
+          <div className="box-sizing: border-box w-[43px] h-[32px] bg-white dark:bg-transparent md:dark:bg-white border border-[#EEF2FF] dark:border-[#2E3445] md:dark:border-[#EEF2FF] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+            <span className="font-['Poppins'] font-medium md:font-normal text-[12px] leading-[16px] text-center text-[#6366F1] dark:text-[#818CF8] md:dark:text-[#6366F1]">
               {activeCandidates.length}
             </span>
           </div>
         </div>
 
         {/* Candidates list with gap 16px */}
-        <div className="w-[998px] flex flex-col gap-[16px]">
+        <div className="w-full flex flex-col gap-[24px] md:gap-[16px]">
           {activeCandidates.length === 0 ? (
             <div className="py-12 text-center text-gray-400 text-xs font-['Poppins'] bg-slate-50/50 rounded-2xl">
               All offers have been withdrawn.
@@ -236,30 +302,30 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
               /* Candidate card container containing details row and note */
               <div
                 key={cand.id}
-                className="w-[998px] bg-white border border-[#EEF2FF]/60 rounded-[12px] flex flex-col overflow-hidden"
+                className="w-full bg-white dark:bg-[#0B0F19] md:dark:bg-transparent rounded-[12px] flex flex-col p-0 md:py-[8px] gap-[8px] overflow-hidden md:overflow-visible"
               >
                 {/* Candidate card Row Frame 2608732 */}
-                <div className="w-[998px] h-[60px] flex flex-row justify-between items-center p-[8px_16px] box-border">
+                <div className="w-full md:w-full h-auto md:h-[44px] flex flex-row justify-between items-center p-0 box-border">
                   {/* User Frame 2608774 */}
-                  <div className="flex flex-row items-start p-0 gap-[8px] h-[44px]">
+                  <div className="flex flex-row items-center md:items-start p-0 gap-[12px] md:gap-[8px] h-[48px] md:h-[44px]">
                     {/* User Avatar */}
                     {cand.avatar ? (
                       <img
-                        className="w-[40px] h-[40px] rounded-full object-cover"
+                        className="w-[48px] h-[48px] md:w-[40px] md:h-[40px] rounded-full object-cover"
                         src={cand.avatar}
                         alt={cand.name}
                       />
                     ) : (
-                      <div className="w-[40px] h-[40px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-sm border border-slate-100">
+                      <div className="w-[48px] h-[48px] md:w-[40px] md:h-[40px] rounded-full bg-indigo-100 dark:bg-[#1C2340] md:dark:bg-indigo-100 flex items-center justify-center text-indigo-500 dark:text-[#818CF8] md:dark:text-indigo-500 font-semibold font-['Poppins'] text-sm border border-slate-100 dark:border-[#2E3445] md:dark:border-slate-100">
                         {cand.name.substring(0, 2).toUpperCase()}
                       </div>
                     )}
                     {/* Text Frame 2609008 */}
                     <div className="flex flex-col justify-center items-start h-[44px]">
-                      <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black text-left">
+                      <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] md:dark:text-black text-left">
                         {cand.name}
                       </span>
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] text-left">
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] dark:text-[#9CA3AF] md:dark:text-[#6B7280] text-left max-w-[140px] md:max-w-none truncate">
                         {cand.role}{cand.companyName ? ` at ${cand.companyName}` : ''}
                       </span>
                     </div>
@@ -283,7 +349,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                         router.push(`/messaging?${params.toString()}`);
                       }}
                       type="button"
-                      className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
+                      className="box-sizing: border-box w-[100px] md:w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
                     >
                       <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white">
                         Chat
@@ -294,23 +360,23 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                     <button
                       onClick={() => handleWithdrawClick(cand.id)}
                       type="button"
-                      className="box-sizing: border-box w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:bg-slate-50 transition-all active:scale-95 bg-white"
+                      className="box-sizing: border-box w-[100px] md:w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:bg-slate-50 transition-all active:scale-95 bg-white dark:bg-transparent md:dark:bg-white"
                     >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6B7280]">
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6B7280] dark:text-[#9CA3AF] md:dark:text-[#6B7280]">
                         Withdraw
                       </span>
                     </button>
                   )}
                   {cand.status === 'declined' && (
-                    <div className="box-sizing: border-box w-[120px] h-[40px] border border-red-200 bg-red-50/50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-red-500 font-semibold">
+                    <div className="box-sizing: border-box w-[100px] md:w-[120px] h-[40px] border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-[#4A1C1C] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-red-500 dark:text-[#F87171] font-semibold">
                         Declined
                       </span>
                     </div>
                   )}
                   {cand.status === 'withdrawn' && (
-                    <div className="box-sizing: border-box w-[120px] h-[40px] border border-gray-200 bg-gray-50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-gray-400">
+                    <div className="box-sizing: border-box w-[100px] md:w-[120px] h-[40px] border border-gray-200 dark:border-[#2E3445] bg-gray-50 dark:bg-[#1C2340]/40 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-gray-400 dark:text-[#9CA3AF]">
                         Withdrawn
                       </span>
                     </div>
@@ -319,49 +385,33 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
                 {/* Expandable note bar */}
                 {cand.note && (
-                  <div className="w-full border-t border-[#EEF2FF] bg-[#F9FAFF] flex flex-col items-start transition-all duration-300">
-                    {/* Collapsed Bar */}
-                    <div
-                      onClick={() => toggleNoteExpanded(cand.id)}
-                      className="w-full flex flex-row justify-between items-center p-[10px_16px] cursor-pointer hover:bg-slate-50/50 select-none"
-                    >
-                      <div className="flex-1 flex flex-row items-center gap-[4px] min-w-0">
-                        <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-[#6366F1] flex-shrink-0">
-                          Note :
-                        </span>
-                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate flex-1">
-                          {cand.note}
-                        </span>
+                  <div className="w-full flex flex-col items-start transition-all duration-300 mt-4 md:mt-0 gap-[8px] px-0 md:px-0 md:pb-0">
+                    
+                    {/* Note Label */}
+                    <span className="font-['Poppins'] font-semibold text-[16px] md:text-[18px] md:font-medium leading-[24px] md:leading-[26px] text-black dark:text-[#F9FAFB] mb-0 md:mb-0 md:mt-0">
+                      Note
+                    </span>
+
+                    {/* Always Open Note Box */}
+                    <div className="flex w-full flex-col gap-2 rounded-[16px] md:rounded-[0px_16px_16px_16px] border-l-[3px] md:border-l-[2px] border-[#6366F1] bg-[#F9FAFF] dark:bg-[#1C2340]/40 p-4 md:p-[12px_16px]">
+                      <div className="flex flex-row justify-start items-center gap-[8px] w-full">
+                        <div className="w-[32px] h-[32px] md:w-[40px] md:h-[40px] rounded-full bg-indigo-100 dark:bg-[#1C2340] flex items-center justify-center text-indigo-500 dark:text-[#818CF8] font-semibold font-['Poppins'] text-xs border border-slate-100 dark:border-[#2E3445]">
+                          {cand.sentByName ? cand.sentByName.substring(0, 2).toUpperCase() : 'RC'}
+                        </div>
+                        <div className="flex flex-col justify-center items-start">
+                          <span className="font-['Poppins'] font-medium md:font-normal text-[12px] leading-[16px] text-[#6366F1] dark:text-[#818CF8] uppercase tracking-wide md:tracking-normal">
+                            {cand.sentByName || 'RECRUITER'}
+                          </span>
+                          <span className="font-['Poppins'] font-normal text-[10px] md:text-[12px] leading-[14px] md:leading-[16px] text-indigo-400 md:text-[#6366F1] uppercase tracking-widest md:tracking-normal">
+                            HEAD OF DESIGN
+                          </span>
+                        </div>
                       </div>
-                      <div className="w-[20px] h-[20px] rounded-full border border-black flex items-center justify-center flex-shrink-0">
-                        <Icon
-                          icon={expandedNotes[cand.id] ? "lucide:chevron-up" : "lucide:chevron-down"}
-                          className="w-3.5 h-3.5 text-black"
-                        />
-                      </div>
+                      <p className="font-['Poppins'] font-normal text-[14px] md:text-[12px] leading-[22px] md:leading-[16px] text-gray-500 md:text-[#6B7280] dark:text-gray-400 whitespace-pre-line mt-1 md:mt-0">
+                        "{cand.note}"
+                      </p>
                     </div>
 
-                    {/* Expanded Detail Box */}
-                    {expandedNotes[cand.id] && (
-                      <div className="w-full px-[16px] pb-[16px] pt-1 flex flex-col gap-2 animate-in fade-in duration-200">
-                        <div className="flex flex-row justify-start items-center gap-[8px] w-full h-[40px] border-t border-dashed border-[#EEF2FF] pt-2 mt-1">
-                          <div className="w-[32px] h-[32px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-xs border border-slate-100">
-                            {cand.sentByName ? cand.sentByName.substring(0, 2).toUpperCase() : 'RC'}
-                          </div>
-                          <div className="flex flex-col justify-center items-start">
-                            <span className="font-['Poppins'] font-normal text-[11px] leading-[14px] text-[#6366F1] uppercase">
-                              {cand.sentByName || 'RECRUITER'}
-                            </span>
-                            <span className="font-['Poppins'] font-normal text-[10px] leading-[12px] text-muted-foreground uppercase">
-                              RECRUITER
-                            </span>
-                          </div>
-                        </div>
-                        <p className="font-['Poppins'] font-normal text-[12px] leading-[18px] text-[#6B7280] whitespace-pre-line mt-1">
-                          {cand.note}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
