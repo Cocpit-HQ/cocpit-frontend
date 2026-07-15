@@ -191,7 +191,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             {/* Name + Headline container */}
             <div className="flex flex-col justify-center py-[4px] h-[32px] flex-1 min-w-0">
               <span className="font-['Poppins'] font-semibold text-[12px] leading-[16px] text-[#6366F1] dark:text-[#818CF8] uppercase tracking-wider truncate">
-                {offer.company_name || offer.recruiter.headline || offer.recruiter.name}
+                {offer.company_name || offer.recruiter.name}
               </span>
               {!offer.company_name && offer.recruiter.headline && offer.recruiter.headline !== offer.recruiter.name && (
                 <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] dark:text-[#818CF8] uppercase tracking-wider truncate">

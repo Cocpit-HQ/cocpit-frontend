@@ -222,11 +222,11 @@ function JobApplicationContextCard({ entityType, entityId, conversationId }: { e
             personal posting — always the job's poster, regardless of which
             side of the conversation shared this card. job.logo is a gradient
             placeholder key (e.g. "gradient-3"), not a URL — never used as an img src. */}
-        <div className="w-[48px] h-[48px] rounded-full bg-black dark:bg-gray-900 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
-          {job.companyLogo || job.recruiterAvatar ? (
-            <img src={job.companyLogo || job.recruiterAvatar} alt={job.company} className="w-full h-full object-cover" />
+        <div className="w-[48px] h-[48px] rounded-full bg-primary/10 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0 text-primary">
+          {job.companyLogo ? (
+            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
           ) : (
-            <span className="font-semibold text-white">{job.company?.[0]?.toUpperCase() || "C"}</span>
+            <Icon icon="mynaui:briefcase-business" className="w-[24px] h-[24px]" />
           )}
         </div>
 
@@ -607,11 +607,11 @@ const JobCard = ({ job, onClick }: { job: Job, onClick: (e: React.MouseEvent) =>
     >
       <div className="flex gap-3">
         {/* Logo / Initial */}
-        <div className="w-10 h-10 rounded-md bg-purple-500 text-white flex items-center justify-center font-semibold shrink-0 overflow-hidden">
+        <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center font-semibold shrink-0 overflow-hidden">
           {job.companyLogo ? (
             <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
           ) : (
-            job.company?.[0] || "J"
+            <Icon icon="mynaui:briefcase-business" className="w-5 h-5" />
           )}
         </div>
 
@@ -719,11 +719,11 @@ const JobPreview = ({ jobId }: { jobId: string }) => {
     >
       <div className="flex flex-row items-center gap-[12px] w-full min-w-0">
         {/* Job poster's avatar */}
-        <div className="w-[48px] h-[48px] rounded-full bg-black dark:bg-gray-900 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
-          {job.companyLogo || (job as any).recruiterAvatar ? (
-            <img src={job.companyLogo || (job as any).recruiterAvatar} alt={job.company} className="w-full h-full object-cover" />
+        <div className="w-[48px] h-[48px] rounded-full bg-primary/10 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0 text-primary">
+          {job.companyLogo ? (
+            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
           ) : (
-            <span className="font-semibold text-white">{job.company?.[0]?.toUpperCase() || "C"}</span>
+            <Icon icon="mynaui:briefcase-business" className="w-[24px] h-[24px]" />
           )}
         </div>
 
