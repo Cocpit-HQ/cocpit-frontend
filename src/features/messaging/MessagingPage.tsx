@@ -49,6 +49,28 @@ export default function MessagingPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'requests'>('chat');
   const processedUserIdRef = React.useRef<string | null>(null);
   const processedMessagesRef = React.useRef<Set<string>>(new Set());
+  const [initialEntityContext, setInitialEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string } | null>(null);
+
+  // Capture context from search parameters as soon as they are available, and preserve it
+  useEffect(() => {
+    if (!searchParams) return;
+    const jobContext = searchParams.get("jobContext");
+    const offerContext = searchParams.get("offerContext");
+    const eventContext = searchParams.get("eventContext");
+
+    if (jobContext) {
+      setInitialEntityContext({ type: 'job', id: jobContext });
+    } else if (offerContext) {
+      setInitialEntityContext({ type: 'offer', id: offerContext });
+    } else if (eventContext) {
+      setInitialEntityContext({ type: 'event', id: eventContext });
+    }
+  }, [searchParams]);
+
+  // Reset context whenever selected chat changes
+  useEffect(() => {
+    setInitialEntityContext(null);
+  }, [selectedChat?.id, selectedChat?.otherUserId]);
 
   const { activeProfile } = useActiveProfile();
 
@@ -1017,15 +1039,7 @@ export default function MessagingPage() {
                   onAcceptSuccess={() => {
                     setActiveTab('chat');
                   }}
-                  initialEntityContext={
-                    searchParams.get("jobContext") 
-                      ? { type: 'job', id: searchParams.get("jobContext") as string }
-                      : searchParams.get("offerContext")
-                        ? { type: 'offer', id: searchParams.get("offerContext") as string }
-                        : searchParams.get("eventContext")
-                          ? { type: 'event', id: searchParams.get("eventContext") as string }
-                          : undefined
-                  }
+                  initialEntityContext={initialEntityContext || undefined}
                 />
               )
             ) : (
