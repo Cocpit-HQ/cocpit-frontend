@@ -1289,3 +1289,24 @@ Icon Name: ion:arrow-undo-outline # hollow curving left reply arrow
 
 Search Name: ai-star-custom
 Icon Name: /assets/AI 2.svg # Custom 4-pointed blue star icon used for AI insights in jobs and channels
+
+Search Name: trending-up
+Icon Name: lucide:trending-up # trending up action
+
+Search Name: lightbulb
+Icon Name: iconoir:lightbulb # lightbulb action
+
+Search Name: shield-check
+Icon Name: lucide:shield-check # shield check action
+
+Search Name: settings
+Icon Name: lucide:settings # settings action
+
+Search Name: tools
+Icon Name: iconoir:tools # tools action
+
+Search Name: leaf
+Icon Name: iconoir:leaf # leaf action
+
+Search Name: handshake
+Icon Name: lucide:handshake # handshake action

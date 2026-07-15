@@ -19,6 +19,7 @@ interface CompanyEditProfileTabProps {
 interface KeyOffering {
   id: string;
   text: string;
+  icon?: string;
 }
 
 const DEFAULT_OFFERINGS = [
@@ -26,6 +27,26 @@ const DEFAULT_OFFERINGS = [
   "Operates across multiple markets",
   "Focuses on innovation and growth",
   "Diverse project opportunities",
+];
+
+const OFFERING_ICONS = [
+  "iconoir:rocket",
+  "iconoir:globe",
+  "lucide:trending-up",
+  "lucide:folder-tree",
+];
+
+const AVAILABLE_ICONS = [
+  "iconoir:rocket",
+  "iconoir:globe",
+  "lucide:trending-up",
+  "lucide:folder-tree",
+  "iconoir:lightbulb",
+  "lucide:shield-check",
+  "lucide:settings",
+  "iconoir:tools",
+  "iconoir:leaf",
+  "lucide:handshake",
 ];
 
 export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditProfileTabProps) {
@@ -61,6 +82,8 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
+  
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -133,10 +156,23 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
       const existingOfferings: string[] = org.key_offerings || org.keyOfferings || [];
       const source = existingOfferings.length > 0 ? existingOfferings : DEFAULT_OFFERINGS;
-      const newOfferings = Array.from({ length: 4 }).map((_, idx) => ({
-        id: String(idx),
-        text: source[idx] || DEFAULT_OFFERINGS[idx]
-      }));
+      const newOfferings = Array.from({ length: 4 }).map((_, idx) => {
+        const rawText = source[idx] || DEFAULT_OFFERINGS[idx];
+        let text = rawText;
+        let icon = OFFERING_ICONS[idx % OFFERING_ICONS.length];
+        
+        if (rawText.includes("|||")) {
+           const parts = rawText.split("|||");
+           icon = parts[0];
+           text = parts[1];
+        }
+        
+        return {
+          id: String(idx),
+          text: text,
+          icon: icon
+        };
+      });
       setInitialOfferings(newOfferings);
 
       if (!profileDraft.isInitialized || profileDraft.draftSlug !== slug) {
@@ -218,7 +254,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       country: formData.country,
       city: formData.city,
       established_year: parseInt(formData.foundedYear) || undefined,
-      keyOfferings: keyOfferings.map((o) => o.text).filter(Boolean),
+      keyOfferings: keyOfferings.map((o, idx) => o.text ? `${o.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length]}|||${o.text}` : '').filter(Boolean),
     });
   };
 
@@ -371,7 +407,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
             <Icon icon="mynaui:search" className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
             
             {isCityDropdownOpen && ((citySearchQuery || "").length > 1 || isSearchingCity) && (
-              <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[200px] overflow-y-auto no-scrollbar">
+              <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[200px] overflow-y-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {isSearchingCity ? (
                   <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
                     <Icon icon="eos-icons:loading" className="w-4 h-4 animate-spin" />
@@ -424,17 +460,63 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           Key offerings
         </label>
         <div className="flex flex-col gap-3 w-full">
-          {keyOfferings.map((offering) => (
-            <div key={offering.id} className="w-full">
-              <input
-                type="text"
-                value={offering.text}
-                onChange={(e) => handleOfferingChange(offering.id, e.target.value)}
-                placeholder="Add a key offering"
-                className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
-              />
-            </div>
-          ))}
+          {keyOfferings.map((offering, idx) => {
+            const currentIcon = offering.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
+            return (
+              <div key={offering.id} className="w-full flex flex-row items-center gap-4 relative">
+                {/* Icon Selector */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (openDropdownId === offering.id) {
+                        setOpenDropdownId(null);
+                      } else {
+                        setOpenDropdownId(offering.id);
+                      }
+                    }}
+                    className="flex flex-row items-center justify-between w-20 h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent focus:outline-none dark:text-white"
+                  >
+                    <Icon icon={currentIcon} className="w-5 h-5 text-gray-900 dark:text-gray-300 flex-shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {openDropdownId === offering.id && (
+                    <div className="absolute top-12 left-0 w-20 max-h-[300px] overflow-y-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl shadow-lg z-50 py-3 flex flex-col items-center gap-4">
+                      {AVAILABLE_ICONS.map((iconStr) => (
+                        <button
+                          key={iconStr}
+                          type="button"
+                          onClick={() => {
+                            const updated = keyOfferings.map((o) =>
+                              o.id === offering.id ? { ...o, icon: iconStr } : o
+                            );
+                            setProfileDraft({ keyOfferings: updated });
+                            setOpenDropdownId(null);
+                          }}
+                          className={`flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors ${
+                            currentIcon === iconStr ? "bg-gray-100 dark:bg-zinc-800" : ""
+                          }`}
+                        >
+                          <Icon icon={iconStr} className="w-5 h-5 text-gray-900 dark:text-gray-300" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Text Input */}
+                <input
+                  type="text"
+                  value={offering.text}
+                  onChange={(e) => handleOfferingChange(offering.id, e.target.value)}
+                  placeholder="Add a key offering"
+                  className="flex-1 h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -17,12 +18,13 @@ const DEFAULT_OFFERINGS = [
 const OFFERING_ICONS = [
   "iconoir:rocket",
   "iconoir:globe",
-  "streamline:money-graph-arrow-increase-ascend-growth-up-arrow-stats-graph-right-grow",
+  "lucide:trending-up",
   "lucide:folder-tree",
 ];
 
 export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectionProps) {
   const offerings = keyOfferings && keyOfferings.length > 0 ? keyOfferings : DEFAULT_OFFERINGS;
+  
   return (
     <div
       style={{
@@ -30,385 +32,172 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
         flexDirection: "column",
         alignItems: "flex-start",
         padding: "0px",
-        gap: "16px",
+        gap: "48px",
         width: "960px",
-        borderRadius: "24px",
         flex: "none",
         alignSelf: "stretch",
         flexGrow: 0,
       }}
       className="bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-4 max-md:!mx-auto"
     >
-      {/* Frame 2609076: Header */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          padding: "0px",
-          gap: "16px",
-          width: "920px",
-          height: "32px",
-          flex: "none",
-          alignSelf: "stretch",
-          flexGrow: 0,
-        }}
-        className="max-md:!w-full max-md:!h-auto"
-      >
+      {/* Top Section: Key Offerings */}
+      <div className="flex flex-col gap-6 w-full max-w-[920px]">
         <h2
           style={{
-            width: "auto",
-            whiteSpace: "nowrap",
-            height: "32px",
             fontFamily: "'Poppins', sans-serif",
             fontWeight: 600,
             fontSize: "24px",
             lineHeight: "32px",
-            display: "flex",
-            alignItems: "center",
-            flex: "none",
-            flexGrow: 0,
           }}
           className="text-black dark:text-white"
         >
           Key offerings
         </h2>
-      </div>
-
-      {/* Frame 2609099: Content Container */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "flex-start",
-          padding: "0px",
-          gap: "24px",
-          width: "920px",
-          height: "227px",
-          flex: "none",
-          alignSelf: "stretch",
-          flexGrow: 0,
-        }}
-        className="flex-col md:flex-row max-md:!flex-col max-md:!w-full max-md:!h-auto max-md:!gap-4"
-      >
-        {/* Frame 2609093: Left Column (Highlights) */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            padding: "0px",
-            gap: "16px",
-            width: "448px",
-            height: "227px",
-            flex: "none",
-            alignSelf: "stretch",
-            flexGrow: 1,
-          }}
-          className="max-md:!w-full max-md:!h-auto"
-        >
-          {offerings.map((text, idx) => (
-            <div
-              key={idx}
-              style={{
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                padding: "8px 16px",
-                gap: "16px",
-                width: "448px",
-                height: "40px",
-                borderLeft: "3px solid #0D47A1",
-                flex: "none",
-                alignSelf: "stretch",
-                flexGrow: 0,
-              }}
-              className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
-            >
-              <Icon icon={OFFERING_ICONS[idx % OFFERING_ICONS.length]} width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
+        
+        <div className="flex flex-row flex-wrap gap-x-[24px] gap-y-4 w-full">
+          {offerings.map((rawText, idx) => {
+            let text = rawText;
+            let iconStr = OFFERING_ICONS[idx % OFFERING_ICONS.length];
+            if (rawText.includes("|||")) {
+              const parts = rawText.split("|||");
+              iconStr = parts[0];
+              text = parts[1];
+            }
+            return (
               <div
+                key={idx}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  padding: "0px",
-                  flex: "none",
-                  flexGrow: 0,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                    lineHeight: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  className="text-[#6B7280] dark:text-zinc-400"
-                >
-                  {text}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Frame 2609096: Right Column (Growth Trends) */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            padding: "0px",
-            gap: "8px",
-            width: "448px",
-            height: "227px",
-            flex: "none",
-            flexGrow: 1,
-          }}
-        >
-          {/* Frame 2609095 */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              padding: "0px",
-              width: "448px",
-              height: "50px",
-              flex: "none",
-              alignSelf: "stretch",
-              flexGrow: 0,
-            }}
-          >
-            {/* Frame 2609094 */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                padding: "0px",
-                gap: "8px",
-                width: "176px",
-                height: "50px",
-                flex: "none",
-                flexGrow: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: "176px",
-                  height: "24px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                  lineHeight: "24px",
-                  flex: "none",
-                  alignSelf: "stretch",
-                  flexGrow: 0,
-                }}
-                className="text-black dark:text-white"
-              >
-                Growth Trends
-              </span>
-              <span
-                style={{
-                  width: "176px",
-                  height: "18px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "12px",
-                  lineHeight: "18px",
-                  flex: "none",
-                  alignSelf: "stretch",
-                  flexGrow: 0,
-                }}
-                className="text-[#6B7280] dark:text-zinc-400"
-              >
-                Employee growth
-              </span>
-            </div>
-
-            {/* Frame 43 */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                padding: "0px",
-                gap: "8px",
-                width: "108px",
-                height: "36px",
-                flex: "none",
-                flexGrow: 0,
-              }}
-            >
-              {/* Group 10 */}
-              <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  background: "rgba(34, 197, 94, 0.25)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flex: "none",
-                  flexGrow: 0,
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#22C55E"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="19" x2="12" y2="5"></line>
-                  <polyline points="5 12 12 5 19 12"></polyline>
-                </svg>
-              </div>
-              <span
-                style={{
-                  width: "72px",
-                  height: "36px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 500,
-                  fontSize: "24px",
-                  lineHeight: "36px",
-                  color: "#22C55E",
-                  flex: "none",
-                  flexGrow: 0,
-                }}
-              >
-                +5.2%
-              </span>
-            </div>
-          </div>
-
-          {/* Frame 2609098 */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              padding: "0px",
-              width: "448px",
-              height: "169px",
-              flex: "none",
-              alignSelf: "stretch",
-              flexGrow: 0,
-            }}
-          >
-            {/* Frame 2609097 */}
-            <div
-              style={{
-                width: "448px",
-                height: "140px",
-                flex: "none",
-                alignSelf: "stretch",
-                flexGrow: 0,
-                position: "relative",
-              }}
-            >
-              <svg
-                style={{
-                  position: "absolute",
-                  width: "400px",
-                  height: "118px",
-                  left: "calc(50% - 400px/2)",
-                  top: "22px",
-                }}
-                className="overflow-visible"
-                viewBox="0 0 400 118"
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#E8F1FF" stopOpacity="1"/>
-                    <stop offset="100%" stopColor="#E8F1FF" stopOpacity="0.2"/>
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M 22,118 L 22,110 C 50,75 70,60 120,60 C 150,60 170,85 200,85 C 240,85 270,55 310,50 C 340,45 370,55 400,20 L 400,118 Z"
-                  fill="url(#growthGradient)"
-                />
-              </svg>
-            </div>
-
-            {/* Frame 14 */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "0px 24px",
-                gap: "18px",
-                width: "448px",
-                height: "29px",
-                borderTop: "1px solid #EFF4FF",
-                flex: "none",
-                alignSelf: "stretch",
-                flexGrow: 0,
-              }}
-              className="dark:border-zinc-800"
-            >
-              {/* Frame 10 */}
-              <div
-                style={{
+                  boxSizing: "border-box",
                   display: "flex",
                   flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  padding: "0px",
-                  gap: "48px",
-                  width: "400px",
-                  height: "29px",
-                  flex: "none",
-                  alignSelf: "stretch",
-                  flexGrow: 0,
+                  alignItems: "center",
+                  padding: "8px 16px",
+                  gap: "16px",
+                  width: "448px",
+                  height: "40px",
+                  borderLeft: "3px solid #0D47A1",
                 }}
+                className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500 flex-none max-md:!w-full"
               >
-                <span
-                  style={{
-                    margin: "0 auto 0 0",
-                    width: "30px",
-                    height: "24px",
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                    flex: "none",
-                    flexGrow: 0,
-                  }}
-                  className="text-[#6B7280] dark:text-zinc-500"
-                >
-                  Jan
-                </span>
-                <span
-                  style={{
-                    margin: "0 0 0 auto",
-                    width: "29px",
-                    height: "24px",
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                    flex: "none",
-                    flexGrow: 0,
-                  }}
-                  className="text-[#6B7280] dark:text-zinc-500"
-                >
-                  Jun
-                </span>
+                <Icon icon={iconStr} width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
+                <div className="flex flex-col items-start p-0 flex-1 overflow-hidden">
+                  <span
+                    style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                      lineHeight: "16px",
+                    }}
+                    className="text-[#6B7280] dark:text-zinc-400 truncate w-full"
+                  >
+                    {text}
+                  </span>
+                </div>
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom Section: Growth Trends */}
+      <div className="flex flex-col gap-6 w-full max-w-[920px]">
+        {/* Header */}
+        <div className="flex flex-row justify-between items-start w-full">
+          <div className="flex flex-col gap-1">
+            <h2
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: "40px",
+                lineHeight: "48px",
+                letterSpacing: "-0.02em"
+              }}
+              className="text-black dark:text-white"
+            >
+              Growth trends
+            </h2>
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 400,
+                fontSize: "14px",
+                lineHeight: "20px",
+              }}
+              className="text-[#6B7280] dark:text-zinc-400"
+            >
+              Hiring velocity over the last 6 months
+            </span>
+          </div>
+
+          <div className="flex flex-row items-center gap-2 mt-2">
+            <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
+              <Icon icon="lucide:arrow-up" className="w-4 h-4 text-[#22C55E]" strokeWidth={3} />
             </div>
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 500,
+                fontSize: "28px",
+                lineHeight: "36px",
+              }}
+              className="text-[#22C55E]"
+            >
+              +5.2%
+            </span>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="relative w-full h-[180px] mt-4">
+          <svg
+            style={{ position: "absolute", width: "100%", height: "120px", top: "0px" }}
+            className="overflow-visible"
+            viewBox="0 0 920 120"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#E8F1FF" stopOpacity="1"/>
+                <stop offset="100%" stopColor="#E8F1FF" stopOpacity="0.2"/>
+              </linearGradient>
+            </defs>
+            <path
+              d="M 22,120 L 22,110 C 89,75 136,60 255,60 C 326,60 374,85 445,85 C 540,85 571,55 706,50 C 777,45 849,55 920,20 L 920,120 Z"
+              fill="url(#growthGradient)"
+            />
+            <path
+              d="M 22,110 C 89,75 136,60 255,60 C 326,60 374,85 445,85 C 540,85 571,55 706,50 C 777,45 849,55 920,20"
+              fill="none"
+              stroke="#3B82F6"
+              strokeWidth="4"
+            />
+            <circle cx="22" cy="110" r="5" fill="#3B82F6" />
+            <circle cx="920" cy="20" r="5" fill="#3B82F6" />
+          </svg>
+          
+          <div className="absolute top-[140px] left-0 w-full flex justify-between border-t border-gray-200 dark:border-zinc-800 pt-4">
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: "10px",
+                letterSpacing: "0.05em",
+              }}
+              className="text-[#6B7280] dark:text-zinc-500 uppercase"
+            >
+              JANUARY
+            </span>
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 600,
+                fontSize: "10px",
+                letterSpacing: "0.05em",
+              }}
+              className="text-[#6B7280] dark:text-zinc-500 uppercase"
+            >
+              JULY
+            </span>
           </div>
         </div>
       </div>

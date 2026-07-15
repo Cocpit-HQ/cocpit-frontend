@@ -19,6 +19,7 @@ export interface CustomLink {
 export interface KeyOffering {
   id: string;
   text: string;
+  icon?: string;
 }
 
 interface CompanyEditState {
