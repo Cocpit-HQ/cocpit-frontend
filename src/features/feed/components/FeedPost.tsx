@@ -305,18 +305,16 @@ export const FeedPost = (props: FeedPostProps) => {
           Undo
         </button>
       ),
-      duration: 5000,
+      duration: 3000,
     });
 
     hideTimeoutRef.current = setTimeout(() => {
-      if (props.sessionId) {
-        hidePost({
-          item_id: id.toString(),
-          session_id: props.sessionId,
-          position: props.position || 0
-        }).catch(console.error);
-      }
-    }, 5000);
+      hidePost({
+        item_id: id.toString(),
+        session_id: props.sessionId || 'unknown',
+        position: props.position || 0
+      }).catch(console.error);
+    }, 3000);
   };
 
   if (isHidden) return null;
