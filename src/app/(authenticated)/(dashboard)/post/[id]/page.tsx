@@ -32,6 +32,10 @@ export default function SinglePostPage({ params }: PageProps) {
             try {
                 const backendPost = await getPostById(id)
                 const mappedPost = mapBackendPostToFrontend(backendPost)
+                if (mappedPost.is_community_article && mappedPost.communityId) {
+                    router.replace(`/channels/${mappedPost.communityId}/article/${mappedPost.id}`)
+                    return
+                }
                 setPost(mappedPost)
             } catch (err: any) {
                 if (err?.response?.status !== 404) {

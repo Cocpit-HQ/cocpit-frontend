@@ -1,18 +1,7 @@
-import { ChannelArticle, ChannelThought } from '../../types/channel.types';
+import { Channel, ChannelArticle, ChannelThought } from '../../types/channel.types';
 import { DUMMY_ARTICLES, DUMMY_THOUGHTS } from '../../utils/dummy-channel-data';
 
-export interface PublicChannelSummary {
-  id: string;
-  orgId: string;
-  name: string;
-  companyName: string;
-  companySlug: string;
-  description: string;
-  bannerUrl: string;
-  logoUrl: string;
-  subscriberCount: number;
-  isSubscribed: boolean;
-}
+export interface PublicChannelSummary extends Channel {}
 
 export const DUMMY_ALL_CHANNELS: PublicChannelSummary[] = [
   {

@@ -165,4 +165,7 @@ export interface Post {
   achievementImageUrl?: string;
   achievementImageTitle?: string;
   achievementImageKey?: string;
+  is_community_article?: boolean;
+  author_org_id?: string;
+  communityId?: string;
 }

@@ -19,7 +19,7 @@ export default function PublicChannelArticlePage() {
   const communityId = params?.communityId as string;
   const articleId = params?.articleId as string;
 
-  const { channel } = usePublicChannel(communityId);
+  const { channel } = usePublicChannel(communityId, false);
   const { article } = usePublicChannelArticle(communityId, articleId);
 
   const [toc, setToc] = useState<TOCItem[]>([]);
@@ -99,7 +99,7 @@ export default function PublicChannelArticlePage() {
         </div>
 
         <div className="lg:border-l lg:border-gray-100 dark:lg:border-[#2E3445] lg:pl-6 h-[calc(100vh-120px)] lg:sticky lg:top-6">
-          <PublicChannelThoughtsPanel articleId={article.id} />
+          <PublicChannelThoughtsPanel articleId={article.id} isSubscribed={!!channel?.isSubscribed} />
         </div>
       </div>
 

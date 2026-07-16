@@ -1,18 +1,31 @@
-import { useState } from 'react';
-import { DUMMY_RECOMMENDED_CHANNELS, PublicChannelSummary } from '../data/dummy-public-channel-data';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as channelService from '../../services/channel.service';
 
 export function useRecommendedChannels() {
-  const [channels, setChannels] = useState<PublicChannelSummary[]>(DUMMY_RECOMMENDED_CHANNELS);
+  const queryClient = useQueryClient();
+
+  const { data: channels = [], isLoading } = useQuery({
+    queryKey: ['recommended-channels'],
+    queryFn: () => channelService.getRecommendedChannels(),
+  });
+
+  const subscribeMutation = useMutation({
+    mutationFn: (channelId: string) => channelService.subscribeToCommunity(channelId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
+      queryClient.invalidateQueries({ queryKey: ['channel-search'] });
+    },
+  });
 
   const toggleSubscribe = (channelId: string) => {
-    setChannels((prev) =>
-      prev.map((c) => (c.id === channelId ? { ...c, isSubscribed: !c.isSubscribed } : c))
-    );
+    subscribeMutation.mutate(channelId);
   };
 
   return {
     channels,
-    isLoading: false,
+    isLoading,
     toggleSubscribe,
   };
 }
+

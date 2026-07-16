@@ -1,12 +1,14 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DUMMY_ALL_CHANNELS, PublicChannelSummary } from '../data/dummy-public-channel-data';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as channelService from '../../services/channel.service';
 
 export function useChannelSearch() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams ? searchParams.get('q') || '' : '';
   const [query, setQuery] = useState(initialQuery);
-  
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (searchParams) {
         const q = searchParams.get('q');
@@ -16,31 +18,38 @@ export function useChannelSearch() {
     }
   }, [searchParams]);
 
-  const [subscribedOverrides, setSubscribedOverrides] = useState<Record<string, boolean>>({});
+  const { data: results = [], isLoading } = useQuery({
+    queryKey: ['channel-search', query],
+    queryFn: () => channelService.searchChannels(query),
+    enabled: true,
+  });
 
-  const results = useMemo<PublicChannelSummary[]>(() => {
-    const q = query.trim().toLowerCase();
-    
-    let filtered = DUMMY_ALL_CHANNELS;
-    if (q) {
-        filtered = DUMMY_ALL_CHANNELS.filter(
-          (c) => c.name.toLowerCase().includes(q) || c.companyName.toLowerCase().includes(q)
-        );
-    }
-    
-    return filtered.map((c) => (c.id in subscribedOverrides ? { ...c, isSubscribed: subscribedOverrides[c.id] } : c));
-  }, [query, subscribedOverrides]);
+  const subscribeMutation = useMutation({
+    mutationFn: ({ channelId, isSubscribed }: { channelId: string; isSubscribed: boolean }) => {
+      return isSubscribed 
+        ? channelService.unsubscribeFromCommunity(channelId)
+        : channelService.subscribeToCommunity(channelId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['channel-search'] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
+    },
+  });
 
   const toggleSubscribe = (channelId: string) => {
     const current = results.find((c) => c.id === channelId);
-    setSubscribedOverrides((prev) => ({ ...prev, [channelId]: !(current?.isSubscribed ?? false) }));
+    if (current) {
+      subscribeMutation.mutate({ channelId, isSubscribed: !!current.isSubscribed });
+    }
   };
 
   return {
     query,
     setQuery,
     results,
-    isLoading: false,
+    isLoading,
     toggleSubscribe,
   };
 }
+

@@ -54,7 +54,7 @@ export default function ChannelHomePage({ channel }: ChannelHomePageProps) {
       <CreateChannelModal
         isOpen={isEditOpen}
         mode="edit"
-        initialValues={{ name: channel.name, description: channel.description, bannerUrl: channel.bannerUrl }}
+        initialValues={{ name: channel.name, description: channel.description || '', bannerUrl: channel.bannerUrl || '' }}
         isSubmitting={updateChannel.isPending}
         onClose={() => setIsEditOpen(false)}
         onSubmit={handleUpdate}

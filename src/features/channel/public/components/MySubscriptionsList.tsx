@@ -3,10 +3,36 @@ import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { useSubscribedChannels } from '../hooks/useSubscribedChannels';
 import PublicChannelCard from './PublicChannelCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MySubscriptionsList() {
   const router = useRouter();
-  const { channels, unsubscribe } = useSubscribedChannels();
+  const { channels, isLoading, unsubscribe } = useSubscribedChannels();
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex flex-col gap-4">
+        <div className="flex flex-col mb-2">
+          <div className="h-6 w-36 bg-gray-200 dark:bg-[#2A2D35] rounded animate-pulse" />
+          <div className="h-4 w-20 bg-gray-100 dark:bg-[#1C2333] rounded animate-pulse mt-2" />
+        </div>
+        <div className="w-full flex flex-col gap-4">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="w-full flex items-center justify-between p-4 rounded-[40px] border border-gray-100 dark:border-[#2A2D35] bg-white dark:bg-[#121B2B]">
+              <div className="flex items-center gap-4 w-full">
+                <Skeleton className="w-12 h-12 rounded-[14px] shrink-0" />
+                <div className="flex flex-col gap-2 w-1/3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+              <Skeleton className="h-8 w-24 rounded-full shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -41,3 +67,4 @@ export default function MySubscriptionsList() {
     </div>
   );
 }
+

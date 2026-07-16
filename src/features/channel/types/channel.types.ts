@@ -2,10 +2,14 @@ export interface Channel {
   id: string;
   orgId: string;
   name: string;
-  description: string;
-  bannerUrl: string;
+  description?: string;
+  bannerUrl?: string;
   subscriberCount: number;
-  createdAt: string;
+  createdAt?: string;
+  companyName?: string;
+  companySlug?: string;
+  logoUrl?: string;
+  isSubscribed?: boolean;
 }
 
 export interface ChannelArticle {
@@ -36,6 +40,7 @@ export interface ChannelInvitee {
 export interface ChannelThought {
   id: string;
   articleId: string;
+  parentId?: string;
   authorName: string;
   authorAvatarUrl: string;
   text: string;

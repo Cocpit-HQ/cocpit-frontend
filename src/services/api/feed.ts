@@ -139,6 +139,9 @@ export interface BackendPost {
   achievement_image_key?: string | null;
   achievement_image_url?: string | null;
   achievement_image_title?: string | null;
+  is_community_article?: boolean;
+  author_org_id?: string;
+  community_id?: string;
   _rankingMeta?: {
     score: number;
     slot_type: string;

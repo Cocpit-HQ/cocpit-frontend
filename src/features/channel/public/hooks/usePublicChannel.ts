@@ -1,27 +1,48 @@
-import { useMemo, useState } from 'react';
-import { DUMMY_ALL_CHANNELS, DUMMY_CHANNEL_ARTICLES, PublicChannelSummary } from '../data/dummy-public-channel-data';
-import { ChannelArticle } from '../../types/channel.types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as channelService from '../../services/channel.service';
 
-export function usePublicChannel(communityId: string | undefined) {
-  const baseChannel = useMemo(
-    () => DUMMY_ALL_CHANNELS.find((c) => c.id === communityId) ?? null,
-    [communityId]
-  );
+export function usePublicChannel(communityId: string | undefined, includeArticles: boolean = true) {
+  const queryClient = useQueryClient();
 
-  const [isSubscribed, setIsSubscribed] = useState(baseChannel?.isSubscribed ?? false);
+  const { data: channel = null, isLoading: isChannelLoading } = useQuery({
+    queryKey: ['public-channel', communityId],
+    queryFn: () => (communityId ? channelService.getPublicChannel(communityId) : Promise.resolve(null)),
+    enabled: !!communityId,
+  });
 
-  const channel: PublicChannelSummary | null = baseChannel
-    ? { ...baseChannel, isSubscribed }
-    : null;
+  const { data: articles = [], isLoading: isArticlesLoading } = useQuery({
+    queryKey: ['public-channel-articles', communityId],
+    queryFn: () => (communityId ? channelService.getArticles(communityId, 'published') : Promise.resolve([])),
+    enabled: !!communityId && includeArticles,
+  });
 
-  const articles: ChannelArticle[] = communityId ? DUMMY_CHANNEL_ARTICLES[communityId] ?? [] : [];
+  const subscribeMutation = useMutation({
+    mutationFn: (isSubscribed: boolean) => {
+      if (!communityId) return Promise.resolve();
+      return isSubscribed
+        ? channelService.unsubscribeFromCommunity(communityId)
+        : channelService.subscribeToCommunity(communityId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['public-channel', communityId] });
+      queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
+    },
+  });
 
-  const toggleSubscribe = () => setIsSubscribed((prev) => !prev);
+  const toggleSubscribe = () => {
+    if (channel) {
+      subscribeMutation.mutate(!!channel.isSubscribed);
+    }
+  };
+
+  const isLoading = isChannelLoading || (includeArticles && isArticlesLoading);
 
   return {
     channel,
     articles,
-    isLoading: false,
+    isLoading,
     toggleSubscribe,
   };
 }
+

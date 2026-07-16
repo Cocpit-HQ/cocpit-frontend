@@ -164,11 +164,11 @@ export async function createArticle(channelId: string, input: ArticleInput): Pro
   formData.append('category', 'Insight'); // <-- Backend requires this for company posts
   formData.append('companyId', channelId);
   formData.append('visibility', 'public');
+  formData.append('is_community_article', 'true');
   if (input.status) {
     formData.append('status', input.status);
   }
   
-  // NOTE: Depending on backend, post media might require array field 'media' or similar
   if (input.coverImage) {
     try {
       const file = await urlToFile(input.coverImage, 'cover.jpg');
@@ -218,6 +218,7 @@ export async function updateArticle(id: string, orgId: string, input: Partial<Ar
     companyId: orgId,
     media_urls: input.coverImage === undefined ? undefined : (coverImageUrl ? [coverImageUrl] : []),
     status: input.status,
+    is_community_article: true,
   };
   
   const res = await api.put(`/post/${id}`, payload);
@@ -242,8 +243,8 @@ export async function deleteArticle(id: string, orgId: string): Promise<boolean>
 }
 
 export async function getSubscriberGrowth(orgId: string): Promise<GrowthPoint[]> {
-  // Missing API
-  return [];
+  const res = await api.get(`/organizations/${orgId}/community/growth`);
+  return res.data.data;
 }
 
 export async function getInvitees(orgId: string, search: string): Promise<ChannelInvitee[]> {
@@ -262,7 +263,6 @@ export async function getInvitees(orgId: string, search: string): Promise<Channe
 }
 
 export async function inviteUsers(orgId: string, userIds: string[]): Promise<boolean> {
-  // Fallback for batch inviting due to backend constraints
   await Promise.all(
     userIds.map(id => api.post(`/organizations/${orgId}/community/invite`, { invitee_id: id }))
   );
@@ -272,28 +272,31 @@ export async function inviteUsers(orgId: string, userIds: string[]): Promise<boo
 export async function getThoughts(articleId: string): Promise<ChannelThought[]> {
   const res = await api.get(`/post/${articleId}/comments`);
   
-  return res.data.data.map((comment: any) => ({
+  return res.data.map((comment: any) => ({
     id: comment.comment_id,
     articleId: articleId,
+    parentId: comment.parent_id || undefined,
     authorName: comment.full_name || comment.author_name,
     authorAvatarUrl: comment.avatar_url || comment.author_avatar,
     text: comment.content || comment.text,
     createdAt: comment.created_at || new Date().toISOString(),
   }));
 }
-
+ 
 export async function addThought(
   articleId: string,
   text: string,
   authorName: string,
-  authorAvatarUrl: string
+  authorAvatarUrl: string,
+  parentId?: string
 ): Promise<ChannelThought> {
-  const res = await api.post(`/post/${articleId}/comments`, { content: text });
+  const res = await api.post(`/post/${articleId}/comments`, { content: text, parent_id: parentId });
   
   const comment = res.data.comment;
   return {
     id: comment.comment_id,
     articleId: articleId,
+    parentId: comment.parent_id || undefined,
     authorName: comment.full_name || authorName,
     authorAvatarUrl: comment.avatar_url || authorAvatarUrl,
     text: comment.content || text,
@@ -307,6 +310,87 @@ export async function deleteThought(id: string): Promise<boolean> {
 }
 
 export async function requestEditAccess(orgId: string): Promise<boolean> {
-  // Missing API
+  await api.post(`/organizations/${orgId}/community/request-access`);
   return true;
 }
+
+export async function getRecommendedChannels(): Promise<Channel[]> {
+  const res = await api.get('/communities/recommended');
+  return res.data.data.map((item: any) => ({
+    id: item.id || item.community_id,
+    orgId: item.orgId || item.org_id,
+    name: item.name,
+    description: item.description,
+    bannerUrl: item.bannerUrl || item.banner_url,
+    subscriberCount: item.subscriberCount || item.subscriber_count || 0,
+    companyName: item.companyName || item.company_name,
+    logoUrl: item.logoUrl || item.logo_url,
+    isSubscribed: false,
+  }));
+}
+
+export async function getSubscribedChannels(): Promise<Channel[]> {
+  const res = await api.get('/communities/subscriptions');
+  return res.data.data.map((item: any) => ({
+    id: item.id || item.community_id,
+    orgId: item.orgId || item.org_id,
+    name: item.name,
+    description: item.description,
+    bannerUrl: item.bannerUrl || item.banner_url,
+    subscriberCount: item.subscriberCount || item.subscriber_count || 0,
+    companyName: item.companyName || item.company_name,
+    companySlug: item.companySlug || item.company_slug,
+    logoUrl: item.logoUrl || item.logo_url,
+    isSubscribed: true,
+  }));
+}
+
+export async function searchChannels(query: string): Promise<Channel[]> {
+  const res = await api.get('/communities/search', {
+    params: { q: query }
+  });
+  return res.data.data.map((item: any) => ({
+    id: item.id || item.community_id,
+    orgId: item.orgId || item.org_id,
+    name: item.name,
+    description: item.description,
+    bannerUrl: item.bannerUrl || item.banner_url,
+    subscriberCount: item.subscriberCount || item.subscriber_count || 0,
+    companyName: item.companyName || item.company_name,
+    logoUrl: item.logoUrl || item.logo_url,
+    isSubscribed: item.isSubscribed || item.is_subscribed || false,
+  }));
+}
+
+export async function getPublicChannel(communityId: string): Promise<Channel | null> {
+  try {
+    const res = await api.get(`/communities/${communityId}`);
+    const data = res.data.data;
+    return {
+      id: data.id || data.community_id,
+      orgId: data.orgId || data.org_id,
+      name: data.name,
+      description: data.description,
+      bannerUrl: data.bannerUrl || data.banner_url,
+      subscriberCount: data.subscriberCount || data.subscriber_count || 0,
+      companyName: data.companyName || data.company_name,
+      companySlug: data.companySlug || data.company_slug,
+      logoUrl: data.logoUrl || data.logo_url,
+      isSubscribed: data.isSubscribed || data.is_subscribed || false,
+    };
+  } catch (error: any) {
+    if (error.response?.status === 404) return null;
+    throw error;
+  }
+}
+
+export async function subscribeToCommunity(communityId: string): Promise<any> {
+  const res = await api.post(`/communities/${communityId}/subscribe`);
+  return res.data;
+}
+
+export async function unsubscribeFromCommunity(communityId: string): Promise<any> {
+  const res = await api.delete(`/communities/${communityId}/unsubscribe`);
+  return res.data;
+}
+
