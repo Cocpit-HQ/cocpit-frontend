@@ -67,7 +67,7 @@ export default function PublicChannelArticlePage() {
         <div className="flex flex-col gap-5 min-w-0 pb-12">
           <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-[#2A2D35] border-dashed">
             <button
-              onClick={() => router.push(`/channels/${communityId}`)}
+              onClick={() => router.back()}
               className="w-10 h-10 rounded-full border border-gray-200 dark:border-[#2A2D35] flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-[#121B2B] transition-colors flex-shrink-0"
             >
               <ChevronLeft className="w-5 h-5" />

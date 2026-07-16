@@ -276,6 +276,10 @@ export const HomeHeader = () => {
         }
     };
 
+    if (pathname.includes('/article/')) {
+        return null;
+    }
+ 
     return (
         <header
             className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-0 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
