@@ -104,6 +104,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
       description: profileResponse.community_details.description,
       isSubscribed: profileResponse.community_details.is_subscribed || false,
       subscriberCount: profileResponse.community_details.subscriber_count || 0,
+      isOwner: profileResponse.community_details.is_owner || profileResponse.is_own_profile || false,
     } : undefined,
   };
 

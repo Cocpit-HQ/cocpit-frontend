@@ -34,6 +34,7 @@ export interface CompanyCommunityData {
   description?: string;
   isSubscribed: boolean;
   subscriberCount: number;
+  isOwner?: boolean;
 }
 
 export interface CompanyProfileData {

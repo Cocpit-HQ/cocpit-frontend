@@ -216,44 +216,46 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           </div>
 
           {/* Frame 2608519: Subscribe Button */}
-          <button
-            onClick={() => subscribeMutation.mutate()}
-            disabled={subscribeMutation.isPending || !community.communityId}
-            style={{
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: "8px 16px",
-              gap: "10px",
-              width: "142px",
-              height: "40px",
-              border: "1px solid #1A73E8",
-              borderRadius: "24px",
-              flex: "none",
-              flexGrow: 0,
-              cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
-            }}
-            className={`transition-colors ${community.isSubscribed ? "bg-[#EFF4FF] hover:bg-blue-100 dark:bg-zinc-900 dark:hover:bg-zinc-800" : "bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900"}`}
-          >
-            <span
+          {!community.isOwner && (
+            <button
+              onClick={() => subscribeMutation.mutate()}
+              disabled={subscribeMutation.isPending || !community.communityId}
               style={{
-                width: "auto",
-                height: "20px",
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 400,
-                fontSize: "14px",
-                lineHeight: "20px",
-                textAlign: "center",
-                color: "#1A73E8",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "8px 16px",
+                gap: "10px",
+                width: "142px",
+                height: "40px",
+                border: "1px solid #1A73E8",
+                borderRadius: "24px",
                 flex: "none",
                 flexGrow: 0,
+                cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
               }}
+              className={`transition-colors ${community.isSubscribed ? "bg-[#EFF4FF] hover:bg-blue-100 dark:bg-zinc-900 dark:hover:bg-zinc-800" : "bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900"}`}
             >
-              {subscribeMutation.isPending ? "..." : (community.isSubscribed ? "Unsubscribe" : "Subscribe")}
-            </span>
-          </button>
+              <span
+                style={{
+                  width: "auto",
+                  height: "20px",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  textAlign: "center",
+                  color: "#1A73E8",
+                  flex: "none",
+                  flexGrow: 0,
+                }}
+              >
+                {subscribeMutation.isPending ? "..." : (community.isSubscribed ? "Unsubscribe" : "Subscribe")}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </div>
