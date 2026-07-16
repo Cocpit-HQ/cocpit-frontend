@@ -161,9 +161,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       toast({ title: "Error", description: "Invalid file type. Please upload an image.", variant: "destructive" });
       return;
     }
-    // Validate size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Error", description: "File size exceeds 5MB.", variant: "destructive" });
+    // Validate size (20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "Error", description: "File size exceeds 20MB.", variant: "destructive" });
       return;
     }
 
@@ -226,9 +226,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Maintain a high resolution aspect ratio (3.125:1 for 500x160)
-      const width = 1500;
-      const height = 480;
+      // Maintain a high resolution aspect ratio (16:3)
+      const width = 1920;
+      const height = 360;
       canvas.width = width;
       canvas.height = height;
 
@@ -416,7 +416,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               <div
                 ref={containerRef}
                 className={cn(
-                  "w-full h-[200px] mx-auto relative overflow-hidden bg-secondary rounded-[24px] select-none group",
+                  "w-full aspect-[16/3] mx-auto relative overflow-hidden bg-secondary rounded-[24px] select-none group",
                   isDraggingImage ? "cursor-grabbing" : "cursor-grab"
                 )}
                 onMouseDown={(e) => {
@@ -502,10 +502,10 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                     Click or drag to upload
                   </p>
                   <p className="text-[13px] text-muted-foreground font-[family-name:var(--font-poppins)] leading-relaxed">
-                    JPG, PNG, WEBP – Max 5MB
+                    JPG, PNG, WEBP – Max 20MB
                   </p>
-                  <p className="text-[12px] text-muted-foreground/70 font-[family-name:var(--font-poppins)]">
-                    Recommended size: 1500 × 480 px
+                  <p className="text-[12px] text-muted-foreground/70 font-[family-name:var(--font-poppins)] max-w-[340px] leading-relaxed mx-auto">
+                    Use a 16:3 banner. Minimum size: 960 x 180 px. Recommended size: 1920 x 360 px for optimal quality.
                   </p>
                 </div>
               </div>

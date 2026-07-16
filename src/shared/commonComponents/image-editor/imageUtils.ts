@@ -4,7 +4,7 @@ export interface ImageValidationResult {
 }
 
 const DEFAULT_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-const DEFAULT_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const DEFAULT_MAX_SIZE = 20 * 1024 * 1024; // 20MB
 
 /**
  * Validates file size and file type constraints.

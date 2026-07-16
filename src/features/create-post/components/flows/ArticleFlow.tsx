@@ -4,6 +4,7 @@ import {
   Image as ImageIcon, X, ArrowLeft, ChevronLeft, Loader2, Sparkles, Send
 } from 'lucide-react';
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 import { MediaItem } from '../../types';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/services/api/upload';
@@ -218,32 +219,88 @@ const ArticleFlow = ({
   const handleInlineImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUploadingInline(true);
-      try {
-        const urls = await uploadMedia([file]);
-        if (urls && urls.length > 0) {
-          const imageUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
-          const imageHtml = `
-            <div class="relative my-4 w-full h-[178px] overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
-              <img src="${imageUrl}" class="w-full h-full object-cover" />
-              <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
-                <button type="button" class="p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
-                </button>
-                <button type="button" class="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete" onclick="this.closest('.relative').remove();">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
-                </button>
-              </div>
-            </div><span> </span>
-          `;
-          editorRef.current?.focus();
-          document.execCommand('insertHTML', false, imageHtml);
-          onContentChange(editorRef.current?.innerHTML || '');
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size cannot exceed 10MB");
+        e.target.value = '';
+        return;
+      }
+
+      const isVideo = file.type.startsWith('video/');
+
+      if (isVideo) {
+        const videoUrl = URL.createObjectURL(file);
+        const pId = 'p-' + Date.now();
+        const videoHtml = `
+          <div class="relative my-4 w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
+            <video controls src="${videoUrl}" style="max-width: 100%; border-radius: 8px;"></video>
+            <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
+              <button type="button" class="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete" onclick="URL.revokeObjectURL('${videoUrl}'); this.closest('.relative').remove();">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
+              </button>
+            </div>
+          </div><p id="${pId}"><br></p>
+        `;
+        editorRef.current?.focus();
+        document.execCommand('insertHTML', false, videoHtml);
+        
+        const insertedP = document.getElementById(pId);
+        if (insertedP) {
+          const sel = window.getSelection();
+          if (sel) {
+            const range = document.createRange();
+            range.setStart(insertedP, 0);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+          insertedP.removeAttribute('id');
         }
-      } catch (err) {
-        console.error("Failed to upload inline image", err);
-      } finally {
-        setIsUploadingInline(false);
+        
+        onContentChange(editorRef.current?.innerHTML || '');
+      } else {
+        setIsUploadingInline(true);
+        try {
+          const urls = await uploadMedia([file]);
+          if (urls && urls.length > 0) {
+            const imageUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
+            const pId = 'p-' + Date.now();
+            const imageHtml = `
+              <div class="relative my-4 w-full h-[178px] overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
+                <img src="${imageUrl}" class="w-full h-full object-cover" />
+                <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
+                  <button type="button" class="p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
+                  </button>
+                  <button type="button" class="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete" onclick="this.closest('.relative').remove();">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
+                  </button>
+                </div>
+              </div><p id="${pId}"><br></p>
+            `;
+            editorRef.current?.focus();
+            document.execCommand('insertHTML', false, imageHtml);
+            
+            const insertedP = document.getElementById(pId);
+            if (insertedP) {
+              const sel = window.getSelection();
+              if (sel) {
+                const range = document.createRange();
+                range.setStart(insertedP, 0);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+              insertedP.removeAttribute('id');
+            }
+            
+            onContentChange(editorRef.current?.innerHTML || '');
+          }
+        } catch (err) {
+          console.error("Failed to upload inline image", err);
+          toast.error("Failed to upload inline image");
+        } finally {
+          setIsUploadingInline(false);
+        }
       }
     }
     e.target.value = '';
@@ -297,7 +354,7 @@ const ArticleFlow = ({
             onClick={(e) => e.preventDefault()}
             className="group w-full max-w-[420px] bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md"
           >
-            <div className="w-full h-[180px] overflow-hidden">
+            <div className="w-full aspect-[16/3] overflow-hidden">
               {coverImage ? (
                 <img src={coverImage.url} alt={title || 'Article cover'} className="w-full h-full object-cover" />
               ) : (
@@ -549,7 +606,7 @@ const ArticleFlow = ({
         {/* Cover Image cloud box / preview */}
         <div className="w-full">
           {coverImage ? (
-            <div className="relative w-full h-[178px] overflow-hidden border border-border group bg-[#D9D9D9]">
+            <div className="relative aspect-[16/3] max-w-[600px] w-full overflow-hidden border border-border group bg-[#D9D9D9] mx-auto">
               <img src={coverImage.url} className="w-full h-full object-cover" />
               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm">
                 <button
@@ -573,8 +630,7 @@ const ArticleFlow = ({
           ) : (
             <div
               onClick={() => coverInputRef.current?.click()}
-              className="flex flex-col items-center justify-center bg-[#FFFFFF] rounded-2xl cursor-pointer p-4 text-center w-full gap-10"
-              style={{ minHeight: '178px', margin: '0 auto' }}
+              className="flex flex-col items-center justify-center bg-[#FFFFFF] rounded-2xl cursor-pointer p-4 text-center w-full gap-10 aspect-[16/3] max-w-[600px] mx-auto"
             >
               {/* First Group: Title + Subtitle */}
               <div className="flex flex-col items-center gap-2">
@@ -593,8 +649,8 @@ const ArticleFlow = ({
                   <span className="inline-block w-[105px] h-[16px] font-normal text-[8px] leading-[16px] text-[#6B7280] text-center font-poppins">
                     JPG, PNG, WEBP (Max 5MB)
                   </span>
-                  <span className="inline-block w-[119px] h-[16px] font-normal text-[8px] leading-[16px] text-[#6B7280] text-center font-poppins">
-                    Recommended: 1200 x 300 px
+                  <span className="inline-block w-full max-w-[350px] mt-1 font-normal text-[10px] leading-[16px] text-[#6B7280] text-center font-poppins">
+                    Use a 16:3 banner, Minimum size: 960 x 180 px. Recommended size: 1920 x 360 px for optimal quality.
                   </span>
                 </div>
               </div>
@@ -613,7 +669,7 @@ const ArticleFlow = ({
         <input
           ref={inlineImageInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleInlineImageUpload}
           className="hidden"
         />

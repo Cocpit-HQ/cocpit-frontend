@@ -257,9 +257,9 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     };
 
     return (
-        <div id="profile-card" className="bg-card border-b md:border border-border shadow-sm rounded-none md:rounded-xl mt-0 md:mt-6 mb-6 w-full relative group">
+        <div id="profile-card" className="w-full relative group mt-0 md:mt-6 mb-6">
             {/* Cover Image */}
-            <div className="h-[160px] w-full relative bg-muted group/cover rounded-none md:rounded-t-xl overflow-hidden">
+            <div className="h-[160px] w-full relative bg-muted group/cover rounded-[24px] overflow-hidden">
                 {canManageCompany ? (
                     <EditCoverPhoto
                         coverImage={company?.cover_url || null}

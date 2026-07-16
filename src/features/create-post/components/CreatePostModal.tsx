@@ -134,7 +134,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
                     }}
                     className="block w-full bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md animate-in fade-in zoom-in-95 duration-200"
                   >
-                    <div className="w-full h-[180px] overflow-hidden">
+                    <div className="w-full aspect-[16/3] overflow-hidden">
                       {state.articleData.coverImage ? (
                         <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
                       ) : (

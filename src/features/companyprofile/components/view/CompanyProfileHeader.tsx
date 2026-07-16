@@ -95,10 +95,10 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
   return (
     <div className="w-full">
       {/* 960 x 224 Header Frame (Cover + Logo/Buttons Row) */}
-      <div className="relative w-full h-[224px] bg-white dark:bg-zinc-950 sm:rounded-t-2xl">
+      <div className="relative w-full h-[224px] sm:rounded-2xl">
         
         {/* 1. Cover Banner (960x160) */}
-        <div className="relative w-full h-[160px] bg-slate-900 overflow-hidden sm:rounded-t-2xl">
+        <div className="relative w-full h-[160px] bg-slate-900 overflow-hidden sm:rounded-[24px]">
           <Image
             src={coverUrl || (data.entityType === "INSTITUTE" ? "/images/companyonboarding/AluminiCoverPage.png" : "/images/companyonboarding/companycoverphotoDefault.png")}
             alt="Cover"

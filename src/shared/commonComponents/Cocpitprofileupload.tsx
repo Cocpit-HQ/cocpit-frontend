@@ -59,9 +59,9 @@ const ImageUploadDropzone: React.FC<ImageUploadDropzoneProps> = ({
           Click or drag to upload
         </p>
         <p className={cn("text-[13px] text-muted-foreground leading-relaxed", fontClass)}>
-          JPG, PNG, WEBP – Max 5MB
+          JPG, PNG, WEBP – Max 20MB
         </p>
-        <p className={cn("text-[12px] text-muted-foreground/70", fontClass)}>
+        <p className={cn("text-[12px] text-muted-foreground/70 max-w-[340px] leading-relaxed mx-auto", fontClass)}>
           {recommendedSizeText}
         </p>
       </div>
@@ -673,8 +673,8 @@ export function EditCoverModal({
         positionX: editor.positionX,
         positionY: editor.positionY,
         previewSizeWidth: editor.containerRef.current?.offsetWidth || 800,
-        canvasWidth: 1500,
-        canvasHeight: 480,
+        canvasWidth: 1920,
+        canvasHeight: 360,
         quality: 0.9,
         outputType: "blob",
       }) as Blob;
@@ -781,7 +781,7 @@ export function EditCoverModal({
             positionY={editor.positionY}
             isDragging={editor.isDraggingImage}
             onPointerDown={editor.handlePointerDown}
-            className="w-full h-[200px] rounded-[24px]"
+            className="w-full aspect-[16/3] rounded-[24px]"
             poppinsFamilyClass={true}
             customOverlayClass={true}
             onWheel={(e) => {
@@ -814,7 +814,7 @@ export function EditCoverModal({
             onDrop={editor.handleDrop}
             onClick={editor.openFilePicker}
             isDragOver={editor.isDragOver}
-            recommendedSizeText="Recommended size: 1500 × 480 px"
+            recommendedSizeText="Use a 16:3 banner. Minimum size: 960 x 180 px. Recommended size: 1920 x 360 px for optimal quality."
             poppinsFamilyClass={true}
           />
         </div>
