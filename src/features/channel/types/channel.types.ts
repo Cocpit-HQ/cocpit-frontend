@@ -10,6 +10,7 @@ export interface Channel {
   companySlug?: string;
   logoUrl?: string;
   isSubscribed?: boolean;
+  isOwner?: boolean;
 }
 
 export interface ChannelArticle {

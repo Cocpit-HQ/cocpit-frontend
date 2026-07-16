@@ -326,6 +326,7 @@ export async function getRecommendedChannels(): Promise<Channel[]> {
     companyName: item.companyName || item.company_name,
     logoUrl: item.logoUrl || item.logo_url,
     isSubscribed: false,
+    isOwner: false,
   }));
 }
 
@@ -342,6 +343,7 @@ export async function getSubscribedChannels(): Promise<Channel[]> {
     companySlug: item.companySlug || item.company_slug,
     logoUrl: item.logoUrl || item.logo_url,
     isSubscribed: true,
+    isOwner: item.isOwner || item.is_owner || false,
   }));
 }
 
@@ -359,6 +361,7 @@ export async function searchChannels(query: string): Promise<Channel[]> {
     companyName: item.companyName || item.company_name,
     logoUrl: item.logoUrl || item.logo_url,
     isSubscribed: item.isSubscribed || item.is_subscribed || false,
+    isOwner: item.isOwner || item.is_owner || false,
   }));
 }
 
@@ -377,6 +380,7 @@ export async function getPublicChannel(communityId: string): Promise<Channel | n
       companySlug: data.companySlug || data.company_slug,
       logoUrl: data.logoUrl || data.logo_url,
       isSubscribed: data.isSubscribed || data.is_subscribed || false,
+      isOwner: data.isOwner || data.is_owner || false,
     };
   } catch (error: any) {
     if (error.response?.status === 404) return null;

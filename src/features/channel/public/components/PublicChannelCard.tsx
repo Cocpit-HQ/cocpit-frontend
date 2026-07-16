@@ -18,7 +18,7 @@ export default function PublicChannelCard({
   onClick,
   onToggleSubscribe,
 }: PublicChannelCardProps) {
-  const subscribeButton = (
+  const subscribeButton = !channel.isOwner ? (
     <button
       onClick={(e) => {
         e.stopPropagation();
@@ -32,7 +32,7 @@ export default function PublicChannelCard({
     >
       {channel.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
     </button>
-  );
+  ) : null;
 
   if (variant === 'search-result') {
     return (

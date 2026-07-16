@@ -33,16 +33,18 @@ export default function PublicChannelHeader({ channel, onToggleSubscribe }: Publ
             {channel.description}
           </p>
         </div>
-        <button
-          onClick={onToggleSubscribe}
-          className={`self-start px-6 py-2 rounded-full text-[13px] font-semibold font-['Poppins'] transition-all active:scale-95 mt-1 ${
-            channel.isSubscribed
-              ? 'bg-transparent border border-[#5A52FF] text-[#5A52FF] hover:opacity-80'
-              : 'bg-[#5A52FF] text-white hover:opacity-90 shadow-sm'
-          }`}
-        >
-          {channel.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
-        </button>
+        {!channel.isOwner && (
+          <button
+            onClick={onToggleSubscribe}
+            className={`self-start px-6 py-2 rounded-full text-[13px] font-semibold font-['Poppins'] transition-all active:scale-95 mt-1 ${
+              channel.isSubscribed
+                ? 'bg-transparent border border-[#5A52FF] text-[#5A52FF] hover:opacity-80'
+                : 'bg-[#5A52FF] text-white hover:opacity-90 shadow-sm'
+            }`}
+          >
+            {channel.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+          </button>
+        )}
       </div>
     </div>
   );
