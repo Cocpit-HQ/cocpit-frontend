@@ -123,4 +123,57 @@ export const companyProfileService = {
     const res = await api.get(`/organizations/${orgId}/posts`, { params });
     return res.data;
   },
+
+  async getOrganizationSubscribers(orgId: string, params?: { search?: string }): Promise<any> {
+    const res = await api.get(`/organizations/${orgId}/community/subscribers`, { params });
+    return res.data?.data || res.data;
+  },
+
+  async removeCommunitySubscriber(orgId: string, userId: string): Promise<any> {
+    const res = await api.delete(`/organizations/${orgId}/community/subscribers/${userId}`);
+    return res.data;
+  },
+
+  async getOrganizationFollowing(orgId: string, params?: { search?: string }): Promise<any> {
+    const res = await api.get(`/organizations/${orgId}/following`, { params });
+    return res.data?.data || res.data;
+  },
+
+  async getOrganizationFollowers(orgId: string, params?: { search?: string }): Promise<any> {
+    const res = await api.get(`/organizations/${orgId}/followers`, { params });
+    // Map backend fields to frontend expected format
+    const data = res.data.map((user: any) => ({
+      ...user,
+      id: user.user_id,
+      name: user.full_name,
+      avatarUrl: user.avatar_url,
+      isFollowedBack: user.is_followed_back
+    }));
+    return data;
+  },
+
+  async removeCompanyFollower(orgId: string, followerId: string): Promise<any> {
+    const res = await api.delete(`/organizations/${orgId}/followers/${followerId}`);
+    return res.data;
+  },
+
+  async organizationFollowUser(orgId: string, userId: string): Promise<any> {
+    const res = await api.post(`/organizations/${orgId}/following/users/${userId}`);
+    return res.data;
+  },
+
+  async organizationUnfollowUser(orgId: string, userId: string): Promise<any> {
+    const res = await api.delete(`/organizations/${orgId}/following/users/${userId}`);
+    return res.data;
+  },
+
+  async organizationFollowOrganization(orgId: string, targetOrgId: string): Promise<any> {
+    const res = await api.post(`/organizations/${orgId}/following/organizations/${targetOrgId}`);
+    return res.data;
+  },
+
+  async organizationUnfollowOrganization(orgId: string, targetOrgId: string): Promise<any> {
+    const res = await api.delete(`/organizations/${orgId}/following/organizations/${targetOrgId}`);
+    return res.data;
+  },
 };

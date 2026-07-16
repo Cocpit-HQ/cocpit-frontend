@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Link as LinkIcon, Share2 } from "lucide-react";
+import { OrganizationStatsModal } from "./OrganizationStatsModal";
 
 interface CompanyProfileHeaderProps {
   data: CompanyProfileData;
@@ -33,6 +34,8 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
   const slug = params.slug as string || "nexsus-global-systems";
   
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [statsModalTab, setStatsModalTab] = useState<"followers" | "following" | "subscribers">("followers");
   const { toast } = useToast();
   const { syncFollowStatus } = useSocial();
 
@@ -265,19 +268,28 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           {/* Right Stats (Frame 2609070) */}
           <div className="flex gap-[40px] items-center w-[295.6px] h-[48px] mt-6 md:mt-0 max-md:!gap-2 max-md:!w-full max-md:!h-auto max-md:!justify-start">
             {/* Following */}
-            <div className="flex flex-col gap-[8px] w-[65.3px] max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]">
+            <div 
+              onClick={() => { setStatsModalTab("following"); setIsStatsModalOpen(true); }}
+              className="flex flex-col gap-[8px] w-[65.3px] cursor-pointer hover:opacity-80 transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
+            >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.following || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Following</span>
             </div>
 
             {/* Followers */}
-            <div className="flex flex-col gap-[8px] w-[65.3px] max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]">
+            <div 
+              onClick={() => { setStatsModalTab("followers"); setIsStatsModalOpen(true); }}
+              className="flex flex-col gap-[8px] w-[65.3px] cursor-pointer hover:opacity-80 transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
+            >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.followers || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Followers</span>
             </div>
 
             {/* Subscribers */}
-            <div className="flex flex-col gap-[8px] w-[85px] max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]">
+            <div 
+              onClick={() => { setStatsModalTab("subscribers"); setIsStatsModalOpen(true); }}
+              className="flex flex-col gap-[8px] w-[85px] cursor-pointer hover:opacity-80 transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
+            >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.subscribers || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Subscribers</span>
             </div>
@@ -364,6 +376,16 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
               toast({ title: "Error", description: "Failed to delete cover", variant: "destructive" });
             }
           }}
+        />
+      )}
+
+      {orgId && (
+        <OrganizationStatsModal
+          isOpen={isStatsModalOpen}
+          onClose={() => setIsStatsModalOpen(false)}
+          initialTab={statsModalTab}
+          orgId={orgId}
+          isOwnProfile={isOwnProfile}
         />
       )}
     </div>

@@ -68,7 +68,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     socialLinks: profileResponse.links ? profileResponse.links.map((link: any) => ({ label: link.display_label || link.platform, platform: link.platform, url: link.url })) : [],
     keyOfferings: company.key_offerings || company.keyOfferings || [],
     stats: {
-      following: 0, // Not provided by this endpoint currently
+      following: company.following_count || 0,
       followers: company.followers_count || 0,
       subscribers: company.subscribers_count || 0,
     },

@@ -75,8 +75,35 @@ export default function PeopleTab({ data }: PeopleTabProps) {
       account_name: emp.account_name || emp.id,
       action,
       textWidth: "125px",
+      is_connected: !!emp.is_connected,
     };
   });
+
+  // Backend returns people pre-sorted connected-first, so a simple count-based
+  // split is enough — no re-sorting needed on the frontend.
+  const isCompanyViewer = activeProfile?.type === "COMPANY";
+  const connectedCount = isCompanyViewer ? 0 : employeesList.filter((e: any) => e.is_connected).length;
+  const peopleYouKnow = isCompanyViewer ? [] : employeesList.slice(0, connectedCount);
+  const suggestedPeople = isCompanyViewer ? employeesList : employeesList.slice(connectedCount);
+  const showGroupHeaders = !isCompanyViewer && peopleYouKnow.length > 0 && suggestedPeople.length > 0;
+
+  // Flex "order" values must stay monotonically increasing after the distributions
+  // block (order: 2) for the two groups to render in the right visual sequence.
+  let orderCursor = 3;
+  const peopleYouKnowHeaderOrder = showGroupHeaders ? orderCursor++ : null;
+  const peopleYouKnowRows = peopleYouKnow.map((emp: any) => ({ emp, order: orderCursor++ }));
+  const suggestedPeopleHeaderOrder = showGroupHeaders ? orderCursor++ : null;
+  const suggestedPeopleRows = suggestedPeople.map((emp: any) => ({ emp, order: orderCursor++ }));
+
+  const groupHeaderStyle: React.CSSProperties = {
+    width: "920px",
+    fontFamily: "'Poppins', sans-serif",
+    fontWeight: 500,
+    fontSize: "16px",
+    lineHeight: "24px",
+    flex: "none",
+    alignSelf: "stretch",
+  };
 
   const handleConnect = async (userId: string) => {
     try {
@@ -91,6 +118,302 @@ export default function PeopleTab({ data }: PeopleTabProps) {
       setConnectingId(null);
     }
   };
+
+  const renderEmployeeRow = (emp: any, order: number) => (
+    <div
+      key={emp.id}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 0px",
+        width: "920px",
+        height: "60px",
+        borderRadius: "12px",
+        flex: "none",
+        order,
+        alignSelf: "stretch",
+        flexGrow: 0,
+      }}
+      className="bg-white dark:bg-zinc-950"
+    >
+      {/* Avatar & Info Row (Frame 2608774) */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          padding: "0px",
+          gap: "8px",
+          height: "44px",
+          flex: "1 1 auto",
+          order: 0,
+          overflow: "hidden",
+        }}
+      >
+        {/* Avatar Ellipse */}
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            overflow: "hidden",
+            position: "relative",
+            flex: "none",
+            order: 0,
+            flexGrow: 0,
+          }}
+        >
+          <Image
+            src={emp.avatar}
+            alt={emp.name}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+
+        {/* Text Frame (Frame 2609008) */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            padding: "0px",
+            flex: "1 1 auto",
+            overflow: "hidden",
+            height: "44px",
+            order: 1,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              padding: "0px",
+              width: "100%",
+              height: "44px",
+              flex: "none",
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 500,
+                fontSize: "16px",
+                lineHeight: "24px",
+                flex: "none",
+                order: 0,
+                flexGrow: 0,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
+              }}
+              className="text-black dark:text-white"
+              title={emp.name}
+            >
+              {emp.name}
+            </span>
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 400,
+                fontSize: "14px",
+                lineHeight: "20px",
+                flex: "none",
+                order: 1,
+                flexGrow: 0,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
+              }}
+              className="text-[#6B7280] dark:text-zinc-400"
+              title={emp.role}
+            >
+              {emp.role}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      {emp.action === "view" && (
+        <Link
+          href={`/profile/${emp.account_name}`}
+          style={{
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "8px 16px",
+            gap: "10px",
+            width: "100px",
+            height: "40px",
+            border: "1px solid #1A73E8",
+            borderRadius: "24px",
+            flex: "none",
+            order: 1,
+            flexGrow: 0,
+            cursor: "pointer",
+            textDecoration: "none",
+          }}
+          className="bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900 transition-colors"
+        >
+          <span
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "20px",
+              textAlign: "center",
+              color: "#1A73E8",
+              flex: "none",
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            View Profile
+          </span>
+        </Link>
+      )}
+
+      {emp.action === "pending" && (
+        <button
+          style={{
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "8px 16px",
+            gap: "10px",
+            width: "100px",
+            height: "40px",
+            border: "1px solid #1A73E8",
+            borderRadius: "24px",
+            flex: "none",
+            order: 1,
+            flexGrow: 0,
+            cursor: "default",
+          }}
+          className="bg-white dark:bg-transparent opacity-70"
+          disabled
+        >
+          <span
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "20px",
+              textAlign: "center",
+              color: "#1A73E8",
+              flex: "none",
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            Pending
+          </span>
+        </button>
+      )}
+
+      {emp.action === "connect" && (
+        <button
+          onClick={() => handleConnect(emp.id)}
+          disabled={connectingId === emp.id}
+          style={{
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "8px 16px",
+            gap: "10px",
+            width: "100px",
+            height: "40px",
+            background: "#1A73E8",
+            borderRadius: "24px",
+            flex: "none",
+            order: 1,
+            flexGrow: 0,
+            border: "none",
+            cursor: "pointer",
+          }}
+          className="hover:bg-blue-700 transition-colors"
+        >
+          <span
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "20px",
+              textAlign: "center",
+              color: "#FFFFFF",
+              flex: "none",
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            {connectingId === emp.id ? "..." : "Connect"}
+          </span>
+        </button>
+      )}
+
+      {emp.action === "empty" && (
+        <div style={{ width: "100px" }} />
+      )}
+
+      {emp.action === "message" && (
+        <Link
+          href={`/messaging?userId=${emp.id}`}
+          style={{
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "8px 16px",
+            gap: "10px",
+            width: "100px",
+            height: "40px",
+            background: "#1A73E8",
+            borderRadius: "24px",
+            flex: "none",
+            order: 1,
+            flexGrow: 0,
+            cursor: "pointer",
+            border: "none",
+            textDecoration: "none",
+          }}
+          className="hover:bg-blue-700 transition-colors"
+        >
+          <span
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "20px",
+              textAlign: "center",
+              color: "#FFFFFF",
+              flex: "none",
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            Message
+          </span>
+        </Link>
+      )}
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -496,302 +819,20 @@ export default function PeopleTab({ data }: PeopleTabProps) {
         </div>
       )}
 
-      {/* Render employees directly under parent for exact Figma sequence gaps */}
-      {employeesList.map((emp: any, empIdx: number) => (
-        <div
-          key={emp.id}
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "8px 0px",
-            width: "920px",
-            height: "60px",
-            borderRadius: "12px",
-            flex: "none",
-            order: empIdx + 3,
-            alignSelf: "stretch",
-            flexGrow: 0,
-          }}
-          className="bg-white dark:bg-zinc-950"
-        >
-          {/* Avatar & Info Row (Frame 2608774) */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "0px",
-              gap: "8px",
-              height: "44px",
-              flex: "1 1 auto",
-              order: 0,
-              overflow: "hidden",
-            }}
-          >
-            {/* Avatar Ellipse */}
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                overflow: "hidden",
-                position: "relative",
-                flex: "none",
-                order: 0,
-                flexGrow: 0,
-              }}
-            >
-              <Image
-                src={emp.avatar}
-                alt={emp.name}
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </div>
+      {/* Grouped: connected people first (backend-sorted), then suggestions */}
+      {showGroupHeaders && (
+        <h3 style={{ ...groupHeaderStyle, order: peopleYouKnowHeaderOrder as number }} className="text-black dark:text-white">
+          People you know
+        </h3>
+      )}
+      {peopleYouKnowRows.map(({ emp, order }: { emp: any; order: number }) => renderEmployeeRow(emp, order))}
 
-            {/* Text Frame (Frame 2609008) */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "flex-start",
-                padding: "0px",
-                flex: "1 1 auto",
-                overflow: "hidden",
-                height: "44px",
-                order: 1,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  padding: "0px",
-                  width: "100%",
-                  height: "44px",
-                  flex: "none",
-                  order: 0,
-                  flexGrow: 0,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                    flex: "none",
-                    order: 0,
-                    flexGrow: 0,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    width: "100%",
-                  }}
-                  className="text-black dark:text-white"
-                  title={emp.name}
-                >
-                  {emp.name}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "14px",
-                    lineHeight: "20px",
-                    flex: "none",
-                    order: 1,
-                    flexGrow: 0,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    width: "100%",
-                  }}
-                  className="text-[#6B7280] dark:text-zinc-400"
-                  title={emp.role}
-                >
-                  {emp.role}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          {emp.action === "view" && (
-            <Link
-              href={`/profile/${emp.account_name}`}
-              style={{
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "8px 16px",
-                gap: "10px",
-                width: "100px",
-                height: "40px",
-                border: "1px solid #1A73E8",
-                borderRadius: "24px",
-                flex: "none",
-                order: 1,
-                flexGrow: 0,
-                cursor: "pointer",
-                textDecoration: "none",
-              }}
-              className="bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900 transition-colors"
-            >
-              <span
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  textAlign: "center",
-                  color: "#1A73E8",
-                  flex: "none",
-                  order: 0,
-                  flexGrow: 0,
-                }}
-              >
-                View Profile
-              </span>
-            </Link>
-          )}
-          
-          {emp.action === "pending" && (
-            <button
-              style={{
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "8px 16px",
-                gap: "10px",
-                width: "100px",
-                height: "40px",
-                border: "1px solid #1A73E8",
-                borderRadius: "24px",
-                flex: "none",
-                order: 1,
-                flexGrow: 0,
-                cursor: "default",
-              }}
-              className="bg-white dark:bg-transparent opacity-70"
-              disabled
-            >
-              <span
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  textAlign: "center",
-                  color: "#1A73E8",
-                  flex: "none",
-                  order: 0,
-                  flexGrow: 0,
-                }}
-              >
-                Pending
-              </span>
-            </button>
-          )}
-
-          {emp.action === "connect" && (
-            <button
-              onClick={() => handleConnect(emp.id)}
-              disabled={connectingId === emp.id}
-              style={{
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "8px 16px",
-                gap: "10px",
-                width: "100px",
-                height: "40px",
-                background: "#1A73E8",
-                borderRadius: "24px",
-                flex: "none",
-                order: 1,
-                flexGrow: 0,
-                border: "none",
-                cursor: "pointer",
-              }}
-              className="hover:bg-blue-700 transition-colors"
-            >
-              <span
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  textAlign: "center",
-                  color: "#FFFFFF",
-                  flex: "none",
-                  order: 0,
-                  flexGrow: 0,
-                }}
-              >
-                {connectingId === emp.id ? "..." : "Connect"}
-              </span>
-            </button>
-          )}
-
-          {emp.action === "empty" && (
-             <div style={{ width: "100px" }} />
-          )}
-
-          {emp.action === "message" && (
-            <Link
-              href={`/messaging?userId=${emp.id}`}
-              style={{
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "8px 16px",
-                gap: "10px",
-                width: "100px",
-                height: "40px",
-                background: "#1A73E8",
-                borderRadius: "24px",
-                flex: "none",
-                order: 1,
-                flexGrow: 0,
-                cursor: "pointer",
-                border: "none",
-                textDecoration: "none",
-              }}
-              className="hover:bg-blue-700 transition-colors"
-            >
-              <span
-                style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  textAlign: "center",
-                  color: "#FFFFFF",
-                  flex: "none",
-                  order: 0,
-                  flexGrow: 0,
-                }}
-              >
-                Message
-              </span>
-            </Link>
-          )}
-        </div>
-      ))}
+      {showGroupHeaders && (
+        <h3 style={{ ...groupHeaderStyle, order: suggestedPeopleHeaderOrder as number }} className="text-black dark:text-white">
+          Suggested people
+        </h3>
+      )}
+      {suggestedPeopleRows.map(({ emp, order }: { emp: any; order: number }) => renderEmployeeRow(emp, order))}
     </div>
   );
 }

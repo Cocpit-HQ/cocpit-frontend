@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { CompanyProfileData } from "../../../types/company-profile.types";
 import { useQuery } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
+import AvatarStack from "../shared/AvatarStack";
 
 interface PeopleSectionProps {
   data: CompanyProfileData;
@@ -17,18 +17,38 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
     queryKey: ["orgPeople", data.id, "preview", isEdu],
     queryFn: () =>
       isEdu
-        ? companyProfileService.getOrgAlumni(data.id, { page: 1, limit: 1 })
-        : companyProfileService.getOrgPeople(data.id, { page: 1, limit: 1 }),
+        ? companyProfileService.getOrgAlumni(data.id, { page: 1, limit: 3 })
+        : companyProfileService.getOrgPeople(data.id, { page: 1, limit: 3 }),
   });
 
-  const employeesList = (peopleData?.people || []).map((emp: any) => ({
-    id: emp.user_id || emp.id || emp._id,
-    name: emp.full_name || emp.name || "Unknown",
-    role: emp.role_display || emp.title || emp.headline || emp.role || "Associate",
-    avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
-  }));
-  const displayEmployees = employeesList.slice(0, 1);
-  const totalCount = peopleData?.meta?.total || displayEmployees.length;
+  const rows: any[] = peopleData?.people || peopleData?.alumni || [];
+  const connectionsTotal = peopleData?.meta?.connections_total || 0;
+  const total = peopleData?.meta?.total || 0;
+
+  // Rows arrive connected-first, so when there are mutual connections, only the
+  // connected rows belong in the "Connections" pill — don't mix in suggestions.
+  const isConnectionsMode = connectionsTotal > 0;
+  const displayCount = isConnectionsMode ? connectionsTotal : total;
+  const displayEmployees = (isConnectionsMode ? rows.filter((r: any) => r.is_connected) : rows)
+    .slice(0, 3)
+    .map((emp: any) => ({
+      id: emp.user_id || emp.id || emp._id,
+      name: emp.full_name || emp.name || "Unknown",
+      avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
+    }));
+
+  if (!isLoading && displayEmployees.length === 0) {
+    return null;
+  }
+
+  const pillLabel = isConnectionsMode ? "Connections" : "Suggestions";
+  const firstName = displayEmployees[0]?.name;
+  const otherCount = Math.max(displayCount - 1, 0);
+  const bodyText =
+    displayCount <= 1
+      ? `${firstName} works here`
+      : `${firstName} and ${otherCount} other${otherCount === 1 ? "" : "s"} work here`;
+
   return (
     <div
       style={{
@@ -38,7 +58,6 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
         padding: "0px",
         gap: "16px",
         width: "960px",
-        height: "192px",
         borderRadius: "24px",
         flex: "none",
         alignSelf: "stretch",
@@ -46,7 +65,6 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
       }}
       className="bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-4 max-md:!mx-auto"
     >
-      {/* Frame 2609076: Header */}
       <div
         style={{
           display: "flex",
@@ -63,11 +81,8 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
         }}
         className="max-md:!w-full max-md:!h-auto"
       >
-        {/* People Title */}
         <h2
           style={{
-            width: "83px",
-            height: "32px",
             fontFamily: "'Poppins', sans-serif",
             fontWeight: 600,
             fontSize: "24px",
@@ -84,167 +99,20 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
         </h2>
       </div>
 
-      {/* Frame 2609092: Content */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          padding: "0px",
-          gap: "16px",
-          width: "920px",
-          height: "76px",
-          flex: "none",
-          order: 1,
-          alignSelf: "stretch",
-          flexGrow: 0,
-        }}
-        className="max-md:!w-full max-md:!h-auto"
-      >
-        {/* Connections Count */}
-        <span
-          style={{
-            height: "16px",
-            fontFamily: "'Poppins', sans-serif",
-            fontStyle: "normal",
-            fontWeight: 400,
-            fontSize: "16px",
-            lineHeight: "16px",
-            flex: "none",
-            order: 0,
-            flexGrow: 0,
-          }}
-          className="text-black dark:text-zinc-300"
-        >
-          {isLoading ? "Loading..." : `${totalCount} Connections`}
-        </span>
-
-        {/* Container */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            padding: "0px",
-            gap: "16px",
-            width: "920px",
-            height: "44px",
-            flex: "none",
-            order: 1,
-            alignSelf: "stretch",
-            flexGrow: 0,
-          }}
-          className="max-md:!w-full max-md:!h-auto"
-        >
-          {displayEmployees.map((emp: any, idx: number) => (
-            <div
-              key={emp.id}
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                padding: "0px",
-                gap: "8px",
-                width: "327px",
-                height: "44px",
-                flex: "none",
-                order: idx,
-                flexGrow: 0,
-              }}
-              className="max-md:!w-full"
-            >
-              {/* Avatar */}
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  position: "relative",
-                  flex: "none",
-                  order: 0,
-                  flexGrow: 0,
-                }}
-              >
-                <Image
-                  src={emp.avatar}
-                  alt={emp.name}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
-
-              {/* Info */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "flex-start",
-                  padding: "0px",
-                  gap: "8px",
-                  width: "279px",
-                  height: "44px",
-                  flex: "none",
-                  order: 1,
-                  flexGrow: 0,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    padding: "0px",
-                    width: "279px",
-                    height: "44px",
-                    flex: "none",
-                    order: 0,
-                    flexGrow: 0,
-                  }}
-                >
-                  {/* Name */}
-                  <span
-                    style={{
-                      height: "24px",
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 500,
-                      fontSize: "16px",
-                      lineHeight: "24px",
-                      flex: "none",
-                      order: 0,
-                      flexGrow: 0,
-                    }}
-                    className="text-black dark:text-white truncate w-full"
-                  >
-                    {emp.name}
-                  </span>
-
-                  {/* Subtitle */}
-                  <span
-                    style={{
-                      height: "20px",
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 400,
-                      fontSize: "14px",
-                      lineHeight: "20px",
-                      flex: "none",
-                      order: 1,
-                      flexGrow: 0,
-                    }}
-                    className="text-[#6B7280] dark:text-zinc-400 truncate w-full"
-                  >
-                    {emp.role}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+      {isLoading ? (
+        <span className="text-black dark:text-zinc-300 font-poppins text-base self-start">Loading...</span>
+      ) : (
+        <div className="w-full flex flex-col gap-4 max-md:!w-full">
+          <div className="inline-flex items-center gap-3 self-start px-4 py-2.5 rounded-full border border-gray-200 dark:border-zinc-800">
+            <AvatarStack people={displayEmployees} totalCount={displayCount} max={2} size={32} />
+            <span className="font-poppins text-sm text-black dark:text-white">{bodyText}</span>
+            <span className="font-poppins text-xs px-2 py-0.5 rounded-full bg-[#EFF4FF] dark:bg-zinc-800 text-[#1A73E8] dark:text-blue-300 font-medium">
+              {pillLabel}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Frame 2609084: View More Button */}
       <div
         style={{
           display: "flex",

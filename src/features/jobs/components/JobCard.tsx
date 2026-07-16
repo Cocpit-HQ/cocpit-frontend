@@ -125,7 +125,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
           {/* Experience */}
           <div className="flex justify-start items-center gap-2">
             <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black dark:text-[#F9FAFB]" />
-            <div className="justify-start text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
+            <div className="justify-start text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] leading-5">{job.experience}</div>
           </div>
 
           {/* Work Mode & Location */}
