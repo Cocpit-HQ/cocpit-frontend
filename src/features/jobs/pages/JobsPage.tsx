@@ -9,6 +9,13 @@ import JobCardSkeleton from "../components/skeletons/JobCardSkeleton";
 import JobList from "../components/JobList";
 import JobFilters from "../components/JobFilters";
 import { Icon } from "@iconify/react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { useRouter, useSearchParams } from "next/navigation";
 import MyListingsDashboard from "../components/my-listings/MyListingsDashboard";
 import { ApplyJobModal } from "../components/ApplyJobModal";
@@ -136,6 +143,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   const [activeFilter, setActiveFilter] = React.useState<'All' | 'Current' | 'Decline' | 'Expired'>(
     (urlSubTab as any) || 'All'
   );
+  const [mobileFilterOpen, setMobileFilterOpen] = React.useState(false);
+  const [isAppFilterDrawerOpen, setIsAppFilterDrawerOpen] = React.useState(false);
 
   useEffect(() => {
     if (urlSubTab && ['All', 'Current', 'Decline', 'Expired'].includes(urlSubTab)) {
@@ -370,6 +379,17 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
     { id: "Saved", label: "Saved" },
   ];
 
+  // Hide mobile HomeHeader search bar when the create-job wizard is active
+  const urlView = urlParams?.get('view');
+  useEffect(() => {
+    if (urlView === 'create-job') {
+      document.body.dataset.hideSearch = 'true';
+    } else {
+      delete document.body.dataset.hideSearch;
+    }
+    return () => { delete document.body.dataset.hideSearch; };
+  }, [urlView]);
+
   if (activeTab === "My Listings" || isCompanyMode) {
     return (
       <div className={`w-full max-w-[998px] mx-auto min-h-screen bg-white ${isCompanyMode ? "dark:bg-[#0F1115]" : "dark:bg-[#0B0F19]"} pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]`}>
@@ -389,12 +409,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
 
   return (
     <div
-      className={`w-full max-w-[998px] mx-auto bg-white dark:bg-[#0B0F19] pb-[40px] px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 dark:border-[#2E3445]/50 rounded-3xl ${activeTab === "Explore" ? "" : "pt-6"
+      className={`w-full max-w-[998px] mx-auto bg-white dark:bg-[#0B0F19] pb-16 px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 dark:border-[#2E3445]/50 rounded-3xl ${activeTab === "Explore" ? "" : "pt-6"
         }`}
     >
       {/* Hero Banner */}
       {activeTab === "Explore" && jobs.length > 0 && (
-        <div className="w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] dark:bg-[#1C2340] border border-[#E0E7FF] dark:border-[#252E54] rounded-[24px] flex flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
+        <div className="hidden md:flex w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] dark:bg-[#1C2340] border border-[#E0E7FF] dark:border-[#252E54] rounded-[24px] flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
           <div className="w-full flex flex-col items-start flex-none self-stretch">
             <div className="w-full font-['Poppins'] font-semibold text-2xl md:text-3xl lg:text-[32px] leading-tight md:leading-[40px] flex items-center text-[#6366F1] dark:text-[#818CF8] flex-none self-stretch">
               Your next career move,
@@ -405,9 +425,21 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         </div>
       )}
 
+      {/* Mobile Posted Jobs Card (Expected Look) */}
+      <div className="w-full flex md:hidden bg-white dark:bg-[#0B0F19] rounded-[16px] border border-gray-200 dark:border-[#2E3445] p-4 flex-col gap-1 shadow-sm mt-2 mb-1">
+          <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-[15px] font-['Poppins']">Posted jobs</h4>
+          <p className="text-gray-500 dark:text-[#9CA3AF] text-[13px] font-['Poppins'] mb-2">Manage and track your active job postings</p>
+          <button 
+            onClick={() => handleTabChange("My Listings")} 
+            className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
+          >
+            Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4"/>
+          </button>
+      </div>
+
       {/* Tabs navigation row */}
       <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white dark:bg-[#0B0F19]">
-        <div className="flex flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto">
+        <div className="flex overflow-x-auto no-scrollbar md:flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto pb-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -428,7 +460,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         {/* My Listings tab link */}
         <button
           onClick={() => handleTabChange("My Listings")}
-          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${activeTab === "My Listings"
+          className={`hidden md:flex h-10 px-4 md:px-5 py-1.5 rounded-3xl justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-auto ${activeTab === "My Listings"
               ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
               : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
             }`}
@@ -448,7 +480,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           </div>
 
           {/* Recommended jobs container */}
-          <div className="w-full flex flex-row justify-start items-start gap-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ">
+          <div className="w-full flex flex-row justify-start items-start gap-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1">
             {isRecommendationsLoading ? (
               [1, 2, 3].map((n) => (
                 <RecommendedJobCardSkeleton key={n} />
@@ -483,20 +515,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         ) : (
           <div className="w-full flex flex-col gap-[24px]">
             {/* Stats Cards Row */}
-            <div className="w-full flex flex-col md:flex-row gap-4 md:gap-[24px]">
+            <div className="w-full flex flex-row gap-2 sm:gap-[24px]">
               {/* Card 1: Total Applied */}
-              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+              <div className="flex-1 min-h-[94px] p-2 sm:p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-center gap-1 sm:gap-[8px]">
                 <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.length
                     : (applicationStats.totalApplied || jobs.length)}
                 </div>
-                <div className="text-[#000000] dark:text-[#F9FAFB] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-center">
                   Total Applied
                 </div>
               </div>
               {/* Card 2: Shortlisted */}
-              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+              <div className="flex-1 min-h-[94px] p-2 sm:p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-center gap-1 sm:gap-[8px]">
                 <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.filter(
@@ -504,7 +536,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       ).length
                     : (applicationStats.shortlisted || 0)}
                 </div>
-                <div className="text-[#000000] dark:text-[#F9FAFB] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-center">
                   Shortlisted
                 </div>
               </div>
@@ -517,10 +549,19 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                 <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] dark:text-[#F9FAFB] leading-[20px]">
                   Tracking {selectedDateFilter !== "All time" ? dateFilteredJobs.length : (applicationStats.totalApplied || jobs.length)} active job applications across your network.
                 </span>
-                <div ref={dropdownRef} className="relative">
+                <div ref={dropdownRef} className="relative flex items-center gap-2">
+                  {/* Mobile Trigger */}
+                  <button
+                    onClick={() => setIsAppFilterDrawerOpen(true)}
+                    className="md:hidden h-[40px] px-2 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#1C2340] rounded-full transition-all border border-transparent text-black dark:text-[#F9FAFB]"
+                  >
+                    <Icon icon="iconoir:filter-list" className="w-[24px] h-[24px]" />
+                  </button>
+
+                  {/* Desktop Date Trigger */}
                   <button
                     onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                    className={`h-[40px] px-4 flex items-center justify-center gap-1.5 hover:bg-slate-100 dark:hover:bg-[#1C2340] rounded-full transition-all border ${
+                    className={`hidden md:flex h-[40px] px-4 items-center justify-center gap-1.5 hover:bg-slate-100 dark:hover:bg-[#1C2340] rounded-full transition-all border ${
                       selectedDateFilter !== "All time"
                         ? "border-[#6366F1]/30 dark:border-[#818CF8]/30 bg-[#EEF2FF] dark:bg-[#1C2340] text-[#6366F1] dark:text-[#818CF8]"
                         : "border-transparent text-black dark:text-[#F9FAFB]"
@@ -609,8 +650,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                 </div>
               </div>
 
-              {/* Filter Chips Row */}
-              <div className="w-full flex flex-row flex-wrap items-center gap-[8px] border-b border-transparent">
+              {/* Filter Chips Row (Desktop Only) */}
+              <div className="hidden md:flex w-full flex-row flex-wrap items-center gap-[8px] border-b border-transparent">
                 {["All", "Applied", "Shortlisted", "In review", "Declined"].map(
                   (chip) => {
                     const isSelected =
@@ -631,6 +672,89 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                 )}
               </div>
             </div>
+
+            {/* Mobile Filter Drawer */}
+            <Drawer open={isAppFilterDrawerOpen} onOpenChange={setIsAppFilterDrawerOpen}>
+              <DrawerContent className="bg-white dark:bg-[#0B0F19] border-t border-indigo-100 dark:border-[#2E3445] rounded-t-[24px] z-[100] h-[85vh]">
+                <DrawerTitle className="sr-only">Filters</DrawerTitle>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-[#2E3445] mb-2 flex-shrink-0">
+                  <h2 className="text-lg font-semibold font-['Poppins'] text-black dark:text-[#F9FAFB]">Filters</h2>
+                  <button
+                    onClick={() => {
+                      setSelectedDateFilter("All time");
+                      setSelectedStatusFilter("All");
+                    }}
+                    className="text-sm text-indigo-500 dark:text-[#818CF8] hover:underline font-['Poppins']"
+                  >
+                    Clear all
+                  </button>
+                </div>
+                <div className="px-5 overflow-y-auto flex-1 pb-24">
+                  <Accordion type="multiple" defaultValue={["date", "status"]} className="w-full">
+                    <AccordionItem value="date" className="border-b border-gray-100 dark:border-[#2E3445]">
+                      <AccordionTrigger className="font-['Poppins'] font-semibold text-base text-black dark:text-[#F9FAFB] hover:no-underline py-4">
+                        Date applied
+                      </AccordionTrigger>
+                      <AccordionContent className="flex flex-col gap-3 pb-4">
+                        {[
+                          { label: "All time", value: "All time" },
+                          { label: "Today", value: "today" },
+                          { label: "Last 7 days", value: "last 7 days" },
+                          { label: "Last 30 days", value: "last 30 days" },
+                        ].map((opt) => (
+                          <label key={opt.value} className="flex items-center gap-3 cursor-pointer group py-1">
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                              selectedDateFilter === opt.value ? "border-indigo-500 dark:border-[#818CF8]" : "border-gray-300 dark:border-gray-600"
+                            }`}>
+                              {selectedDateFilter === opt.value && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 dark:bg-[#818CF8]" />}
+                            </div>
+                            <input
+                              type="radio"
+                              className="hidden"
+                              checked={selectedDateFilter === opt.value}
+                              onChange={() => setSelectedDateFilter(opt.value)}
+                            />
+                            <span className="text-sm text-black dark:text-[#F9FAFB] font-['Poppins']">{opt.label}</span>
+                          </label>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="status" className="border-none">
+                      <AccordionTrigger className="font-['Poppins'] font-semibold text-base text-black dark:text-[#F9FAFB] hover:no-underline py-4">
+                        Status
+                      </AccordionTrigger>
+                      <AccordionContent className="flex flex-col gap-3 pb-4">
+                        {["All", "Applied", "Shortlisted", "In review", "Declined"].map((status) => (
+                          <label key={status} className="flex items-center gap-3 cursor-pointer group py-1">
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                              selectedStatusFilter.toLowerCase() === status.toLowerCase() ? "bg-indigo-500 border-indigo-500 dark:bg-[#818CF8] dark:border-[#818CF8]" : "border-gray-300 dark:border-gray-600"
+                            }`}>
+                              {selectedStatusFilter.toLowerCase() === status.toLowerCase() && <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white dark:text-[#0B0F19]" />}
+                            </div>
+                            <input
+                              type="radio"
+                              className="hidden"
+                              checked={selectedStatusFilter.toLowerCase() === status.toLowerCase()}
+                              onChange={() => setSelectedStatusFilter(status)}
+                            />
+                            <span className="text-sm text-black dark:text-[#F9FAFB] font-['Poppins']">{status}</span>
+                          </label>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+                
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-[#0B0F19] border-t border-gray-100 dark:border-[#2E3445]">
+                   <button
+                     onClick={() => setIsAppFilterDrawerOpen(false)}
+                     className="w-full py-3 rounded-xl bg-indigo-500 dark:bg-[#818CF8] text-white dark:text-[#0B0F19] font-semibold font-['Poppins'] shadow-sm active:scale-95 transition-transform"
+                   >
+                     Show Results
+                   </button>
+                </div>
+              </DrawerContent>
+            </Drawer>
 
             {/* Applications list */}
             <div className="w-full flex flex-col">
@@ -812,11 +936,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         <div className="w-full flex flex-col gap-[20px]">
           {/* Header & Sub-tabs */}
           <div className="w-full flex flex-col items-start gap-4">
-            <h3 className="text-black dark:text-[#F9FAFB] text-xl font-bold font-['Poppins'] leading-8">
-              Official Job Offers
-            </h3>
+            <div className="w-full flex justify-between items-center">
+              <h3 className="text-black dark:text-[#F9FAFB] text-xl font-bold font-['Poppins'] leading-8">
+                Official Job Offers
+              </h3>
+              <button 
+                onClick={() => setMobileFilterOpen(true)}
+                className="md:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#2E3445] transition-colors outline-none"
+              >
+                <Icon icon="iconoir:filter-list" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
+              </button>
+            </div>
             
-            <div className="w-full flex flex-row items-start gap-4 h-[36px] p-0">
+            {/* Desktop Only Sub-tabs */}
+            <div className="hidden md:flex w-full flex-row items-start gap-4 h-[36px] p-0">
               {(['All', 'Current', 'Decline', 'Expired'] as const).map((subTab) => {
                 const isActive = activeFilter === subTab;
                 return (
@@ -835,6 +968,31 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
               })}
             </div>
           </div>
+
+          {/* Mobile Filter Drawer */}
+          <Drawer open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+            <DrawerContent className="bg-white dark:bg-[#0B0F19] border-t border-indigo-100 dark:border-[#2E3445] rounded-t-[24px] z-[80] pb-8 pt-4">
+              <DrawerTitle className="sr-only">Filter Offers</DrawerTitle>
+              <div className="flex flex-col px-4">
+                {(['All', 'Current', 'Decline', 'Expired'] as const).map((subTab) => (
+                  <button
+                    key={subTab}
+                    onClick={() => {
+                      handleSubTabChange(subTab);
+                      setMobileFilterOpen(false);
+                    }}
+                    className={`w-full py-4 px-4 text-left font-['Poppins'] text-base transition-colors rounded-xl ${
+                      activeFilter === subTab
+                        ? 'text-indigo-500 dark:text-[#818CF8] font-medium bg-indigo-50/50 dark:bg-[#1C2340]'
+                        : 'text-gray-600 dark:text-[#9CA3AF] hover:bg-gray-50 dark:hover:bg-[#1C2340]'
+                    }`}
+                  >
+                    {subTab}
+                  </button>
+                ))}
+              </div>
+            </DrawerContent>
+          </Drawer>
 
           {/* Offers list */}
           <div className="w-full flex flex-col gap-6 mt-2">

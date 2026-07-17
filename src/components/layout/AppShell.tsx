@@ -6,7 +6,7 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useUIStore } from "@/store/ui.store";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { Plus } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -19,6 +19,8 @@ export function AppShell({
 }: AppShellProps) {
   const { setActiveModal } = useUIStore();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isCreateJobActive = searchParams?.get('view') === 'create-job';
 
   return (
     <div className="relative flex min-h-screen bg-background text-foreground">
@@ -36,7 +38,7 @@ export function AppShell({
       {/* Mobile bottom navigation */}
       {!hideBottomNav && (
         <>
-          {!pathname?.startsWith('/organization/') && (
+          {!pathname?.startsWith('/organization/') && !pathname?.includes('/jobs/') && !isCreateJobActive && (
             <button
               onClick={() => setActiveModal('create-post')}
               className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 bg-[#6366F1] text-white rounded-full flex items-center justify-center shadow-[0_8px_16px_rgba(99,102,241,0.4)] hover:bg-[#5558e3] transition-colors"

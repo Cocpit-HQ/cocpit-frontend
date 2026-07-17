@@ -91,6 +91,16 @@ export const HomeHeader = () => {
     const isChannelSearchPage = pathname === '/channels/search';
     const isChannelDetailPage = isChannelPage && !isChannelSearchPage && pathname !== '/channels';
 
+    // Track whether the create-job wizard is active (set via body data-attribute by JobsPage)
+    const [isCreateJobActive, setIsCreateJobActive] = useState(false);
+    useEffect(() => {
+        const checkAttr = () => setIsCreateJobActive(!!document.body.dataset.hideSearch);
+        checkAttr();
+        const observer = new MutationObserver(checkAttr);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['data-hide-search'] });
+        return () => observer.disconnect();
+    }, []);
+
     // Job search state
     const [jobTitleQuery, setJobTitleQuery] = useState('');
     const [jobLocationQuery, setJobLocationQuery] = useState('');
@@ -824,12 +834,12 @@ export const HomeHeader = () => {
                 </div>
 
                 {/* --- Mobile Header (Hidden from md screens up) --- */}
-                <div className="relative flex w-full items-center gap-2 md:hidden">
+                <div className={`relative w-full items-center gap-2 md:hidden ${isCreateJobActive ? 'hidden' : 'flex'}`}>
                     {/* Mobile Search Bar */}
                     <div className="flex-1 flex items-center gap-3 relative">
                         <input
                             type="text"
-                            placeholder="Search"
+                            placeholder={pathname === '/jobs' || pathname.startsWith('/jobs/') ? "Search jobs" : "Search"}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => setIsSearchFocused(true)}

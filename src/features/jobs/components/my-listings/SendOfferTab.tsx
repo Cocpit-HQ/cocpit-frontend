@@ -148,7 +148,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
 
 
   return (
-    <div className="w-full flex flex-col gap-[16px] bg-white dark:bg-[#0B0F19] rounded-[24px] p-[16px] min-h-[708px] animate-in fade-in duration-300">
+    <div className={`w-full flex flex-col gap-[16px] bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} rounded-[24px] p-[16px] min-h-[708px] animate-in fade-in duration-300`}>
       {/* Header Row */}
       {sentOffers.length > 0 && (
         <div className="w-full flex flex-col gap-[4px] px-0">
@@ -195,7 +195,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
             <div
               key={`${item.id}-${index}`}
               onClick={() => handleSelectGroup(item)}
-              className="w-full bg-white dark:bg-[#0B0F19] border-b border-[#EEF2FF]/60 dark:border-[#2E3445]/60 last:border-b-0 hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors cursor-pointer"
+              className={`w-full bg-white ${isCompanyMode ? 'dark:bg-[#0F1115] border-[#EEF2FF]/60 dark:border-[#2A2D35]/60 hover:bg-slate-50 dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] border-[#EEF2FF]/60 dark:border-[#2E3445]/60 hover:bg-slate-50 dark:hover:bg-[#1C2340]'} border-b last:border-b-0 transition-colors cursor-pointer`}
             >
               {/* Desktop View */}
               <div className="hidden md:flex flex-row items-center justify-between py-4 px-4 gap-4 h-[88px] w-full">
@@ -253,16 +253,16 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
               {/* Mobile View */}
               <div className="flex md:hidden flex-row items-center py-4 px-1 gap-4 w-full">
                 {/* Logo Placeholder */}
-                <div className="w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white shadow-sm border border-slate-100 dark:border-[#2E3445]">
+                <div className={`w-14 h-14 rounded-2xl bg-black shrink-0 overflow-hidden relative flex items-center justify-center text-white shadow-sm border border-slate-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'}`}>
                   <Icon icon="lucide:infinity" className="w-8 h-8 text-white" />
                 </div>
                 
                 {/* Info */}
                 <div className="flex-1 flex flex-col justify-center min-w-0">
-                  <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
+                  <span className={`font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} capitalize truncate w-full`}>
                     {item.title}
                   </span>
-                  <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 dark:text-[#9CA3AF] truncate w-full mt-0.5">
+                  <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} truncate w-full mt-0.5`}>
                     Sent to {item.sentCount} candidates • {item.acceptedCount} accepted
                   </span>
                 </div>

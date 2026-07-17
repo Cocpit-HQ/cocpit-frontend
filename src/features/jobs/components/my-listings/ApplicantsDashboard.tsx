@@ -222,13 +222,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     text: isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]',
     textMuted: isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]',
     border: isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]',
-    borderLight: isCompanyMode ? 'dark:border-[#16365F]' : 'dark:border-[#252E54]',
+    borderLight: isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]',
     primary: isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]',
     primaryBg: isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]',
-    primaryHover: isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#6366F1]',
-    card: isCompanyMode ? 'dark:bg-[#1A2435]' : 'dark:bg-[#252E54]',
-    ultraLight: isCompanyMode ? 'dark:bg-[#121B2B]' : 'dark:bg-[#1C2340]',
-    modalBg: isCompanyMode ? 'dark:bg-[#1A2435]' : 'dark:bg-[#1C2340]',
+    primaryHover: isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90',
+    card: isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]',
+    ultraLight: isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]',
+    modalBg: isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]',
   };
 
   // Real data state
@@ -583,24 +583,20 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     (opt) => {
                       const isOptActive = filter === opt;
                       return (
-                        <div
+                        <button
                           key={opt}
                           onClick={() => {
                             setFilter(opt);
                             setIsDropdownOpen(false);
                           }}
-                          className={`self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer transition-colors ${
-                            isCompanyMode ? `hover:bg-blue-50/25 dark:hover:bg-[#16365F]/50` : `hover:bg-indigo-50/25 dark:hover:bg-[#252E54]/50`
+                          className={`w-full flex items-center px-3 py-2 rounded-2xl text-sm font-medium font-['Poppins'] transition-colors ${
+                            isOptActive
+                              ? (isCompanyMode ? 'bg-[#E8F0FE] text-[#1A73E8] dark:bg-[#16365F] dark:text-[#4D9CFF]' : 'bg-indigo-50 text-[#6366F1] dark:bg-[#252E54] dark:text-[#818CF8]')
+                              : `text-gray-600 ${t.textMuted} hover:bg-slate-50 hover:${t.ultraLight}`
                           }`}
                         >
-                          <span
-                            className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                              isOptActive ? (isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500') : 'text-black ${t.text}'
-                            }`}
-                          >
-                            {opt}
-                          </span>
-                        </div>
+                          {opt}
+                        </button>
                       );
                     }
                   )}
@@ -609,29 +605,25 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             </div>
           </div>
 
-          {/* Candidate Card List (Frame 2609108) */}
-          <div
-            className={`flex flex-col items-start p-0 gap-[16px] w-[270px] h-[356px] flex-none order-1 grow-0 overflow-y-auto scrollbar-none`}
-            style={{ scrollbarWidth: 'none' }}
-          >
+          {/* List of candidate cards */}
+          <div className="flex flex-col items-start p-0 gap-[16px] w-[278px] h-auto flex-none order-1 grow-0">
             {filteredCandidates.length === 0 ? (
-              <div className={`py-12 flex flex-col items-center justify-center gap-2 text-center w-full`}>
-                <span className={`text-gray-400 text-xs font-semibold font-['Poppins']`}>No candidates</span>
-                <span className={`text-gray-400 text-[10px] font-['Poppins']`}>No applications match filter</span>
+              <div className="py-12 flex flex-col items-center justify-center gap-2 text-center w-full">
+                <span className={`text-sm font-semibold text-gray-500 ${t.textMuted} font-['Poppins']`}>No candidates</span>
               </div>
             ) : (
               filteredCandidates.map((cand) => {
-                const isSelected = cand.applicationId === selectedCandId;
+                const isActive = selectedCandId === cand.applicationId;
                 return (
                   <div
                     key={cand.applicationId}
                     onClick={() => setSelectedCandId(cand.applicationId)}
-                    className={`box-border flex flex-row items-center p-[12px] gap-[8px] w-[270px] h-[78px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer transition-all duration-200`}
-                    style={{
-                      backgroundColor: isSelected ? (isCompanyMode ? '#E8F0FE' : '#EEF2FF') : '#FFFFFF',
-                    }}
+                    className={`box-border flex flex-row items-center py-[12px] px-[16px] gap-[12px] w-[278px] h-[74px] rounded-[24px] cursor-pointer transition-all active:scale-[0.98] flex-none order-0 self-stretch grow-0 ${
+                      isActive 
+                        ? (isCompanyMode ? 'bg-[#E8F0FE] border border-[#1A73E8] dark:bg-[#16365F] dark:border-[#4D9CFF]' : 'bg-indigo-50 border border-indigo-500 dark:bg-[#252E54] dark:border-[#818CF8]') 
+                        : `bg-[#F9FAFF] ${t.ultraLight} border border-transparent hover:border-gray-200 hover:${t.borderLight}`
+                    }`}
                   >
-                    {/* Ellipse 2 (User avatar) */}
                     {cand.avatarUrl ? (
                       <img
                         className={`w-[50px] h-[50px] rounded-full object-cover flex-none order-0 grow-0`}

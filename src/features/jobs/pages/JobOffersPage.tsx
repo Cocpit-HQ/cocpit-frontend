@@ -5,9 +5,17 @@ import { OfferCard } from '../components/OfferCard';
 import OfferCardSkeleton from '../components/skeletons/OfferCardSkeleton';
 import * as jobsService from '../services/jobs.service';
 import { Icon } from '@iconify/react';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const JobOffersPage: React.FC = () => {
   const router = useRouter();
+  const { isCompany, activeProfile } = useActiveProfile();
+  const isCompanyMode = isCompany && activeProfile;
   const { offers, isLoading, handleAccept, handleDecline } = useJobOffers();
 
   // Hidden scrollbar logic: show on scroll and hover for 3 seconds
@@ -33,6 +41,7 @@ export const JobOffersPage: React.FC = () => {
   }, []);
 
   const [activeFilter, setActiveFilter] = React.useState<'All' | 'Current' | 'Decline' | 'Expired'>('All');
+  const [mobileFilterOpen, setMobileFilterOpen] = React.useState(false);
 
   const filteredOffers = React.useMemo(() => {
     if (activeFilter === 'All') return offers;
@@ -57,7 +66,7 @@ export const JobOffersPage: React.FC = () => {
   const subTabs = ['All', 'Current', 'Decline', 'Expired'] as const;
 
   return (
-    <div className="w-full max-w-[998px] h-auto min-h-[814px] mx-auto bg-white pt-[20px] px-4 md:px-[20px] pb-[20px] flex flex-col items-center gap-6 border border-slate-100/50 rounded-3xl">
+    <div className={`w-full max-w-[998px] h-auto min-h-[814px] mx-auto bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} pt-[20px] px-4 md:px-[20px] pb-[20px] flex flex-col items-center gap-6 border border-slate-100/50 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} rounded-3xl`}>
       
       {/* Section 1 — Tabs row */}
       <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 gap-4">
@@ -74,8 +83,8 @@ export const JobOffersPage: React.FC = () => {
                 }}
                 className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
                   isActive
-                    ? 'bg-[#EEF2FF] border-transparent text-[#6366F1]'
-                    : 'bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]'
+                    ? `bg-[#EEF2FF] ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'} border-transparent text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`
+                    : `bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border-[#6366F1]/30 ${isCompanyMode ? 'dark:border-[#4D9CFF]/30' : 'dark:border-[#818CF8]/30'} hover:border-[#6366F1] ${isCompanyMode ? 'dark:hover:border-[#4D9CFF]' : 'dark:hover:border-[#818CF8]'} text-[#6366F1]/70 ${isCompanyMode ? 'dark:text-[#4D9CFF]/70' : 'dark:text-[#818CF8]/70'} hover:text-[#6366F1] ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`
                 }`}
               >
                 {tab.label}
@@ -89,7 +98,7 @@ export const JobOffersPage: React.FC = () => {
           onClick={() => {
             router.push('/jobs?tab=My Listings');
           }}
-          className="h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1] w-full md:w-auto"
+          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border-[#6366F1]/30 ${isCompanyMode ? 'dark:border-[#4D9CFF]/30' : 'dark:border-[#818CF8]/30'} hover:border-[#6366F1] ${isCompanyMode ? 'dark:hover:border-[#4D9CFF]' : 'dark:hover:border-[#818CF8]'} text-[#6366F1]/70 ${isCompanyMode ? 'dark:text-[#4D9CFF]/70' : 'dark:text-[#818CF8]/70'} hover:text-[#6366F1] ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'} w-full md:w-auto`}
         >
           <span>Posted jobs</span>
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
@@ -98,28 +107,62 @@ export const JobOffersPage: React.FC = () => {
 
       {/* Section 2 — Title row & Filters (margin-top 24px) */}
       <div className="w-full flex flex-col items-start gap-4 flex-none">
-        <h1 className="font-['Poppins'] font-semibold text-lg leading-6 text-black">
-          Official Job Offers
-        </h1>
+        <div className="w-full flex justify-between items-center">
+          <h1 className={`font-['Poppins'] font-semibold text-lg leading-6 text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+            Official Job Offers
+          </h1>
+          <button 
+            onClick={() => setMobileFilterOpen(true)}
+            className={`md:hidden p-2 rounded-full hover:bg-gray-100 ${isCompanyMode ? 'dark:hover:bg-[#2A2D35]' : 'dark:hover:bg-[#2E3445]'} transition-colors outline-none`}
+          >
+            <Icon icon="iconoir:filter-list" className={`w-6 h-6 text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`} />
+          </button>
+        </div>
+
+        <Drawer open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+          <DrawerContent className={`bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border-t border-indigo-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} rounded-t-[24px] z-[100] pb-8 pt-4`}>
+            <DrawerTitle className="sr-only">Filter Offers</DrawerTitle>
+            <div className="flex flex-col px-4">
+              {subTabs.map((subTab) => (
+                <button
+                  key={subTab}
+                  onClick={() => {
+                    setActiveFilter(subTab);
+                    setMobileFilterOpen(false);
+                  }}
+                  className={`w-full py-4 px-4 text-left font-['Poppins'] text-base transition-colors rounded-xl ${
+                    activeFilter === subTab
+                      ? `text-indigo-500 ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} font-medium bg-indigo-50/50 ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'}`
+                      : `text-gray-600 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} hover:bg-gray-50 ${isCompanyMode ? 'dark:hover:bg-[#16365F]' : 'dark:hover:bg-[#1C2340]'}`
+                  }`}
+                >
+                  {subTab}
+                </button>
+              ))}
+            </div>
+          </DrawerContent>
+        </Drawer>
         
-        {/* Sub-tabs / Filters */}
-        <div className="w-full flex items-center border-b border-gray-200 gap-6">
+        {/* Sub-tabs / Filters (Desktop Only) */}
+        <div className={`hidden md:flex w-full items-center border-b border-gray-200 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} gap-6`}>
           {subTabs.map((subTab) => (
             <button
               key={subTab}
               onClick={() => setActiveFilter(subTab)}
               className={`pb-2 text-sm font-medium font-['Poppins'] relative transition-colors ${
-                activeFilter === subTab ? 'text-[#6366F1]' : 'text-gray-500 hover:text-gray-900'
+                activeFilter === subTab ? `text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}` : `text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} hover:text-gray-900 ${isCompanyMode ? 'dark:hover:text-[#FFFFFF]' : 'dark:hover:text-white'}`
               }`}
             >
               {subTab}
               {activeFilter === subTab && (
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#6366F1] rounded-t-sm" />
+                <div className={`absolute bottom-0 left-0 w-full h-[2px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} rounded-t-sm`} />
               )}
             </button>
           ))}
         </div>
       </div>
+
+
 
       {/* Section 3 — Offers list */}
       <div 
@@ -139,12 +182,12 @@ export const JobOffersPage: React.FC = () => {
             ))}
           </div>
         ) : filteredOffers.length === 0 ? (
-          <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">
-            <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-[#6366F1]">
+          <div className={`w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 ${isCompanyMode ? 'dark:outline-[#2A2D35]' : 'dark:outline-[#2E3445]'}`}>
+            <div className={`w-16 h-16 rounded-full bg-indigo-50 ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'} flex items-center justify-center text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`}>
               <Icon icon="solar:letter-linear" className="w-8 h-8" />
             </div>
-            <h4 className="text-black text-lg font-semibold font-['Poppins']">No offers found</h4>
-            <p className="text-gray-500 text-sm font-['Poppins'] max-w-xs text-center">
+            <h4 className={`text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-lg font-semibold font-['Poppins']`}>No offers found</h4>
+            <p className={`text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} text-sm font-['Poppins'] max-w-xs text-center`}>
               There are no offers in this category.
             </p>
             {activeFilter !== 'All' && (

@@ -218,14 +218,20 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-[416px] p-4 bg-white rounded-3xl flex flex-col justify-start items-center overflow-hidden shadow-xl border border-indigo-50/50 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+      {/* Mobile bottom sheet / Desktop centered modal */}
+      <div className="w-full md:w-[416px] md:p-4 bg-white dark:bg-[#0F1115] md:rounded-3xl flex flex-col justify-start items-center overflow-hidden shadow-xl border border-indigo-50/50 dark:border-[#2A2D35] animate-in slide-in-from-bottom md:zoom-in-95 duration-300 rounded-t-[28px] max-h-[92dvh] md:max-h-none overflow-y-auto">
         
         {/* STAGE 1: Choose Job */}
         {stage === 1 && (
           <>
-            {/* Header Close button */}
-            <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
+            {/* Mobile drag handle */}
+            <div className="md:hidden w-full flex flex-col items-center pt-3 pb-1 px-4">
+              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#2A2D35] mb-1" />
+            </div>
+
+            {/* Desktop close button */}
+            <div className="hidden md:flex self-stretch flex-col justify-start items-end gap-2.5">
               <button
                 onClick={handleCancelClick}
                 type="button"
@@ -236,15 +242,15 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Content Container */}
-            <div className="w-full flex flex-col justify-start items-center gap-4">
+            <div className="w-full flex flex-col justify-start items-center gap-4 px-4 md:px-0 pb-6 md:pb-0">
               {/* Title Header */}
               <div className="w-full flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Send offer</div>
-                <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Choose or create a job to send an offer.</div>
+                <div className="text-center justify-start text-black dark:text-[#F9FAFB] text-lg font-semibold md:font-medium font-['Poppins'] leading-6">Send offer</div>
+                <div className="text-center justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">Choose or create a job to send an offer.</div>
               </div>
 
               {/* Search input */}
-              <div data-property-1="SEARCH" className={`w-96 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 bg-white inline-flex justify-between items-center transition-colors ${
+              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${
                 isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
               }`}>
                 <input
@@ -252,7 +258,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
+                  className="flex-1 bg-transparent border-0 p-0 text-black dark:text-[#F9FAFB] text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
                 />
                 <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center text-gray-450 pointer-events-none">
                   <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
@@ -260,9 +266,9 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               </div>
 
               {/* Job Listings List */}
-              <div className="w-96 flex flex-col justify-start items-start gap-4">
-                <div className="text-center justify-start text-black text-xs font-normal font-['Poppins'] leading-4">Recent jobs</div>
-                <div className="self-stretch flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+              <div className="w-full md:w-96 flex flex-col justify-start items-start gap-4">
+                <div className="text-left justify-start text-black dark:text-[#F9FAFB] text-xs font-normal font-['Poppins'] leading-4">Recent jobs</div>
+                <div className="self-stretch flex flex-col gap-2 md:max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
                   {filteredListings.length === 0 ? (
                     <div className="py-12 text-center text-gray-400 text-xs font-['Poppins'] w-full">
                       No active job listings found.
@@ -274,18 +280,18 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                         <div
                           key={job.id}
                           onClick={() => setSelectedJobId(job.id)}
-                          className={`self-stretch px-4 py-2 rounded-xl inline-flex justify-start items-start gap-4 cursor-pointer border transition-all ${
+                          className={`self-stretch px-4 py-3 md:py-2 rounded-xl inline-flex justify-start items-start gap-4 cursor-pointer border transition-all ${
                             isSelected
-                              ? (isCompanyMode ? 'bg-blue-50 border-blue-100 shadow-sm' : 'bg-indigo-50 border-indigo-100 shadow-sm')
-                              : 'bg-white hover:bg-slate-50 border-transparent'
+                              ? (isCompanyMode ? 'bg-blue-50 dark:bg-[#16365F] border-blue-100 dark:border-[#1A73E8]/30 shadow-sm' : 'bg-indigo-50 dark:bg-[#252E54] border-indigo-100 dark:border-indigo-500/30 shadow-sm')
+                              : 'bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#1C2340]/30 border-transparent'
                           }`}
                         >
-                          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 min-w-0">
-                            <div className="justify-center text-black text-base font-medium font-['Poppins'] capitalize leading-6 truncate w-full text-left">{job.title}</div>
-                            <div className="self-stretch justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-left">{job.posted_at || 'Posted recently'}</div>
+                          <div className="flex-1 inline-flex flex-col justify-start items-start gap-1 md:gap-2 min-w-0">
+                            <div className="justify-center text-black dark:text-[#F9FAFB] text-base font-semibold md:font-medium font-['Poppins'] capitalize leading-6 truncate w-full text-left">{job.title}</div>
+                            <div className="self-stretch justify-center text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4 text-left">{job.posted_at || 'Posted recently'}</div>
                           </div>
-                          <div className="w-16 p-2 bg-green-50 rounded-full inline-flex flex-col justify-center items-center flex-shrink-0">
-                            <div className="justify-center text-green-500 text-[10px] font-medium font-['Poppins'] uppercase">ACTIVE</div>
+                          <div className="w-16 p-2 bg-green-50 dark:bg-[#123B23] rounded-full inline-flex flex-col justify-center items-center flex-shrink-0">
+                            <div className="justify-center text-green-500 dark:text-[#4ADE80] text-[10px] font-medium font-['Poppins'] uppercase">ACTIVE</div>
                           </div>
                         </div>
                       );
@@ -299,7 +305,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <button
                   onClick={handleCancelClick}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
                     isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
                   }`}
                 >
@@ -341,7 +347,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   }}
                   disabled={!selectedJobId || isFetchingRecipients}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
                     isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
                   }`}
                 >
@@ -355,8 +361,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         {/* STAGE 2: Choose Candidates */}
         {stage === 2 && (
           <>
-            {/* Header Close button */}
-            <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
+            {/* Mobile drag handle */}
+            <div className="md:hidden w-full flex flex-col items-center pt-3 pb-1 px-4">
+              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#2A2D35] mb-1" />
+            </div>
+
+            {/* Desktop close button */}
+            <div className="hidden md:flex self-stretch flex-col justify-start items-end gap-2.5">
               <button
                 onClick={handleCancelClick}
                 type="button"
@@ -367,15 +378,15 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Content Container */}
-            <div className="w-full flex flex-col justify-start items-center gap-4">
+            <div className="w-full flex flex-col justify-start items-center gap-4 px-4 md:px-0 pb-6 md:pb-0">
               {/* Title Header */}
               <div className="w-full flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Send offer</div>
-                <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Choose or create a job to send an offer.</div>
+                <div className="text-center justify-start text-black dark:text-[#F9FAFB] text-lg font-semibold md:font-medium font-['Poppins'] leading-6">Send offer</div>
+                <div className="text-center justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">Write a short invitation message</div>
               </div>
 
               {/* Search input */}
-              <div data-property-1="SEARCH" className={`w-96 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 bg-white inline-flex justify-between items-center transition-colors ${
+              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${
                 isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
               }`}>
                 <input
@@ -383,7 +394,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
+                  className="flex-1 bg-transparent border-0 p-0 text-black dark:text-[#F9FAFB] text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
                 />
                 <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center text-gray-400 pointer-events-none">
                   <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
@@ -478,7 +489,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     }
                   }}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
                     isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
                   }`}
                 >
@@ -491,7 +502,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   }}
                   disabled={selectedCandidates.length === 0}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
                     isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
                   }`}
                 >
@@ -505,8 +516,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         {/* STAGE 3: Personal Note & Send */}
         {stage === 3 && (
           <>
-            {/* Header Close button */}
-            <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
+            {/* Mobile drag handle */}
+            <div className="md:hidden w-full flex flex-col items-center pt-3 pb-1 px-4">
+              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#2A2D35] mb-1" />
+            </div>
+
+            {/* Desktop close button */}
+            <div className="hidden md:flex self-stretch flex-col justify-start items-end gap-2.5">
               <button
                 onClick={handleCancelClick}
                 type="button"
@@ -517,11 +533,11 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             </div>
 
             {/* Content Container */}
-            <div className="w-full flex flex-col justify-start items-center gap-4">
+            <div className="w-full flex flex-col justify-start items-center gap-4 px-4 md:px-0 pb-6 md:pb-0">
               {/* Title Header */}
               <div className="w-full flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Send offer</div>
-                <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Choose or create a job to send an offer.</div>
+                <div className="text-center justify-start text-black dark:text-[#F9FAFB] text-lg font-semibold md:font-medium font-['Poppins'] leading-6">Send offer</div>
+                <div className="text-center justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">Write a short invitation message</div>
               </div>
 
               {/* Selected Candidates Avatars */}
@@ -563,14 +579,14 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               </div>
 
               {/* Single Textarea */}
-              <div className={`self-stretch h-36 px-4 py-3 bg-white rounded-2xl outline outline-1 inline-flex justify-start items-start w-full box-border transition-colors ${
-                isCompanyMode ? 'outline-gray-200 focus-within:outline-blue-300' : 'outline-gray-200 focus-within:outline-indigo-300'
+              <div className={`self-stretch h-36 px-4 py-3 bg-white dark:bg-[#0B0F19] rounded-2xl outline outline-1 inline-flex justify-start items-start w-full box-border transition-colors ${
+                isCompanyMode ? 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-blue-300' : 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-indigo-300'
               }`}>
                 <textarea
                   value={personalNote}
                   onChange={(e) => setPersonalNote(e.target.value)}
                   placeholder="Add a personal note...."
-                  className="flex-1 w-full h-full bg-transparent border-0 p-0 text-gray-700 text-sm font-normal font-['Poppins'] focus:outline-none focus:ring-0 resize-none placeholder-gray-500"
+                  className="flex-1 w-full h-full bg-transparent border-0 p-0 text-gray-700 dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] focus:outline-none focus:ring-0 resize-none placeholder-gray-500 dark:placeholder-[#9CA3AF]"
                 />
               </div>
 
@@ -579,7 +595,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <button
                   onClick={() => setStage(2)}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
                     isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
                   }`}
                 >
@@ -589,7 +605,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   onClick={handleSendClick}
                   disabled={selectedCandidates.length === 0 || isSending}
                   type="button"
-                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
                     isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
                   }`}
                 >
