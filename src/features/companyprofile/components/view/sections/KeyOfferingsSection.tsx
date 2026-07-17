@@ -69,7 +69,7 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
                   alignItems: "center",
                   padding: "8px 16px",
                   gap: "16px",
-                  width: "448px",
+                  width: offerings.length === 3 && idx === 2 ? "100%" : "448px",
                   height: "40px",
                   borderLeft: "3px solid #0D47A1",
                 }}

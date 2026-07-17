@@ -158,7 +158,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
       const newOfferings = Array.from({ length: 4 }).map((_, idx) => {
         const existing = existingOfferings[idx];
-        const text = existing?.content || DEFAULT_OFFERINGS[idx];
+        const text = existing?.content || "";
         const icon = existing?.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
 
         return {
@@ -248,7 +248,26 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       country: formData.country,
       city: formData.city,
       established_year: parseInt(formData.foundedYear) || undefined,
-      keyOfferings: keyOfferings.map((o) => ({ icon: o.icon, content: o.text })).filter(o => o.content),
+      keyOfferings: keyOfferings.map((o, idx) => {
+        const icon = o.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
+        const ICON_LABELS: Record<string, string> = {
+          "iconoir:rocket": "Rocket",
+          "iconoir:globe": "Globe",
+          "lucide:trending-up": "Trending Up",
+          "lucide:folder-tree": "Folder Tree",
+          "iconoir:lightbulb": "Lightbulb",
+          "lucide:shield-check": "Shield Check",
+          "lucide:settings": "Settings",
+          "iconoir:tools": "Tools",
+          "iconoir:leaf": "Leaf",
+          "lucide:handshake": "Handshake",
+        };
+        return {
+          icon,
+          label: ICON_LABELS[icon] || "Offering",
+          content: o.text
+        };
+      }).filter(o => o.content),
     });
   };
 
@@ -504,7 +523,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
                   type="text"
                   value={offering.text}
                   onChange={(e) => handleOfferingChange(offering.id, e.target.value)}
-                  placeholder="Add a key offering"
+                  placeholder={DEFAULT_OFFERINGS[idx] || "Add a key offering"}
                   className="flex-1 h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
                 />
               </div>
