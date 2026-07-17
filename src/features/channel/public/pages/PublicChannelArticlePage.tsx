@@ -99,7 +99,10 @@ export default function PublicChannelArticlePage() {
         </div>
 
         <div className="lg:border-l lg:border-gray-100 dark:lg:border-[#2E3445] lg:pl-6 h-[calc(100vh-120px)] lg:sticky lg:top-6">
-          <PublicChannelThoughtsPanel articleId={article.id} isSubscribed={!!channel?.isSubscribed} />
+          <PublicChannelThoughtsPanel
+            articleId={article.id}
+            isSubscribed={channel ? !!channel.isSubscribed : !!(article.isSubscribed)}
+          />
         </div>
       </div>
 

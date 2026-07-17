@@ -166,6 +166,7 @@ export async function getArticleById(id: string): Promise<ChannelArticle | null>
       status: item.status || 'published',
       publishedAt: item.publishedAt || item.created_at || new Date().toISOString(),
       updatedAt: item.updatedAt || item.updated_at || new Date().toISOString(),
+      isSubscribed: item.isSubscribed ?? item.is_subscribed ?? undefined,
     };
   } catch (error: any) {
     if (error.response?.status === 404) return null;

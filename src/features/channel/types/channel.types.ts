@@ -23,6 +23,7 @@ export interface ChannelArticle {
   status: 'published' | 'draft';
   publishedAt?: string;
   updatedAt: string;
+  isSubscribed?: boolean;
 }
 
 export interface GrowthPoint {
