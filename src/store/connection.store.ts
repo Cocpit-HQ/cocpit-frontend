@@ -3,12 +3,14 @@
 // Holds tab state and optimistic request removal tracking.
 
 import { create } from 'zustand';
-import type { ConnectionTab } from '@/features/connection/types';
+import type { ConnectionTab, InvitationSubTab } from '@/features/connection/types';
 
 interface ConnectionUIState {
   // ─── Tab ──────────────────────────────────────────────────────────────────
   activeTab:    ConnectionTab;
   setActiveTab: (tab: ConnectionTab) => void;
+  invitationSubTab: InvitationSubTab;
+  setInvitationSubTab: (subTab: InvitationSubTab) => void;
 
   // ─── Optimistic removals ──────────────────────────────────────────────────
   // When user accepts/declines/undoes, we add the id here to hide the card
@@ -33,6 +35,8 @@ export const useConnectionStore = create<ConnectionUIState>((set) => ({
       activeTab:         tab,
       removedRequestIds: [], // reset optimistic state on tab switch
     })),
+  invitationSubTab: 'teams',
+  setInvitationSubTab: (subTab) => set({ invitationSubTab: subTab }),
 
   // Optimistic removals
   removedRequestIds: [],

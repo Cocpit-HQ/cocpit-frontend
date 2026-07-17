@@ -1,6 +1,7 @@
 // src/features/connection/types.ts
 
-export type ConnectionTab = 'received' | 'sent';
+export type ConnectionTab = 'received' | 'sent' | 'invitations';
+export type InvitationSubTab = 'teams' | 'channels';
 
 export interface MutualInfo {
   count:   number;

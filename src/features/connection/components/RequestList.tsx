@@ -38,8 +38,8 @@ export function RequestList({ requests, mode }: RequestListProps) {
               request={request}
               mode={mode}
               isActing={isActing}
-              onAccept={mode === 'received' ? (id) => accept.mutate(id)  : undefined}
-              onDecline={mode === 'received' ? (id) => decline.mutate(id) : undefined}
+              onAccept={(mode === 'received' || mode === 'invitations') ? (id) => accept.mutate(id)  : undefined}
+              onDecline={(mode === 'received' || mode === 'invitations') ? (id) => decline.mutate(id) : undefined}
               onUndo={mode === 'sent'     ? (id) => undo.mutate(id)    : undefined}
             />
           </div>

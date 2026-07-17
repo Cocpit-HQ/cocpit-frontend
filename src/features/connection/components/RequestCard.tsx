@@ -7,7 +7,7 @@ import type { ConnectionRequest } from '../types';
 
 interface RequestCardProps {
   request:   ConnectionRequest;
-  mode:      'received' | 'sent';
+  mode:      'received' | 'sent' | 'invitations';
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
   onUndo?:   (id: string) => void;
@@ -95,7 +95,7 @@ export function RequestCard({
 
       {/* Actions */}
       <div className="flex items-center gap-3 w-full sm:w-auto sm:shrink-0 mt-2 sm:mt-0">
-        {mode === 'received' && (
+        {(mode === 'received' || mode === 'invitations') && (
           <>
             <button
               className="flex-1 sm:flex-none inline-flex items-center justify-center h-10 sm:w-[100px] rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"

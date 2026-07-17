@@ -40,7 +40,7 @@ interface ConnectionPageProps {
 }
 
 export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProps) {
-  const { activeTab, setActiveTab } = useConnectionStore();
+  const { activeTab, setActiveTab, invitationSubTab, setInvitationSubTab } = useConnectionStore();
   const isExpanded    = view === 'expanded';
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
     isLoading,
     isError,
     refetch,
-  } = useConnectionRequests(activeTab);
+  } = useConnectionRequests(activeTab, invitationSubTab);
 
   const { data: counts } = useConnectionCounts();
 
@@ -74,8 +74,24 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
   const showEmpty     = !isLoading && !isError && allRequests.length === 0;
   const showContent   = !isLoading && !isError && allRequests.length > 0;
 
-  // Suggestions: shown on both tabs in main view
-  const showSuggestions = !isExpanded;
+  // Suggestions: shown on both tabs in main view, but hidden on invitations
+  const showSuggestions = !isExpanded && activeTab !== 'invitations';
+
+  let emptyTitle = '';
+  let emptySubtitle = '';
+  if (activeTab === 'invitations') {
+    if (invitationSubTab === 'teams') {
+      emptyTitle = 'No team invitations';
+      emptySubtitle = "You haven't received any team invitations";
+    } else {
+      emptyTitle = 'No channel invitations';
+      emptySubtitle = "You haven't received any channel invitations";
+    }
+  } else {
+    const validTab = activeTab as 'received' | 'sent';
+    emptyTitle = EMPTY_STATE[validTab].title;
+    emptySubtitle = EMPTY_STATE[validTab].subtitle;
+  }
 
   return (
     <main className="min-h-screen bg-background px-4 sm:px-5 py-4 sm:py-6">
@@ -86,6 +102,32 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
 
         {/* Tabs + Inbox counter */}
         {!isExpanded && <ConnectionTabs />}
+
+        {!isExpanded && activeTab === 'invitations' && (
+          <div className="flex gap-6 mb-5">
+            <button
+              onClick={() => setInvitationSubTab('teams')}
+              className={`pb-2 text-sm font-medium transition-colors ${
+                invitationSubTab === 'teams'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-foreground/70 hover:text-foreground'
+              }`}
+            >
+              Teams
+            </button>
+            <button
+              onClick={() => setInvitationSubTab('channels')}
+              className={`pb-2 text-sm font-medium transition-colors ${
+                invitationSubTab === 'channels'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-foreground/70 hover:text-foreground'
+              }`}
+            >
+              Channels
+            </button>
+          </div>
+        )}
+
         <InboxCounter count={isLoading ? 0 : inboxCount} />
 
         {/* ── Content area ── */}
@@ -116,8 +158,8 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
           {/* Empty */}
           {showEmpty && (
             <EmptyState
-              title={EMPTY_STATE[activeTab].title}
-              subtitle={EMPTY_STATE[activeTab].subtitle}
+              title={emptyTitle}
+              subtitle={emptySubtitle}
             />
           )}
 
