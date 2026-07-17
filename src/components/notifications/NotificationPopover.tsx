@@ -184,6 +184,10 @@ export function NotificationPopover({
       } catch (e) { console.error("Error parsing invite metadata", e); }
       router.push(inviteLink);
       setIsOpen(false);
+    } else if (notification.type === 'community_invite') {
+      // Channel invitation — open connections page on the channels invitation tab
+      router.push('/connections?tab=invitations&sub=channels')
+      setIsOpen(false);
     } else if (notification.type === 'company_job' && notification.reference_id) {
       router.push(`/jobs/${notification.reference_id}`);
       setIsOpen(false);

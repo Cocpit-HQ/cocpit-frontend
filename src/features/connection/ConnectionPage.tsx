@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { useConnectionStore } from '@/store/connection.store';
 import { useConnectionRequests }   from './hooks/useConnectionRequests';
 import { useConnectionCounts }     from './hooks/useConnectionCounts';
+import type { ConnectionTab, InvitationSubTab } from './types';
 
 import { ConnectionHeader }   from './components/ConnectionHeader';
 import { ConnectionTabs }     from './components/ConnectionTabs';
@@ -42,6 +44,22 @@ interface ConnectionPageProps {
 export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProps) {
   const { activeTab, setActiveTab, invitationSubTab, setInvitationSubTab } = useConnectionStore();
   const isExpanded    = view === 'expanded';
+
+  // Read URL search params on mount (e.g. /connections?tab=invitations&sub=channels
+  // emitted by notification click) and activate the corresponding tab/sub-tab.
+  // Only runs once on mount — subsequent tab switches use the store directly.
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') as ConnectionTab | null;
+    const urlSub = searchParams.get('sub') as InvitationSubTab | null;
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+    if (urlSub && urlSub !== invitationSubTab) {
+      setInvitationSubTab(urlSub);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally runs once on mount only
 
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {

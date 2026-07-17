@@ -108,13 +108,24 @@ export async function updateChannel(orgId: string, input: Partial<ChannelInput>)
   };
 }
 
-export async function getArticles(communityId: string, status?: 'published' | 'draft'): Promise<ChannelArticle[]> {
-  if (!communityId) return [];
+export interface ArticlesResponse {
+  articles: ChannelArticle[];
+  nextCursor: string | null;
+  total: number;
+}
+
+export async function getArticles(
+  communityId: string,
+  status?: 'published' | 'draft',
+  cursor?: string | null,
+  limit: number = 10
+): Promise<ArticlesResponse> {
+  if (!communityId) return { articles: [], nextCursor: null, total: 0 };
   const res = await api.get(`/communities/${communityId}/articles`, {
-    params: { status }
+    params: { status, cursor, limit }
   });
   
-  return res.data.data.map((item: any) => ({
+  const articles = res.data.data.map((item: any) => ({
     id: item.id || item.post_id,
     channelId: communityId,
     title: item.title,
@@ -125,6 +136,12 @@ export async function getArticles(communityId: string, status?: 'published' | 'd
     publishedAt: item.publishedAt || item.created_at,
     updatedAt: item.updatedAt || item.updated_at,
   }));
+
+  return {
+    articles,
+    nextCursor: res.data.nextCursor || null,
+    total: res.data.total || 0,
+  };
 }
 
 export async function getArticleById(id: string): Promise<ChannelArticle | null> {

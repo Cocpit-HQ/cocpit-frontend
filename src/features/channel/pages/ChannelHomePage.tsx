@@ -20,9 +20,26 @@ interface ChannelHomePageProps {
 
 export default function ChannelHomePage({ channel }: ChannelHomePageProps) {
   const router = useRouter();
-  const { articles: publishedArticles } = useChannelArticles(channel.id, 'published');
-  const { articles: draftArticles } = useChannelArticles(channel.id, 'draft');
-  const articles = [...publishedArticles, ...draftArticles];
+
+  const {
+    data: publishedData,
+    fetchNextPage: fetchNextPublished,
+    hasNextPage: hasNextPublished,
+    isFetchingNextPage: isFetchingPublished,
+  } = useChannelArticles(channel.id, 'published');
+
+  const {
+    data: draftData,
+    fetchNextPage: fetchNextDraft,
+    hasNextPage: hasNextDraft,
+    isFetchingNextPage: isFetchingDraft,
+  } = useChannelArticles(channel.id, 'draft');
+
+  const publishedArticles = publishedData?.pages.flatMap((page) => page.articles) ?? [];
+  const draftArticles = draftData?.pages.flatMap((page) => page.articles) ?? [];
+  const totalPublished = publishedData?.pages[0]?.total ?? 0;
+  const totalDrafts = draftData?.pages[0]?.total ?? 0;
+
   const { growth } = useSubscriberGrowth();
   const updateChannel = useUpdateChannel();
   const deleteArticle = useDeleteArticle();
@@ -45,7 +62,16 @@ export default function ChannelHomePage({ channel }: ChannelHomePageProps) {
       <SubscriberGrowthChart data={growth} totalSubscribers={channel.subscriberCount} />
 
       <ChannelArticlesTabs
-        articles={articles}
+        publishedArticles={publishedArticles}
+        draftArticles={draftArticles}
+        totalPublished={totalPublished}
+        totalDrafts={totalDrafts}
+        hasNextPublished={hasNextPublished}
+        hasNextDraft={hasNextDraft}
+        onLoadMorePublished={fetchNextPublished}
+        onLoadMoreDraft={fetchNextDraft}
+        isLoadingMorePublished={isFetchingPublished}
+        isLoadingMoreDraft={isFetchingDraft}
         onSelectPublished={(article) => router.push(`/channel/article/${article.id}`)}
         onEditDraft={(article) => router.push(`/channel/write?id=${article.id}`)}
         onDeleteDraft={(article) => setDeleteTarget(article)}

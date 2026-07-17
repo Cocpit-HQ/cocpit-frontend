@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { ConnectionPage } from '@/features/connection/ConnectionPage';
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function ConnectionRoute() {
-  return <ConnectionPage view="main" />;
+  return (
+    <Suspense fallback={null}>
+      <ConnectionPage view="main" />
+    </Suspense>
+  );
 }

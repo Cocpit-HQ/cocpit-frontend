@@ -1,52 +1,52 @@
 // src/features/connection/hooks/useConnectionRequests.ts
 import { useQuery } from '@tanstack/react-query';
-import { getConnectionRequests } from '@/services/api/connections';
-import type { ConnectionTab, InvitationSubTab, ConnectionRequest } from '../types';
+import {
+  getConnectionRequests,
+  getChannelInvitations,
+} from '@/services/api/connections';
+import type { ConnectionTab, InvitationSubTab, ConnectionRequest, ConnectionRequestsResponse } from '../types';
+
+const EMPTY_RESPONSE: ConnectionRequestsResponse = { data: [], totalCount: 0, page: 1, limit: 10 };
 
 export const useConnectionRequests = (tab: ConnectionTab, subTab?: InvitationSubTab, page = 1) =>
   useQuery({
     queryKey: ['connection-requests', tab, subTab, page],
-    queryFn:  async () => {
-      if (tab === 'invitations') {
-        const dummyData: ConnectionRequest[] = subTab === 'teams' ? [
-          {
-            id: 'dummy-team-1',
-            sender_id: 'sys',
-            receiver_id: 'me',
-            created_at: new Date().toISOString(),
-            status: 'pending',
-            reason_tag: null,
-            isCompanyRequest: true,
-            mutuals: { count: 0, avatars: [] },
-            user: {
-              name: 'Nexus Global Systems',
-              avatar: '/images/default-avatar.png', // Fallback, could use an external placeholder if needed
-              headline: 'SaaS & Fintech Solutions',
-              slug: 'nexus-global',
-            }
-          }
-        ] : [
-          {
-            id: 'dummy-channel-1',
-            sender_id: 'sys',
-            receiver_id: 'me',
-            created_at: new Date().toISOString(),
-            status: 'pending',
-            reason_tag: null,
-            isCompanyRequest: true,
-            mutuals: { count: 0, avatars: [] },
-            user: {
-              name: 'Nexus Global Systems',
-              avatar: '/images/default-avatar.png',
-              headline: '989 subscribers',
-              slug: 'nexus-global-channel',
-            }
-          }
-        ];
-        return { data: dummyData, totalCount: 1, page: 1, limit: 10 };
+    queryFn: async (): Promise<ConnectionRequestsResponse> => {
+      // ── Connection tabs (received / sent) ────────────────────────────────
+      if (tab !== 'invitations') {
+        return getConnectionRequests(tab, page, 10);
       }
-      return getConnectionRequests(tab, page, 10);
+
+      // ── Invitations — Teams sub-tab ───────────────────────────────────────
+      // Team invitations not built yet — return empty without an API call.
+      if (subTab === 'teams') {
+        return EMPTY_RESPONSE;
+      }
+
+      // ── Invitations — Channels sub-tab ────────────────────────────────────
+      const res = await getChannelInvitations();
+      const mapped: ConnectionRequest[] = (res.data ?? []).map((item) => ({
+        id:               item.inviteId,
+        sender_id:        item.senderOrgId,
+        receiver_id:      '',             // not needed for UI
+        created_at:       item.createdAt,
+        status:           'pending',
+        reason_tag:       null,
+        isCompanyRequest: true,
+        mutuals:          { count: 0, avatars: [] },
+        user: {
+          name:     item.companyName,
+          avatar:   item.logoUrl ?? '',
+          headline: 'Channel invitation',
+          slug:     item.companySlug ?? null,
+        },
+      }));
+      return { data: mapped, totalCount: mapped.length, page: 1, limit: 50 };
     },
-    staleTime: 30_000,
+    // Only fetch invitations when actually on the channels sub-tab.
+    // For other tabs (received/sent), always enabled.
+    enabled: tab !== 'invitations' || subTab === 'channels',
+    staleTime: tab === 'invitations' ? 60_000 : 30_000,
     retry: 1,
   });
+

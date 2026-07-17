@@ -98,6 +98,9 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             router.push(`/post/${postReferenceId}`)
         } else if (notification.type.includes('job') && notification.reference_id) {
             router.push(`/jobs/${notification.reference_id}`)
+        } else if (notification.type === 'community_invite') {
+            // Channel invitation — open connections page on the channels invitation tab
+            router.push('/connections?tab=invitations&sub=channels')
         }
     }
 

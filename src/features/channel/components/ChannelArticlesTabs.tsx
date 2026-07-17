@@ -4,7 +4,16 @@ import { ChannelArticle } from '../types/channel.types';
 import ChannelArticleCard from './ChannelArticleCard';
 
 interface ChannelArticlesTabsProps {
-  articles: ChannelArticle[];
+  publishedArticles: ChannelArticle[];
+  draftArticles: ChannelArticle[];
+  totalPublished: number;
+  totalDrafts: number;
+  hasNextPublished: boolean;
+  hasNextDraft: boolean;
+  onLoadMorePublished: () => void;
+  onLoadMoreDraft: () => void;
+  isLoadingMorePublished: boolean;
+  isLoadingMoreDraft: boolean;
   initialTab?: 'published' | 'draft';
   onSelectPublished: (article: ChannelArticle) => void;
   onEditDraft: (article: ChannelArticle) => void;
@@ -12,16 +21,28 @@ interface ChannelArticlesTabsProps {
 }
 
 export default function ChannelArticlesTabs({
-  articles,
+  publishedArticles,
+  draftArticles,
+  totalPublished,
+  totalDrafts,
+  hasNextPublished,
+  hasNextDraft,
+  onLoadMorePublished,
+  onLoadMoreDraft,
+  isLoadingMorePublished,
+  isLoadingMoreDraft,
   initialTab = 'published',
   onSelectPublished,
   onEditDraft,
   onDeleteDraft,
 }: ChannelArticlesTabsProps) {
   const [tab, setTab] = useState<'published' | 'draft'>(initialTab);
-  const published = articles.filter((a) => a.status === 'published');
-  const drafts = articles.filter((a) => a.status === 'draft');
-  const list = tab === 'published' ? published : drafts;
+  
+  const list = tab === 'published' ? publishedArticles : draftArticles;
+  const total = tab === 'published' ? totalPublished : totalDrafts;
+  const hasNext = tab === 'published' ? hasNextPublished : hasNextDraft;
+  const onLoadMore = tab === 'published' ? onLoadMorePublished : onLoadMoreDraft;
+  const isLoadingMore = tab === 'published' ? isLoadingMorePublished : isLoadingMoreDraft;
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -30,7 +51,7 @@ export default function ChannelArticlesTabs({
           All articles
         </h3>
         <span className="text-[#6B7280] text-[12px] font-['Poppins']">
-          Total articles - {articles.length}
+          Total articles - {total}
         </span>
       </div>
 
@@ -61,15 +82,27 @@ export default function ChannelArticlesTabs({
             </p>
           </div>
         ) : (
-          list.map((article) => (
-            <ChannelArticleCard
-              key={article.id}
-              article={article}
-              onClick={tab === 'published' ? () => onSelectPublished(article) : () => onEditDraft(article)}
-              onEdit={() => onEditDraft(article)}
-              onDelete={() => onDeleteDraft(article)}
-            />
-          ))
+          <>
+            {list.map((article) => (
+              <ChannelArticleCard
+                key={article.id}
+                article={article}
+                onClick={tab === 'published' ? () => onSelectPublished(article) : () => onEditDraft(article)}
+                onEdit={() => onEditDraft(article)}
+                onDelete={() => onDeleteDraft(article)}
+              />
+            ))}
+            
+            {hasNext && (
+              <button
+                onClick={onLoadMore}
+                disabled={isLoadingMore}
+                className="w-full py-2.5 mt-2 rounded-xl border border-gray-200 dark:border-[#2A2D35] hover:bg-gray-50 dark:hover:bg-[#121B2B] text-[14px] font-medium text-gray-700 dark:text-[#A1A8B3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-['Poppins']"
+              >
+                {isLoadingMore ? 'Loading...' : 'Load more articles'}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -12,12 +12,14 @@ interface RequestListProps {
 
 export function RequestList({ requests, mode }: RequestListProps) {
   const { removedRequestIds } = useConnectionStore();
-  const { accept, decline, undo } = useConnectionActions();
+  const { accept, decline, undo, acceptInvitation, declineInvitation } = useConnectionActions();
 
   // Filter out optimistically removed cards
   const visible = requests.filter((r) => !removedRequestIds.includes(r.id));
 
   if (visible.length === 0) return null;
+
+  const isInvitation = mode === 'invitations';
 
   return (
     <div
@@ -28,9 +30,11 @@ export function RequestList({ requests, mode }: RequestListProps) {
       {visible.map((request) => {
         // Check if this specific card's action is in-flight
         const isActing =
-          accept.isPending  && accept.variables  === request.id ||
-          decline.isPending && decline.variables === request.id ||
-          undo.isPending    && undo.variables    === request.id;
+          accept.isPending            && accept.variables            === request.id ||
+          decline.isPending           && decline.variables           === request.id ||
+          undo.isPending              && undo.variables              === request.id ||
+          acceptInvitation.isPending  && acceptInvitation.variables  === request.id ||
+          declineInvitation.isPending && declineInvitation.variables === request.id;
 
         return (
           <div key={request.id} role="listitem">
@@ -38,9 +42,21 @@ export function RequestList({ requests, mode }: RequestListProps) {
               request={request}
               mode={mode}
               isActing={isActing}
-              onAccept={(mode === 'received' || mode === 'invitations') ? (id) => accept.mutate(id)  : undefined}
-              onDecline={(mode === 'received' || mode === 'invitations') ? (id) => decline.mutate(id) : undefined}
-              onUndo={mode === 'sent'     ? (id) => undo.mutate(id)    : undefined}
+              onAccept={
+                mode === 'received'
+                  ? (id) => accept.mutate(id)
+                  : isInvitation
+                  ? (id) => acceptInvitation.mutate(id)
+                  : undefined
+              }
+              onDecline={
+                mode === 'received'
+                  ? (id) => decline.mutate(id)
+                  : isInvitation
+                  ? (id) => declineInvitation.mutate(id)
+                  : undefined
+              }
+              onUndo={mode === 'sent' ? (id) => undo.mutate(id) : undefined}
             />
           </div>
         );
@@ -48,3 +64,4 @@ export function RequestList({ requests, mode }: RequestListProps) {
     </div>
   );
 }
+

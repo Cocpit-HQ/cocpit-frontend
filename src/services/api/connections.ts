@@ -99,3 +99,44 @@ export const sendConnectionRequest = async (userId: string) => {
   const { data } = await api.post(`/users/${userId}/connect`);
   return data;
 };
+
+// ─── Channel / Community Invitations ─────────────────────────────────────────
+
+/**
+ * Get all pending channel invitations for the current user (receiver).
+ * Backend: GET /communities/invitations
+ * Only returns PENDING invitations — accepted/ignored are excluded server-side.
+ */
+export const getChannelInvitations = async (): Promise<{
+  data: Array<{
+    inviteId: string;
+    createdAt: string;
+    senderOrgId: string;
+    companyName: string;
+    logoUrl: string | null;
+    companySlug: string;
+  }>;
+}> => {
+  const { data } = await api.get('/communities/invitations');
+  return data;
+};
+
+/**
+ * Accept a pending channel invitation.
+ * Backend: POST /communities/invitations/:inviteId/accept
+ * Side-effect: auto-creates a community_subscription record.
+ */
+export const acceptChannelInvitation = async (inviteId: string) => {
+  const { data } = await api.post(`/communities/invitations/${inviteId}/accept`);
+  return data;
+};
+
+/**
+ * Decline (ignore) a pending channel invitation.
+ * Backend: POST /communities/invitations/:inviteId/ignore
+ * Sets status to IGNORED — user can receive a new invite again later.
+ */
+export const declineChannelInvitation = async (inviteId: string) => {
+  const { data } = await api.post(`/communities/invitations/${inviteId}/ignore`);
+  return data;
+};

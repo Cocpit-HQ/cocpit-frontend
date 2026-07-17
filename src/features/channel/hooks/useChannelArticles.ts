@@ -1,19 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import * as channelService from '../services/channel.service';
 
 export const useChannelArticles = (communityId: string | undefined, status?: 'published' | 'draft') => {
-  const { data, isLoading, refetch } = useQuery({
+  return useInfiniteQuery({
     queryKey: ['channel', 'articles', communityId, status],
-    queryFn: () => channelService.getArticles(communityId!, status),
-    staleTime: 1000 * 60 * 2,
+    queryFn: ({ pageParam }) => channelService.getArticles(communityId!, status, pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: !!communityId,
+    staleTime: 1000 * 60 * 2,
   });
-
-  return {
-    articles: data ?? [],
-    isLoading,
-    refetch,
-  };
 };
 
 export const useChannelArticle = (id: string | undefined) => {

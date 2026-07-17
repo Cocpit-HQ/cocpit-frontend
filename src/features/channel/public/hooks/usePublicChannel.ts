@@ -10,11 +10,13 @@ export function usePublicChannel(communityId: string | undefined, includeArticle
     enabled: !!communityId,
   });
 
-  const { data: articles = [], isLoading: isArticlesLoading } = useQuery({
+  const { data: articlesResponse, isLoading: isArticlesLoading } = useQuery({
     queryKey: ['public-channel-articles', communityId],
-    queryFn: () => (communityId ? channelService.getArticles(communityId, 'published') : Promise.resolve([])),
+    queryFn: () => (communityId ? channelService.getArticles(communityId, 'published') : Promise.resolve({ articles: [], nextCursor: null, total: 0 })),
     enabled: !!communityId && includeArticles,
   });
+
+  const articles = articlesResponse?.articles ?? [];
 
   const subscribeMutation = useMutation({
     mutationFn: (isSubscribed: boolean) => {

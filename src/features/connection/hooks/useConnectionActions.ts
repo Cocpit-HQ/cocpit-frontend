@@ -8,6 +8,8 @@ import {
   declineConnectionRequest,
   cancelConnectionRequest,
   sendConnectionRequest,
+  acceptChannelInvitation,
+  declineChannelInvitation,
 } from '@/services/api/connections';
 import { useConnectionStore } from '@/store/connection.store';
 
@@ -89,5 +91,38 @@ export const useConnectionActions = () => {
     },
   });
 
-  return { accept, decline, undo, connect };
+  // ─── Accept channel invitation ────────────────────────────────────────────
+  const acceptInvitation = useMutation({
+    mutationFn: (inviteId: string) => {
+      removeRequest(inviteId);           // optimistic — hide card immediately
+      return acceptChannelInvitation(inviteId);
+    },
+    onSuccess: () => {
+      // Invalidate channel invitations cache so a refresh gets updated list.
+      // Do NOT invalidate connection-counts (invitations are separate).
+      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      toast.success('You are now subscribed to this channel!');
+    },
+    onError: (_err, inviteId) => {
+      restoreRequest(inviteId);
+      toast.error('Failed to accept invitation. Please try again.');
+    },
+  });
+
+  // ─── Decline channel invitation ───────────────────────────────────────────
+  const declineInvitation = useMutation({
+    mutationFn: (inviteId: string) => {
+      removeRequest(inviteId);
+      return declineChannelInvitation(inviteId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+    },
+    onError: (_err, inviteId) => {
+      restoreRequest(inviteId);
+      toast.error('Failed to decline invitation. Please try again.');
+    },
+  });
+
+  return { accept, decline, undo, connect, acceptInvitation, declineInvitation };
 };
