@@ -31,6 +31,7 @@ export default function CreateChannelModal({
   const [name, setName] = useState(initialValues?.name ?? emptyValues.name);
   const [description, setDescription] = useState(initialValues?.description ?? emptyValues.description);
   const [bannerUrl, setBannerUrl] = useState(initialValues?.bannerUrl ?? emptyValues.bannerUrl);
+  const [isDescTouched, setIsDescTouched] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function CreateChannelModal({
       setName(initialValues?.name ?? emptyValues.name);
       setDescription(initialValues?.description ?? emptyValues.description);
       setBannerUrl(initialValues?.bannerUrl ?? emptyValues.bannerUrl);
+      setIsDescTouched(false);
     }
   }, [isOpen, initialValues]);
 
@@ -50,7 +52,9 @@ export default function CreateChannelModal({
     e.target.value = '';
   };
 
-  const isValid = name.trim().length > 0 && bannerUrl.trim().length > 0;
+  const wordCount = description.trim() ? description.trim().split(/\s+/).length : 0;
+  const isDescValid = wordCount >= 20 && wordCount <= 150;
+  const isValid = name.trim().length > 0 && bannerUrl.trim().length > 0 && isDescValid;
   const title = mode === 'create' ? 'Create channel' : 'Edit channel';
   const submitLabel = mode === 'create' ? 'Create channel' : 'Save';
 
@@ -108,15 +112,35 @@ export default function CreateChannelModal({
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
-              Channel description
+              Channel description*
             </label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setIsDescTouched(true);
+              }}
+              onBlur={() => setIsDescTouched(true)}
               rows={3}
               placeholder="Describe what this channel is about"
-              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-[#2A2D35] bg-white dark:bg-[#0F1115] text-sm font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] resize-none placeholder:text-gray-400"
+              className={`w-full px-4 py-2.5 rounded-2xl border ${isDescTouched && !isDescValid ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-[#2A2D35] focus:border-[#1A73E8]'} bg-white dark:bg-[#0F1115] text-sm font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none resize-none placeholder:text-gray-400`}
             />
+            <div className="flex justify-between items-start mt-0.5">
+              <div className="flex-1">
+                {isDescTouched && wordCount === 0 && (
+                  <p className="text-xs text-red-500 font-['Poppins']">Description is required.</p>
+                )}
+                {isDescTouched && wordCount > 0 && wordCount < 20 && (
+                  <p className="text-xs text-red-500 font-['Poppins']">Description must be at least 20 words.</p>
+                )}
+                {isDescTouched && wordCount > 150 && (
+                  <p className="text-xs text-red-500 font-['Poppins']">Description cannot exceed 150 words.</p>
+                )}
+              </div>
+              <p className={`text-xs font-['Poppins'] ${wordCount > 150 ? 'text-red-500' : 'text-gray-400'}`}>
+                {wordCount}/150 words
+              </p>
+            </div>
           </div>
         </div>
 

@@ -82,7 +82,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
-  
+
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   useEffect(() => {
     if (!isCityDropdownOpen) return;
     const query = citySearchQuery || "";
-    
+
     const delay = setTimeout(async () => {
       if (query.trim().length > 1) {
         setIsSearchingCity(true);
@@ -123,9 +123,9 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   const handleCitySelect = async (placeId: string, displayName: string) => {
     setIsCityDropdownOpen(false);
     setCitySearchQuery(null);
-    
+
     setProfileDraft({ city: displayName });
-    
+
     try {
       const res = await getPlaceDetails(placeId, sessionToken.current);
       if (res.success && res.data) {
@@ -154,19 +154,13 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       };
       setInitialData(newForm);
 
-      const existingOfferings: string[] = org.key_offerings || org.keyOfferings || [];
-      const source = existingOfferings.length > 0 ? existingOfferings : DEFAULT_OFFERINGS;
+      const existingOfferings: { icon: string; content: string }[] = org.key_offerings || org.keyOfferings || [];
+
       const newOfferings = Array.from({ length: 4 }).map((_, idx) => {
-        const rawText = source[idx] || DEFAULT_OFFERINGS[idx];
-        let text = rawText;
-        let icon = OFFERING_ICONS[idx % OFFERING_ICONS.length];
-        
-        if (rawText.includes("|||")) {
-           const parts = rawText.split("|||");
-           icon = parts[0];
-           text = parts[1];
-        }
-        
+        const existing = existingOfferings[idx];
+        const text = existing?.content || DEFAULT_OFFERINGS[idx];
+        const icon = existing?.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
+
         return {
           id: String(idx),
           text: text,
@@ -244,7 +238,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isDirty || updateMutation.isPending) return;
-    
+
     updateMutation.mutate({
       name: formData.name,
       headline: formData.headline,
@@ -254,7 +248,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       country: formData.country,
       city: formData.city,
       established_year: parseInt(formData.foundedYear) || undefined,
-      keyOfferings: keyOfferings.map((o, idx) => o.text ? `${o.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length]}|||${o.text}` : '').filter(Boolean),
+      keyOfferings: keyOfferings.map((o) => ({ icon: o.icon, content: o.text })).filter(o => o.content),
     });
   };
 
@@ -264,7 +258,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
-      
+
       {/* 2-Column Row 1: Name and Industry */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {/* Name */}
@@ -405,7 +399,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
               className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] placeholder-gray-400"
             />
             <Icon icon="mynaui:search" className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
-            
+
             {isCityDropdownOpen && ((citySearchQuery || "").length > 1 || isSearchingCity) && (
               <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[200px] overflow-y-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {isSearchingCity ? (
@@ -495,9 +489,8 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
                             setProfileDraft({ keyOfferings: updated });
                             setOpenDropdownId(null);
                           }}
-                          className={`flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors ${
-                            currentIcon === iconStr ? "bg-gray-100 dark:bg-zinc-800" : ""
-                          }`}
+                          className={`flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors ${currentIcon === iconStr ? "bg-gray-100 dark:bg-zinc-800" : ""
+                            }`}
                         >
                           <Icon icon={iconStr} className="w-5 h-5 text-gray-900 dark:text-gray-300" />
                         </button>
@@ -532,11 +525,10 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         <button
           type="submit"
           disabled={!isDirty || updateMutation.isPending}
-          className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center ${
-            isDirty && !updateMutation.isPending
-              ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
-              : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
-          }`}
+          className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center ${isDirty && !updateMutation.isPending
+            ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
+            : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
+            }`}
         >
           {updateMutation.isPending ? "Saving..." : "Save"}
         </button>

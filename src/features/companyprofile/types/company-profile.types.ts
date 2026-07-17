@@ -58,7 +58,7 @@ export interface CompanyProfileData {
   founded?: string;
   offices?: { city: string; address: string }[];
   specialties?: string[];
-  keyOfferings?: string[];
+  keyOfferings?: { id?: string; icon: string; content: string }[];
   stats?: CompanyProfileStats;
   coreTeam?: CompanyTeamMember[];
   posts?: CompanyPost[];

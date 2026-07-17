@@ -5,7 +5,7 @@ import React from "react";
 import { Icon } from "@iconify/react";
 
 interface KeyOfferingsSectionProps {
-  keyOfferings?: string[];
+  keyOfferings?: { icon: string; content: string }[];
 }
 
 const DEFAULT_OFFERINGS = [
@@ -24,7 +24,7 @@ const OFFERING_ICONS = [
 
 export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectionProps) {
   const offerings = keyOfferings && keyOfferings.length > 0 ? keyOfferings : DEFAULT_OFFERINGS;
-  
+
   return (
     <div
       style={{
@@ -53,16 +53,12 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
         >
           Key offerings
         </h2>
-        
+
         <div className="flex flex-row flex-wrap gap-x-[24px] gap-y-4 w-full">
-          {offerings.map((rawText, idx) => {
-            let text = rawText;
-            let iconStr = OFFERING_ICONS[idx % OFFERING_ICONS.length];
-            if (rawText.includes("|||")) {
-              const parts = rawText.split("|||");
-              iconStr = parts[0];
-              text = parts[1];
-            }
+          {offerings.map((offering, idx) => {
+            const isObject = typeof offering === 'object' && offering !== null;
+            const text = isObject ? (offering as any).content : offering as string;
+            const iconStr = isObject && (offering as any).icon ? (offering as any).icon : OFFERING_ICONS[idx % OFFERING_ICONS.length];
             return (
               <div
                 key={idx}
@@ -157,8 +153,8 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
           >
             <defs>
               <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#E8F1FF" stopOpacity="1"/>
-                <stop offset="100%" stopColor="#E8F1FF" stopOpacity="0.2"/>
+                <stop offset="0%" stopColor="#E8F1FF" stopOpacity="1" />
+                <stop offset="100%" stopColor="#E8F1FF" stopOpacity="0.2" />
               </linearGradient>
             </defs>
             <path
@@ -174,7 +170,7 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
             <circle cx="22" cy="110" r="5" fill="#3B82F6" />
             <circle cx="920" cy="20" r="5" fill="#3B82F6" />
           </svg>
-          
+
           <div className="absolute top-[140px] left-0 w-full flex justify-between border-t border-gray-200 dark:border-zinc-800 pt-4">
             <span
               style={{
