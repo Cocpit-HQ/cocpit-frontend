@@ -11,8 +11,8 @@ export const useChannelThoughts = (articleId: string | undefined) => {
   });
 
   const addThought = useMutation({
-    mutationFn: ({ text, authorName, authorAvatarUrl }: { text: string; authorName: string; authorAvatarUrl: string }) =>
-      channelService.addThought(articleId as string, text, authorName, authorAvatarUrl),
+    mutationFn: ({ text, authorName, authorAvatarUrl, parentId }: { text: string; authorName: string; authorAvatarUrl: string; parentId?: string }) =>
+      channelService.addThought(articleId as string, text, authorName, authorAvatarUrl, parentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['channel', 'thoughts', articleId] });
     },

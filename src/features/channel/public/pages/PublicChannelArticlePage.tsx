@@ -98,11 +98,14 @@ export default function PublicChannelArticlePage() {
           />
         </div>
 
-        <div className="lg:border-l lg:border-gray-100 dark:lg:border-[#2E3445] lg:pl-6 h-[calc(100vh-120px)] lg:sticky lg:top-6">
-          <PublicChannelThoughtsPanel
-            articleId={article.id}
-            isSubscribed={channel ? !!channel.isSubscribed : !!(article.isSubscribed)}
-          />
+        <div className="hidden lg:block lg:w-[386px] flex-shrink-0">
+          <div className="sticky top-24 h-[calc(100vh-120px)] border border-[#E0E0E7] dark:border-[#2A2D35] rounded-[32px] overflow-hidden bg-white dark:bg-[#0F1115]">
+            <PublicChannelThoughtsPanel
+              articleId={articleId}
+              isSubscribed={channel ? (channel.isSubscribed || false) : (article.isSubscribed || false)}
+              isOwner={channel?.isOwner || false}
+            />
+          </div>
         </div>
       </div>
 

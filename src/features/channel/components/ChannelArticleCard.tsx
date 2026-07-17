@@ -95,7 +95,7 @@ export default function ChannelArticleCard({ article, onClick, onEdit, onDelete 
             className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] transition-colors self-center"
             title="Share"
           >
-            <Icon icon="lucide:share" className="w-[18px] h-[18px]" />
+            <Icon icon="fluent:share-28-regular" className="w-[18px] h-[18px]" />
           </button>
         </div>
       </div>

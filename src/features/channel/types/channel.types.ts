@@ -47,6 +47,7 @@ export interface ChannelThought {
   authorAvatarUrl: string;
   text: string;
   createdAt: string;
+  authorId?: string;
 }
 
 export type CollaborationMode = 'select' | 'pan' | 'comment';

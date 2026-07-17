@@ -298,6 +298,7 @@ export async function getThoughts(articleId: string): Promise<ChannelThought[]> 
     authorAvatarUrl: comment.avatar_url || comment.author_avatar,
     text: comment.content || comment.text,
     createdAt: comment.created_at || new Date().toISOString(),
+    authorId: comment.author_id,
   }));
 }
  
@@ -319,6 +320,7 @@ export async function addThought(
     authorAvatarUrl: comment.avatar_url || authorAvatarUrl,
     text: comment.content || text,
     createdAt: comment.created_at || new Date().toISOString(),
+    authorId: comment.author_id,
   };
 }
 

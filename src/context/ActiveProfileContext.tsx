@@ -215,7 +215,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
                     setActiveProfile(userProfile);
                     trackActorMetric("switch_complete", { type: "USER", id: session.user.id });
-                    router.push("/feed");
+                    window.location.href = "/feed";
                     return;
                 }
 
@@ -232,7 +232,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 const companyProfile = buildCompanyProfile(targetCompany);
                 setActiveProfile(companyProfile);
                 trackActorMetric("switch_complete", { type: "COMPANY", id: companyProfile.id });
-                router.push(`/organization/${targetCompany.slug}`);
+                window.location.href = `/organization/${targetCompany.slug}`;
             } catch (error) {
                 console.error("[ActorContext] Failed to switch actor.", error);
                 trackActorMetric("switch_error", { type, id });

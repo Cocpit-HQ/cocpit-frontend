@@ -420,10 +420,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   let textClass = '';
 
                   if (step === 'Declined' && isCurrent) {
-                    circleClass = 'bg-transparent border border-[#EF4444]';
+                    circleClass = 'bg-[#EF4444] border border-[#EF4444]';
                     textClass = 'text-[#EF4444]';
                   } else if (isCompleted || isCurrent) {
-                    circleClass = isCompleted ? 'bg-[#6366F1] border border-[#6366F1]' : 'bg-transparent border border-[#6366F1]';
+                    circleClass = 'bg-[#6366F1] border border-[#6366F1]';
                     textClass = 'text-[#6366F1]';
                   } else {
                     circleClass = 'bg-transparent border border-[#DADADA]';
