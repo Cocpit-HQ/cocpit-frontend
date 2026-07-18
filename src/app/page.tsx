@@ -19,7 +19,7 @@ export default function Home() {
         {/* Footer Text */}
         <div className="absolute bottom-8 text-center w-full left-0 px-4">
           <p className="text-xs text-black font-medium leading-relaxed">
-            By continuing, you agree to our <span className="text-[#0ea5e9] hover:underline cursor-pointer">Terms &<br className="block md:hidden" /> Privacy Policy</span>
+            By continuing, you agree to our <span className="text-[#6366F1] hover:underline cursor-pointer">Terms &<br className="block md:hidden" /> Privacy Policy</span>
           </p>
         </div>
       </div>

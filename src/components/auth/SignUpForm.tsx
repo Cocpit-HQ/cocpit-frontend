@@ -179,12 +179,8 @@ export default function SignUpForm() {
         setOtpError(false);
         toast({
           title: "Email Verified!",
-          description: "Your email has been successfully verified.",
+          description: "Your email has been successfully verified. Click Continue to proceed.",
         });
-        // Automatically proceed to password creation
-        setTimeout(() => {
-          setStep(2);
-        }, 800);
       } catch (error: any) {
         setEmailVerified(false);
         setOtpError(true);
@@ -229,6 +225,10 @@ export default function SignUpForm() {
         variant: "destructive",
       });
       setOtp("");
+      if (errorMessage.toLowerCase().includes("otp") || errorMessage.toLowerCase().includes("expired") || errorMessage.toLowerCase().includes("code")) {
+        setStep(1);
+        setEmailVerified(false);
+      }
     } finally {
       setIsVerifying(false);
     }
@@ -451,6 +451,22 @@ export default function SignUpForm() {
                         Resend code
                       </button>
                     </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (emailVerified) {
+                          setStep(2);
+                        } else if (otp.length === 6) {
+                          handleVerifyOtp(otp);
+                        }
+                      }}
+                      disabled={isCheckingOtp || (!emailVerified && otp.length !== 6)}
+                      className={styles.primaryButton}
+                      style={{ marginTop: '0.5rem' }}
+                    >
+                      {isCheckingOtp ? "Verifying..." : "Continue"}
+                    </button>
                   </div>
                 )}
 
@@ -516,23 +532,25 @@ export default function SignUpForm() {
                   <div className={styles.inputWrapper}>
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Set password"
+                      placeholder="Enter Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`${styles.input} ${styles.inputWithIcon}`}
                       maxLength={15}
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className={styles.passwordToggle}
-                    >
-                      {showPassword
-                        ? <Icon icon="fluent:eye-20-regular" width={20} height={20} />
-                        : <Icon icon="fluent:eye-off-20-regular" width={20} height={20} />
-                      }
-                    </button>
+                    {password.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={styles.passwordToggle}
+                      >
+                        {showPassword
+                          ? <Icon icon="fluent:eye-20-regular" width={20} height={20} />
+                          : <Icon icon="fluent:eye-off-20-regular" width={20} height={20} />
+                        }
+                      </button>
+                    )}
                   </div>
                 </div>
 
