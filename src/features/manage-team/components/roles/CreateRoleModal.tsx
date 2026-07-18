@@ -26,10 +26,13 @@ export default function CreateRoleModal({
   const [color, setColor] = useState(ROLE_COLORS[0]);
   const [description, setDescription] = useState('');
   const [permissions, setPermissions] = useState<TeamPermission[]>([]);
+  const [showLimitError, setShowLimitError] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = () => {
+  const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+
+  const handleSubmit = async () => {
     if (!name.trim()) return;
     onSubmit({
       name: name.trim(),
@@ -53,98 +56,123 @@ export default function CreateRoleModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-[420px] max-h-[85vh] bg-white dark:bg-[#1A1D24] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-[672px] max-h-[90vh] bg-[#FFFFFF] rounded-[24px] shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 pb-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-['Poppins']">
+        <div className="flex items-center justify-between px-8 py-6 h-[87px]">
+          <h2 className="text-[32px] font-semibold text-[#000000] font-['Poppins'] leading-[38px] tracking-[-0.64px]">
             Create new role
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="w-6 h-6 flex items-center justify-center text-[#EF4444] transition-colors hover:opacity-80"
           >
             <Icon icon="lucide:x" className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 pb-5 flex flex-col gap-4">
-          {/* Role name */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-gray-500 dark:text-gray-400 font-['Poppins'] font-medium">
-              Role name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="HR Manager"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0F1115] text-sm text-gray-800 dark:text-gray-200 font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors placeholder:text-gray-300"
-            />
-          </div>
+        <div className="flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-4">
+          
+          <div className="flex flex-col gap-4 pt-2">
+            {/* Role name */}
+            <div className="flex flex-col gap-[11.5px]">
+              <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px]">
+                Role name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="HR Manager"
+                className="w-full h-[56px] px-4 rounded-[12px] border border-[#E0E0E7] bg-[#FFFFFF] text-[16px] text-[#434655] font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors placeholder:text-[#6B7280]"
+              />
+            </div>
 
-          {/* Color picker */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-gray-500 dark:text-gray-400 font-['Poppins'] font-medium">
-              Color
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {ROLE_COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full transition-all ${
-                    color === c
-                      ? 'ring-2 ring-offset-2 ring-[#1A73E8] dark:ring-offset-[#1A1D24]'
-                      : 'hover:scale-110'
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
+            {/* Color picker */}
+            <div className="flex flex-col gap-[11.5px]">
+              <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px]">
+                Role color
+              </label>
+              <div className="flex gap-3 flex-wrap">
+                {ROLE_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${
+                      color === c
+                        ? 'border border-[#000000]'
+                        : ''
+                    }`}
+                  >
+                    <div 
+                      className="w-[24px] h-[24px] rounded-full" 
+                      style={{ backgroundColor: c }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-[12px] w-full">
+              <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px] h-[17px] flex items-center">
+                Role description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const newWordCount = val.trim().split(/\s+/).filter(Boolean).length;
+                  if (newWordCount <= 200) {
+                    setDescription(val);
+                    setShowLimitError(false);
+                  } else {
+                    setShowLimitError(true);
+                  }
+                }}
+                placeholder="Describe the responsibilities and scope of this role..."
+                className={`box-border w-full h-[120px] p-4 rounded-[12px] border ${showLimitError ? 'border-red-500' : 'border-[#E0E0E7]'} bg-[#FFFFFF] text-[16px] font-normal text-[#434655] leading-[26px] font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors resize-none overflow-y-auto placeholder:text-[#6B7280]`}
+              />
+              <div className="flex justify-between items-start mt-1">
+                <div className="flex-1">
+                  {showLimitError && (
+                    <span className="text-[12px] text-red-500 font-['Poppins']">
+                      Description cannot exceed 200 words.
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[12px] font-['Poppins'] ${showLimitError ? 'text-red-500' : 'text-[#6B7280]'}`}>
+                  {wordCount}/200
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Description */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-gray-500 dark:text-gray-400 font-['Poppins'] font-medium">
-              Role description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the role's responsibilities and scope of role..."
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0F1115] text-sm text-gray-800 dark:text-gray-200 font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors resize-none placeholder:text-gray-300"
-            />
-          </div>
-
           {/* Permissions */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-gray-500 dark:text-gray-400 font-['Poppins'] font-medium">
-              Permissions
-            </label>
+          <div className="mt-4">
             <PermissionCheckList
               selected={permissions}
               onChange={setPermissions}
             />
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-5 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 font-['Poppins'] hover:bg-gray-50 dark:hover:bg-[#0F1115] transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!name.trim() || isSubmitting}
-            className="px-5 py-2 rounded-full bg-[#1A73E8] dark:bg-[#4D9CFF] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Creating...' : 'Create'}
-          </button>
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-[16px] pt-4 pb-2 mt-4">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#1A73E8] bg-[#FFFFFF] text-[14px] font-normal text-[#1A73E8] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!name.trim() || isSubmitting}
+              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] bg-[#1A73E8] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Creating...' : 'Create'}
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

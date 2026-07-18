@@ -10,51 +10,39 @@ interface MemberRowProps {
 }
 
 export default function MemberRow({ member, onRemove }: MemberRowProps) {
+  // Use headline as a mock email for the UI if email is not available
+  const mockEmail = member.headline?.includes('@') 
+    ? member.headline 
+    : `${member.name.split(' ')[0].toLowerCase()}.${member.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
+
   return (
-    <div className="w-full flex items-center justify-between py-3 group">
+    <div className="w-full flex items-center justify-between py-2">
       <div className="flex items-center gap-3 min-w-0">
         <img
           src={member.avatarUrl}
           alt={member.name}
-          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/assets/pngegg.png';
           }}
         />
         <div className="flex flex-col min-w-0">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 font-['Poppins'] truncate">
+          <span className="text-[13px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">
             {member.name}
           </span>
-          {member.headline && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-['Poppins'] truncate">
-              {member.headline}
-            </span>
-          )}
+          <span className="text-[11px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">
+            {mockEmail}
+          </span>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Role badge */}
-        {member.roleName && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: member.roleColor || '#808080' }}
-            />
-            <span className="text-xs text-gray-600 dark:text-gray-400 font-['Poppins']">
-              {member.roleName}
-            </span>
-          </div>
-        )}
-
-        {/* Remove button */}
         {onRemove && (
           <button
             onClick={onRemove}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
-            title="Remove member"
+            className="text-[12px] font-medium text-[#F15156] hover:text-red-600 transition-colors"
           >
-            <Icon icon="lucide:x" className="w-3.5 h-3.5" />
+            Remove member
           </button>
         )}
       </div>

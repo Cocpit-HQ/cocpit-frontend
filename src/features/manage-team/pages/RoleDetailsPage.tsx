@@ -14,7 +14,6 @@ import InviteMemberModal from '../components/members/InviteMemberModal';
 import RemoveMemberConfirm from '../components/members/RemoveMemberConfirm';
 import ActivityLogTable from '../components/activity/ActivityLogTable';
 import ActivityLogFiltersBar from '../components/activity/ActivityLogFilters';
-import PermissionCheckList from '../components/permissions/PermissionCheckList';
 
 interface RoleDetailsPageProps {
   roleId: string;
@@ -72,91 +71,112 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
     <div className="w-full max-w-[1128px] mx-auto min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-8 px-4 xl:px-0">
       <div className="w-full max-w-[998px] mx-auto flex flex-col gap-5">
         {/* Back + breadcrumb */}
-        <div className="flex items-center gap-2 text-sm font-['Poppins']">
+        <div className="flex items-center gap-3 mb-2">
           <button
             onClick={() => router.push('/team')}
-            className="text-gray-400 hover:text-[#1A73E8] transition-colors"
+            className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-black transition-colors shrink-0"
           >
-            Role details
+            <Icon icon="lucide:chevron-left" className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Role header */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: role.color }}
-            />
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-['Poppins']">
-              {role.name}
-            </h1>
-            <button className="p-1 rounded-lg text-gray-400 hover:text-[#1A73E8] transition-colors">
-              <Icon icon="proicons:pencil" className="w-4 h-4" />
-            </button>
-          </div>
-          {role.description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-['Poppins'] max-w-[600px]">
-              {role.description}
-            </p>
-          )}
-        </div>
-
-        {/* Permissions (read-only display) */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Icon
-              icon="lucide:shield-check"
-              className="w-4 h-4 text-gray-400"
-            />
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 font-['Poppins']">
-              Permissions
+          <div className="flex flex-col">
+            <span className="text-[16px] font-semibold text-[#000000] dark:text-white font-['Poppins']">
+              Role details
+            </span>
+            <span className="text-[12px] text-[#A3AED0] dark:text-gray-400 font-['Poppins']">
+              Explore articles, insights, and updates shared by the community.
             </span>
           </div>
-          <PermissionCheckList
-            selected={role.permissions}
-            onChange={() => {}}
-            disabled
-          />
+        </div>
+
+        {/* Role header card */}
+        <div className="flex flex-col border border-[#E8F1FF] dark:border-gray-800 rounded-[24px] p-4 bg-white dark:bg-[#1A1D24] gap-3">
+          <div className="flex items-center justify-between gap-3 w-full">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-6 h-6 rounded-full"
+                style={{ backgroundColor: role.color }}
+              />
+              <h1 className="text-[24px] font-medium leading-[24px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
+                {role.name}
+              </h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="w-6 h-6 relative border-[1.5px] border-[#000000] dark:border-white rounded-sm hover:opacity-80 flex items-center justify-center">
+                <Icon icon="proicons:pencil" className="w-3.5 h-3.5 text-[#000000] dark:text-white" />
+              </button>
+              <button className="w-6 h-6 relative bg-[#EF4444] rounded-sm hover:opacity-80 flex items-center justify-center">
+                <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 text-white" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2 w-full mt-2">
+            <h3 className="text-[18px] font-medium leading-[27px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
+              Description
+            </h3>
+            <div className="bg-[#F2F7FF] dark:bg-gray-800 border-l-[4px] border-[#0D47A1] py-2 px-4 flex flex-col gap-2 w-full">
+              <p className="text-[16px] leading-[24px] font-normal text-[#6B7280] dark:text-gray-300 font-['Poppins'] flex items-center">
+                {role.description || 'No description provided.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 w-full mt-2">
+            <h3 className="text-[18px] font-medium leading-[27px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
+              Permissions
+            </h3>
+            <div className="flex flex-wrap gap-4">
+              {role.permissions?.length > 0 ? (
+                role.permissions.map(p => {
+                  const formatP = p.replace('_', ' ');
+                  return (
+                    <div key={p} className="box-border flex flex-row justify-center items-center bg-[#F2F7FF] dark:bg-gray-800 border border-[#EEF2FF] dark:border-gray-700 rounded-lg">
+                       <div className="flex flex-row justify-center items-center px-4 py-1.5 gap-2">
+                         <span className="text-[14px] leading-[20px] font-normal text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] text-center flex items-center capitalize">
+                           {formatP}
+                         </span>
+                       </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-[14px] text-[#6B7280] font-['Poppins']">No permissions</span>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Sub-tabs: Members | Activity Log */}
-        <div className="flex gap-0 border-b border-gray-200 dark:border-gray-700">
-          {['members', 'activity'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as 'members' | 'activity')}
-              className={`px-4 py-2.5 text-sm font-medium font-['Poppins'] transition-colors relative capitalize ${
-                activeTab === tab
-                  ? 'text-[#1A73E8] dark:text-[#4D9CFF]'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              {tab === 'members' ? 'Members' : 'Activity log'}
-              {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#1A73E8] dark:bg-[#4D9CFF] rounded-full" />
-              )}
-            </button>
-          ))}
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={() => setActiveTab('members')}
+            className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
+              activeTab === 'members'
+                ? 'bg-[#E9F0FE] dark:bg-[#1A73E8]/20 text-[#1A73E8] dark:text-[#4D9CFF] border border-transparent'
+                : 'bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] border border-[#1A73E8] dark:border-[#4D9CFF] hover:bg-[#E9F0FE]/50'
+            }`}
+          >
+            Members
+          </button>
+          <button
+            onClick={() => setActiveTab('activity')}
+            className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
+              activeTab === 'activity'
+                ? 'bg-[#E9F0FE] dark:bg-[#1A73E8]/20 text-[#1A73E8] dark:text-[#4D9CFF] border border-transparent'
+                : 'bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] border border-[#1A73E8] dark:border-[#4D9CFF] hover:bg-[#E9F0FE]/50'
+            }`}
+          >
+            Activity logs
+          </button>
         </div>
 
         {/* Tab content */}
         {activeTab === 'members' ? (
-          <div className="flex flex-col gap-4">
-            {/* Invite button */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setIsInviteOpen(true)}
-                className="flex items-center gap-1.5 text-[#1A73E8] dark:text-[#4D9CFF] text-sm font-semibold font-['Poppins'] hover:underline"
-              >
-                <Icon icon="lucide:plus" className="w-4 h-4" />
-                Add members
-              </button>
-            </div>
-
+          <div className="flex flex-col gap-4 mt-2">
             <MemberList
               members={role.members}
               onRemoveMember={(member) => setRemoveTarget(member)}
+              onInviteClick={() => setIsInviteOpen(true)}
             />
           </div>
         ) : (

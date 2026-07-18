@@ -781,7 +781,7 @@ export const HomeHeader = () => {
 
                     {/* Header Right Section (Action Buttons) */}
                     <div className="flex items-center gap-4 shrink-0 min-w-0 xl:w-[406px] xl:justify-end">
-                        {!pathname.startsWith('/channel') && (
+                        {!pathname.startsWith('/channel') && !pathname.startsWith('/team') && (
                             <button
                                 onClick={() => setActiveModal('create-post')}
                                 className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap`}

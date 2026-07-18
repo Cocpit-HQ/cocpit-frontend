@@ -9,28 +9,32 @@ interface TeamTabsProps {
 
 export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
   const tabs = [
-    { key: 'team' as const, label: 'Team' },
-    { key: 'activity' as const, label: 'Activity log' },
+    { key: 'team' as const, label: 'Roles' },
+    { key: 'activity' as const, label: 'Activity logs' },
   ];
 
   return (
-    <div className="w-full flex gap-0 border-b border-gray-200 dark:border-gray-700">
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => onTabChange(tab.key)}
-          className={`px-4 py-2.5 text-sm font-medium font-['Poppins'] transition-colors relative ${
-            activeTab === tab.key
-              ? 'text-[#1A73E8] dark:text-[#4D9CFF]'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-          }`}
-        >
-          {tab.label}
-          {activeTab === tab.key && (
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#1A73E8] dark:bg-[#4D9CFF] rounded-full" />
-          )}
-        </button>
-      ))}
+    <div className="inline-flex justify-start items-start gap-4 mb-2">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.key;
+        return (
+          <button
+            key={tab.key}
+            onClick={() => onTabChange(tab.key)}
+            className={`h-10 rounded-[24px] flex justify-center items-center overflow-hidden transition-all ${
+              isActive 
+                ? "bg-[#E8F1FF] dark:bg-[#1A2435] border border-transparent" 
+                : "bg-[#FFFFFF] dark:bg-transparent border border-[#1A73E8] hover:bg-[#E8F1FF]/50 dark:hover:bg-[#1A2435]/50"
+            }`}
+          >
+            <div className="h-8 px-4 py-[6px] flex justify-center items-center gap-2">
+              <span className={`text-center text-xs font-['Poppins'] leading-5 ${isActive ? "text-[#1A73E8] font-medium" : "text-[#1A73E8] font-normal"}`}>
+                {tab.label}
+              </span>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -66,6 +66,7 @@ export async function createRole(
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+  DUMMY_ROLES.push(newRole);
   return newRole;
 }
 
@@ -78,12 +79,12 @@ export async function updateRole(
   await delay(500);
   const existing = DUMMY_ROLES.find((r) => r.id === roleId);
   if (!existing) throw new Error('Role not found');
-  return {
-    ...existing,
+  Object.assign(existing, {
     ...input,
     permissions: input.permissions ?? existing.permissions,
     updatedAt: new Date().toISOString(),
-  };
+  });
+  return existing;
 }
 
 export async function deleteRole(
@@ -92,6 +93,10 @@ export async function deleteRole(
 ): Promise<boolean> {
   // TODO: Replace with api.delete(`/organizations/${orgId}/roles/${roleId}`)
   await delay(500);
+  const index = DUMMY_ROLES.findIndex((r) => r.id === roleId);
+  if (index !== -1) {
+    DUMMY_ROLES.splice(index, 1);
+  }
   return true;
 }
 

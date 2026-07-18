@@ -6,6 +6,7 @@ import { useTeamRoles } from '../hooks/useTeamRoles';
 import { useCreateRole } from '../hooks/useCreateRole';
 import { useUpdateRole } from '../hooks/useUpdateRole';
 import { useDeleteRole } from '../hooks/useDeleteRole';
+import { useInviteMember } from '../hooks/useInviteMember';
 import TeamHeader from '../components/TeamHeader';
 import TeamTabs from '../components/TeamTabs';
 import TeamHomePage from './TeamHomePage';
@@ -13,6 +14,7 @@ import TeamActivityLogPage from './TeamActivityLogPage';
 import CreateRoleModal from '../components/roles/CreateRoleModal';
 import EditRoleModal from '../components/roles/EditRoleModal';
 import DeleteRoleConfirm from '../components/roles/DeleteRoleConfirm';
+import InviteMemberModal from '../components/members/InviteMemberModal';
 import { CreateRoleInput, UpdateRoleInput } from '../types/team.types';
 import { Loader2 } from 'lucide-react';
 
@@ -21,11 +23,13 @@ export default function ManageTeamPage() {
   const createRole = useCreateRole();
   const updateRole = useUpdateRole();
   const deleteRole = useDeleteRole();
+  const inviteMember = useInviteMember();
 
   const [activeTab, setActiveTab] = useState<'team' | 'activity'>('team');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TeamRole | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TeamRole | null>(null);
+  const [inviteTarget, setInviteTarget] = useState<TeamRole | null>(null);
 
   const handleCreate = (input: CreateRoleInput) => {
     createRole.mutate(input, {
@@ -71,6 +75,7 @@ export default function ManageTeamPage() {
             roles={roles}
             onEditRole={(role) => setEditTarget(role)}
             onDeleteRole={(role) => setDeleteTarget(role)}
+            onInviteRole={(role) => setInviteTarget(role)}
           />
         ) : (
           <TeamActivityLogPage roles={roles} />
@@ -97,6 +102,18 @@ export default function ManageTeamPage() {
           roleName={deleteTarget?.name}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+
+        <InviteMemberModal
+          isOpen={!!inviteTarget}
+          onClose={() => setInviteTarget(null)}
+          onInvite={(userId) => {
+            if (inviteTarget) {
+              inviteMember.mutate({ userId, roleId: inviteTarget.id }, {
+                onSuccess: () => setInviteTarget(null)
+              });
+            }
+          }}
         />
       </div>
     </div>

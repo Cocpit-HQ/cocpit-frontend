@@ -3,23 +3,23 @@ export type TeamPermission =
   | 'create_post'
   | 'channels'
   | 'chat'
-  | 'counter'
+  | 'queries'
   | 'teams'
   | 'activity_logs'
   | 'jobs'
-  | 'jobs_detail'
+  | 'jobs_chat'
   | 'analytics';
 
 // Human-readable labels for permissions (used in UI)
 export const PERMISSION_LABELS: Record<TeamPermission, string> = {
   create_post: 'Create post',
-  channels: 'Channels',
+  channels: 'Channel',
   chat: 'Chat',
-  counter: 'Counter',
+  queries: 'Queries',
   teams: 'Teams',
   activity_logs: 'Activity logs',
   jobs: 'Jobs',
-  jobs_detail: 'Jobs detail',
+  jobs_chat: 'Jobs chat',
   analytics: 'Analytics',
 };
 
@@ -28,26 +28,27 @@ export const ALL_PERMISSIONS: TeamPermission[] = [
   'create_post',
   'channels',
   'chat',
-  'counter',
+  'queries',
   'teams',
   'activity_logs',
   'jobs',
-  'jobs_detail',
+  'jobs_chat',
   'analytics',
 ];
 
 // Predefined role colors from the design
 export const ROLE_COLORS: string[] = [
-  '#FF4D4D', // Red
-  '#FF8C00', // Orange
-  '#FFD700', // Gold
-  '#4CAF50', // Green
-  '#2196F3', // Blue
-  '#00BCD4', // Cyan
-  '#9C27B0', // Purple
-  '#E91E63', // Pink
-  '#795548', // Brown
-  '#607D8B', // Blue Grey
+  '#EF4444',
+  '#F97316',
+  '#EAB308',
+  '#22C55E',
+  '#10B981',
+  '#14B8A6',
+  '#3B82F6',
+  '#8B5CF6',
+  '#6366F1',
+  '#EC4899',
+  '#64748B',
 ];
 
 // Role entity (maps to organization_roles table)

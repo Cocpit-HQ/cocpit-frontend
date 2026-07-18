@@ -10,12 +10,14 @@ interface TeamHomePageProps {
   roles: TeamRole[];
   onEditRole: (role: TeamRole) => void;
   onDeleteRole: (role: TeamRole) => void;
+  onInviteRole: (role: TeamRole) => void;
 }
 
 export default function TeamHomePage({
   roles,
   onEditRole,
   onDeleteRole,
+  onInviteRole,
 }: TeamHomePageProps) {
   const router = useRouter();
 
@@ -30,6 +32,7 @@ export default function TeamHomePage({
         onRoleClick={(role) => router.push(`/team/role/${role.id}`)}
         onEditRole={onEditRole}
         onDeleteRole={onDeleteRole}
+        onInviteRole={onInviteRole}
       />
     </div>
   );
