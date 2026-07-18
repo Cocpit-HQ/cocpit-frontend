@@ -265,19 +265,22 @@ export async function getSubscriberGrowth(orgId: string): Promise<GrowthPoint[]>
   return res.data.data;
 }
 
-export async function getInvitees(orgId: string, search: string): Promise<ChannelInvitee[]> {
+export async function getInvitees(orgId: string, search: string, page: number = 1): Promise<ChannelInvitee[]> {
   if (!orgId) return [];
   const res = await api.get(`/organizations/${orgId}/community/invite-suggestions`, {
-    params: { search }
+    params: { search, limit: 50, page }
   });
   
-  return res.data.data.map((user: any) => ({
-    id: user.id || user.user_id,
-    name: user.name,
-    avatarUrl: user.avatarUrl || user.avatar,
-    headline: user.headline,
-    invited: user.isInvited || user.is_invited,
-  }));
+  return res.data.data.map((user: any) => {
+    const name = user.name || 'Unknown User';
+    return {
+      id: user.id || user.user_id,
+      name,
+      avatarUrl: user.avatarUrl || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+      headline: user.headline,
+      invited: user.isInvited || user.is_invited,
+    };
+  });
 }
 
 export async function inviteUsers(orgId: string, userIds: string[]): Promise<boolean> {
