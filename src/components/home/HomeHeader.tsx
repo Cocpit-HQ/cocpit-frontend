@@ -178,11 +178,7 @@ export const HomeHeader = () => {
     };
 
 
-    useEffect(() => {
-        if (isSearchFocused && !searchQuery && history.length === 0) {
-            setIsSearchFocused(false);
-        }
-    }, [history.length, isSearchFocused, searchQuery]);
+    // Removed useEffect that forced isSearchFocused to false, as it broke typing suggestions
 
     useEffect(() => {
         if (debouncedSearchQuery.trim() === '') {

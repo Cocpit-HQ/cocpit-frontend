@@ -311,7 +311,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     }
   }, [userId, session?.user?.id, user]);
 
-  const isOwnProfile = !!(session?.user?.id === userId || (user && session?.user?.id === user.id));
+  const isOwnProfile = !!(activeProfile?.type === 'USER' && (session?.user?.id === userId || (user && session?.user?.id === user.id)));
   const isUserFollowing = user ? isFollowing(user.id) : false;
   const isUserBlocked = user ? isBlocked(user.id) : false;
 

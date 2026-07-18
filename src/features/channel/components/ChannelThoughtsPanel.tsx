@@ -110,7 +110,7 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search thoughts"
-            className="w-full h-[40px] pl-[16px] pr-[32px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
+            className="w-full h-[40px] pl-[16px] pr-[48px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
           />
           <div className="absolute right-[16px] top-1/2 -translate-y-1/2 flex items-center justify-center text-[#000000] dark:text-[#A1A8B3] pointer-events-none">
             <Icon icon="lucide:search" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px' }} />

@@ -40,10 +40,10 @@ export default function ChannelHeader({ channel, onEdit, onInvite }: ChannelHead
 
       <div className="w-full flex items-center justify-between gap-4">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="text-black dark:text-[#FFFFFF] text-lg font-semibold font-['Poppins'] truncate">
+          <h2 className="text-black dark:text-[#FFFFFF] text-lg font-semibold font-['Poppins'] break-words">
             {channel.name}
           </h2>
-          <p className="text-gray-500 dark:text-[#A1A8B3] text-xs font-['Poppins'] truncate">
+          <p className="text-gray-500 dark:text-[#A1A8B3] text-xs font-['Poppins'] break-words">
             {channel.description}
           </p>
         </div>

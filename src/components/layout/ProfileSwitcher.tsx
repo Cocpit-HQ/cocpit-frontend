@@ -45,6 +45,7 @@ export function ProfileSwitcher({
   const { logout, user } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [showAllOrgs, setShowAllOrgs] = React.useState(false);
 
   const companies = switchableCompanies.filter(
     (c) => c.entity_type === "COMPANY" || !c.entity_type,
@@ -181,70 +182,49 @@ export function ProfileSwitcher({
               <DropdownMenuLabel className="text-[12px] font-medium text-[#71717A] px-2 mb-2 p-0">
                 Organizations
               </DropdownMenuLabel>
-              <div className="space-y-1">
-                {institutions.map((inst: any) => (
+              <div className="space-y-1 max-h-[220px] overflow-y-auto pr-1">
+                {(showAllOrgs ? [...institutions, ...companies] : [...institutions, ...companies].slice(0, 3)).map((org: any) => (
                   <DropdownMenuItem
-                    key={inst.org_id || inst.company_id}
+                    key={org.org_id || org.company_id}
                     onClick={() =>
-                      switchProfile("COMPANY", inst.org_id || inst.company_id)
+                      switchProfile("COMPANY", org.org_id || org.company_id)
                     }
                     className={cn(
                       "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
-                      activeProfile.id === (inst.org_id || inst.company_id) &&
+                      activeProfile.id === (org.org_id || org.company_id) &&
                         "bg-profile-active-bg border-profile-active-border",
                     )}
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarImage
-                        src={inst.logo_url}
+                        src={org.logo_url}
                         className="object-cover"
                       />
                       <AvatarFallback>
-                        {inst.name.slice(0, 2).toUpperCase()}
+                        {org.name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-[15px] leading-[22px] font-normal text-profile-text font-[family-name:var(--font-poppins)] truncate">
-                      {inst.name}
+                      {org.name}
                     </span>
-                    {activeProfile.id === (inst.org_id || inst.company_id) && (
+                    {activeProfile.id === (org.org_id || org.company_id) && (
                       <Check className="ml-auto h-4 w-4 text-[#6366F1]" />
                     )}
                   </DropdownMenuItem>
                 ))}
-                {companies.map((company: any) => (
+                
+                {!showAllOrgs && (institutions.length + companies.length) > 3 && (
                   <DropdownMenuItem
-                    key={company.org_id || company.company_id}
-                    onClick={() =>
-                      switchProfile(
-                        "COMPANY",
-                        company.org_id || company.company_id,
-                      )
-                    }
-                    className={cn(
-                      "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
-                      activeProfile.id ===
-                        (company.org_id || company.company_id) &&
-                        "bg-profile-active-bg border-profile-active-border",
-                    )}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setShowAllOrgs(true);
+                    }}
+                    className="profile-switcher-item flex items-center justify-center gap-2 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none text-[#6366F1] font-medium"
                   >
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage
-                        src={company.logo_url}
-                        className="object-cover"
-                      />
-                      <AvatarFallback>
-                        {company.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-[15px] leading-[22px] font-normal text-profile-text font-[family-name:var(--font-poppins)] truncate">
-                      {company.name}
-                    </span>
-                    {activeProfile.id ===
-                      (company.org_id || company.company_id) && (
-                      <Check className="ml-auto h-4 w-4 text-[#6366F1]" />
-                    )}
+                    <span className="text-[14px]">Show {institutions.length + companies.length - 3} more</span>
+                    <ChevronDown className="w-4 h-4" />
                   </DropdownMenuItem>
-                ))}
+                )}
               </div>
             </DropdownMenuGroup>
           )}
