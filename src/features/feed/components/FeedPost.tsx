@@ -95,6 +95,8 @@ export const FeedPost = (props: FeedPostProps) => {
   const [showInnerOptions, setShowInnerOptions] = useState(false);
   const [innerOptionsPos, setInnerOptionsPos] = useState<{ top: number; right: number } | null>(null);
   const innerOptionsBtnRef = useRef<HTMLButtonElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [captionFocused, setCaptionFocused] = useState(false);
 
   const handleOptionsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -504,6 +506,104 @@ export const FeedPost = (props: FeedPostProps) => {
               />
             </div>
           )}
+        </>
+      ) : videoSrc && !props.isFullContent ? (
+        <>
+          {/* NEW VIDEO FEED CARD DESIGN */}
+          <div 
+            className="relative w-full max-w-[560px] max-h-[500px] rounded-[24px] overflow-hidden bg-black flex-shrink-0 cursor-pointer shadow-sm group transition-all duration-300"
+            style={{ aspectRatio: finalAspectRatio || '16/9' }}
+          >
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              muted
+              loop
+              playsInline
+              onLoadedMetadata={handleMediaLoad}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              className="absolute inset-0 w-full h-full object-cover"
+              onClick={(e) => e.stopPropagation()}
+            />
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none" />
+            
+            {/* Click Interceptor for Video */}
+            <div 
+              className="absolute inset-0 z-0 pointer-events-auto"
+              onClick={(e) => {
+                 e.stopPropagation();
+                 if (captionFocused) {
+                    setCaptionFocused(false);
+                    videoRef.current?.play();
+                    return;
+                 }
+                 router.push(`/post/${id}`);
+              }}
+            />
+
+            {/* Header Overlay */}
+            <div className="absolute top-0 left-0 w-full p-4 z-10 pointer-events-auto">
+              <PostHeader
+                {...props}
+                isMe={props.isOwnPost || false}
+                author={author}
+                timeAgo={timeAgo}
+                visibility={visibility || 'public'}
+                optionsBtnRef={optionsBtnRef}
+                showOptions={showOptions}
+                setShowOptions={setShowOptions}
+                optionsPos={optionsPos}
+                setOptionsPos={setOptionsPos}
+                onEdit={() => setIsEditModalOpen(true)}
+                onDelete={handleDelete}
+                onToggleVisibility={handleToggleVisibility}
+                onShowAnalytics={() => setShowPollAnalytics(true)}
+                onReport={() => setIsReportModalOpen(true)}
+                onNotInterested={handleNotInterested}
+                location={location}
+                tags={tags}
+                authorRole={props.authorHeadline || undefined}
+                variant="overlay"
+              />
+            </div>
+            
+            {/* Caption Overlay */}
+            <div 
+              className={`absolute bottom-0 left-0 w-full p-4 z-10 pointer-events-auto rounded-b-[24px] transition-all duration-300 ${captionFocused ? 'opacity-100 bg-black/40 backdrop-blur-sm' : 'opacity-70 hover:opacity-90'}`}
+              onClick={(e) => {
+                 e.stopPropagation();
+                 if (!captionFocused) {
+                    setCaptionFocused(true);
+                    videoRef.current?.pause();
+                 }
+              }}
+            >
+              <PostContent
+                isCarouselView={forceSquareMedia}
+                content={content}
+                author={author}
+                isExpanded={isExpanded}
+                isFullContent={props.isFullContent}
+                shared_post={shared_post}
+                sharedPollData={shared_post?.poll}
+                isProfileView={isProfileView}
+                postId={id}
+                location={location}
+                timeAgo={timeAgo}
+                onToggleExpand={() => setIsExpanded(!isExpanded)}
+                category={category}
+                title={title}
+                articleBody={articleBody}
+                imageSrc={imageSrc}
+                authorAvatar={authorAvatar}
+                authorSlug={props.authorSlug}
+                postType={props.post_type}
+                variant="overlay"
+              />
+            </div>
+          </div>
         </>
       ) : (
         <>
