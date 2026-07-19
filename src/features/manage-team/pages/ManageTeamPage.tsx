@@ -85,6 +85,7 @@ export default function ManageTeamPage() {
         <CreateRoleModal
           isOpen={isCreateOpen}
           isSubmitting={createRole.isPending}
+          existingRoles={roles?.map(r => r.name) || []}
           onClose={() => setIsCreateOpen(false)}
           onSubmit={handleCreate}
         />

@@ -12,6 +12,7 @@ import PermissionCheckList from '../permissions/PermissionCheckList';
 interface CreateRoleModalProps {
   isOpen: boolean;
   isSubmitting?: boolean;
+  existingRoles?: string[];
   onClose: () => void;
   onSubmit: (input: CreateRoleInput) => void;
 }
@@ -19,6 +20,7 @@ interface CreateRoleModalProps {
 export default function CreateRoleModal({
   isOpen,
   isSubmitting,
+  existingRoles = [],
   onClose,
   onSubmit,
 }: CreateRoleModalProps) {
@@ -32,8 +34,12 @@ export default function CreateRoleModal({
 
   const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
 
+  const isNameAdmin = name.trim().toLowerCase() === 'admin';
+  const isNameTaken = existingRoles.some(r => r.toLowerCase() === name.trim().toLowerCase());
+  const hasError = isNameAdmin || isNameTaken;
+
   const handleSubmit = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || hasError) return;
     onSubmit({
       name: name.trim(),
       color,
@@ -79,13 +85,29 @@ export default function CreateRoleModal({
               <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px]">
                 Role name
               </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="HR Manager"
-                className="w-full h-[56px] px-4 rounded-[12px] border border-[#E0E0E7] bg-[#FFFFFF] text-[16px] text-[#434655] font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors placeholder:text-[#6B7280]"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="HR Manager"
+                  className={`w-full h-[56px] px-4 rounded-[12px] border ${
+                    hasError 
+                      ? 'border-[#EF4444] focus:border-[#EF4444]' 
+                      : 'border-[#E0E0E7] focus:border-[#1A73E8]'
+                  } bg-[#FFFFFF] text-[16px] text-[#434655] font-['Poppins'] outline-none transition-colors placeholder:text-[#6B7280]`}
+                />
+                {isNameAdmin && (
+                  <p className="text-[#EF4444] text-[14px] mt-1 font-['Poppins']">
+                    This role is unavailable
+                  </p>
+                )}
+                {isNameTaken && !isNameAdmin && (
+                  <p className="text-[#EF4444] text-[14px] mt-1 font-['Poppins']">
+                    This role is already taken
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Color picker */}

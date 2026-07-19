@@ -115,16 +115,18 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
             >
               <Icon icon="proicons:pencil" className="w-5 h-5" />
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="p-1.5 text-[#EF4444] hover:text-red-600"
-              title="Delete role"
-            >
-              <Icon icon="lucide:trash-2" className="w-5 h-5" />
-            </button>
+            {!role.isSystemRole && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-1.5 text-[#EF4444] hover:text-red-600"
+                title="Delete role"
+              >
+                <Icon icon="lucide:trash-2" className="w-5 h-5" />
+              </button>
+            )}
           </div>
         )}
       </div>

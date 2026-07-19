@@ -1,15 +1,11 @@
 /**
  * Team Management Service
  *
- * NOTE: Backend APIs are NOT ready yet.
- * All functions return dummy data with simulated async delays.
- * When backend is ready, replace dummy returns with actual api calls.
- *
- * Endpoint paths are TBD — will be filled in once the backend team
- * finalizes the API contract.
+ * All functions currently return empty data.
+ * Each function has a TODO comment with the real API endpoint to integrate.
  */
 
-// import api from '@/lib/axios'; // Uncomment when backend is ready
+import api from '@/lib/axios';
 import {
   TeamRole,
   TeamMember,
@@ -19,55 +15,96 @@ import {
   CreateRoleInput,
   UpdateRoleInput,
 } from '../types/team.types';
-import {
-  DUMMY_ROLES,
-  DUMMY_MEMBERS,
-  DUMMY_ACTIVITY_LOGS,
-  DUMMY_INVITE_CANDIDATES,
-} from '../utils/dummy-team-data';
 
-// Simulated network delay
-const delay = (ms: number = 300) => new Promise((r) => setTimeout(r, ms));
+// ─── Response Mappers ─────────────────────────────────────────────────────────
+
+/** Maps a snake_case role row from the backend to a camelCase TeamRole */
+function mapRole(row: any): TeamRole {
+  return {
+    id: row.role_id,
+    orgId: row.org_id,
+    name: row.name,
+    color: row.color || '#808080',
+    description: row.description || '',
+    permissions: row.permissions || [],
+    priority: row.priority ?? 0,
+    isSystemRole: row.is_system_role ?? false,
+    memberCount: row.member_count ?? 0,
+    members: Array.isArray(row.members) ? row.members.map((m: any) => ({
+      ...m,
+      avatarUrl: m.avatar || m.avatar_url || '',
+      id: m.id || m.user_id,
+      name: m.name || m.full_name,
+    })) : [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapMember(row: any): TeamMember {
+  return {
+    id: row.user_id,
+    orgId: row.org_id || '',
+    name: row.full_name,
+    avatarUrl: row.avatar_url,
+    headline: row.headline,
+    roleId: row.role_id,
+    roleName: row.role_name,
+    roleColor: row.role_color,
+    status: row.status,
+    joinedAt: row.joined_at,
+  };
+}
+
+function mapActivityLog(row: any): ActivityLogEntry {
+  return {
+    id: row.log_id,
+    actorName: row.actor_name,
+    actorAvatarUrl: row.actor_avatar_url,
+    action: row.action,
+    targetName: row.target_name,
+    targetRole: row.target_role,
+    details: row.details,
+    highlightedText: row.highlighted_text,
+    timestamp: row.created_at,
+  };
+}
+
+function mapCandidate(row: any): InviteCandidate {
+  return {
+    id: row.user_id,
+    name: row.full_name,
+    avatarUrl: row.avatar || row.avatar_url || '',
+    headline: row.headline,
+    alreadyMember: row.already_member || false,
+  };
+}
 
 // ─── Roles ────────────────────────────────────────────────────────────────────
 
 export async function getTeamRoles(orgId: string): Promise<TeamRole[]> {
-  // TODO: Replace with api.get(`/organizations/${orgId}/roles`)
-  await delay();
-  return DUMMY_ROLES.filter((r) => r.orgId === 'org-demo');
+  const res = await api.get(`/organizations/${orgId}/teams/roles`);
+  return (res.data || []).map(mapRole);
 }
 
 export async function getRoleById(
   orgId: string,
   roleId: string
 ): Promise<TeamRole | null> {
-  // TODO: Replace with api.get(`/organizations/${orgId}/roles/${roleId}`)
-  await delay();
-  return DUMMY_ROLES.find((r) => r.id === roleId) ?? null;
+  try {
+    const res = await api.get(`/organizations/${orgId}/teams/roles/${roleId}`);
+    return res.data ? mapRole(res.data) : null;
+  } catch (error) {
+    return null;
+  }
 }
 
 export async function createRole(
   orgId: string,
   input: CreateRoleInput
 ): Promise<TeamRole> {
-  // TODO: Replace with api.post(`/organizations/${orgId}/roles`, input)
-  await delay(500);
-  const newRole: TeamRole = {
-    id: `role-${Date.now()}`,
-    orgId,
-    name: input.name,
-    color: input.color,
-    description: input.description,
-    permissions: input.permissions,
-    priority: DUMMY_ROLES.length,
-    isSystemRole: false,
-    memberCount: 0,
-    members: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  DUMMY_ROLES.push(newRole);
-  return newRole;
+  const res = await api.post(`/organizations/${orgId}/teams/roles`, input);
+  return mapRole(res.data);
 }
 
 export async function updateRole(
@@ -75,46 +112,34 @@ export async function updateRole(
   roleId: string,
   input: UpdateRoleInput
 ): Promise<TeamRole> {
-  // TODO: Replace with api.put(`/organizations/${orgId}/roles/${roleId}`, input)
-  await delay(500);
-  const existing = DUMMY_ROLES.find((r) => r.id === roleId);
-  if (!existing) throw new Error('Role not found');
-  Object.assign(existing, {
-    ...input,
-    permissions: input.permissions ?? existing.permissions,
-    updatedAt: new Date().toISOString(),
-  });
-  return existing;
+  const res = await api.put(`/organizations/${orgId}/teams/roles/${roleId}`, input);
+  return mapRole(res.data);
 }
 
 export async function deleteRole(
   orgId: string,
   roleId: string
 ): Promise<boolean> {
-  // TODO: Replace with api.delete(`/organizations/${orgId}/roles/${roleId}`)
-  await delay(500);
-  const index = DUMMY_ROLES.findIndex((r) => r.id === roleId);
-  if (index !== -1) {
-    DUMMY_ROLES.splice(index, 1);
-  }
+  await api.delete(`/organizations/${orgId}/teams/roles/${roleId}`);
   return true;
 }
 
 // ─── Members ──────────────────────────────────────────────────────────────────
 
 export async function getTeamMembers(orgId: string): Promise<TeamMember[]> {
-  // TODO: Replace with api.get(`/organizations/${orgId}/members`)
-  await delay();
-  return DUMMY_MEMBERS;
+  const res = await api.get(`/organizations/${orgId}/teams/members`);
+  // The backend might return paginated { data, meta } or just an array
+  const list = res.data?.data || res.data || [];
+  return list.map(mapMember);
 }
 
 export async function getRoleMembers(
   orgId: string,
   roleId: string
 ): Promise<TeamMember[]> {
-  // TODO: Replace with api.get(`/organizations/${orgId}/roles/${roleId}/members`)
-  await delay();
-  return DUMMY_MEMBERS.filter((m) => m.roleId === roleId);
+  const res = await api.get(`/organizations/${orgId}/teams/roles/${roleId}/members`);
+  const list = res.data?.data || res.data || [];
+  return list.map(mapMember);
 }
 
 export async function inviteMember(
@@ -122,8 +147,7 @@ export async function inviteMember(
   userId: string,
   roleId?: string
 ): Promise<boolean> {
-  // TODO: Replace with api.post(`/organizations/${orgId}/members/invite`, { userId, roleId })
-  await delay(500);
+  await api.post(`/organizations/${orgId}/teams/invite`, { userId, roleId });
   return true;
 }
 
@@ -131,8 +155,7 @@ export async function removeMember(
   orgId: string,
   userId: string
 ): Promise<boolean> {
-  // TODO: Replace with api.delete(`/organizations/${orgId}/members/${userId}`)
-  await delay(500);
+  await api.delete(`/organizations/${orgId}/teams/members/${userId}`);
   return true;
 }
 
@@ -141,8 +164,7 @@ export async function updateMemberRole(
   userId: string,
   roleId: string
 ): Promise<boolean> {
-  // TODO: Replace with api.put(`/organizations/${orgId}/members/${userId}/role`, { roleId })
-  await delay(500);
+  await api.put(`/organizations/${orgId}/teams/members/${userId}/role`, { roleId });
   return true;
 }
 
@@ -152,21 +174,9 @@ export async function getActivityLogs(
   orgId: string,
   filters?: ActivityLogFilters
 ): Promise<ActivityLogEntry[]> {
-  // TODO: Replace with api.get(`/organizations/${orgId}/activity-logs`, { params: filters })
-  await delay();
-  let logs = [...DUMMY_ACTIVITY_LOGS];
-
-  if (filters?.search) {
-    const q = filters.search.toLowerCase();
-    logs = logs.filter(
-      (l) =>
-        l.actorName.toLowerCase().includes(q) ||
-        l.targetName?.toLowerCase().includes(q) ||
-        l.action.toLowerCase().includes(q)
-    );
-  }
-
-  return logs;
+  const res = await api.get(`/organizations/${orgId}/teams/activity`, { params: filters });
+  const list = res.data?.data || res.data || [];
+  return list.map(mapActivityLog);
 }
 
 // ─── Invite Candidates ───────────────────────────────────────────────────────
@@ -175,13 +185,7 @@ export async function getInviteCandidates(
   orgId: string,
   search: string
 ): Promise<InviteCandidate[]> {
-  // TODO: Replace with api.get(`/organizations/${orgId}/members/invite-suggestions`, { params: { search } })
-  await delay();
-  if (!search) return DUMMY_INVITE_CANDIDATES;
-  const q = search.toLowerCase();
-  return DUMMY_INVITE_CANDIDATES.filter(
-    (c) =>
-      c.name.toLowerCase().includes(q) ||
-      c.headline?.toLowerCase().includes(q)
-  );
+  const res = await api.get(`/organizations/${orgId}/teams/invite-candidates`, { params: { search } });
+  const list = res.data?.candidates || res.data?.data || (Array.isArray(res.data) ? res.data : []);
+  return list.map(mapCandidate);
 }
