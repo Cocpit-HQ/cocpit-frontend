@@ -7,6 +7,9 @@ import { useUIStore } from "@/store/ui.store";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { Plus } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -18,6 +21,8 @@ export function AppShell({
   hideBottomNav = false,
 }: AppShellProps) {
   const { setActiveModal } = useUIStore();
+  const { isCompany } = useActiveProfile();
+  const { checkPermission } = useCompanyPermissions();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isCreateJobActive = searchParams?.get('view') === 'create-job';
@@ -39,15 +44,33 @@ export function AppShell({
       {!hideBottomNav && (
         <>
           {!pathname?.startsWith('/organization/') && !pathname?.includes('/jobs/') && !isCreateJobActive && (
-            <button
-              onClick={() => setActiveModal('create-post')}
-              className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 bg-[#6366F1] text-white rounded-full flex items-center justify-center shadow-[0_8px_16px_rgba(99,102,241,0.4)] hover:bg-[#5558e3] transition-colors"
-              aria-label="Create Post"
-            >
-              <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                  <Plus className="w-4 h-4" strokeWidth={3} />
-              </div>
-            </button>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      if (isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                      }
+                      setActiveModal('create-post');
+                    }}
+                    className={`md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 bg-[#6366F1] text-white rounded-full flex items-center justify-center shadow-[0_8px_16px_rgba(99,102,241,0.4)] hover:bg-[#5558e3] transition-colors ${(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) ? '!cursor-not-allowed' : ''}`}
+                    aria-label="Create Post"
+                  >
+                    <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
+                        <Plus className="w-4 h-4" strokeWidth={3} />
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                {(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) && (
+                    <TooltipContent side="top" className="bg-gray-800 text-white border-gray-700">
+                        <p>You don't have permission to access this</p>
+                    </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           )}
           <MobileBottomNav />
         </>

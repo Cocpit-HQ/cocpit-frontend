@@ -14,6 +14,12 @@ import { useCompanyPermissions } from '@/components/organizations/hooks/use-comp
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store'
 import { useQueryClient } from '@tanstack/react-query'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import './sidebar.css'
 
 interface DarkSidebarProps {
@@ -49,7 +55,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           title: 'Core',
           items: [
             { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
-            { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true },
+            { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true, disabled: !checkPermission('CHANNELS') },
             { icon: Compass, label: 'Explore', href: '/explore', show: false },
             { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
           ]
@@ -57,22 +63,22 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         {
           title: 'Work',
           items: [
-            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
+            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: true, disabled: !(checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS')) },
             { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
           ]
         },
         {
           title: 'Insights',
           items: [
-            { icon: (props: any) => <Icon icon="streamline-ultimate:team-meeting" {...props} />, label: 'Team', href: '/team', show: true },
-            { icon: (props: any) => <Icon icon="hugeicons:analytics-up" {...props} />, label: 'Analytics', href: analyticsHref, show: checkPermission('VIEW_ANALYTICS') },
+            { icon: (props: any) => <Icon icon="streamline-ultimate:team-meeting" {...props} />, label: 'Team', href: '/team', show: true, disabled: !checkPermission('TEAMS') },
+            { icon: (props: any) => <Icon icon="hugeicons:analytics-up" {...props} />, label: 'Analytics', href: analyticsHref, show: true, disabled: !checkPermission('VIEW_ANALYTICS') },
           ]
         },
         {
           title: 'Account',
           items: [
             { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
-            { icon: Settings, label: 'Settings', href: settingsHref, show: canEdit || checkPermission('MANAGE_SETTINGS') },
+            { icon: Settings, label: 'Settings', href: settingsHref, show: true },
           ]
         }
       ];
@@ -158,8 +164,41 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
                 {section.title}
               </h3>
               <div className="sidebar__items">
-                {visibleItems.map((item) => {
+                {visibleItems.map((item: any) => {
                   const active = isActive(item.href)
+                  
+                  const content = (
+                    <>
+                      <item.icon className="sidebar__item-icon" />
+                      <span className="sidebar__item-label">
+                        {item.label}
+                      </span>
+                    </>
+                  )
+
+                  if (item.disabled) {
+                    return (
+                      <TooltipProvider key={item.label} delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`sidebar__item ${isCompany ? 'sidebar__item--company' : ''} !cursor-not-allowed`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                            >
+                              {content}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="bg-gray-800 text-white border-gray-700">
+                            <p>You don't have permission to access this</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                  }
+
                   return (
                     <Link
                       key={item.label}
@@ -174,10 +213,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
                       }}
                       className={`sidebar__item ${isCompany ? 'sidebar__item--company' : ''} ${active ? (isCompany ? 'sidebar__item--company-active' : 'sidebar__item--active') : ''}`}
                     >
-                      <item.icon className="sidebar__item-icon" />
-                      <span className="sidebar__item-label">
-                        {item.label}
-                      </span>
+                      {content}
                     </Link>
                   )
                 })}

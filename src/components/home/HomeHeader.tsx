@@ -16,9 +16,12 @@ import { useUIStore } from '@/store/ui.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { getNotifications } from '@/services/api/notifications';
 import { useSocket } from '@/context/SocketContext';
+import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const HomeHeader = () => {
     const { activeProfile, isCompany } = useActiveProfile();
+    const { checkPermission } = useCompanyPermissions();
     const { socket } = useSocket();
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
     const router = useRouter();
@@ -782,15 +785,33 @@ export const HomeHeader = () => {
                     {/* Header Right Section (Action Buttons) */}
                     <div className="flex items-center gap-4 shrink-0 min-w-0 xl:w-[406px] xl:justify-end">
                         {!pathname.startsWith('/channel') && !pathname.startsWith('/team') && (
-                            <button
-                                onClick={() => setActiveModal('create-post')}
-                                className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap`}
-                            >
-                                <span>Create post</span>
-                                <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                    <Plus size={12} strokeWidth={3} />
-                                </div>
-                            </button>
+                            <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            onClick={(e) => {
+                                                if (isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    return;
+                                                }
+                                                setActiveModal('create-post');
+                                            }}
+                                            className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap ${(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) ? '!cursor-not-allowed' : ''}`}
+                                        >
+                                            <span>Create post</span>
+                                            <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
+                                                <Plus size={12} strokeWidth={3} />
+                                            </div>
+                                        </button>
+                                    </TooltipTrigger>
+                                    {(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) && (
+                                        <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
+                                            <p>You don't have permission to access this</p>
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
                         )}
 
                         {/* Icons group — gap-2 (8px) between each, each icon 56×40 */}
@@ -816,12 +837,29 @@ export const HomeHeader = () => {
                                     )}
                                 </div>
                             </Link>
-                            <Link
-                                href="/messaging"
-                                className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
-                            >
-                                <MessageCircle width={24} height={24} strokeWidth={1.5} />
-                            </Link>
+                            <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Link
+                                            href="/messaging"
+                                            onClick={(e) => {
+                                                if (isCompany && !checkPermission('chat') && !checkPermission('MESSAGES')) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }
+                                            }}
+                                            className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'} ${(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES')) ? '!cursor-not-allowed' : ''}`}
+                                        >
+                                            <MessageCircle width={24} height={24} strokeWidth={1.5} />
+                                        </Link>
+                                    </TooltipTrigger>
+                                    {(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES')) && (
+                                        <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
+                                            <p>You don't have permission to access this</p>
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
                             <div className="flex items-center justify-center w-14 h-10 rounded-[24px]">
                                 <ProfileSwitcher showArrow={false} />
                             </div>

@@ -48,7 +48,7 @@ export default function RoleDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-[calc(100%+8px)] left-0 w-full min-w-[140px] bg-white dark:bg-[#1A1D24] border border-[#E0E0E7] dark:border-gray-700 rounded-[12px] shadow-lg z-20 py-2 max-h-[200px] overflow-y-auto">
+        <div className="absolute top-[calc(100%+8px)] left-0 w-full min-w-[140px] bg-white dark:bg-[#1A1D24] border border-[#E0E0E7] dark:border-gray-700 rounded-[12px] shadow-lg z-20 py-2 max-h-[200px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {options.map((option) => (
             <button
               key={option.value}
