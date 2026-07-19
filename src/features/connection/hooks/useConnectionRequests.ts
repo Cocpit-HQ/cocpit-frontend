@@ -5,6 +5,7 @@ import {
   getChannelInvitations,
 } from '@/services/api/connections';
 import type { ConnectionTab, InvitationSubTab, ConnectionRequest, ConnectionRequestsResponse } from '../types';
+import { getUserPendingInvites } from '@/features/manage-team/services/team.service';
 
 const EMPTY_RESPONSE: ConnectionRequestsResponse = { data: [], totalCount: 0, page: 1, limit: 10 };
 
@@ -18,9 +19,25 @@ export const useConnectionRequests = (tab: ConnectionTab, subTab?: InvitationSub
       }
 
       // ── Invitations — Teams sub-tab ───────────────────────────────────────
-      // Team invitations not built yet — return empty without an API call.
       if (subTab === 'teams') {
-        return EMPTY_RESPONSE;
+        const teamInvites = await getUserPendingInvites();
+        const mapped: ConnectionRequest[] = teamInvites.map((invite) => ({
+          id:               invite.token, // Use token as ID so we can pass it to accept/decline
+          sender_id:        invite.org_id,
+          receiver_id:      '',             // not needed for UI
+          created_at:       invite.invited_at,
+          status:           'pending',
+          reason_tag:       null,
+          isCompanyRequest: true,
+          mutuals:          { count: 0, avatars: [] },
+          user: {
+            name:     invite.org_name,
+            avatar:   invite.org_logo || '',
+            headline: `Role: ${invite.role}`,
+            slug:     null,
+          },
+        }));
+        return { data: mapped, totalCount: mapped.length, page: 1, limit: 50 };
       }
 
       // ── Invitations — Channels sub-tab ────────────────────────────────────
@@ -43,9 +60,9 @@ export const useConnectionRequests = (tab: ConnectionTab, subTab?: InvitationSub
       }));
       return { data: mapped, totalCount: mapped.length, page: 1, limit: 50 };
     },
-    // Only fetch invitations when actually on the channels sub-tab.
+    // Only fetch invitations when actually on an invitations sub-tab.
     // For other tabs (received/sent), always enabled.
-    enabled: tab !== 'invitations' || subTab === 'channels',
+    enabled: tab !== 'invitations' || subTab === 'channels' || subTab === 'teams',
     staleTime: tab === 'invitations' ? 60_000 : 30_000,
     retry: 1,
   });

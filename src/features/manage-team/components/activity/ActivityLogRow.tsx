@@ -14,11 +14,12 @@ export default function ActivityLogRow({ entry }: ActivityLogRowProps) {
     <div className="w-full flex items-center gap-3 py-3">
       {/* Actor avatar */}
       <img
-        src={entry.actorAvatarUrl}
+        src={entry.actorAvatarUrl || '/assets/pngegg.png'}
         alt={entry.actorName}
         className="w-9 h-9 rounded-full object-cover flex-shrink-0"
         onError={(e) => {
-          (e.target as HTMLImageElement).src = '/assets/pngegg.png';
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = '/assets/pngegg.png';
         }}
       />
 

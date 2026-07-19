@@ -10,6 +10,7 @@ interface ActivityLogFiltersProps {
   onFiltersChange: (filters: ActivityLogFilters) => void;
   roleOptions?: { value: string; label: string }[];
   memberOptions: { value: string; label: string }[];
+  hideRoleDropdown?: boolean;
 }
 
 const DATE_RANGE_OPTIONS = [
@@ -24,6 +25,7 @@ export default function ActivityLogFiltersBar({
   onFiltersChange,
   memberOptions,
   roleOptions = [],
+  hideRoleDropdown = false,
 }: ActivityLogFiltersProps) {
   const update = (patch: Partial<ActivityLogFilters>) =>
     onFiltersChange({ ...filters, ...patch });
@@ -48,17 +50,19 @@ export default function ActivityLogFiltersBar({
       </div>
 
       {/* Role */}
-      <div className="flex flex-col items-start gap-2 flex-1 max-w-[304px]">
-        <span className="text-[14px] font-medium text-[#000000] dark:text-white font-['Poppins'] tracking-[0.14px]">
-          Role
-        </span>
-        <RoleDropdown
-          options={[{ value: 'all', label: 'All roles' }, ...roleOptions]}
-          value={filters.roleId}
-          onChange={(v) => update({ roleId: v })}
-          placeholder="All roles"
-        />
-      </div>
+      {!hideRoleDropdown && (
+        <div className="flex flex-col items-start gap-2 flex-1 max-w-[304px]">
+          <span className="text-[14px] font-medium text-[#000000] dark:text-white font-['Poppins'] tracking-[0.14px]">
+            Role
+          </span>
+          <RoleDropdown
+            options={[{ value: 'all', label: 'All roles' }, ...roleOptions]}
+            value={filters.roleId}
+            onChange={(v) => update({ roleId: v })}
+            placeholder="All roles"
+          />
+        </div>
+      )}
 
       {/* Member */}
       <div className="flex flex-col items-start gap-2 flex-1 max-w-[304px]">

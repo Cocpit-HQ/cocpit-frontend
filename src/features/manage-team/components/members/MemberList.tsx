@@ -2,17 +2,18 @@
 
 import React from 'react';
 import { Icon } from '@iconify/react';
-import { TeamMember } from '../../types/team.types';
+import { TeamMember, PendingInvitation } from '../../types/team.types';
 import MemberRow from './MemberRow';
 
 interface MemberListProps {
   members: TeamMember[];
+  pendingInvites?: PendingInvitation[];
   onRemoveMember?: (member: TeamMember) => void;
   onInviteClick?: () => void;
-  onWithdrawInvitation?: () => void;
+  onWithdrawInvitation?: (inviteId: string) => void;
 }
 
-export default function MemberList({ members, onRemoveMember, onInviteClick, onWithdrawInvitation }: MemberListProps) {
+export default function MemberList({ members, pendingInvites = [], onRemoveMember, onInviteClick, onWithdrawInvitation }: MemberListProps) {
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Header */}
@@ -50,27 +51,31 @@ export default function MemberList({ members, onRemoveMember, onInviteClick, onW
         )}
       </div>
 
-      {/* Sent Invitations Section (Mock as per design) */}
-      <div className="flex flex-col mt-4">
-        <span className="text-[12px] text-[#A3AED0] dark:text-gray-500 font-['Poppins'] mb-2">
-          Sent invitations - 1
-        </span>
-        <div className="w-full flex items-center justify-between py-2">
-          <div className="flex items-center gap-3">
-            <img src="/images/Team/profile_team.png" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/pngegg.png'; }} alt="Bee smith" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-            <div className="flex flex-col min-w-0">
-              <span className="text-[14px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">Bee smith</span>
-              <span className="text-[12px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">bee.turner@example.com</span>
+      {pendingInvites.length > 0 && (
+        <div className="flex flex-col mt-4">
+          <span className="text-[12px] text-[#A3AED0] dark:text-gray-500 font-['Poppins'] mb-2">
+            Sent invitations - {pendingInvites.length}
+          </span>
+          {pendingInvites.map((invite) => (
+            <div key={invite.id} className="w-full flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <img src={invite.avatarUrl} onError={(e) => { (e.target as HTMLImageElement).src = '/assets/pngegg.png'; }} alt={invite.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[14px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">{invite.name}</span>
+                  <span className="text-[12px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">{invite.headline || 'Invited user'}</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => onWithdrawInvitation?.(invite.id)}
+                className="text-[13px] text-[#A3AED0] font-['Poppins'] font-medium hover:text-gray-600"
+              >
+                Withdraw invitation
+              </button>
             </div>
-          </div>
-          <button 
-            onClick={onWithdrawInvitation}
-            className="text-[13px] text-[#A3AED0] font-['Poppins'] font-medium hover:text-gray-600"
-          >
-            Withdraw invitation
-          </button>
+          ))}
         </div>
-      </div>
+      )}
+
     </div>
   );
 }

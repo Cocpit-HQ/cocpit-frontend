@@ -95,7 +95,7 @@ export default function CreateRoleModal({
                     hasError 
                       ? 'border-[#EF4444] focus:border-[#EF4444]' 
                       : 'border-[#E0E0E7] focus:border-[#1A73E8]'
-                  } bg-[#FFFFFF] text-[16px] text-[#434655] font-['Poppins'] outline-none transition-colors placeholder:text-[#6B7280]`}
+                  } bg-[#FFFFFF] text-[16px] text-[#434655] font-['Poppins'] font-medium outline-none transition-colors placeholder:text-[#6B7280]`}
                 />
                 {isNameAdmin && (
                   <p className="text-[#EF4444] text-[14px] mt-1 font-['Poppins']">
@@ -153,7 +153,7 @@ export default function CreateRoleModal({
                   }
                 }}
                 placeholder="Describe the responsibilities and scope of this role..."
-                className={`box-border w-full h-[120px] p-4 rounded-[12px] border ${showLimitError ? 'border-red-500' : 'border-[#E0E0E7]'} bg-[#FFFFFF] text-[16px] font-normal text-[#434655] leading-[26px] font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors resize-none overflow-y-auto placeholder:text-[#6B7280]`}
+                className={`box-border w-full h-[120px] p-4 rounded-[12px] border ${showLimitError ? 'border-red-500' : 'border-[#E0E0E7]'} bg-[#FFFFFF] text-[16px] font-medium text-[#434655] leading-[26px] font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors resize-none overflow-y-auto placeholder:text-[#6B7280]`}
               />
               <div className="flex justify-between items-start mt-1">
                 <div className="flex-1">

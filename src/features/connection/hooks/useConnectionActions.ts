@@ -11,6 +11,7 @@ import {
   acceptChannelInvitation,
   declineChannelInvitation,
 } from '@/services/api/connections';
+import { acceptInvite as acceptTeamInvite, declineInvite as declineTeamInvite } from '@/features/manage-team/services/team.service';
 import { useConnectionStore } from '@/store/connection.store';
 
 
@@ -124,5 +125,36 @@ export const useConnectionActions = () => {
     },
   });
 
-  return { accept, decline, undo, connect, acceptInvitation, declineInvitation };
+  // ─── Accept team invitation ────────────────────────────────────────────
+  const acceptTeamInvitation = useMutation({
+    mutationFn: (inviteId: string) => {
+      removeRequest(inviteId);
+      return acceptTeamInvite(inviteId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      toast.success('You have joined the team!');
+    },
+    onError: (_err, inviteId) => {
+      restoreRequest(inviteId);
+      toast.error('Failed to accept team invitation. Please try again.');
+    },
+  });
+
+  // ─── Decline team invitation ───────────────────────────────────────────
+  const declineTeamInvitation = useMutation({
+    mutationFn: (inviteId: string) => {
+      removeRequest(inviteId);
+      return declineTeamInvite(inviteId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+    },
+    onError: (_err, inviteId) => {
+      restoreRequest(inviteId);
+      toast.error('Failed to decline team invitation. Please try again.');
+    },
+  });
+
+  return { accept, decline, undo, connect, acceptInvitation, declineInvitation, acceptTeamInvitation, declineTeamInvitation };
 };

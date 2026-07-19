@@ -79,6 +79,7 @@ export interface TeamMember {
   roleColor?: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'PENDING_INVITE' | 'REMOVED';
   joinedAt: string;
+  inviteId?: string;
 }
 
 // Activity log entry
@@ -102,13 +103,38 @@ export interface ActivityLogFilters {
   dateRange: string;
 }
 
-// Invite candidate (for invite modal)
 export interface InviteCandidate {
   id: string;
   name: string;
   avatarUrl: string;
   headline?: string;
   alreadyMember?: boolean;
+}
+
+export interface PendingInvitation {
+  id: string;
+  userId: string;
+  name: string;
+  avatarUrl: string;
+  headline?: string;
+  roleId: string;
+  roleName: string;
+  roleColor?: string;
+  invitedAt: string;
+}
+
+export interface UserPendingInvitation {
+  invite_id: string;
+  org_id: string;
+  org_name: string;
+  org_logo: string;
+  role: string;
+  role_id: string;
+  token: string;
+  expires_at: string;
+  invited_at: string;
+  inviter_name: string;
+  inviter_avatar: string;
 }
 
 // Input types for mutations

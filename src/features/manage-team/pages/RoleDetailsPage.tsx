@@ -8,13 +8,18 @@ import { useRoleDetails } from '../hooks/useRoleDetails';
 import { useActivityLogs } from '../hooks/useActivityLogs';
 import { useRemoveMember } from '../hooks/useRemoveMember';
 import { useInviteMember } from '../hooks/useInviteMember';
-import { TeamMember, ActivityLogFilters } from '../types/team.types';
+import { useUpdateRole } from '../hooks/useUpdateRole';
+import { useDeleteRole } from '../hooks/useDeleteRole';
+import { useWithdrawInvite } from '../hooks/useWithdrawInvite';
+import { TeamMember, ActivityLogFilters, UpdateRoleInput, PendingInvitation } from '../types/team.types';
 import MemberList from '../components/members/MemberList';
 import InviteMemberModal from '../components/members/InviteMemberModal';
 import RemoveMemberConfirm from '../components/members/RemoveMemberConfirm';
 import WithdrawInviteConfirm from '../components/members/WithdrawInviteConfirm';
 import ActivityLogTable from '../components/activity/ActivityLogTable';
 import ActivityLogFiltersBar from '../components/activity/ActivityLogFilters';
+import EditRoleModal from '../components/roles/EditRoleModal';
+import DeleteRoleConfirm from '../components/roles/DeleteRoleConfirm';
 
 interface RoleDetailsPageProps {
   roleId: string;
@@ -25,11 +30,16 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
   const { role, isLoading } = useRoleDetails(roleId);
   const removeMember = useRemoveMember();
   const inviteMember = useInviteMember();
+  const updateRole = useUpdateRole();
+  const deleteRole = useDeleteRole();
+  const withdrawInvite = useWithdrawInvite();
 
   const [activeTab, setActiveTab] = useState<'members' | 'activity'>('members');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Activity log filters for this role
   const [logFilters, setLogFilters] = useState<ActivityLogFilters>({
@@ -69,6 +79,31 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
     });
   };
 
+  const handleWithdraw = () => {
+    if (!withdrawTargetId) return;
+    withdrawInvite.mutate(withdrawTargetId, {
+      onSuccess: () => setWithdrawTargetId(null),
+    });
+  };
+
+  const handleUpdate = (input: UpdateRoleInput) => {
+    if (!role) return;
+    updateRole.mutate(
+      { roleId: role.id, input },
+      { onSuccess: () => setIsEditOpen(false) }
+    );
+  };
+
+  const handleDelete = () => {
+    if (!role) return;
+    deleteRole.mutate(role.id, {
+      onSuccess: () => {
+        setIsDeleteOpen(false);
+        router.push('/team');
+      },
+    });
+  };
+
   return (
     <div className="w-full max-w-[1128px] mx-auto min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-8 px-4 xl:px-0">
       <div className="w-full max-w-[998px] mx-auto flex flex-col gap-5">
@@ -103,12 +138,22 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <button className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center">
+              <button 
+                onClick={() => setIsEditOpen(true)}
+                className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center"
+                title="Edit role"
+              >
                 <Icon icon="fluent:edit-24-regular" className="w-5 h-5 text-[#000000] dark:text-white" />
               </button>
-              <button className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center">
-                <Icon icon="fluent:delete-24-regular" className="w-5 h-5 text-[#EF4444]" />
-              </button>
+              {!role.isSystemRole && (
+                <button 
+                  onClick={() => setIsDeleteOpen(true)}
+                  className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center"
+                  title="Delete role"
+                >
+                  <Icon icon="fluent:delete-24-regular" className="w-5 h-5 text-[#EF4444]" />
+                </button>
+              )}
             </div>
           </div>
           
@@ -176,10 +221,21 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         {activeTab === 'members' ? (
           <div className="flex flex-col gap-4 mt-2">
             <MemberList
-              members={role.members}
+              members={role.members.filter(m => m.status === 'ACTIVE')}
+              pendingInvites={role.members.filter(m => m.status === 'PENDING_INVITE').map(m => ({
+                id: m.inviteId || '',
+                userId: m.id,
+                name: m.name,
+                avatarUrl: m.avatarUrl,
+                headline: m.headline,
+                roleId: role.id,
+                roleName: role.name,
+                roleColor: role.color,
+                invitedAt: m.joinedAt
+              } as PendingInvitation))}
               onRemoveMember={(member) => setRemoveTarget(member)}
               onInviteClick={() => setIsInviteOpen(true)}
-              onWithdrawInvitation={() => setIsWithdrawOpen(true)}
+              onWithdrawInvitation={(inviteId) => setWithdrawTargetId(inviteId)}
             />
           </div>
         ) : (
@@ -191,6 +247,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
                 value: m.id,
                 label: m.name,
               }))}
+              hideRoleDropdown={true}
             />
             <ActivityLogTable logs={logs} isLoading={logsLoading} />
           </div>
@@ -213,9 +270,24 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         />
 
         <WithdrawInviteConfirm
-          isOpen={isWithdrawOpen}
-          onConfirm={() => setIsWithdrawOpen(false)}
-          onCancel={() => setIsWithdrawOpen(false)}
+          isOpen={!!withdrawTargetId}
+          onConfirm={handleWithdraw}
+          onCancel={() => setWithdrawTargetId(null)}
+        />
+
+        <EditRoleModal
+          isOpen={isEditOpen}
+          role={role}
+          isSubmitting={updateRole.isPending}
+          onClose={() => setIsEditOpen(false)}
+          onSubmit={handleUpdate}
+        />
+
+        <DeleteRoleConfirm
+          isOpen={isDeleteOpen}
+          roleName={role?.name}
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteOpen(false)}
         />
       </div>
     </div>

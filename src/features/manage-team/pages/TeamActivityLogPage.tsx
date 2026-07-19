@@ -6,6 +6,7 @@ import { useActivityLogs } from '../hooks/useActivityLogs';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import ActivityLogFiltersBar from '../components/activity/ActivityLogFilters';
 import ActivityLogTable from '../components/activity/ActivityLogTable';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface TeamActivityLogPageProps {
   roles: TeamRole[];
@@ -19,7 +20,14 @@ export default function TeamActivityLogPage({ roles }: TeamActivityLogPageProps)
     dateRange: 'last_7_days',
   });
 
-  const { logs, isLoading } = useActivityLogs(filters);
+  const debouncedSearch = useDebounce(filters.search, 300);
+
+  const queryFilters = React.useMemo(() => ({
+    ...filters,
+    search: debouncedSearch,
+  }), [filters, debouncedSearch]);
+
+  const { logs, isLoading } = useActivityLogs(queryFilters);
   const { members } = useTeamMembers();
 
   const roleOptions = roles.map((r) => ({

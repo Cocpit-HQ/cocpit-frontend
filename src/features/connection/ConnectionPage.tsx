@@ -187,6 +187,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
               <RequestList
                 requests={displayRequests}
                 mode={activeTab}
+                subTab={invitationSubTab}
               />
 
               {/* See All — full-width bottom bar, only in main view when we have > 3 */}

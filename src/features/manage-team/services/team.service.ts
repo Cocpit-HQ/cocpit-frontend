@@ -12,6 +12,8 @@ import {
   ActivityLogEntry,
   ActivityLogFilters,
   InviteCandidate,
+  PendingInvitation,
+  UserPendingInvitation,
   CreateRoleInput,
   UpdateRoleInput,
 } from '../types/team.types';
@@ -35,6 +37,8 @@ function mapRole(row: any): TeamRole {
       avatarUrl: m.avatar || m.avatar_url || '',
       id: m.id || m.user_id,
       name: m.name || m.full_name,
+      status: m.status || 'ACTIVE',
+      inviteId: m.invite_id,
     })) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -60,7 +64,7 @@ function mapActivityLog(row: any): ActivityLogEntry {
   return {
     id: row.log_id,
     actorName: row.actor_name,
-    actorAvatarUrl: row.actor_avatar_url,
+    actorAvatarUrl: row.actor_avatar || row.actor_avatar_url || '/assets/pngegg.png',
     action: row.action,
     targetName: row.target_name,
     targetRole: row.target_role,
@@ -146,9 +150,15 @@ export async function inviteMember(
   orgId: string,
   userId: string,
   roleId?: string
-): Promise<boolean> {
+): Promise<void> {
   await api.post(`/organizations/${orgId}/teams/invite`, { userId, roleId });
-  return true;
+}
+
+export async function withdrawInvite(
+  orgId: string,
+  inviteId: string
+): Promise<void> {
+  await api.delete(`/organizations/${orgId}/teams/invites/${inviteId}`);
 }
 
 export async function removeMember(
@@ -174,8 +184,31 @@ export async function getActivityLogs(
   orgId: string,
   filters?: ActivityLogFilters
 ): Promise<ActivityLogEntry[]> {
-  const res = await api.get(`/organizations/${orgId}/teams/activity`, { params: filters });
-  const list = res.data?.data || res.data || [];
+  const params: any = {};
+  if (filters) {
+    if (filters.memberId && filters.memberId !== 'all') {
+      params.memberId = filters.memberId;
+    }
+    if (filters.dateRange && filters.dateRange !== 'all_time') {
+      const dateFrom = new Date();
+      if (filters.dateRange === 'last_7_days') dateFrom.setDate(dateFrom.getDate() - 7);
+      else if (filters.dateRange === 'last_30_days') dateFrom.setDate(dateFrom.getDate() - 30);
+      else if (filters.dateRange === 'last_90_days') dateFrom.setDate(dateFrom.getDate() - 90);
+      params.dateFrom = dateFrom.toISOString();
+    }
+  }
+
+  const res = await api.get(`/organizations/${orgId}/teams/activity`, { params });
+  let list = res.data?.data || res.data || [];
+
+  if (filters?.search) {
+    const s = filters.search.toLowerCase();
+    list = list.filter((item: any) => 
+      (item.action && item.action.toLowerCase().includes(s)) ||
+      (item.actor_name && item.actor_name.toLowerCase().includes(s)) ||
+      (item.actor_role && item.actor_role.toLowerCase().includes(s))
+    );
+  }
   return list.map(mapActivityLog);
 }
 
@@ -188,4 +221,39 @@ export async function getInviteCandidates(
   const res = await api.get(`/organizations/${orgId}/teams/invite-candidates`, { params: { search } });
   const list = res.data?.candidates || res.data?.data || (Array.isArray(res.data) ? res.data : []);
   return list.map(mapCandidate);
+}
+
+export async function getPendingInvites(
+  orgId: string
+): Promise<PendingInvitation[]> {
+  const res = await api.get(`/organizations/${orgId}/teams/invites/pending`);
+  const list = res.data?.data || res.data || [];
+  return list.map((item: any) => ({
+    id: item.invite_id,
+    userId: item.user_id,
+    name: item.full_name || 'Unknown',
+    avatarUrl: item.avatar || '/assets/pngegg.png',
+    headline: item.headline || '',
+    roleId: item.role_id,
+    roleName: item.role_name || '',
+    roleColor: item.role_color || '',
+    invitedAt: item.invited_at,
+  }));
+}
+
+// ─── User Invitations ─────────────────────────────────────────────────────────
+
+export async function getUserPendingInvites(): Promise<UserPendingInvitation[]> {
+  const res = await api.get('/organizations/teams/invites/pending');
+  return res.data || [];
+}
+
+export async function acceptInvite(token: string): Promise<any> {
+  const res = await api.post('/organizations/teams/invites/accept', { token });
+  return res.data;
+}
+
+export async function declineInvite(token: string): Promise<any> {
+  const res = await api.post('/organizations/teams/invites/decline', { token });
+  return res.data;
 }

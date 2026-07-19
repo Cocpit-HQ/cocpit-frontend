@@ -37,7 +37,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
       onClick={onClick}
       className="self-stretch h-[60px] px-4 inline-flex justify-between items-center transition-colors cursor-pointer rounded-xl hover:bg-[#F4F7FE] dark:hover:bg-gray-800"
     >
-      <div className="flex-1 self-stretch flex justify-start items-center gap-2">
+      <div className="flex-1 min-w-0 self-stretch flex justify-start items-center gap-2">
         <div 
           className="w-6 h-6 rounded-full flex-shrink-0"
           style={{ backgroundColor: role.color }} 

@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useEffect, useState } from 'react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import api from '@/lib/axios';
-
 import { Suspense } from 'react';
+
+import * as teamService from '@/features/manage-team/services/team.service';
 
 function InviteContent() {
     const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ function InviteContent() {
         if (!token) return;
         setStatus('LOADING');
         try {
-            await api.post('/organizations/invites/accept', { token });
+            await teamService.acceptInvite(token);
             setStatus('SUCCESS');
             setMessage("Invitation accepted successfully!");
             setTimeout(() => {
@@ -30,6 +31,22 @@ function InviteContent() {
         } catch (error: any) {
             setStatus('ERROR');
             setMessage(error.response?.data?.message || "Failed to accept invitation.");
+        }
+    };
+
+    const handleDecline = async () => {
+        if (!token) return;
+        setStatus('LOADING');
+        try {
+            await teamService.declineInvite(token);
+            setStatus('SUCCESS');
+            setMessage("Invitation declined.");
+            setTimeout(() => {
+                router.push('/dashboard');
+            }, 2000);
+        } catch (error: any) {
+            setStatus('ERROR');
+            setMessage(error.response?.data?.message || "Failed to decline invitation.");
         }
     };
 
@@ -77,12 +94,17 @@ function InviteContent() {
                         </p>
                     )}
                 </CardContent>
-                <CardFooter className="flex justify-center">
+                <CardFooter className="flex flex-col gap-2 justify-center">
                     {status !== 'SUCCESS' && (
-                        <Button onClick={handleAccept} disabled={status === 'LOADING'} className="w-full">
-                            {status === 'LOADING' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Accept Invitation
-                        </Button>
+                        <>
+                            <Button onClick={handleAccept} disabled={status === 'LOADING'} className="w-full">
+                                {status === 'LOADING' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Accept Invitation
+                            </Button>
+                            <Button onClick={handleDecline} disabled={status === 'LOADING'} variant="outline" className="w-full">
+                                Decline
+                            </Button>
+                        </>
                     )}
                 </CardFooter>
             </Card>
