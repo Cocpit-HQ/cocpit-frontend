@@ -29,8 +29,13 @@ export default function ActivityLogRow({ entry }: ActivityLogRowProps) {
             {entry.actorName}
           </span>{' '}
           {entry.action}{' '}
+          {entry.targetName && (
+            <span className="font-medium text-gray-900 dark:text-white">
+              {entry.targetName}
+            </span>
+          )}{' '}
           {entry.highlightedText && (
-            <span className="font-medium text-[#1A73E8] dark:text-[#4D9CFF]">
+            <span className="text-[#1A73E8] dark:text-[#4D9CFF] cursor-pointer hover:underline">
               {entry.highlightedText}
             </span>
           )}
@@ -55,7 +60,7 @@ function getTimeAgo(timestamp: string): string {
 
   if (diffMins < 1) return 'Just now';
   if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} h ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   return date.toLocaleDateString('en-US', {
     month: 'short',

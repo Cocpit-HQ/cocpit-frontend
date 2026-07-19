@@ -21,16 +21,16 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
         <img
           src={member.avatarUrl}
           alt={member.name}
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/assets/pngegg.png';
           }}
         />
         <div className="flex flex-col min-w-0">
-          <span className="text-[13px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">
+          <span className="text-[14px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">
             {member.name}
           </span>
-          <span className="text-[11px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">
+          <span className="text-[12px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">
             {mockEmail}
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
         {onRemove && (
           <button
             onClick={onRemove}
-            className="text-[12px] font-medium text-[#F15156] hover:text-red-600 transition-colors"
+            className="text-[13px] font-medium text-[#F15156] hover:text-red-600 transition-colors"
           >
             Remove member
           </button>

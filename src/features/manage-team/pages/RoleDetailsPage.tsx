@@ -12,6 +12,7 @@ import { TeamMember, ActivityLogFilters } from '../types/team.types';
 import MemberList from '../components/members/MemberList';
 import InviteMemberModal from '../components/members/InviteMemberModal';
 import RemoveMemberConfirm from '../components/members/RemoveMemberConfirm';
+import WithdrawInviteConfirm from '../components/members/WithdrawInviteConfirm';
 import ActivityLogTable from '../components/activity/ActivityLogTable';
 import ActivityLogFiltersBar from '../components/activity/ActivityLogFilters';
 
@@ -27,6 +28,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
 
   const [activeTab, setActiveTab] = useState<'members' | 'activity'>('members');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null);
 
   // Activity log filters for this role
@@ -101,11 +103,11 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <button className="w-6 h-6 relative border-[1.5px] border-[#000000] dark:border-white rounded-sm hover:opacity-80 flex items-center justify-center">
-                <Icon icon="proicons:pencil" className="w-3.5 h-3.5 text-[#000000] dark:text-white" />
+              <button className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center">
+                <Icon icon="fluent:edit-24-regular" className="w-5 h-5 text-[#000000] dark:text-white" />
               </button>
-              <button className="w-6 h-6 relative bg-[#EF4444] rounded-sm hover:opacity-80 flex items-center justify-center">
-                <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 text-white" />
+              <button className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center">
+                <Icon icon="fluent:delete-24-regular" className="w-5 h-5 text-[#EF4444]" />
               </button>
             </div>
           </div>
@@ -125,14 +127,14 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <h3 className="text-[18px] font-medium leading-[27px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
               Permissions
             </h3>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 mt-1">
               {role.permissions?.length > 0 ? (
                 role.permissions.map(p => {
                   const formatP = p.replace('_', ' ');
                   return (
                     <div key={p} className="box-border flex flex-row justify-center items-center bg-[#F2F7FF] dark:bg-gray-800 border border-[#EEF2FF] dark:border-gray-700 rounded-lg">
-                       <div className="flex flex-row justify-center items-center px-4 py-1.5 gap-2">
-                         <span className="text-[14px] leading-[20px] font-normal text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] text-center flex items-center capitalize">
+                       <div className="flex flex-row justify-center items-center px-4 py-[6px] gap-2">
+                         <span className="text-[14px] font-normal leading-[20px] text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] text-center flex items-center capitalize">
                            {formatP}
                          </span>
                        </div>
@@ -177,6 +179,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
               members={role.members}
               onRemoveMember={(member) => setRemoveTarget(member)}
               onInviteClick={() => setIsInviteOpen(true)}
+              onWithdrawInvitation={() => setIsWithdrawOpen(true)}
             />
           </div>
         ) : (
@@ -184,7 +187,6 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <ActivityLogFiltersBar
               filters={logFilters}
               onFiltersChange={setLogFilters}
-              roleOptions={[]}
               memberOptions={role.members.map((m) => ({
                 value: m.id,
                 label: m.name,
@@ -208,6 +210,12 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
           memberName={removeTarget?.name}
           onConfirm={handleRemove}
           onCancel={() => setRemoveTarget(null)}
+        />
+
+        <WithdrawInviteConfirm
+          isOpen={isWithdrawOpen}
+          onConfirm={() => setIsWithdrawOpen(false)}
+          onCancel={() => setIsWithdrawOpen(false)}
         />
       </div>
     </div>
