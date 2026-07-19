@@ -28,13 +28,14 @@ interface PostContentProps {
   imageSrc?: string;
   authorAvatar?: string;
   postType?: string;
+  variant?: 'default' | 'overlay';
 }
 
 export const PostContent = ({
   content, author, authorSlug, isExpanded, isFullContent,
   shared_post, sharedPollData, isSharedVoting, handleSharedVote, isProfileView,
   postId, location, timeAgo, onToggleExpand, isCarouselView,
-  category, title, articleBody, imageSrc, postType
+  category, title, articleBody, imageSrc, postType, variant = 'default'
 }: PostContentProps) => {
   const isArticle = category === 'Article' || Boolean(articleBody) || postType === 'article';
   const articleHref = postId ? `/post/${postId}` : undefined;
@@ -140,21 +141,23 @@ export const PostContent = ({
           );
         }
 
-        const truncateLength = 185;
+        const isOverlay = variant === 'overlay';
+        const truncateLength = isOverlay ? 120 : 185;
+        const maxLines = isOverlay ? 2 : 3;
         const trimmedContent = content.trimEnd();
         const nonEmptyLineCount = trimmedContent.split('\n').filter(line => line.trim() !== '').length;
-        const isLong = !isFullContent && (trimmedContent.length > truncateLength || nonEmptyLineCount > 3);
+        const isLong = !isFullContent && (trimmedContent.length > truncateLength || nonEmptyLineCount > maxLines);
         let displayContent = trimmedContent;
 
-        if (isLong && !isExpanded) {
+        if (isLong && (!isExpanded || isOverlay)) {
           const lines = trimmedContent.split('\n');
-          if (nonEmptyLineCount > 3) {
+          if (nonEmptyLineCount > maxLines) {
             let nonEmptyCount = 0;
             let sliceIndex = lines.length;
             for (let i = 0; i < lines.length; i++) {
               if (lines[i].trim() !== '') {
                 nonEmptyCount++;
-                if (nonEmptyCount === 3) {
+                if (nonEmptyCount === maxLines) {
                   sliceIndex = i + 1;
                   break;
                 }
@@ -175,33 +178,37 @@ export const PostContent = ({
         return (
           <div className="w-full">
             <div
-              className="font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap"
+              className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] whitespace-pre-wrap ${isOverlay ? 'text-white' : 'text-foreground'}`}
             >
               <span className="inline">
-                <RichTextRenderer content={isExpanded ? trimmedContent : displayContent} authorName={author} authorSlug={authorSlug} />
+                <RichTextRenderer content={(isExpanded && !isOverlay) ? trimmedContent : displayContent} authorName={author} authorSlug={authorSlug} />
               </span>
-              {isLong && !isExpanded && (
+              {isLong && (!isExpanded || isOverlay) && (
                 <span className="inline">
-                  ...{' '}
+                  {isOverlay ? '... ' : '... '}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onToggleExpand?.();
+                      if (isOverlay && postId) {
+                        window.location.href = `/post/${postId}`;
+                      } else {
+                        onToggleExpand?.();
+                      }
                     }}
-                    className="inline text-[#6366F1] hover:text-[#6366F1]/80 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors"
+                    className={`inline hover:opacity-80 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors ${isOverlay ? 'text-white font-semibold shadow-sm' : 'text-[#6366F1]'}`}
                   >
-                    Read more
+                    {isOverlay ? 'Show more' : 'Read more'}
                   </button>
                 </span>
               )}
             </div>
-            {isLong && isExpanded && (
+            {isLong && isExpanded && !isOverlay && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleExpand?.();
                 }}
-                className="text-[12px] text-[#6366F1] hover:text-[#6366F1]/80 mt-1 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors inline-block"
+                className={`text-[12px] hover:opacity-80 mt-1 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors inline-block text-[#6366F1]`}
               >
                 Show less
               </button>

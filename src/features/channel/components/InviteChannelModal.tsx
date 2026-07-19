@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Icon } from '@iconify/react';
 import { Search, Check, X } from 'lucide-react';
 import { useChannelInvitees, useInviteSubscribers } from '../hooks/useChannelInvitees';
+import { useInView } from 'react-intersection-observer';
 
 interface InviteChannelModalProps {
   isOpen: boolean;
@@ -12,8 +13,15 @@ interface InviteChannelModalProps {
 export default function InviteChannelModal({ isOpen, onClose }: InviteChannelModalProps) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const { invitees, isLoading } = useChannelInvitees(search);
+  const { invitees, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useChannelInvitees(search);
   const inviteMutation = useInviteSubscribers();
+  const { ref, inView } = useInView();
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggle = (id: string) => {
     const next = new Set(selected);
@@ -69,39 +77,46 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
           </div>
 
           <div className="w-full max-w-[360px] h-[160px] overflow-y-auto flex flex-col gap-2 flex-shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {isLoading ? (
+            {isLoading && invitees.length === 0 ? (
               <p className="text-center text-[#6B7280] text-sm py-8 font-['Poppins']">Searching...</p>
             ) : invitees.length === 0 ? (
               <p className="text-center text-[#6B7280] text-sm py-8 font-['Poppins']">No people found.</p>
             ) : (
-              invitees.map((user) => {
-                const isSelected = selected.has(user.id);
-                return (
-                  <div
-                    key={user.id}
-                    onClick={() => !user.invited && toggle(user.id)}
-                    className={`flex items-center justify-between h-[48px] rounded-xl transition-colors ${
-                      user.invited ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#121B2B]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-[9px] min-w-0 h-[32px]">
-                      <img src={user.avatarUrl} alt={user.name} className="w-[32px] h-[32px] rounded-full object-cover flex-shrink-0" />
-                      <p className="text-[16px] leading-[24px] font-normal font-['Poppins'] text-black dark:text-[#FFFFFF] truncate">
-                        {user.name}
-                      </p>
-                    </div>
-                    {user.invited ? (
-                      <span className="text-[10px] text-[#6B7280] font-['Poppins'] pr-1">Invited</span>
-                    ) : isSelected ? (
-                      <div className="w-[18px] h-[18px] mr-1 flex items-center justify-center bg-[#1A73E8] rounded-[2px] flex-shrink-0">
-                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+              <>
+                {invitees.map((user) => {
+                  const isSelected = selected.has(user.id);
+                  return (
+                    <div
+                      key={user.id}
+                      onClick={() => !user.invited && toggle(user.id)}
+                      className={`flex items-center justify-between h-[48px] rounded-xl transition-colors ${
+                        user.invited ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#121B2B]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-[9px] min-w-0 h-[32px]">
+                        <img src={user.avatarUrl} alt={user.name} className="w-[32px] h-[32px] rounded-full object-cover flex-shrink-0" />
+                        <p className="text-[16px] leading-[24px] font-normal font-['Poppins'] text-black dark:text-[#FFFFFF] truncate">
+                          {user.name}
+                        </p>
                       </div>
-                    ) : (
-                      <div className="w-[18px] h-[18px] mr-1 flex-shrink-0"></div>
-                    )}
+                      {user.invited ? (
+                        <span className="text-[10px] text-[#6B7280] font-['Poppins'] pr-1">Invited</span>
+                      ) : isSelected ? (
+                        <div className="w-[18px] h-[18px] mr-1 flex items-center justify-center bg-[#1A73E8] rounded-[2px] flex-shrink-0">
+                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        </div>
+                      ) : (
+                        <div className="w-[18px] h-[18px] mr-1 flex-shrink-0"></div>
+                      )}
+                    </div>
+                  );
+                })}
+                {hasNextPage && (
+                  <div ref={ref} className="w-full flex justify-center py-2 h-[48px] items-center flex-shrink-0">
+                    {isFetchingNextPage && <p className="text-[12px] text-[#6B7280] font-['Poppins']">Loading more...</p>}
                   </div>
-                );
-              })
+                )}
+              </>
             )}
           </div>
 

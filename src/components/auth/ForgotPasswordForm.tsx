@@ -191,7 +191,7 @@ export default function ForgotPasswordForm() {
             <form onSubmit={handleSendOtp} className={styles.form}>
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>
-                  Email or Phone
+                  Email
                 </label>
                 <input
                   type="text"
@@ -290,9 +290,9 @@ export default function ForgotPasswordForm() {
                   }
                 }}
                 disabled={isCheckingOtp || otp.length !== 6}
-                className={styles.secondaryButton}
+                className={styles.primaryButton}
               >
-                {isCheckingOtp ? "Verifying..." : "Verify"}
+                {isCheckingOtp ? "Verifying..." : "Continue"}
               </button>
             </div>
           )}
@@ -305,19 +305,21 @@ export default function ForgotPasswordForm() {
                 <div className={styles.inputWrapperFlex}>
                   <input
                     type={showNewPassword ? "text" : "password"}
-                    placeholder="Set password"
+                    placeholder="Enter Password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className={`${styles.input} ${styles.inputWithIcon}`}
                     maxLength={15}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className={styles.passwordToggle}
-                  >
-                    {showNewPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
-                  </button>
+                  {newPassword.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className={styles.passwordToggle}
+                    >
+                      {showNewPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -361,19 +363,21 @@ export default function ForgotPasswordForm() {
                 <div className={styles.inputWrapperFlex}>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Set password"
+                    placeholder="Enter Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className={`${styles.input} ${styles.inputWithIcon}`}
                     maxLength={15}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className={styles.passwordToggle}
-                  >
-                    {showConfirmPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
-                  </button>
+                  {confirmPassword.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className={styles.passwordToggle}
+                    >
+                      {showConfirmPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
+                    </button>
+                  )}
                 </div>
               </div>
 

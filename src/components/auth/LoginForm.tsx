@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AlertCircle, MailWarning, Send } from "lucide-react";
-import { Eye, EyeClosed } from "iconoir-react";
+import { Icon } from "@iconify/react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
 import { signIn, getSession } from "next-auth/react";
@@ -266,7 +266,7 @@ const LoginForm = () => {
         {/* Email field */}
         <div className={styles.fieldGroup}>
           <label htmlFor="email" className={styles.label}>
-            Email or Phone
+            Email
           </label>
           <div className={styles.inputWrapper}>
             <input
@@ -295,7 +295,7 @@ const LoginForm = () => {
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              placeholder="Set password"
+              placeholder="Enter Password"
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -304,14 +304,16 @@ const LoginForm = () => {
               className={`${styles.input} ${styles.inputWithToggle}`}
               disabled={isLoading || isGoogleLoading}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className={styles.passwordToggle}
-              disabled={isLoading || isGoogleLoading}
-            >
-              {showPassword ? <EyeClosed className={styles.toggleIcon} strokeWidth={2} /> : <Eye className={styles.toggleIcon} strokeWidth={2} />}
-            </button>
+            {password.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={styles.passwordToggle}
+                disabled={isLoading || isGoogleLoading}
+              >
+                {showPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
+              </button>
+            )}
           </div>
 
           <div className={styles.passwordHelperRow}>

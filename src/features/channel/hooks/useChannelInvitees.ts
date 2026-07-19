@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as channelService from '../services/channel.service';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -7,15 +7,25 @@ export const useChannelInvitees = (search: string) => {
   const { activeProfile } = useActiveProfile();
   const orgId = activeProfile?.id;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['channel', 'invitees', orgId, search],
-    queryFn: () => channelService.getInvitees(orgId!, search),
+    queryFn: ({ pageParam = 1 }) => channelService.getInvitees(orgId!, search, pageParam as number),
+    getNextPageParam: (lastPage, allPages) => {
+      // Limit is 50, so if less than 50 items are returned, there are no more pages
+      return lastPage.length === 50 ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
     enabled: !!orgId,
   });
 
+  const invitees = data?.pages.flat() ?? [];
+
   return {
-    invitees: data ?? [],
+    invitees,
     isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
   };
 };
 

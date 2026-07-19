@@ -41,6 +41,7 @@ interface PostHeaderProps {
   onNotInterested?: () => void;
   content?: string;
   hideOptions?: boolean;
+  variant?: 'default' | 'overlay';
 }
 
 const formatCompanyName = (name?: string): string => {
@@ -57,7 +58,7 @@ export const PostHeader = ({
   isMe, isOwnPost, isCompanyPost, poll, shared_post, content,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
   onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport, onNotInterested,
-  location, tags, authorRole, title, hideOptions
+  location, tags, authorRole, title, hideOptions, variant = 'default'
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
@@ -160,9 +161,10 @@ export const PostHeader = ({
   }, [showOptions, setShowOptions]);
 
   const authorLink = isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`;
+  const isOverlay = variant === 'overlay';
 
   return (
-    <div className={`flex flex-row justify-between p-0 gap-[8px] w-full ${hideOptions ? 'items-center h-[56px] bg-white dark:bg-card' : 'items-start'}`}>
+    <div className={`flex flex-row justify-between p-0 gap-[8px] w-full ${hideOptions ? 'items-center h-[56px] bg-white dark:bg-card' : 'items-start'} ${isOverlay ? 'z-10' : ''}`}>
       {/* Author Info (Frame 2608571) */}
       <div
         onClick={(e) => {
@@ -181,25 +183,25 @@ export const PostHeader = ({
           <div className="flex items-center gap-1 min-h-[24px]">
             {isMe || (!isCompanyPost && !authorId) ? (
               <div className="flex items-baseline gap-1.5">
-                <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] cursor-default ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>
+                <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] cursor-default ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : (isOverlay ? 'font-medium text-white' : 'font-medium text-foreground')}`}>
                   {isCompanyPost ? formatCompanyName(author) : author}
                 </h3>
               </div>
             ) : (
               <Link href={authorLink} className=" flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
-                <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>
+                <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : (isOverlay ? 'font-medium text-white hover:underline' : 'font-medium text-foreground')}`}>
                   {isCompanyPost ? formatCompanyName(author) : author}
                 </h3>
               </Link>
             )}
             {shared_post && (
-              <span className="text-[#6B7280] text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ml-1 w-[45px] h-[16px] flex-none text-center">
+              <span className={`text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ml-1 w-[45px] h-[16px] flex-none text-center ${isOverlay ? 'text-white/80' : 'text-[#6B7280]'}`}>
                 reposted
               </span>
             )}
           </div>
           {!shared_post && (
-            <div className={`text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] truncate w-full block ${hideOptions ? 'text-[#6B7280]' : 'text-muted-foreground'}`} title={authorRole || title || ''}>
+            <div className={`text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] truncate w-full block ${hideOptions ? 'text-[#6B7280]' : (isOverlay ? 'text-white/80' : 'text-muted-foreground')}`} title={authorRole || title || ''}>
               {authorRole || title || ''}
             </div>
           )}
@@ -207,9 +209,9 @@ export const PostHeader = ({
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
             return (
-              <div className={`flex items-center text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ${hideOptions ? 'gap-[8px] text-[#6B7280]' : 'gap-1.5 text-muted-foreground'}`}>
+              <div className={`flex items-center text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ${hideOptions ? 'gap-[8px] text-[#6B7280]' : (isOverlay ? 'gap-1.5 text-white/80' : 'gap-1.5 text-muted-foreground')}`}>
                 {location && <span title={location}>{truncatedLocation}</span>}
-                {location && timeAgo && !isRepostWithoutThoughts && <span className={`rounded-full shrink-0 ${hideOptions ? 'w-[6px] h-[6px] bg-[#6B7280]' : 'w-1 h-1 bg-muted-foreground/40'}`} />}
+                {location && timeAgo && !isRepostWithoutThoughts && <span className={`rounded-full shrink-0 ${hideOptions ? 'w-[6px] h-[6px] bg-[#6B7280]' : (isOverlay ? 'w-1 h-1 bg-white/60' : 'w-1 h-1 bg-muted-foreground/40')}`} />}
                 {timeAgo && !isRepostWithoutThoughts && <span className="shrink-0">{timeAgo}</span>}
               </div>
             );
@@ -230,7 +232,7 @@ export const PostHeader = ({
             <button
               ref={optionsBtnRef}
               onClick={handleOptionsClick}
-              className="text-[#000000] p-1"
+              className={`p-1 ${isOverlay ? 'text-white' : 'text-[#000000] dark:text-white'}`}
             >
               <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
             </button>
