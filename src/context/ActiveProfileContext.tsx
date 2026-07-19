@@ -74,11 +74,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const bootstrapLockRef = React.useRef<string | null>(null);
 
     const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string } | null }) => {
-        let permissions = company?.viewer_role_data?.permissions || [];
-        if (typeof permissions === 'string') {
-            try { permissions = JSON.parse(permissions); } catch (e) { permissions = []; }
-        }
-        return permissions.includes("*") || permissions.includes("SWITCH_TO_COMPANY");
+        return true;
     };
 
     const switchableCompanies = companies.filter(canSwitchToCompany);
