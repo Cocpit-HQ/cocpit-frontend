@@ -712,6 +712,7 @@ export default function ProfilePage() {
   const [isSavingExperience, setIsSavingExperience] = useState(false);
 
   const [editingExperiences, setEditingExperiences] = useState<Experience[] | null>(null);
+  const [editingExperienceSelectedId, setEditingExperienceSelectedId] = useState<string | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
 
   const handleUpdateProfile = useCallback(async (data: any) => {
@@ -1198,6 +1199,7 @@ export default function ProfilePage() {
 
       setIsAddExperienceModalOpen(false)
       setEditingExperiences(null)
+      setEditingExperienceSelectedId(null)
       // Success toast is handled by the useExperienceMutations.batchUpdate hook
     } catch (err: any) {
       // Error toast is handled by the useExperienceMutations.batchUpdate hook
@@ -1224,6 +1226,7 @@ export default function ProfilePage() {
     }
     setIsAddExperienceModalOpen(false);
     setEditingExperiences(null);
+    setEditingExperienceSelectedId(null);
   }
 
   const handleSaveEducation = async (data: Partial<Education>) => {
@@ -1350,9 +1353,14 @@ export default function ProfilePage() {
             <ProfileExperience
               experiences={experiences}
               isOwnProfile={true}
-              onAddExperienceClick={() => { setEditingExperiences(null); setIsAddExperienceModalOpen(true); }}
-              onEditExperienceClick={(exps) => {
+              onAddExperienceClick={() => { 
+                setEditingExperiences(null); 
+                setEditingExperienceSelectedId(null);
+                setIsAddExperienceModalOpen(true); 
+              }}
+              onEditExperienceClick={(exps, selectedExp) => {
                 setEditingExperiences(exps);
+                setEditingExperienceSelectedId(selectedExp?.experience_id || null);
                 setIsAddExperienceModalOpen(true);
               }}
             />
@@ -1395,8 +1403,10 @@ export default function ProfilePage() {
             onCancel={() => {
               setIsAddExperienceModalOpen(false);
               setEditingExperiences(null);
+              setEditingExperienceSelectedId(null);
             }}
             initialExperiences={editingExperiences || undefined}
+            initialActiveRoleId={editingExperienceSelectedId}
             onDelete={(ids) => {
               handleDeleteExperience(ids);
             }}

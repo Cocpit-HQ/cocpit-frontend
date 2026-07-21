@@ -47,19 +47,38 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
     username,
     className,
     asMenuItem,
+    connectionRequestStatus,
+    connectionRequestId,
+    connectionRequestSender,
 }) => {
     const { socket } = useSocket();
     const queryClient = useQueryClient();
     const { activeProfile, isCompany } = useActiveProfile();
 
     // ─── Core state ───
-    const [relationship, setRelationship] = useState<RelationshipState>('none');
-    const [requestId, setRequestId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    const determineInitialRelationship = (): RelationshipState => {
+        if (connectionRequestStatus === 'connected') return 'connected';
+        if (connectionRequestStatus === 'blocked') return 'blocked';
+        if (connectionRequestStatus === 'pending') {
+            return connectionRequestSender === 'me' ? 'pending_sent' : 'pending_received';
+        }
+        if (connectionRequestStatus === null) return 'none';
+        return 'none'; // fallback
+    };
+
+    const hasInitialData = connectionRequestStatus !== undefined;
+    
+    const [relationship, setRelationship] = useState<RelationshipState>(hasInitialData ? determineInitialRelationship() : 'none');
+    const [requestId, setRequestId] = useState<string | null>(connectionRequestId || null);
+    const [loading, setLoading] = useState(!hasInitialData);
     const [actionLoading, setActionLoading] = useState(false);
 
     // ─── Fetch relationship on mount ───
     const fetchRelationship = useCallback(async () => {
+        if (hasInitialData) {
+            setLoading(false);
+            return;
+        }
         try {
             if (isCompany && activeProfile) {
                 const data = await companyService.getConnectionStatus(activeProfile.id, userId);
@@ -76,7 +95,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [userId, isCompany, activeProfile]);
+    }, [userId, isCompany, activeProfile, hasInitialData]);
 
     useEffect(() => {
         fetchRelationship();
@@ -237,12 +256,12 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         if (asMenuItem) {
             return (
                 <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                    className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 dark:focus:bg-[#4A1C1C] focus:text-[#F87171] text-destructive dark:text-[#F87171] rounded-xl outline-none group transition-colors"
                     onClick={handleRemove}
                     disabled={actionLoading}
                 >
-                    <UserX className="w-4 h-4 mr-2" />
-                    Remove Connection
+                    <span className="text-sm font-medium group-focus:text-[#F87171]">Remove Connection</span>
+                    <UserX className="w-4 h-4 group-focus:text-[#F87171] transition-colors" />
                 </DropdownMenuItem>
             );
         }

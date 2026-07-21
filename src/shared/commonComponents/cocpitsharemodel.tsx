@@ -136,38 +136,41 @@ export default function CocpitShareModel({
   const toggleSelected = (id: string) => {
     setSelectedUsers((prev) => {
       if (prev.includes(id)) {
-        return [];
+        return prev.filter((uId) => uId !== id);
       } else {
-        return [id];
+        return [...prev, id];
       }
     });
   };
 
   const handleSendClick = async () => {
     if (selectedUsers.length === 0 || isSending) return;
-    const targetUserId = selectedUsers[0];
     setIsSending(true);
     try {
       const isCompany = activeProfile?.type === "COMPANY";
       const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
 
-      await sendMessage(
-        targetUserId,
-        shareUrl,
-        postId,
-        undefined,
-        effectiveCompanyId,
-        undefined,
-        profileId
+      await Promise.all(
+        selectedUsers.map((targetUserId) =>
+          sendMessage(
+            targetUserId,
+            shareUrl,
+            postId,
+            undefined,
+            effectiveCompanyId,
+            undefined,
+            profileId
+          )
+        )
       );
 
-      toast.success("Message sent");
+      toast.success(selectedUsers.length > 1 ? "Messages sent" : "Message sent");
 
       // Invalidate queries so that the messaging state is updated instantly
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["messages"] });
 
-      onShare?.([targetUserId]);
+      onShare?.(selectedUsers);
       handleClose();
     } catch (err: any) {
       console.error(err);
@@ -280,7 +283,7 @@ export default function CocpitShareModel({
                     {users.map((u, index) => (
                       <div
                         key={`${u.id}-${index}`}
-                        className="flex flex-col items-center cursor-pointer hover:bg-[var(--primary-tint)] rounded-lg p-2 transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
+                        className={`flex flex-col items-center cursor-pointer rounded-lg p-2 transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1 ${selectedUsers.includes(u.id) ? "border border-[var(--primary)] bg-[var(--primary-tint)]" : "border border-transparent hover:bg-[var(--primary)]/5"}`}
                         onClick={() => toggleSelected(u.id)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -341,7 +344,7 @@ export default function CocpitShareModel({
                           className="flex items-center justify-between py-2"
                         >
                           <div
-                            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--primary-tint)] flex-1 p-1 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
+                            className={`flex items-center gap-3 cursor-pointer flex-1 p-1 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1 ${checked ? "border border-[var(--primary)] bg-[var(--primary-tint)]" : "border border-transparent hover:bg-[var(--primary)]/5"}`}
                             onClick={() => toggleSelected(u.id)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
@@ -365,12 +368,10 @@ export default function CocpitShareModel({
                                 <User className="w-6 h-6 text-[var(--primary)]" strokeWidth={1.5} />
                               )}
                               {selectedUsers.includes(u.id) && (
-                                <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                                  <div className="h-3 w-3 rounded bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white">
-                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  </div>
+                                <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
                                 </div>
                               )}
                             </div>
@@ -378,15 +379,6 @@ export default function CocpitShareModel({
                               {u.name}
                             </div>
                           </div>
-                          <label className="flex items-center cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              tabIndex={-1}
-                              className="h-4 w-4 accent-[var(--primary)]"
-                              checked={checked}
-                              onChange={() => toggleSelected(u.id)}
-                            />
-                          </label>
                         </div>
                       );
                     })

@@ -22,6 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -75,6 +85,7 @@ interface AddExperienceFormProps {
   onCancel: () => void
   onSave: (roles: SavedRole[], deletedIds: string[]) => Promise<void>
   onDelete?: (ids: string[]) => void
+  initialActiveRoleId?: string | null
   initialExperiences?: Experience[]
   companyName?: string
   isSaving?: boolean
@@ -265,7 +276,7 @@ function RoleSection({
 
       <div className="space-y-6">
         {/* New Role Indicator & Remove Button */}
-        {!isFirst && (
+        {!isFirst && !role.experience_id && (
           <div className="flex items-center justify-end mb-2">
             {onRemove && (
               <button
@@ -285,7 +296,7 @@ function RoleSection({
         {(() => {
           const roleInputBlock = (
             <>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between">
                 <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
               </div>
               <div className={acStyles.wrapper}>
@@ -653,6 +664,7 @@ export default function AddExperienceForm({
   companyName,
   isSaving = false,
   existingExperiences = [],
+  initialActiveRoleId,
 }: AddExperienceFormProps) {
   const isEditing = !!initialExperiences && initialExperiences.length > 0
   const firstExp = initialExperiences?.[0]
@@ -667,7 +679,15 @@ export default function AddExperienceForm({
       : [emptyRole()]
   )
   const [deletedRoleIds, setDeletedRoleIds] = useState<string[]>([])
-  const [activeRoleIndex, setActiveRoleIndex] = useState(0)
+  const [activeRoleIndex, setActiveRoleIndex] = useState(() => {
+    if (initialActiveRoleId && initialExperiences) {
+      const idx = initialExperiences.findIndex(e => e.experience_id === initialActiveRoleId);
+      return Math.max(0, idx);
+    }
+    return 0;
+  })
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
   // Per-role field errors (blocking, shown in red) — map of index → { field: message }
   const [fieldErrors, setFieldErrors] = useState<Record<number, Record<string, string>>>({})
@@ -693,8 +713,13 @@ export default function AddExperienceForm({
     setDeletedRoleIds([])
     setFieldErrors({})
     setFieldWarnings({})
-    setActiveRoleIndex(0)
-  }, [initialExperiences, companyName])
+    if (initialActiveRoleId && initialExperiences && initialExperiences.length > 0) {
+      const idx = initialExperiences.findIndex(e => e.experience_id === initialActiveRoleId);
+      setActiveRoleIndex(Math.max(0, idx));
+    } else {
+      setActiveRoleIndex(0);
+    }
+  }, [initialExperiences, companyName, initialActiveRoleId])
 
   // ── Company autocomplete state ─────────────────────────────────────────────
   const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([])
@@ -864,43 +889,25 @@ export default function AddExperienceForm({
           }
         }
 
+        // Intra-session (same-company) identical start date check.
+        // While roles can have overlapping ranges (e.g., promotions), the backend
+        // rejects multiple roles starting on the exact same month/year.
+        const identicalStartIdx = roles.findIndex((other, oIdx) => {
+          if (index === oIdx) return false
+          const otherStart = buildDate(other.startMonth, other.startYear)
+          return otherStart && startDate === otherStart
+        })
 
-        // Check for overlaps within this session (same company) — blocking
-        const endDate = role.is_current ? null : buildDate(role.endMonth, role.endYear)
-
-        // Calculate effective end date for this role if it's being ended by another role in this form
-        let effectiveEndDate = endDate;
-        if (role.is_current) {
-          const ender = roles.find(r => r.endCurrentRole && r.experienceIdToEnd === role.experience_id);
-          if (ender) {
-            effectiveEndDate = buildDate(ender.startMonth, ender.startYear);
-          }
+        if (identicalStartIdx !== -1) {
+          roleErrors.startDate = `Cannot have multiple roles starting on the exact same month and year.`
+          valid = false
         }
 
-        roles.forEach((other, oIdx) => {
-          if (index === oIdx) return
-
-          // Ignore if this role is explicitly ending the 'other' role in this form
-          if (role.endCurrentRole && role.experienceIdToEnd && role.experienceIdToEnd === other.experience_id) {
-            return;
-          }
-
-          const otherStart = buildDate(other.startMonth, other.startYear)
-          let otherEnd = other.is_current ? null : buildDate(other.endMonth, other.endYear)
-
-          // Calculate effective end date for the other role
-          if (other.is_current) {
-            const otherEnder = roles.find(r => r.endCurrentRole && r.experienceIdToEnd === other.experience_id);
-            if (otherEnder) {
-              otherEnd = buildDate(otherEnder.startMonth, otherEnder.startYear);
-            }
-          }
-
-          if (otherStart && datesOverlap(startDate, effectiveEndDate, otherStart, otherEnd)) {
-            roleErrors.startDate = `Overlaps with "${other.title || 'another role'}"`
-            valid = false
-          }
-        })
+        // Intra-session (same-company) date overlap is NOT validated on the client.
+        // Roles within the same company group may have concurrent/adjacent dates
+        // during a promotion transition. The backend handles final consistency.
+        const endDate = role.is_current ? null : buildDate(role.endMonth, role.endYear)
+        const effectiveEndDate = endDate;
 
         // Check for overlaps with existing database records (same company) — blocking
         const companyNorm = company.trim().toLowerCase()
@@ -991,7 +998,7 @@ export default function AddExperienceForm({
 
     if (!valid) {
       const firstErrorIdx = Number(Object.keys(errors)[0])
-      if (!isNaN(firstErrorIdx)) {
+      if (!isNaN(firstErrorIdx) && !errors[activeRoleIndex]) {
         setActiveRoleIndex(firstErrorIdx)
       }
     }
@@ -1354,14 +1361,7 @@ export default function AddExperienceForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              if (initialExperiences && initialExperiences.length > 0) {
-                const allIds = initialExperiences
-                  .map(exp => exp.experience_id)
-                  .filter((id): id is string => !!id);
-                onDelete?.(allIds);
-              }
-            }}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={isSaving}
             className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
           >
@@ -1371,7 +1371,7 @@ export default function AddExperienceForm({
           <Button
             type="button"
             variant="outline"
-            onClick={onCancel}
+            onClick={() => setShowDiscardConfirm(true)}
             disabled={isSaving}
             className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
           >
@@ -1386,6 +1386,60 @@ export default function AddExperienceForm({
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent overlayClassName="bg-white/40 backdrop-blur-[3px]" className="w-[300px] h-[158px] sm:max-w-[300px] rounded-[24px] p-[16px] flex flex-col gap-[8px] justify-between shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border-0 sm:rounded-[24px]">
+          <AlertDialogHeader className="flex flex-col items-center p-0 m-0 space-y-0">
+            <AlertDialogTitle className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] p-0 m-0 text-foreground">
+              Delete item?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[14px] leading-[20px] text-muted-foreground font-[family-name:var(--font-poppins)] text-center p-0 m-0 mt-[2px]">
+              This will be permanently removed from your profile
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-row justify-between items-center w-full p-0 m-0 mt-auto sm:space-x-0 gap-[8px]">
+            <AlertDialogCancel className="h-[40px] flex-1 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium font-[family-name:var(--font-poppins)] m-0">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const activeRole = roles[activeRoleIndex];
+                if (activeRole?.experience_id) {
+                  onDelete?.([activeRole.experience_id]);
+                }
+                setShowDeleteConfirm(false);
+              }}
+              className="h-[40px] flex-1 rounded-full bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 text-white font-medium font-[family-name:var(--font-poppins)] m-0"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+        <AlertDialogContent overlayClassName="bg-white/40 backdrop-blur-[3px]" className="w-[300px] h-[130px] sm:max-w-[300px] rounded-[24px] p-[16px] flex flex-col gap-[8px] justify-between shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border-0 sm:rounded-[24px]">
+          <AlertDialogHeader className="flex flex-col items-center justify-center p-0 m-0 space-y-0 h-full">
+            <AlertDialogTitle className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] p-0 m-0 text-foreground text-center">
+              Discard all changes
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-row justify-between items-center w-full p-0 m-0 mt-auto sm:space-x-0 gap-[8px]">
+            <AlertDialogCancel className="h-[40px] flex-1 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium font-[family-name:var(--font-poppins)] m-0">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDiscardConfirm(false);
+                onCancel();
+              }}
+              className="h-[40px] flex-1 rounded-full bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 text-white font-medium font-[family-name:var(--font-poppins)] m-0"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

@@ -9,7 +9,7 @@ interface ProfileExperienceProps {
     experiences: any[];
     isOwnProfile: boolean;
     onAddExperienceClick?: () => void;
-    onEditExperienceClick?: (exp: any) => void;
+    onEditExperienceClick?: (groupExps: any[], selectedExp?: any) => void;
 }
 
 export function ProfileExperience({
@@ -53,7 +53,7 @@ export function ProfileExperience({
                                     <EditableExperienceGroup
                                         key={`${group.company_name}-${gIdx}`}
                                         group={group}
-                                        onEdit={() => onEditExperienceClick?.(group.experiences)}
+                                        onEdit={(selectedExp) => onEditExperienceClick?.(group.experiences, selectedExp)}
                                         isOwnProfile={isOwnProfile}
                                     />
                                 ))}

@@ -8,6 +8,7 @@ export interface User {
   headline: string;
   avatar: string; // URL or path
   location: string;
+  website?: string;
   about: string;
   skills: string[];
   experiences: Experience[];

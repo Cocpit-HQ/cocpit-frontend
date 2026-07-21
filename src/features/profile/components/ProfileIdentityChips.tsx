@@ -24,21 +24,21 @@ export function ProfileIdentityChips({ initialIdentity }: ProfileIdentityChipsPr
       <div className="flex items-center gap-[16px] flex-wrap md:flex-nowrap">
         {/* Open To Chip */}
         {identity.openTo && (
-          <div className="profile-identity-chip flex items-center justify-center py-2 px-4 rounded-full border whitespace-nowrap text-[14px] font-normal leading-[20px] font-[family-name:var(--font-poppins)]">
+          <div className="profile-identity-chip flex items-center justify-center py-2 px-4 rounded-full border whitespace-nowrap text-[14px] font-normal leading-[20px] font-[family-name:var(--font-poppins)] dark:border-[#818CF8] dark:text-[#818CF8]">
             {identity.openTo}
           </div>
         )}
 
         {/* Availability Chip */}
         {identity.availability && (
-          <div className="profile-identity-chip flex items-center justify-center py-2 px-4 rounded-full border whitespace-nowrap text-[14px] font-normal leading-[20px] font-[family-name:var(--font-poppins)]">
+          <div className="profile-identity-chip flex items-center justify-center py-2 px-4 rounded-full border whitespace-nowrap text-[14px] font-normal leading-[20px] font-[family-name:var(--font-poppins)] dark:border-[#818CF8] dark:text-[#818CF8]">
             {identity.availability}
           </div>
         )}
 
         {/* Preference Chip */}
         {identity.workPreference && (
-          <div className="profile-identity-chip flex items-center justify-center py-2 px-4 rounded-full border whitespace-nowrap text-[14px] font-normal leading-[20px] font-[family-name:var(--font-poppins)]">
+          <div className="profile-identity-chip flex items-center justify-center py-2 px-4 rounded-full border whitespace-nowrap text-[14px] font-normal leading-[20px] font-[family-name:var(--font-poppins)] dark:border-[#818CF8] dark:text-[#818CF8]">
             {identity.workPreference}
           </div>
         )}

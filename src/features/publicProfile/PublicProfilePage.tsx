@@ -12,6 +12,7 @@ import { SkillOverlap } from "./components/SkillOverlap";
 import { ConnectionButton } from "./components/ConnectionButton";
 
 // Shared common profile components
+import { PublicProfileHeader } from "@/features/publicProfile/components/PublicProfileHeader";
 import { ProfileHeader } from "@/features/profile/commonProfileComponents/ProfileHeader";
 import { ProfileAbout } from "@/features/profile/commonProfileComponents/ProfileAbout";
 import { LivingResume } from "@/features/profile/commonProfileComponents/LivingResume";
@@ -411,35 +412,26 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const publicActions = !isOwnProfile && (
     <>
       <button
-        onClick={handleMessage}
-        title="Message"
-        className="bg-background hover:bg-muted text-foreground border border-input p-2 sm:px-4 sm:py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium cursor-pointer"
-      >
-        <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4" />
-        <span className="hidden sm:inline">Message</span>
-      </button>
-      <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
-      <button
         onClick={handleFollowToggle}
         disabled={isFollowLoading(user.id)}
-        className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium cursor-pointer ${
+        className={`w-36 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-colors cursor-pointer ${
           isUserFollowing
             ? "bg-muted text-foreground hover:bg-muted/80"
-            : "bg-primary text-primary-foreground hover:opacity-90"
+            : "bg-indigo-500 dark:bg-[#818CF8] text-white hover:opacity-90"
         } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
       >
-        {isUserFollowing ? (
-          <>
-            <UserCheck className="w-4 h-4" />
-            Following
-          </>
-        ) : (
-          <>
-            <UserPlus className="w-4 h-4" />
-            Follow
-          </>
-        )}
+        <span className="text-center text-sm font-normal font-['Poppins'] leading-5">
+          {isUserFollowing ? "Following" : "Follow"}
+        </span>
       </button>
+      <button
+        onClick={handleMessage}
+        title="Message"
+        className="w-36 h-10 px-4 py-2 bg-white dark:bg-[#0B0F19] rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-500 dark:outline-[#818CF8] flex justify-center items-center gap-2.5 transition-colors cursor-pointer hover:bg-indigo-50 dark:hover:bg-[#1C2340]"
+      >
+        <span className="text-center text-indigo-500 dark:text-[#818CF8] text-sm font-normal font-['Poppins'] leading-5">Message</span>
+      </button>
+      <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
     </>
   );
 
@@ -457,27 +449,27 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       />
       <DropdownMenuItem
         onClick={() => setIsShareModalOpen(true)}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
       >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share Profile</span>
-        <Share2 className="w-4 h-4 text-black group-focus:text-[#6366F1] transition-colors" />
+        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Share Profile</span>
+        <Share2 className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => {
           navigator.clipboard.writeText(window.location.href);
           toast.success("Profile link copied");
         }}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
       >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy Profile Link</span>
-        <LinkIcon className="w-4 h-4 text-black group-focus:text-[#6366F1] transition-colors" />
+        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Copy Profile Link</span>
+        <LinkIcon className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => setIsReportModalOpen(true)}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
       >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Report Profile</span>
-        <Flag className="w-4 h-4 text-black group-focus:text-[#6366F1] transition-colors" />
+        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Report Profile</span>
+        <Flag className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       {isUserBlocked ? (
         <DropdownMenuItem
@@ -487,18 +479,18 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
               window.location.reload();
             }
           }}
-          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
         >
-          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Unblock User</span>
-          <Ban className="w-4 h-4 group-focus:text-[#6366F1] transition-colors" />
+          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Unblock User</span>
+          <Ban className="w-4 h-4 group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
         </DropdownMenuItem>
       ) : (
         <DropdownMenuItem
           onClick={() => setShowBlockDialog(true)}
-          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 focus:text-destructive text-destructive rounded-xl outline-none group transition-colors"
+          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 dark:focus:bg-[#4A1C1C] focus:text-destructive dark:focus:text-[#F87171] text-destructive dark:text-[#F87171] rounded-xl outline-none group transition-colors"
         >
-          <span className="text-sm font-medium group-focus:text-destructive">Block User</span>
-          <Ban className="w-4 h-4 group-focus:text-destructive transition-colors" />
+          <span className="text-sm font-medium group-focus:text-destructive dark:group-focus:text-[#F87171]">Block User</span>
+          <Ban className="w-4 h-4 group-focus:text-destructive dark:group-focus:text-[#F87171] transition-colors" />
         </DropdownMenuItem>
       )}
     </>
@@ -512,7 +504,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         </div>
 
         <div id="profile-card" className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
-          <ProfileHeader
+          <PublicProfileHeader
             user={user}
             isOwnProfile={isOwnProfile}
             coverImage={user.cover_image}
@@ -521,14 +513,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             latestEducation={latestEducation}
             onAvatarClick={() => setIsViewAvatarOpen(true)}
             onContactInfoClick={() => setIsContactInfoModalOpen(true)}
-            onShareProfileClick={() => setIsShareModalOpen(true)}
             onFollowListClick={openFollowList}
             onRoleClick={handleRoleClick}
             publicActions={publicActions}
             dropdownActions={dropdownActions}
           />
 
-          <SkillOverlap currentUserSkills={currentUserSkills} profileUserSkills={user.skills} />
+          {/* <SkillOverlap currentUserSkills={currentUserSkills} profileUserSkills={user.skills} /> */}
 
           <ProfileAbout
             aboutText={user.about}
