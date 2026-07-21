@@ -64,27 +64,100 @@ function formatAction(action: string, metadata?: any): string {
   if (!action) return 'performed an activity';
   const upper = action.toUpperCase().trim();
   switch (upper) {
-    case 'VIEW':
-    case 'VIEWED':
-      return 'viewed page';
-    case 'TEAMS':
-      return 'viewed Teams';
-    case 'ACTIVITY_LOGS':
-      return 'viewed Activity logs';
-    case 'CREATE_POST':
-      return 'created a post';
+    case 'ACTOR_SWITCH':
+      return 'switched actor context to organization';
+    case 'CREATE_PAGE':
+      return 'created the company page';
+    case 'UPDATE_PROFILE':
+      return 'updated organization profile';
+    case 'UPLOAD_VERIFICATION_DOC':
+      return 'uploaded verification document';
+    case 'VERIFICATION_STATUS_CHANGED':
+      return 'updated verification status';
+    case 'INVITE_MEMBER':
+      return 'invited team member';
+    case 'WITHDRAW_INVITE':
+      return 'withdrew team invitation';
+    case 'ACCEPT_INVITE':
+      return 'joined organization';
+    case 'REMOVE_MEMBER':
+      return 'removed team member';
+    case 'ASSIGN_ROLE':
+      return 'updated role for';
     case 'CREATE_ROLE':
       return 'created role';
     case 'UPDATE_ROLE':
       return 'updated role';
     case 'DELETE_ROLE':
       return 'deleted role';
-    case 'INVITE_MEMBER':
-      return 'invited team member';
-    case 'ASSIGN_ROLE':
-      return 'assigned role';
-    case 'REMOVE_MEMBER':
-      return 'removed member';
+    case 'CREATE_JOB':
+      return 'created job';
+    case 'CLOSE_JOB':
+      return 'closed job';
+    case 'DELETE_JOB':
+      return 'deleted job';
+    case 'SEND_OFFER':
+      return 'sent offer to candidate for';
+    case 'SHORTLIST_APPLICATION':
+      return 'shortlisted application for';
+    case 'DECLINE_APPLICATION':
+      return 'declined application for';
+    case 'CREATE_POST':
+      return 'created a post';
+    case 'EDIT_POST':
+      return 'edited a post';
+    case 'CHANGE_VISIBILITY':
+      return 'changed post visibility';
+    case 'DELETE_POST':
+      return 'deleted a post';
+    case 'LIKE':
+    case 'LIKED':
+      return 'liked post by';
+    case 'COMMENT':
+    case 'COMMENTED':
+      return 'commented on';
+    case 'REPOST':
+    case 'REPOSTED':
+      return 'reposted post by';
+    case 'SHARE_POST':
+      return 'shared a post';
+    case 'REPORT_POST':
+      return 'reported a post';
+    case 'SAVE_POST':
+      return 'saved a post';
+    case 'CREATE_CHANNEL':
+      return 'created channel';
+    case 'CREATE_ARTICLE':
+      return 'created article';
+    case 'EDIT_ARTICLE':
+      return 'edited article';
+    case 'DELETE_ARTICLE':
+      return 'deleted article';
+    case 'POST_THOUGHT':
+      return 'posted a thought';
+    case 'DELETE_THOUGHT':
+      return 'deleted a thought';
+    case 'REPLY_THOUGHT':
+      return 'replied to';
+    case 'RESOLVE_QUERY':
+      return 'resolved support query';
+    case 'REASSIGN_QUERY':
+      return 'reassigned support query';
+    case 'CLOSE_QUERY':
+      return 'closed support query';
+    case 'START_CHAT_SESSION':
+      return 'started chat session';
+    case 'ACCEPT_CONNECTION':
+      return 'accepted connection request';
+    case 'EXTERNAL_CONNECTION':
+      return 'connected with external user';
+    case 'UNAUTHORIZED_ACCESS_ATTEMPT':
+      return 'attempted unauthorized access';
+    case 'VIEW_USER_PROFILE':
+      return 'viewed profile of';
+    case 'VIEW':
+    case 'VIEWED':
+      return 'viewed public profile';
     case 'TRANSFER_OWNERSHIP':
       return 'transferred ownership';
     default:
@@ -94,8 +167,27 @@ function formatAction(action: string, metadata?: any): string {
 
 function mapActivityLog(row: any): ActivityLogEntry {
   const metadata = row.metadata || {};
-  let targetName = row.target_name || metadata.targetName || metadata.roleName || '';
-  let highlightedText = row.highlighted_text || '';
+  let targetName = row.target_name || metadata.targetName || metadata.roleName || metadata.title || '';
+  let targetId = metadata.targetId || metadata.postId || metadata.jobId || metadata.roleId || '';
+  let targetType = metadata.targetType || '';
+  let linkUrl = metadata.linkUrl || '';
+  let highlightedText = metadata.highlightedText || '';
+
+  const actionUpper = (row.action || '').toUpperCase().trim();
+  if (actionUpper === 'LIKE' || actionUpper === 'COMMENT' || actionUpper === 'REPOST' || actionUpper === 'CREATE_POST') {
+    if (!highlightedText) highlightedText = 'post';
+    if (!linkUrl && targetId) linkUrl = `/post/${targetId}`;
+  } else if (actionUpper === 'CREATE_JOB' || actionUpper === 'CLOSE_JOB' || actionUpper === 'SEND_OFFER') {
+    if (!highlightedText) highlightedText = 'job';
+    if (!linkUrl && targetId) linkUrl = `/jobs/${targetId}`;
+  } else if (actionUpper === 'ASSIGN_ROLE' || actionUpper === 'CREATE_ROLE') {
+    if (!highlightedText && metadata.roleId) highlightedText = 'role';
+    if (!linkUrl && metadata.roleId) linkUrl = `/team/role/${metadata.roleId}`;
+  } else if (actionUpper === 'VIEW_USER_PROFILE') {
+    if (!highlightedText) highlightedText = 'profile';
+    if (!linkUrl && metadata.targetHandle) linkUrl = `/u/${metadata.targetHandle}`;
+    else if (!linkUrl && targetId) linkUrl = `/profile/${targetId}`;
+  }
 
   return {
     id: row.log_id || row.id,
@@ -104,6 +196,9 @@ function mapActivityLog(row: any): ActivityLogEntry {
     action: formatAction(row.action, metadata),
     targetName: targetName,
     targetRole: row.target_role || row.actor_role,
+    targetId: targetId,
+    targetType: targetType,
+    linkUrl: linkUrl,
     details: row.details || (row.metadata ? JSON.stringify(row.metadata) : ''),
     highlightedText: highlightedText,
     timestamp: row.created_at || row.timestamp,

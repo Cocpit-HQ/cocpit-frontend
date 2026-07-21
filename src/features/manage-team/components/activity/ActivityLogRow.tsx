@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { ActivityLogEntry } from '../../types/team.types';
 
 interface ActivityLogRowProps {
@@ -8,7 +9,14 @@ interface ActivityLogRowProps {
 }
 
 export default function ActivityLogRow({ entry }: ActivityLogRowProps) {
+  const router = useRouter();
   const timeAgo = getTimeAgo(entry.timestamp);
+
+  const handleLinkClick = () => {
+    if (entry.linkUrl) {
+      router.push(entry.linkUrl);
+    }
+  };
 
   return (
     <div className="w-full flex items-center gap-3 py-3">
@@ -31,12 +39,18 @@ export default function ActivityLogRow({ entry }: ActivityLogRowProps) {
           </span>{' '}
           {entry.action}{' '}
           {entry.targetName && (
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span
+              onClick={handleLinkClick}
+              className={`font-medium ${entry.linkUrl ? 'text-[#1A73E8] dark:text-[#4D9CFF] cursor-pointer hover:underline' : 'text-gray-900 dark:text-white'}`}
+            >
               {entry.targetName}
             </span>
           )}{' '}
           {entry.highlightedText && (
-            <span className="text-[#1A73E8] dark:text-[#4D9CFF] cursor-pointer hover:underline">
+            <span
+              onClick={handleLinkClick}
+              className={`text-[#1A73E8] dark:text-[#4D9CFF] ${entry.linkUrl ? 'cursor-pointer hover:underline' : ''}`}
+            >
               {entry.highlightedText}
             </span>
           )}

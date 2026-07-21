@@ -22,10 +22,15 @@ export default function TeamActivityLogPage({ roles }: TeamActivityLogPageProps)
 
   const debouncedSearch = useDebounce(filters.search, 300);
 
+  const effectiveSearch = React.useMemo(() => {
+    const trimmed = (debouncedSearch || '').trim();
+    return trimmed.length >= 3 ? trimmed : '';
+  }, [debouncedSearch]);
+
   const queryFilters = React.useMemo(() => ({
     ...filters,
-    search: debouncedSearch,
-  }), [filters, debouncedSearch]);
+    search: effectiveSearch,
+  }), [filters, effectiveSearch]);
 
   const { logs, isLoading } = useActivityLogs(queryFilters);
   const { members } = useTeamMembers();

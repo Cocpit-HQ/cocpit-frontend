@@ -90,6 +90,9 @@ export interface ActivityLogEntry {
   action: string;
   targetName?: string;
   targetRole?: string;
+  targetId?: string;
+  targetType?: string;
+  linkUrl?: string;
   details?: string;
   highlightedText?: string;
   timestamp: string;
