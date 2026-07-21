@@ -28,7 +28,7 @@ function mapRole(row: any): TeamRole {
     name: row.name,
     color: row.color || '#808080',
     description: row.description || '',
-    permissions: row.permissions || [],
+    permissions: Array.isArray(row.permissions) ? row.permissions.map((p: string) => p.toUpperCase()) : [],
     priority: row.priority ?? 0,
     isSystemRole: row.is_system_role ?? false,
     memberCount: row.member_count ?? 0,

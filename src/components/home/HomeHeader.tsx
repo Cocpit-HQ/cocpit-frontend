@@ -21,7 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 export const HomeHeader = () => {
     const { activeProfile, isCompany } = useActiveProfile();
-    const { checkPermission } = useCompanyPermissions();
+    const { checkPermission } = useCompanyPermissions(activeProfile);
     const { socket } = useSocket();
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
     const router = useRouter();

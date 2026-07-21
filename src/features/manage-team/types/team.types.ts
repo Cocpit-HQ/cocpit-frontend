@@ -1,39 +1,39 @@
 // Permission keys matching the design screens
 export type TeamPermission =
-  | 'create_post'
-  | 'channels'
-  | 'chat'
-  | 'queries'
-  | 'teams'
-  | 'activity_logs'
-  | 'jobs'
-  | 'jobs_chat'
-  | 'analytics';
+  | 'CREATE_POST'
+  | 'CHANNELS'
+  | 'MESSAGES'
+  | 'QUERIES'
+  | 'TEAMS'
+  | 'ACTIVITY_LOGS'
+  | 'POST_JOBS'
+  | 'JOBS_CHAT'
+  | 'VIEW_ANALYTICS';
 
 // Human-readable labels for permissions (used in UI)
 export const PERMISSION_LABELS: Record<TeamPermission, string> = {
-  create_post: 'Create post',
-  channels: 'Channel',
-  chat: 'Chat',
-  queries: 'Queries',
-  teams: 'Teams',
-  activity_logs: 'Activity logs',
-  jobs: 'Jobs',
-  jobs_chat: 'Jobs chat',
-  analytics: 'Analytics',
+  CREATE_POST: 'Create post',
+  CHANNELS: 'Channel',
+  MESSAGES: 'Chat',
+  QUERIES: 'Queries',
+  TEAMS: 'Teams',
+  ACTIVITY_LOGS: 'Activity logs',
+  POST_JOBS: 'Jobs',
+  JOBS_CHAT: 'Jobs chat',
+  VIEW_ANALYTICS: 'Analytics',
 };
 
 // All available permissions in display order
 export const ALL_PERMISSIONS: TeamPermission[] = [
-  'create_post',
-  'channels',
-  'chat',
-  'queries',
-  'teams',
-  'activity_logs',
-  'jobs',
-  'jobs_chat',
-  'analytics',
+  'CREATE_POST',
+  'CHANNELS',
+  'MESSAGES',
+  'QUERIES',
+  'TEAMS',
+  'ACTIVITY_LOGS',
+  'POST_JOBS',
+  'JOBS_CHAT',
+  'VIEW_ANALYTICS',
 ];
 
 // Predefined role colors from the design

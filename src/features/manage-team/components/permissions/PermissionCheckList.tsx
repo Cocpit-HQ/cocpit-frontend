@@ -11,18 +11,18 @@ interface PermissionCheckListProps {
 }
 
 const PERMISSION_GROUPS = [
-  { id: 'create_post', label: 'Create post', icon: 'lucide:plus' },
-  { id: 'channels', label: 'Channel', icon: 'quill:inbox-newsletter' },
-  { id: 'chat', label: 'Chat', icon: 'hugeicons:comment-01', children: [
-    { id: 'queries', label: 'Queries' }
+  { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
+  { id: 'CHANNELS', label: 'Channel', icon: 'quill:inbox-newsletter' },
+  { id: 'MESSAGES', label: 'Chat', icon: 'hugeicons:comment-01', children: [
+    { id: 'QUERIES', label: 'Queries' }
   ]},
-  { id: 'teams', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
-    { id: 'activity_logs', label: 'Activity logs' }
+  { id: 'TEAMS', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
+    { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
   ]},
-  { id: 'jobs', label: 'Jobs', icon: 'hugeicons:job-search', children: [
-    { id: 'jobs_chat', label: 'Jobs chat' }
+  { id: 'POST_JOBS', label: 'Jobs', icon: 'hugeicons:job-search', children: [
+    { id: 'JOBS_CHAT', label: 'Jobs chat' }
   ]},
-  { id: 'analytics', label: 'Analytics', icon: 'hugeicons:analytics-up' }
+  { id: 'VIEW_ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up' }
 ] as const;
 
 export default function PermissionCheckList({
@@ -36,8 +36,8 @@ export default function PermissionCheckList({
     if (selected.includes(perm)) {
       let newSelected = selected.filter((p) => p !== perm);
       // If Teams is deactivated, also deactivate its children (Activity logs)
-      if (perm === 'teams') {
-        newSelected = newSelected.filter((p) => p !== 'activity_logs');
+      if (perm === 'TEAMS') {
+        newSelected = newSelected.filter((p) => p !== 'ACTIVITY_LOGS');
       }
       onChange(newSelected);
     } else {
@@ -85,7 +85,7 @@ export default function PermissionCheckList({
                   {group.children.map((child) => {
                     const isChildChecked = selected.includes(child.id as TeamPermission);
                     // Special functionality for teams: activity log checkbox cannot be activated unless team toggle is on
-                    const isChildDisabled = disabled || (group.id === 'teams' && !isChecked);
+                    const isChildDisabled = disabled || (group.id === 'TEAMS' && !isChecked);
                     
                     return (
                       <div key={child.id} className={`flex items-center justify-between pl-9 h-[40px] w-full ${isChildDisabled ? 'opacity-50' : ''}`}>

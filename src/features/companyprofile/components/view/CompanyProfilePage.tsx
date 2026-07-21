@@ -48,7 +48,17 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
 
   const company = profileResponse.org;
   const isEdu = company.entity_type === "INSTITUTION" || company.entity_type === "INSTITUTE";
-  const ownProfile = activeProfile?.type === "COMPANY" && activeProfile?.id === (company.company_id || company.org_id);
+  
+  // Check if the user has the permission to manage company details (or is the owner)
+  const hasEditPermission = 
+    profileResponse.is_own_profile || 
+    profileResponse.viewer_permissions?.includes('*') || 
+    profileResponse.viewer_permissions?.includes('MANAGE_COMPANY_DETAILS');
+    
+  // They must be acting as the company AND have the edit permission to see the private view
+  const ownProfile = activeProfile?.type === "COMPANY" && 
+    activeProfile?.id === (company.company_id || company.org_id) && 
+    hasEditPermission;
 
   const data: CompanyProfileData = {
     id: company.company_id || company.org_id,

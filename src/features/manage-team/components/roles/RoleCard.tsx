@@ -16,15 +16,15 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
   const formatPermissions = (perms: TeamPermission[]) => {
     if (!perms || perms.length === 0) return 'No permissions';
     const map: Record<string, string> = {
-      create_post: 'Feed',
-      channels: 'channel',
-      chat: 'chat',
-      queries: 'queries',
-      teams: 'Teams',
-      activity_logs: 'activity logs',
-      jobs: 'Jobs',
-      jobs_chat: 'jobs chat',
-      analytics: 'Analytics'
+      CREATE_POST: 'Feed',
+      CHANNELS: 'channel',
+      MESSAGES: 'chat',
+      QUERIES: 'queries',
+      TEAMS: 'Teams',
+      ACTIVITY_LOGS: 'activity logs',
+      POST_JOBS: 'Jobs',
+      JOBS_CHAT: 'jobs chat',
+      VIEW_ANALYTICS: 'Analytics'
     };
     const mapped = perms.map(p => map[p as string] || p);
     // Capitalize the first letter of the resulting string to ensure it looks like "Feed, chat" or "Jobs, chat"
