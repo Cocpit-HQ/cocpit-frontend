@@ -196,6 +196,11 @@ export const addSkills = async (payload: AddSkillsPayload): Promise<AddSkillsRes
   return response.data;
 };
 
+export const syncSkills = async (payload: { skills: string[] }): Promise<AddSkillsResponse> => {
+  const response = await api.put<AddSkillsResponse>("/profile/skills/sync", payload);
+  return response.data;
+};
+
 // ─── GET /profile/skills (cursor-based, mirrors onboarding) ───────────────────
 
 export const SKILLS_PAGE_SIZE = 20;

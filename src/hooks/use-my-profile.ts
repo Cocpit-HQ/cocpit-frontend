@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -12,6 +11,7 @@ import {
     updateEducation,
     deleteEducation,
     addSkills,
+    syncSkills,
     deleteSkill,
     uploadAvatar,
     deleteAvatar,
@@ -246,7 +246,20 @@ export function useSkillMutations() {
         }
     });
 
-    return { add, remove };
+    const sync = useMutation({
+        mutationFn: (payload: { skills: string[] }) => syncSkills(payload),
+        onSuccess: (response) => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    skills: response.skills
+                };
+            });
+        }
+    });
+
+    return { add, remove, sync };
 }
 
 export function useAvatarMutations() {

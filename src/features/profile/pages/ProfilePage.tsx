@@ -1083,7 +1083,7 @@ export default function ProfilePage() {
     try {
       const normalizedNewSkills = newSkills.map(s => s.trim()).filter(s => s !== "");
 
-      // Deduplicate new skills case-insensitively to prevent any accidental duplicates
+      // Deduplicate new skills case-insensitively
       const uniqueNewSkills: string[] = [];
       for (const skill of normalizedNewSkills) {
         if (!uniqueNewSkills.some(s => s.toLowerCase() === skill.toLowerCase())) {
@@ -1091,30 +1091,14 @@ export default function ProfilePage() {
         }
       }
 
-      const currentSkillNames = skills.map(s => s.name);
-
-      const skillsToAdd = uniqueNewSkills.filter(newSkill =>
-        !currentSkillNames.some(curr => curr.toLowerCase() === newSkill.toLowerCase())
-      );
-
-      const skillsToRemove = skills.filter(curr =>
-        !uniqueNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
-      );
-
-      const resultingSkillsCount = skills.length + skillsToAdd.length - skillsToRemove.length;
-      if (resultingSkillsCount < 3) {
+      if (uniqueNewSkills.length < 3) {
         toast.error("You must have a minimum of 3 skills on your profile.");
         setIsSavingSkills(false);
         return;
       }
 
-      if (skillsToAdd.length > 0) {
-        await skillMutations.add.mutateAsync({ name: skillsToAdd });
-      }
-
-      if (skillsToRemove.length > 0) {
-        await Promise.all(skillsToRemove.map(s => skillMutations.remove.mutateAsync(s.skill_id)));
-      }
+      // Use the new bulk sync endpoint
+      await skillMutations.sync.mutateAsync({ skills: uniqueNewSkills });
 
       setIsAddSkillModalOpen(false);
       toast.success("Skills updated successfully");
@@ -1124,7 +1108,7 @@ export default function ProfilePage() {
     } finally {
       setIsSavingSkills(false);
     }
-  }, [skills, skillMutations.add, skillMutations.remove]);
+  }, [skillMutations.sync]);
 
   const handleDeleteSkill = useCallback((skillName: string) => {
     const skill = skills.find(s => s.name === skillName);
