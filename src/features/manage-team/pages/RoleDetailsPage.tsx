@@ -243,7 +243,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <ActivityLogFiltersBar
               filters={logFilters}
               onFiltersChange={setLogFilters}
-              memberOptions={role.members.map((m) => ({
+              memberOptions={role.members.filter(m => m.status === 'ACTIVE').map((m) => ({
                 value: m.id,
                 label: m.name,
               }))}

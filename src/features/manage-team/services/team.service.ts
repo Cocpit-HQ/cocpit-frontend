@@ -60,17 +60,53 @@ function mapMember(row: any): TeamMember {
   };
 }
 
+function formatAction(action: string, metadata?: any): string {
+  if (!action) return 'performed an activity';
+  const upper = action.toUpperCase().trim();
+  switch (upper) {
+    case 'VIEW':
+    case 'VIEWED':
+      return 'viewed page';
+    case 'TEAMS':
+      return 'viewed Teams';
+    case 'ACTIVITY_LOGS':
+      return 'viewed Activity logs';
+    case 'CREATE_POST':
+      return 'created a post';
+    case 'CREATE_ROLE':
+      return 'created role';
+    case 'UPDATE_ROLE':
+      return 'updated role';
+    case 'DELETE_ROLE':
+      return 'deleted role';
+    case 'INVITE_MEMBER':
+      return 'invited team member';
+    case 'ASSIGN_ROLE':
+      return 'assigned role';
+    case 'REMOVE_MEMBER':
+      return 'removed member';
+    case 'TRANSFER_OWNERSHIP':
+      return 'transferred ownership';
+    default:
+      return action.replace(/_/g, ' ').toLowerCase();
+  }
+}
+
 function mapActivityLog(row: any): ActivityLogEntry {
+  const metadata = row.metadata || {};
+  let targetName = row.target_name || metadata.targetName || metadata.roleName || '';
+  let highlightedText = row.highlighted_text || '';
+
   return {
-    id: row.log_id,
-    actorName: row.actor_name,
+    id: row.log_id || row.id,
+    actorName: row.actor_name || 'Team member',
     actorAvatarUrl: row.actor_avatar || row.actor_avatar_url || '/assets/pngegg.png',
-    action: row.action,
-    targetName: row.target_name,
-    targetRole: row.target_role,
-    details: row.details,
-    highlightedText: row.highlighted_text,
-    timestamp: row.created_at,
+    action: formatAction(row.action, metadata),
+    targetName: targetName,
+    targetRole: row.target_role || row.actor_role,
+    details: row.details || (row.metadata ? JSON.stringify(row.metadata) : ''),
+    highlightedText: highlightedText,
+    timestamp: row.created_at || row.timestamp,
   };
 }
 
@@ -185,30 +221,63 @@ export async function getActivityLogs(
   filters?: ActivityLogFilters
 ): Promise<ActivityLogEntry[]> {
   const params: any = {};
+  let dateFromLimit: Date | null = null;
+
   if (filters) {
+    if (filters.roleId && filters.roleId !== 'all') {
+      params.roleId = filters.roleId;
+    }
     if (filters.memberId && filters.memberId !== 'all') {
       params.memberId = filters.memberId;
     }
+    if (filters.search) {
+      params.search = filters.search;
+    }
     if (filters.dateRange && filters.dateRange !== 'all_time') {
-      const dateFrom = new Date();
-      if (filters.dateRange === 'last_7_days') dateFrom.setDate(dateFrom.getDate() - 7);
-      else if (filters.dateRange === 'last_30_days') dateFrom.setDate(dateFrom.getDate() - 30);
-      else if (filters.dateRange === 'last_90_days') dateFrom.setDate(dateFrom.getDate() - 90);
-      params.dateFrom = dateFrom.toISOString();
+      dateFromLimit = new Date();
+      dateFromLimit.setHours(0, 0, 0, 0);
+      if (filters.dateRange === 'last_7_days') dateFromLimit.setDate(dateFromLimit.getDate() - 7);
+      else if (filters.dateRange === 'last_30_days') dateFromLimit.setDate(dateFromLimit.getDate() - 30);
+      else if (filters.dateRange === 'last_90_days') dateFromLimit.setDate(dateFromLimit.getDate() - 90);
+      params.dateFrom = dateFromLimit.toISOString();
     }
   }
 
   const res = await api.get(`/organizations/${orgId}/teams/activity`, { params });
   let list = res.data?.data || res.data || [];
 
+  // Client-side date range filter fallback
+  if (dateFromLimit) {
+    const minTimestamp = dateFromLimit.getTime();
+    list = list.filter((item: any) => {
+      const ts = item.created_at || item.timestamp;
+      if (!ts) return true;
+      const t = new Date(ts).getTime();
+      return !isNaN(t) && t >= minTimestamp;
+    });
+  }
+
+  // Client-side member filter fallback
+  if (filters?.memberId && filters.memberId !== 'all') {
+    list = list.filter((item: any) => {
+      const actorId = item.actor_id || item.actorId || item.user_id;
+      return actorId === filters.memberId;
+    });
+  }
+
+  // Client-side search filter fallback
   if (filters?.search) {
     const s = filters.search.toLowerCase();
     list = list.filter((item: any) => 
       (item.action && item.action.toLowerCase().includes(s)) ||
       (item.actor_name && item.actor_name.toLowerCase().includes(s)) ||
-      (item.actor_role && item.actor_role.toLowerCase().includes(s))
+      (item.actor_role && item.actor_role.toLowerCase().includes(s)) ||
+      (item.target_name && item.target_name.toLowerCase().includes(s)) ||
+      (item.details && item.details.toLowerCase().includes(s)) ||
+      (item.metadata && JSON.stringify(item.metadata).toLowerCase().includes(s))
     );
   }
+
   return list.map(mapActivityLog);
 }
 
