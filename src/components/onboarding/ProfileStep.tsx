@@ -230,7 +230,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Account Name</label>
+          <label className={styles.label}>Username</label>
           <div className={styles.inputWrapper}>
             <input
               type="text"

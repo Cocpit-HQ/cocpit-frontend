@@ -50,11 +50,14 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
   if (diffMinutes <= 0) {
     shortTimeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    shortTimeAgo = `${diffMinutes}Min ago`;
+    shortTimeAgo = `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
   } else if (diffHours < 24) {
-    shortTimeAgo = `${diffHours}Hr ago`;
-  } else {
+    shortTimeAgo = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+  } else if (diffDays < 7) {
     shortTimeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+  } else {
+    const diffWeeks = Math.floor(diffDays / 7);
+    shortTimeAgo = `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
   }
 
   // Handle poll mapping (snake_case required for Poll)

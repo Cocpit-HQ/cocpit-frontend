@@ -144,6 +144,8 @@ interface RoleSectionProps {
   fieldErrors?: Record<string, string>    // blocking — shown in red
   fieldWarnings?: Record<string, string>  // non-blocking — shown in amber
   existingCurrentRoleId?: string          // ID of the role to end if checkbox is checked
+  companyNode?: React.ReactNode
+  locationNode?: React.ReactNode
 }
 
 function RoleSection({
@@ -158,6 +160,8 @@ function RoleSection({
   fieldErrors = {},
   fieldWarnings = {},
   existingCurrentRoleId,
+  companyNode,
+  locationNode,
 }: RoleSectionProps) {
   const inputStyles =
     "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
@@ -277,104 +281,124 @@ function RoleSection({
           </div>
         )}
 
-        {/* Title */}
-        <div className="flex flex-col" ref={roleWrapperRef}>
-          <div className="flex items-center justify-between mb-2">
-            <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
-            <span className={cn(
-              "text-[11px] font-[family-name:var(--font-poppins)]",
-              role.title.length > 90 ? "text-amber-500" : "text-[#9CA3AF]"
-            )}>
-              {role.title.length}/100
-            </span>
-          </div>
-          <div className={acStyles.wrapper}>
-            <div className={cn(
-              acStyles.inputWrapper,
-              showRoleDropdown && acStyles.isOpen,
-              fieldErrors.title && "border-red-400"
-            )} onClick={() => roleInputRef.current?.focus()}>
-              <input
-                ref={roleInputRef}
-                type="text"
-                className={acStyles.input}
-                placeholder="e.g. Designer"
-                value={roleSearch}
-                onChange={(e) => {
-                  const val = e.target.value
-                  setRoleSearch(val)
-                  set("title", val)
-                }}
-                onFocus={handleRoleFocus}
-                onKeyDown={handleRoleKeyDown}
-                autoComplete="off"
-                maxLength={100}
-              />
-              <div className={acStyles.suffix}>
-                {roleLoading ? (
-                  <Loader2 className={acStyles.spinner} />
-                ) : roleSearch ? (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setRoleSearch("")
-                      set("title", "")
-                      setRoleOptions([])
-                      setShowRoleDropdown(false)
+        {/* Title and Company */}
+        {(() => {
+          const roleInputBlock = (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
+              </div>
+              <div className={acStyles.wrapper}>
+                <div className={cn(
+                  acStyles.inputWrapper,
+                  showRoleDropdown && acStyles.isOpen,
+                  fieldErrors.title && "border-red-400"
+                )} onClick={() => roleInputRef.current?.focus()}>
+                  <input
+                    ref={roleInputRef}
+                    type="text"
+                    className={acStyles.input}
+                    placeholder="e.g. Designer"
+                    value={roleSearch}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setRoleSearch(val)
+                      set("title", val)
                     }}
-                    className={acStyles.clearBtn}
-                  >
-                    <X className={acStyles.clearIcon} />
-                  </button>
-                ) : (
-                  <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showRoleDropdown && "rotate-180")} />
+                    onFocus={handleRoleFocus}
+                    onKeyDown={handleRoleKeyDown}
+                    autoComplete="off"
+                    maxLength={100}
+                  />
+                  <div className={acStyles.suffix}>
+                    {roleLoading ? (
+                      <Loader2 className={acStyles.spinner} />
+                    ) : roleSearch ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setRoleSearch("")
+                          set("title", "")
+                          setRoleOptions([])
+                          setShowRoleDropdown(false)
+                        }}
+                        className={acStyles.clearBtn}
+                      >
+                        <X className={acStyles.clearIcon} />
+                      </button>
+                    ) : (
+                      <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showRoleDropdown && "rotate-180")} />
+                    )}
+                  </div>
+                </div>
+                {showRoleDropdown && (
+                  <ul ref={roleListRef} className={acStyles.dropdown}>
+                    {roleOptions.map((name, idx) => (
+                      <li
+                        key={name}
+                        data-idx={idx}
+                        className={cn(acStyles.item, "date-select-item", idx === roleHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                        onMouseDown={() => selectRole(name)}
+                        onMouseEnter={() => setRoleHighlight(idx)}
+                      >
+                        <Briefcase className={acStyles.itemIcon} />
+                        <span>{name}</span>
+                      </li>
+                    ))}
+                    <li
+                      data-idx={roleOptions.length}
+                      className={cn(acStyles.item, "border-t border-border date-select-item", roleOptions.length === roleHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                      onMouseDown={() => {
+                        if (roleSearch.trim()) {
+                          selectRole(roleSearch.trim())
+                        } else {
+                          setShowRoleDropdown(false)
+                          roleInputRef.current?.focus()
+                        }
+                      }}
+                      onMouseEnter={() => setRoleHighlight(roleOptions.length)}
+                    >
+                      <Plus className={acStyles.itemIcon} />
+                      <span>
+                        {roleSearch.trim() && !roleExactMatch
+                          ? `Other: "${roleSearch.trim()}"`
+                          : "Other (type your own)"}
+                      </span>
+                    </li>
+                  </ul>
                 )}
               </div>
-            </div>
-            {showRoleDropdown && (
-              <ul ref={roleListRef} className={acStyles.dropdown}>
-                {roleOptions.map((name, idx) => (
-                  <li
-                    key={name}
-                    data-idx={idx}
-                    className={cn(acStyles.item, "date-select-item", idx === roleHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
-                    onMouseDown={() => selectRole(name)}
-                    onMouseEnter={() => setRoleHighlight(idx)}
-                  >
-                    <Briefcase className={acStyles.itemIcon} />
-                    <span>{name}</span>
-                  </li>
-                ))}
-                <li
-                  data-idx={roleOptions.length}
-                  className={cn(acStyles.item, "border-t border-border date-select-item", roleOptions.length === roleHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
-                  onMouseDown={() => {
-                    if (roleSearch.trim()) {
-                      selectRole(roleSearch.trim())
-                    } else {
-                      setShowRoleDropdown(false)
-                      roleInputRef.current?.focus()
-                    }
-                  }}
-                  onMouseEnter={() => setRoleHighlight(roleOptions.length)}
-                >
-                  <Plus className={acStyles.itemIcon} />
-                  <span>
-                    {roleSearch.trim() && !roleExactMatch
-                      ? `Other: "${roleSearch.trim()}"`
-                      : "Other (type your own)"}
-                  </span>
-                </li>
-              </ul>
-            )}
-          </div>
-          {fieldErrors.title && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
-              <AlertTriangle className="w-3 h-3" />{fieldErrors.title}
-            </p>
-          )}
-        </div>
+              {fieldErrors.title && (
+                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+                  <AlertTriangle className="w-3 h-3" />{fieldErrors.title}
+                </p>
+              )}
+            </>
+          );
+
+          return (
+            <>
+              {companyNode ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="flex flex-col" ref={roleWrapperRef}>
+                    {roleInputBlock}
+                  </div>
+                  {companyNode}
+                </div>
+              ) : (
+                <div className="flex flex-col" ref={roleWrapperRef}>
+                  {roleInputBlock}
+                </div>
+              )}
+              {locationNode && (
+                <div className="mt-4">
+                  {locationNode}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* "End current role" checkbox — shown for new roles when an existing active role exists */}
         {showEndCurrentRole && (
@@ -1097,6 +1121,79 @@ export default function AddExperienceForm({
 
   const modalTitle = isEditing ? "Edit experience" : "Add experience"
 
+  const companyBlock = (
+    <div className="flex flex-col" ref={companyWrapperRef}>
+      <Label className={labelStyles}>Company</Label>
+      <div className={acStyles.wrapper}>
+        <div className={cn(acStyles.inputWrapper, showCompanyDropdown && acStyles.isOpen)} onClick={() => companyInputRef.current?.focus()}>
+          <input ref={companyInputRef} type="text" className={acStyles.input} placeholder="e.g. Google" value={companySearch}
+            onChange={(e) => { setCompanySearch(e.target.value); setCompany(e.target.value); setOrgId(null) }}
+            onFocus={handleCompanyFocus}
+            onKeyDown={handleCompanyKeyDown} autoComplete="off" />
+          <div className={acStyles.suffix}>
+            {companyLoading ? <Loader2 className={acStyles.spinner} /> : companySearch ? (
+              <button type="button" onClick={(e) => { e.stopPropagation(); setCompanySearch(""); setCompany(""); setOrgId(null); setCompanyOptions([]); setShowCompanyDropdown(false) }} className={acStyles.clearBtn}>
+                <X className={acStyles.clearIcon} />
+              </button>
+            ) : (
+              <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showCompanyDropdown && "rotate-180")} />
+            )}
+          </div>
+        </div>
+        {showCompanyDropdown && (
+          <ul ref={companyListRef} className={acStyles.dropdown}>
+            {companyOptions.map((opt, idx) => (
+              <li key={opt.org_id || `${opt.name}-${idx}`} data-idx={idx} className={cn(acStyles.item, "date-select-item flex items-center gap-2", idx === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectCompany(opt)} onMouseEnter={() => setCompanyHighlight(idx)}>
+                {opt.logo_url && !failedUrls[opt.logo_url] ? (
+                  <img
+                    src={opt.logo_url}
+                    alt={opt.name}
+                    className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0"
+                    onError={() => {
+                      if (opt.logo_url) {
+                        setFailedUrls((prev) => ({ ...prev, [opt.logo_url as string]: true }));
+                      }
+                    }}
+                  />
+                ) : (
+                  <Building2 className={acStyles.itemIcon} />
+                )}
+                <span>{opt.name}</span>
+              </li>
+            ))}
+            <li data-idx={companyOptions.length} className={cn(acStyles.item, "border-t border-border date-select-item", companyOptions.length === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+              onMouseDown={() => { if (companySearch.trim()) { selectCompany(companySearch.trim()) } else { setShowCompanyDropdown(false); companyInputRef.current?.focus() } }}
+              onMouseEnter={() => setCompanyHighlight(companyOptions.length)}>
+              <Plus className={acStyles.itemIcon} />
+              <span>{companySearch.trim() && !companyExactMatch ? `Other: "${companySearch.trim()}"` : "Other (type your own)"}</span>
+            </li>
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+
+  const locationBlock = (
+    <div className="flex flex-col">
+      <Label className={labelStyles}>Location</Label>
+      <LocationAutocomplete
+        mode="places"
+        value={location}
+        onSelect={(val) => {
+          if (!val) {
+            setLocation("");
+          } else if (typeof val === 'string') {
+            setLocation(val);
+          } else if ('formattedAddress' in val) {
+            setLocation(val.formattedAddress);
+          } else {
+            setLocation(val.name || "");
+          }
+        }}
+      />
+    </div>
+  )
+
   return (
     <div className="relative bg-card rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
 
@@ -1158,78 +1255,6 @@ export default function AddExperienceForm({
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Company + Location — shared across roles */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="flex flex-col" ref={companyWrapperRef}>
-              <Label className={labelStyles}>Company</Label>
-              <div className={acStyles.wrapper}>
-                <div className={cn(acStyles.inputWrapper, showCompanyDropdown && acStyles.isOpen)} onClick={() => companyInputRef.current?.focus()}>
-                  <input ref={companyInputRef} type="text" className={acStyles.input} placeholder="e.g. Google" value={companySearch}
-                    onChange={(e) => { setCompanySearch(e.target.value); setCompany(e.target.value); setOrgId(null) }}
-                    onFocus={handleCompanyFocus}
-                    onKeyDown={handleCompanyKeyDown} autoComplete="off" />
-                  <div className={acStyles.suffix}>
-                    {companyLoading ? <Loader2 className={acStyles.spinner} /> : companySearch ? (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setCompanySearch(""); setCompany(""); setOrgId(null); setCompanyOptions([]); setShowCompanyDropdown(false) }} className={acStyles.clearBtn}>
-                        <X className={acStyles.clearIcon} />
-                      </button>
-                    ) : (
-                      <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showCompanyDropdown && "rotate-180")} />
-                    )}
-                  </div>
-                </div>
-                {showCompanyDropdown && (
-                  <ul ref={companyListRef} className={acStyles.dropdown}>
-                    {companyOptions.map((opt, idx) => (
-                      <li key={opt.org_id || `${opt.name}-${idx}`} data-idx={idx} className={cn(acStyles.item, "date-select-item flex items-center gap-2", idx === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectCompany(opt)} onMouseEnter={() => setCompanyHighlight(idx)}>
-                        {opt.logo_url && !failedUrls[opt.logo_url] ? (
-                          <img
-                            src={opt.logo_url}
-                            alt={opt.name}
-                            className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0"
-                            onError={() => {
-                              if (opt.logo_url) {
-                                setFailedUrls((prev) => ({ ...prev, [opt.logo_url as string]: true }));
-                              }
-                            }}
-                          />
-                        ) : (
-                          <Building2 className={acStyles.itemIcon} />
-                        )}
-                        <span>{opt.name}</span>
-                      </li>
-                    ))}
-                    <li data-idx={companyOptions.length} className={cn(acStyles.item, "border-t border-border date-select-item", companyOptions.length === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
-                      onMouseDown={() => { if (companySearch.trim()) { selectCompany(companySearch.trim()) } else { setShowCompanyDropdown(false); companyInputRef.current?.focus() } }}
-                      onMouseEnter={() => setCompanyHighlight(companyOptions.length)}>
-                      <Plus className={acStyles.itemIcon} />
-                      <span>{companySearch.trim() && !companyExactMatch ? `Other: "${companySearch.trim()}"` : "Other (type your own)"}</span>
-                    </li>
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col">
-              <Label className={labelStyles}>Location</Label>
-              <LocationAutocomplete
-                mode="places"
-                value={location}
-                onSelect={(val) => {
-                  if (!val) {
-                    setLocation("");
-                  } else if (typeof val === 'string') {
-                    setLocation(val);
-                  } else if ('formattedAddress' in val) {
-                    setLocation(val.formattedAddress);
-                  } else {
-                    setLocation(val.name || "");
-                  }
-                }}
-              />
-            </div>
-          </div>
-
           {/* Multiple current roles warning */}
           {multipleCurrentRoles && activeRoleIndex === 0 && (
             <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-[12px]">
@@ -1260,6 +1285,8 @@ export default function AddExperienceForm({
                   }
                   fieldErrors={fieldErrors[index]}
                   fieldWarnings={fieldWarnings[index]}
+                  companyNode={index === 0 ? companyBlock : undefined}
+                  locationNode={index === 0 ? locationBlock : undefined}
                 />
               </div>
             );

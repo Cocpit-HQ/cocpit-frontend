@@ -103,7 +103,7 @@ const isStepAhead = (stepA: number, subA: boolean, stepB: number, subB: boolean)
 
 const getMaxAllowedStep = (backendStep: string | null): { step: number; showSubStep: boolean } => {
   if (!backendStep) {
-    return { step: 1, showSubStep: false };
+    return { step: 0, showSubStep: false };
   }
   if (backendStep === "DETAILS") {
     return { step: 3, showSubStep: true };

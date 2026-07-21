@@ -45,12 +45,7 @@ interface PostHeaderProps {
 }
 
 const formatCompanyName = (name?: string): string => {
-  if (!name) return "";
-  const words = name.trim().split(/\s+/);
-  if (words.length > 2) {
-    return `${words[0]} ${words[1]}...`;
-  }
-  return name;
+  return name || "";
 };
 
 export const PostHeader = ({

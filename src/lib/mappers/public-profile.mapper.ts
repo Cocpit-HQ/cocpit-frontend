@@ -30,11 +30,14 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
   if (diffMinutes <= 0) {
     timeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    timeAgo = `${diffMinutes}Min ago`;
+    timeAgo = `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
   } else if (diffHours < 24) {
-    timeAgo = `${diffHours}Hr ago`;
-  } else {
+    timeAgo = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+  } else if (diffDays < 7) {
     timeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+  } else {
+    const diffWeeks = Math.floor(diffDays / 7);
+    timeAgo = `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
   }
 
   // Media mapping

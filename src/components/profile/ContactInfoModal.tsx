@@ -159,15 +159,7 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                             <div className="flex-1 flex flex-col gap-1">
                                 <div className="flex items-center gap-2 h-6">
                                     <p className="text-[16px] font-medium text-foreground">Profile URL</p>
-                                    {isOwnProfile && !isEditingUrl && (
-                                        <button
-                                            onClick={handleStartEdit}
-                                            className="p-1 rounded-md text-foreground hover:text-primary hover:bg-secondary transition-all"
-                                            title="Edit profile URL"
-                                        >
-                                            <Pencil className="w-4 h-4" strokeWidth={1.5} />
-                                        </button>
-                                    )}
+
                                 </div>
 
                                 {isEditingUrl ? (

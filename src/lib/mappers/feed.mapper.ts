@@ -67,11 +67,14 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   if (diffMinutes <= 0) {
     shortTimeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    shortTimeAgo = `${diffMinutes}Min ago`;
+    shortTimeAgo = `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
   } else if (diffHours < 24) {
-    shortTimeAgo = `${diffHours}Hr ago`;
-  } else {
+    shortTimeAgo = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+  } else if (diffDays < 7) {
     shortTimeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+  } else {
+    const diffWeeks = Math.floor(diffDays / 7);
+    shortTimeAgo = `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
   }
 
   // Handle poll mapping
@@ -171,9 +174,13 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
       let spShortTimeAgo = "";
       if (spDiffMinutes <= 0) spShortTimeAgo = "Just now";
-      else if (spDiffMinutes < 60) spShortTimeAgo = `${spDiffMinutes}Min ago`;
-      else if (spDiffHours < 24) spShortTimeAgo = `${spDiffHours}Hr ago`;
-      else spShortTimeAgo = `${spDiffDays} ${spDiffDays === 1 ? 'day' : 'days'} ago`;
+      else if (spDiffMinutes < 60) spShortTimeAgo = `${spDiffMinutes} ${spDiffMinutes === 1 ? 'minute' : 'minutes'} ago`;
+      else if (spDiffHours < 24) spShortTimeAgo = `${spDiffHours} ${spDiffHours === 1 ? 'hour' : 'hours'} ago`;
+      else if (spDiffDays < 7) spShortTimeAgo = `${spDiffDays} ${spDiffDays === 1 ? 'day' : 'days'} ago`;
+      else {
+        const spDiffWeeks = Math.floor(spDiffDays / 7);
+        spShortTimeAgo = `${spDiffWeeks} ${spDiffWeeks === 1 ? 'week' : 'weeks'} ago`;
+      }
 
       // Handle shared post poll
       const spPoll = sp.poll ? {
@@ -295,11 +302,14 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
   if (diffMinutes <= 0) {
     shortTimeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    shortTimeAgo = `${diffMinutes}Min ago`;
+    shortTimeAgo = `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
   } else if (diffHours < 24) {
-    shortTimeAgo = `${diffHours}Hr ago`;
-  } else {
+    shortTimeAgo = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+  } else if (diffDays < 7) {
     shortTimeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+  } else {
+    const diffWeeks = Math.floor(diffDays / 7);
+    shortTimeAgo = `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
   }
 
   return {
