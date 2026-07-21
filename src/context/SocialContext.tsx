@@ -213,7 +213,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   const { data: session, status } = useSession();
 
   React.useEffect(() => {
-    if (status === 'authenticated' && !session?.user?.error) {
+    if (status === 'authenticated' && !session?.user?.error && !isCompany) {
       // Fetch blocked users
       api.get('/users/me/blocks').then(res => {
         const ids = res.data.map((u: any) => (u.user_id || u.id)?.toString()).filter(Boolean);
@@ -233,7 +233,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         });
       }
     }
-  }, [status, session?.user?.id]);
+  }, [status, session?.user?.id, isCompany]);
 
   return (
     <SocialContext.Provider value={{

@@ -122,6 +122,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     const currentPath = optimisticPath || pathname
     if (!currentPath) return false
     if (href === '/feed') return currentPath === '/feed' || currentPath === '/'
+    if (href === '/channel') return currentPath === '/channel' || currentPath.startsWith('/channel/')
     if (href.startsWith('/organization/') && !href.endsWith('/settings') && !href.endsWith('/analytics')) {
       return currentPath === href;
     }

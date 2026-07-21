@@ -49,7 +49,7 @@ export const HomeHeader = () => {
 
     useEffect(() => {
         fetchUnreadCount();
-    }, [activeProfile, isCompany, pathname]);
+    }, [activeProfile, isCompany]);
 
     useEffect(() => {
         const handleUpdate = () => {

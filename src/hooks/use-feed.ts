@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { getFeed, resetFeedSession } from '@/services/api/feed';
 import { deletePost as apiDeletePost } from '@/services/api/posts';
@@ -12,6 +13,8 @@ export const useFeed = (enableInitialFetch = true) => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { activeProfile } = useActiveProfile();
+  const pathname = usePathname();
+  const isFeedRoute = pathname === '/feed' || pathname?.startsWith('/feed');
 
   const currentUser = useMemo(() => ({
     id: session?.user?.id || '',
@@ -48,7 +51,7 @@ export const useFeed = (enableInitialFetch = true) => {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     refetchOnWindowFocus: false,
-    enabled: !!session && enableInitialFetch,
+    enabled: !!session && enableInitialFetch && isFeedRoute,
   });
 
   const posts = useMemo(() => {
