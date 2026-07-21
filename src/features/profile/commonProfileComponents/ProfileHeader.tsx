@@ -151,11 +151,20 @@ export const ProfileHeader = React.memo(function ProfileHeader({
 
                             {/* Avatar Logo */}
                             <div className="absolute inset-[4px] rounded-full overflow-hidden bg-card">
-                                <img
-                                    src={user?.avatar || "/assets/avatar.png"}
-                                    alt="Avatar"
-                                    className="w-full h-full object-cover"
-                                />
+                                {user?.avatar ? (
+                                    <img
+                                        src={user.avatar}
+                                        alt="Avatar"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex flex-col justify-center items-center gap-[4px] bg-[#EEF2FF] rounded-full">
+                                        <Icon icon="solar:gallery-linear" className="w-[24px] h-[24px] text-[#000000]" />
+                                        <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] leading-[15px] text-center text-[#000000]">
+                                            Add profile
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {isOwnProfile && (

@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { useMemo } from "react";
 import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
+import { Icon } from "@iconify/react";
 import styles from "./ProfileStep.module.css";
 
 interface ProfileStepProps {
@@ -200,8 +201,11 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
                   <img src={displayImage} alt="Profile" className={styles.photoImage} />
                 </div>
               ) : (
-                <div className={styles.photoPlaceholder} style={{ width: '100%', height: '100%' }}>
-                  <img src="/assets/profilephoto.png" alt="Profile Placeholder" className={styles.photoImage} />
+                <div className="w-full h-full flex flex-col justify-center items-center gap-[4px] bg-[#EEF2FF] rounded-full" style={{ width: '100%', height: '100%' }}>
+                  <Icon icon="solar:gallery-linear" className="w-[24px] h-[24px] text-[#000000]" />
+                  <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] leading-[15px] text-center text-[#000000]">
+                    Add profile
+                  </span>
                 </div>
               )}
             </button>

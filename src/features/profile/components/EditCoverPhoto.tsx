@@ -553,7 +553,17 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
         {coverImage ? (
           <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
-          <img src="/assets/coverphoto.jpg" alt="Default Cover" className="w-full h-full object-cover" />
+          <div className="w-full h-full flex flex-col justify-center items-center p-[10px] gap-[10px] bg-[#EEF2FF] rounded-[24px]">
+            <Icon icon="solar:gallery-linear" className="w-6 h-6 text-[#000000]" />
+            <div className="flex flex-col items-center gap-[4px] w-full max-w-[414px]">
+              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-center text-[#000000]">
+                Add banner
+              </span>
+              <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] leading-[15px] text-center text-[#6B7280]">
+                Use a 16:3 banner. Minimum size: 960 × 180 px. Recommended size: 1920 × 360 px for optimal quality.
+              </span>
+            </div>
+          </div>
         )}
         {children}
 

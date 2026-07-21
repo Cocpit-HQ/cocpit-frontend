@@ -1,21 +1,33 @@
 import { Experience } from "@/types/entities";
 
 export function getResumeOverview(experiences: Experience[]) {
-  // Simple logic to calculate years of experience
-  let totalYears = 0;
+  // Calculate total years based on months
+  let totalMonths = 0;
   let featuresShipped = 0; // Mock calculation based on description
 
   experiences.forEach((exp) => {
-    const start = new Date(exp.start_date).getFullYear();
-    const end = exp.end_date ? new Date(exp.end_date).getFullYear() : new Date().getFullYear();
-    totalYears += end - start;
+    if (!exp.start_date) return;
+    const start = new Date(exp.start_date);
+    if (isNaN(start.getTime())) return;
+
+    const end = exp.end_date ? new Date(exp.end_date) : new Date();
+    const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    const expMonths = Math.max(0, months);
+    totalMonths += expMonths;
 
     // Simple heuristic: 5 features per year of experience
-    featuresShipped += (totalYears > 0 ? 5 : 0);
+    const expYears = Math.round(expMonths / 12);
+    if (expYears > 0) {
+      featuresShipped += (expYears * 5);
+    }
   });
 
-  // Ensure at least 7+ years as per requirement example or fallback
-  const displayYears = totalYears > 0 ? totalYears : 7;
+  // Ensure at least 0 years
+  let displayYears = 0;
+  if (experiences.length > 0) {
+    displayYears = Math.round(totalMonths / 12);
+  }
+  
   const displayFeatures = featuresShipped > 0 ? featuresShipped * 3 : 15; // inflating for "15+ features"
 
   return {

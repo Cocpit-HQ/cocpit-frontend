@@ -42,13 +42,24 @@ export function LivingResume({
   // Metrics calculations
   const domains = new Set(experiences.map(e => e.company_name)).size + 2;
   const toolsCount = skills.length;
-  let totalYears = 0;
+  // Calculate total years based on months
+  let totalMonths = 0;
   experiences.forEach((exp) => {
-    const start = new Date(exp.start_date).getFullYear();
-    const end = exp.end_date ? new Date(exp.end_date).getFullYear() : new Date().getFullYear();
-    totalYears += end - start;
+    if (!exp.start_date) return;
+    const start = new Date(exp.start_date);
+    if (isNaN(start.getTime())) return;
+
+    const end = exp.end_date ? new Date(exp.end_date) : new Date();
+    const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    totalMonths += Math.max(0, months);
   });
-  if (totalYears === 0) totalYears = 1;
+  
+  let totalYears = 0;
+  if (experiences.length > 0) {
+    totalYears = Math.round(totalMonths / 12);
+  } else {
+    totalYears = 0; // Empty state fallback
+  }
 
   const handleDownloadOrView = () => {
     if (resumeUrl) {

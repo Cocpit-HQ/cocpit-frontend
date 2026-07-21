@@ -496,15 +496,34 @@ function RoleSection({
                 <SelectValue placeholder="Month" />
               </SelectTrigger>
               <SelectContent>
-                {months.map((m) => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
+                {(role.is_current && role.startYear === currentYear.toString()
+                  ? months.slice(0, new Date().getMonth() + 1)
+                  : months
+                ).map((m) => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
+            <Select 
+              value={role.startYear} 
+              onValueChange={(v) => {
+                let updatedStartMonth = role.startMonth
+                if (role.is_current && v === currentYear.toString()) {
+                  const currentMonthIdx = new Date().getMonth()
+                  const selectedMonthIdx = months.indexOf(role.startMonth)
+                  if (selectedMonthIdx > currentMonthIdx) {
+                    updatedStartMonth = ""
+                  }
+                }
+                onChange({ ...role, startYear: v, startMonth: updatedStartMonth })
+              }}
+            >
               <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
-                {years.map((y) => <SelectItem key={y} value={y} className="date-select-item">{y}</SelectItem>)}
+                {(role.is_current
+                  ? years.filter(y => parseInt(y) <= currentYear)
+                  : years
+                ).map((y) => <SelectItem key={y} value={y} className="date-select-item">{y}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -563,8 +582,20 @@ function RoleSection({
             checked={role.is_current}
             onCheckedChange={(checked) => {
               const isChecked = checked as boolean
+              
+              // If checking "current", ensure the selected start month isn't in the future of the current year
+              let updatedStartMonth = role.startMonth
+              if (isChecked && role.startYear === currentYear.toString()) {
+                const currentMonthIdx = new Date().getMonth()
+                const selectedMonthIdx = months.indexOf(role.startMonth)
+                if (selectedMonthIdx > currentMonthIdx) {
+                  updatedStartMonth = ""
+                }
+              }
+
               const update: Partial<RoleFormState> = {
                 is_current: isChecked,
+                startMonth: updatedStartMonth,
                 endMonth: isChecked ? "" : role.endMonth,
                 endYear: isChecked ? "" : role.endYear,
               }
