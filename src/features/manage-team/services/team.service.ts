@@ -51,6 +51,7 @@ function mapMember(row: any): TeamMember {
     orgId: row.org_id || '',
     name: row.full_name,
     avatarUrl: row.avatar_url,
+    email: row.email,
     headline: row.headline,
     roleId: row.role_id,
     roleName: row.role_name,

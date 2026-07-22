@@ -73,6 +73,7 @@ export interface TeamMember {
   orgId: string;
   name: string;
   avatarUrl: string;
+  email?: string;
   headline?: string;
   roleId?: string;
   roleName?: string;

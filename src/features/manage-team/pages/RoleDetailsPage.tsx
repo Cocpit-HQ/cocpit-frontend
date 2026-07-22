@@ -21,6 +21,9 @@ import ActivityLogTable from '../components/activity/ActivityLogTable';
 import ActivityLogFiltersBar from '../components/activity/ActivityLogFilters';
 import EditRoleModal from '../components/roles/EditRoleModal';
 import DeleteRoleConfirm from '../components/roles/DeleteRoleConfirm';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RoleDetailsPageProps {
   roleId: string;
@@ -29,6 +32,10 @@ interface RoleDetailsPageProps {
 export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeProfile } = useActiveProfile();
+  const perms = useCompanyPermissions(activeProfile);
+  const hasActivityPermission = perms.checkPermission('ACTIVITY_LOGS');
+
   const { role, isLoading } = useRoleDetails(roleId);
   const removeMember = useRemoveMember();
   const inviteMember = useInviteMember();
@@ -231,16 +238,36 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
           >
             Members
           </button>
-          <button
-            onClick={() => setActiveTab('activity')}
-            className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
-              activeTab === 'activity'
-                ? 'bg-[#E9F0FE] dark:bg-[#1A73E8]/20 text-[#1A73E8] dark:text-[#4D9CFF] border border-transparent'
-                : 'bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] border border-[#1A73E8] dark:border-[#4D9CFF] hover:bg-[#E9F0FE]/50'
-            }`}
-          >
-            Activity logs
-          </button>
+          {hasActivityPermission ? (
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
+                activeTab === 'activity'
+                  ? 'bg-[#E9F0FE] dark:bg-[#1A73E8]/20 text-[#1A73E8] dark:text-[#4D9CFF] border border-transparent'
+                  : 'bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] border border-[#1A73E8] dark:border-[#4D9CFF] hover:bg-[#E9F0FE]/50'
+              }`}
+            >
+              Activity logs
+            </button>
+          ) : (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="!cursor-not-allowed">
+                    <button
+                      disabled
+                      className="px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] border border-[#9CA3AF] text-[#9CA3AF] opacity-50 !cursor-not-allowed bg-transparent"
+                    >
+                      Activity logs
+                    </button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-gray-800 text-white border-gray-700">
+                  <p>You don't have permission to access this</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
 
         {/* Tab content */}

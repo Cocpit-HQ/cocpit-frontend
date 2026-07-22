@@ -10,10 +10,9 @@ interface MemberRowProps {
 }
 
 export default function MemberRow({ member, onRemove }: MemberRowProps) {
-  // Use headline as a mock email for the UI if email is not available
-  const mockEmail = member.headline?.includes('@') 
-    ? member.headline 
-    : `${member.name.split(' ')[0].toLowerCase()}.${member.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
+  const displayEmail = member.email || 
+    (member.headline?.includes('@') ? member.headline : null) || 
+    `${member.name.split(' ')[0].toLowerCase()}.${member.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
 
   return (
     <div className="w-full flex items-center justify-between py-2">
@@ -31,7 +30,7 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
             {member.name}
           </span>
           <span className="text-[12px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">
-            {mockEmail}
+            {displayEmail}
           </span>
         </div>
       </div>

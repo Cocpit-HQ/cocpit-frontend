@@ -55,7 +55,7 @@ export function useCompanyPermissions(company?: any | null) {
         if (jobsSubPerms.includes(cleanPerm) && upperPerms.includes("JOBS")) return true;
 
         // TEAMS parent implies sub-permissions
-        const teamsSubPerms = ["VIEW_MEMBERS", "INVITE_MEMBERS", "REMOVE_MEMBERS", "MANAGE_MEMBERS", "MANAGE_ROLES", "ACTIVITY_LOGS", "TEAMS"];
+        const teamsSubPerms = ["VIEW_MEMBERS", "INVITE_MEMBERS", "REMOVE_MEMBERS", "MANAGE_MEMBERS", "MANAGE_ROLES", "TEAMS"];
         if (teamsSubPerms.includes(cleanPerm) && upperPerms.includes("TEAMS")) return true;
 
         // CHANNEL parent implies channel-related details
