@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useToast } from "@/hooks/use-toast";
 import { resetPassword, requestOTP, verifyOTP } from "@/services/api/auth";
@@ -127,6 +127,16 @@ export default function ForgotPasswordForm() {
     } finally {
       setIsResetting(false);
     }
+  };
+
+  // Resets flow back to Step 1 (enter email) from OTP or Set Password screens
+  const handleGoBack = () => {
+    setOtpSent(false);
+    setEmailVerified(false);
+    setOtp("");
+    setOtpError(false);
+    setShowVerified(false);
+    setError(null);
   };
 
   return (
@@ -275,25 +285,35 @@ export default function ForgotPasswordForm() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (showVerified) {
-                    setEmailVerified(true);
-                    toast({
-                      title: "Email Verified!",
-                      description: "You may now set a new password.",
-                    });
-                  } else if (!isCheckingOtp) {
-                    // Guard: don't fire if a verify request is already in-flight
-                    handleVerifyOtp(otp);
-                  }
-                }}
-                disabled={isCheckingOtp || otp.length !== 6}
-                className={styles.primaryButton}
-              >
-                {isCheckingOtp ? "Verifying..." : "Continue"}
-              </button>
+              <div className={styles.actionRow}>
+                <button
+                  type="button"
+                  onClick={handleGoBack}
+                  className={styles.backButton}
+                  aria-label="Go back to enter email"
+                >
+                  <ChevronLeft className={styles.backIcon} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showVerified) {
+                      setEmailVerified(true);
+                      toast({
+                        title: "Email Verified!",
+                        description: "You may now set a new password.",
+                      });
+                    } else if (!isCheckingOtp) {
+                      // Guard: don't fire if a verify request is already in-flight
+                      handleVerifyOtp(otp);
+                    }
+                  }}
+                  disabled={isCheckingOtp || otp.length !== 6}
+                  className={styles.primaryButton}
+                >
+                  {isCheckingOtp ? "Verifying..." : "Continue"}
+                </button>
+              </div>
             </div>
           )}
 
@@ -381,25 +401,37 @@ export default function ForgotPasswordForm() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isResetting || !isPasswordValid || !confirmPassword}
-                className={styles.primaryButton}
-              >
-                {isResetting ? "Resetting..." : "Continue"}
-              </button>
+              <div className={styles.actionRow}>
+                <button
+                  type="button"
+                  onClick={handleGoBack}
+                  className={styles.backButton}
+                  aria-label="Go back to enter email"
+                >
+                  <ChevronLeft className={styles.backIcon} />
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResetting || !isPasswordValid || !confirmPassword}
+                  className={styles.primaryButton}
+                >
+                  {isResetting ? "Resetting..." : "Continue"}
+                </button>
+              </div>
             </form>
           )}
 
-          {/* Navigation */}
-          <div className={styles.navigation}>
-            <p className={styles.navigationText}>
-              Back to{" "}
-              <Link href="/" className={styles.navigationLink}>
-                Sign in
-              </Link>
-            </p>
-          </div>
+          {/* Navigation — only shown on Step 1 (enter email) */}
+          {!otpSent && (
+            <div className={styles.navigation}>
+              <p className={styles.navigationText}>
+                Back to{" "}
+                <Link href="/" className={styles.navigationLink}>
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer Text */}

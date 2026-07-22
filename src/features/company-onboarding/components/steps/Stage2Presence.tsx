@@ -408,8 +408,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                     onClick={() => {
                       if (showEmailCode && emailTimer === 0) {
                         setEmailCode('');
+                        setEmailCodeError('');
                         updateField('isEmailVerified', false);
                         setEmailTimer(30);
+                        sendEmailOTP(officialEmail).catch(() => {
+                          setEmailDomainError('Failed to resend verification code');
+                        });
                       }
                     }}
                     className={`text-[12px] font-poppins font-medium flex-none ${
@@ -569,8 +573,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                     onClick={() => {
                       if (showPhoneCode && phoneTimer === 0) {
                         setPhoneCode('');
+                        setPhoneCodeError('');
                         updateField('isPhoneVerified', false);
                         setPhoneTimer(30);
+                        sendPhoneOTP(`${phoneCountryCode}${phoneNumber}`).catch(() => {
+                          setPhoneLengthError('Failed to resend verification code');
+                        });
                       }
                     }}
                     className={`text-[12px] font-poppins font-medium flex-none ${

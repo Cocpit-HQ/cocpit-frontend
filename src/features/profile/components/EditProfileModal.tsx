@@ -81,11 +81,16 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   useEffect(() => {
     if (user) {
-      let initialStatus = (user as any).account_type || "student";
-      initialStatus = initialStatus.toLowerCase().replace(" ", "_");
-      if (!ROLES.find(r => r.id === initialStatus)) {
-        initialStatus = "student";
-      }
+      const ACCOUNT_TYPE_TO_ROLE_ID: Record<string, string> = {
+        student: "student", Student: "student",
+        fresher: "fresher", Fresher: "fresher",
+        intern: "intern", Intern: "intern",
+        self_employed: "self_employed", "Self Employed": "self_employed",
+        employed: "employed", Employee: "employed", Employed: "employed",
+        unemployed: "unemployed", Unemployed: "unemployed",
+      };
+      const rawAccountType = (user as any).account_type || "";
+      const initialStatus = ACCOUNT_TYPE_TO_ROLE_ID[rawAccountType] ?? "student";
 
       const data = {
         name: user.name || "",
