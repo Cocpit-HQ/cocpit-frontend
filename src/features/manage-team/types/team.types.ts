@@ -11,7 +11,7 @@ export type TeamPermission =
   | 'ANALYTICS';
 
 // Human-readable labels for permissions (used in UI)
-export const PERMISSION_LABELS: Record<TeamPermission, string> = {
+export const PERMISSION_LABELS: Record<string, string> = {
   CREATE_POST: 'Create post',
   CHANNEL: 'Channel',
   CHAT: 'Chat',
@@ -21,7 +21,40 @@ export const PERMISSION_LABELS: Record<TeamPermission, string> = {
   JOBS: 'Jobs',
   JOBS_CHAT: 'Jobs chat',
   ANALYTICS: 'Analytics',
+  // System / RBAC permission key mappings
+  SWITCH_TO_COMPANY: 'Switch to company',
+  MANAGE_COMPANY: 'Manage company',
+  MANAGE_COMPANY_DETAILS: 'Manage company details',
+  MANAGE_SETTINGS: 'Manage settings',
+  MANAGE_ROLES: 'Manage roles',
+  MANAGE_MEMBERS: 'Manage members',
+  INVITE_MEMBERS: 'Invite members',
+  REMOVE_MEMBERS: 'Remove members',
+  VIEW_MEMBERS: 'View members',
+  POST_JOBS: 'Post jobs',
+  VIEW_JOBS: 'View jobs',
+  MANAGE_JOBS: 'Manage jobs',
+  VIEW_APPLICANTS: 'View applicants',
+  MANAGE_APPLICANTS: 'Manage applicants',
+  CREATE_CONTENT: 'Create content',
+  MANAGE_COMMENTS: 'Manage comments',
+  VIEW_ANALYTICS: 'View analytics',
+  '*': 'All permissions',
 };
+
+export function getPermissionLabel(perm: string): string {
+  if (!perm) return '';
+  const upper = String(perm).toUpperCase().trim();
+  if (PERMISSION_LABELS[upper]) {
+    return PERMISSION_LABELS[upper];
+  }
+  const formatted = upper
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .trim();
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
 
 // All available permissions in display order
 export const ALL_PERMISSIONS: TeamPermission[] = [

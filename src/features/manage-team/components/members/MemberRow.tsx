@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Icon } from '@iconify/react';
+import { useSession } from 'next-auth/react';
 import { TeamMember } from '../../types/team.types';
 
 interface MemberRowProps {
@@ -10,6 +11,12 @@ interface MemberRowProps {
 }
 
 export default function MemberRow({ member, onRemove }: MemberRowProps) {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id || (session?.user as any)?.sub;
+
+  const isSelf = Boolean(currentUserId && (member.id === currentUserId || (member as any).userId === currentUserId));
+  const isOwner = Boolean(member.roleName?.toLowerCase() === 'owner');
+
   const displayEmail = member.email || 
     (member.headline?.includes('@') ? member.headline : null) || 
     `${member.name.split(' ')[0].toLowerCase()}.${member.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
@@ -36,7 +43,7 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        {onRemove && (
+        {onRemove && !isSelf && !isOwner && (
           <button
             onClick={onRemove}
             className="text-[13px] font-medium text-[#F15156] hover:text-red-600 transition-colors"
@@ -48,3 +55,4 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
     </div>
   );
 }
+

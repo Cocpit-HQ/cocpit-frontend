@@ -11,7 +11,7 @@ import { useInviteMember } from '../hooks/useInviteMember';
 import { useUpdateRole } from '../hooks/useUpdateRole';
 import { useDeleteRole } from '../hooks/useDeleteRole';
 import { useWithdrawInvite } from '../hooks/useWithdrawInvite';
-import { TeamMember, ActivityLogFilters, UpdateRoleInput, PendingInvitation, PERMISSION_LABELS } from '../types/team.types';
+import { TeamMember, ActivityLogFilters, UpdateRoleInput, PendingInvitation, PERMISSION_LABELS, getPermissionLabel } from '../types/team.types';
 import { useDebounce } from '@/hooks/use-debounce';
 import MemberList from '../components/members/MemberList';
 import InviteMemberModal from '../components/members/InviteMemberModal';
@@ -208,7 +208,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <div className="flex flex-wrap gap-4 mt-1">
               {role.permissions?.length > 0 ? (
                 role.permissions.map(p => {
-                  const label = PERMISSION_LABELS[p as keyof typeof PERMISSION_LABELS] || PERMISSION_LABELS[p.toUpperCase() as keyof typeof PERMISSION_LABELS] || p;
+                  const label = getPermissionLabel(p);
                   return (
                     <div key={p} className="box-border flex flex-row justify-center items-center bg-[#F2F7FF] dark:bg-gray-800 border border-[#EEF2FF] dark:border-gray-700 rounded-lg">
                        <div className="flex flex-row justify-center items-center px-4 py-[6px] gap-2">
