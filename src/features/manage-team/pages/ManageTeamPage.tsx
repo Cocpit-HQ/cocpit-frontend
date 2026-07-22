@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { TeamRole, TeamMember } from '../types/team.types';
 import { useTeamRoles } from '../hooks/useTeamRoles';
 import { useCreateRole } from '../hooks/useCreateRole';
@@ -19,13 +20,32 @@ import { CreateRoleInput, UpdateRoleInput } from '../types/team.types';
 import { Loader2 } from 'lucide-react';
 
 export default function ManageTeamPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { roles, isLoading } = useTeamRoles();
   const createRole = useCreateRole();
   const updateRole = useUpdateRole();
   const deleteRole = useDeleteRole();
   const inviteMember = useInviteMember();
 
-  const [activeTab, setActiveTab] = useState<'team' | 'activity'>('team');
+  // Read initial tab from the URL so a refresh lands back on Activity logs
+  // instead of resetting to Roles — same pattern as RoleDetailsPage.
+  const urlTab = searchParams?.get('tab');
+  const [activeTab, setActiveTabLocal] = useState<'team' | 'activity'>(
+    urlTab === 'activity' ? 'activity' : 'team'
+  );
+
+  const setActiveTab = useCallback((tab: 'team' | 'activity') => {
+    setActiveTabLocal(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === 'team') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const query = params.toString();
+    router.replace(`${window.location.pathname}${query ? `?${query}` : ''}`);
+  }, [router]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TeamRole | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TeamRole | null>(null);

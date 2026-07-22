@@ -15,7 +15,7 @@ export const useInviteMember = () => {
     },
     onSuccess: () => {
       toast.success('Invitation sent!');
-      queryClient.invalidateQueries({ queryKey: ['team', 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['team'] });
     },
     onError: () => {
       toast.error('Failed to send invitation.');

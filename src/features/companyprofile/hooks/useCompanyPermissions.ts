@@ -30,39 +30,44 @@ export function useCompanyPermissions(company?: any | null) {
     // Helper to check specific permission
     const checkPermission = (perm: string) => {
         if (isOwner || isAdmin) return true;
+        if (!permissions || !Array.isArray(permissions)) return false;
         if (permissions.includes('*')) return true;
-        
-        const cleanPerm = perm.toUpperCase().trim();
-        
-        // Exact match
-        if (permissions.includes(cleanPerm)) return true;
-        
+
+        const cleanPerm = String(perm || '').toUpperCase().trim();
+        const upperPerms = permissions.map((p: any) => String(p).toUpperCase().trim());
+
+        if (upperPerms.includes('*') || upperPerms.includes(cleanPerm)) return true;
+
+        // CHAT / MESSAGES fallback
+        if ((cleanPerm === 'CHAT' || cleanPerm === 'MESSAGES') && (upperPerms.includes('CHAT') || upperPerms.includes('MESSAGES'))) return true;
+
+        // QUERIES fallback
+        if (cleanPerm === 'QUERIES' && (upperPerms.includes('QUERIES') || upperPerms.includes('CHAT') || upperPerms.includes('MESSAGES'))) return true;
+
         // Channel singular/plural fallback
-        if (cleanPerm === 'CHANNELS' && permissions.includes('CHANNEL')) return true;
-        if (cleanPerm === 'CHANNEL' && permissions.includes('CHANNELS')) return true;
-        
+        if ((cleanPerm === 'CHANNELS' || cleanPerm === 'CHANNEL') && (upperPerms.includes('CHANNEL') || upperPerms.includes('CHANNELS'))) return true;
+
         // Analytics fallback
-        if (cleanPerm === 'VIEW_ANALYTICS' && permissions.includes('ANALYTICS')) return true;
+        if ((cleanPerm === 'VIEW_ANALYTICS' || cleanPerm === 'ANALYTICS') && (upperPerms.includes('ANALYTICS') || upperPerms.includes('VIEW_ANALYTICS'))) return true;
 
         // JOBS parent implies sub-permissions
         const jobsSubPerms = ["POST_JOBS", "VIEW_APPLICANTS", "JOBS_CHAT", "JOBS"];
-        if (jobsSubPerms.includes(cleanPerm) && permissions.includes("JOBS")) return true;
+        if (jobsSubPerms.includes(cleanPerm) && upperPerms.includes("JOBS")) return true;
 
         // TEAMS parent implies sub-permissions
         const teamsSubPerms = ["VIEW_MEMBERS", "INVITE_MEMBERS", "REMOVE_MEMBERS", "MANAGE_MEMBERS", "MANAGE_ROLES", "ACTIVITY_LOGS", "TEAMS"];
-        if (teamsSubPerms.includes(cleanPerm) && permissions.includes("TEAMS")) return true;
+        if (teamsSubPerms.includes(cleanPerm) && upperPerms.includes("TEAMS")) return true;
 
         // CHANNEL parent implies channel-related details
-        const channelSubPerms = ["MANAGE_COMPANY_DETAILS", "INVITE_MEMBERS", "CHANNEL"];
-        if (channelSubPerms.includes(cleanPerm) && permissions.includes("CHANNEL")) return true;
-        
-        // Sub-permission fallbacks matching the backend
-        if (cleanPerm === 'QUERIES' && permissions.includes('CHAT')) return true;
-        if (cleanPerm === 'JOBS_CHAT' && permissions.includes('JOBS')) return true;
-        
+        const channelSubPerms = ["MANAGE_COMPANY_DETAILS", "INVITE_MEMBERS", "CHANNEL", "CHANNELS", "MANAGE_CHANNEL"];
+        if (channelSubPerms.includes(cleanPerm) && (upperPerms.includes("CHANNEL") || upperPerms.includes("CHANNELS"))) return true;
+
+        // CREATE_POST / CREATE_CONTENT
+        if ((cleanPerm === 'CREATE_POST' || cleanPerm === 'CREATE_CONTENT') && (upperPerms.includes('CREATE_POST') || upperPerms.includes('CREATE_CONTENT'))) return true;
+
         // Hierarchy: MANAGE_X implies VIEW_X
-        if (cleanPerm.startsWith("VIEW_") && permissions.includes(cleanPerm.replace("VIEW_", "MANAGE_"))) return true;
-        
+        if (cleanPerm.startsWith("VIEW_") && upperPerms.includes(cleanPerm.replace("VIEW_", "MANAGE_"))) return true;
+
         return false;
     };
 

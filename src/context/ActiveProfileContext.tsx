@@ -29,6 +29,7 @@ interface ActiveProfileContextType {
     isCompany: boolean;
     userCompanies: (Company & { role: string })[];
     switchableCompanies: (Company & { role: string })[];
+    refreshCompanies: () => Promise<void>;
     refreshProfile?: () => Promise<void>;
 }
 
@@ -219,6 +220,25 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         }
     }, [session?.user?.image, session?.user?.name, activeProfile?.type]);
 
+    /**
+     * Re-pulls the org membership list from the bootstrap endpoint.
+     * `bootstrappedCompanies` is plain component state (not React Query), so it
+     * never notices membership changes made elsewhere — e.g. accepting a team
+     * invite adds a new org, but the switcher won't show it until this runs.
+     */
+    const refreshCompanies = async () => {
+        try {
+            const actorContext = await getActorContext();
+            const normalizedCompanies = actorContext.organizations.map((company) => normalizeCompany(company)) as (Company & { role: string })[];
+            const uniqueCompanies = Array.from(
+                new Map(normalizedCompanies.map(c => [c.org_id || c.company_id, c])).values()
+            );
+            setBootstrappedCompanies(uniqueCompanies);
+        } catch (error) {
+            console.warn("[ActorContext] Failed to refresh org membership list.", error);
+        }
+    };
+
     const switchProfile = (type: ProfileType, id: string) => {
         const performSwitch = async () => {
             try {
@@ -274,7 +294,8 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         isCompany: activeProfile?.type === "COMPANY",
         userCompanies: companies,
         switchableCompanies,
-        refreshProfile,
+        refreshCompanies,
+        refreshProfile: refreshCompanies,
     };
 
     return (

@@ -142,16 +142,16 @@ export const PostContent = ({
         }
 
         const isOverlay = variant === 'overlay';
-        const truncateLength = isOverlay ? 120 : 185;
+        const truncateLength = isOverlay ? 90 : 160;
         const maxLines = isOverlay ? 2 : 3;
         const trimmedContent = content.trimEnd();
-        const nonEmptyLineCount = trimmedContent.split('\n').filter(line => line.trim() !== '').length;
-        const isLong = !isFullContent && (trimmedContent.length > truncateLength || nonEmptyLineCount > maxLines);
+        const lines = trimmedContent.split('\n');
+        const nonEmptyLines = lines.filter((line) => line.trim() !== '');
+        const isLong = !isFullContent && (trimmedContent.length > truncateLength || nonEmptyLines.length > maxLines);
         let displayContent = trimmedContent;
 
         if (isLong && (!isExpanded || isOverlay)) {
-          const lines = trimmedContent.split('\n');
-          if (nonEmptyLineCount > maxLines) {
+          if (nonEmptyLines.length > maxLines) {
             let nonEmptyCount = 0;
             let sliceIndex = lines.length;
             for (let i = 0; i < lines.length; i++) {
@@ -165,6 +165,8 @@ export const PostContent = ({
             }
             displayContent = lines.slice(0, sliceIndex).join('\n');
           }
+          displayContent = displayContent.trimEnd();
+
           if (displayContent.length > truncateLength) {
             let truncated = displayContent.slice(0, truncateLength);
             const lastSpaceIndex = truncated.lastIndexOf(' ');

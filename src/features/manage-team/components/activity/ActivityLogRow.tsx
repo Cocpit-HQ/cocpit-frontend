@@ -8,7 +8,7 @@ interface ActivityLogRowProps {
   entry: ActivityLogEntry;
 }
 
-export default function ActivityLogRow({ entry }: ActivityLogRowProps) {
+function ActivityLogRow({ entry }: ActivityLogRowProps) {
   const router = useRouter();
   const timeAgo = getTimeAgo(entry.timestamp);
 
@@ -64,6 +64,10 @@ export default function ActivityLogRow({ entry }: ActivityLogRowProps) {
     </div>
   );
 }
+
+// Memoized: activity log lists can run long, and rows shouldn't re-render just
+// because a sibling filter or an unrelated parent state (e.g. a modal) changed.
+export default React.memo(ActivityLogRow);
 
 function getTimeAgo(timestamp: string): string {
   const now = new Date();

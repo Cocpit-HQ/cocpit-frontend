@@ -238,7 +238,13 @@ export async function createRole(
   orgId: string,
   input: CreateRoleInput
 ): Promise<TeamRole> {
-  const res = await api.post(`/organizations/${orgId}/teams/roles`, input);
+  const payload = {
+    ...input,
+    permissions: input.permissions?.map((p) =>
+      typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : p
+    ),
+  };
+  const res = await api.post(`/organizations/${orgId}/teams/roles`, payload);
   return mapRole(res.data);
 }
 
@@ -247,7 +253,13 @@ export async function updateRole(
   roleId: string,
   input: UpdateRoleInput
 ): Promise<TeamRole> {
-  const res = await api.put(`/organizations/${orgId}/teams/roles/${roleId}`, input);
+  const payload = {
+    ...input,
+    permissions: input.permissions?.map((p) =>
+      typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : p
+    ),
+  };
+  const res = await api.put(`/organizations/${orgId}/teams/roles/${roleId}`, payload);
   return mapRole(res.data);
 }
 
@@ -311,12 +323,28 @@ export async function updateMemberRole(
 
 // ─── Activity Logs ────────────────────────────────────────────────────────────
 
+export interface ActivityLogCursor {
+  cursorCreatedAt: string;
+  cursorLogId: string;
+}
+
+export interface ActivityLogsPage {
+  data: ActivityLogEntry[];
+  nextCursor: ActivityLogCursor | null;
+  hasMore: boolean;
+}
+
+/**
+ * Cursor-paginated activity log fetch — mirrors jobsService.getMyListings so the
+ * hook can drive an infinite-scroll list instead of loading the whole log in one shot.
+ */
 export async function getActivityLogs(
   orgId: string,
-  filters?: ActivityLogFilters
-): Promise<ActivityLogEntry[]> {
-  const params: any = {};
-  let dateFromLimit: Date | null = null;
+  filters?: ActivityLogFilters,
+  cursor?: ActivityLogCursor | null,
+  limit: number = 20
+): Promise<ActivityLogsPage> {
+  const params: any = { limit };
 
   if (filters) {
     if (filters.roleId && filters.roleId !== 'all') {
@@ -329,7 +357,7 @@ export async function getActivityLogs(
       params.search = filters.search;
     }
     if (filters.dateRange && filters.dateRange !== 'all_time') {
-      dateFromLimit = new Date();
+      const dateFromLimit = new Date();
       dateFromLimit.setHours(0, 0, 0, 0);
       if (filters.dateRange === 'last_7_days') dateFromLimit.setDate(dateFromLimit.getDate() - 7);
       else if (filters.dateRange === 'last_30_days') dateFromLimit.setDate(dateFromLimit.getDate() - 30);
@@ -338,42 +366,24 @@ export async function getActivityLogs(
     }
   }
 
+  if (cursor?.cursorCreatedAt && cursor?.cursorLogId) {
+    params.cursorCreatedAt = cursor.cursorCreatedAt;
+    params.cursorLogId = cursor.cursorLogId;
+  }
+
   const res = await api.get(`/organizations/${orgId}/teams/activity`, { params });
-  let list = res.data?.data || res.data || [];
+  const list = res.data?.data || res.data || [];
+  const mapped = list.map(mapActivityLog);
+  const rawCursor = res.data?.nextCursor;
+  const nextCursor: ActivityLogCursor | null = rawCursor?.cursorCreatedAt && rawCursor?.cursorLogId
+    ? { cursorCreatedAt: rawCursor.cursorCreatedAt, cursorLogId: rawCursor.cursorLogId }
+    : null;
 
-  // Client-side date range filter fallback
-  if (dateFromLimit) {
-    const minTimestamp = dateFromLimit.getTime();
-    list = list.filter((item: any) => {
-      const ts = item.created_at || item.timestamp;
-      if (!ts) return true;
-      const t = new Date(ts).getTime();
-      return !isNaN(t) && t >= minTimestamp;
-    });
-  }
-
-  // Client-side member filter fallback
-  if (filters?.memberId && filters.memberId !== 'all') {
-    list = list.filter((item: any) => {
-      const actorId = item.actor_id || item.actorId || item.user_id;
-      return actorId === filters.memberId;
-    });
-  }
-
-  // Client-side search filter fallback
-  if (filters?.search) {
-    const s = filters.search.toLowerCase();
-    list = list.filter((item: any) => 
-      (item.action && item.action.toLowerCase().includes(s)) ||
-      (item.actor_name && item.actor_name.toLowerCase().includes(s)) ||
-      (item.actor_role && item.actor_role.toLowerCase().includes(s)) ||
-      (item.target_name && item.target_name.toLowerCase().includes(s)) ||
-      (item.details && item.details.toLowerCase().includes(s)) ||
-      (item.metadata && JSON.stringify(item.metadata).toLowerCase().includes(s))
-    );
-  }
-
-  return list.map(mapActivityLog);
+  return {
+    data: mapped,
+    nextCursor,
+    hasMore: mapped.length === limit && !!nextCursor,
+  };
 }
 
 // ─── Invite Candidates ───────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Icon } from '@iconify/react';
-import { TeamRole, TeamPermission } from '../../types/team.types';
+import { TeamRole, TeamPermission, PERMISSION_LABELS } from '../../types/team.types';
 
 interface RoleCardProps {
   role: TeamRole;
@@ -15,7 +15,7 @@ interface RoleCardProps {
 export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: RoleCardProps) {
   const formatPermissions = (perms: TeamPermission[]) => {
     if (!perms || perms.length === 0) return 'No permissions';
-    const map: Record<string, string> = {
+    const fallbackMap: Record<string, string> = {
       CREATE_POST: 'Feed',
       CHANNEL: 'channel',
       CHAT: 'chat',
@@ -26,8 +26,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
       JOBS_CHAT: 'jobs chat',
       ANALYTICS: 'Analytics'
     };
-    const mapped = perms.map(p => map[p as string] || p);
-    // Capitalize the first letter of the resulting string to ensure it looks like "Feed, chat" or "Jobs, chat"
+    const mapped = perms.map(p => PERMISSION_LABELS[p as keyof typeof PERMISSION_LABELS] || fallbackMap[p as string] || p);
     const str = mapped.join(', ');
     return str.charAt(0).toUpperCase() + str.slice(1);
   };

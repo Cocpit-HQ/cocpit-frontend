@@ -13,11 +13,13 @@ import {
 } from '@/services/api/connections';
 import { acceptInvite as acceptTeamInvite, declineInvite as declineTeamInvite } from '@/features/manage-team/services/team.service';
 import { useConnectionStore } from '@/store/connection.store';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 
 export const useConnectionActions = () => {
   const queryClient = useQueryClient();
   const { removeRequest, restoreRequest, setFollowed } = useConnectionStore();
+  const { refreshCompanies } = useActiveProfile();
 
   /** Invalidate both list and counts so tabs + badges refresh */
   const invalidateAll = () => {
@@ -133,6 +135,11 @@ export const useConnectionActions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['team'] });
+      // The org list in ActiveProfileContext is plain component state, not React
+      // Query — invalidating queries above won't touch it, so the newly joined
+      // org wouldn't show up in the profile switcher without this.
+      void refreshCompanies();
       toast.success('You have joined the team!');
     },
     onError: (_err, inviteId) => {
@@ -149,6 +156,7 @@ export const useConnectionActions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['team'] });
     },
     onError: (_err, inviteId) => {
       restoreRequest(inviteId);

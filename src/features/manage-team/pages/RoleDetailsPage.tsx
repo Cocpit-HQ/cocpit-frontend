@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { Loader2 } from 'lucide-react';
 import { useRoleDetails } from '../hooks/useRoleDetails';
@@ -11,7 +11,8 @@ import { useInviteMember } from '../hooks/useInviteMember';
 import { useUpdateRole } from '../hooks/useUpdateRole';
 import { useDeleteRole } from '../hooks/useDeleteRole';
 import { useWithdrawInvite } from '../hooks/useWithdrawInvite';
-import { TeamMember, ActivityLogFilters, UpdateRoleInput, PendingInvitation } from '../types/team.types';
+import { TeamMember, ActivityLogFilters, UpdateRoleInput, PendingInvitation, PERMISSION_LABELS } from '../types/team.types';
+import { useDebounce } from '@/hooks/use-debounce';
 import MemberList from '../components/members/MemberList';
 import InviteMemberModal from '../components/members/InviteMemberModal';
 import RemoveMemberConfirm from '../components/members/RemoveMemberConfirm';
@@ -27,6 +28,7 @@ interface RoleDetailsPageProps {
 
 export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { role, isLoading } = useRoleDetails(roleId);
   const removeMember = useRemoveMember();
   const inviteMember = useInviteMember();
@@ -34,7 +36,26 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
   const deleteRole = useDeleteRole();
   const withdrawInvite = useWithdrawInvite();
 
-  const [activeTab, setActiveTab] = useState<'members' | 'activity'>('members');
+  // Read initial sub-tab from the URL so a refresh (or a shared link) lands
+  // back on Activity logs instead of resetting to Members.
+  const urlTab = searchParams?.get('tab');
+  const [activeTab, setActiveTabLocal] = useState<'members' | 'activity'>(
+    urlTab === 'activity' ? 'activity' : 'members'
+  );
+
+  // Wrap setActiveTab to also persist the selected sub-tab in the URL, same
+  // pattern as jobs/MyListingsDashboard's subtab/filter query params.
+  const setActiveTab = useCallback((tab: 'members' | 'activity') => {
+    setActiveTabLocal(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === 'members') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const query = params.toString();
+    router.replace(`${window.location.pathname}${query ? `?${query}` : ''}`);
+  }, [router]);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
   const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null);
@@ -48,7 +69,12 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
     memberId: 'all',
     dateRange: 'last_7_days',
   });
-  const { logs, isLoading: logsLoading } = useActivityLogs(logFilters);
+  // Debounce free-text search before it hits the query key, same as TeamActivityLogPage
+  const debouncedSearch = useDebounce(logFilters.search, 300);
+  const effectiveSearch = debouncedSearch.trim().length >= 3 ? debouncedSearch.trim() : '';
+  const queryLogFilters: ActivityLogFilters = { ...logFilters, search: effectiveSearch };
+
+  const { logs, isLoading: logsLoading, isFetchingMore: logsFetchingMore, hasMore: logsHasMore, loadMore: loadMoreLogs } = useActivityLogs(queryLogFilters);
 
   if (isLoading) {
     return (
@@ -175,12 +201,12 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <div className="flex flex-wrap gap-4 mt-1">
               {role.permissions?.length > 0 ? (
                 role.permissions.map(p => {
-                  const formatP = p.replace('_', ' ');
+                  const label = PERMISSION_LABELS[p as keyof typeof PERMISSION_LABELS] || PERMISSION_LABELS[p.toUpperCase() as keyof typeof PERMISSION_LABELS] || p;
                   return (
                     <div key={p} className="box-border flex flex-row justify-center items-center bg-[#F2F7FF] dark:bg-gray-800 border border-[#EEF2FF] dark:border-gray-700 rounded-lg">
                        <div className="flex flex-row justify-center items-center px-4 py-[6px] gap-2">
-                         <span className="text-[14px] font-normal leading-[20px] text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] text-center flex items-center capitalize">
-                           {formatP}
+                         <span className="text-[14px] font-normal leading-[20px] text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] text-center flex items-center">
+                           {label}
                          </span>
                        </div>
                     </div>
@@ -249,7 +275,13 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
               }))}
               hideRoleDropdown={true}
             />
-            <ActivityLogTable logs={logs} isLoading={logsLoading} />
+            <ActivityLogTable
+              logs={logs}
+              isLoading={logsLoading}
+              hasMore={logsHasMore}
+              isFetchingMore={logsFetchingMore}
+              loadMore={loadMoreLogs}
+            />
           </div>
         )}
 

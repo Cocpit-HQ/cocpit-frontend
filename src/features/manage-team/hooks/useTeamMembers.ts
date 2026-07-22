@@ -9,7 +9,10 @@ export const useTeamMembers = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['team', 'members', orgId],
     queryFn: () => teamService.getTeamMembers(orgId!),
-    staleTime: 1000 * 60 * 3,
+    staleTime: 0,
+    refetchInterval: 10000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     enabled: !!orgId,
   });
 

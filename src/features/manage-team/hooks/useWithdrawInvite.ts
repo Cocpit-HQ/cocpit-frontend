@@ -12,7 +12,7 @@ export const useWithdrawInvite = () => {
     mutationFn: (inviteId: string) => teamService.withdrawInvite(orgId!, inviteId),
     onSuccess: () => {
       toast.success('Invitation withdrawn');
-      queryClient.invalidateQueries({ queryKey: ['team', 'invites', 'pending', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['team'] });
     },
     onError: () => {
       toast.error('Failed to withdraw invitation');

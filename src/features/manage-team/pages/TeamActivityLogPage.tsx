@@ -32,7 +32,7 @@ export default function TeamActivityLogPage({ roles }: TeamActivityLogPageProps)
     search: effectiveSearch,
   }), [filters, effectiveSearch]);
 
-  const { logs, isLoading } = useActivityLogs(queryFilters);
+  const { logs, isLoading, isFetchingMore, hasMore, loadMore } = useActivityLogs(queryFilters);
   const { members } = useTeamMembers();
 
   // Filter to active members only (excluding invited / pending / suspended)
@@ -77,7 +77,13 @@ export default function TeamActivityLogPage({ roles }: TeamActivityLogPageProps)
       />
 
       {/* Log table */}
-      <ActivityLogTable logs={logs} isLoading={isLoading} />
+      <ActivityLogTable
+        logs={logs}
+        isLoading={isLoading}
+        hasMore={hasMore}
+        isFetchingMore={isFetchingMore}
+        loadMore={loadMore}
+      />
     </div>
   );
 }

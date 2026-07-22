@@ -9,7 +9,10 @@ export const useRoleDetails = (roleId: string | null) => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['team', 'role', orgId, roleId],
     queryFn: () => teamService.getRoleById(orgId!, roleId!),
-    staleTime: 1000 * 60 * 3,
+    staleTime: 0,
+    refetchInterval: 10000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     enabled: !!orgId && !!roleId,
   });
 

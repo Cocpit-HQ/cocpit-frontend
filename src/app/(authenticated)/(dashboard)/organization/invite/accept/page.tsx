@@ -9,11 +9,13 @@ import api from '@/lib/axios';
 import { Suspense } from 'react';
 
 import * as teamService from '@/features/manage-team/services/team.service';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 function InviteContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get('token');
+    const { refreshCompanies } = useActiveProfile();
 
     const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('IDLE');
     const [message, setMessage] = useState('');
@@ -23,6 +25,10 @@ function InviteContent() {
         setStatus('LOADING');
         try {
             await teamService.acceptInvite(token);
+            // router.push below is a client-side nav — ActiveProfileContext's org
+            // list is plain state, not React Query, so it won't pick up the newly
+            // joined org on its own. Refresh it before landing on /dashboard.
+            await refreshCompanies();
             setStatus('SUCCESS');
             setMessage("Invitation accepted successfully!");
             setTimeout(() => {

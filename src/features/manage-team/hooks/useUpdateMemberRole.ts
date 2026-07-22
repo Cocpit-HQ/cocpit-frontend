@@ -15,9 +15,7 @@ export const useUpdateMemberRole = () => {
     },
     onSuccess: () => {
       toast.success('Member role updated!');
-      queryClient.invalidateQueries({ queryKey: ['team', 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['team', 'roles'] });
-      queryClient.invalidateQueries({ queryKey: ['team', 'role'] });
+      queryClient.invalidateQueries({ queryKey: ['team'] });
     },
     onError: () => {
       toast.error('Failed to update member role.');

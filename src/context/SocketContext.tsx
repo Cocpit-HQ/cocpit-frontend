@@ -420,6 +420,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     };
 
+    // Fired by acceptTeamsInvite / declineTeamsInvite / removeMember whenever
+    // membership changes — broadcast to the org room (every active member's
+    // socket is auto-joined to it on connect). Lets an admin's open Team page
+    // pick up the change live instead of needing a manual refresh. Also covers
+    // the Activity Log tab: every action this event fires for (invite accepted/
+    // declined, member removed) is exactly what shows up there, so there's no
+    // need for a separate audit-log-wide socket event just for that tab.
+    const handleMemberSync = (payload: any) => {
+      console.log("[Socket] member_sync event received:", payload);
+      if (refreshProfile) {
+        refreshProfile();
+      }
+      queryClient.invalidateQueries({ queryKey: ['team'] });
+      queryClient.invalidateQueries({ queryKey: ['user-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -427,20 +444,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('userStatusChanged', handleUserStatus);
     newSocket.on('isTyping', handleTyping);
     newSocket.on('stoppedTyping', handleStopTyping);
-    const handleMemberSync = (payload: any) => {
-      console.log("[Socket] member_sync event received:", payload);
-      if (refreshProfile) {
-        refreshProfile();
-      }
-      queryClient.invalidateQueries({ queryKey: ['user-companies'] });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-    };
-
+    newSocket.on('member_sync', handleMemberSync);
     newSocket.on('user_blocked', handleBlock);
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
-    newSocket.on('member_sync', handleMemberSync);
 
     socketRef.current = newSocket;
     queueMicrotask(() => {
@@ -464,6 +472,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('userStatusChanged', handleUserStatus);
       newSocket.off('isTyping', handleTyping);
       newSocket.off('stoppedTyping', handleStopTyping);
+      newSocket.off('member_sync', handleMemberSync);
       newSocket.off('user_blocked', handleBlock);
       newSocket.off('block_confirmed', handleBlock);
       newSocket.off('user_unblocked', handleUnblock);
