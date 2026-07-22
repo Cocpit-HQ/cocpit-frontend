@@ -177,18 +177,27 @@ export const usePostMedia = (
     e.target.value = '';
   }, [createMediaItem, onTypeChange]);
 
-  const removeMediaItem = useCallback((mediaId: string, setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>, isEdit: boolean) => {
-    setMedia(prev => {
-      const itemToRemove = prev.find(item => item.id === mediaId);
+  const removeMediaItem = useCallback((id: string, setter: React.Dispatch<React.SetStateAction<MediaItem[]>>, isEdit: boolean) => {
+    setter(prev => {
+      const itemToRemove = prev.find(item => item.id === id);
       if (itemToRemove && !itemToRemove.isExisting) {
         URL.revokeObjectURL(itemToRemove.url);
         if (itemToRemove.croppedBlobUrl) URL.revokeObjectURL(itemToRemove.croppedBlobUrl);
       }
-      const filtered = prev.filter(item => item.id !== mediaId);
-      if (filtered.length === 0) setActiveImageIndex(0);
-      else if (activeImageIndex >= filtered.length) setActiveImageIndex(filtered.length - 1);
-      return filtered;
+      const remaining = prev.filter(item => item.id !== id);
+      
+      const originalUrls = new Set(remaining.map(item => item.url));
+      previewMediaUrlsRef.current.forEach(url => {
+        if (!originalUrls.has(url)) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      if (remaining.length === 0) setActiveImageIndex(0);
+      else if (activeImageIndex >= remaining.length) setActiveImageIndex(remaining.length - 1);
+      return remaining;
     });
+    setPreviewMediaUrls([]);
   }, [activeImageIndex]);
 
   const handleVideoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
@@ -424,7 +433,16 @@ export const usePostMedia = (
   }, []);
 
   const generatePreviewBlobs = async (postType: string) => {
-    previewMediaUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    const originalUrls = new Set([
+      ...uploadedImages.map(img => img.url),
+      ...uploadedVideos.map(v => v.url)
+    ]);
+
+    previewMediaUrlsRef.current.forEach(url => {
+      if (!originalUrls.has(url)) {
+        URL.revokeObjectURL(url);
+      }
+    });
     const newUrls: string[] = [];
 
     if (postType === 'photo') {

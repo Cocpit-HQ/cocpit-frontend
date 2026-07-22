@@ -436,7 +436,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                                 handleRemoveConnection(id, user.full_name, user.type);
                                             }}
                                         >
-                                            Unfollow
+                                            Remove connection
                                         </button>
                                     )}
                                 </div>

@@ -84,21 +84,23 @@ const FilterChip = ({ label, active, onClick }: { label: string, active: boolean
   </button>
 )
 
-const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdit, currentUser, activeTab }: {
+const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDelete, onEdit, currentUser, activeTab, targetProfile }: {
   post: Post,
   onLike?: () => void,
   onSave?: () => void,
+  onShare?: () => void,
   onTogglePrivacy?: () => void,
   onDelete?: () => void,
   onEdit?: () => void,
   currentUser?: any,
-  activeTab?: string
+  activeTab?: string,
+  targetProfile?: any
 }) => {
   const { activeProfile, isCompany } = useActiveProfile();
   const { data: session } = useSession();
   const isOwner = post.authorId === currentUser?.id || post.author === currentUser?.name;
   const router = useRouter();
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(activeTab === 'Comments');
   const [commentsCount, setCommentsCount] = useState(parseInt(post.comments) || 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const image = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
@@ -115,9 +117,19 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   };
 
   return (
-    <div className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card py-4 shadow-sm md:w-[560px] md:max-w-[560px]">
+    <div className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card shadow-sm md:w-[560px] md:max-w-[560px]">
+      {/* Target User Commented Header */}
+      {activeTab === 'Comments' && targetProfile && (
+        <div className="flex w-full items-center gap-2 px-4 py-3 border-b border-border bg-muted/20">
+          <img src={targetProfile.avatar_url || "/assets/pngegg.png"} alt={targetProfile.full_name} className="w-5 h-5 rounded-full object-cover" />
+          <span className="font-[family-name:var(--font-poppins)] text-xs text-muted-foreground font-medium">
+            <span className="text-foreground font-semibold">{targetProfile.full_name || targetProfile.account_name}</span> commented on this
+          </span>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex w-full flex-row items-start justify-between px-4">
+      <div className="flex w-full flex-row items-start justify-between px-4 pt-4">
         <div 
           className="flex items-start gap-2 cursor-pointer group"
           onClick={(e) => {
@@ -258,8 +270,6 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
             </p>
           )}
         </div>
-
-
 
         {/* Shared Post Content */}
         {post.shared_post && (
@@ -826,8 +836,9 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                     setEditMode(true, post.id);
                     setIsEditModalOpen(true);
                   }}
-                  currentUser={profileData}
+                  currentUser={profileData?.user}
                   activeTab={activeTab}
+                  targetProfile={profileData?.user}
                 />
               ))
             ) : (

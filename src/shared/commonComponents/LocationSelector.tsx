@@ -92,6 +92,17 @@ export function LocationSelector({
   const visibleLocations = query.trim().length === 0 ? DEFAULT_LOCATIONS : suggestions;
 
   const handleSelect = async (location: PlacesSuggestion) => {
+    const label = getSuggestionLabel(location);
+    const isSelected = draftLabel === label || (
+      draftLocation && "placeId" in draftLocation && draftLocation.placeId === location.placeId
+    );
+
+    if (isSelected) {
+      setDraftLocation(null);
+      setQuery("");
+      return;
+    }
+
     setSelectingPlaceId(location.placeId);
     
     // Check if it's a static location first
