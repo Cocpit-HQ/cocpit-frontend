@@ -47,7 +47,7 @@ const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, refreshProfile } = useActiveProfile();
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -427,10 +427,20 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('userStatusChanged', handleUserStatus);
     newSocket.on('isTyping', handleTyping);
     newSocket.on('stoppedTyping', handleStopTyping);
+    const handleMemberSync = (payload: any) => {
+      console.log("[Socket] member_sync event received:", payload);
+      if (refreshProfile) {
+        refreshProfile();
+      }
+      queryClient.invalidateQueries({ queryKey: ['user-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    };
+
     newSocket.on('user_blocked', handleBlock);
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
+    newSocket.on('member_sync', handleMemberSync);
 
     socketRef.current = newSocket;
     queueMicrotask(() => {
@@ -458,10 +468,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('block_confirmed', handleBlock);
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
+      newSocket.off('member_sync', handleMemberSync);
       newSocket.disconnect();
       setTypingConversations({});
     };
-  }, [session?.user?.accessToken, session?.user?.error, toast, router, queryClient]);
+  }, [session?.user?.accessToken, session?.user?.error, toast, router, queryClient, refreshProfile]);
 
   const isUserOnlineMemo = React.useCallback((userId: string) => onlineUsers.has(userId), [onlineUsers]);
 

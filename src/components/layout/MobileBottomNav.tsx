@@ -7,7 +7,7 @@ import { Home, Briefcase, Sparkles, Calendar, Users, LineChart } from "lucide-re
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
-import { useCompanyPermissions } from "@/components/organizations/hooks/use-company"
+import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
 import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
 import { Icon } from '@iconify/react'
 

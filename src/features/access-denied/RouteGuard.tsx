@@ -3,7 +3,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
+import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
 import AccessDenied from './AccessDenied';
 
 interface RouteGuardProps {

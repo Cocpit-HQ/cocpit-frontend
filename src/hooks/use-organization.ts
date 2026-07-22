@@ -1,3 +1,4 @@
+export { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
 export {
     COMP_KEYS,
     useCompany,
@@ -11,7 +12,6 @@ export {
     useTransferOwnership,
     useDeleteCompany,
     useCreateCompany,
-    useCompanyPermissions,
     useAnalyticsOverview,
     useAnalyticsEngagement,
     useAnalyticsJobs,

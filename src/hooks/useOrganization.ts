@@ -1,1 +1,1 @@
-export * from '@/components/organizations/hooks/use-company';
+export * from './use-organization';

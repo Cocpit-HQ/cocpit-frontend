@@ -29,6 +29,7 @@ interface ActiveProfileContextType {
     isCompany: boolean;
     userCompanies: (Company & { role: string })[];
     switchableCompanies: (Company & { role: string })[];
+    refreshProfile?: () => Promise<void>;
 }
 
 const ActiveProfileContext = createContext<ActiveProfileContextType | undefined>(undefined);
@@ -78,6 +79,34 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     };
 
     const switchableCompanies = companies.filter(canSwitchToCompany);
+
+    const refreshProfile = React.useCallback(async () => {
+        if (!session?.user) return;
+        const userProfile = createUserProfile(session.user as any);
+        try {
+            const actorContext = await getActorContext();
+            const normalizedCompanies = actorContext.organizations.map((company) => normalizeCompany(company)) as (Company & { role: string })[];
+            
+            // Deduplicate by ID to prevent key collisions in UI
+            const uniqueCompanies = Array.from(
+                new Map(normalizedCompanies.map(c => [c.org_id || c.company_id, c])).values()
+            );
+            setBootstrappedCompanies(uniqueCompanies);
+
+            let nextProfile = userProfile;
+            if (actorContext.actor.type === "ORGANIZATION") {
+                const targetCompany = normalizedCompanies.find(
+                    (company) => (company.org_id || company.company_id) === actorContext.actor.id
+                );
+                if (targetCompany && canSwitchToCompany(targetCompany)) {
+                    nextProfile = buildCompanyProfile(targetCompany);
+                }
+            }
+            setActiveProfile(nextProfile);
+        } catch (error) {
+            console.warn("[ActorContext] Refresh profile failed.", error);
+        }
+    }, [session]);
 
     useEffect(() => {
         if (status === "loading") return;
@@ -245,6 +274,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         isCompany: activeProfile?.type === "COMPANY",
         userCompanies: companies,
         switchableCompanies,
+        refreshProfile,
     };
 
     return (

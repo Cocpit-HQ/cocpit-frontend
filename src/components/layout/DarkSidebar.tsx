@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
-import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
+import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions'
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store'
 import { useQueryClient } from '@tanstack/react-query'
@@ -55,7 +55,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           title: 'Core',
           items: [
             { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
-            { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true, disabled: !checkPermission('CHANNELS') },
+            { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true, disabled: !checkPermission('CHANNEL') },
             { icon: Compass, label: 'Explore', href: '/explore', show: false },
             { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
           ]
