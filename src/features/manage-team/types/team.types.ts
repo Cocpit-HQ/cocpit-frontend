@@ -1,39 +1,39 @@
 // Permission keys matching the design screens
 export type TeamPermission =
   | 'CREATE_POST'
-  | 'CHANNELS'
-  | 'MESSAGES'
+  | 'CHANNEL'
+  | 'CHAT'
   | 'QUERIES'
   | 'TEAMS'
   | 'ACTIVITY_LOGS'
-  | 'POST_JOBS'
+  | 'JOBS'
   | 'JOBS_CHAT'
-  | 'VIEW_ANALYTICS';
+  | 'ANALYTICS';
 
 // Human-readable labels for permissions (used in UI)
 export const PERMISSION_LABELS: Record<TeamPermission, string> = {
   CREATE_POST: 'Create post',
-  CHANNELS: 'Channel',
-  MESSAGES: 'Chat',
+  CHANNEL: 'Channel',
+  CHAT: 'Chat',
   QUERIES: 'Queries',
   TEAMS: 'Teams',
   ACTIVITY_LOGS: 'Activity logs',
-  POST_JOBS: 'Jobs',
+  JOBS: 'Jobs',
   JOBS_CHAT: 'Jobs chat',
-  VIEW_ANALYTICS: 'Analytics',
+  ANALYTICS: 'Analytics',
 };
 
 // All available permissions in display order
 export const ALL_PERMISSIONS: TeamPermission[] = [
   'CREATE_POST',
-  'CHANNELS',
-  'MESSAGES',
+  'CHANNEL',
+  'CHAT',
   'QUERIES',
   'TEAMS',
   'ACTIVITY_LOGS',
-  'POST_JOBS',
+  'JOBS',
   'JOBS_CHAT',
-  'VIEW_ANALYTICS',
+  'ANALYTICS',
 ];
 
 // Predefined role colors from the design

@@ -6,6 +6,7 @@ import {
   CreateRoleInput,
   TeamPermission,
   ROLE_COLORS,
+  ALL_PERMISSIONS,
 } from '../../types/team.types';
 import PermissionCheckList from '../permissions/PermissionCheckList';
 
@@ -40,11 +41,14 @@ export default function CreateRoleModal({
 
   const handleSubmit = async () => {
     if (!name.trim() || hasError) return;
+    const cleanedPermissions = permissions.filter((p) =>
+      ALL_PERMISSIONS.includes(p as TeamPermission)
+    );
     onSubmit({
       name: name.trim(),
       color,
       description: description.trim() || undefined,
-      permissions,
+      permissions: cleanedPermissions,
     });
     // Reset
     setName('');

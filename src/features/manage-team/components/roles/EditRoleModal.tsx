@@ -7,6 +7,7 @@ import {
   UpdateRoleInput,
   TeamPermission,
   ROLE_COLORS,
+  ALL_PERMISSIONS,
 } from '../../types/team.types';
 import PermissionCheckList from '../permissions/PermissionCheckList';
 
@@ -36,7 +37,10 @@ export default function EditRoleModal({
       setName(role.name);
       setColor(role.color);
       setDescription(role.description || '');
-      setPermissions([...role.permissions]);
+      const validPermissions = (role.permissions || []).filter((p) =>
+        ALL_PERMISSIONS.includes(p as TeamPermission)
+      ) as TeamPermission[];
+      setPermissions(validPermissions);
     }
   }, [role]);
 
@@ -47,11 +51,14 @@ export default function EditRoleModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    const cleanedPermissions = permissions.filter((p) =>
+      ALL_PERMISSIONS.includes(p as TeamPermission)
+    );
     onSubmit({
       name: name.trim(),
       color,
       description: description.trim() || undefined,
-      permissions,
+      permissions: cleanedPermissions,
     });
   };
 

@@ -12,17 +12,17 @@ interface PermissionCheckListProps {
 
 const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
-  { id: 'CHANNELS', label: 'Channel', icon: 'quill:inbox-newsletter' },
-  { id: 'MESSAGES', label: 'Chat', icon: 'hugeicons:comment-01', children: [
+  { id: 'CHANNEL', label: 'Channel', icon: 'quill:inbox-newsletter' },
+  { id: 'CHAT', label: 'Chat', icon: 'hugeicons:comment-01', children: [
     { id: 'QUERIES', label: 'Queries' }
   ]},
   { id: 'TEAMS', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
     { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
   ]},
-  { id: 'POST_JOBS', label: 'Jobs', icon: 'hugeicons:job-search', children: [
+  { id: 'JOBS', label: 'Jobs', icon: 'hugeicons:job-search', children: [
     { id: 'JOBS_CHAT', label: 'Jobs chat' }
   ]},
-  { id: 'VIEW_ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up' }
+  { id: 'ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up' }
 ] as const;
 
 export default function PermissionCheckList({
@@ -33,15 +33,27 @@ export default function PermissionCheckList({
   const toggle = (perm: TeamPermission) => {
     if (disabled) return;
     
+    const parentGroup = PERMISSION_GROUPS.find((g) => g.id === perm && 'children' in g);
+
     if (selected.includes(perm)) {
       let newSelected = selected.filter((p) => p !== perm);
-      // If Teams is deactivated, also deactivate its children (Activity logs)
+      // For TEAMS specifically: when TEAMS toggle is deactivated, also deactivate ACTIVITY_LOGS
       if (perm === 'TEAMS') {
         newSelected = newSelected.filter((p) => p !== 'ACTIVITY_LOGS');
       }
       onChange(newSelected);
     } else {
-      onChange([...selected, perm]);
+      let newSelected = [...selected, perm];
+      // When any parent toggle is activated, automatically check its child permissions
+      if (parentGroup && 'children' in parentGroup) {
+        const childIds = parentGroup.children.map((c) => c.id as TeamPermission);
+        childIds.forEach((childId) => {
+          if (!newSelected.includes(childId)) {
+            newSelected.push(childId);
+          }
+        });
+      }
+      onChange(newSelected);
     }
   };
 
@@ -84,7 +96,8 @@ export default function PermissionCheckList({
                 <div className="flex flex-col w-full">
                   {group.children.map((child) => {
                     const isChildChecked = selected.includes(child.id as TeamPermission);
-                    // Special functionality for teams: activity log checkbox cannot be activated unless team toggle is on
+                    // Special rule for Teams: Activity logs checkbox requires Teams toggle to be ON.
+                    // For Chat and Jobs: child checkboxes (Queries, Jobs chat) can be checked even when toggle is OFF.
                     const isChildDisabled = disabled || (group.id === 'TEAMS' && !isChecked);
                     
                     return (
