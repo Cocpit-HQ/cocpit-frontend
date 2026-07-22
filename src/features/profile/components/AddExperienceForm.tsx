@@ -8,6 +8,7 @@ import type { Experience } from "@/types/entities"
 import { Checkbox } from "@/components/ui/checkbox"
 import { X, Plus, ChevronDown, Trash2, AlertTriangle, Loader2, Building2, Briefcase } from "lucide-react"
 import { Icon } from '@iconify/react'
+import { toast } from "sonner"
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
@@ -79,6 +80,8 @@ export interface SavedRole {
   org_id: string | null
   /** ID of an EXISTING experience to end when shouldEndPreviousRole is true on index 0 */
   experienceIdToEnd?: string
+  /** True if this role is new, or its fields differ from what it was loaded with — controls whether an UPDATE op is sent for it */
+  _dirty: boolean
 }
 
 interface AddExperienceFormProps {
@@ -119,7 +122,7 @@ const mapToRole = (exp: Experience): RoleFormState => ({
   startYear: exp.start_date ? dayjs(exp.start_date).year().toString() : "",
   endMonth: exp.end_date ? months[dayjs(exp.end_date).month()] : "",
   endYear: exp.end_date ? dayjs(exp.end_date).year().toString() : "",
-  is_current: !exp.end_date,
+  is_current: !!exp.is_current,
   description: exp.description ?? "",
   endCurrentRole: false,
   experienceIdToEnd: undefined,
@@ -140,6 +143,13 @@ const datesOverlap = (
   const b1 = dayjs(bStart), b2 = bEnd ? dayjs(bEnd) : dayjs().add(100, 'year')
   return a1.isBefore(b2) && b1.isBefore(a2)
 }
+
+/**
+ * Single source of truth for "is this experience currently active".
+ * is_current is a real boolean end-to-end — trust it strictly rather than
+ * inferring activity from a missing end_date.
+ */
+const isExperienceActive = (e: Experience): boolean => e.is_current === true
 
 // ─── RoleSection sub-component ────────────────────────────────────────────────
 
@@ -678,6 +688,18 @@ export default function AddExperienceForm({
       ? initialExperiences.map(mapToRole)
       : [emptyRole()]
   )
+  // Snapshot of each existing role's data as-loaded, keyed by experience_id — used to
+  // detect which roles the user actually touched so unchanged ones aren't resent on save.
+  const [initialRoleSnapshots, setInitialRoleSnapshots] = useState<Record<string, RoleFormState>>(() => {
+    const snap: Record<string, RoleFormState> = {}
+    initialExperiences?.forEach(exp => { if (exp.experience_id) snap[exp.experience_id] = mapToRole(exp) })
+    return snap
+  })
+  const [initialGroup, setInitialGroup] = useState(() => ({
+    company: companyName ?? firstExp?.company_name ?? "",
+    orgId: firstExp?.org_id ?? null,
+    location: firstExp?.location ?? "",
+  }))
   const [deletedRoleIds, setDeletedRoleIds] = useState<string[]>([])
   const [activeRoleIndex, setActiveRoleIndex] = useState(() => {
     if (initialActiveRoleId && initialExperiences) {
@@ -703,12 +725,18 @@ export default function AddExperienceForm({
       setLogoUrl(exp.logo_url ?? null)
       setLocation(exp.location ?? "")
       setRoles(initialExperiences.map(mapToRole))
+      const snap: Record<string, RoleFormState> = {}
+      initialExperiences.forEach(e => { if (e.experience_id) snap[e.experience_id] = mapToRole(e) })
+      setInitialRoleSnapshots(snap)
+      setInitialGroup({ company: companyName ?? exp.company_name ?? "", orgId: exp.org_id ?? null, location: exp.location ?? "" })
     } else {
       setCompany(companyName ?? "")
       setOrgId(null)
       setLogoUrl(null)
       setLocation("")
       setRoles([emptyRole()])
+      setInitialRoleSnapshots({})
+      setInitialGroup({ company: companyName ?? "", orgId: null, location: "" })
     }
     setDeletedRoleIds([])
     setFieldErrors({})
@@ -875,6 +903,20 @@ export default function AddExperienceForm({
           roleWarnings.startDate = "Start date is in the future — double-check this"
         }
 
+        // Auto-termination chronology guard: you can't end a role "with" a new role
+        // that started before the role being ended even began.
+        if (role.endCurrentRole && role.experienceIdToEnd) {
+          const targetRoleInSession = roles.find(r => r.experience_id === role.experienceIdToEnd)
+          const targetStart = targetRoleInSession
+            ? buildDate(targetRoleInSession.startMonth, targetRoleInSession.startYear)
+            : existingExperiences.find(e => e.experience_id === role.experienceIdToEnd)?.start_date
+
+          if (targetStart && dayjs(startDate).isBefore(dayjs(targetStart))) {
+            roleErrors.startDate = "The new role's start date cannot be before the current role's start date."
+            valid = false
+          }
+        }
+
         // End date checks (only if not current)
         if (!role.is_current) {
           if (!role.endMonth || !role.endYear) {
@@ -1013,7 +1055,7 @@ export default function AddExperienceForm({
   /** Detect the most recent existing active role (across ALL companies) that isn't currently open in the form */
   const existingCurrentRole = useMemo(() => {
     const activeRoles = existingExperiences
-      .filter(e => (e.is_current || !e.end_date) && !roles.some(r => r.experience_id === e.experience_id))
+      .filter(e => isExperienceActive(e) && !roles.some(r => r.experience_id === e.experience_id))
       .sort((a, b) => {
         const timeA = a.start_date ? new Date(a.start_date).getTime() : 0;
         const timeB = b.start_date ? new Date(b.start_date).getTime() : 0;
@@ -1024,12 +1066,12 @@ export default function AddExperienceForm({
 
   /** Detect multiple "currently working" across ALL experiences (cross-company) */
   const existingCurrentCount = existingExperiences.filter(
-    e => (e.is_current || !e.end_date) && !roles.some(r => r.experience_id === e.experience_id)
+    e => isExperienceActive(e) && !roles.some(r => r.experience_id === e.experience_id)
   ).length
   const newCurrentRolesCount = roles.filter(r => r.is_current).length
   const endedExistingIds = new Set(roles.filter(r => r.endCurrentRole && r.experienceIdToEnd).map(r => r.experienceIdToEnd));
   const remainingExistingCurrentCount = existingExperiences.filter(
-    e => (e.is_current || !e.end_date) && !roles.some(r => r.experience_id === e.experience_id) && !endedExistingIds.has(e.experience_id)
+    e => isExperienceActive(e) && !roles.some(r => r.experience_id === e.experience_id) && !endedExistingIds.has(e.experience_id)
   ).length;
 
   const multipleCurrentRoles =
@@ -1038,6 +1080,10 @@ export default function AddExperienceForm({
 
   /** Find the best candidate role to "end" for a given index in the roles array */
   const getTargetRoleToEnd = (index: number) => {
+    // A role can only "end" a candidate that chronologically started on or before it —
+    // ending a role that started later than the role being added makes no sense.
+    const newRoleStart = buildDate(roles[index].startMonth, roles[index].startYear)
+
     // Collect all IDs already targeted by roles in this form session (to avoid 1:N termination mapping)
     const alreadyTargetedIds = roles
       .map((r, i) => ({ id: r.experienceIdToEnd, index: i }))
@@ -1048,12 +1094,13 @@ export default function AddExperienceForm({
     // We look at all roles EXCEPT the current one that aren't already being ended by someone else
     const sessionActive = roles
       .map((r, i) => ({ role: r, index: i }))
-      .filter(x =>
-        x.index !== index &&
-        x.role.is_current &&
-        !!x.role.experience_id &&
-        !alreadyTargetedIds.includes(x.role.experience_id)
-      )
+      .filter(x => {
+        if (x.index === index || !x.role.is_current || !x.role.experience_id) return false
+        if (alreadyTargetedIds.includes(x.role.experience_id)) return false
+        const candidateStart = buildDate(x.role.startMonth, x.role.startYear)
+        if (newRoleStart && candidateStart && dayjs(candidateStart).isAfter(dayjs(newRoleStart))) return false
+        return true
+      })
       .sort((a, b) => {
         const dateA = buildDate(a.role.startMonth, a.role.startYear);
         const dateB = buildDate(b.role.startMonth, b.role.startYear);
@@ -1070,8 +1117,13 @@ export default function AddExperienceForm({
     }
 
     // 2. Fallback to an active role from another company (database state)
-    // Only if it hasn't been claimed by another role in this form
-    if (existingCurrentRole && !alreadyTargetedIds.includes(existingCurrentRole.experience_id)) {
+    // Only if it hasn't been claimed by another role in this form, and it started
+    // on or before the role being added.
+    if (
+      existingCurrentRole &&
+      !alreadyTargetedIds.includes(existingCurrentRole.experience_id) &&
+      !(newRoleStart && existingCurrentRole.start_date && dayjs(existingCurrentRole.start_date).isAfter(dayjs(newRoleStart)))
+    ) {
       return {
         title: `${existingCurrentRole.title} at ${existingCurrentRole.company_name}`,
         id: existingCurrentRole.experience_id
@@ -1110,10 +1162,30 @@ export default function AddExperienceForm({
     if (isSaving) return
     if (!validate()) return   // run full validation, block on errors
 
+    // Group-level fields (company/org/location) are shared across every role's `data` payload —
+    // if any of them changed, every existing role needs to be resent even if untouched itself.
+    const groupChanged =
+      company.trim() !== initialGroup.company ||
+      orgId !== initialGroup.orgId ||
+      (location.trim() || "") !== initialGroup.location
+
     const savedRoles: SavedRole[] = roles.map((role, index) => {
       const startDate = buildDate(role.startMonth, role.startYear)
       const endDate = role.is_current ? null : buildDate(role.endMonth, role.endYear)
       const shouldEnd = (index > 0 || (index === 0 && !!existingCurrentRole)) && role.endCurrentRole
+
+      const snapshot = role.experience_id ? initialRoleSnapshots[role.experience_id] : undefined
+      const fieldsChanged = !snapshot ||
+        role.title !== snapshot.title ||
+        role.work_type !== snapshot.work_type ||
+        role.work_mode !== snapshot.work_mode ||
+        role.startMonth !== snapshot.startMonth ||
+        role.startYear !== snapshot.startYear ||
+        role.endMonth !== snapshot.endMonth ||
+        role.endYear !== snapshot.endYear ||
+        role.is_current !== snapshot.is_current ||
+        role.description !== snapshot.description
+
       return {
         experience_id: role.experience_id,
         title: role.title.trim(),
@@ -1128,25 +1200,20 @@ export default function AddExperienceForm({
         description: role.description.trim() || null,
         shouldEndPreviousRole: shouldEnd,
         experienceIdToEnd: role.experienceIdToEnd,
+        _dirty: !role.experience_id || groupChanged || fieldsChanged,
       }
     })
     try {
       await onSave(savedRoles, deletedRoleIds)
     } catch (err: any) {
-      if (err.response?.status === 422 && err.response.data?.errors) {
-        const newFieldErrors = { ...fieldErrors }
-        err.response.data.errors.forEach((e: any) => {
-          // Parse path like "experiences.0" or "experiences.1.is_current"
-          const pathParts = e.path ? e.path.split(".") : []
-          if (pathParts[0] === "experiences" && pathParts[1] !== undefined) {
-            const roleIndex = parseInt(pathParts[1], 10)
-            if (!isNaN(roleIndex)) {
-              // Map to the start date field so it shows up in the UI
-              newFieldErrors[roleIndex] = { startDate: e.message }
-            }
-          }
-        })
-        setFieldErrors(newFieldErrors)
+      // ProfilePage.handleSaveExperience already translated backend entityId-keyed errors
+      // into role-index-keyed ones (it's the one place that knows the mapping) — consume
+      // that directly instead of re-deriving anything from a positional path here.
+      if (err.roleFieldErrors) {
+        setFieldErrors(prev => ({ ...prev, ...err.roleFieldErrors }))
+        if (Array.isArray(err.globalMessages)) {
+          err.globalMessages.forEach((message: string) => toast.error(message))
+        }
       } else if (err.response?.status === 409) {
         alert("Version conflict: someone else updated this profile. Please refresh the page.")
       }
@@ -1318,7 +1385,7 @@ export default function AddExperienceForm({
                   index={index}
                   isFirst={index === 0}
                   isOnly={roles.length === 1}
-                  showEndCurrentRole={!!targetRole}
+                  showEndCurrentRole={role.is_current && !!targetRole}
                   existingCurrentRoleId={targetRole?.id}
                   previousRoleTitle={targetRole?.title}
                   onChange={(updated) => updateRole(index, updated)}

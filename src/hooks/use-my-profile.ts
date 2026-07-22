@@ -159,6 +159,9 @@ export function useExperienceMutations() {
             const msg = err.response?.data?.message || "Failed to update experiences";
             if (err.response?.status === 409 && err.response?.data?.code === "VERSION_CONFLICT") {
                 toast.error("Version conflict: someone else updated this profile. Please refresh.", { duration: 5000 });
+                // The cached version is now stale — refresh it so the next save attempt
+                // uses the current version instead of failing the same way again.
+                queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             } else {
                 toast.error(msg);
             }

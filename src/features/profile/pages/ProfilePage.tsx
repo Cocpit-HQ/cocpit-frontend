@@ -1124,6 +1124,11 @@ export default function ProfilePage() {
 
   const handleSaveExperience = async (roles: SavedRole[], deletedIds: string[] = []) => {
     setIsSavingExperience(true)
+    // Maps a stable entity id (experience_id for existing roles, generated tempId for new
+    // ones) back to the role's position in `roles` — used to translate backend validation
+    // errors (keyed by entityId) back to the correct form card. Declared outside the try
+    // block so the catch block below can still read it.
+    const idToRoleIndex: Record<string, number> = {}
     try {
       const operations: any[] = []
 
@@ -1137,7 +1142,7 @@ export default function ProfilePage() {
 
       console.log("[Batch Save] Constructing operations for batch update...", { roles, deletedIds });
 
-      for (const role of roles) {
+      roles.forEach((role, index) => {
         // Prepare the base data for the operation
         const data = {
           title: role.title,
@@ -1154,12 +1159,18 @@ export default function ProfilePage() {
 
         if (role.experience_id) {
           // ── Editing an existing role ─────────────────────
-          const existing = updateMap.get(role.experience_id) || {}
-          updateMap.set(role.experience_id, { ...existing, ...data })
+          idToRoleIndex[role.experience_id] = index
+          // Only queue an UPDATE if the form actually reports this role as changed —
+          // untouched roles are left alone rather than resent as a full overwrite.
+          if (role._dirty) {
+            const existing = updateMap.get(role.experience_id) || {}
+            updateMap.set(role.experience_id, { ...existing, ...data })
+          }
         } else {
           // ── Adding a new role ────────────────────────────
           // Generate a tempId for optimistic cache mapping
-          const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+          const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}-${index}`
+          idToRoleIndex[tempId] = index
           createOps.push({
             type: 'CREATE',
             tempId,
@@ -1170,6 +1181,15 @@ export default function ProfilePage() {
         // ── Handle atomic role termination ───────────────
         // If this role was set to end a previous one, add an extra update operation
         if (role.shouldEndPreviousRole && role.experienceIdToEnd) {
+          // Defensive backstop: the form's own validation should already block this,
+          // but re-check chronology here in case the role's start date was edited
+          // after the "end current role" checkbox was auto-checked.
+          const targetExp = flatExperiences.find(e => e.experience_id === role.experienceIdToEnd)
+          if (targetExp && new Date(role.start_date) < new Date(targetExp.start_date)) {
+            const message = `Cannot end "${targetExp.title}" — its start date is after the new role's start date.`
+            toast.error(message)
+            throw new Error(message)
+          }
           console.log(`[Batch Save] Queuing termination for role ID: ${role.experienceIdToEnd}`);
           const existing = updateMap.get(role.experienceIdToEnd) || {}
           updateMap.set(role.experienceIdToEnd, {
@@ -1178,7 +1198,7 @@ export default function ProfilePage() {
             end_date: role.start_date
           })
         }
-      }
+      })
 
       // Finalize operations array from map
       for (const [id, data] of updateMap.entries()) {
@@ -1186,6 +1206,13 @@ export default function ProfilePage() {
       }
       operations.push(...createOps)
 
+      if (operations.length === 0) {
+        // Nothing actually changed — avoid an unnecessary round trip / version bump.
+        setIsAddExperienceModalOpen(false)
+        setEditingExperiences(null)
+        setEditingExperienceSelectedId(null)
+        return
+      }
 
       console.log("[Batch Save] Executing batch update with operations:", operations);
 
@@ -1204,6 +1231,26 @@ export default function ProfilePage() {
     } catch (err: any) {
       // Error toast is handled by the useExperienceMutations.batchUpdate hook
       console.error("Failed to save experience batch:", err)
+
+      // Translate backend entityId-keyed validation errors into role-index-keyed ones —
+      // this is the one place that knows how `roles` positions map to the ids/tempIds just
+      // generated above, so AddExperienceForm doesn't need to (and can't reliably) re-derive it.
+      if (err.response?.status === 422 && Array.isArray(err.response?.data?.errors)) {
+        const roleFieldErrors: Record<number, Record<string, string>> = {}
+        const globalMessages: string[] = []
+        for (const e of err.response.data.errors) {
+          const roleIndex = e.entityId !== undefined ? idToRoleIndex[e.entityId] : undefined
+          const field = e.path?.endsWith('.end_date') ? 'endDate' : 'startDate'
+          if (roleIndex !== undefined) {
+            roleFieldErrors[roleIndex] = { ...(roleFieldErrors[roleIndex] || {}), [field]: e.message }
+          } else {
+            globalMessages.push(e.message)
+          }
+        }
+        err.roleFieldErrors = roleFieldErrors
+        err.globalMessages = globalMessages
+      }
+
       throw err
     } finally {
       setIsSavingExperience(false)
