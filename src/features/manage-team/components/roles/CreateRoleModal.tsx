@@ -31,6 +31,15 @@ export default function CreateRoleModal({
   const [permissions, setPermissions] = useState<TeamPermission[]>([]);
   const [showLimitError, setShowLimitError] = useState(false);
 
+  const handleClose = () => {
+    setName('');
+    setColor(ROLE_COLORS[0]);
+    setDescription('');
+    setPermissions([]);
+    setShowLimitError(false);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
@@ -50,11 +59,7 @@ export default function CreateRoleModal({
       description: description.trim() || undefined,
       permissions: cleanedPermissions,
     });
-    // Reset
-    setName('');
-    setColor(ROLE_COLORS[0]);
-    setDescription('');
-    setPermissions([]);
+    handleClose();
   };
 
   return (
@@ -62,7 +67,7 @@ export default function CreateRoleModal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       {/* Modal */}
@@ -73,7 +78,7 @@ export default function CreateRoleModal({
             Create new role
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-6 h-6 flex items-center justify-center text-[#EF4444] transition-colors hover:opacity-80"
           >
             <Icon icon="lucide:x" className="w-5 h-5" />
@@ -185,7 +190,7 @@ export default function CreateRoleModal({
           {/* Footer */}
           <div className="flex items-center justify-end gap-[16px] pt-4 pb-2 mt-4">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 h-[40px] rounded-[24px] border border-[#1A73E8] dark:border-[#4D9CFF] bg-[#FFFFFF] dark:bg-transparent text-[14px] font-normal text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] hover:bg-gray-50 dark:hover:bg-[#121B2B] transition-colors"
             >
               Cancel

@@ -36,12 +36,16 @@ export function RequestCard({
 
   const showAvatar = !!user.avatar && !imgError;
   const hasMutuals = mutuals.count > 0;
+  const isCompany = request.isCompanyRequest || mode === 'invitations';
   const profileId = mode === 'received' ? request.sender_id : request.receiver_id;
+  const targetHref = isCompany
+    ? `/organization/${user.slug || profileId}`
+    : `/profile/${profileId}`;
 
   return (
     <article className="flex flex-col sm:flex-row sm:items-center justify-between py-4 sm:py-2 px-4 bg-card min-h-[92px] rounded-xl transition-all hover:bg-[var(--primary-tint)] border-b border-border last:border-b-0 gap-3 sm:gap-0" aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}>
       <div className="flex items-start sm:items-center gap-3 w-full sm:w-[calc(100%-230px)]">
-        <Link href={`/profile/${profileId}`} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary mt-1 sm:mt-0" tabIndex={-1}>
+        <Link href={targetHref} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary mt-1 sm:mt-0" tabIndex={-1}>
           {showAvatar ? (
             <Image
               src={user.avatar}
@@ -60,7 +64,7 @@ export function RequestCard({
 
         {/* Body */}
         <div className="flex flex-col min-w-0 flex-1 justify-center">
-          <Link href={`/profile/${profileId}`} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group">
+          <Link href={targetHref} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group">
             <p className="text-base font-medium text-foreground leading-6 truncate group-hover:text-primary transition-colors">{user.name}</p>
           </Link>
           <p className="text-sm text-muted-foreground leading-5 truncate">{user.headline}</p>

@@ -19,7 +19,10 @@ interface CreateJobModalProps {
 }
 
 export function CreateJobModal({ open, onOpenChange, trigger, initialData }: CreateJobModalProps) {
-  const { activeProfile, isCompany } = useActiveProfile()
+  const { activeProfile, isCompany, userCompanies } = useActiveProfile()
+  const activeCompany = userCompanies?.find(
+    (c) => (c.org_id || c.company_id) === activeProfile?.id
+  )
   const companyId = isCompany && activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined
   const { createNewJob, updateExistingJob } = useRecruiterJobs(companyId)
   const [internalOpen, setInternalOpen] = useState(false)
@@ -83,9 +86,10 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         activelyHiring: initialData.activelyHiring || false,
       })
     } else if (isOpen) {
+      const defaultCompanyLoc = isCompany && activeProfile?.type === 'COMPANY' ? (activeCompany?.location || '') : '';
       setFormData({
         title: "",
-        location: "",
+        location: defaultCompanyLoc,
         type: "Full-time",
         minSalary: "",
         maxSalary: "",

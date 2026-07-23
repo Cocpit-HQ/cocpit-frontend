@@ -447,7 +447,7 @@ export const usePostMedia = (
 
     if (postType === 'photo') {
       for (const img of uploadedImages) {
-        if (img.isExisting) {
+        if (img.isExisting || !hasImageEdits(img)) {
           newUrls.push(img.url);
           continue;
         }
@@ -455,9 +455,7 @@ export const usePostMedia = (
         try {
           const shouldPad = shouldPadImageToAspect(img, aspectRatio);
 
-          if (!hasImageEdits(img)) {
-            newUrls.push(img.url);
-          } else if (shouldPad) {
+          if (shouldPad) {
             const blob = await getPaddedImg(
               img.url,
               aspectRatio,

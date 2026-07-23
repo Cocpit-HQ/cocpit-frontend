@@ -101,6 +101,9 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         } else if (notification.type === 'community_invite') {
             // Channel invitation — open connections page on the channels invitation tab
             router.push('/connections?tab=invitations&sub=channels')
+        } else if (notification.type === 'organization_invite' || notification.type === 'ORGANIZATION_INVITE') {
+            // Team / Organization invitation — open connections page on the teams invitation tab
+            router.push('/connections?tab=invitations&sub=teams')
         }
     }
 

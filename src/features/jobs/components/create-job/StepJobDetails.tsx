@@ -30,18 +30,22 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 }) => {
   const { setCreateJobDetails } = useJobStore();
   const { data: profileData } = useMyProfile();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, userCompanies } = useActiveProfile();
+  const activeCompany = userCompanies?.find(
+    (c) => (c.org_id || c.company_id) === activeProfile?.id
+  );
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const userProfile = profileData?.user;
   const hasPopulated = useRef(false);
   const hasManuallyRegenerated = useRef(false); // Stops bg polling once user explicitly regenerates
 
-  const companyNameFallback = activeProfile?.type === 'COMPANY' ? activeProfile.name : userProfile?.name;
+  const companyNameFallback = isCompanyMode ? activeProfile?.name : userProfile?.name;
+  const companyLocationFallback = (isCompanyMode ? activeCompany?.location : null) || (profileData as any)?.companyProfile?.location || (profileData as any)?.company?.location || userProfile?.location || '';
 
   // Form fields
   const [role, setRole] = useState(initialRole);
   const [company, setCompany] = useState(initialDetails?.company || companyNameFallback || '');
-  const [location, setLocation] = useState(initialDetails?.location || userProfile?.location || '');
+  const [location, setLocation] = useState(initialDetails?.location || companyLocationFallback);
   const [description, setDescription] = useState(initialDetails?.description || '');
 
   // Normalization for dropdown values
@@ -73,16 +77,16 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
   // Safely populate defaults when the profile data resolves, if it wasn't cached instantly
   useEffect(() => {
-    if (userProfile && !hasPopulated.current) {
+    if ((userProfile || activeProfile) && !hasPopulated.current) {
       if (!company && !initialDetails?.company && companyNameFallback) {
         setCompany(companyNameFallback);
       }
-      if (!location && !initialDetails?.location && userProfile.location) {
-        setLocation(userProfile.location);
+      if (!location && !initialDetails?.location && companyLocationFallback) {
+        setLocation(companyLocationFallback);
       }
       hasPopulated.current = true;
     }
-  }, [userProfile, company, location, initialDetails]);
+  }, [userProfile, activeProfile, company, location, initialDetails, companyNameFallback, companyLocationFallback]);
 
   // Sync form fields when initialDetails updates (e.g., after hydration on refresh)
   const hasHydratedFields = useRef(false);

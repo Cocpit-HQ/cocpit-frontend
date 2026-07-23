@@ -20,18 +20,37 @@ import {
 
 // ─── Response Mappers ─────────────────────────────────────────────────────────
 
+function parsePermissionsList(raw: any): any[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      if (typeof parsed === 'string') return [parsed];
+    } catch (e) {
+      return raw.split(',').map((s) => s.trim());
+    }
+  }
+  return [];
+}
+
 /** Maps a snake_case role row from the backend to a camelCase TeamRole */
 function mapRole(row: any): TeamRole {
+  const rawPerms = parsePermissionsList(row.permissions);
+  const permissions = rawPerms
+    .map((p: any) => (typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : ''))
+    .filter((p: string) => p.length > 0);
+
   return {
-    id: row.role_id,
-    orgId: row.org_id,
+    id: row.role_id || row.id,
+    orgId: row.org_id || row.orgId,
     name: row.name,
     color: row.color || '#808080',
     description: row.description || '',
-    permissions: Array.isArray(row.permissions) ? row.permissions.map((p: string) => p.toUpperCase()) : [],
+    permissions: permissions as any,
     priority: row.priority ?? 0,
-    isSystemRole: row.is_system_role ?? false,
-    memberCount: row.member_count ?? 0,
+    isSystemRole: row.is_system_role ?? row.isSystemRole ?? false,
+    memberCount: row.member_count ?? row.memberCount ?? 0,
     members: Array.isArray(row.members) ? row.members.map((m: any) => ({
       ...m,
       avatarUrl: m.avatar || m.avatar_url || '',
@@ -41,8 +60,8 @@ function mapRole(row: any): TeamRole {
       inviteId: m.invite_id,
       isOwner: Boolean(m.is_owner ?? m.isOwner),
     })) : [],
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: row.created_at || row.createdAt,
+    updatedAt: row.updated_at || row.updatedAt,
   };
 }
 
@@ -67,7 +86,7 @@ function formatAction(action: string, metadata?: any): string {
   const upper = action.toUpperCase().trim();
   switch (upper) {
     case 'ACTOR_SWITCH':
-      return 'switched actor context to organization';
+      return 'successfully switched to the Organization account.';
     case 'CREATE_PAGE':
       return 'created the company page';
     case 'UPDATE_PROFILE':

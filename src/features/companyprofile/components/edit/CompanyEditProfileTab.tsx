@@ -33,8 +33,62 @@ const OFFERING_ICONS = [
   "iconoir:rocket",
   "iconoir:globe",
   "lucide:trending-up",
-  "lucide:folder-tree",
+  "lucide:sparkles",
+  "lucide:briefcase",
+  "lucide:award",
 ];
+
+const INDUSTRY_OPTIONS = [
+  "Information Technology",
+  "Software & SaaS",
+  "Healthcare",
+  "Finance & Banking",
+  "Manufacturing"
+];
+
+const normalizeIndustry = (val?: string): string => {
+  if (!val) return "Information Technology";
+  const lower = val.toLowerCase().trim();
+  if (lower === "manufacturing") return "Manufacturing";
+  if (lower === "information technology" || lower === "information_technology" || lower === "it" || lower === "technology") return "Information Technology";
+  if (lower === "software & saas" || lower === "software_saas" || lower.includes("software")) return "Software & SaaS";
+  if (lower.includes("finance") || lower === "finance_banking") return "Finance & Banking";
+  if (lower.includes("health")) return "Healthcare";
+  if (lower.includes("education")) return "Education";
+  if (lower.includes("retail")) return "Retail & E-commerce";
+  if (lower.includes("media")) return "Media & Entertainment";
+  
+  const matched = INDUSTRY_OPTIONS.find(opt => opt.toLowerCase() === lower);
+  return matched || val;
+};
+
+const SIZE_OPTIONS = [
+  "1 - 10 Members",
+  "11 - 50 Members",
+  "51 - 200 Members",
+  "201 - 500 Members",
+  "501 - 1,000 Members",
+  "1,001 - 5,000 Members",
+  "5,001 - 10,000 Members",
+  "10,000+ Members"
+];
+
+const normalizeCompanySize = (val?: string): string => {
+  if (!val) return "1 - 10 Members";
+  const s = val.toLowerCase().replace(/–/g, '-').replace(/\s+/g, '');
+  
+  if (s.includes('1-10') || s.includes('1to10')) return "1 - 10 Members";
+  if (s.includes('11-50') || s.includes('11to50')) return "11 - 50 Members";
+  if (s.includes('51-200') || s.includes('51to200')) return "51 - 200 Members";
+  if (s.includes('201-500') || s.includes('201to500')) return "201 - 500 Members";
+  if (s.includes('501-1000') || s.includes('501to1000')) return "501 - 1,000 Members";
+  if (s.includes('1001-5000') || s.includes('1001to5000')) return "1,001 - 5,000 Members";
+  if (s.includes('5001-10000') || s.includes('5001to10000')) return "5,001 - 10,000 Members";
+  if (s.includes('10000+') || s.includes('10,000+')) return "10,000+ Members";
+
+  const matched = SIZE_OPTIONS.find(opt => opt.toLowerCase() === val.toLowerCase());
+  return matched || val;
+};
 
 const AVAILABLE_ICONS = [
   "iconoir:rocket",
@@ -144,9 +198,9 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       const org = profileData.org || profileData;
       const newForm = {
         name: org.name || "",
-        industry: org.industry || "Technology",
+        industry: normalizeIndustry(org.industry),
         foundedYear: org.established_year?.toString() || org.founded?.toString() || "",
-        size: org.size || org.employeeCount || "1 - 10 Members",
+        size: normalizeCompanySize(org.size || org.employeeCount),
         website: org.website || org.websiteUrl || "",
         country: org.country || "India",
         city: org.city || (org.location ? org.location.split(',')[0] : "Mumbai"),
@@ -205,10 +259,6 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         description: "Profile changes saved successfully!",
       });
 
-      // Merge the authoritative saved fields (returned by the mutation itself)
-      // straight into the query cache. This is synchronous — unlike a refetch,
-      // there's no network round trip, so there's no window where `profileData`
-      // can still be stale when clearProfileDraft() runs right after.
       queryClient.setQueryData(["orgProfile", slug], (old: any) => {
         if (!old) return old;
         const wrapped = "org" in old;
@@ -219,8 +269,6 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
       clearProfileDraft();
 
-      // Background revalidation only — not awaited and not relied on for
-      // correctness, since setQueryData above already made the cache correct.
       queryClient.invalidateQueries({ queryKey: ["orgProfile", slug], refetchType: "none" });
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
 
@@ -303,14 +351,15 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           <div className="relative w-full h-11">
             <select
               name="industry"
-              value={formData.industry}
+              value={normalizeIndustry(formData.industry)}
               onChange={handleChange}
               className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
             >
-              <option value="Technology">Technology</option>
-              <option value="Finance">Finance</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Education">Education</option>
+              {INDUSTRY_OPTIONS.map((opt) => (
+                <option key={opt} value={opt} className="dark:bg-[#0D1117] dark:text-white">
+                  {opt}
+                </option>
+              ))}
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
           </div>
@@ -341,14 +390,15 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           <div className="relative w-full h-11">
             <select
               name="size"
-              value={formData.size}
+              value={normalizeCompanySize(formData.size)}
               onChange={handleChange}
               className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
             >
-              <option value="1 - 10 Members">1 - 10 Members</option>
-              <option value="11 - 50 Members">11 - 50 Members</option>
-              <option value="51 - 200 Members">51 - 200 Members</option>
-              <option value="201 - 500 Members">201 - 500 Members</option>
+              {SIZE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt} className="dark:bg-[#0D1117] dark:text-white">
+                  {opt}
+                </option>
+              ))}
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
           </div>

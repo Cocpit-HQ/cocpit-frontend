@@ -897,6 +897,12 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50">
                                     <img
                                       src={media.previewMediaUrls[previewActiveIndex] || media.uploadedImages[previewActiveIndex]?.url}
+                                      onError={(e) => {
+                                        const rawUrl = media.uploadedImages[previewActiveIndex]?.url;
+                                        if (rawUrl && e.currentTarget.src !== rawUrl) {
+                                          e.currentTarget.src = rawUrl;
+                                        }
+                                      }}
                                       className="w-full h-full object-cover"
                                       alt="Attached media"
                                     />
@@ -970,6 +976,12 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   >
                                     <img
                                       src={media.previewMediaUrls[previewActiveIndex] || media.uploadedImages[previewActiveIndex]?.url}
+                                      onError={(e) => {
+                                        const rawUrl = media.uploadedImages[previewActiveIndex]?.url;
+                                        if (rawUrl && e.currentTarget.src !== rawUrl) {
+                                          e.currentTarget.src = rawUrl;
+                                        }
+                                      }}
                                       className="w-full h-full object-cover"
                                       alt="Cropped post media"
                                     />

@@ -37,9 +37,27 @@ export default function EditRoleModal({
       setName(role.name);
       setColor(role.color);
       setDescription(role.description || '');
-      const validPermissions = (role.permissions || []).filter((p) =>
+
+      let rawPerms: any[] = [];
+      if (Array.isArray(role.permissions)) {
+        rawPerms = role.permissions;
+      } else if (typeof role.permissions === 'string') {
+        try {
+          const parsed = JSON.parse(role.permissions);
+          rawPerms = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          rawPerms = (role.permissions as string).split(',').map((s) => s.trim());
+        }
+      }
+
+      const normalized = rawPerms.map((p: any) =>
+        typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : ''
+      );
+
+      const validPermissions = normalized.filter((p: string) =>
         ALL_PERMISSIONS.includes(p as TeamPermission)
       ) as TeamPermission[];
+
       setPermissions(validPermissions);
     }
   }, [role]);

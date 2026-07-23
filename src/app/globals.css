@@ -4,14 +4,22 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *));
 
 @layer base {
-  :root, body {
+
+  :root,
+  body {
     --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
   }
+}
+
+.font-poppins,
+[class*="font-['Poppins']"] {
+  font-family: var(--font-poppins-base), "Poppins", sans-serif !important;
 }
 
 @theme {
   --font-sans: "Twemoji Country Flags", 'Inter', var(--font-geist-sans), sans-serif;
   --font-heading: "Twemoji Country Flags", 'Sora', var(--font-geist-sans), sans-serif;
+  --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -442,12 +450,15 @@
   .achievement-btn {
     background-color: transparent;
   }
+
   .achievement-btn:hover {
     background-color: #EEF2FF;
   }
+
   .achievement-btn-selected {
     background-color: #EEF2FF;
   }
+
   .achievement-btn-selected:hover {
     background-color: #E0E7FF;
   }

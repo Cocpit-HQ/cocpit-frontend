@@ -45,7 +45,7 @@ export default function RecommendedChannelsRail() {
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {channels.map((channel) => (
+        {channels.slice(0, 3).map((channel) => (
           <PublicChannelCard
             key={channel.id}
             channel={channel}

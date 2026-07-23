@@ -70,7 +70,7 @@ interface CompanyEditState {
 
 const defaultProfileDraft = {
   name: "",
-  industry: "Technology",
+  industry: "Information Technology",
   foundedYear: "",
   size: "1 - 10 Members",
   website: "",
