@@ -127,8 +127,6 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.chat.name === nextProps.chat.name &&
     prevProps.chat.avatar === nextProps.chat.avatar &&
     prevProps.chat.role === nextProps.chat.role &&
-    prevProps.chat.sessionStatus === nextProps.chat.sessionStatus &&
-    prevProps.chat.sessionHandlerName === nextProps.chat.sessionHandlerName &&
     prevProps.chat.is_requesting === nextProps.chat.is_requesting &&
     prevProps.chat.request_source === nextProps.chat.request_source &&
     prevProps.chat.is_muted === nextProps.chat.is_muted

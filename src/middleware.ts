@@ -42,7 +42,7 @@ export const config = {
     "/notifications/:path*",
     "/notifications/:path*",
     "/onboarding",
-    "/create-organization",
+    "/company-onboarding",
     "/organization/:path*/settings",
   ]
 }

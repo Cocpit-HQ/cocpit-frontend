@@ -182,6 +182,7 @@ export function CompanyOnboardingPage() {
       const res = await publishNewOrganization(formData);
       if (res.success) {
         updateField('slug', res.slug);
+        updateField('orgId', res.org_id);
         goNext();
       }
     } catch (err: any) {

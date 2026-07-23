@@ -3,7 +3,6 @@ export type TeamPermission =
   | 'CREATE_POST'
   | 'CHANNEL'
   | 'CHAT'
-  | 'QUERIES'
   | 'TEAMS'
   | 'ACTIVITY_LOGS'
   | 'JOBS'
@@ -15,7 +14,6 @@ export const PERMISSION_LABELS: Record<string, string> = {
   CREATE_POST: 'Create post',
   CHANNEL: 'Channel',
   CHAT: 'Chat',
-  QUERIES: 'Queries',
   TEAMS: 'Teams',
   ACTIVITY_LOGS: 'Activity logs',
   JOBS: 'Jobs',
@@ -61,7 +59,6 @@ export const ALL_PERMISSIONS: TeamPermission[] = [
   'CREATE_POST',
   'CHANNEL',
   'CHAT',
-  'QUERIES',
   'TEAMS',
   'ACTIVITY_LOGS',
   'JOBS',

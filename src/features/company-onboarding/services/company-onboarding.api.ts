@@ -42,6 +42,7 @@ export interface CompleteOnboardingResponse {
   success: boolean;
   message: string;
   slug: string;
+  org_id: string;
 }
 
 export const getCountries = async (): Promise<string[]> => {

@@ -11,7 +11,6 @@ export {
     useVerifyDomain,
     useTransferOwnership,
     useDeleteCompany,
-    useCreateCompany,
     useAnalyticsOverview,
     useAnalyticsEngagement,
     useAnalyticsJobs,

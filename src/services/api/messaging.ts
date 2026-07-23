@@ -81,42 +81,6 @@ export const shareProfileInDM = async (
   return response.data;
 };
 
-// ============ Company Chat Sessions ============
-
-export interface ChatSession {
-  session_id: string;
-  handler_user_id: string;
-  handler_name_snapshot: string;
-  handler_role_name_snapshot?: string;
-  status: 'ACTIVE' | 'TIMED_OUT' | 'ENDED' | 'TRANSFERRED';
-  started_at: string;
-  last_activity_at: string;
-  message_count: number;
-}
-
-export const getActiveSession = async (conversationId: string, companyId: string): Promise<{ session: ChatSession | null; featureEnabled: boolean }> => {
-  void companyId;
-  const response = await api.get('/company-chat-sessions/active', { params: { conversationId } });
-  return response.data;
-};
-
-export const claimSession = async (conversationId: string, companyId: string) => {
-  void companyId;
-  const response = await api.post('/company-chat-sessions/claim', { conversationId });
-  return response.data;
-};
-
-export const releaseSession = async (sessionId: string) => {
-  const response = await api.post('/company-chat-sessions/release', { sessionId });
-  return response.data;
-};
-
-export const takeoverSession = async (conversationId: string, companyId: string) => {
-  void companyId;
-  const response = await api.post('/company-chat-sessions/takeover', { conversationId });
-  return response.data;
-};
-
 export const searchUsersForMessaging = async (query?: string, cursor?: string, limit?: number) => {
   const params: Record<string, string | number> = {};
   if (query) params.q = query;

@@ -223,7 +223,7 @@ function CompaniesSettings() {
           <h2 className="mb-2 text-foreground">Companies</h2>
           <p className="text-sm text-muted-foreground">Manage the companies you own or belong to</p>
         </div>
-        <Button onClick={() => router.push('/create-organization')}>
+        <Button onClick={() => router.push('/company-onboarding')}>
           <Plus className="w-4 h-4 mr-2" />
           Create
         </Button>
@@ -263,7 +263,7 @@ function CompaniesSettings() {
         ) : (
           <div className="text-center py-12 border border-dashed rounded-xl">
             <p className="text-muted-foreground mb-4">You haven't created or joined any companies yet.</p>
-            <Button variant="outline" onClick={() => router.push('/create-organization')}>
+            <Button variant="outline" onClick={() => router.push('/company-onboarding')}>
               Create your first company
             </Button>
           </div>

@@ -107,9 +107,6 @@ export interface ChatThread {
   isBlockedByOther?: boolean;
   lastMessageAt: string; // ISO string for sorting (was timestamp)
   isDeleted?: boolean; // Frontend flag to filter out
-  // Session indicator fields (company mode)
-  sessionStatus?: 'mine' | 'other' | 'unclaimed' | null
-  sessionHandlerName?: string
   is_requesting?: boolean;
   invitation_id?: string;
   request_source?: string;

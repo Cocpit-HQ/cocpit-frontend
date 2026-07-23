@@ -8,7 +8,7 @@ import ChatList from "./components/ui/ChatList";
 import ChatWindow from "./components/ui/ChatWindow";
 import { ChatThread, Message } from "@/types/messaging";
 import { InfiniteData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getConversations, getActiveSession } from "@/services/api/messaging";
+import { getConversations } from "@/services/api/messaging";
 import { getUserById } from "@/services/api/user";
 import { sendOfferChatContext } from "@/services/api/offers";
 import {
@@ -126,87 +126,12 @@ export default function MessagingPage() {
     return chats.find((c) => String(c.id) === String(selectedChat.id)) || selectedChat;
   }, [chats, selectedChat]);
 
-  // Fetch session status for each company conversation and enrich chats
-  const isCompanyMode = activeProfile?.type === "COMPANY";
-  const companyId = isCompanyMode ? activeProfile.id : undefined;
-
   const { user } = useAuth();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
 
   const { socket } = useSocket();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  React.useEffect(() => {
-    if (!isCompanyMode || !companyId || !chats.length) return;
-
-    const queryKey = [
-      "conversations",
-      activeProfile?.type ?? "USER",
-      activeProfile?.id ?? "me",
-    ];
-    let cancelled = false;
-
-    const fetchSessionStatuses = async () => {
-      const updates: Record<
-        string,
-        { status: "mine" | "other" | "unclaimed"; handler?: string }
-      > = {};
-
-      // Batch: fetch sessions for non-group conversations
-      const nonGroupChats = chats.filter((c) => !c.isGroup);
-      await Promise.all(
-        nonGroupChats.map(async (c) => {
-          try {
-            const data = await getActiveSession(c.id, companyId!);
-            if (!data.featureEnabled) return;
-            if (!data.session) {
-              updates[c.id] = { status: "unclaimed" };
-            } else if (data.session.handler_user_id === user?.id) {
-              updates[c.id] = {
-                status: "mine",
-                handler: data.session.handler_name_snapshot,
-              };
-            } else {
-              updates[c.id] = {
-                status: "other",
-                handler: data.session.handler_name_snapshot,
-              };
-            }
-          } catch {
-            /* ignore individual failures */
-          }
-        }),
-      );
-
-      if (cancelled) return;
-
-      // Update cache with session statuses
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: ChatThread[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((c) => {
-            const update = updates[c.id];
-            if (update) {
-              return {
-                ...c,
-                sessionStatus: update.status,
-                sessionHandlerName: update.handler,
-              };
-            }
-            return c;
-          });
-        },
-      );
-    };
-
-    fetchSessionStatuses();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isCompanyMode, companyId, chats.length, user?.id]); // Only re-run when company mode changes or chat count changes
 
   // Handle userId param to start a new chat or select existing
   useEffect(() => {
@@ -892,53 +817,6 @@ export default function MessagingPage() {
     socket.on("unblock_confirmed", handleUnblock);
     socket.on("conversation_preference_updated", handlePreferenceUpdated);
 
-    // Session events: re-fetch session status for the affected conversation
-    const handleSessionEvent = (payload: { conversationId: string }) => {
-      if (!isCompanyMode || !companyId) return;
-      const qKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-
-      getActiveSession(payload.conversationId, companyId)
-        .then((data) => {
-          queryClient.setQueryData(
-            qKey,
-            (oldData: ChatThread[] | undefined) => {
-              if (!oldData) return oldData;
-              return oldData.map((c) => {
-                if (c.id === payload.conversationId) {
-                  if (!data.featureEnabled || !data.session) {
-                    return {
-                      ...c,
-                      sessionStatus: data.featureEnabled
-                        ? ("unclaimed" as const)
-                        : undefined,
-                      sessionHandlerName: undefined,
-                    };
-                  }
-                  return {
-                    ...c,
-                    sessionStatus:
-                      data.session.handler_user_id === user?.id
-                        ? ("mine" as const)
-                        : ("other" as const),
-                    sessionHandlerName: data.session.handler_name_snapshot,
-                  };
-                }
-                return c;
-              });
-            },
-          );
-        })
-        .catch(console.error);
-    };
-
-    socket.on("session_claimed", handleSessionEvent);
-    socket.on("session_released", handleSessionEvent);
-    socket.on("session_takeover_forced", handleSessionEvent);
-
     return () => {
       socket.off("new_message", handleNewMessage);
       socket.off("notification", handleNotification);
@@ -949,9 +827,6 @@ export default function MessagingPage() {
       socket.off("message_deleted_for_everyone", handleMessageDeleted);
       socket.off("message_deleted_for_me", handleMessageDeleted);
       socket.off("message_edited", handleMessageEdited);
-      socket.off("session_claimed", handleSessionEvent);
-      socket.off("session_released", handleSessionEvent);
-      socket.off("session_takeover_forced", handleSessionEvent);
       socket.off("user_blocked", handleBlock);
       socket.off("block_confirmed", handleBlock);
       socket.off("user_unblocked", handleUnblock);
@@ -964,8 +839,6 @@ export default function MessagingPage() {
     selectedChat?.id,
     activeProfile?.id,
     activeProfile?.type,
-    isCompanyMode,
-    companyId,
     user?.id,
   ]); // Stabilized dependency list to prevent repeated socket registrations
 

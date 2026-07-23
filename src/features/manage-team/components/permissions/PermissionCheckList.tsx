@@ -13,9 +13,7 @@ interface PermissionCheckListProps {
 const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
   { id: 'CHANNEL', label: 'Channel', icon: 'quill:inbox-newsletter' },
-  { id: 'CHAT', label: 'Chat', icon: 'hugeicons:comment-01', children: [
-    { id: 'QUERIES', label: 'Queries' }
-  ]},
+  { id: 'CHAT', label: 'Chat', icon: 'hugeicons:comment-01' },
   { id: 'TEAMS', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
     { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
   ]},
@@ -97,7 +95,7 @@ export default function PermissionCheckList({
                   {group.children.map((child) => {
                     const isChildChecked = selected.includes(child.id as TeamPermission);
                     // Special rule for Teams: Activity logs checkbox requires Teams toggle to be ON.
-                    // For Chat and Jobs: child checkboxes (Queries, Jobs chat) can be checked even when toggle is OFF.
+                    // For Jobs: Jobs chat checkbox can be checked even when toggle is OFF.
                     const isChildDisabled = disabled || (group.id === 'TEAMS' && !isChecked);
                     
                     return (

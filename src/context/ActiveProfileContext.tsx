@@ -295,7 +295,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         userCompanies: companies,
         switchableCompanies,
         refreshCompanies,
-        refreshProfile: refreshCompanies,
+        refreshProfile,
     };
 
     return (

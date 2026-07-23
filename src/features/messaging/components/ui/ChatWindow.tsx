@@ -38,8 +38,6 @@ import { DeleteMessageModal } from "./DeleteMessageModal"
 import { Trash2 } from "lucide-react"
 import MediaPreviewModal from "./MediaPreviewModal"
 import ChatSkeleton from "./ChatSkeleton"
-import { useChatSession } from "@/features/messaging/hooks/use-chat-session"
-import { SessionBanner } from "./SessionBanner"
 
 interface ChatWindowProps {
   chat: ChatThread
@@ -167,12 +165,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
   const isBlockedByOther = initialChat.isBlockedByOther;
 
-  // Company chat session management
-  const chatSession = useChatSession(
-    activeProfile?.type === 'COMPANY' ? initialChat.id : undefined
-  );
   const isCompanyMode = activeProfile?.type === 'COMPANY';
-  const sessionDisabled = isCompanyMode && initialChat.id !== 'new' && chatSession.featureEnabled && !chatSession.isMySession;
 
   const chat = {
     ...initialChat,
@@ -376,7 +369,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
     // Reset typing state when chat changes
     setTypingUser(null);
-    chatSession.clearSessionLost();
     setTypingMap(new Map());
 
     if (chat.id && (chat.unread > 0 || (isGroupInvitation && !chat.is_read))) {
@@ -714,15 +706,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     },
     onError: (err: any, newTodo, context) => {
       queryClient.setQueryData(['messages', chat.id], context?.previousMessages);
-      // Handle session lost (403 from backend)
-      if (err?.response?.status === 403 && isCompanyMode) {
-        chatSession.clearSessionLost();
-        chatSession.refetchSession();
-        // Small delay then set sessionLost
-        setTimeout(() => {
-          // The refetch above will update session state, and if session is gone the banner will show
-        }, 100);
-      }
       console.error("Failed to send message", err);
     },
     onSuccess: (data, variables, context) => {
@@ -1274,22 +1257,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         </div>
       )}
 
-      {/* Session Banner (company mode only) */}
-      {isCompanyMode && !isGroupInvitation && (
-        <SessionBanner
-          session={chatSession.session}
-          featureEnabled={chatSession.featureEnabled}
-          isMySession={chatSession.isMySession}
-          isActionLoading={chatSession.isActionLoading}
-          actionError={chatSession.actionError}
-          sessionLost={chatSession.sessionLost}
-          onClaim={chatSession.claim}
-          onRelease={chatSession.release}
-          onTakeover={chatSession.takeover}
-          onClearSessionLost={chatSession.clearSessionLost}
-        />
-      )}
-
       {chat.pinnedContext && !isGroupInvitation && (
         <div className="px-4 py-2 text-xs text-center font-medium bg-primary/20 text-primary">
           Context: {chat.pinnedContext}
@@ -1381,16 +1348,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
               onSendMessage={handleSendMessage}
               onTyping={handleTypingInput}
               searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
-              disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || sessionDisabled}
-              disabledMessage={
-                isBlockedByOther ? "User not found" :
-                  sessionDisabled && chatSession.session ? `Handled by ${chatSession.session.handler_name_snapshot}` :
-                    sessionDisabled ? "Claim this conversation to reply" :
-                      undefined
-              }
+              disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther}
+              disabledMessage={isBlockedByOther ? "User not found" : undefined}
               pendingEntityContext={pendingEntityContext}
               onDismissEntityContext={() => setPendingEntityContext(null)}
-              placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
+              placeholder="Type a message..."
               replyingTo={replyingTo}
               onCancelReply={() => setReplyingTo(null)}
               pendingSharedPost={pendingSharedPost}

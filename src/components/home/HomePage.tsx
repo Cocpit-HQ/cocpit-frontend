@@ -5,8 +5,7 @@ import dynamic from 'next/dynamic'
 import { X } from 'lucide-react'
 import { FeedSection } from './FeedSection'
 import { useStories } from '@/context/StoriesContext'
-import TrendingHashtags from './TrendingHashtags'
-import UpdatesPanel from './UpdatesPanel'
+// TrendingHashtags removed per ID-295
 
 // Lazy-load heavy modal/overlay components (saves ~230KB from initial bundle)
 const MobileStoryViewer = dynamic(
@@ -67,30 +66,19 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="pt-4 md:pt-6 pb-4 md:pb-8">
         <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
-          <div className="flex w-full flex-col items-center gap-6 md:gap-8 xl:flex-row xl:gap-[32px] xl:items-start xl:justify-center">
+          <div className="mx-auto max-w-[998px] w-full flex flex-col items-start">
             {isArticleMode ? (
               <InlineArticleEditor />
             ) : (
-              <>
-                {/* Feed Section */}
-                <FeedSection
-                  groups={groups}
-                  storyLoading={storyLoading}
-                  setShowCreateStory={setShowCreateStory}
-                  setMobileSelectedGroupId={setMobileSelectedGroupId}
-                  setSelectedStory={setSelectedStory}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                />
-
-                {/* Sideboards */}
-                <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-[406px] xl:shrink-0 xl:self-start xl:overflow-y-auto scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="space-y-6">
-                    {/* <UpdatesPanel /> */}
-                    <TrendingHashtags />
-                  </div>
-                </aside>
-              </>
+              <FeedSection
+                groups={groups}
+                storyLoading={storyLoading}
+                setShowCreateStory={setShowCreateStory}
+                setMobileSelectedGroupId={setMobileSelectedGroupId}
+                setSelectedStory={setSelectedStory}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              />
             )}
           </div>
         </div>

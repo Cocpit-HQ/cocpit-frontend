@@ -140,23 +140,6 @@ export function useDeleteCompany() {
     });
 }
 
-export function useCreateCompany() {
-    const router = useRouter();
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: companyService.createCompany,
-        onSuccess: (data) => {
-            toast.success('Company created successfully!');
-            queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
-            router.push(`/organization/${data.slug}`);
-        },
-        onError: (err) => {
-            toast.error(companyService.normalizeError(err));
-        }
-    });
-}
-
 // Simplified permissions hook
 // Allows components to easily check if the current user can perform actions
 export function useCompanyPermissions(company?: any | null) {

@@ -9,7 +9,6 @@ import { useInView } from '@/hooks/use-in-view';
 import { useEffect } from 'react';
 import { ArrowLeft, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import TrendingHashtags from '@/components/home/TrendingHashtags';
 
 export default function HashtagPage() {
   const params = useParams();
@@ -133,7 +132,6 @@ export default function HashtagPage() {
           {/* Sideboards */}
           <aside className="hidden lg:block lg:col-span-4 space-y-6 pt-6">
             <div className="sticky top-24 space-y-6">
-              <TrendingHashtags />
               <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
                 <h4 className="text-sm font-bold mb-2">About Discovery</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
