@@ -50,7 +50,6 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const followUser = async (id: string) => {
-    if (isCompany) return; // Follow is a user-only action
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -60,7 +59,13 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     setFollowingIds((prev) => [...prev, id]);
 
     try {
-      await api.post(`/users/${id}/follow`);
+      if (isCompany && activeProfile?.id) {
+        // Company follows a user via the org-specific endpoint
+        await api.post(`/organizations/${activeProfile.id}/following/users/${id}`);
+      } else {
+        await api.post(`/users/${id}/follow`);
+      }
+
       setFollowingLoading((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -99,7 +104,6 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const unfollowUser = async (id: string) => {
-    if (isCompany) return; // Unfollow is a user-only action
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -109,7 +113,12 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     setFollowingIds((prev) => prev.filter((userId) => userId !== id));
 
     try {
-      await api.delete(`/users/${id}/unfollow`);
+      if (isCompany && activeProfile?.id) {
+        // Company unfollows a user via the org-specific endpoint
+        await api.delete(`/organizations/${activeProfile.id}/following/users/${id}`);
+      } else {
+        await api.delete(`/users/${id}/unfollow`);
+      }
 
       setFollowingLoading((prev) => {
         const next = new Set(prev);
@@ -213,27 +222,37 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   const { data: session, status } = useSession();
 
   React.useEffect(() => {
-    if (status === 'authenticated' && !session?.user?.error && !isCompany) {
-      // Fetch blocked users
-      api.get('/users/me/blocks').then(res => {
-        const ids = res.data.map((u: any) => (u.user_id || u.id)?.toString()).filter(Boolean);
-        setBlockedIds(ids);
-      }).catch(err => {
-        console.warn("Failed to fetch blocked users", err);
-      });
-
-      // Fetch following users to sync follow states in UI on initial load / refresh
-      const userId = session?.user?.id;
-      if (userId) {
-        api.get(`/users/${userId}/following`).then(res => {
-          const ids = res.data.map((u: any) => (u.following_id || u.user_id || u.id)?.toString()).filter(Boolean);
+    if (status === 'authenticated' && !session?.user?.error) {
+      if (isCompany && activeProfile?.id) {
+        // Fetch the users the organization is following to correctly seed followingIds
+        api.get(`/organizations/${activeProfile.id}/following`).then(res => {
+          const ids = res.data.map((u: any) => (u.user_id || u.id)?.toString()).filter(Boolean);
           setFollowingIds(ids);
         }).catch(err => {
-          console.warn("Failed to fetch following users", err);
+          console.warn("Failed to fetch org following users", err);
         });
+      } else {
+        // Fetch blocked users (user-only)
+        api.get('/users/me/blocks').then(res => {
+          const ids = res.data.map((u: any) => (u.user_id || u.id)?.toString()).filter(Boolean);
+          setBlockedIds(ids);
+        }).catch(err => {
+          console.warn("Failed to fetch blocked users", err);
+        });
+
+        // Fetch following users to sync follow states in UI on initial load / refresh
+        const userId = session?.user?.id;
+        if (userId) {
+          api.get(`/users/${userId}/following`).then(res => {
+            const ids = res.data.map((u: any) => (u.following_id || u.user_id || u.id)?.toString()).filter(Boolean);
+            setFollowingIds(ids);
+          }).catch(err => {
+            console.warn("Failed to fetch following users", err);
+          });
+        }
       }
     }
-  }, [status, session?.user?.id, isCompany]);
+  }, [status, session?.user?.id, isCompany, activeProfile?.id]);
 
   return (
     <SocialContext.Provider value={{

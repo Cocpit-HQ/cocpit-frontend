@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getUserById, getPublicProfilePosts } from "../services/publicProfile.service";
 import { useSocial } from "@/context/SocialContext";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { User } from "@/types/user";
 import { PublicUserProfileResponse } from "@/types/api";
 import { mapPublicPostToPost } from "@/lib/mappers/public-profile.mapper";
@@ -115,12 +116,15 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
 
 export function useProfile(userId: string) {
     const { syncFollowStatus } = useSocial();
+    const { isCompany } = useActiveProfile();
 
     return useQuery({
         queryKey: ["profile", userId],
         queryFn: async () => {
             const userData = await getUserById(userId);
-            if (userData.user.is_following !== undefined) {
+            // When in company mode, SocialContext is already seeded from the org's following list.
+            // Syncing from the API response here would cause a race condition, so we skip it.
+            if (!isCompany && userData.user.is_following !== undefined) {
                 syncFollowStatus(userData.user.id, userData.user.is_following);
             }
             return transformUserData(userData);
