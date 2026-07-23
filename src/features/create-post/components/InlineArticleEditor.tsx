@@ -63,10 +63,10 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
         coverInputRef={articleCoverInputRef}
         caption={state.description}
         onCaptionChange={state.setDescription}
-        onPost={async () => {
+        onPost={async (inlineFiles) => {
             isSavingRef.current = true;
             try {
-              await actions.handlePost();
+              await actions.handlePost(inlineFiles);
               if (onSuccess) {
                 onSuccess();
               } else {

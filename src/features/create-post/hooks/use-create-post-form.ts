@@ -250,9 +250,20 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   }, [isOpen, editPostId, sharedPostId]);
 
-  const handlePost = async (tagUserIds?: string[]) => {
+  const handlePost = async (inlineFilesOrTagUserIds?: File[] | string[], tagUserIds?: string[]) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+
+    let inlineFiles: File[] = [];
+    let activeTagUserIds: string[] | undefined = tagUserIds;
+
+    if (inlineFilesOrTagUserIds && inlineFilesOrTagUserIds.length > 0) {
+      if (inlineFilesOrTagUserIds[0] instanceof File) {
+        inlineFiles = inlineFilesOrTagUserIds as File[];
+      } else {
+        activeTagUserIds = inlineFilesOrTagUserIds as string[];
+      }
+    }
 
     try {
       // --- Frontend Media Validations ---
@@ -387,7 +398,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             updatePayload.media_urls = media_urls;
           }
 
-          await postApi.update(editPostId, updatePayload);
+          await postApi.update(editPostId, updatePayload, inlineFiles);
 
           if (onUpdate) {
             // Map the frontend fields for the feed optimistic/immediate update
@@ -416,8 +427,11 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         return;
       }
 
+      // Combine cover/post files and inline article files
+      const allFilesToUpload = [...filesToUpload, ...inlineFiles];
+
       if (isCompanyPost) {
-        const { mappedPost } = await postApi.create(payload, filesToUpload, tagUserIds);
+        const { mappedPost } = await postApi.create(payload, allFilesToUpload, activeTagUserIds);
         addPost(mappedPost);
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
         queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
@@ -431,7 +445,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         resetForm();
         onClose();
       } else {
-        await startUpload(payload, filesToUpload, tagUserIds);
+        await startUpload(payload, allFilesToUpload, activeTagUserIds);
         if (onPostCreated) onPostCreated();
         resetForm();
         onClose();

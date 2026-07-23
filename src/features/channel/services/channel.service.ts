@@ -174,7 +174,7 @@ export async function getArticleById(id: string): Promise<ChannelArticle | null>
   }
 }
 
-export async function createArticle(channelId: string, input: ArticleInput): Promise<ChannelArticle> {
+export async function createArticle(channelId: string, input: ArticleInput, files?: File[]): Promise<ChannelArticle> {
   const formData = new FormData();
   formData.append('title', input.title);
   formData.append('content', input.content);
@@ -194,6 +194,12 @@ export async function createArticle(channelId: string, input: ArticleInput): Pro
     } catch (e) {
       console.warn("Failed to convert coverImage to File", e);
     }
+  }
+
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      formData.append('media', file, file.name);
+    });
   }
   
   const res = await api.post(`/post`, formData, {
@@ -215,7 +221,7 @@ export async function createArticle(channelId: string, input: ArticleInput): Pro
   };
 }
 
-export async function updateArticle(id: string, orgId: string, input: Partial<ArticleInput>): Promise<ChannelArticle> {
+export async function updateArticle(id: string, orgId: string, input: Partial<ArticleInput>, files?: File[]): Promise<ChannelArticle> {
   let coverImageUrl = input.coverImage;
   
   if (input.coverImage && (input.coverImage.startsWith('data:') || input.coverImage.startsWith('blob:'))) {
@@ -230,16 +236,37 @@ export async function updateArticle(id: string, orgId: string, input: Partial<Ar
     }
   }
 
-  const payload = {
+  const payload: any = {
     title: input.title,
     content: input.content,
     companyId: orgId,
+    post_type: 'article',
     media_urls: input.coverImage === undefined ? undefined : (coverImageUrl ? [coverImageUrl] : []),
     status: input.status,
-    is_community_article: true,
+    is_community_article: 'true',
   };
   
-  const res = await api.put(`/post/${id}`, payload);
+  let res;
+  if (files && files.length > 0) {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('media', file, file.name);
+    });
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+    res = await api.put(`/post/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  } else {
+    res = await api.put(`/post/${id}`, payload);
+  }
   const data = res.data.data || res.data;
   
   return {
@@ -367,6 +394,11 @@ export async function getSubscribedChannels(): Promise<Channel[]> {
     logoUrl: item.logoUrl || item.logo_url,
     isSubscribed: true,
     isOwner: item.isOwner || item.is_owner || false,
+    latestArticle: item.latestArticle ? {
+      id: item.latestArticle.id,
+      title: item.latestArticle.title,
+      createdAt: item.latestArticle.createdAt,
+    } : null,
   }));
 }
 

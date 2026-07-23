@@ -38,6 +38,17 @@ export default function SubscriberGrowthChart({ data, totalSubscribers }: Subscr
     return (((last - first) / first) * 100);
   }, [data]);
 
+  const yTicks = useMemo(() => {
+    if (data.length === 0) return [0, 5];
+    const maxSubscribers = Math.max(...data.map(d => d.subscribers), 0);
+    const maxVal = Math.max(Math.ceil(maxSubscribers / 5) * 5, 5);
+    const ticks = [];
+    for (let i = 0; i <= maxVal; i += 5) {
+      ticks.push(i);
+    }
+    return ticks;
+  }, [data]);
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
@@ -72,7 +83,14 @@ export default function SubscriberGrowthChart({ data, totalSubscribers }: Subscr
               tickLine={false}
               axisLine={false}
             />
-            <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} width={40} />
+            <YAxis
+              ticks={yTicks}
+              domain={[0, yTicks[yTicks.length - 1]]}
+              tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+              tickLine={false}
+              axisLine={false}
+              width={40}
+            />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border)' }} />
 
             <Area

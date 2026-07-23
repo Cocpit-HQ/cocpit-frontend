@@ -2,6 +2,23 @@ import React from 'react';
 import { Icon } from '@iconify/react';
 import { PublicChannelSummary } from '../data/dummy-public-channel-data';
 import { ChannelArticle } from '../../types/channel.types';
+import { formatDistanceToNowStrict } from 'date-fns';
+
+const formatShortTime = (dateString?: string): string => {
+  if (!dateString) return 'Just now';
+  try {
+    const distance = formatDistanceToNowStrict(new Date(dateString));
+    return distance
+      .replace(/ seconds?/, 's')
+      .replace(/ minutes?/, 'm')
+      .replace(/ hours?/, 'h')
+      .replace(/ days?/, 'd')
+      .replace(/ months?/, 'mo')
+      .replace(/ years?/, 'y') + ' ago';
+  } catch (e) {
+    return 'Just now';
+  }
+};
 
 interface PublicChannelCardProps {
   channel: PublicChannelSummary;
@@ -93,7 +110,13 @@ export default function PublicChannelCard({
               {channel.name}
             </h4>
             <p className="text-gray-500 dark:text-[#A1A8B3] text-[12px] font-['Poppins'] mt-0.5">
-              New post: "The React 19 Upgrade Guide" • 2h ago
+              {channel.latestArticle ? (
+                <>
+                  New post: "{channel.latestArticle.title}" • {formatShortTime(channel.latestArticle.createdAt)}
+                </>
+              ) : (
+                'No posts yet'
+              )}
             </p>
           </div>
         </div>

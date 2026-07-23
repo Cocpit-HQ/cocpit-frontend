@@ -31,9 +31,9 @@ interface ArticleFlowProps {
   coverInputRef: React.RefObject<HTMLInputElement | null>;
   caption: string;
   onCaptionChange: (value: string) => void;
-  onPost: () => Promise<void>;
+  onPost: (inlineFiles?: File[]) => Promise<void>;
   isSubmitting: boolean;
-  onClose: () => void;
+  onClose: (inlineFiles?: File[]) => Promise<void> | void;
   currentUser: ArticleIdentity;
   currentPoster: ArticleIdentity;
   isCompanyPost: boolean;
@@ -71,9 +71,12 @@ const ArticleFlow = ({
   const [savedRange, setSavedRange] = useState<Range | null>(null);
   const [editingLinkNode, setEditingLinkNode] = useState<HTMLElement | null>(null);
   const [isUploadingInline, setIsUploadingInline] = useState(false);
+  const [editingImgSrc, setEditingImgSrc] = useState<string | null>(null);
+  const [localFiles, setLocalFiles] = useState<{ id: string; file: File }[]>([]);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const inlineImageInputRef = useRef<HTMLInputElement>(null);
+  const editImageInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize innerHTML only once
   useEffect(() => {
@@ -184,6 +187,41 @@ const ArticleFlow = ({
   const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
 
+    // Handle inline image/video Edit button
+    const editImgBtn = target.closest('.edit-img-btn') || (target.closest('button') && target.closest('button')?.getAttribute('title') === 'Edit' && target.closest('.img-tools'));
+    if (editImgBtn) {
+      const container = editImgBtn.closest('[contenteditable="false"]');
+      if (container) {
+        const img = container.querySelector('img');
+        const src = img?.getAttribute('src');
+        if (src) {
+          setEditingImgSrc(src);
+          editImageInputRef.current?.click();
+          return;
+        }
+      }
+    }
+
+    // Handle inline image/video Delete button
+    const deleteImgBtn = target.closest('.delete-img-btn') || (target.closest('button') && target.closest('button')?.getAttribute('title') === 'Delete' && target.closest('.img-tools'));
+    if (deleteImgBtn) {
+      const container = deleteImgBtn.closest('[contenteditable="false"]');
+      if (container) {
+        const video = container.querySelector('video');
+        if (video) {
+          const src = video.getAttribute('src');
+          if (src && src.startsWith('blob:')) {
+            try {
+              URL.revokeObjectURL(src);
+            } catch (err) {}
+          }
+        }
+        container.remove();
+        onContentChange(editorRef.current?.innerHTML || '');
+        return;
+      }
+    }
+
     // Handle inline link Edit button
     const editLinkBtn = target.closest('.edit-link-btn');
     if (editLinkBtn) {
@@ -229,12 +267,16 @@ const ArticleFlow = ({
 
       if (isVideo) {
         const videoUrl = URL.createObjectURL(file);
+        const uniqueId = videoUrl.split('/').pop() || Date.now().toString();
+        const namedFile = new File([file], uniqueId, { type: file.type });
+        setLocalFiles(prev => [...prev, { id: videoUrl, file: namedFile }]);
+
         const pId = 'p-' + Date.now();
         const videoHtml = `
-          <div class="relative my-4 w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
+          <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
             <video controls src="${videoUrl}" style="max-width: 100%; border-radius: 8px;"></video>
             <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
-              <button type="button" class="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete" onclick="URL.revokeObjectURL('${videoUrl}'); this.closest('.relative').remove();">
+              <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
               </button>
             </div>
@@ -258,52 +300,109 @@ const ArticleFlow = ({
         
         onContentChange(editorRef.current?.innerHTML || '');
       } else {
-        setIsUploadingInline(true);
         try {
-          const urls = await uploadMedia([file]);
-          if (urls && urls.length > 0) {
-            const imageUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
-            const pId = 'p-' + Date.now();
-            const imageHtml = `
-              <div class="relative my-4 w-full h-[178px] overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
-                <img src="${imageUrl}" class="w-full h-full object-cover" />
-                <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
-                  <button type="button" class="p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
-                  </button>
-                  <button type="button" class="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete" onclick="this.closest('.relative').remove();">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
-                  </button>
-                </div>
-              </div><p id="${pId}"><br></p>
-            `;
-            editorRef.current?.focus();
-            document.execCommand('insertHTML', false, imageHtml);
-            
-            const insertedP = document.getElementById(pId);
-            if (insertedP) {
-              const sel = window.getSelection();
-              if (sel) {
-                const range = document.createRange();
-                range.setStart(insertedP, 0);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-              }
-              insertedP.removeAttribute('id');
+          const imageUrl = URL.createObjectURL(file);
+          const uniqueId = imageUrl.split('/').pop() || Date.now().toString();
+          const namedFile = new File([file], uniqueId, { type: file.type });
+          setLocalFiles(prev => [...prev, { id: imageUrl, file: namedFile }]);
+          
+          const pId = 'p-' + Date.now();
+          const imageHtml = `
+            <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
+              <img src="${imageUrl}" class="max-w-full h-auto object-contain block mx-auto" />
+              <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
+                <button type="button" class="edit-img-btn p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
+                </button>
+                <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
+                </button>
+              </div>
+            </div><p id="${pId}"><br></p>
+          `;
+          editorRef.current?.focus();
+          document.execCommand('insertHTML', false, imageHtml);
+          
+          const insertedP = document.getElementById(pId);
+          if (insertedP) {
+            const sel = window.getSelection();
+            if (sel) {
+              const range = document.createRange();
+              range.setStart(insertedP, 0);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
             }
-            
-            onContentChange(editorRef.current?.innerHTML || '');
+            insertedP.removeAttribute('id');
           }
+          
+          onContentChange(editorRef.current?.innerHTML || '');
         } catch (err) {
-          console.error("Failed to upload inline image", err);
-          toast.error("Failed to upload inline image");
-        } finally {
-          setIsUploadingInline(false);
+          console.error("Failed to add inline image locally", err);
         }
       }
     }
     e.target.value = '';
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingImgSrc) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size cannot exceed 10MB");
+        e.target.value = '';
+        return;
+      }
+      try {
+        const imageUrl = URL.createObjectURL(file);
+        const uniqueId = imageUrl.split('/').pop() || Date.now().toString();
+        const namedFile = new File([file], uniqueId, { type: file.type });
+        setLocalFiles(prev => [...prev, { id: imageUrl, file: namedFile }]);
+        
+        // Replace the old src with the new local blobUrl in the content HTML string
+        const newContent = content.replace(editingImgSrc, imageUrl);
+        
+        // Synchronously update the DOM ref to prevent the useEffect overwrite race condition
+        if (editorRef.current) {
+          editorRef.current.innerHTML = newContent;
+        }
+        
+        onContentChange(newContent);
+        toast.success("Image updated locally");
+      } catch (err) {
+        console.error("Failed to update image locally", err);
+      } finally {
+        setEditingImgSrc(null);
+      }
+    }
+    e.target.value = '';
+  };
+
+  const getFilesToUpload = (): File[] => {
+    const currentContent = editorRef.current?.innerHTML || content;
+    
+    // Find all blob: URLs in currentContent
+    const blobUrls = Array.from(currentContent.matchAll(/src="(blob:[^"]+)"/g)).map(m => m[1]);
+    
+    const filesToUpload: File[] = [];
+    blobUrls.forEach(url => {
+      const match = localFiles.find(f => f.id === url);
+      if (match) {
+        filesToUpload.push(match.file);
+      }
+    });
+    
+    return filesToUpload;
+  };
+
+  const handleOnPost = async () => {
+    const files = getFilesToUpload();
+    await onPost(files);
+  };
+
+  const handleOnClose = async () => {
+    const files = getFilesToUpload();
+    await onClose(files);
   };
 
   const hasContent = content.replace(/<[^>]*>/g, '').trim().length > 0 || content.includes('<img');
@@ -399,7 +498,7 @@ const ArticleFlow = ({
           </button>
           <button
             disabled={isSubmitting}
-            onClick={onPost}
+            onClick={handleOnPost}
             className={`flex items-center gap-2 px-8 py-2 rounded-full text-[14px] font-normal transition-colors disabled:cursor-not-allowed ${
               isCompanyPost 
                 ? 'bg-[#1A73E8] hover:bg-[#1A73E8]/90 dark:bg-[#4D9CFF] dark:hover:bg-[#4D9CFF]/90 text-white disabled:bg-gray-200 dark:disabled:bg-[#2A2D35] disabled:text-gray-400 dark:disabled:text-[#A1A8B3]'
@@ -447,6 +546,19 @@ const ArticleFlow = ({
         .article-editor p {
           margin-bottom: 0.5rem;
         }
+        .article-editor img {
+          max-width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+          display: block !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
+        .article-editor div[contenteditable="false"] {
+          width: fit-content !important;
+          max-width: 100% !important;
+          height: auto !important;
+        }
       `}</style>
 
       {/* Header Area */}
@@ -454,7 +566,7 @@ const ArticleFlow = ({
         {/* Top Row: Title & Back */}
         <div className="flex items-center gap-3 px-[16px] pt-4 pb-4">
           <button 
-            onClick={onClose} 
+            onClick={handleOnClose} 
             className="w-12 h-12 p-2 rounded-full outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex items-center justify-center transition-colors text-gray-500 hover:bg-muted"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -474,11 +586,11 @@ const ArticleFlow = ({
               <img src={avatarSrc} className="w-[40px] h-[40px] rounded-full object-cover" style={{ flex: 'none' }} />
 
               {/* Frame 2608493 */}
-              <div className="flex flex-col items-start justify-center" style={{ height: '42px', padding: '0px', flex: 'none' }}>
-                <h4 className="text-[#000000]" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '24px' }}>
+              <div className="flex flex-col items-start justify-center min-w-0" style={{ height: '42px', padding: '0px', flex: 'none', maxWidth: '180px' }}>
+                <h4 className="text-[#000000] truncate w-full" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '24px' }} title={authorName}>
                   {authorName}
                 </h4>
-                <p className="text-[#6B7280]" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '16px' }}>
+                <p className="text-[#6B7280] truncate w-full" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '16px' }} title={subtitleText}>
                   {subtitleText}
                 </p>
               </div>
@@ -553,7 +665,7 @@ const ArticleFlow = ({
           {/* Action Buttons */}
           <div className="ml-auto flex flex-row justify-center items-center gap-[8px]" style={{ width: '188px', height: '40px' }}>
             <button
-              onClick={onClose}
+              onClick={handleOnClose}
               className={`flex flex-row justify-center items-center rounded-[24px] transition-all border ${isCompanyPost ? 'bg-white dark:bg-[#0F1115] border-gray-200 dark:border-[#2A2D35] text-gray-500 dark:text-[#A1A8B3] hover:bg-gray-50 dark:hover:bg-[#121B2B]' : 'bg-white dark:bg-[#0B0F19] border-[#818CF8] text-[#818CF8]'}`}
               style={{ width: '90px', height: '40px', padding: '8px 16px', gap: '10px' }}
             >
@@ -565,7 +677,7 @@ const ArticleFlow = ({
               disabled={!isNextActive || isSubmitting}
               onClick={() => {
                 if (isEdit || skipNextStep) {
-                  onPost();
+                  handleOnPost();
                 } else {
                   console.log("NEXT CLICKED");
                   onPreviewStepChange?.(true);
@@ -671,6 +783,13 @@ const ArticleFlow = ({
           type="file"
           accept="image/*,video/*"
           onChange={handleInlineImageUpload}
+          className="hidden"
+        />
+        <input
+          ref={editImageInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleEditImageUpload}
           className="hidden"
         />
 

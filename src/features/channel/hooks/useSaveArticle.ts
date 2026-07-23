@@ -7,8 +7,8 @@ export const useCreateArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ channelId, input }: { channelId: string; input: ArticleInput }) =>
-      channelService.createArticle(channelId, input),
+    mutationFn: ({ channelId, input, files }: { channelId: string; input: ArticleInput; files?: File[] }) =>
+      channelService.createArticle(channelId, input, files),
     onSuccess: (article) => {
       toast.success(article.status === 'published' ? 'Article published!' : 'Draft saved.');
       queryClient.invalidateQueries({ queryKey: ['channel', 'articles'] });
@@ -23,8 +23,8 @@ export const useUpdateArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, channelId, input }: { id: string; channelId: string; input: Partial<ArticleInput> }) =>
-      channelService.updateArticle(id, channelId, input),
+    mutationFn: ({ id, channelId, input, files }: { id: string; channelId: string; input: Partial<ArticleInput>; files?: File[] }) =>
+      channelService.updateArticle(id, channelId, input, files),
     onSuccess: (article) => {
       toast.success(article.status === 'published' ? 'Article published!' : 'Draft saved.');
       queryClient.invalidateQueries({ queryKey: ['channel', 'articles'] });

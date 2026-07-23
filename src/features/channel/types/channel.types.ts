@@ -11,6 +11,11 @@ export interface Channel {
   logoUrl?: string;
   isSubscribed?: boolean;
   isOwner?: boolean;
+  latestArticle?: {
+    id: string;
+    title: string;
+    createdAt: string;
+  } | null;
 }
 
 export interface ChannelArticle {

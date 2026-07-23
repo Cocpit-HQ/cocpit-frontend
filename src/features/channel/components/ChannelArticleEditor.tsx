@@ -70,24 +70,24 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
     status,
   });
 
-  const persist = async (status: 'published' | 'draft') => {
+  const persist = async (status: 'published' | 'draft', inlineFiles: File[] = []) => {
     if (!channel) return;
     if (existingArticle) {
-      await updateArticle.mutateAsync({ id: existingArticle.id, channelId: channel.orgId, input: buildInput(status) });
+      await updateArticle.mutateAsync({ id: existingArticle.id, channelId: channel.orgId, input: buildInput(status), files: inlineFiles });
     } else {
-      await createArticle.mutateAsync({ channelId: channel.orgId, input: buildInput(status) });
+      await createArticle.mutateAsync({ channelId: channel.orgId, input: buildInput(status), files: inlineFiles });
     }
   };
 
-  const handlePost = async () => {
-    await persist('published');
+  const handlePost = async (inlineFiles?: File[]) => {
+    await persist('published', inlineFiles || []);
     onSuccess();
   };
 
-  const handleClose = async () => {
+  const handleClose = async (inlineFiles?: File[]) => {
     const hasContent = title.trim().length > 0 || plainText(content).length > 0;
     if (hasContent && !isEditingPublished) {
-      await persist('draft');
+      await persist('draft', inlineFiles || []);
     }
     onClose();
   };

@@ -30,7 +30,7 @@ export const postApi = {
     console.log("[postApi.create] Submitting unified single-API multipart upload for", files.length, "files...");
     const formData = new FormData();
     files.forEach(file => {
-      formData.append("media", file);
+      formData.append("media", file, file.name);
     });
 
     Object.entries(payload).forEach(([key, value]) => {
@@ -69,8 +69,35 @@ export const postApi = {
     };
   },
 
-  update: async (postId: string, payload: UpdatePostRequest) => {
-    return await updatePost(postId, payload);
+  update: async (postId: string, payload: UpdatePostRequest, files: File[] = []) => {
+    if (files.length === 0) {
+      return await updatePost(postId, payload);
+    }
+
+    console.log("[postApi.update] Submitting unified single-API multipart upload for", files.length, "files...");
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append("media", file, file.name);
+    });
+
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else if (typeof value === 'object') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+
+    const response = await api.put<any>(`/post/${postId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   },
 
   getById: async (postId: string) => {
