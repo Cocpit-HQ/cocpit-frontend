@@ -31,7 +31,7 @@ export default function ActivityLogFiltersBar({
     onFiltersChange({ ...filters, ...patch });
 
   return (
-    <div className="w-full flex flex-row items-start gap-6 max-w-[960px]">
+    <div className="w-full flex flex-row items-start gap-6 max-w-[960px] sticky top-[72px] z-20 bg-white dark:bg-[#0F1115] pt-2.5 pb-3">
       {/* Search logs */}
       <div className="flex flex-col items-start gap-2 flex-1 max-w-[304px]">
         <span className="text-[14px] font-medium text-[#000000] dark:text-white font-['Poppins'] tracking-[0.14px]">

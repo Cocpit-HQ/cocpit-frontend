@@ -59,6 +59,17 @@
   --color-profile-active-border: var(--profile-active-border);
   --color-profile-text: var(--profile-text);
   --color-subtle: var(--subtle);
+
+  /* Company Theme Tokens */
+  --color-company-bg: var(--company-bg);
+  --color-company-card: var(--company-card);
+  --color-company-text: var(--company-text);
+  --color-company-secondary: var(--company-secondary);
+  --color-company-border: var(--company-border);
+  --color-company-primary: var(--company-primary);
+  --color-company-primary-dark: var(--company-primary-dark);
+  --color-company-ultra-light: var(--company-ultra-light);
+  --color-company-light-primary: var(--company-light-primary);
 }
 
 @layer base {
@@ -142,6 +153,17 @@
 
     /* Company Onboarding */
     --onboarding-accent: #82B8FF;
+
+    /* Company Theme Variables (Default / Dark) */
+    --company-bg: #0F1115;
+    --company-card: #121B2B;
+    --company-text: #FFFFFF;
+    --company-secondary: #A1A8B3;
+    --company-border: #2A2D35;
+    --company-primary: #4D9CFF;
+    --company-primary-dark: #82B8FF;
+    --company-ultra-light: #121B2B;
+    --company-light-primary: rgba(77, 156, 255, 0.15);
   }
 
   [data-theme="navy"] {
@@ -242,6 +264,17 @@
     --profile-active-border: #EEF2FF;
     --profile-text: #000000;
     --subtle: #EEF2FF;
+
+    /* Company Theme Variables (Light) */
+    --company-bg: #FFFFFF;
+    --company-card: #FFFFFF;
+    --company-text: #000000;
+    --company-secondary: #6B7280;
+    --company-border: #E0E0E7;
+    --company-primary: #1A73E8;
+    --company-primary-dark: #0D47A1;
+    --company-ultra-light: #F2F7FF;
+    --company-light-primary: #E8F1FF;
   }
 
   [data-theme="dark"] {
@@ -335,6 +368,17 @@
     --profile-active-border: #1C2840;
     --profile-text: #ffffff;
     --subtle: #2A3150;
+
+    /* Company Theme Variables (Dark) */
+    --company-bg: #0F1115;
+    --company-card: #121B2B;
+    --company-text: #FFFFFF;
+    --company-secondary: #A1A8B3;
+    --company-border: #2A2D35;
+    --company-primary: #4D9CFF;
+    --company-primary-dark: #82B8FF;
+    --company-ultra-light: #121B2B;
+    --company-light-primary: rgba(77, 156, 255, 0.15);
   }
 }
 

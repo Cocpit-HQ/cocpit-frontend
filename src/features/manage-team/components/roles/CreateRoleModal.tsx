@@ -66,10 +66,10 @@ export default function CreateRoleModal({
       />
 
       {/* Modal */}
-      <div className="relative w-[672px] max-h-[90vh] bg-[#FFFFFF] rounded-[24px] shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden">
+      <div className="relative w-[672px] max-h-[90vh] bg-[#FFFFFF] dark:bg-[#0F1115] border border-transparent dark:border-[#2A2D35] rounded-[24px] shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 h-[87px]">
-          <h2 className="text-[32px] font-semibold text-[#000000] font-['Poppins'] leading-[38px] tracking-[-0.64px]">
+          <h2 className="text-[32px] font-semibold text-[#000000] dark:text-white font-['Poppins'] leading-[38px] tracking-[-0.64px]">
             Create new role
           </h2>
           <button
@@ -86,7 +86,7 @@ export default function CreateRoleModal({
           <div className="flex flex-col gap-4 pt-2">
             {/* Role name */}
             <div className="flex flex-col gap-[11.5px]">
-              <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px]">
+              <label className="text-[16px] text-[#434655] dark:text-[#A1A8B3] font-['Poppins'] font-medium leading-[17px]">
                 Role name
               </label>
               <div>
@@ -98,8 +98,8 @@ export default function CreateRoleModal({
                   className={`w-full h-[56px] px-4 rounded-[12px] border ${
                     hasError 
                       ? 'border-[#EF4444] focus:border-[#EF4444]' 
-                      : 'border-[#E0E0E7] focus:border-[#1A73E8]'
-                  } bg-[#FFFFFF] text-[16px] text-[#434655] font-['Poppins'] font-medium outline-none transition-colors placeholder:text-[#6B7280]`}
+                      : 'border-[#E0E0E7] dark:border-[#2A2D35] focus:border-[#1A73E8] dark:focus:border-[#4D9CFF]'
+                  } bg-[#FFFFFF] dark:bg-[#121B2B] text-[16px] text-[#434655] dark:text-white font-['Poppins'] font-medium outline-none transition-colors placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3]`}
                 />
                 {isNameAdmin && (
                   <p className="text-[#EF4444] text-[14px] mt-1 font-['Poppins']">
@@ -116,7 +116,7 @@ export default function CreateRoleModal({
 
             {/* Color picker */}
             <div className="flex flex-col gap-[11.5px]">
-              <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px]">
+              <label className="text-[16px] text-[#434655] dark:text-[#A1A8B3] font-['Poppins'] font-medium leading-[17px]">
                 Role color
               </label>
               <div className="flex gap-3 flex-wrap">
@@ -126,7 +126,7 @@ export default function CreateRoleModal({
                     onClick={() => setColor(c)}
                     className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${
                       color === c
-                        ? 'border border-[#000000]'
+                        ? 'border border-[#000000] dark:border-white'
                         : ''
                     }`}
                   >
@@ -141,7 +141,7 @@ export default function CreateRoleModal({
 
             {/* Description */}
             <div className="flex flex-col gap-[12px] w-full">
-              <label className="text-[16px] text-[#434655] font-['Poppins'] font-medium leading-[17px] h-[17px] flex items-center">
+              <label className="text-[16px] text-[#434655] dark:text-[#A1A8B3] font-['Poppins'] font-medium leading-[17px] h-[17px] flex items-center">
                 Role description
               </label>
               <textarea
@@ -157,7 +157,7 @@ export default function CreateRoleModal({
                   }
                 }}
                 placeholder="Describe the responsibilities and scope of this role..."
-                className={`box-border w-full h-[120px] p-4 rounded-[12px] border ${showLimitError ? 'border-red-500' : 'border-[#E0E0E7]'} bg-[#FFFFFF] text-[16px] font-medium text-[#434655] leading-[26px] font-['Poppins'] outline-none focus:border-[#1A73E8] transition-colors resize-none overflow-y-auto placeholder:text-[#6B7280]`}
+                className={`box-border w-full h-[120px] p-4 rounded-[12px] border ${showLimitError ? 'border-red-500' : 'border-[#E0E0E7] dark:border-[#2A2D35]'} bg-[#FFFFFF] dark:bg-[#121B2B] text-[16px] font-medium text-[#434655] dark:text-white leading-[26px] font-['Poppins'] outline-none focus:border-[#1A73E8] dark:focus:border-[#4D9CFF] transition-colors resize-none overflow-y-auto placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3]`}
               />
               <div className="flex justify-between items-start mt-1">
                 <div className="flex-1">
@@ -167,7 +167,7 @@ export default function CreateRoleModal({
                     </span>
                   )}
                 </div>
-                <span className={`text-[12px] font-['Poppins'] ${showLimitError ? 'text-red-500' : 'text-[#6B7280]'}`}>
+                <span className={`text-[12px] font-['Poppins'] ${showLimitError ? 'text-red-500' : 'text-[#6B7280] dark:text-[#A1A8B3]'}`}>
                   {wordCount}/200
                 </span>
               </div>
@@ -186,14 +186,14 @@ export default function CreateRoleModal({
           <div className="flex items-center justify-end gap-[16px] pt-4 pb-2 mt-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#1A73E8] bg-[#FFFFFF] text-[14px] font-normal text-[#1A73E8] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#1A73E8] dark:border-[#4D9CFF] bg-[#FFFFFF] dark:bg-transparent text-[14px] font-normal text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] hover:bg-gray-50 dark:hover:bg-[#121B2B] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!name.trim() || isSubmitting}
-              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] bg-[#1A73E8] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] dark:border-transparent bg-[#1A73E8] dark:bg-[#4D9CFF] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Creating...' : 'Create'}
             </button>

@@ -58,8 +58,8 @@ export default function PermissionCheckList({
   };
 
   return (
-    <div className="flex flex-col p-4 gap-4 bg-[#EFF4FF] rounded-[24px]">
-      <div className="text-[16px] font-semibold text-[#000000] leading-[25px] font-['Poppins']">
+    <div className="flex flex-col p-4 gap-4 bg-[#EFF4FF] dark:bg-[#1A2435] rounded-[24px]">
+      <div className="text-[16px] font-semibold text-[#000000] dark:text-[#FFFFFF] leading-[25px] font-['Poppins']">
         Permissions
       </div>
       <div className="flex flex-col gap-4">
@@ -68,11 +68,11 @@ export default function PermissionCheckList({
           const hasChildren = 'children' in group;
 
           return (
-            <div key={group.id} className={`flex flex-col bg-[#FFFFFF] rounded-[16px] p-4 box-border ${hasChildren ? 'gap-4' : ''}`}>
+            <div key={group.id} className={`flex flex-col bg-[#FFFFFF] dark:bg-[#0F1115] rounded-[16px] p-4 box-border ${hasChildren ? 'gap-4' : ''}`}>
               <div className="flex items-center justify-between h-[26px] w-full">
                 <div className="flex items-center gap-3 h-[26px]">
-                  <Icon icon={group.icon} className="w-6 h-6 text-[#000000] shrink-0" />
-                  <div className="flex items-center h-[26px] text-[16px] font-normal text-[#000000] leading-[26px] font-['Poppins']">
+                  <Icon icon={group.icon} className="w-6 h-6 text-[#000000] dark:text-[#FFFFFF] shrink-0" />
+                  <div className="flex items-center h-[26px] text-[16px] font-normal text-[#000000] dark:text-[#FFFFFF] leading-[26px] font-['Poppins']">
                     {group.label}
                   </div>
                 </div>
@@ -81,11 +81,11 @@ export default function PermissionCheckList({
                   onClick={() => toggle(group.id as TeamPermission)}
                   disabled={disabled}
                   className={`relative w-[44px] h-[24px] rounded-full transition-colors ${
-                    isChecked ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7]'
+                    isChecked ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#E0E0E7] dark:bg-[#2A2D35]'
                   }`}
                 >
                   <div
-                    className={`absolute top-[2px] w-[20px] h-[20px] bg-[#FFFFFF] rounded-full border border-[#E0E0E7] transition-all ${
+                    className={`absolute top-[2px] w-[20px] h-[20px] bg-[#FFFFFF] rounded-full border border-[#E0E0E7] dark:border-[#2A2D35] transition-all ${
                       isChecked ? 'left-[22px]' : 'left-[2px]'
                     }`}
                   />
@@ -102,20 +102,20 @@ export default function PermissionCheckList({
                     
                     return (
                       <div key={child.id} className={`flex items-center justify-between pl-9 h-[40px] w-full ${isChildDisabled ? 'opacity-50' : ''}`}>
-                        <div className="flex items-center h-[26px] text-[16px] text-[#000000] leading-[26px] font-['Poppins']">
+                        <div className="flex items-center h-[26px] text-[16px] text-[#000000] dark:text-[#A1A8B3] leading-[26px] font-['Poppins']">
                           {child.label}
                         </div>
                         <button
                           type="button"
                           onClick={() => toggle(child.id as TeamPermission)}
                           disabled={isChildDisabled}
-                          className="flex items-center justify-center w-[40px] h-[40px] rounded-[100px] p-[11px] hover:bg-gray-50 transition-colors disabled:hover:bg-transparent"
+                          className="flex items-center justify-center w-[40px] h-[40px] rounded-[100px] p-[11px] hover:bg-gray-50 dark:hover:bg-[#1A2435] transition-colors disabled:hover:bg-transparent"
                         >
                           <div className={`box-border w-[18px] h-[18px] rounded-[2px] border flex items-center justify-center transition-colors ${
                             isChildChecked 
-                              ? 'bg-[#1A73E8] border-[#1A73E8]' 
-                              : 'border-[#6B7280]'
-                          } ${isChildDisabled ? 'cursor-not-allowed bg-[#E0E0E7] border-[#E0E0E7]' : ''}`}>
+                              ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] border-[#1A73E8] dark:border-[#4D9CFF]' 
+                              : 'border-[#6B7280] dark:border-[#A1A8B3]'
+                          } ${isChildDisabled ? 'cursor-not-allowed bg-[#E0E0E7] dark:bg-[#2A2D35] border-[#E0E0E7] dark:border-[#2A2D35]' : ''}`}>
                             {isChildChecked && (
                               <Icon icon="lucide:check" className="w-[14px] h-[14px] text-white" />
                             )}

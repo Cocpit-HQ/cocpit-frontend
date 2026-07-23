@@ -39,6 +39,7 @@ function mapRole(row: any): TeamRole {
       name: m.name || m.full_name,
       status: m.status || 'ACTIVE',
       inviteId: m.invite_id,
+      isOwner: Boolean(m.is_owner ?? m.isOwner),
     })) : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -137,6 +137,8 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
     });
   };
 
+  const isAdminRole = role.name.toLowerCase() === 'admin' || role.name.toLowerCase() === 'administrator';
+
   return (
     <div className="w-full max-w-[1128px] mx-auto min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-8 px-4 xl:px-0">
       <div className="w-full max-w-[998px] mx-auto flex flex-col gap-5">
@@ -144,9 +146,9 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         <div className="flex items-center gap-3 mb-2">
           <button
             onClick={() => router.push('/team')}
-            className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-black transition-colors shrink-0"
+            className="w-12 h-12 rounded-full border border-[#DADADA] dark:border-gray-700 backdrop-blur-[12px] flex items-center justify-center text-[#6B7280] dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors shrink-0"
           >
-            <Icon icon="lucide:chevron-left" className="w-5 h-5" />
+            <Icon icon="lucide:chevron-left" className="w-6 h-6" />
           </button>
           <div className="flex flex-col">
             <span className="text-[16px] font-semibold text-[#000000] dark:text-white font-['Poppins']">
@@ -157,74 +159,95 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             </span>
           </div>
         </div>
-
         {/* Role header card */}
-        <div className="flex flex-col border border-[#E8F1FF] dark:border-gray-800 rounded-[24px] p-4 bg-white dark:bg-[#1A1D24] gap-3">
-          <div className="flex items-center justify-between gap-3 w-full">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-6 h-6 rounded-full"
-                style={{ backgroundColor: role.color }}
-              />
-              <h1 className="text-[24px] font-medium leading-[24px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
+        {isAdminRole ? (
+          <div className="flex flex-col border border-company-border rounded-[24px] p-5 bg-company-card gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#00C2FF] flex-shrink-0" />
+              <h1 className="text-[24px] font-semibold leading-[24px] text-company-text font-['Poppins']">
                 {role.name}
               </h1>
             </div>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setIsEditOpen(true)}
-                className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center"
-                title="Edit role"
-              >
-                <Icon icon="fluent:edit-24-regular" className="w-5 h-5 text-[#000000] dark:text-white" />
-              </button>
-              {!role.isSystemRole && (
-                <button 
-                  onClick={() => setIsDeleteOpen(true)}
-                  className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center"
-                  title="Delete role"
-                >
-                  <Icon icon="fluent:delete-24-regular" className="w-5 h-5 text-[#EF4444]" />
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-2 w-full mt-2">
-            <h3 className="text-[18px] font-medium leading-[27px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
-              Description
-            </h3>
-            <div className="bg-[#F2F7FF] dark:bg-gray-800 border-l-[4px] border-[#0D47A1] py-2 px-4 flex flex-col gap-2 w-full">
-              <p className="text-[16px] leading-[24px] font-normal text-[#6B7280] dark:text-gray-300 font-['Poppins'] flex items-center">
-                {role.description || 'No description provided.'}
-              </p>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-2 w-full mt-2">
-            <h3 className="text-[18px] font-medium leading-[27px] text-[#000000] dark:text-white font-['Poppins'] flex items-center">
-              Permissions
-            </h3>
-            <div className="flex flex-wrap gap-4 mt-1">
-              {role.permissions?.length > 0 ? (
-                role.permissions.map(p => {
-                  const label = getPermissionLabel(p);
-                  return (
-                    <div key={p} className="box-border flex flex-row justify-center items-center bg-[#F2F7FF] dark:bg-gray-800 border border-[#EEF2FF] dark:border-gray-700 rounded-lg">
-                       <div className="flex flex-row justify-center items-center px-4 py-[6px] gap-2">
-                         <span className="text-[14px] font-normal leading-[20px] text-[#1A73E8] dark:text-[#4D9CFF] font-['Poppins'] text-center flex items-center">
-                           {label}
-                         </span>
-                       </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <span className="text-[14px] text-[#6B7280] font-['Poppins']">No permissions</span>
-              )}
+            <div className="flex flex-col gap-2 w-full mt-1">
+              <h3 className="text-[18px] font-medium leading-[27px] text-company-text font-['Poppins']">
+                Description
+              </h3>
+              <div className="bg-company-ultra-light border-l-[4px] border-[#0D47A1] dark:border-l-[#82B8FF] py-3 px-4 flex flex-col gap-2 w-full rounded-r-md">
+                <p className="text-[15px] leading-[24px] font-normal text-company-secondary font-['Poppins']">
+                  {role.description || 'Administrator Has full access to all modules and features of the application. Administrators can view, manage, create, edit, and delete any data, as well as configure settings and oversee all system activities'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col border border-company-border rounded-[24px] p-4 bg-company-card gap-3">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-6 h-6 rounded-full"
+                  style={{ backgroundColor: role.color }}
+                />
+                <h1 className="text-[24px] font-medium leading-[24px] text-company-text font-['Poppins'] flex items-center">
+                  {role.name}
+                </h1>
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setIsEditOpen(true)}
+                  className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center"
+                  title="Edit role"
+                >
+                  <Icon icon="fluent:edit-24-regular" className="w-5 h-5 text-company-text" />
+                </button>
+                {!role.isSystemRole && (
+                  <button
+                    onClick={() => setIsDeleteOpen(true)}
+                    className="w-6 h-6 relative hover:opacity-80 flex items-center justify-center"
+                    title="Delete role"
+                  >
+                    <Icon icon="fluent:delete-24-regular" className="w-5 h-5 text-[#EF4444] dark:text-[#F87171]" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 w-full mt-2">
+              <h3 className="text-[18px] font-medium leading-[27px] text-company-text font-['Poppins'] flex items-center">
+                Description
+              </h3>
+              <div className="bg-company-ultra-light border-l-[4px] border-[#0D47A1] dark:border-l-[#82B8FF] py-2 px-4 flex flex-col gap-2 w-full rounded-r-md">
+                <p className="text-[16px] leading-[24px] font-normal text-company-secondary font-['Poppins'] flex items-center">
+                  {role.description || 'No description provided.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 w-full mt-2">
+              <h3 className="text-[18px] font-medium leading-[27px] text-company-text font-['Poppins'] flex items-center">
+                Permissions
+              </h3>
+              <div className="flex flex-wrap gap-4 mt-1">
+                {role.permissions?.length > 0 ? (
+                  role.permissions.map(p => {
+                    const label = getPermissionLabel(p);
+                    return (
+                      <div key={p} className="box-border flex flex-row justify-center items-center bg-company-light-primary border border-company-border rounded-lg">
+                        <div className="flex flex-row justify-center items-center px-4 py-[6px] gap-2">
+                          <span className="text-[14px] font-normal leading-[20px] text-company-primary font-['Poppins'] text-center flex items-center">
+                            {label}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <span className="text-[14px] text-company-secondary font-['Poppins']">No permissions</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Sub-tabs: Members | Activity Log */}
         <div className="flex gap-3 mt-4">
@@ -232,8 +255,8 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             onClick={() => setActiveTab('members')}
             className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
               activeTab === 'members'
-                ? 'bg-[#E9F0FE] dark:bg-[#1A73E8]/20 text-[#1A73E8] dark:text-[#4D9CFF] border border-transparent'
-                : 'bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] border border-[#1A73E8] dark:border-[#4D9CFF] hover:bg-[#E9F0FE]/50'
+                ? 'bg-company-light-primary text-company-primary border border-transparent'
+                : 'bg-transparent text-company-primary border border-company-primary hover:bg-company-light-primary/50'
             }`}
           >
             Members
@@ -243,8 +266,8 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
               onClick={() => setActiveTab('activity')}
               className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
                 activeTab === 'activity'
-                  ? 'bg-[#E9F0FE] dark:bg-[#1A73E8]/20 text-[#1A73E8] dark:text-[#4D9CFF] border border-transparent'
-                  : 'bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] border border-[#1A73E8] dark:border-[#4D9CFF] hover:bg-[#E9F0FE]/50'
+                  ? 'bg-company-light-primary text-company-primary border border-transparent'
+                  : 'bg-transparent text-company-primary border border-company-primary hover:bg-company-light-primary/50'
               }`}
             >
               Activity logs

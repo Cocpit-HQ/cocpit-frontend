@@ -114,6 +114,7 @@ export interface TeamMember {
   status: 'ACTIVE' | 'SUSPENDED' | 'PENDING_INVITE' | 'REMOVED';
   joinedAt: string;
   inviteId?: string;
+  isOwner?: boolean;
 }
 
 // Activity log entry
@@ -153,6 +154,7 @@ export interface PendingInvitation {
   userId: string;
   name: string;
   avatarUrl: string;
+  email?: string;
   headline?: string;
   roleId: string;
   roleName: string;

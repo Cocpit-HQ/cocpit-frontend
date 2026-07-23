@@ -9,10 +9,9 @@ export const usePendingInvites = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['team', 'invites', 'pending', orgId],
     queryFn: () => teamService.getPendingInvites(orgId!),
-    staleTime: 0,
-    refetchInterval: 10000,
+    staleTime: 5 * 60 * 1000,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     enabled: !!orgId,
   });
 

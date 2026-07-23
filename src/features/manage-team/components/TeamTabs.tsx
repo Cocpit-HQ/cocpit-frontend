@@ -24,7 +24,7 @@ export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
     <div className="inline-flex justify-start items-start gap-4 mb-2">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
-        
+
         const buttonContent = (
           <button
             key={tab.key}
@@ -36,10 +36,10 @@ export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
             disabled={tab.disabled}
             className={`h-10 rounded-[24px] flex justify-center items-center overflow-hidden transition-all ${
               tab.disabled
-                ? "opacity-50 !cursor-not-allowed bg-[#FFFFFF] dark:bg-transparent border border-[#9CA3AF]"
+                ? "opacity-50 !cursor-not-allowed bg-company-bg border border-[#9CA3AF]"
                 : isActive 
-                  ? "bg-[#E8F1FF] dark:bg-[#1A2435] border border-transparent" 
-                  : "bg-[#FFFFFF] dark:bg-transparent border border-[#1A73E8] hover:bg-[#E8F1FF]/50 dark:hover:bg-[#1A2435]/50"
+                  ? "bg-company-light-primary border border-transparent" 
+                  : "bg-company-bg border border-company-primary hover:bg-company-light-primary/50"
             }`}
           >
             <div className="h-8 px-4 py-[6px] flex justify-center items-center gap-2">
@@ -47,8 +47,8 @@ export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
                 tab.disabled 
                   ? "text-[#9CA3AF] font-normal" 
                   : isActive 
-                    ? "text-[#1A73E8] font-medium" 
-                    : "text-[#1A73E8] font-normal"
+                    ? "text-company-primary font-medium" 
+                    : "text-company-primary font-normal"
               }`}>
                 {tab.label}
               </span>

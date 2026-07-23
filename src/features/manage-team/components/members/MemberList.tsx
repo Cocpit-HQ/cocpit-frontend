@@ -56,23 +56,38 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
           <span className="text-[12px] text-[#A3AED0] dark:text-gray-500 font-['Poppins'] mb-2">
             Sent invitations - {pendingInvites.length}
           </span>
-          {pendingInvites.map((invite) => (
-            <div key={invite.id} className="w-full flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
-                <img src={invite.avatarUrl} onError={(e) => { (e.target as HTMLImageElement).src = '/assets/pngegg.png'; }} alt={invite.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[14px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">{invite.name}</span>
-                  <span className="text-[12px] text-[#707EAE] dark:text-gray-500 font-['Poppins'] truncate">{invite.headline || 'Invited user'}</span>
+          {pendingInvites.map((invite) => {
+            const displayEmail = invite.email ||
+              (invite.headline?.includes('@') ? invite.headline : null) ||
+              `${invite.name.split(' ')[0].toLowerCase()}.${invite.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
+
+            return (
+              <div key={invite.id} className="w-full flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={invite.avatarUrl}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/assets/pngegg.png'; }}
+                    alt={invite.name}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[14px] font-semibold text-[#000000] dark:text-gray-200 font-['Poppins'] truncate">
+                      {invite.name}
+                    </span>
+                    <span className="text-[12px] text-[#707EAE] dark:text-gray-400 font-['Poppins'] truncate">
+                      {displayEmail}
+                    </span>
+                  </div>
                 </div>
+                <button
+                  onClick={() => onWithdrawInvitation?.(invite.id)}
+                  className="text-[13px] text-[#A3AED0] dark:text-gray-400 font-['Poppins'] font-medium hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  Withdraw invitation
+                </button>
               </div>
-              <button 
-                onClick={() => onWithdrawInvitation?.(invite.id)}
-                className="text-[13px] text-[#A3AED0] font-['Poppins'] font-medium hover:text-gray-600"
-              >
-                Withdraw invitation
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
