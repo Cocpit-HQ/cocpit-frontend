@@ -120,7 +120,7 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     is_deleted_for_everyone: backendMessage.is_deleted_for_everyone || false,
     is_deleted_for_me: backendMessage.is_deleted_for_me || false,
     status: backendMessage.read_at ? 'read' : 'sent',
-    media: backendMessage.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' | 'document' })),
+    media: backendMessage.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' | 'document', name: m.filename })),
     sharedProfile: backendMessage.shared_profile || null,
     sharedProfileId: backendMessage.shared_profile_id || undefined,
     sharedProfileType: backendMessage.shared_profile_type || undefined,

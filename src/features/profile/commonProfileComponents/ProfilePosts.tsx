@@ -18,6 +18,9 @@ import React, { useEffect, useState } from "react";
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { useSession } from "next-auth/react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSocial } from "@/context/SocialContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service";
 import { toast } from "sonner";
 
 import { PostCarousel } from "@/components/shared/PostCarousel";
@@ -35,6 +38,7 @@ import type { Post } from "@/types/entities";
 import { createRepost, toggleLike, toggleSavePost, updatePost, deletePost } from "../services/profile.service";
 
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then(m => m.ReportModal), { ssr: false });
 
 const mergeProfilePostState = (current: Post, incoming: Post): Post => ({
   ...current,
@@ -79,6 +83,65 @@ const ProfilePostCard = ({
   const [isReposted, setIsReposted] = useState(post.isReposted || false);
   const [repostId, setRepostId] = useState<string | null>(post.repostId || null);
   const [isUndoRepostConfirmOpen, setIsUndoRepostConfirmOpen] = useState(false);
+
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
+  const queryClient = useQueryClient();
+  const authorUserId = post.authorId?.toString();
+  const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
+  const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
+
+  const followCompanyMutation = useMutation({
+    mutationFn: (orgId: string) => companyProfileService.followOrganization(orgId),
+    onSuccess: (_, orgId) => {
+      syncFollowStatus(orgId, true);
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+    }
+  });
+
+  const unfollowCompanyMutation = useMutation({
+    mutationFn: (orgId: string) => companyProfileService.unfollowOrganization(orgId),
+    onSuccess: (_, orgId) => {
+      syncFollowStatus(orgId, false);
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+    }
+  });
+
+  const handleToggleFollowAuthor = () => {
+    if (!authorUserId || isAuthorFollowLoading) return;
+
+    if (localPost.isCompanyPost) {
+      if (isAuthorFollowing) {
+        unfollowCompanyMutation.mutate(authorUserId);
+      } else {
+        followCompanyMutation.mutate(authorUserId);
+      }
+    } else {
+      if (isAuthorFollowing) {
+        unfollowUser(authorUserId);
+      } else {
+        followUser(authorUserId);
+      }
+    }
+  };
+
+  const handleNotInterested = () => {
+    setIsHidden(true);
+    toast("Post hidden", {
+      description: "We'll show fewer posts like this.",
+      action: {
+        label: "Undo",
+        onClick: () => setIsHidden(false),
+      },
+    });
+  };
 
   useEffect(() => {
     setLocalPost(post);
@@ -283,6 +346,8 @@ const ProfilePostCard = ({
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  if (isHidden) return null;
+
   return (
     <div onClick={handleCardClick} onClickCapture={handleCardNavigationClick} className="cursor-pointer flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       {/* Header section */}
@@ -386,6 +451,41 @@ const ProfilePostCard = ({
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
                     <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-[#FF6B6B]" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
+                )}
+
+                {!isOwnPost && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleToggleFollowAuthor}
+                      disabled={!authorUserId || isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending}
+                      className="flex items-start justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
+                    >
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)] break-words text-left pr-2">
+                        {localPost.isCompanyPost
+                          ? (isAuthorFollowing ? "Unfollow company" : "Follow company")
+                          : (isAuthorFollowing ? "Unfollow user" : "Follow user")}
+                      </span>
+                      <img
+                        src={localPost.authorAvatar || "/assets/pngegg.png"}
+                        alt={localPost.author || "User"}
+                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setIsReportModalOpen(true)}
+                      className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
+                    >
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)]">Report post</span>
+                      <Icon icon="mdi:information-outline" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleNotInterested}
+                      className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
+                    >
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)]">Not interested</span>
+                      <Icon icon="fluent:eye-off-16-regular" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
+                    </DropdownMenuItem>
+                  </>
                 )}
               </div>
             </DropdownMenuContent>
@@ -697,6 +797,15 @@ const ProfilePostCard = ({
               shares: (Number(prev.shares) || 0) + 1 + ""
             }));
           }}
+        />
+      )}
+
+      {isReportModalOpen && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="POST"
+          targetId={localPost.id}
         />
       )}
     </div>

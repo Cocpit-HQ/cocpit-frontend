@@ -304,7 +304,7 @@ export default function UnifiedMessageInput({
                         ref={fileInputRef}
                         className="hidden"
                         onChange={handleFileSelect}
-                        accept="image/*,video/*,application/pdf"
+                        accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     />
 
                     {/* Right side controls */}

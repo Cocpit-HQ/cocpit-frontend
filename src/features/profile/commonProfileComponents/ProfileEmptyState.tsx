@@ -83,7 +83,7 @@ export function ProfileEmptyState({
             <span className="font-[family-name:var(--font-poppins)] font-medium text-sm leading-5 text-white">
               Create
             </span>
-            <Icon icon="ic:round-add" className="w-5 h-5 text-white" />
+            <Icon icon="solar:add-circle-linear" className="w-5 h-5 text-white" />
           </button>
         </div>
       </div>

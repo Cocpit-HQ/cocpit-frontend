@@ -194,38 +194,31 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   useEffect(() => {
     const query = debouncedSchoolSearch.trim()
 
-    // ❌ 1. Empty input → reset
-    if (!query) {
-      setSchoolOptions([])
-      lastSchoolQueryRef.current = ""
-      return
-    }
-
-    // ❌ 2. Prevent API after selecting from dropdown
     if (schoolSelectedRef.current) {
       schoolSelectedRef.current = false
       return
     }
 
-    // ❌ 3. Prevent duplicate API for same query
-    if (lastSchoolQueryRef.current === query) return
+    if (!query) {
+      lastSchoolQueryRef.current = ""
+      setShowSchoolDropdown(false)
+      return
+    }
 
-    // ✅ 4. Serve from cache (NO API call)
+    if (lastSchoolQueryRef.current === query && schoolOptions.length > 0) return
+
     if (schoolCacheRef.current[query]) {
       const cached = schoolCacheRef.current[query]
       setSchoolOptions(cached)
 
       if (
         cached.length > 0 &&
-        document.activeElement === schoolInputRef.current &&
-        schoolSearch.trim() === query
+        document.activeElement === schoolInputRef.current
       ) {
         setShowSchoolDropdown(true)
       }
 
       setSchoolHighlight(-1)
-
-      // ✅ mark as handled
       lastSchoolQueryRef.current = query
       return
     }
@@ -233,30 +226,22 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     let cancelled = false
     setSchoolLoading(true)
 
-    // 🚫 DO NOT set lastQueryRef here
-
     getEducationList(query, "")
       .then((res) => {
         if (cancelled) return
 
         const schoolsList = res.schools || []
-
-        // ✅ Save to cache
         schoolCacheRef.current[query] = schoolsList
-
         setSchoolOptions(schoolsList)
 
         if (
           schoolsList.length > 0 &&
-          document.activeElement === schoolInputRef.current &&
-          schoolSearch.trim() === query
+          document.activeElement === schoolInputRef.current
         ) {
           setShowSchoolDropdown(true)
         }
 
         setSchoolHighlight(-1)
-
-        // ✅ IMPORTANT: set AFTER success
         lastSchoolQueryRef.current = query
       })
       .catch(() => {
@@ -271,51 +256,41 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     }
   }, [debouncedSchoolSearch])
 
-
   // ── Fetch degree suggestions ──────────────────────────────────────────────
   useEffect(() => {
     const query = debouncedDegreeSearch.trim()
 
-    // ❌ 1. Empty input → reset
-    if (!query) {
-      setDegreeOptions([])
-      lastDegreeQueryRef.current = ""
-      return
-    }
-
-    // ❌ 2. Prevent API after selecting from dropdown
     if (degreeSelectedRef.current) {
       degreeSelectedRef.current = false
       return
     }
 
-    // ❌ 3. Prevent duplicate API for same query
-    if (lastDegreeQueryRef.current === query) return
+    if (!query) {
+      lastDegreeQueryRef.current = ""
+      setShowDegreeDropdown(false)
+      return
+    }
 
-    // ✅ 4. Serve from cache (NO API call)
+    if (lastDegreeQueryRef.current === query && degreeOptions.length > 0) return
+
     if (degreeCacheRef.current[query]) {
       const cached = degreeCacheRef.current[query]
       setDegreeOptions(cached)
 
       if (
         cached.length > 0 &&
-        document.activeElement === degreeInputRef.current &&
-        degreeSearch.trim() === query
+        document.activeElement === degreeInputRef.current
       ) {
         setShowDegreeDropdown(true)
       }
 
       setDegreeHighlight(-1)
-
-      // ✅ mark as handled
       lastDegreeQueryRef.current = query
       return
     }
 
     let cancelled = false
     setDegreeLoading(true)
-
-    // 🚫 DO NOT set lastQueryRef here
 
     getEducationList("", query)
       .then((res) => {
@@ -324,22 +299,17 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         const degs = res.degrees || []
         const uniqueDegrees = Array.from(new Set(degs))
 
-        // ✅ Save to cache
         degreeCacheRef.current[query] = uniqueDegrees
-
         setDegreeOptions(uniqueDegrees)
 
         if (
           uniqueDegrees.length > 0 &&
-          document.activeElement === degreeInputRef.current &&
-          degreeSearch.trim() === query
+          document.activeElement === degreeInputRef.current
         ) {
           setShowDegreeDropdown(true)
         }
 
         setDegreeHighlight(-1)
-
-        // ✅ IMPORTANT: set AFTER success
         lastDegreeQueryRef.current = query
       })
       .catch(() => {
@@ -358,46 +328,37 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   useEffect(() => {
     const query = debouncedSpecializationSearch.trim()
 
-    // ❌ 1. Empty input → reset
-    if (!query) {
-      setSpecializationOptions([])
-      lastSpecializationQueryRef.current = ""
-      return
-    }
-
-    // ❌ 2. Prevent API after selecting from dropdown
     if (specializationSelectedRef.current) {
       specializationSelectedRef.current = false
       return
     }
 
-    // ❌ 3. Prevent duplicate API for same query
-    if (lastSpecializationQueryRef.current === query) return
+    if (!query) {
+      lastSpecializationQueryRef.current = ""
+      setShowSpecializationDropdown(false)
+      return
+    }
 
-    // ✅ 4. Serve from cache (NO API call)
+    if (lastSpecializationQueryRef.current === query && specializationOptions.length > 0) return
+
     if (specializationCacheRef.current[query]) {
       const cached = specializationCacheRef.current[query]
       setSpecializationOptions(cached)
 
       if (
         cached.length > 0 &&
-        document.activeElement === specializationInputRef.current &&
-        specializationSearch.trim() === query
+        document.activeElement === specializationInputRef.current
       ) {
         setShowSpecializationDropdown(true)
       }
 
       setSpecializationHighlight(-1)
-
-      // ✅ mark as handled
       lastSpecializationQueryRef.current = query
       return
     }
 
     let cancelled = false
     setSpecializationLoading(true)
-
-    // 🚫 DO NOT set lastQueryRef here
 
     getEducationList("", "", query)
       .then((res) => {
@@ -406,22 +367,17 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         const specs = res.specializations || []
         const uniqueSpecs = Array.from(new Set(specs))
 
-        // ✅ Save to cache
         specializationCacheRef.current[query] = uniqueSpecs
-
         setSpecializationOptions(uniqueSpecs)
 
         if (
           uniqueSpecs.length > 0 &&
-          document.activeElement === specializationInputRef.current &&
-          specializationSearch.trim() === query
+          document.activeElement === specializationInputRef.current
         ) {
           setShowSpecializationDropdown(true)
         }
 
         setSpecializationHighlight(-1)
-
-        // ✅ IMPORTANT: set AFTER success
         lastSpecializationQueryRef.current = query
       })
       .catch(() => {
@@ -570,7 +526,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       setSchoolLogo(opt.logo_url)
       lastSchoolQueryRef.current = opt.name.trim()
     }
-    setShowSchoolDropdown(false); setSchoolOptions([])
+    setShowSchoolDropdown(false)
   }
   const selectDegree = (deg: string) => {
     degreeSelectedRef.current = true
@@ -578,7 +534,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     const value = deg
     setFormData(prev => ({ ...prev, degree: value }))
     setDegreeSearch(value)
-    setShowDegreeDropdown(false); setDegreeOptions([])
+    setShowDegreeDropdown(false)
     lastDegreeQueryRef.current = value.trim()
   }
   const selectSpecialization = (spec: string) => {
@@ -587,7 +543,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     const value = spec
     setFormData(prev => ({ ...prev, field_of_study: value }))
     setSpecializationSearch(value)
-    setShowSpecializationDropdown(false); setSpecializationOptions([])
+    setShowSpecializationDropdown(false)
     lastSpecializationQueryRef.current = value.trim()
   }
 
@@ -801,6 +757,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 <div className={cn(acStyles.inputWrapper, showSchoolDropdown && acStyles.isOpen)} onClick={() => schoolInputRef.current?.focus()}>
                   <input ref={schoolInputRef} type="text" className={acStyles.input} placeholder="Enter your school or university" value={schoolSearch}
                     onChange={(e) => {
+                      schoolSelectedRef.current = false
                       setSchoolSearch(e.target.value)
                       setFormData(prev => ({ ...prev, school_name: e.target.value }))
                       schoolDirtyRef.current = true
@@ -809,7 +766,14 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                     onKeyDown={handleSchoolKeyDown} autoComplete="off" />
                   <div className={acStyles.suffix}>
                     {schoolLoading ? <Loader2 className={acStyles.spinner} /> : schoolSearch ? (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setSchoolSearch(""); setFormData(prev => ({ ...prev, school_name: "" })); setSchoolOptions([]); setShowSchoolDropdown(false) }} className={acStyles.clearBtn}>
+                      <button type="button" onClick={(e) => {
+                        e.stopPropagation();
+                        schoolSelectedRef.current = false;
+                        setSchoolSearch("");
+                        setFormData(prev => ({ ...prev, school_name: "" }));
+                        lastSchoolQueryRef.current = "";
+                        setShowSchoolDropdown(false);
+                      }} className={acStyles.clearBtn}>
                         <X className={acStyles.clearIcon} />
                       </button>
                     ) : (
@@ -856,6 +820,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 <div className={cn(acStyles.inputWrapper, showDegreeDropdown && acStyles.isOpen)} onClick={() => degreeInputRef.current?.focus()}>
                   <input ref={degreeInputRef} type="text" className={acStyles.input} placeholder="e.g. MBA" value={degreeSearch}
                     onChange={(e) => {
+                      degreeSelectedRef.current = false
                       setDegreeSearch(e.target.value)
                       setFormData(prev => ({ ...prev, degree: e.target.value }))
                       degreeDirtyRef.current = true
@@ -864,7 +829,14 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                     onKeyDown={handleDegreeKeyDown} autoComplete="off" />
                   <div className={acStyles.suffix}>
                     {degreeLoading ? <Loader2 className={acStyles.spinner} /> : degreeSearch ? (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setDegreeSearch(""); setFormData(prev => ({ ...prev, degree: "" })); setDegreeOptions([]); setShowDegreeDropdown(false) }} className={acStyles.clearBtn}>
+                      <button type="button" onClick={(e) => {
+                        e.stopPropagation();
+                        degreeSelectedRef.current = false;
+                        setDegreeSearch("");
+                        setFormData(prev => ({ ...prev, degree: "" }));
+                        lastDegreeQueryRef.current = "";
+                        setShowDegreeDropdown(false);
+                      }} className={acStyles.clearBtn}>
                         <X className={acStyles.clearIcon} />
                       </button>
                     ) : (
@@ -909,6 +881,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                     placeholder="e.g. Finance"
                     value={specializationSearch}
                     onChange={(e) => {
+                      specializationSelectedRef.current = false
                       setSpecializationSearch(e.target.value)
                       setFormData(prev => ({ ...prev, field_of_study: e.target.value }))
                       specializationDirtyRef.current = true
@@ -925,9 +898,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
+                          specializationSelectedRef.current = false
                           setSpecializationSearch("")
                           setFormData(prev => ({ ...prev, field_of_study: "" }))
-                          setSpecializationOptions([])
+                          lastSpecializationQueryRef.current = ""
                           setShowSpecializationDropdown(false)
                         }}
                         className={acStyles.clearBtn}

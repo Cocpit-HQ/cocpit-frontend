@@ -149,7 +149,21 @@ export default function MessagingPage() {
         setSelectedChat(targetChat);
         processedUserIdRef.current = conversationId;
         if (!isMobile && typeof window !== 'undefined') {
-          window.history.replaceState(null, "", "/messaging");
+          window.history.replaceState(null, "", `/messaging?conversationId=${conversationId}`);
+        }
+      }
+      return;
+    }
+
+    // Handle groupId param — works for all chat types and profile types
+    if (groupId) {
+      if (groupId === processedUserIdRef.current) return;
+      const groupChat = chats.find((c) => String(c.id) === String(groupId));
+      if (groupChat) {
+        setSelectedChat(groupChat);
+        processedUserIdRef.current = groupId;
+        if (!isMobile && typeof window !== 'undefined') {
+          window.history.replaceState(null, "", `/messaging?groupId=${groupId}`);
         }
       }
       return;
@@ -198,19 +212,6 @@ export default function MessagingPage() {
         return;
       }
 
-      if (groupId) {
-        if (groupId === processedUserIdRef.current) return;
-        const groupChat = chats.find((c) => String(c.id) === String(groupId));
-        if (groupChat) {
-          setSelectedChat(groupChat);
-          processedUserIdRef.current = groupId;
-          if (!isMobile && typeof window !== 'undefined') {
-            window.history.replaceState(null, "", "/messaging");
-          }
-        }
-        return;
-      }
-
       // If we have a userId but no companyId match, don't return early.
       // Let the regular userId logic below handle it.
       if (!userId) return;
@@ -241,7 +242,7 @@ export default function MessagingPage() {
         safelySetSelectedChat(existingChat);
         processedUserIdRef.current = userId;
         if (!isMobile && typeof window !== 'undefined') {
-          window.history.replaceState(null, "", "/messaging");
+          window.history.replaceState(null, "", `/messaging?conversationId=${existingChat.id}`);
         }
       } else {
         if (userId === processedUserIdRef.current) return;
@@ -862,12 +863,14 @@ export default function MessagingPage() {
               selectedChatId={selectedChat?.id}
               onSelectChat={React.useCallback(
                 (chat: ChatThread) => {
+                  const isGroupChat = !!(chat.isGroup || (chat as any).is_group);
                   if (isMobile) {
-                    router.push(`/messaging?groupId=${chat.id}`);
+                    router.push(isGroupChat ? `/messaging?groupId=${chat.id}` : `/messaging?conversationId=${chat.id}`);
                   } else {
                     setSelectedChat(chat);
                     if (typeof window !== 'undefined') {
-                      window.history.replaceState(null, "", "/messaging");
+                      const queryParam = isGroupChat ? `groupId=${chat.id}` : `conversationId=${chat.id}`;
+                      window.history.replaceState(null, "", `/messaging?${queryParam}`);
                     }
                   }
                 },

@@ -38,7 +38,7 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 // Hooks and services
-import { useProfile, useProfilePosts } from "./hooks/usePublicProfile";
+import { useProfile, useProfilePosts, useProfilePostsPreview } from "./hooks/usePublicProfile";
 import { useSocial } from "@/context/SocialContext";
 import { initialSkills as currentUserSkills } from "@/lib/data/profile";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -86,12 +86,20 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   // TanStack Query Hooks
   const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
   const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
+  const { data: previewPosts, isLoading: isPreviewPostsLoading } = useProfilePostsPreview(userId);
 
   // Filter out private posts from the main profile page preview
   const visiblePosts = useMemo(() => {
     if (!publicPosts) return [];
     return publicPosts.filter(post => post.visibility !== 'private');
   }, [publicPosts]);
+
+  // Server-ordered (plain posts before poll/repost) 3-post preview strip only —
+  // ProfileSkills below still uses visiblePosts, the full recency-ordered list.
+  const visiblePreviewPosts = useMemo(() => {
+    if (!previewPosts) return [];
+    return previewPosts.filter(post => post.visibility !== 'private');
+  }, [previewPosts]);
 
   // Scroll Restoration Logic
   const hasRestoredScroll = useRef(false);
@@ -535,12 +543,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           />
 
           <ProfilePosts
-            posts={visiblePosts}
+            posts={visiblePreviewPosts}
             isOwnProfile={isOwnProfile}
             isCompany={activeProfile?.type === 'COMPANY'}
             profileSlug={user?.account_name || user?.id || ""}
             userName={user?.name || ""}
-            isLoading={isPostsLoading}
+            isLoading={isPreviewPostsLoading}
           />
 
           <ProfileSkills

@@ -140,7 +140,7 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
           ref={fileInputRef}
           className="hidden"
           onChange={handleFileSelect}
-          accept="image/*,video/*,application/pdf"
+          accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         />
         <button
           className="p-2 rounded-full transition-colors mb-1 hover:bg-muted text-muted-foreground"

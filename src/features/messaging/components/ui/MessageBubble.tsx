@@ -512,7 +512,7 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
   return (
     <div className={cn(
       "grid gap-1 overflow-hidden w-full",
-      isMediaOnly ? "rounded-2xl" : "rounded-t-2xl",
+      isMediaOnly ? "rounded-[12px]" : "rounded-t-[12px]",
       message.media.length === 1 ? "grid-cols-1" :
         message.media.length === 2 ? "grid-cols-2" :
           "grid-cols-2"
@@ -535,6 +535,11 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
         }
 
         if (item.type === 'document') {
+          const displayName = item.name || `Document-${index + 1}`;
+          const fileExt = item.name?.includes('.') ? item.name.split('.').pop()!.toLowerCase() : '';
+          const isWordDoc = fileExt === 'doc' || fileExt === 'docx';
+          const docIcon = isWordDoc ? 'selfhst:google-docs' : 'material-icon-theme:pdf';
+          const extLabel = fileExt ? fileExt.toUpperCase() : 'PDF';
           return (
             <div
               key={index}
@@ -544,21 +549,19 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
                 <div
                   onClick={(e) => {
                     e.stopPropagation()
-                    onMediaClick?.(item.url, 'document', `Document-${index + 1}.pdf`)
+                    onMediaClick?.(item.url, 'document', item.name || displayName)
                   }}
                   className={cn(
-                    "flex items-center gap-3 p-3 transition-colors w-full min-w-[200px] cursor-pointer",
+                    "flex items-center gap-3 p-3 transition-colors w-full min-w-[200px] cursor-pointer rounded-[12px_12px_0px_12px]",
                     isMediaOnly ? "bg-secondary/40 hover:bg-secondary/60" : "bg-background/50 backdrop-blur-sm hover:bg-background/80"
                   )}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
+                  <div className="w-10 h-10 rounded-lg bg-background dark:bg-background/40 flex items-center justify-center shrink-0">
+                    <Icon icon={docIcon} className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0 mr-8">
-                    <p className="text-sm font-medium truncate opacity-90">Document</p>
-                    <p className="text-xs text-muted-foreground uppercase">PDF</p>
+                    <p className="text-sm font-medium truncate opacity-90">{displayName}</p>
+                    <p className="text-xs text-muted-foreground uppercase">{extLabel}</p>
                   </div>
                 </div>
               </div>
@@ -962,7 +965,7 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
 
 
   return (
-    <div 
+    <div
       onClick={() => router.push(`/jobs/${jobId}`)}
       className="w-full max-w-[740px] border border-[#EEF2FF] dark:border-zinc-800 rounded-[24px] p-[16px] bg-white dark:bg-zinc-950 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer flex flex-col md:flex-row justify-between items-center gap-[12px] mr-auto my-3 min-h-[116px]"
     >
@@ -1009,6 +1012,7 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
 // --- Main Component ---
 
 function MessageBubble(props: MessageBubbleProps) {
+  const router = useRouter()
   const { theme, resolvedTheme } = useTheme()
   const isDarkTheme = resolvedTheme === "dark" || theme === "dark" || theme === "navy"
 
@@ -1056,7 +1060,7 @@ function MessageBubble(props: MessageBubbleProps) {
 
     if (message.repliedMessage && message.repliedMessage.senderName) {
       return isMe
-        ? "box-border flex flex-col justify-center items-start bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[12px_12px_0px_12px] shadow-sm gap-[10px] w-full"
+        ? "box-border flex flex-col justify-center items-start bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[0px_0px_0px_12px] shadow-sm gap-[10px] w-full"
         : "box-border flex flex-col justify-center items-start bg-[var(--primary-tint)] text-[var(--foreground)] rounded-[12px_12px_12px_0px] gap-[10px] w-full"
     }
 
@@ -1228,7 +1232,16 @@ function MessageBubble(props: MessageBubbleProps) {
           {/* Sender name for group messages — shown above the bubble row */}
           {showSenderName && !isMe && message.senderName && (
             <div className="pl-[32px] w-full">
-              <span className="font-['Poppins'] font-semibold text-[11px] leading-[14px] text-[var(--primary)] truncate block max-w-[70%] md:max-w-[85%]">
+              <span
+                className="font-['Poppins'] font-semibold text-[11px] leading-[14px] text-[var(--primary)] truncate block max-w-[70%] md:max-w-[85%] cursor-pointer hover:underline"
+                onClick={(e) => {
+                  if (message.senderId) {
+                    e.stopPropagation();
+                    const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
+                    router.push(`/profile/${message.senderId}?returnTo=${encodeURIComponent(returnTo)}`);
+                  }
+                }}
+              >
                 {message.senderName}
               </span>
             </div>
@@ -1383,7 +1396,16 @@ function MessageBubble(props: MessageBubbleProps) {
             showTime ? (
               <div className="flex flex-row items-center gap-[8px] mt-[2px]">
                 {/* Avatar sits at position 0 — far left */}
-                <div className="w-[24px] h-[24px] shrink-0">
+                <div
+                  className={cn("w-[24px] h-[24px] shrink-0", resolvedShowAvatar && message.senderId && "cursor-pointer")}
+                  onClick={(e) => {
+                    if (resolvedShowAvatar && message.senderId) {
+                      e.stopPropagation();
+                      const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
+                      router.push(`/profile/${message.senderId}?returnTo=${encodeURIComponent(returnTo)}`);
+                    }
+                  }}
+                >
                   {resolvedShowAvatar ? (
                     <Avatar url={message.senderAvatar} name={message.senderName || "Unknown"} size="xs" />
                   ) : (

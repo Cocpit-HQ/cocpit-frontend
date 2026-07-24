@@ -75,7 +75,7 @@ export interface BackendMessage {
   shared_profile_type?: "user" | "company";
   entity_type?: "post" | "profile" | "company" | "job" | "event" | "offer";
   entity_id?: string;
-  media?: { url: string; media_type: string }[];
+  media?: { url: string; media_type: string; filename?: string | null }[];
   reactions?: {
     user_id: string;
     emoji: string;
@@ -168,7 +168,7 @@ export interface Message {
     isDeleted: boolean;
   } | null;
   status?: 'sending' | 'sent' | 'delivered' | 'read';
-  media?: { url: string; type: 'image' | 'video' | 'document' }[];
+  media?: { url: string; type: 'image' | 'video' | 'document'; name?: string | null }[];
   reactions?: {
     user_id: string;
     emoji: string;

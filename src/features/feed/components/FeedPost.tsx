@@ -700,7 +700,27 @@ export const FeedPost = (props: FeedPostProps) => {
       {/* Social Proof & Actions */}
       <div className="flex flex-col gap-[8px] px-4 md:px-0 mt-auto pb-2">
         {(forceSquareMedia || (likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername)) && (
-          <div className={`flex items-center ${forceSquareMedia ? 'min-h-[16px]' : ''}`}>
+          <div className={`flex items-center gap-2 ${forceSquareMedia ? 'min-h-[16px]' : ''}`}>
+            {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && likedUsers && likedUsers.length > 0 && (() => {
+              const viewerUsername = (isCompany ? activeProfile?.slug : ((activeProfile as any)?.account_name || (session?.user as any)?.username))?.toLowerCase();
+              const filteredLikedUsers = likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
+              if (filteredLikedUsers.length === 0) return null;
+              return (
+                <div className="flex -space-x-1.5 overflow-hidden">
+                  {filteredLikedUsers.slice(0, 3).map((user, idx) => (
+                    <img
+                      key={idx}
+                      src={user.avatar_url || "/assets/pngegg.png"}
+                      alt={user.username || "user"}
+                      className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/assets/pngegg.png";
+                      }}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
             {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
               <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
               Liked by{" "}

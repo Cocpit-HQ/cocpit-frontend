@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useGroupChat } from "./groupChat.context";
 import SharedAvatar from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface GroupDetailsProps {
 }
 
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember, activeView, setActiveView }: GroupDetailsProps) {
+    const router = useRouter();
     const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup, cancelInvitation, sentInvitations } = useGroupChat();
     const { isUserOnline } = useSocket();
     const { blockUser, unblockUser, isBlocked } = useSocial();
@@ -309,7 +311,13 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
                         >
                             {/* Left: Avatar */}
-                            <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch">
+                            <div
+                                className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch cursor-pointer"
+                                onClick={() => {
+                                    const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
+                                    router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
+                                }}
+                            >
                                 {member.avatar_url ? (
                                     <Image src={member.avatar_url} alt={member.full_name} width={32} height={32} className="object-cover w-full h-full" />
                                 ) : (
@@ -320,8 +328,14 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             </div>
 
                             {/* Middle: Name + Headline + Admin badge */}
-                            <div className="flex flex-col flex-1 ml-[8px]">
-                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2">
+                            <div
+                                className="flex flex-col flex-1 ml-[8px] cursor-pointer"
+                                onClick={() => {
+                                    const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
+                                    router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
+                                }}
+                            >
+                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2 hover:underline">
                                     <span>{member.user_id === currentUserId ? "You" : member.full_name}</span>
                                 </span>
                                 <div className="flex flex-row items-center">

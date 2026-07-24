@@ -146,3 +146,21 @@ export function useProfilePosts(userId: string) {
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
 }
+
+// Global Profile's 3-post preview strip: server-ordered to prefer image/caption
+// posts over polls/reposts (falling back to them only if fewer than 3 plain
+// posts exist), across the user's full post history — not just whatever the
+// general list's first page happens to contain. Deliberately a separate query
+// from useProfilePosts above, which still needs the full recency-ordered list
+// (e.g. for the Skills section's post-evidence lookup).
+export function useProfilePostsPreview(userId: string) {
+    return useQuery({
+        queryKey: ["profile-posts-preview", userId],
+        queryFn: async () => {
+            const data = await getPublicProfilePosts(userId, 'All', { preview: true });
+            return data.posts.map(mapPublicPostToPost);
+        },
+        enabled: !!userId,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+    });
+}
