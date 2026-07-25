@@ -36,9 +36,11 @@ export interface ConnectionRequestsResponse {
 }
 
 export interface ConnectionCounts {
-  received:    number;
-  sent:        number;
-  invitations?: number;
+  received:            number;
+  sent:                number;
+  invitations?:        number;
+  teamsInvitations?:   number;
+  channelsInvitations?: number;
 }
 
 export type SuggestionReasonSignal = 'mutual' | 'company' | 'skill' | 'city' | null;

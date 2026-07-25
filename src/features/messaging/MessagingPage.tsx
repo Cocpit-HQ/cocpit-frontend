@@ -25,8 +25,9 @@ import { GroupChatProvider } from "./components/group-chat/groupChat.context";
 import CreateGroupModal from "./components/group-chat/CreateGroupModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useToast } from "@/hooks/use-toast";
-import { ChatWindowSkeleton } from "./components/skeletons/ChatWindowSkeleton";
+import { DUMMY_JOB_CHATS } from "@/features/messaging/data/companyMessagingMockData";
 import { companyService } from "@/services/organization.service";
+import ChatWindowSkeleton from "./components/skeletons/ChatWindowSkeleton";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -46,7 +47,7 @@ export default function MessagingPage() {
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'requests'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'jobs' | 'requests'>('chat');
   const processedUserIdRef = React.useRef<string | null>(null);
   const processedMessagesRef = React.useRef<Set<string>>(new Set());
   const [initialEntityContext, setInitialEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string; targetId: string } | null>(null);
@@ -91,16 +92,20 @@ export default function MessagingPage() {
       "conversations",
       activeProfile?.type ?? "USER",
       activeProfile?.id ?? "me",
+      activeProfile?.type === "COMPANY" ? activeTab : "all",
     ],
     queryFn: async () => {
       const params =
         activeProfile?.type === "COMPANY"
-          ? { companyId: activeProfile.id }
+          ? {
+              companyId: activeProfile.id,
+              tab: (activeTab === "jobs" ? "JOBS" : "GENERAL") as "JOBS" | "GENERAL",
+            }
           : {};
       const backendChats = await getConversations(params);
       return backendChats.map(mapBackendChatToChatThread);
     },
-    staleTime: Infinity, // Prevent refetch on mounting/updates unless explicit invalidation
+    staleTime: 0,
     refetchOnWindowFocus: false,
   });
 
@@ -142,16 +147,58 @@ export default function MessagingPage() {
     const conversationId = searchParams.get("conversationId");
     const companyId = searchParams.get("companyId");
 
-    // Handle conversationId param (from notification click) — works for all chat types
-    if (conversationId) {
-      const targetChat = chats.find((c) => String(c.id) === String(conversationId));
-      if (targetChat) {
-        setSelectedChat(targetChat);
-        processedUserIdRef.current = conversationId;
-        if (!isMobile && typeof window !== 'undefined') {
-          window.history.replaceState(null, "", `/messaging?conversationId=${conversationId}`);
+    // Don't re-run if no relevant URL params are present
+    if (!userId && !groupId && !conversationId && !companyId) {
+      processedUserIdRef.current = null;
+      return;
+    }
+
+    const currentKey = conversationId || groupId || userId || companyId;
+    if (processedUserIdRef.current === currentKey && selectedChat) {
+      return;
+    }
+
+    // Check for existing conversation across both GENERAL and JOBS tabs when searching by userId/conversationId
+    const findExistingChatAcrossAllTabs = async (targetUserId?: string | null, targetConvId?: string | null) => {
+      if (!targetUserId && !targetConvId) return null;
+      // First check local `chats` list
+      let localMatch = chats.find(c =>
+        (targetConvId && String(c.id) === String(targetConvId)) ||
+        (targetUserId && (String(c.otherUserId) === String(targetUserId) || String(c.otherUserSlug) === String(targetUserId)))
+      );
+      if (localMatch) return localMatch;
+
+      // If in Company mode and not found in current activeTab list, check the other tab backend list
+      if (activeProfile?.type === 'COMPANY') {
+        const otherTab = activeTab === 'jobs' ? 'GENERAL' : 'JOBS';
+        try {
+          const otherTabBackendChats = await getConversations({ companyId: activeProfile.id, tab: otherTab });
+          const otherTabChats = otherTabBackendChats.map(mapBackendChatToChatThread);
+          const otherTabMatch = otherTabChats.find(c =>
+            (targetConvId && String(c.id) === String(targetConvId)) ||
+            (targetUserId && (String(c.otherUserId) === String(targetUserId) || String(c.otherUserSlug) === String(targetUserId)))
+          );
+          if (otherTabMatch) return otherTabMatch;
+        } catch (e) {
+          console.error("Error fetching other tab conversations", e);
         }
       }
+      return null;
+    };
+
+    // Handle conversationId param (from notification click) — works for all chat types
+    if (conversationId) {
+      const processConvId = async () => {
+        const targetChat = await findExistingChatAcrossAllTabs(null, conversationId);
+        if (targetChat) {
+          setSelectedChat(targetChat);
+          processedUserIdRef.current = conversationId;
+          if (!isMobile && typeof window !== 'undefined') {
+            window.history.replaceState(null, "", `/messaging?conversationId=${conversationId}`);
+          }
+        }
+      };
+      processConvId();
       return;
     }
 
@@ -172,21 +219,26 @@ export default function MessagingPage() {
     // Company profile: handle userId only when companyId is also present (initiated from user profile "Message" button)
     if (activeProfile?.type === "COMPANY") {
       if (userId && companyId === activeProfile.id) {
-        const existingChat = chats.find((c) => c.otherUserId === userId);
-        if (existingChat) {
-          setSelectedChat(existingChat);
-          processedUserIdRef.current = userId;
-          if (!isMobile && typeof window !== 'undefined') {
-            window.history.replaceState(null, "", "/messaging");
-          }
-        } else {
-          if (processedUserIdRef.current === userId) return;
-          processedUserIdRef.current = userId;
-          const fetchAndCreateDraft = async () => {
+        const processCompanyUserId = async () => {
+          const existingChat = await findExistingChatAcrossAllTabs(userId, null);
+          if (existingChat) {
+            setSelectedChat(existingChat);
+            processedUserIdRef.current = userId;
+            if (!isMobile && typeof window !== 'undefined') {
+              window.history.replaceState(null, "", "/messaging");
+            }
+          } else {
+            if (processedUserIdRef.current === userId) return;
+            processedUserIdRef.current = userId;
             if (!userId || userId === "null" || userId === "undefined") return;
             try {
               const response = await getUserById(userId);
               const targetUser = response.user;
+              const hasJobContextParam = Boolean(
+                searchParams.get("jobContext") ||
+                searchParams.get("offerContext") ||
+                searchParams.get("jobId")
+              );
               const newChat: ChatThread = {
                 id: "new",
                 otherUserId: targetUser.id,
@@ -198,17 +250,21 @@ export default function MessagingPage() {
                 lastMessageAt: new Date().toISOString(),
                 unread: 0,
                 online: false,
+                isJobChat: hasJobContextParam,
               };
               setSelectedChat(newChat);
+              if (hasJobContextParam) {
+                setActiveTab('jobs');
+              }
             } catch (err) {
               console.error(
                 "Failed to fetch user details for company chat draft",
                 err,
               );
             }
-          };
-          fetchAndCreateDraft();
-        }
+          }
+        };
+        processCompanyUserId();
         return;
       }
 
@@ -232,27 +288,28 @@ export default function MessagingPage() {
     };
 
     if (userId) {
-      const existingChat = chats.find(
-        (c) =>
-          String(c.otherUserId) === String(userId) ||
-          String(c.otherUserSlug) === String(userId),
-      );
+      const processUserId = async () => {
+        const existingChat = await findExistingChatAcrossAllTabs(userId, null);
 
-      if (existingChat) {
-        safelySetSelectedChat(existingChat);
-        processedUserIdRef.current = userId;
-        if (!isMobile && typeof window !== 'undefined') {
-          window.history.replaceState(null, "", `/messaging?conversationId=${existingChat.id}`);
-        }
-      } else {
-        if (userId === processedUserIdRef.current) return;
-        processedUserIdRef.current = userId;
-        // No existing chat, fetch user details to create a draft
-        const fetchUserAndCreateDraft = async () => {
+        if (existingChat) {
+          safelySetSelectedChat(existingChat);
+          processedUserIdRef.current = userId;
+          if (!isMobile && typeof window !== 'undefined') {
+            window.history.replaceState(null, "", `/messaging?conversationId=${existingChat.id}`);
+          }
+        } else {
+          if (userId === processedUserIdRef.current) return;
+          processedUserIdRef.current = userId;
+          // No existing chat, fetch user details to create a draft
           if (!userId || userId === "null" || userId === "undefined") return;
           try {
             const response = await getUserById(userId);
             const user = response.user;
+            const hasJobContextParam = Boolean(
+              searchParams.get("jobContext") ||
+              searchParams.get("offerContext") ||
+              searchParams.get("jobId")
+            );
             const newChat: ChatThread = {
               id: "new",
               otherUserId: user.id,
@@ -264,14 +321,18 @@ export default function MessagingPage() {
               lastMessageAt: new Date().toISOString(),
               unread: 0,
               online: false,
+              isJobChat: hasJobContextParam,
             };
             safelySetSelectedChat(newChat);
+            if (activeProfile?.type === 'COMPANY' && hasJobContextParam) {
+              setActiveTab('jobs');
+            }
           } catch (err) {
             console.error("Failed to fetch user details for new chat", err);
           }
-        };
-        fetchUserAndCreateDraft();
-      }
+        }
+      };
+      processUserId();
     } else if (groupId) {
       const groupChat = chats.find((c) => String(c.id) === String(groupId));
       if (groupChat) {
@@ -913,6 +974,7 @@ export default function MessagingPage() {
                 <ChatWindow
                   chat={activeChat}
                   isMobile={!!isMobile}
+                  activeTab={activeTab}
                   onBack={() => {
                     setSelectedChat(null);
                     processedUserIdRef.current = null;

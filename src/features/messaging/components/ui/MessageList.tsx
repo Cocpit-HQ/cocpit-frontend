@@ -24,9 +24,11 @@ interface MessageListProps {
   onReaction?: (message: Message, emoji: string) => void
   currentUserId?: string
   conversationId?: string
+  otherUserType?: "COMPANY" | "USER"
+  otherUserSlug?: string
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -284,11 +286,17 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 ? isMoreThanOneMinute(msg.created_at, next.created_at)
                 : false;
 
-              // Simple grouping logic based on sender AND time difference
+              // Simple grouping logic based on sender, senderMemberName/senderId, AND time difference
+              const isSameSenderMember = prev && !(prev as any).isSkeleton && 
+                prev.sender === msg.sender && 
+                ((prev.senderMemberName && msg.senderMemberName) ? (prev.senderMemberName === msg.senderMemberName) : (prev.senderId === msg.senderId));
               const isFirstInGroup =
-                !prev || (prev as any).isSkeleton || prev.sender !== msg.sender || isTimeBreakWithPrev;
+                !prev || (prev as any).isSkeleton || !isSameSenderMember || isTimeBreakWithPrev;
+              const isSameNextMember = next && !(next as any).isSkeleton && 
+                next.sender === msg.sender && 
+                ((next.senderMemberName && msg.senderMemberName) ? (next.senderMemberName === msg.senderMemberName) : (next.senderId === msg.senderId));
               const isLastInGroup =
-                !next || (next as any).isSkeleton || next.sender !== msg.sender || isTimeBreakWithNext;
+                !next || (next as any).isSkeleton || !isSameNextMember || isTimeBreakWithNext;
 
               const currentMsgDateStr = msg.created_at
                 ? formatDateDivider(msg.created_at)
@@ -355,6 +363,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 onReaction={onReaction}
                 currentUserId={currentUserId}
                 conversationId={conversationId}
+                otherUserType={otherUserType}
+                otherUserSlug={otherUserSlug}
                 onMediaLoad={() => {
                   if (shouldScrollToBottomRef.current && scrollRef.current) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight

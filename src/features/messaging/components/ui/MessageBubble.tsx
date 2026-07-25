@@ -23,6 +23,7 @@ import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
 import { useTheme } from "next-themes"
 import { ReactionListPopup } from "../ReactionListPopup"
 import { createPortal } from "react-dom"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 const CustomReplyIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className={className}>
@@ -53,6 +54,8 @@ interface MessageBubbleProps {
   onReaction?: (message: Message, emoji: string) => void
   currentUserId?: string
   conversationId?: string
+  otherUserType?: "COMPANY" | "USER"
+  otherUserSlug?: string
 }
 
 // --- Hooks ---
@@ -322,28 +325,34 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
 
   return (
     <div
-      className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] cursor-pointer hover:bg-background/80 transition-all shadow-sm group"
+      className="mb-2.5 rounded-[24px] bg-white border border-[#EEF2FF] p-3 w-[260px] cursor-pointer hover:bg-gray-50/90 transition-all shadow-[0px_2px_4px_rgba(99,102,241,0.05)] overflow-hidden"
       onClick={() => router.push(`/post/${postToRender.id}`)}
       role="button"
       tabIndex={0}
     >
-      <div className="p-3 border-b border-white/10 flex items-center gap-2.5">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden ring-1 ring-white/20">
+      <div className="flex flex-row items-center gap-[10px] w-[236px]">
+        {/* Avatar pill frame 2608515 */}
+        <div className="w-[52px] h-[36px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden shrink-0">
           <img
             src={postToRender.authorAvatar || '/assets/pngegg.png'}
             alt={postToRender.author}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-[24px]"
           />
         </div>
-        <div className="flex flex-col">
-          <span className="text-xs font-semibold truncate leading-none mb-0.5">{postToRender.author}</span>
-          <span className="text-xs text-muted-foreground leading-none">Shared a post</span>
+        {/* Author info frame 2608692 */}
+        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+          <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black truncate block">
+            {postToRender.author || postToRender.content}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate block">
+            {postToRender.subtext || "Hybrid • Pune"}
+          </span>
         </div>
       </div>
 
-      {/* Media Preview */}
+      {/* Media Preview (if present) */}
       {postToRender.media && postToRender.media.length > 0 && (
-        <div className="w-full aspect-[4/3] bg-black relative">
+        <div className="w-full aspect-[4/3] bg-black relative rounded-xl overflow-hidden mt-2">
           {postToRender.media[0].type === 'video' ? (
             <div className="w-full h-full relative flex items-center justify-center">
               <video
@@ -371,13 +380,6 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
           )}
         </div>
       )}
-
-      {/* Post Content Preview */}
-      <div className="p-3">
-        <p className="text-xs line-clamp-3 leading-relaxed text-foreground/90">
-          {postToRender.content}
-        </p>
-      </div>
     </div>
   )
 }
@@ -1037,6 +1039,8 @@ function MessageBubble(props: MessageBubbleProps) {
     onReaction,
     currentUserId,
     conversationId,
+    otherUserType,
+    otherUserSlug,
   } = props
 
   const isMe = message.sender === "me"
@@ -1049,6 +1053,9 @@ function MessageBubble(props: MessageBubbleProps) {
     return !text || isDefaultMediaText
   })() || false
 
+  const { activeProfile } = useActiveProfile()
+  const isCompanyProfile = activeProfile?.type === 'COMPANY'
+
   // Helper for dynamic classes
   const getBubbleClasses = () => {
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) {
@@ -1060,13 +1067,17 @@ function MessageBubble(props: MessageBubbleProps) {
 
     if (message.repliedMessage && message.repliedMessage.senderName) {
       return isMe
-        ? "box-border flex flex-col justify-center items-start bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[0px_0px_0px_12px] shadow-sm gap-[10px] w-full"
+        ? isCompanyProfile
+          ? "box-border flex flex-col justify-center items-start bg-[#1A73E8] text-white rounded-[0px_0px_0px_12px] shadow-sm gap-[10px] w-full"
+          : "box-border flex flex-col justify-center items-start bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[0px_0px_0px_12px] shadow-sm gap-[10px] w-full"
         : "box-border flex flex-col justify-center items-start bg-[var(--primary-tint)] text-[var(--foreground)] rounded-[12px_12px_12px_0px] gap-[10px] w-full"
     }
 
     // Standard message styling
     const baseClasses = isMe
-      ? "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[12px_12px_0px_12px] shadow-sm"
+      ? isCompanyProfile
+        ? "bg-[#1A73E8] text-white rounded-[12px_12px_0px_12px] shadow-sm"
+        : "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[12px_12px_0px_12px] shadow-sm"
       : "bg-[var(--primary-tint)] text-[var(--foreground)] rounded-[12px_12px_12px_0px]"
 
     const mediaOnlyClasses = "bg-transparent rounded-[12px] overflow-hidden"
@@ -1229,16 +1240,28 @@ function MessageBubble(props: MessageBubbleProps) {
       >
         <div className={cn("flex flex-col relative w-full gap-[4px]", isMe ? "items-end" : "items-start")}>
 
-          {/* Sender name for group messages — shown above the bubble row */}
+          {/* Sender name for sent messages (isMe) — rendered ONLY on the first message of a consecutive group when actor context is Organization or Group */}
+          {isMe && (message.isFirstInGroup ?? true) && (isCompanyProfile || isGroup) && (
+            <div className="pr-[4px] w-full flex justify-end">
+              <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black dark:text-white truncate block max-w-[70%] md:max-w-[85%]">
+                {isCompanyProfile ? (message.senderMemberName || "Member") : message.senderName}
+              </span>
+            </div>
+          )}
+
+          {/* Sender name for group/received messages — shown above the bubble row */}
           {showSenderName && !isMe && message.senderName && (
             <div className="pl-[32px] w-full">
               <span
                 className="font-['Poppins'] font-semibold text-[11px] leading-[14px] text-[var(--primary)] truncate block max-w-[70%] md:max-w-[85%] cursor-pointer hover:underline"
                 onClick={(e) => {
-                  if (message.senderId) {
+                  if (message.senderId || otherUserSlug) {
                     e.stopPropagation();
                     const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
-                    router.push(`/profile/${message.senderId}?returnTo=${encodeURIComponent(returnTo)}`);
+                    const targetRoute = otherUserType === 'COMPANY'
+                      ? `/organization/${otherUserSlug || message.senderId}`
+                      : `/profile/${message.senderId}`;
+                    router.push(`${targetRoute}?returnTo=${encodeURIComponent(returnTo)}`);
                   }
                 }}
               >
@@ -1248,7 +1271,7 @@ function MessageBubble(props: MessageBubbleProps) {
           )}
 
           {/* ROW 1: Bubble — indented 32px to align after avatar space */}
-          <div className={cn("flex w-full group/message items-center overflow-hidden", isMe ? "justify-end" : "justify-start pl-[32px]")}>
+          <div className={cn("flex w-full group/message items-center", isMe ? "justify-end" : "justify-start pl-[32px]")}>
 
             {/* Action Icons for isMe */}
             {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
@@ -1279,7 +1302,7 @@ function MessageBubble(props: MessageBubbleProps) {
             )}>
               <div
                 className={cn(
-                  "relative break-words w-full transition-all overflow-hidden",
+                  "relative break-words w-full transition-all",
                   message.repliedMessage && message.repliedMessage.senderName
                     ? "font-['Poppins'] font-normal text-[12px] leading-[16px]"
                     : "text-[14px] leading-[20px]",
@@ -1353,14 +1376,14 @@ function MessageBubble(props: MessageBubbleProps) {
                 <button
                   onClick={handleReactionBadgeClick}
                   className={cn(
-                    "absolute flex flex-row items-center justify-center gap-[4px] px-[6px] bg-[var(--background)] border border-[var(--border)] rounded-[24px] shadow-sm cursor-pointer hover:scale-105 transition-all z-10",
-                    isMe ? "-left-[12px] -bottom-[12px]" : "-right-[12px] -bottom-[12px]"
+                    "absolute flex flex-row items-center justify-center gap-[4px] px-[8px] py-[3px] bg-[#FFFFFF] border border-[#E5E7EB] dark:bg-gray-800 dark:border-gray-700 rounded-[24px] shadow-sm cursor-pointer hover:scale-105 transition-all z-30",
+                    isMe ? "-left-[12px] -bottom-[10px]" : "-right-[12px] -bottom-[10px]"
                   )}
                   style={{ minWidth: '32px', height: '24px', boxSizing: 'border-box' }}
                 >
-                  <span className="text-[14px] leading-[1]">{displayReaction.emoji}</span>
+                  <span className="text-[14px] leading-normal flex items-center justify-center">{displayReaction.emoji}</span>
                   {validReactions.length > 1 && (
-                    <span className="font-['Poppins'] font-medium text-[11px] text-[var(--muted-foreground)]">
+                    <span className="font-['Poppins'] font-medium text-[11px] leading-normal text-[#6B7280] dark:text-gray-300">
                       {validReactions.length}
                     </span>
                   )}
@@ -1397,12 +1420,15 @@ function MessageBubble(props: MessageBubbleProps) {
               <div className="flex flex-row items-center gap-[8px] mt-[2px]">
                 {/* Avatar sits at position 0 — far left */}
                 <div
-                  className={cn("w-[24px] h-[24px] shrink-0", resolvedShowAvatar && message.senderId && "cursor-pointer")}
+                  className={cn("w-[24px] h-[24px] shrink-0", resolvedShowAvatar && (message.senderId || otherUserSlug) && "cursor-pointer")}
                   onClick={(e) => {
-                    if (resolvedShowAvatar && message.senderId) {
+                    if (resolvedShowAvatar && (message.senderId || otherUserSlug)) {
                       e.stopPropagation();
                       const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
-                      router.push(`/profile/${message.senderId}?returnTo=${encodeURIComponent(returnTo)}`);
+                      const targetRoute = otherUserType === 'COMPANY'
+                        ? `/organization/${otherUserSlug || message.senderId}`
+                        : `/profile/${message.senderId}`;
+                      router.push(`${targetRoute}?returnTo=${encodeURIComponent(returnTo)}`);
                     }
                   }}
                 >

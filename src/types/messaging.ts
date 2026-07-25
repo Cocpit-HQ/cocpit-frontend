@@ -9,6 +9,7 @@ export interface BackendChat {
   other_user_id?: string; // Added optional other_user_id
   other_user_type?: "COMPANY" | "USER";
   other_user_headline?: string;
+  org_headline?: string;
   other_user_slug?: string;
   last_message_text: string;
   unread_count: number;
@@ -23,6 +24,7 @@ export interface BackendChat {
   is_read?: boolean;
   is_muted?: boolean;
   muted_until?: string | null;
+  is_job_chat?: boolean;
 }
 
 export interface BackendMessage {
@@ -34,6 +36,8 @@ export interface BackendMessage {
   read_at: string | null;
   author_company_id?: string | null; // Added for company messaging
   sender_name?: string;
+  sender_member_name?: string;
+  org_headline?: string;
   sender_avatar?: string;
   message_type?: string;
   action_type?: string;
@@ -93,6 +97,7 @@ export interface ChatThread {
   id: string; // was number
   name: string;
   role?: string;
+  orgHeadline?: string;
   lastMessage: string;
   time: string;
   unread: number;
@@ -113,6 +118,9 @@ export interface ChatThread {
   is_read?: boolean;
   is_muted?: boolean;
   muted_until?: string | null;
+  jobIds?: string[];
+  isJobChat?: boolean;
+  isMock?: boolean;
 }
 
 export interface Message {
@@ -120,6 +128,8 @@ export interface Message {
   senderId?: string;
   sender: "me" | "other";
   senderName?: string;
+  senderMemberName?: string;
+  orgHeadline?: string;
   senderAvatar?: string;
   text: string;
   isBlocked?: boolean; // Admin/Block status

@@ -21,6 +21,17 @@ export const useConnectionActions = () => {
   const { removeRequest, restoreRequest, setFollowed } = useConnectionStore();
   const { refreshCompanies } = useActiveProfile();
 
+  /** Optimistically update the badge counts in cache for instant UI feedback */
+  const updateCountsOptimistically = (key: 'received' | 'sent' | 'invitations', delta: number) => {
+    queryClient.setQueryData(['connection-counts'], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        [key]: Math.max(0, (old[key] ?? 0) + delta),
+      };
+    });
+  };
+
   /** Invalidate both list and counts so tabs + badges refresh */
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['connection-requests'] });
@@ -31,6 +42,7 @@ export const useConnectionActions = () => {
   const accept = useMutation({
     mutationFn: (requestId: string) => {
       removeRequest(requestId);           // optimistic — hide card immediately
+      updateCountsOptimistically('received', -1);
       return acceptConnectionRequest(requestId);
     },
     onSuccess: () => {
@@ -39,6 +51,7 @@ export const useConnectionActions = () => {
     },
     onError: (_err, requestId) => {
       restoreRequest(requestId);          // rollback — show card again
+      updateCountsOptimistically('received', +1);
       toast.error('Failed to accept. Please try again.');
     },
   });
@@ -47,6 +60,7 @@ export const useConnectionActions = () => {
   const decline = useMutation({
     mutationFn: (requestId: string) => {
       removeRequest(requestId);
+      updateCountsOptimistically('received', -1);
       return declineConnectionRequest(requestId);
     },
     onSuccess: () => {
@@ -54,6 +68,7 @@ export const useConnectionActions = () => {
     },
     onError: (_err, requestId) => {
       restoreRequest(requestId);
+      updateCountsOptimistically('received', +1);
       toast.error('Failed to decline. Please try again.');
     },
   });
@@ -62,6 +77,7 @@ export const useConnectionActions = () => {
   const undo = useMutation({
     mutationFn: (requestId: string) => {
       removeRequest(requestId);
+      updateCountsOptimistically('sent', -1);
       return cancelConnectionRequest(requestId);
     },
     onSuccess: () => {
@@ -70,13 +86,17 @@ export const useConnectionActions = () => {
     },
     onError: (_err, requestId) => {
       restoreRequest(requestId);
+      updateCountsOptimistically('sent', +1);
       toast.error('Failed to withdraw. Please try again.');
     },
   });
 
   // ─── Connect (suggestions grid — two-way connection request) ──────────────
   const connect = useMutation({
-    mutationFn: (userId: string) => sendConnectionRequest(userId),
+    mutationFn: (userId: string) => {
+      updateCountsOptimistically('sent', +1);
+      return sendConnectionRequest(userId);
+    },
     onSuccess: (_data, userId) => {
       // Mark as requested for instant UI toggle (Requested state)
       setFollowed(userId);
@@ -88,6 +108,7 @@ export const useConnectionActions = () => {
       toast.success('Connection request sent!');
     },
     onError: (err: unknown) => {
+      updateCountsOptimistically('sent', -1);
       const serverMsg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(serverMsg || 'Failed to send request. Please try again.');
@@ -98,16 +119,16 @@ export const useConnectionActions = () => {
   const acceptInvitation = useMutation({
     mutationFn: (inviteId: string) => {
       removeRequest(inviteId);           // optimistic — hide card immediately
+      updateCountsOptimistically('invitations', -1);
       return acceptChannelInvitation(inviteId);
     },
     onSuccess: () => {
-      // Invalidate channel invitations cache so a refresh gets updated list.
-      // Do NOT invalidate connection-counts (invitations are separate).
-      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      invalidateAll();
       toast.success('You are now subscribed to this channel!');
     },
     onError: (_err, inviteId) => {
       restoreRequest(inviteId);
+      updateCountsOptimistically('invitations', +1);
       toast.error('Failed to accept invitation. Please try again.');
     },
   });
@@ -116,13 +137,15 @@ export const useConnectionActions = () => {
   const declineInvitation = useMutation({
     mutationFn: (inviteId: string) => {
       removeRequest(inviteId);
+      updateCountsOptimistically('invitations', -1);
       return declineChannelInvitation(inviteId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      invalidateAll();
     },
     onError: (_err, inviteId) => {
       restoreRequest(inviteId);
+      updateCountsOptimistically('invitations', +1);
       toast.error('Failed to decline invitation. Please try again.');
     },
   });
@@ -131,19 +154,18 @@ export const useConnectionActions = () => {
   const acceptTeamInvitation = useMutation({
     mutationFn: (inviteId: string) => {
       removeRequest(inviteId);
+      updateCountsOptimistically('invitations', -1);
       return acceptTeamInvite(inviteId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['team'] });
-      // The org list in ActiveProfileContext is plain component state, not React
-      // Query — invalidating queries above won't touch it, so the newly joined
-      // org wouldn't show up in the profile switcher without this.
       void refreshCompanies();
       toast.success('You have joined the team!');
     },
     onError: (_err, inviteId) => {
       restoreRequest(inviteId);
+      updateCountsOptimistically('invitations', +1);
       toast.error('Failed to accept team invitation. Please try again.');
     },
   });
@@ -152,14 +174,16 @@ export const useConnectionActions = () => {
   const declineTeamInvitation = useMutation({
     mutationFn: (inviteId: string) => {
       removeRequest(inviteId);
+      updateCountsOptimistically('invitations', -1);
       return declineTeamInvite(inviteId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['connection-requests', 'invitations'] });
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['team'] });
     },
     onError: (_err, inviteId) => {
       restoreRequest(inviteId);
+      updateCountsOptimistically('invitations', +1);
       toast.error('Failed to decline team invitation. Please try again.');
     },
   });

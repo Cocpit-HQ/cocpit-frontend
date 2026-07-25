@@ -6,6 +6,7 @@ export const useConnectionCounts = () =>
   useQuery({
     queryKey: ['connection-counts'],
     queryFn:  getConnectionCounts,
-    staleTime: 30_000,
+    staleTime: 5_000,
+    refetchOnWindowFocus: true,
     retry: 1,
   });

@@ -6,6 +6,7 @@ import { MoreHorizontal, Phone, Video } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
 import MessageList from "./MessageList"
+import ChatSkeleton from "./ChatSkeleton"
 import UnifiedMessageInput from "./UnifiedMessageInput"
 import MobileChatHeader from "./MobileChatHeader"
 import { useSearchParams, useRouter } from "next/navigation";
@@ -15,7 +16,7 @@ import { SocketMessage, TypingPayload } from "@/types/socket"
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, InfiniteData } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox"
-import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup, unmuteGroup } from "@/services/api/messaging"
+import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup, unmuteGroup, updateJobChatStatus } from "@/services/api/messaging"
 import { sendMessage as sendGroupMessage, getGroupDetails, leaveGroup, respondInvitation } from "@/services/api/group-chat"
 import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
@@ -37,7 +38,6 @@ import {
 import { DeleteMessageModal } from "./DeleteMessageModal"
 import { Trash2 } from "lucide-react"
 import MediaPreviewModal from "./MediaPreviewModal"
-import ChatSkeleton from "./ChatSkeleton"
 
 interface ChatWindowProps {
   chat: ChatThread
@@ -45,6 +45,7 @@ interface ChatWindowProps {
   onBack?: () => void
   onAcceptSuccess?: () => void
   initialEntityContext?: { type: 'job' | 'offer' | 'event', id: string }
+  activeTab?: 'chat' | 'jobs' | 'requests'
 }
 
 const getAvatarGradient = (avatar: string) => {
@@ -129,7 +130,7 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
   );
 }
 
-export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess, initialEntityContext }: ChatWindowProps) {
+export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess, initialEntityContext, activeTab }: ChatWindowProps) {
   const { socket, isUserOnline, setActiveConversationId } = useSocket();
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
@@ -169,7 +170,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
   const chat = {
     ...initialChat,
-    online: (!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false
+    online: initialChat.isMock ? initialChat.online : ((!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false)
   };
 
   const isGroupInvitation = !!chat.is_requesting && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
@@ -301,7 +302,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     isFetchingNextPage,
     isLoading
   } = useInfiniteQuery({
-    queryKey: ['messages', chat.id],
+    queryKey: ['messages', chat.id, activeProfile?.id || 'USER'],
     queryFn: async ({ pageParam }) => {
       const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
       const backendMessages = await getMessages(chat.id, 50, pageParam, companyId);
@@ -371,14 +372,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     setTypingUser(null);
     setTypingMap(new Map());
 
-    if (chat.id && (chat.unread > 0 || (isGroupInvitation && !chat.is_read))) {
+    if (chat.id && !chat.isMock && !String(chat.id).startsWith("mock-") && (chat.unread > 0 || (isGroupInvitation && !chat.is_read))) {
       const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
       markAsRead(chat.id, companyId).then(() => {
         // Optimistically update conversation unread count and read status
-        queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
-          if (!oldChats) return [];
-          return oldChats.map(c => c.id === chat.id ? { ...c, unread: 0, is_read: true } : c);
-        });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
       }).catch(console.error);
     }
 
@@ -417,7 +415,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       // Map socket message to frontend entity using valid mapper
       const uiMessage = mapBackendMessageToMessage(msg as any, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
 
-      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      queryClient.setQueryData(['messages', chat.id, activeProfile?.id || 'USER'], (old: InfiniteData<Message[]> | undefined) => {
         // If cache is empty (not loaded yet), create a minimal structure so the message isn't lost
         if (!old) {
           return { pages: [[uiMessage]], pageParams: [null] };
@@ -475,7 +473,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
       // Mark as read if we are focused
-      if (!isMe) {
+      if (!isMe && !chat.isMock && !String(chat.id).startsWith("mock-")) {
         const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
         markAsRead(chat.id, companyId).catch(console.error);
       }
@@ -512,7 +510,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     const handleMessagesSeen = (payload: { conversationId: string, messageIds: string[], readAt: string, readerId: string }) => {
       if (payload.conversationId !== chat.id) return;
 
-      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      queryClient.setQueryData(['messages', chat.id, activeProfile?.id || 'USER'], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return undefined;
         const newPages = old.pages.map(page =>
           page.map(m => {
@@ -530,7 +528,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       // payload: { messageId, conversationId, deleteType: 'me'|'everyone' }
       if (payload.conversationId !== chat.id) return;
 
-      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      queryClient.setQueryData(['messages', chat.id, activeProfile?.id || 'USER'], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return undefined;
 
         if (payload.deleteType === 'me') {
@@ -572,7 +570,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     const handleMessageEdited = (payload: { messageId: string, conversationId: string, text_content: string }) => {
       if (payload.conversationId !== chat.id) return;
 
-      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      queryClient.setQueryData(['messages', chat.id, activeProfile?.id || 'USER'], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return undefined;
         const newPages = old.pages.map(page => page.map(m => {
           if (m.id === payload.messageId) {
@@ -591,7 +589,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
     const handleReactionUpdated = (payload: { messageId: string; conversationId: string; reaction: { user_id: string; emoji: string; full_name: string; avatar: string | null; updated_at: string } | null; userId?: string }) => {
       if (payload.conversationId !== chat.id) return;
-      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      queryClient.setQueryData(['messages', chat.id, activeProfile?.id || 'USER'], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return old;
         const newPages = old.pages.map(page => page.map(m => {
           if (m.id !== payload.messageId) return m;
@@ -677,6 +675,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         // Add minimal required fields for mapping/rendering
         senderId: session?.user?.id || 'me',
+        senderMemberName: session?.user?.name || (session?.user as any)?.full_name || "Member",
         created_at: new Date().toISOString(),
         type: 'text',
         read_at: null,
@@ -1145,33 +1144,14 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                         </h2>
                       </Link>
                       <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[var(--muted-foreground)] w-full">
-                        {chat.role ? (
+                        <span className="truncate">{chat.otherUserType === 'COMPANY' ? (chat.orgHeadline || chat.role || "") : (chat.role || "")}</span>
+                        {(typingDisplayString || chat.online) && (
                           <>
-                            <span className="truncate">{chat.role}</span>
-                            {(typingDisplayString || chat.online) && (
-                              <>
-                                <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
-                                <span
-                                  style={{ color: typingDisplayString ? 'var(--foreground)' : '#22C55E' }}
-                                >
-                                  {typingDisplayString ? "Typing..." : "Active now"}
-                                </span>
-                              </>
-                            )}
+                            <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
+                            <span className="text-[#22C55E]">
+                              {typingDisplayString ? "Typing..." : "Active now"}
+                            </span>
                           </>
-                        ) : (
-                          (typingDisplayString || chat.online) ? (
-                            <>
-                              <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
-                              <span
-                                style={{ color: typingDisplayString ? 'var(--foreground)' : '#22C55E' }}
-                              >
-                                {typingDisplayString ? "Typing..." : "Active now"}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="truncate">Member</span>
-                          )
                         )}
                       </p>
                     </div>
@@ -1192,54 +1172,89 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-[204px] p-[8px] mr-4 bg-[var(--popover)] border border-[var(--border)]"
+                    className="w-[217px] p-[8px] mr-4 bg-white border border-[#F2F7FF] shadow-sm flex flex-col gap-0"
                     style={{ borderRadius: '24px 0px 24px 24px' }}>
                     {chat.isGroup ? (
                       <>
-                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
-                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
+                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
+                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
                         </DropdownMenuItem>
                         {chat.is_muted ? (
-                          <DropdownMenuItem onClick={() => setShowUnmuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unmute group</span>
-                            <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="var(--foreground)" />
+                          <DropdownMenuItem onClick={() => setShowUnmuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unmute group</span>
+                            <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="#000000" />
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => setShowMuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Mute group</span>
-                            <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="var(--foreground)" />
+                          <DropdownMenuItem onClick={() => setShowMuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Mute group</span>
+                            <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="#000000" />
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
-                          <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="var(--destructive)" />
+                        <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-red-50 rounded-[24px] transition-colors border-none outline-none">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#EF4444]">Leave group</span>
+                          <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="#EF4444" />
                         </DropdownMenuItem>
                       </>
                     ) : (
                       <>
-                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
-                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowReportConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
-                          <InfoIcon className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
-                        </DropdownMenuItem>
-                        {isBlockedByMe ? (
-                          <DropdownMenuItem onClick={handleUnblock} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
-                            <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                        {(activeTab !== undefined ? activeTab === 'jobs' : Boolean(chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0))) ? (
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try {
+                                await updateJobChatStatus(chat.id, false);
+                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                toast({ description: "Conversation removed from jobs" });
+                              } catch (err: any) {
+                                const msg = err?.response?.data?.message || err?.message || "Failed to remove conversation from jobs";
+                                toast({ title: "Error", description: msg, variant: "destructive" });
+                              }
+                            }}
+                            className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                          >
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Remove from jobs</span>
+                            <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
-                            <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try {
+                                await updateJobChatStatus(chat.id, true);
+                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                toast({ description: "Conversation moved to jobs" });
+                              } catch (err: any) {
+                                const msg = err?.response?.data?.message || err?.message || "Failed to move conversation to jobs";
+                                toast({ title: "Error", description: msg, variant: "destructive" });
+                              }
+                            }}
+                            className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                          >
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Move to jobs</span>
+                            <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete Chat</span>
-                          <Trash2 className="w-[24px] h-[24px] text-[var(--destructive)]" strokeWidth={1} />
+                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
+                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setShowReportConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Report profile</span>
+                          <Icon icon="fluent:info-16-regular" width={24} height={24} color="#000000" />
+                        </DropdownMenuItem>
+                        {isBlockedByMe ? (
+                          <DropdownMenuItem onClick={handleUnblock} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unblock profile</span>
+                            <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Block profile</span>
+                            <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-red-50 rounded-[24px] transition-colors border-none outline-none">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#EF4444]">Delete Chat</span>
+                          <Icon icon="fluent:delete-16-regular" width={24} height={24} color="#EF4444" />
                         </DropdownMenuItem>
                       </>
                     )}
@@ -1289,25 +1304,23 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             })}
             onReaction={handleReactionSelect}
             currentUserId={currentUserId}
-            conversationId={chat.id}
+            conversationId={chat.id.toString()}
+            otherUserType={chat.otherUserType}
+            otherUserSlug={chat.otherUserSlug || chat.otherUserId}
           />
         )
       )}
 
       {typingDisplayString && !isBlockedByMe && !isBlockedByOther && !isGroupInvitation && (
-        <div className="px-5 py-1.5 text-xs text-muted-foreground/80 italic flex items-center gap-1.5 border-t border-border/30">
-          <span className="flex gap-0.5">
-            <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+        <div className="px-6 py-1.5 flex items-center gap-2 bg-transparent text-[#000000] font-['Poppins'] font-normal text-[12px] leading-[16px] shrink-0">
+          <span className="flex gap-1 items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#000000] animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#000000] animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#000000] animate-bounce" style={{ animationDelay: '300ms' }} />
           </span>
-          {typingDisplayString}
-        </div>
-      )}
-
-      {activeProfile?.type === 'COMPANY' && !isBlockedByMe && !isBlockedByOther && !isGroupInvitation && (
-        <div className="px-4 py-1 text-xs text-center bg-muted/40 text-muted-foreground/70 border-t border-border/40">
-          Replying as <span className="font-semibold text-foreground">{activeProfile.name}</span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#000000]">
+            {typingDisplayString}
+          </span>
         </div>
       )}
 

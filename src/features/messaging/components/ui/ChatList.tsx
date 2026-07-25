@@ -15,7 +15,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 import Avatar from "@/components/shared/Avatar"
-import { ConversationListSkeleton } from "../skeletons/ConversationListSkeleton"
+import ConversationListSkeleton from "../skeletons/ConversationListSkeleton"
 
 // Reusable exact tag component
 const TagChip = ({ active, label, hasIndicator, onClick }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void }) => (
@@ -44,8 +44,8 @@ interface ChatListProps {
   error: Error | null;
   onCreateGroup?: () => void;
   isCompany?: boolean;
-  activeTab?: 'chat' | 'requests';
-  setActiveTab?: (tab: 'chat' | 'requests') => void;
+  activeTab?: 'chat' | 'jobs' | 'requests';
+  setActiveTab?: (tab: 'chat' | 'jobs' | 'requests') => void;
 }
 
 export function ChatList({
@@ -97,20 +97,54 @@ export function ChatList({
     const handleInvitationUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
+    const handleConversationUpdated = (data?: { conversationId?: string; isJobChat?: boolean }) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    };
     socket.on('group_invite', handleInvite);
     socket.on('invitation_update', handleInvitationUpdate);
+    socket.on('conversation_updated', handleConversationUpdated);
+    socket.on('conversation_job_status_changed', handleConversationUpdated);
     return () => {
       socket.off('group_invite', handleInvite);
       socket.off('invitation_update', handleInvitationUpdate);
+      socket.off('conversation_updated', handleConversationUpdated);
+      socket.off('conversation_job_status_changed', handleConversationUpdated);
     };
   }, [socket, queryClient]);
 
-  const [localActiveTab, setLocalActiveTab] = useState<'chat' | 'requests'>('chat');
+  const [localActiveTab, setLocalActiveTab] = useState<'chat' | 'jobs' | 'requests'>('chat');
   const activeTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
   const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : setLocalActiveTab;
 
-  // Badge logic
-  const hasUnreadChats = chats.some(chat => !chat.is_requesting && chat.unread > 0);
+  const otherTabQuery = useQuery({
+    queryKey: [
+      "conversations",
+      activeProfile?.type ?? "USER",
+      activeProfile?.id ?? "me",
+      activeProfile?.type === "COMPANY" ? (activeTab === "jobs" ? "chat" : "jobs") : "none",
+    ],
+    queryFn: async () => {
+      if (activeProfile?.type !== "COMPANY") return [];
+      const otherTabParam = activeTab === "jobs" ? "GENERAL" : "JOBS";
+      const backendChats = await getConversations({ companyId: activeProfile.id, tab: otherTabParam });
+      return backendChats.map(mapBackendChatToChatThread);
+    },
+    enabled: isCompany,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  const currentTabHasUnread = chats.some(chat => chat.unread > 0);
+  const otherTabHasUnread = (otherTabQuery.data || []).some(chat => chat.unread > 0);
+
+  const hasUnreadChats = isCompany
+    ? (activeTab === 'chat' ? currentTabHasUnread : otherTabHasUnread)
+    : chats.some(chat => !chat.is_requesting && chat.unread > 0);
+
+  const hasUnreadJobChats = isCompany
+    ? (activeTab === 'jobs' ? currentTabHasUnread : otherTabHasUnread)
+    : false;
+
   const hasUnreadRequests = chats.some(chat => {
     if (chat.is_requesting === true) {
       const isGroupInv = chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation';
@@ -123,27 +157,33 @@ export function ChatList({
   // Merge online status into chats
   const chatsWithStatus = React.useMemo(() => chats.map(chat => ({
     ...chat,
-    online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
+    online: chat.isMock ? chat.online : (chat.otherUserId ? isUserOnline(chat.otherUserId) : false)
   })), [chats, isUserOnline]);
 
   const filteredChats = React.useMemo(() => {
     let list = chatsWithStatus.filter((chat) => {
-      // 1. Filter by Tab
-      if (activeTab === 'chat' && chat.is_requesting) return false;
-      if (activeTab === 'requests' && !chat.is_requesting) return false;
+      // Company mode logic: Chat (General) vs Jobs
+      if (isCompany) {
+        const isJob = Boolean(chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0));
+        if (activeTab === 'chat' && isJob) return false;
+        if (activeTab === 'jobs' && !isJob) return false;
+      } else {
+        // User mode logic: Chat vs Requests
+        if (activeTab === 'chat' && chat.is_requesting) return false;
+        if (activeTab === 'requests' && !chat.is_requesting) return false;
+      }
 
-      // 2. Filter by Search
+      // Filter by Search
       return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     });
 
     // Sort by latest message timestamp (most recent first)
-    // Unread items bubble to top within their category
     return list.sort((a, b) => {
       if (a.unread > 0 && b.unread === 0) return -1;
       if (b.unread > 0 && a.unread === 0) return 1;
       return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
     });
-  }, [chatsWithStatus, activeTab, searchTerm]);
+  }, [chatsWithStatus, activeTab, searchTerm, isCompany]);
 
   // Virtualizer setup
   const rowVirtualizer = useVirtualizer({
@@ -177,13 +217,15 @@ export function ChatList({
               </p>
             </div>
           </div>
-          {/* Plus Button (Frame 2608532) */}
-          <button
-            onClick={onCreateGroup}
-            className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
-          >
-            <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
-          </button>
+          {/* Plus Button (Frame 2608532) - Hidden for Company profile */}
+          {!isCompany && (
+            <button
+              onClick={onCreateGroup}
+              className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
+            >
+              <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
+            </button>
+          )}
         </div>
 
         {/* Search Bar (Frame 2608500) */}
@@ -206,12 +248,21 @@ export function ChatList({
             hasIndicator={hasUnreadChats}
             onClick={() => setActiveTab('chat')}
           />
-          <TagChip
-            active={activeTab === 'requests'}
-            label="Requests"
-            hasIndicator={hasUnreadRequests}
-            onClick={() => setActiveTab('requests')}
-          />
+          {isCompany ? (
+            <TagChip
+              active={activeTab === 'jobs'}
+              label="Jobs"
+              hasIndicator={hasUnreadJobChats}
+              onClick={() => setActiveTab('jobs')}
+            />
+          ) : (
+            <TagChip
+              active={activeTab === 'requests'}
+              label="Requests"
+              hasIndicator={hasUnreadRequests}
+              onClick={() => setActiveTab('requests')}
+            />
+          )}
         </div>
 
         {/* Inbox Count */}

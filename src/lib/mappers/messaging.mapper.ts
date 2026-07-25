@@ -66,6 +66,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     id: backendChat.conversation_id,
     name: backendChat.other_user_name || "Deleted User",
     role: backendChat.other_user_headline || "",
+    orgHeadline: backendChat.org_headline || "",
     lastMessage: isPostUrl(backendChat.last_message_text) ? "Shared a post" : (isJobUrl(backendChat.last_message_text) ? "Shared a job" : backendChat.last_message_text),
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
@@ -88,12 +89,14 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     is_read: backendChat.is_read || false,
     is_muted: backendChat.is_muted || false,
     muted_until: backendChat.muted_until || null,
+    isJobChat: backendChat.is_job_chat || false,
   };
 };
 
 export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string, currentCompanyId?: string): Message => {
-  const isMe = (currentUserId && String(backendMessage.sender_id) === String(currentUserId)) ||
-    (currentCompanyId && backendMessage.author_company_id === currentCompanyId);
+  const messageOrgId = backendMessage.author_company_id || (backendMessage as any).author_org_id;
+  const isMe = (currentCompanyId && messageOrgId && String(messageOrgId) === String(currentCompanyId)) ||
+    (!currentCompanyId && currentUserId && String(backendMessage.sender_id) === String(currentUserId));
   const isDeletedUser = backendMessage.sender_id === null;
 
   return {
@@ -101,6 +104,8 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     senderId: backendMessage.sender_id,
     sender: isMe ? "me" : "other",
     senderName: isDeletedUser ? "Deleted User" : (backendMessage.sender_name || "Unknown"),
+    senderMemberName: backendMessage.sender_member_name || undefined,
+    orgHeadline: backendMessage.org_headline || "",
     senderAvatar: backendMessage.sender_avatar,
     text: backendMessage.text_content,
     time: formatTime(backendMessage.created_at),

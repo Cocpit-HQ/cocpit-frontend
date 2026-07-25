@@ -78,8 +78,8 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
             <h3 className="h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
               <span className="truncate">{chat.name}</span>
             </h3>
-            <p className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
-              <span className="truncate">{chat.role || "Member"}</span>
+            <p className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full min-w-0">
+              <span className="truncate w-full block">{chat.otherUserType === 'COMPANY' ? (chat.orgHeadline || chat.role || "") : (chat.role || "")}</span>
             </p>
           </div>
 
@@ -127,6 +127,7 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.chat.name === nextProps.chat.name &&
     prevProps.chat.avatar === nextProps.chat.avatar &&
     prevProps.chat.role === nextProps.chat.role &&
+    prevProps.chat.orgHeadline === nextProps.chat.orgHeadline &&
     prevProps.chat.is_requesting === nextProps.chat.is_requesting &&
     prevProps.chat.request_source === nextProps.chat.request_source &&
     prevProps.chat.is_muted === nextProps.chat.is_muted

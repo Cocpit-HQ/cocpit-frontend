@@ -42,7 +42,7 @@ interface ConnectionPageProps {
 }
 
 export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProps) {
-  const { activeTab, setActiveTab, invitationSubTab, setInvitationSubTab } = useConnectionStore();
+  const { activeTab, setActiveTab, invitationSubTab, setInvitationSubTab, removedRequestIds } = useConnectionStore();
   const isExpanded    = view === 'expanded';
 
   // Read URL search params on mount (e.g. /connections?tab=invitations&sub=channels
@@ -76,15 +76,20 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
 
   const { data: counts } = useConnectionCounts();
 
-  const allRequests     = data?.data ?? [];
-  const totalCount      = data?.totalCount ?? 0;
+  const rawRequests     = data?.data ?? [];
+  const allRequests     = rawRequests.filter((r) => !removedRequestIds.includes(r.id));
+  const totalCount      = Math.max(0, (data?.totalCount ?? 0) - removedRequestIds.length);
   const previewLimit    = isExpanded ? allRequests.length : 3;
   const displayRequests = allRequests.slice(0, previewLimit);
 
-  // Which inbox count to show for active tab
-  const inboxCount = activeTab === 'received'
+  // Which inbox count to show for active tab — prioritize actual fetched list totalCount when data is ready
+  const activeTabCount = activeTab === 'received'
     ? (counts?.received ?? 0)
-    : (counts?.sent     ?? 0);
+    : activeTab === 'sent'
+      ? (counts?.sent ?? 0)
+      : (counts?.invitations ?? 0);
+
+  const inboxCount = data ? totalCount : activeTabCount;
 
   // Render decision
   const showSkeleton  = isLoading;
@@ -125,23 +130,29 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
           <div className="flex gap-6 mb-5">
             <button
               onClick={() => setInvitationSubTab('teams')}
-              className={`pb-2 text-sm font-medium transition-colors ${
+              className={`pb-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5 ${
                 invitationSubTab === 'teams'
                   ? 'text-primary border-b-2 border-primary'
                   : 'text-foreground/70 hover:text-foreground'
               }`}
             >
-              Teams
+              <span>Teams</span>
+              {(counts?.teamsInvitations ?? 0) > 0 && (
+                <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] shadow-[0_0_6px_rgba(99,102,241,0.8)] shrink-0 inline-block" />
+              )}
             </button>
             <button
               onClick={() => setInvitationSubTab('channels')}
-              className={`pb-2 text-sm font-medium transition-colors ${
+              className={`pb-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5 ${
                 invitationSubTab === 'channels'
                   ? 'text-primary border-b-2 border-primary'
                   : 'text-foreground/70 hover:text-foreground'
               }`}
             >
-              Channels
+              <span>Channels</span>
+              {(counts?.channelsInvitations ?? 0) > 0 && (
+                <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] shadow-[0_0_6px_rgba(99,102,241,0.8)] shrink-0 inline-block" />
+              )}
             </button>
           </div>
         )}

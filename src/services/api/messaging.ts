@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import { BackendChat, BackendMessage } from "@/types/messaging";
 
-export const getConversations = async (params?: { companyId?: string }): Promise<BackendChat[]> => {
+export const getConversations = async (params?: { companyId?: string; tab?: 'GENERAL' | 'JOBS' }): Promise<BackendChat[]> => {
   const response = await api.get("/conversations", { params });
   return response.data;
 };
@@ -138,6 +138,11 @@ export const checkContextSent = async (conversationId: string, entityId: string,
   const response = await api.get(`/conversations/${conversationId}/check-context`, {
     params: { entityId, entityType }
   });
+  return response.data;
+};
+
+export const updateJobChatStatus = async (conversationId: string, isJobChat: boolean) => {
+  const response = await api.patch(`/conversations/${conversationId}/job-status`, { isJobChat });
   return response.data;
 };
 
