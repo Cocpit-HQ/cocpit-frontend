@@ -65,7 +65,7 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
               <div key={invite.id} className="w-full flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3 min-w-0">
                   <img
-                    src={invite.avatarUrl}
+                    src={invite.avatarUrl || '/assets/pngegg.png'}
                     onError={(e) => { (e.target as HTMLImageElement).src = '/assets/pngegg.png'; }}
                     alt={invite.name}
                     className="w-10 h-10 rounded-full object-cover flex-shrink-0"

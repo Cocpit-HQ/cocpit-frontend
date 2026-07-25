@@ -4,6 +4,7 @@ import React from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { CompanyProfileData } from "../../types/company-profile.types";
+import { TabPermissionGuard } from "@/features/access-denied";
 import HomeTab from "./tabs/HomeTab";
 import AboutTab from "./tabs/AboutTab";
 import PostsTab from "./tabs/PostsTab";
@@ -52,25 +53,27 @@ export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfil
         })}
       </Tabs.List>
 
-      <Tabs.Content value="home" className="mt-6 outline-none">
-        <HomeTab data={data} isOwnProfile={isOwnProfile} onTabChange={handleTabChange} />
-      </Tabs.Content>
+      <TabPermissionGuard activeTab={activeTab}>
+        <Tabs.Content value="home" className="mt-6 outline-none">
+          <HomeTab data={data} isOwnProfile={isOwnProfile} onTabChange={handleTabChange} />
+        </Tabs.Content>
 
-      <Tabs.Content value="about" className="mt-6 outline-none">
-        <AboutTab data={data} />
-      </Tabs.Content>
+        <Tabs.Content value="about" className="mt-6 outline-none">
+          <AboutTab data={data} />
+        </Tabs.Content>
 
-      <Tabs.Content value="posts" className="mt-6 outline-none">
-        <PostsTab data={data} isOwnProfile={isOwnProfile} />
-      </Tabs.Content>
+        <Tabs.Content value="posts" className="mt-6 outline-none">
+          <PostsTab data={data} isOwnProfile={isOwnProfile} />
+        </Tabs.Content>
 
-      <Tabs.Content value="jobs" className="mt-6 outline-none">
-        <JobsTab data={data} isOwnProfile={isOwnProfile} />
-      </Tabs.Content>
+        <Tabs.Content value="jobs" className="mt-6 outline-none">
+          <JobsTab data={data} isOwnProfile={isOwnProfile} />
+        </Tabs.Content>
 
-      <Tabs.Content value="people" className="mt-6 outline-none">
-        <PeopleTab data={data} />
-      </Tabs.Content>
+        <Tabs.Content value="people" className="mt-6 outline-none">
+          <PeopleTab data={data} />
+        </Tabs.Content>
+      </TabPermissionGuard>
 
     </Tabs.Root>
   );

@@ -44,7 +44,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
             {role.members.slice(0, 3).map((member) => (
               <img
                 key={member.id}
-                src={member.avatarUrl}
+                src={member.avatarUrl || '/images/Team/profile_team.png'}
                 alt={member.name}
                 className="w-6 h-6 rounded-full border border-company-card object-cover"
                 onError={(e) => {

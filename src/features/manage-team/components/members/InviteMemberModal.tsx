@@ -108,7 +108,7 @@ export default function InviteMemberModal({
                 >
                   <div className="flex items-center gap-3">
                     <img
-                      src={c.avatarUrl}
+                      src={c.avatarUrl || '/assets/pngegg.png'}
                       alt={c.name}
                       className="w-10 h-10 rounded-full object-cover"
                       onError={(e) => {

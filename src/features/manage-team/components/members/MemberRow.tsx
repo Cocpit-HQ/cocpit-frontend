@@ -29,7 +29,7 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
     <div className="w-full flex items-center justify-between py-2.5">
       <div className="flex items-center gap-3 min-w-0">
         <img
-          src={member.avatarUrl}
+          src={member.avatarUrl || '/assets/pngegg.png'}
           alt={member.name}
           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
           onError={(e) => {
