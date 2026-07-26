@@ -28,7 +28,7 @@ export default function HomeTab({ data, isOwnProfile, onTabChange }: HomeTabProp
       {!isOwnProfile && (
         <>
           <PeopleSection data={data} onViewMoreClick={() => onTabChange?.("people")} />
-          <KeyOfferingsSection keyOfferings={data.keyOfferings} />
+          <KeyOfferingsSection keyOfferings={data.keyOfferings} employeeGrowth={data.employeeGrowth} />
           <CommunitySection data={data} />
         </>
       )}

@@ -22,6 +22,7 @@ import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
 import { useSocial } from "@/context/SocialContext"
+import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service"
 import { ReportModal } from "@/components/shared/ReportModal"
 import MessageInfoModal from "../../MessageInfoModal"
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel"
@@ -169,7 +170,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const [pendingSharedProfile, setPendingSharedProfile] = useState<any | null>(null);
   const processedEntityContextRef = useRef<string | null>(null);
 
-  const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
+  const isBlockedByMe = initialChat.isBlockedByMe || (initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false);
   const isBlockedByOther = initialChat.isBlockedByOther;
 
   const isCompanyMode = activeProfile?.type === 'COMPANY';
@@ -177,6 +178,23 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const chat = {
     ...initialChat,
     online: initialChat.isMock ? initialChat.online : ((!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false)
+  };
+
+  const handleUnblock = async () => {
+    const targetId = chat.otherUserId || (chat as any).other_user_id;
+    if (!targetId) return;
+    try {
+      if (chat.otherUserType === 'COMPANY') {
+        await companyProfileService.unblockTarget(targetId);
+      } else {
+        await unblockUser(targetId);
+      }
+      toast({ description: "Account unblocked successfully" });
+      queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.response?.data?.message || "Failed to unblock account", variant: "destructive" });
+    }
   };
 
   const isJobChatDisabled = Boolean((chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0)) && !canJobsChat);
@@ -235,13 +253,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       window.history.replaceState(null, "", newPath);
     }
   }, [sharedProfileIdParam, chat.id]);
-
-  const handleUnblock = async () => {
-    if (!chat.otherUserId) return;
-    await unblockUser(chat.otherUserId);
-    queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
-    queryClient.invalidateQueries({ queryKey: ['conversations'] });
-  };
 
   const handleAcceptRequest = async () => {
     try {

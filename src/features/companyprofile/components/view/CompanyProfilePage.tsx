@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
@@ -10,6 +10,7 @@ import CompanyProfileHeader from "./CompanyProfileHeader";
 import CompanyProfileTabs from "./CompanyProfileTabs";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { Icon } from "@iconify/react";
 
 interface CompanyProfilePageProps {
   isOwnProfile?: boolean;
@@ -17,6 +18,7 @@ interface CompanyProfilePageProps {
 
 export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProfilePageProps) {
   const params = useParams();
+  const router = useRouter();
   const slug = (params?.slug as string) || "nexsus-global-systems";
 
   const { data: profileResponse, isLoading, isError } = useQuery({
@@ -37,11 +39,24 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     );
   }
 
-  if (isError || !profileResponse || !profileResponse.org) {
+  if (isError || !profileResponse || !profileResponse.org || profileResponse.relationship?.is_blocked) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950">
-        <h2 className="text-2xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">Organization not found</h2>
-        <p className="text-zinc-500 dark:text-zinc-400">The profile you are looking for does not exist or has been removed.</p>
+      <div className="min-h-screen bg-card flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md mx-auto">
+          <div className="w-20 h-20 bg-muted/60 dark:bg-muted/40 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon icon="lucide:ban" className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Profile Unavailable</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            The profile you are looking for could not be found. They may have been removed or the link is incorrect.
+          </p>
+          <button
+            onClick={() => router.push('/feed')}
+            className="inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 mt-4 cursor-pointer"
+          >
+            Return to Feed
+          </button>
+        </div>
       </div>
     );
   }
@@ -107,6 +122,8 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     entityType: isEdu ? "INSTITUTE" : "COMPANY",
     isFollowing: profileResponse.relationship?.is_following || false,
     isSubscribed: profileResponse.relationship?.is_subscribed || false,
+    isBlocked: profileResponse.relationship?.is_blocked || false,
+    employeeGrowth: profileResponse.relevance?.employee_growth || profileResponse.employee_growth || undefined,
     community: profileResponse.community_details ? {
       communityId: profileResponse.community_details.community_id,
       name: profileResponse.community_details.name,

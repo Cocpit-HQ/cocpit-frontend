@@ -1,11 +1,38 @@
-
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Icon } from "@iconify/react";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 
 interface KeyOfferingsSectionProps {
-  keyOfferings?: { icon: string; content: string }[];
+  keyOfferings?: { icon?: string; content: string }[];
+  employeeGrowth?: {
+    percentage: string;
+    growth_value: number;
+    base_count: number;
+    current_headcount: number;
+    total_joins: number;
+    max_y: number;
+    y_ticks: number[];
+    start_month: string;
+    current_month: string;
+    trend: {
+      month_num: number;
+      month: string;
+      full_month: string;
+      joins: number;
+      departures: number;
+      headcount: number;
+    }[];
+  };
 }
 
 const DEFAULT_OFFERINGS = [
@@ -22,8 +49,50 @@ const OFFERING_ICONS = [
   "lucide:folder-tree",
 ];
 
-export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectionProps) {
+// Custom Tooltip for Hovering on Graph
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-lg min-w-[120px] bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+      <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+      <span className="text-sm font-semibold text-foreground text-blue-600 dark:text-blue-400">
+        {payload[0].value.toLocaleString()} employees
+      </span>
+    </div>
+  );
+}
+
+export default function KeyOfferingsSection({ keyOfferings, employeeGrowth }: KeyOfferingsSectionProps) {
   const offerings = keyOfferings && keyOfferings.length > 0 ? keyOfferings : DEFAULT_OFFERINGS;
+
+  // --- Growth Chart Calculations ---
+  const yTicks = useMemo(() => {
+    if (employeeGrowth?.y_ticks && Array.isArray(employeeGrowth.y_ticks) && employeeGrowth.y_ticks.length > 0) {
+      return [...employeeGrowth.y_ticks].reverse(); // Recharts YAxis ticks order from 0 to max
+    }
+    return [0, 5];
+  }, [employeeGrowth?.y_ticks]);
+
+  const chartData = useMemo(() => {
+    if (employeeGrowth?.trend && Array.isArray(employeeGrowth.trend) && employeeGrowth.trend.length > 0) {
+      return employeeGrowth.trend.map(item => ({
+        month: item.month,
+        full_month: (item.full_month || item.month).toUpperCase(),
+        headcount: Number(item.headcount) || 0
+      }));
+    }
+    return [
+      { month: "Jan", full_month: "JANUARY", headcount: 0 },
+      { month: "Jul", full_month: "JULY", headcount: 0 }
+    ];
+  }, [employeeGrowth?.trend]);
+
+  const percentageStr = employeeGrowth?.percentage || "+0.0%";
+  const isNegative = percentageStr.startsWith("-");
+
+  const startMonthLabel = (employeeGrowth?.start_month || "JANUARY").toUpperCase();
+  const currentMonthLabel = (employeeGrowth?.current_month || "JULY").toUpperCase();
 
   return (
     <div
@@ -57,7 +126,7 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
         <div className="flex flex-row flex-wrap gap-x-[24px] gap-y-4 w-full">
           {offerings.map((offering, idx) => {
             const isObject = typeof offering === 'object' && offering !== null;
-            const text = isObject ? (offering as any).content : offering as string;
+            const text = isObject ? (offering as any).content : (offering as string);
             const iconStr = isObject && (offering as any).icon ? (offering as any).icon : OFFERING_ICONS[idx % OFFERING_ICONS.length];
             return (
               <div
@@ -121,13 +190,17 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
               }}
               className="text-[#6B7280] dark:text-zinc-400"
             >
-              Hiring velocity over the last 6 months
+              Hiring velocity YTD ({startMonthLabel} – {currentMonthLabel})
             </span>
           </div>
 
           <div className="flex flex-row items-center gap-2 mt-2">
-            <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
-              <Icon icon="lucide:arrow-up" className="w-4 h-4 text-[#22C55E]" strokeWidth={3} />
+            <div className={`w-6 h-6 rounded-full ${isNegative ? 'bg-red-500/10' : 'bg-green-500/10'} flex items-center justify-center`}>
+              <Icon
+                icon={isNegative ? "lucide:arrow-down" : "lucide:arrow-up"}
+                className={`w-4 h-4 ${isNegative ? 'text-red-500' : 'text-[#22C55E]'}`}
+                strokeWidth={3}
+              />
             </div>
             <span
               style={{
@@ -136,65 +209,55 @@ export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectio
                 fontSize: "28px",
                 lineHeight: "36px",
               }}
-              className="text-[#22C55E]"
+              className={isNegative ? "text-red-500" : "text-[#22C55E]"}
             >
-              +5.2%
+              {percentageStr}
             </span>
           </div>
         </div>
 
-        {/* Chart */}
-        <div className="relative w-full h-[180px] mt-4">
-          <svg
-            style={{ position: "absolute", width: "100%", height: "120px", top: "0px" }}
-            className="overflow-visible"
-            viewBox="0 0 920 120"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#E8F1FF" stopOpacity="1" />
-                <stop offset="100%" stopColor="#E8F1FF" stopOpacity="0.2" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M 22,120 L 22,110 C 89,75 136,60 255,60 C 326,60 374,85 445,85 C 540,85 571,55 706,50 C 777,45 849,55 920,20 L 920,120 Z"
-              fill="url(#growthGradient)"
-            />
-            <path
-              d="M 22,110 C 89,75 136,60 255,60 C 326,60 374,85 445,85 C 540,85 571,55 706,50 C 777,45 849,55 920,20"
-              fill="none"
-              stroke="#3B82F6"
-              strokeWidth="4"
-            />
-            <circle cx="22" cy="110" r="5" fill="#3B82F6" />
-            <circle cx="920" cy="20" r="5" fill="#3B82F6" />
-          </svg>
+        {/* Recharts Area Chart Container */}
+        <div className="h-[180px] w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="orgGrowthGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
 
-          <div className="absolute top-[140px] left-0 w-full flex justify-between border-t border-gray-200 dark:border-zinc-800 pt-4">
-            <span
-              style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 600,
-                fontSize: "10px",
-                letterSpacing: "0.05em",
-              }}
-              className="text-[#6B7280] dark:text-zinc-500 uppercase"
-            >
-              JANUARY
-            </span>
-            <span
-              style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 600,
-                fontSize: "10px",
-                letterSpacing: "0.05em",
-              }}
-              className="text-[#6B7280] dark:text-zinc-500 uppercase"
-            >
-              JULY
-            </span>
-          </div>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              
+              <XAxis
+                dataKey="full_month"
+                tick={{ fontSize: 10, fill: '#6B7280', fontWeight: 600 }}
+                tickLine={false}
+                axisLine={false}
+              />
+
+              <YAxis
+                ticks={yTicks}
+                domain={[0, yTicks[yTicks.length - 1]]}
+                tick={{ fontSize: 10, fill: '#6B7280', fontWeight: 600 }}
+                tickLine={false}
+                axisLine={false}
+                width={36}
+              />
+
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border)' }} />
+
+              <Area
+                type="monotone"
+                dataKey="headcount"
+                stroke="#3B82F6"
+                strokeWidth={3.5}
+                fill="url(#orgGrowthGrad)"
+                dot={{ r: 4, fill: '#3B82F6', stroke: '#3B82F6' }}
+                activeDot={{ r: 6, fill: '#3B82F6', stroke: 'var(--card)', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

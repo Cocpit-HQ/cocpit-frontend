@@ -93,6 +93,33 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
     }
   });
 
+  const blockMutation = useMutation({
+    mutationFn: () => data.isBlocked 
+      ? companyProfileService.unblockTarget(orgId!)
+      : companyProfileService.blockTarget(orgId!),
+    onSuccess: () => {
+      toast({
+        title: data.isBlocked ? "Organization unblocked" : "Organization blocked",
+        description: data.isBlocked 
+          ? `You have unblocked ${data.name}`
+          : `You have blocked ${data.name}`
+      });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Action failed",
+        description: err.response?.data?.message || "Failed to update block status",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleBlockToggle = () => {
+    if (!orgId) return;
+    blockMutation.mutate();
+  };
+
 
 
   return (
@@ -265,6 +292,16 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
                     <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
                       <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share Profile</span>
                       <Share2 className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleBlockToggle} 
+                      disabled={blockMutation.isPending}
+                      className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/40 rounded-xl outline-none group transition-colors text-red-600 dark:text-red-400"
+                    >
+                      <span className="text-sm font-medium group-focus:text-red-600">
+                        {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock Organization" : "Block Organization"}
+                      </span>
+                      <Icon icon="lucide:ban" className="w-4 h-4 text-red-600 dark:text-red-400 group-focus:text-red-600 transition-colors" />
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

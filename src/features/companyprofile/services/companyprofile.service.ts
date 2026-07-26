@@ -176,4 +176,14 @@ export const companyProfileService = {
     const res = await api.delete(`/organizations/${orgId}/following/organizations/${targetOrgId}`);
     return res.data;
   },
+
+  async blockTarget(targetId: string): Promise<any> {
+    const res = await api.post(`/users/${targetId}/block`);
+    return res.data;
+  },
+
+  async unblockTarget(targetId: string): Promise<any> {
+    const res = await api.delete(`/users/${targetId}/unblock`);
+    return res.data;
+  },
 };

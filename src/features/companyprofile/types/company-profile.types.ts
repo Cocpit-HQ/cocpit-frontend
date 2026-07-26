@@ -37,6 +37,28 @@ export interface CompanyCommunityData {
   isOwner?: boolean;
 }
 
+export interface EmployeeGrowthTrendPoint {
+  month_num: number;
+  month: string;
+  full_month: string;
+  joins: number;
+  departures: number;
+  headcount: number;
+}
+
+export interface EmployeeGrowthData {
+  percentage: string;
+  growth_value: number;
+  base_count: number;
+  current_headcount: number;
+  total_joins: number;
+  max_y: number;
+  y_ticks: number[];
+  start_month: string;
+  current_month: string;
+  trend: EmployeeGrowthTrendPoint[];
+}
+
 export interface CompanyProfileData {
   id: string;
   _id?: string;
@@ -65,5 +87,7 @@ export interface CompanyProfileData {
   entityType?: 'COMPANY' | 'INSTITUTE';
   isFollowing?: boolean;
   isSubscribed?: boolean;
+  isBlocked?: boolean;
   community?: CompanyCommunityData;
+  employeeGrowth?: EmployeeGrowthData;
 }
