@@ -192,12 +192,18 @@ export function useCompanyPermissions(company?: any | null) {
         // Analytics fallback
         if ((cleanPerm === 'VIEW_ANALYTICS' || cleanPerm === 'ANALYTICS') && (upperPerms.includes('ANALYTICS') || upperPerms.includes('VIEW_ANALYTICS'))) return true;
 
-        // JOBS parent implies sub-permissions
-        const jobsSubPerms = ["POST_JOBS", "VIEW_APPLICANTS", "JOBS_CHAT", "JOBS"];
+        // JOBS sub-permissions
+        if (cleanPerm === 'JOBS_CHAT') {
+            return upperPerms.includes("JOBS") && upperPerms.includes("JOBS_CHAT");
+        }
+        const jobsSubPerms = ["POST_JOBS", "VIEW_APPLICANTS", "JOBS"];
         if (jobsSubPerms.includes(cleanPerm) && upperPerms.includes("JOBS")) return true;
 
-        // TEAMS parent implies sub-permissions
-        const teamsSubPerms = ["VIEW_MEMBERS", "INVITE_MEMBERS", "REMOVE_MEMBERS", "MANAGE_MEMBERS", "MANAGE_ROLES", "ACTIVITY_LOGS", "TEAMS"];
+        // TEAMS sub-permissions
+        if (cleanPerm === 'ACTIVITY_LOGS') {
+            return upperPerms.includes("TEAMS") && upperPerms.includes("ACTIVITY_LOGS");
+        }
+        const teamsSubPerms = ["VIEW_MEMBERS", "INVITE_MEMBERS", "REMOVE_MEMBERS", "MANAGE_MEMBERS", "MANAGE_ROLES", "TEAMS"];
         if (teamsSubPerms.includes(cleanPerm) && upperPerms.includes("TEAMS")) return true;
 
         // CHANNEL parent implies channel-related details

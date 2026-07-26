@@ -21,7 +21,8 @@ export function useCompanyPermissions(company?: any | null) {
     }
 
     const { name, permissions, priority } = company.viewer_role_data;
-    const roleName = name.toUpperCase();
+    const originalRoleName = name || '';
+    const roleName = originalRoleName.toUpperCase();
 
     // Use permission-based ownership detection for both companies and institutions
     const isOwner = permissions.includes('*');
@@ -50,11 +51,17 @@ export function useCompanyPermissions(company?: any | null) {
         // Analytics fallback
         if ((cleanPerm === 'VIEW_ANALYTICS' || cleanPerm === 'ANALYTICS') && (upperPerms.includes('ANALYTICS') || upperPerms.includes('VIEW_ANALYTICS'))) return true;
 
-        // JOBS parent implies sub-permissions
-        const jobsSubPerms = ["POST_JOBS", "VIEW_APPLICANTS", "JOBS_CHAT", "JOBS"];
+        // JOBS sub-permissions
+        if (cleanPerm === 'JOBS_CHAT') {
+            return upperPerms.includes("JOBS") && upperPerms.includes("JOBS_CHAT");
+        }
+        const jobsSubPerms = ["POST_JOBS", "VIEW_APPLICANTS", "JOBS"];
         if (jobsSubPerms.includes(cleanPerm) && upperPerms.includes("JOBS")) return true;
 
-        // TEAMS parent implies sub-permissions
+        // TEAMS sub-permissions
+        if (cleanPerm === 'ACTIVITY_LOGS') {
+            return upperPerms.includes("TEAMS") && upperPerms.includes("ACTIVITY_LOGS");
+        }
         const teamsSubPerms = ["VIEW_MEMBERS", "INVITE_MEMBERS", "REMOVE_MEMBERS", "MANAGE_MEMBERS", "MANAGE_ROLES", "TEAMS"];
         if (teamsSubPerms.includes(cleanPerm) && upperPerms.includes("TEAMS")) return true;
 
@@ -76,7 +83,7 @@ export function useCompanyPermissions(company?: any | null) {
     const isEditor = roleName === 'EDITOR';
 
     return {
-        role: roleName,
+        role: originalRoleName || roleName,
         priority,
         isOwner,
         isAdmin,
@@ -87,6 +94,9 @@ export function useCompanyPermissions(company?: any | null) {
         canEdit: checkPermission('MANAGE_COMPANY_DETAILS'),
         canManageMembers: checkPermission('MANAGE_MEMBERS') || checkPermission('INVITE_MEMBERS') || checkPermission('REMOVE_MEMBERS'),
         canPostJobs: checkPermission('POST_JOBS'),
+        canViewJobs: checkPermission('JOBS'),
+        canJobsChat: checkPermission('JOBS_CHAT'),
+        canChat: checkPermission('CHAT'),
         canCreateContent: checkPermission('CREATE_CONTENT'),
         canViewAnalytics: checkPermission('VIEW_ANALYTICS'),
         canManageRoles: checkPermission('MANAGE_ROLES'),

@@ -35,9 +35,10 @@ export default function PermissionCheckList({
 
     if (selected.includes(perm)) {
       let newSelected = selected.filter((p) => p !== perm);
-      // For TEAMS specifically: when TEAMS toggle is deactivated, also deactivate ACTIVITY_LOGS
-      if (perm === 'TEAMS') {
-        newSelected = newSelected.filter((p) => p !== 'ACTIVITY_LOGS');
+      // When a parent toggle is deactivated, also deactivate all its child permissions
+      if (parentGroup && 'children' in parentGroup) {
+        const childIds = parentGroup.children.map((c) => c.id as TeamPermission);
+        newSelected = newSelected.filter((p) => !childIds.includes(p));
       }
       onChange(newSelected);
     } else {
@@ -94,9 +95,8 @@ export default function PermissionCheckList({
                 <div className="flex flex-col w-full">
                   {group.children.map((child) => {
                     const isChildChecked = selected.includes(child.id as TeamPermission);
-                    // Special rule for Teams: Activity logs checkbox requires Teams toggle to be ON.
-                    // For Jobs: Jobs chat checkbox can be checked even when toggle is OFF.
-                    const isChildDisabled = disabled || (group.id === 'TEAMS' && !isChecked);
+                    // Child permissions require their parent group toggle to be ON
+                    const isChildDisabled = disabled || !isChecked;
                     
                     return (
                       <div key={child.id} className={`flex items-center justify-between pl-9 h-[40px] w-full ${isChildDisabled ? 'opacity-50' : ''}`}>

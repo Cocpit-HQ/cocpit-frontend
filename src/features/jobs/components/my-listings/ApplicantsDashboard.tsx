@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
 import { JobListing } from '../../types/jobs.types';
 import {
   getJobApplicants,
@@ -206,6 +207,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 }) => {
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && !!activeProfile?.id;
+  const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
+  const canJobsChat = !isCompanyMode || companyPermissions.canJobsChat;
   const router = useRouter();
 
   const [candidates, setCandidates] = useState<any[]>([]);
@@ -777,15 +780,22 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   </button>
 
                   <button
-                    onClick={() => router.push(`/messaging?userId=${candidateDetail.applicantId}&jobContext=${listing.id}`)}
+                    onClick={() => {
+                      if (!canJobsChat) return;
+                      router.push(`/messaging?userId=${candidateDetail.applicantId}&jobContext=${listing.id}`);
+                    }}
+                    disabled={!canJobsChat}
+                    title={!canJobsChat ? "Permission required to chat with job candidates" : ""}
                     type="button"
-                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 hover:bg-slate-50 ${t.ultraLight} transition-all active:scale-95 ${
-                      isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 transition-all ${
+                      !canJobsChat
+                        ? 'opacity-50 cursor-not-allowed bg-gray-200 dark:bg-gray-800 text-gray-400 border-gray-300 dark:border-gray-700'
+                        : `hover:bg-slate-50 ${t.ultraLight} active:scale-95 ${
+                            isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8]' : 'border-[#818CF8] text-[#818CF8]'
+                          }`
                     }`}
                   >
-                    <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${
-                      isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
-                    }`}>
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap">
                       Chat
                     </span>
                   </button>

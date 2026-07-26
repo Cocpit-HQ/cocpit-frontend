@@ -24,6 +24,7 @@ import GroupChat from "./components/group-chat/GroupChat";
 import { GroupChatProvider } from "./components/group-chat/groupChat.context";
 import CreateGroupModal from "./components/group-chat/CreateGroupModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions";
 import { useToast } from "@/hooks/use-toast";
 import { DUMMY_JOB_CHATS } from "@/features/messaging/data/companyMessagingMockData";
 import { companyService } from "@/services/organization.service";
@@ -50,7 +51,43 @@ export default function MessagingPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'jobs' | 'requests'>('chat');
   const processedUserIdRef = React.useRef<string | null>(null);
   const processedMessagesRef = React.useRef<Set<string>>(new Set());
+  const prevConversationIdRef = React.useRef<string | null>(null);
+  const hasForcedJobTabRef = React.useRef<boolean>(false);
   const [initialEntityContext, setInitialEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string; targetId: string } | null>(null);
+
+  // Detect URL search params for job/offer context immediately on mount/param change
+  useEffect(() => {
+    if (!searchParams) return;
+    const hasJobContext =
+      searchParams.get('jobId') ||
+      searchParams.get('jobContext') ||
+      searchParams.get('offerContext');
+
+    if (hasJobContext) {
+      setActiveTab('jobs');
+      hasForcedJobTabRef.current = true;
+    }
+  }, [searchParams]);
+
+  // Controlled Auto-Switch when switching conversations
+  useEffect(() => {
+    if (!selectedChat?.id) return;
+
+    const isNewConversation = prevConversationIdRef.current !== selectedChat.id;
+
+    if (isNewConversation) {
+      const isJob = Boolean(
+        selectedChat.isJobChat ||
+        (selectedChat.jobIds && selectedChat.jobIds.length > 0)
+      );
+
+      if (!hasForcedJobTabRef.current) {
+        setActiveTab(isJob ? 'jobs' : 'chat');
+      }
+
+      prevConversationIdRef.current = selectedChat.id;
+    }
+  }, [selectedChat?.id, selectedChat?.isJobChat]);
 
   // Capture context from search parameters as soon as they are available, and preserve it
   useEffect(() => {
@@ -80,12 +117,33 @@ export default function MessagingPage() {
   }, [selectedChat?.id, selectedChat?.otherUserId, initialEntityContext?.targetId]);
 
   const { activeProfile } = useActiveProfile();
+  const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
+
+  // Default activeTab to 'jobs' if company profile has JOBS_CHAT permission but NO general CHAT permission
+  useEffect(() => {
+    if (activeProfile?.type === 'COMPANY' && !companyPermissions.canChat && companyPermissions.canJobsChat) {
+      setActiveTab('jobs');
+    }
+  }, [activeProfile?.id, activeProfile?.type, companyPermissions.canChat, companyPermissions.canJobsChat]);
 
   // Clear selected chat when switching profiles (user <-> company)
   useEffect(() => {
     setSelectedChat(null);
     processedUserIdRef.current = null;
   }, [activeProfile?.id, activeProfile?.type]);
+
+  // Clear selected chat if selectedChat is a job chat but company profile lacks JOBS_CHAT permission
+  useEffect(() => {
+    if (selectedChat && activeProfile?.type === 'COMPANY') {
+      const isJob = Boolean(
+        selectedChat.isJobChat ||
+        (selectedChat.jobIds && selectedChat.jobIds.length > 0)
+      );
+      if (isJob && !companyPermissions.canJobsChat) {
+        setSelectedChat(null);
+      }
+    }
+  }, [selectedChat, activeProfile?.type, companyPermissions.canJobsChat]);
 
   const rawChatsQuery = useQuery({
     queryKey: [

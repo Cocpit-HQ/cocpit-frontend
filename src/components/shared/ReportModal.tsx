@@ -64,11 +64,8 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
       onClose();
     } catch (error: any) {
       console.error('Failed to submit report', error);
-      if (error.response?.status === 409) {
-        toast.error('You have already reported this content');
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to submit report');
-      }
+      const errorMessage = error.response?.data?.message || 'Failed to submit report';
+      toast.error(errorMessage);
       onClose();
     } finally {
       setIsLoading(false);

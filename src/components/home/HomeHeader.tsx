@@ -843,17 +843,17 @@ export const HomeHeader = () => {
                                         <Link
                                             href="/messaging"
                                             onClick={(e) => {
-                                                if (isCompany && !checkPermission('chat') && !checkPermission('MESSAGES')) {
+                                                if (isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) {
                                                     e.preventDefault();
                                                     e.stopPropagation();
                                                 }
                                             }}
-                                            className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'} ${(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES')) ? '!cursor-not-allowed' : ''}`}
+                                            className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'} ${(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) ? '!cursor-not-allowed' : ''}`}
                                         >
                                             <MessageCircle width={24} height={24} strokeWidth={1.5} />
                                         </Link>
                                     </TooltipTrigger>
-                                    {(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES')) && (
+                                    {(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) && (
                                         <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
                                             <p>You don't have permission to access this</p>
                                         </TooltipContent>

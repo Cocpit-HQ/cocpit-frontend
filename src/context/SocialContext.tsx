@@ -189,7 +189,6 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   const isBlocked = (id: string) => blockedIds.includes(id);
 
   const blockUser = async (id: string) => {
-    if (isCompany) return; // Block is a user-only action
     setBlockedIds(prev => [...prev, id]);
 
     setFollowingIds(prev => prev.filter(uid => uid !== id));
@@ -206,7 +205,6 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const unblockUser = async (id: string) => {
-    if (isCompany) return; // Unblock is a user-only action
     setBlockedIds(prev => prev.filter(uid => uid !== id));
     try {
       await api.delete(`/users/${id}/unblock`);

@@ -12,24 +12,30 @@ import { getPendingInvitations, respondInvitation } from "@/services/api/group-c
 import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
 import { useSocket } from "@/context/SocketContext"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
 import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 import Avatar from "@/components/shared/Avatar"
 import ConversationListSkeleton from "../skeletons/ConversationListSkeleton"
 
 // Reusable exact tag component
-const TagChip = ({ active, label, hasIndicator, onClick }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void }) => (
+const TagChip = ({ active, label, hasIndicator, onClick, disabled }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void, disabled?: boolean }) => (
   <button
-    onClick={onClick}
-    className={`flex flex-row justify-center items-center px-[16px] py-[6px] gap-[8px] h-[32px] rounded-[24px] flex-none order-0 ${active
-        ? "bg-[#EEF2FF] border border-[#EEF2FF]"
-        : "bg-transparent border border-[#6366F1]"
-      }`}
+    onClick={disabled ? undefined : onClick}
+    disabled={disabled}
+    title={disabled ? "Permission required to view job chats" : undefined}
+    className={`flex flex-row justify-center items-center px-[16px] py-[6px] gap-[8px] h-[32px] rounded-[24px] flex-none order-0 ${
+      disabled
+        ? "opacity-50 cursor-not-allowed bg-gray-100 border border-gray-300"
+        : active
+          ? "bg-[#EEF2FF] border border-[#EEF2FF]"
+          : "bg-transparent border border-[#6366F1]"
+    }`}
   >
-    <span className={`h-[20px] font-['Poppins'] font-medium text-[14px] leading-[20px] flex items-center text-center tracking-[0.1px] text-[#6366F1] flex-none order-0`}>
+    <span className={`h-[20px] font-['Poppins'] font-medium text-[14px] leading-[20px] flex items-center text-center tracking-[0.1px] ${disabled ? 'text-gray-400' : 'text-[#6366F1]'} flex-none order-0`}>
       {label}
     </span>
-    {hasIndicator && (
+    {hasIndicator && !disabled && (
       <span className={`w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none order-1`} />
     )}
   </button>
@@ -63,6 +69,9 @@ export function ChatList({
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline, typingConversations } = useSocket();
   const { activeProfile } = useActiveProfile();
+  const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
+  const canChat = !isCompany || companyPermissions.canChat;
+  const canJobsChat = !isCompany || companyPermissions.canJobsChat;
   const queryClient = useQueryClient();
   const parentRef = React.useRef<HTMLDivElement>(null);
 
@@ -246,14 +255,24 @@ export function ChatList({
             active={activeTab === 'chat'}
             label="Chat"
             hasIndicator={hasUnreadChats}
-            onClick={() => setActiveTab('chat')}
+            disabled={!canChat}
+            onClick={() => {
+              if (canChat) {
+                setActiveTab('chat');
+              }
+            }}
           />
           {isCompany ? (
             <TagChip
               active={activeTab === 'jobs'}
               label="Jobs"
               hasIndicator={hasUnreadJobChats}
-              onClick={() => setActiveTab('jobs')}
+              disabled={!canJobsChat}
+              onClick={() => {
+                if (canJobsChat) {
+                  setActiveTab('jobs');
+                }
+              }}
             />
           ) : (
             <TagChip
@@ -288,10 +307,25 @@ export function ChatList({
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const chat = filteredChats[virtualRow.index];
+              const isJobChat = Boolean(chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0));
+              const isJobChatDisabled = isCompany && isJobChat && !canJobsChat;
+
               return (
                 <div
                   key={chat.id}
-                  onClick={() => onSelectChat?.(chat)}
+                  onClick={(e) => {
+                    if (isJobChatDisabled) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return;
+                    }
+                    onSelectChat?.(chat);
+                    if (chat.isJobChat && activeTab !== 'jobs' && setActiveTab) {
+                      setActiveTab('jobs');
+                    }
+                  }}
+                  className={isJobChatDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
+                  title={isJobChatDisabled ? "Permission required to access job chat" : undefined}
                   style={{
                     position: "absolute",
                     top: 0,

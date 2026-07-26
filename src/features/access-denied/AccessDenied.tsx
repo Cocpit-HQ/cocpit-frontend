@@ -94,34 +94,61 @@ export default function AccessDenied({
   // Determine current role name
   const currentRole =
     roleName ||
-    perms?.role ||
     profileAny?.viewer_role_data?.name ||
+    perms?.role ||
     profileAny?.role ||
     'Member';
-
-  const formattedRoleName =
-    currentRole.charAt(0).toUpperCase() + currentRole.slice(1).toLowerCase();
 
   // Determine role description
   const upperRoleKey = currentRole.toUpperCase();
   const currentRoleDesc =
     roleDescription ||
-    (activeProfile as any)?.viewer_role_data?.description ||
+    profileAny?.viewer_role_data?.description ||
     ROLE_DESCRIPTIONS[upperRoleKey] ||
-    `Assigned to the ${formattedRoleName} role within your organization.`;
+    `Assigned to the ${currentRole} role within your organization.`;
 
+  // Determine accessible pages pills
   // Determine accessible pages pills
   const pagesToDisplay = React.useMemo(() => {
     if (accessiblePages && accessiblePages.length > 0) {
       return accessiblePages;
     }
 
-    return DEFAULT_PAGES.filter((p) => {
-      if (p.alwaysAvailable) return true;
-      if (!p.permission) return true;
-      return perms.checkPermission(p.permission);
+    const slug = (activeProfile as any)?.slug;
+    const isCompany = activeProfile?.type === 'COMPANY';
+
+    const dynamicPages: AccessiblePagePill[] = [
+      { label: 'Feed', path: '/feed', alwaysAvailable: true },
+      {
+        label: 'Profile',
+        path: isCompany && slug ? `/organization/${slug}` : '/profile',
+        alwaysAvailable: true,
+      },
+      { label: 'Settings', path: '/settings', alwaysAvailable: true },
+      { label: 'Chat', path: '/messaging', permission: 'CHAT' },
+      { label: 'Job chat', path: '/messaging', permission: 'JOBS_CHAT' },
+      { label: 'Channel', path: '/channel', permission: 'CHANNELS' },
+      { label: 'Jobs', path: '/jobs', permission: 'POST_JOBS' },
+      { label: 'Team', path: isCompany && slug ? `/organization/${slug}/settings?tab=members` : '/team', permission: 'TEAMS' },
+      {
+        label: 'Analytics',
+        path: isCompany && slug ? `/organization/${slug}/analytics` : '/company-analytics',
+        permission: 'VIEW_ANALYTICS',
+      },
+    ];
+
+    const seenPaths = new Set<string>();
+    return dynamicPages.filter((p) => {
+      if (!p.alwaysAvailable && p.permission && !perms.checkPermission(p.permission)) {
+        return false;
+      }
+      if (seenPaths.has(p.path)) {
+        return false;
+      }
+      seenPaths.add(p.path);
+      return true;
     });
-  }, [accessiblePages, perms]);
+  }, [accessiblePages, perms, activeProfile]);
 
   return (
     <div className="access-denied-page min-h-[70vh] flex flex-col items-center justify-center py-10 px-4">
@@ -190,7 +217,7 @@ export default function AccessDenied({
             <div className="flex items-center gap-2 mb-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#1A73E8] inline-block" />
               <span className="text-base font-semibold text-zinc-900 dark:text-zinc-100 font-['Poppins']">
-                {formattedRoleName}
+                {currentRole}
               </span>
             </div>
             <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 font-['Poppins'] leading-relaxed pl-4">

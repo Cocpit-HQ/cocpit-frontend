@@ -5,6 +5,7 @@ import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
 import { formatSalaryRange, getCurrencyIcon } from '../../utils/currency.utils';
 
 interface OfferDetailsScreenProps {
@@ -39,6 +40,7 @@ interface OfferCandidate {
   status: 'chat' | 'withdraw' | 'declined' | 'withdrawn';
   note?: string;
   sentByName?: string;
+  sentByHeadline?: string;
   orgId?: string; // org_id of the company that sent the offer (null for personal offers)
 }
 
@@ -52,8 +54,10 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
-  const { activeProfile, userCompanies } = useActiveProfile();
+  const { activeProfile } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
+  const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
+  const canJobsChat = !isCompanyMode || companyPermissions.canJobsChat;
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
 
   const toggleNoteExpanded = (candidateId: string) => {
@@ -89,6 +93,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         status: item.status === 'accepted' ? 'chat' : (item.status === 'pending' ? 'withdraw' : (item.status === 'declined' ? 'declined' : 'withdrawn')),
         note: item.message || undefined,
         sentByName: item.sent_by_name,
+        sentByHeadline: item.sent_by_headline || undefined,
         orgId: item.org_id || undefined,
       }));
       setCandidates(mapped);
@@ -342,10 +347,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                   {cand.status === 'chat' && (
                     <button
                       onClick={() => {
-                        // Same pattern as the candidate-side "Chat" button (OfferCard.tsx):
-                        // navigate with the target + offer context via URL params. ChatWindow
-                        // stages it as a pinned card and attaches it to the recruiter's next
-                        // sent message — it is not sent as its own message here.
+                        if (!canJobsChat) return;
                         const params = new URLSearchParams();
                         params.set('userId', cand.userId);
                         const companyId = getCompanyId();
@@ -355,8 +357,16 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                         params.set('offerContext', cand.id);
                         router.push(`/messaging?${params.toString()}`);
                       }}
+                      disabled={!canJobsChat}
+                      title={!canJobsChat ? "Permission required to chat with job candidates" : ""}
                       type="button"
-                      className={`box-sizing: border-box w-[100px] md:w-[120px] h-[40px] ${isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] text-white dark:text-[#0F1115]' : 'bg-[#6366F1] dark:bg-[#818CF8] text-white dark:text-[#0B0F19]'} border border-white dark:border-transparent rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer`}
+                      className={`box-sizing: border-box w-[100px] md:w-[120px] h-[40px] ${
+                        !canJobsChat
+                          ? 'opacity-50 cursor-not-allowed bg-gray-300 dark:bg-gray-700 text-gray-500'
+                          : isCompanyMode
+                            ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] text-white dark:text-[#0F1115] hover:opacity-90 active:scale-95 cursor-pointer'
+                            : 'bg-[#6366F1] dark:bg-[#818CF8] text-white dark:text-[#0B0F19] hover:opacity-90 active:scale-95 cursor-pointer'
+                      } border border-white dark:border-transparent rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] transition-all`}
                     >
                       <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center">
                         Chat
@@ -406,12 +416,14 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                           {cand.sentByName ? cand.sentByName.substring(0, 2).toUpperCase() : 'RC'}
                         </div>
                         <div className="flex flex-col justify-center items-start">
-                          <span className={`font-['Poppins'] font-medium md:font-normal text-[12px] leading-[16px] ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'} uppercase tracking-wide md:tracking-normal`}>
+                          <span className={`font-['Poppins'] font-medium md:font-normal text-[12px] leading-[16px] ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'} tracking-wide md:tracking-normal`}>
                             {cand.sentByName || 'RECRUITER'}
                           </span>
-                          <span className={`font-['Poppins'] font-normal text-[10px] md:text-[12px] leading-[14px] md:leading-[16px] ${isCompanyMode ? 'text-blue-400 dark:text-[#82B8FF]' : 'text-indigo-400 md:text-[#6366F1] dark:text-[#5B66D6]'} uppercase tracking-widest md:tracking-normal`}>
-                            HEAD OF DESIGN
-                          </span>
+                          {cand.sentByHeadline && (
+                            <span className={`font-['Poppins'] font-normal text-[10px] md:text-[12px] leading-[14px] md:leading-[16px] ${isCompanyMode ? 'text-blue-400 dark:text-[#82B8FF]' : 'text-indigo-400 md:text-[#6366F1] dark:text-[#5B66D6]'} tracking-normal`}>
+                              {cand.sentByHeadline}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <p className={`font-['Poppins'] font-normal text-[14px] md:text-[12px] leading-[22px] md:leading-[16px] text-gray-500 md:text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-gray-400'} whitespace-pre-line mt-1 md:mt-0`}>

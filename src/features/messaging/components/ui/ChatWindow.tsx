@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { MoreHorizontal, Phone, Video } from "lucide-react"
+import { MoreHorizontal, Phone, Video, Ban, X } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
 import MessageList from "./MessageList"
@@ -22,13 +22,14 @@ import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
 import { useSocial } from "@/context/SocialContext"
-import { createReport } from "@/services/api/report"
+import { ReportModal } from "@/components/shared/ReportModal"
 import MessageInfoModal from "../../MessageInfoModal"
 import { Button } from "@/components/ui/button"
-import { X, Copy, Pencil, Info as InfoIcon, MoreVertical, Ban } from "lucide-react"
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel"
 import { Icon } from "@iconify/react"
 import { Plus } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,6 +136,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
   const { activeProfile } = useActiveProfile();
+  const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
+  const canJobsChat = activeProfile?.type !== 'COMPANY' || companyPermissions.canJobsChat;
+  const canChat = activeProfile?.type !== 'COMPANY' || companyPermissions.canChat;
+
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -145,6 +150,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const [showMuteConfirm, setShowMuteConfirm] = useState(false);
   const [showUnmuteConfirm, setShowUnmuteConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -172,6 +178,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     ...initialChat,
     online: initialChat.isMock ? initialChat.online : ((!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false)
   };
+
+  const isJobChatDisabled = Boolean((chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0)) && !canJobsChat);
+  const isGeneralChatDisabled = Boolean(!chat.isJobChat && !(chat.jobIds && chat.jobIds.length > 0) && activeProfile?.type === 'COMPANY' && !canChat);
 
   const isGroupInvitation = !!chat.is_requesting && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
   const isSingleRequest = !!chat.is_requesting && !isGroupInvitation;
@@ -675,7 +684,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         // Add minimal required fields for mapping/rendering
         senderId: session?.user?.id || 'me',
-        senderMemberName: session?.user?.name || (session?.user as any)?.full_name || "Member",
+        senderMemberName: (session?.user as any)?.full_name || session?.user?.name || activeProfile?.name || "Member",
         created_at: new Date().toISOString(),
         type: 'text',
         read_at: null,
@@ -1233,7 +1242,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                             <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                        <DropdownMenuItem 
+                          onClick={() => setIsShareModalOpen(true)}
+                          className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                        >
                           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
                           <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
                         </DropdownMenuItem>
@@ -1361,8 +1373,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
               onSendMessage={handleSendMessage}
               onTyping={handleTypingInput}
               searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
-              disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther}
-              disabledMessage={isBlockedByOther ? "User not found" : undefined}
+              disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || isJobChatDisabled || isGeneralChatDisabled}
+              disabledMessage={isBlockedByOther ? "User not found" : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined))}
               pendingEntityContext={pendingEntityContext}
               onDismissEntityContext={() => setPendingEntityContext(null)}
               placeholder="Type a message..."
@@ -1413,36 +1425,15 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         />
       )}
 
-      {/* Confirmation Boxes */}
-      <CocpitConfirmBox
-        isOpen={showReportConfirm}
-        title="Report this profile?"
-        message="We'll review this profile based on your report."
-        confirmText="Report"
-        cancelText="Cancel"
-        onConfirm={async () => {
-          if (chat.otherUserId) {
-            try {
-              const targetType = chat.otherUserType === 'COMPANY' ? 'COMPANY' : 'USER';
-              const reportRes = await createReport({
-                targetType: targetType,
-                targetId: chat.otherUserId,
-                customReason: "Reported from chat window"
-              });
-              toast({ description: reportRes.message || "Profile reported successfully" });
-              setShowReportConfirm(false);
-            } catch (err: any) {
-              const errorMsg = err?.response?.data?.message || "Failed to report profile";
-              toast({
-                title: "Error",
-                description: errorMsg,
-                variant: "destructive"
-              });
-            }
-          }
-        }}
-        onCancel={() => setShowReportConfirm(false)}
-      />
+      {/* Report Modal */}
+      {showReportConfirm && (
+        <ReportModal
+          isOpen={showReportConfirm}
+          onClose={() => setShowReportConfirm(false)}
+          targetType={chat.otherUserType === 'COMPANY' ? 'COMPANY' : 'USER'}
+          targetId={chat.otherUserId || (chat as any).other_user_id || ''}
+        />
+      )}
 
       <CocpitConfirmBox
         isOpen={showBlockConfirm}
@@ -1451,14 +1442,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         confirmText="Block"
         cancelText="Cancel"
         onConfirm={async () => {
-          if (chat.otherUserId) {
+          const targetUserId = chat.otherUserId || (chat as any).other_user_id;
+          if (targetUserId) {
             try {
-              await blockUser(chat.otherUserId);
-              setShowBlockConfirm(false);
+              await blockUser(targetUserId);
+              queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
+              queryClient.invalidateQueries({ queryKey: ['conversations'] });
             } catch (err: any) {
-              // Context shows toast, ensure we close the modal
+              console.error("Failed to block user:", err);
+            } finally {
               setShowBlockConfirm(false);
             }
+          } else {
+            setShowBlockConfirm(false);
           }
         }}
         onCancel={() => setShowBlockConfirm(false)}
@@ -1575,6 +1571,15 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
           }
         }}
         onCancel={() => setShowLeaveConfirm(false)}
+      />
+
+      <CocpitShareModel
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        profileId={chat.otherUserId || (chat as any).other_user_id}
+        onShare={(selectedIds) => {
+          setIsShareModalOpen(false);
+        }}
       />
 
     </div>
