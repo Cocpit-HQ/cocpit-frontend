@@ -229,6 +229,14 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         }).catch(err => {
           console.warn("Failed to fetch org following users", err);
         });
+
+        // Fetch users blocked by organization
+        api.get('/users/me/blocks').then(res => {
+          const ids = res.data.map((u: any) => (u.user_id || u.id)?.toString()).filter(Boolean);
+          setBlockedIds(ids);
+        }).catch(err => {
+          console.warn("Failed to fetch org blocked users", err);
+        });
       } else {
         // Fetch blocked users (user-only)
         api.get('/users/me/blocks').then(res => {
