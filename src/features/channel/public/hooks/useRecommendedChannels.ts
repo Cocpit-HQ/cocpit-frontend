@@ -11,10 +11,12 @@ export function useRecommendedChannels() {
 
   const subscribeMutation = useMutation({
     mutationFn: (channelId: string) => channelService.subscribeToCommunity(channelId),
-    onSuccess: () => {
+    onSuccess: (_, channelId) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
       queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
       queryClient.invalidateQueries({ queryKey: ['channel-search'] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel', channelId] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel'] });
     },
   });
 

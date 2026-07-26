@@ -18,15 +18,15 @@ export default function MySubscriptionsList() {
         </div>
         <div className="w-full flex flex-col gap-4">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="w-full flex items-center justify-between p-4 rounded-[40px] border border-gray-100 dark:border-[#2A2D35] bg-white dark:bg-[#121B2B]">
-              <div className="flex items-center gap-4 w-full">
-                <Skeleton className="w-12 h-12 rounded-[14px] shrink-0" />
+            <div key={i} className="w-full flex items-center justify-between p-4 rounded-[12px] border border-[#EEF2FF] dark:border-[#1C2340] bg-white dark:bg-[#121B2B]">
+              <div className="flex items-center gap-[10px] w-full">
+                <Skeleton className="w-[48px] h-[48px] rounded-[12px] shrink-0" />
                 <div className="flex flex-col gap-2 w-1/3">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-3 w-3/4" />
                 </div>
               </div>
-              <Skeleton className="h-8 w-24 rounded-full shrink-0" />
+              <Skeleton className="h-[40px] w-[142px] rounded-[24px] shrink-0" />
             </div>
           ))}
         </div>
@@ -36,11 +36,11 @@ export default function MySubscriptionsList() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="flex flex-col mb-2">
-        <h3 className="text-black dark:text-[#FFFFFF] text-[18px] font-semibold font-['Poppins'] leading-tight">
+      <div className="flex flex-col gap-[4px] mb-1">
+        <h3 className="text-black dark:text-[#FFFFFF] text-[18px] font-medium font-['Poppins'] leading-[26px]">
           My subscriptions
         </h3>
-        <p className="text-gray-500 dark:text-[#A1A8B3] text-[12px] font-['Poppins'] mt-1">
+        <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal font-['Poppins'] leading-[16px]">
           Total - {channels.length}
         </p>
       </div>

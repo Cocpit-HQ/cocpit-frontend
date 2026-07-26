@@ -10,8 +10,8 @@ export default function ChannelDiscoveryPage() {
   const router = useRouter();
 
   return (
-    <div className="w-full max-w-[1128px] mx-auto min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-8 px-4 xl:px-0">
-      <div className="w-full max-w-[998px] mx-auto flex flex-col gap-10">
+    <div className="w-full min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-12 px-4 xl:px-0">
+      <div className="w-full max-w-[960px] mx-auto flex flex-col gap-[24px]">
         
         <RecommendedChannelsRail />
         <MySubscriptionsList />

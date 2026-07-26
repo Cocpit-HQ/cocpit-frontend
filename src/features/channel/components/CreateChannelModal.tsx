@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Icon } from '@iconify/react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
+import ChannelBannerEditorModal from './ChannelBannerEditorModal';
 
 export interface ChannelFormValues {
   name: string;
@@ -31,137 +32,136 @@ export default function CreateChannelModal({
   const [name, setName] = useState(initialValues?.name ?? emptyValues.name);
   const [description, setDescription] = useState(initialValues?.description ?? emptyValues.description);
   const [bannerUrl, setBannerUrl] = useState(initialValues?.bannerUrl ?? emptyValues.bannerUrl);
-  const [isDescTouched, setIsDescTouched] = useState(false);
-  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setName(initialValues?.name ?? emptyValues.name);
       setDescription(initialValues?.description ?? emptyValues.description);
       setBannerUrl(initialValues?.bannerUrl ?? emptyValues.bannerUrl);
-      setIsDescTouched(false);
+      setIsBannerModalOpen(false);
     }
   }, [isOpen, initialValues]);
 
-  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setBannerUrl(reader.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
-
-  const wordCount = description.trim() ? description.trim().split(/\s+/).length : 0;
-  const isDescValid = wordCount >= 20 && wordCount <= 150;
-  const isValid = name.trim().length > 0 && bannerUrl.trim().length > 0 && isDescValid;
+  const isValid = name.trim().length > 0 && bannerUrl.trim().length > 0 && description.trim().length > 0;
   const title = mode === 'create' ? 'Create channel' : 'Edit channel';
   const submitLabel = mode === 'create' ? 'Create channel' : 'Save';
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[440px] rounded-[24px] p-6">
-        <DialogHeader>
-          <DialogTitle className="font-['Poppins'] text-lg font-semibold">{title}</DialogTitle>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4 py-2">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
-              Channel name*
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Nexsus Global Systems"
-              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-[#2A2D35] bg-white dark:bg-[#0F1115] text-sm font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-gray-400"
-            />
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="w-full max-w-[648px] sm:max-w-[648px] !p-0 rounded-[24px] sm:rounded-[24px] bg-[#FFFFFF] dark:bg-[#121B2B] !border-0 !shadow-2xl overflow-hidden flex flex-col [&>button]:hidden">
+          {/* Modal Header */}
+          <div className="w-full max-w-[648px] h-[87px] px-[32px] py-[24px] flex flex-row items-center justify-between flex-shrink-0">
+            <DialogTitle className="font-['Poppins'] font-medium text-[32px] leading-[38px] tracking-[-0.64px] text-[#000000] dark:text-[#FFFFFF] m-0">
+              {title}
+            </DialogTitle>
+            <button
+              onClick={onClose}
+              className="w-[24px] h-[24px] flex items-center justify-center text-[#EF4444] hover:opacity-80 transition-opacity"
+              title="Close"
+            >
+              <X className="w-6 h-6" strokeWidth={1.5} />
+            </button>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
-              Channel banner*
-            </label>
-            <div
-              onClick={() => bannerInputRef.current?.click()}
-              className="relative w-full h-[110px] rounded-2xl border-2 border-dashed border-gray-200 dark:border-[#2A2D35] flex items-center justify-center cursor-pointer overflow-hidden hover:border-[#1A73E8]/50 transition-colors bg-gray-50 dark:bg-[#0F1115]"
-            >
+          {/* Modal Content (Scrollable) */}
+          <div className="w-full max-w-[648px] h-[533.5px] px-[24px] flex flex-col items-start gap-[16px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            
+            {/* Container: Channel name* */}
+            <div className="w-full max-w-[600px] flex flex-col items-start gap-[11.5px] flex-shrink-0">
+              <label className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-[#000000] dark:text-[#FFFFFF]">
+                Channel name*
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Nexsus Global Systems"
+                className="w-full max-w-[600px] h-[56px] px-[16px] rounded-[12px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-[#FFFFFF] dark:bg-[#0F1115] text-[16px] leading-[24px] font-normal font-['Poppins'] text-[#000000] dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3]"
+              />
+            </div>
+
+            {/* Container: Channel banner* (6:1 Ratio) */}
+            <div className="w-full max-w-[600px] flex flex-col items-center gap-[8px] flex-shrink-0 rounded-[12px]">
+              <label className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-[#000000] dark:text-[#FFFFFF] text-left">
+                Channel banner*
+              </label>
+              
               {bannerUrl ? (
-                <img src={bannerUrl} alt="Channel banner" className="absolute inset-0 w-full h-full object-cover" />
+                <div className="w-full max-w-[600px] h-[100px] sm:h-[113px] rounded-[12px] overflow-hidden relative select-none bg-gray-100 dark:bg-[#1A2435] flex items-center justify-center flex-shrink-0">
+                  <img src={bannerUrl} alt="Channel banner" className="w-full h-full object-cover" />
+                </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 text-center px-4">
-                  <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-gray-400" />
-                  <span className="text-xs text-gray-400 font-['Poppins']">
-                    Click to upload or drag and drop
-                  </span>
-                  <span className="text-[10px] text-gray-400 font-['Poppins']">
-                    Max 5 MB, recommended 920 x 100 px
-                  </span>
+                <div
+                  onClick={() => setIsBannerModalOpen(true)}
+                  className="w-full max-w-[600px] h-[100px] sm:h-[113px] rounded-[12px] border-2 border-dashed border-[#E0E0E7] dark:border-[#2A2D35] flex flex-col items-center justify-center cursor-pointer hover:border-[#1A73E8] transition-colors bg-[#FFFFFF] dark:bg-[#0F1115] flex-shrink-0"
+                >
+                  <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280] dark:text-[#A1A8B3] mb-1" />
+                  <span className="text-sm font-['Poppins'] text-[#6B7280] dark:text-[#A1A8B3]">Click to choose a banner (6:1 aspect ratio)</span>
                 </div>
               )}
-            </div>
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleBannerUpload}
-              className="hidden"
-            />
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
-              Channel description*
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                setIsDescTouched(true);
-              }}
-              onBlur={() => setIsDescTouched(true)}
-              rows={3}
-              placeholder="Describe what this channel is about"
-              className={`w-full px-4 py-2.5 rounded-2xl border ${isDescTouched && !isDescValid ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-[#2A2D35] focus:border-[#1A73E8]'} bg-white dark:bg-[#0F1115] text-sm font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none resize-none placeholder:text-gray-400`}
-            />
-            <div className="flex justify-between items-start mt-0.5">
-              <div className="flex-1">
-                {isDescTouched && wordCount === 0 && (
-                  <p className="text-xs text-red-500 font-['Poppins']">Description is required.</p>
-                )}
-                {isDescTouched && wordCount > 0 && wordCount < 20 && (
-                  <p className="text-xs text-red-500 font-['Poppins']">Description must be at least 20 words.</p>
-                )}
-                {isDescTouched && wordCount > 150 && (
-                  <p className="text-xs text-red-500 font-['Poppins']">Description cannot exceed 150 words.</p>
-                )}
-              </div>
-              <p className={`text-xs font-['Poppins'] ${wordCount > 150 ? 'text-red-500' : 'text-gray-400'}`}>
-                {wordCount}/150 words
-              </p>
+              {bannerUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setIsBannerModalOpen(true)}
+                  className="font-['Poppins'] font-normal text-[14px] leading-[21px] text-[#1A73E8] dark:text-[#4D9CFF] hover:underline cursor-pointer bg-transparent border-0 p-0 m-0 mt-0.5"
+                >
+                  Change
+                </button>
+              ) : null}
             </div>
-          </div>
-        </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="flex-1 sm:flex-none px-6 py-2.5 rounded-full border border-[#1A73E8] text-[#1A73E8] text-sm font-semibold font-['Poppins'] transition-colors hover:bg-[#EFF4FF] disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => isValid && onSubmit({ name: name.trim(), description: description.trim(), bannerUrl })}
-            disabled={!isValid || isSubmitting}
-            className="flex-1 sm:flex-none px-6 py-2.5 rounded-full bg-[#1A73E8] text-white text-sm font-semibold font-['Poppins'] transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitLabel}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {/* Container: Channel description */}
+            <div className="w-full max-w-[600px] flex flex-col items-start gap-[12px] flex-shrink-0">
+              <label className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-[#000000] dark:text-[#FFFFFF]">
+                Channel description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="Describe what this channel is about"
+                className="w-full max-w-[600px] h-[120px] p-[16px] rounded-[12px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-[#FFFFFF] dark:bg-[#0F1115] text-[16px] leading-[26px] font-normal font-['Poppins'] text-[#000000] dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3] resize-none overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              />
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="w-full max-w-[600px] h-[64px] flex flex-row items-center justify-end gap-[16px] pb-[24px] mt-auto flex-shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="w-[140px] h-[40px] flex items-center justify-center rounded-[24px] border border-[#1A73E8] dark:border-[#4D9CFF] bg-[#FFFFFF] dark:bg-transparent text-[#1A73E8] dark:text-[#4D9CFF] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:bg-[#EFF4FF] dark:hover:bg-[#1A2435] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => isValid && onSubmit({ name: name.trim(), description: description.trim(), bannerUrl })}
+                disabled={!isValid || isSubmitting}
+                className="w-[140px] sm:w-auto min-w-[140px] px-6 h-[40px] flex items-center justify-center gap-2 rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>{submitLabel}</span>
+              </button>
+            </div>
+
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 6:1 Banner Editor & Crop Preview Modal */}
+      <ChannelBannerEditorModal
+        isOpen={isBannerModalOpen}
+        onClose={() => setIsBannerModalOpen(false)}
+        currentBanner={bannerUrl || null}
+        onSaveBanner={(newUrl) => {
+          if (newUrl) setBannerUrl(newUrl);
+          setIsBannerModalOpen(false);
+        }}
+      />
+    </>
   );
 }

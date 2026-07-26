@@ -21,7 +21,7 @@ export default function PublicChannelPage() {
         <div className="w-full max-w-[998px] mx-auto flex flex-col gap-6">
           {/* Header Skeleton */}
           <div className="w-full flex flex-col gap-4">
-            <Skeleton className="w-full h-[140px] md:h-[160px] rounded-3xl" />
+            <Skeleton className="w-full aspect-[6/1] rounded-3xl" />
             <div className="w-full flex flex-col gap-3 px-1">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-5 w-48" />

@@ -441,6 +441,8 @@
     border-color: var(--border);
   }
 
+
+
   [data-theme="dark"] .feed-card-input:hover,
   [data-theme="navy"] .feed-card-input:hover {
     background-color: var(--muted);
@@ -1337,3 +1339,150 @@
     border-radius: 0 !important;
   }
 }
+
+/* Canonical article typography: shared by the article editor (write view, `.article-editor`),
+   the channel article page, and the feed/single-post article card (read views, both
+   `.article-content`), so an article looks identical everywhere its HTML is rendered.
+   Unlayered CSS to ensure Tailwind preflight resets never strip heading sizes or bullet points. */
+.article-content h1, .article-editor h1,
+.article-content h2, .article-editor h2,
+.article-content h3, .article-editor h3 {
+  scroll-margin-top: 2rem;
+}
+.article-content h1, .article-editor h1 {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+.article-content h2, .article-editor h2 {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+.article-content h3, .article-editor h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+.article-content p, .article-editor p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.625;
+}
+.article-content ul, .article-editor ul {
+  list-style: disc outside !important;
+  list-style-type: disc !important;
+  padding-left: 2rem !important;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.article-content ul li, .article-editor ul li {
+  display: list-item !important;
+  list-style: disc outside !important;
+  list-style-type: disc !important;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.article-content ol, .article-editor ol {
+  list-style: decimal outside !important;
+  list-style-type: decimal !important;
+  padding-left: 2rem !important;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.article-content ol li, .article-editor ol li {
+  display: list-item !important;
+  list-style: decimal outside !important;
+  list-style-type: decimal !important;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.article-content li, .article-editor li {
+  display: list-item !important;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.article-content li p, .article-editor li p,
+.article-content li div:not([contenteditable="false"]), .article-editor li div:not([contenteditable="false"]) {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline !important;
+}
+.article-content strong, .article-editor strong {
+  font-weight: 700 !important;
+}
+.article-content a, .article-editor a {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+.article-content img, .article-editor img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.article-content video, .article-editor video {
+  max-width: 100% !important;
+  border-radius: 8px;
+}
+.article-content div[contenteditable="false"], .article-editor div[contenteditable="false"] {
+  width: fit-content !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+/* Hide leftover editor-only controls when article HTML is rendered on a read view.
+   Scoped to .article-content only — the live editor (.article-editor) still needs these
+   interactive while composing. */
+.article-content .edit-link-btn,
+.article-content .delete-link-btn,
+.article-content .link-preview-capsule,
+.article-content .img-tools {
+  display: none !important;
+}
+
+/* Ensure inline image/video edit & delete tools are 100% visible and stacked above images on hover inside the editor */
+.article-editor .img-tools {
+  z-index: 30 !important;
+}
+
+.article-editor div[contenteditable="false"]:hover .img-tools,
+.article-editor .group:hover .img-tools {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 30 !important;
+}
+
+.article-editor .img-tools svg {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 31 !important;
+}
+
+/* Guarantee link action buttons and icons never compress or squash in flex containers */
+.article-editor .edit-link-btn,
+.article-editor .delete-link-btn {
+  flex-shrink: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+}
+.article-editor .edit-link-btn svg,
+.article-editor .delete-link-btn svg {
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+}
+
+
+

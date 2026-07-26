@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { FileText } from 'lucide-react';
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer';
 import { PostSharedContent } from './PostSharedContent';
+import { sanitizeArticleHtmlForDisplay } from '@/lib/sanitizeArticleHtml';
 import type { Poll, Post } from '@/types/entities';
 
 interface PostContentProps {
@@ -55,80 +56,6 @@ export const PostContent = ({
 
   return (
     <div className="flex-1 flex flex-col justify-center w-full gap-2">
-      {/* Custom rich article renderer styles */}
-      <style>{`
-        .article-body-view h1 {
-          font-size: 1.6rem;
-          font-weight: 800;
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          color: var(--foreground);
-          font-family: var(--font-poppins), sans-serif;
-          line-height: 1.3;
-        }
-        .article-body-view h2 {
-          font-size: 1.3rem;
-          font-weight: 700;
-          margin-top: 1.25rem;
-          margin-bottom: 0.5rem;
-          color: var(--foreground);
-          font-family: var(--font-poppins), sans-serif;
-          line-height: 1.3;
-        }
-        .article-body-view p {
-          margin-bottom: 1rem;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          color: var(--foreground);
-          opacity: 0.9;
-          white-space: pre-wrap;
-          word-break: break-word;
-        }
-        .article-body-view ul {
-          list-style-type: disc;
-          padding-left: 1.5rem;
-          margin-bottom: 1rem;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          white-space: pre-wrap;
-          word-break: break-word;
-        }
-        .article-body-view li {
-          margin-bottom: 0.4rem;
-        }
-        /* Hide editor-only controls in feed view */
-        .article-body-view .edit-link-btn,
-        .article-body-view .delete-link-btn,
-        .article-body-view .img-tools {
-          display: none !important;
-        }
-        /* Link wrapper: relative for tooltip anchor */
-        .article-body-view span.inline.group {
-          position: relative;
-        }
-        /* Tooltip: hidden by default, visible on hover, high z-index */
-        .article-body-view span.inline.group > span:last-of-type {
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.2s ease;
-          z-index: 50;
-        }
-        .article-body-view span.inline.group:hover > span:last-of-type {
-          opacity: 1;
-          pointer-events: auto;
-        }
-        /* Style links in feed view */
-        .article-body-view a {
-          color: #6366F1;
-          font-weight: 500;
-          text-decoration: none;
-          cursor: pointer;
-        }
-        .article-body-view a:hover {
-          text-decoration: underline;
-        }
-      `}</style>
-
       {/* Main post description/caption */}
       {content && !isArticle && (() => {
         if (isCarouselView) {
@@ -286,8 +213,8 @@ export const PostContent = ({
               >
                 <div className={`min-w-0 ${showFullArticle ? 'overflow-visible' : 'overflow-hidden'}`}>
                   <div
-                    dangerouslySetInnerHTML={{ __html: articleBody || '' }}
-                    className="article-body-view border-t border-border/40 pt-4 break-words"
+                    dangerouslySetInnerHTML={{ __html: sanitizeArticleHtmlForDisplay(articleBody || '') }}
+                    className="article-content border-t border-border/40 pt-4 break-words"
                     style={{ overflowWrap: 'break-word', wordWrap: 'break-word', wordBreak: 'break-word' }}
                   />
                 </div>

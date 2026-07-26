@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { Icon } from '@iconify/react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -52,18 +53,32 @@ export default function SubscriberGrowthChart({ data, totalSubscribers }: Subscr
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex flex-col">
-          <h3 className="text-black dark:text-[#FFFFFF] text-sm font-semibold font-['Poppins']">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-black dark:text-[#FFFFFF] text-[16px] leading-[24px] font-semibold font-['Poppins']">
             Subscriber growth
           </h3>
-          <span className="text-gray-400 text-xs font-['Poppins']">
-            Total subscribers - {totalSubscribers.toLocaleString()}
+          <span className="text-[#1A73E8] dark:text-[#4D9CFF] text-[12px] leading-[18px] font-medium font-['Poppins']">
+            Total subscriber - {totalSubscribers.toLocaleString()}
           </span>
         </div>
-        <span className="text-emerald-500 text-sm font-semibold font-['Poppins']">
-          {growthPercent >= 0 ? '+' : ''}
-          {growthPercent.toFixed(1)}%
-        </span>
+        <div className="flex items-center gap-[10px] h-[36px]">
+          <div className={`w-[36px] h-[36px] rounded-full flex items-center justify-center flex-shrink-0 ${
+            growthPercent >= 0 
+              ? 'bg-[#DCFCE7] dark:bg-[#123B23] text-[#10B981] dark:text-[#34D399]' 
+              : 'bg-[#FEE2E2] dark:bg-[#4A1C1C] text-red-500 dark:text-red-400'
+          }`}>
+            <Icon 
+              icon={growthPercent >= 0 ? "material-symbols:arrow-upward-alt" : "material-symbols:arrow-downward-alt"} 
+              className="w-[24px] h-[24px]" 
+            />
+          </div>
+          <span className={`font-['Poppins'] font-medium text-[24px] leading-[100%] tracking-[0px] ${
+            growthPercent >= 0 ? 'text-[#10B981] dark:text-[#34D399]' : 'text-red-500 dark:text-red-400'
+          }`}>
+            {growthPercent >= 0 ? '+' : ''}
+            {growthPercent.toFixed(1)}%
+          </span>
+        </div>
       </div>
 
       <div className="h-[180px] w-full">

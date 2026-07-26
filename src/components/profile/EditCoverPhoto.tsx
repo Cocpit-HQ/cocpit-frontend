@@ -25,9 +25,27 @@ interface EditCoverPhotoProps {
   children?: ReactNode;
   onUpload?: (formData: FormData) => Promise<{ coverUrl: string }>;
   onDelete?: () => Promise<void>;
+  /** Tailwind aspect ratio string, e.g. "16/3" or "2/1". Default: "16/3" */
+  aspectRatio?: string;
+  /** Canvas crop output width in px. Default: 1920 */
+  canvasWidth?: number;
+  /** Canvas crop output height in px. Default: 360 */
+  canvasHeight?: number;
+  /** Subtitle shown in the modal header. Default: "This will appear at the top of your profile" */
+  subtitle?: string;
 }
 
-const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverImage, children, onUpload, onDelete }) => {
+const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({
+  coverImage,
+  setCoverImage,
+  children,
+  onUpload,
+  onDelete,
+  aspectRatio = "16/3",
+  canvasWidth = 1920,
+  canvasHeight = 360,
+  subtitle = "This will appear at the top of your profile",
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -42,6 +60,8 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [modalState, setModalState] = useState<ModalState>("edit");
   const [isDragOver, setIsDragOver] = useState(false);
+  // Natural image dimensions — used to compute the correct pan boundaries
+  const [naturalImgSize, setNaturalImgSize] = useState({ w: 0, h: 0 });
 
   const lastPointer = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +92,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     setFlipV(false);
     setPositionX(0);
     setPositionY(0);
+    setNaturalImgSize({ w: 0, h: 0 });
   };
 
   // Document-level mouse/touch move & up for smooth dragging
@@ -93,8 +114,21 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
         containerWidth = containerRef.current.offsetWidth;
         containerHeight = containerRef.current.offsetHeight;
       }
-      const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
-      const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+
+      // Width-fill: image always spans the full container width.
+      // For portrait images this means the image is taller than the container (overflows
+      // vertically) and the user pans up/down to frame it.
+      let renderedW = containerWidth;
+      let renderedH = containerHeight;
+      if (naturalImgSize.w > 0 && naturalImgSize.h > 0) {
+        const imgAspect = naturalImgSize.w / naturalImgSize.h;
+        // Image rendered at full container width; height is proportional
+        renderedW = containerWidth;
+        renderedH = containerWidth / imgAspect;
+      }
+
+      const maxTranslateX = Math.max(0, (renderedW * zoomScale - containerWidth) / 2);
+      const maxTranslateY = Math.max(0, (renderedH * zoomScale - containerHeight) / 2);
 
       setPositionX(prev => Math.min(Math.max(prev + dx, -maxTranslateX), maxTranslateX));
       setPositionY(prev => Math.min(Math.max(prev + dy, -maxTranslateY), maxTranslateY));
@@ -140,8 +174,18 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       containerWidth = containerRef.current.offsetWidth;
       containerHeight = containerRef.current.offsetHeight;
     }
-    const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
-    const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+
+    // Width-fill: same formula as the drag handler
+    let renderedW = containerWidth;
+    let renderedH = containerHeight;
+    if (naturalImgSize.w > 0 && naturalImgSize.h > 0) {
+      const imgAspect = naturalImgSize.w / naturalImgSize.h;
+      renderedW = containerWidth;
+      renderedH = containerWidth / imgAspect;
+    }
+
+    const maxTranslateX = Math.max(0, (renderedW * zoomScale - containerWidth) / 2);
+    const maxTranslateY = Math.max(0, (renderedH * zoomScale - containerHeight) / 2);
 
     setPositionX((prev) => Math.min(Math.max(prev, -maxTranslateX), maxTranslateX));
     setPositionY((prev) => Math.min(Math.max(prev, -maxTranslateY), maxTranslateY));
@@ -226,9 +270,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Maintain a high resolution aspect ratio (16:3)
-      const width = 1920;
-      const height = 360;
+      // Use caller-specified canvas dimensions (default 1920×360 for 16:3 profile; 1920×960 for 2:1 articles)
+      const width = canvasWidth;
+      const height = canvasHeight;
       canvas.width = width;
       canvas.height = height;
 
@@ -350,7 +394,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               Cover image
             </DialogTitle>
             <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-              This will appear at the top of your profile
+              {subtitle}
             </p>
           </div>
 
@@ -405,7 +449,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               <div
                 ref={containerRef}
                 className={cn(
-                  "w-full aspect-[16/3] mx-auto relative overflow-hidden bg-secondary rounded-[24px] select-none group",
+                  `w-full aspect-[${aspectRatio}] mx-auto relative overflow-hidden bg-secondary rounded-[24px] select-none group`,
                   isDraggingImage ? "cursor-grabbing" : "cursor-grab"
                 )}
                 onMouseDown={(e) => {
@@ -419,15 +463,26 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 onWheel={(e) => {
                   e.preventDefault();
                   const delta = e.deltaY > 0 ? -5 : 5;
-                  setZoom(prev => Math.min(100, Math.max(0, prev + delta)));
+                  setZoom(prev => Math.min(200, Math.max(0, prev + delta)));
                 }}
               >
+                {/* Width-fill: image spans full container width by default.
+                     Portrait images overflow vertically — user pans up/down to frame. */}
                 <img
                   src={displayImage || "/assets/coverphoto.jpg"}
                   alt="Current Cover"
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  onLoad={(e) => {
+                    const el = e.currentTarget;
+                    setNaturalImgSize({ w: el.naturalWidth, h: el.naturalHeight });
+                  }}
+                  className="absolute pointer-events-none select-none w-full h-auto"
                   draggable={false}
-                  style={{ transform: `translate(${positionX}px, ${positionY}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
+                  style={{
+                    left: 0,
+                    top: '50%',
+                    transform: `translateY(calc(-50% + ${positionY}px)) translateX(${positionX}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
+                    transformOrigin: '50% 50%',
+                  }}
                 />
 
                 {/* ─── Hover Overlay (hidden while dragging) ─── */}
@@ -451,7 +506,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 <Slider
                   value={[zoom]}
                   onValueChange={(vals) => setZoom(vals[0])}
-                  max={100}
+                  max={200}
                   step={1}
                   className="w-full"
                 />

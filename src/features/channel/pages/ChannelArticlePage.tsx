@@ -6,6 +6,7 @@ import { Loader2, ChevronLeft } from 'lucide-react';
 import { useMyChannel } from '../hooks/useMyChannel';
 import { useChannelArticle } from '../hooks/useChannelArticles';
 import ChannelThoughtsPanel from '../components/ChannelThoughtsPanel';
+import { sanitizeArticleHtmlForDisplay } from '@/lib/sanitizeArticleHtml';
 
 
 interface TOCItem {
@@ -100,14 +101,14 @@ export default function ChannelArticlePage() {
           )}
           
           {/* Article Title */}
-          <h1 className="text-black dark:text-[#FFFFFF] text-[24px] lg:text-[28px] font-regular font-['Poppins'] leading-tight mt-2">
+          <h1 className="text-black dark:text-[#FFFFFF] text-[32px] lg:text-[40px] font-semibold font-['Poppins'] leading-tight mt-4 mb-2">
             {article.title}
           </h1>
 
           {/* Article HTML Content */}
           <div
             className="article-content prose prose-gray dark:prose-invert max-w-none font-['Poppins'] text-gray-800 dark:text-[#FFFFFF] mt-2"
-            dangerouslySetInnerHTML={{ __html: article.content.replace(/<div[^>]*class="[^"]*img-tools[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '').replace(/\s*onmouseenter="[^"]*"/gi, '').replace(/\s*onmouseleave="[^"]*"/gi, '') }}
+            dangerouslySetInnerHTML={{ __html: sanitizeArticleHtmlForDisplay(article.content) }}
           />
         </div>
 
@@ -116,77 +117,6 @@ export default function ChannelArticlePage() {
           <ChannelThoughtsPanel articleId={article.id} />
         </div>
       </div>
-
-
-      
-      {/* Global styles for article content headings to allow scrolling */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .article-content h1, .article-content h2, .article-content h3 {
-          scroll-margin-top: 2rem;
-        }
-        .article-content h1 {
-          font-size: 2rem;
-          font-weight: 700;
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          line-height: 1.25;
-        }
-        .article-content h2 {
-          font-size: 1.75rem;
-          font-weight: 700;
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          line-height: 1.3;
-        }
-        .article-content h3 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-top: 1.25rem;
-          margin-bottom: 0.5rem;
-          line-height: 1.4;
-        }
-        .article-content p {
-          margin-top: 0.75rem;
-          margin-bottom: 0.75rem;
-          line-height: 1.625;
-        }
-        .article-content ul {
-          list-style-type: disc;
-          padding-left: 1.5rem;
-          margin-top: 0.75rem;
-          margin-bottom: 0.75rem;
-        }
-        .article-content ol {
-          list-style-type: decimal;
-          padding-left: 1.5rem;
-          margin-top: 0.75rem;
-          margin-bottom: 0.75rem;
-        }
-        .article-content li {
-          margin-top: 0.25rem;
-          margin-bottom: 0.25rem;
-        }
-        .article-content strong {
-          font-weight: 700;
-        }
-        .article-content a {
-          color: #4f46e5;
-          text-decoration: underline;
-        }
-        .article-content img {
-          max-width: 100% !important;
-          height: auto !important;
-          object-fit: contain !important;
-          display: block !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
-        }
-        .article-content div[contenteditable="false"] {
-          width: fit-content !important;
-          max-width: 100% !important;
-          height: auto !important;
-        }
-      `}} />
     </div>
   );
 }

@@ -111,7 +111,7 @@ export const HomeHeader = () => {
     // Channel search state
     const [channelSearchQuery, setChannelSearchQuery] = useState('');
 
-    // Read URL params on the jobs page to pre-fill the inputs
+    // Read URL params on the jobs page or channel search page to pre-fill the inputs
     const urlSearchParams = useSearchParams();
     useEffect(() => {
         if (isJobsPage) {
@@ -120,7 +120,11 @@ export const HomeHeader = () => {
             setJobTitleQuery(urlSearch);
             setJobLocationQuery(urlLocation);
         }
-    }, [isJobsPage, urlSearchParams]);
+        if (isChannelSearchPage && urlSearchParams) {
+            const urlSearch = urlSearchParams.get('q') || '';
+            setChannelSearchQuery(urlSearch);
+        }
+    }, [isJobsPage, isChannelSearchPage, urlSearchParams]);
 
     useEffect(() => {
         if (!isFeedPage) {
@@ -296,19 +300,19 @@ export const HomeHeader = () => {
         >
             <div className="mx-auto flex min-h-12 min-w-0 max-w-[1128px] items-center px-0 md:min-h-[72px] md:px-4 xl:px-0">
                 {isChannelPage ? (
-                    <div className="w-full max-w-[998px] mx-auto flex items-center justify-between h-full px-4 xl:px-0">
-                        <div className="flex items-center gap-4">
+                    <div className="w-full max-w-[960px] mx-auto flex items-center justify-between h-full px-4 xl:px-0">
+                        <div className="flex items-center gap-[16px]">
                             <button 
                                 onClick={() => router.back()}
-                                className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shrink-0"
+                                className="w-[48px] h-[48px] rounded-[100px] border border-[#DADADA] dark:border-[#2E3445] backdrop-blur-[12px] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#1C2340] transition-colors shrink-0"
                             >
-                                <Icon icon="lucide:arrow-left" className="w-5 h-5 text-black dark:text-white" />
+                                <Icon icon="lucide:chevron-left" className="w-[24px] h-[24px] text-[#6B7280] dark:text-[#9CA3AF]" />
                             </button>
-                            <div className="flex flex-col">
-                                <h1 className="text-black dark:text-white text-[20px] font-semibold font-['Poppins'] leading-tight">
+                            <div className="flex flex-col justify-center">
+                                <h1 className="text-black dark:text-white text-[18px] font-medium font-['Poppins'] leading-[26px]">
                                     {isChannelSearchPage ? 'Search channel' : 'Channel'}
                                 </h1>
-                                <p className="text-gray-500 dark:text-gray-400 text-xs font-['Poppins'] hidden sm:block">
+                                <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-normal font-['Poppins'] leading-[16px] hidden sm:block">
                                     {isChannelSearchPage ? 'Find the channel you want' : 
                                      isChannelDetailPage ? 'Explore articles, insights, and updates shared by the channel' : 
                                      'Explore channels that match your interests'}
@@ -317,7 +321,7 @@ export const HomeHeader = () => {
                         </div>
 
                         {!isChannelDetailPage && (
-                            <div className="relative w-[200px] sm:w-[300px]">
+                            <div className="relative w-[280px] sm:w-[350px] md:w-[400px]">
                                 <input 
                                     type="text" 
                                     placeholder="Search channel"
@@ -328,11 +332,11 @@ export const HomeHeader = () => {
                                             router.push(`/channels/search?q=${encodeURIComponent(channelSearchQuery.trim())}`);
                                         }
                                     }}
-                                    className="w-full pl-4 pr-10 py-2.5 rounded-full border border-gray-200 dark:border-gray-800 bg-transparent text-sm text-black dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-gray-700 font-['Poppins']"
+                                    className="w-full h-[40px] pl-[16px] pr-[44px] py-[8px] rounded-[24px] border border-[#6B7280] dark:border-[#A1A8B3] bg-transparent text-[16px] font-normal leading-[24px] text-black dark:text-white placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3] focus:outline-none focus:border-gray-400 dark:focus:border-gray-600 font-['Poppins']"
                                 />
                                 <Icon 
                                     icon="lucide:search" 
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" 
+                                    className="absolute right-[16px] top-1/2 -translate-y-1/2 w-[24px] h-[24px] text-[#6B7280] dark:text-[#A1A8B3] cursor-pointer hover:opacity-80 transition-opacity" 
                                     onClick={() => {
                                         if (channelSearchQuery.trim()) {
                                             router.push(`/channels/search?q=${encodeURIComponent(channelSearchQuery.trim())}`);

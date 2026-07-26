@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import ArticleFlow from '@/features/create-post/components/flows/ArticleFlow';
 import { MediaItem } from '@/features/create-post/types';
@@ -24,7 +24,6 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
   const { article: existingArticle, isLoading: isArticleLoading } = useChannelArticle(articleId);
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -51,16 +50,6 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
   // (new articles, in-progress drafts) walks the full write -> preview -> Post flow.
   const isEditingPublished = existingArticle?.status === 'published';
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setCoverImage({ id: `cover-${Date.now()}`, url: reader.result as string, type: 'image', crop: { x: 0, y: 0 }, zoom: 1 });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
 
   const buildInput = (status: 'published' | 'draft'): ArticleInput => ({
     title: title.trim() || 'Untitled article',
@@ -101,17 +90,22 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
   }
 
   return (
-    <div className="w-full bg-white dark:bg-[#0F1115] rounded-2xl min-h-[800px] flex flex-col relative z-10">
+    <div className="w-full bg-white dark:bg-[#0F1115] rounded-2xl h-full max-h-full flex flex-col relative z-10 overflow-hidden">
       <ArticleFlow
         title={title}
         onTitleChange={setTitle}
         content={content}
         onContentChange={setContent}
         coverImage={coverImage}
-        onCoverUpload={handleCoverUpload}
+        onCoverChange={(url) => {
+          if (url) {
+            setCoverImage({ id: `cover-${Date.now()}`, url, type: 'image', crop: { x: 0, y: 0 }, zoom: 1, isExisting: true });
+          } else {
+            setCoverImage(null);
+          }
+        }}
         onRemoveCover={() => setCoverImage(null)}
         isEdit={isEditingPublished}
-        coverInputRef={coverInputRef}
         caption={caption}
         onCaptionChange={setCaption}
         onPost={handlePost}

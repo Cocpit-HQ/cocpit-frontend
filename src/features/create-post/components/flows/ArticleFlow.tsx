@@ -1,13 +1,41 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Bold, Italic, Heading1, Heading2, List, Link as LinkIcon,
+  Bold, Italic, Heading1, Heading2, Heading3, List, Link as LinkIcon,
   Image as ImageIcon, X, ArrowLeft, ChevronLeft, Loader2, Sparkles, Send
 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 import { MediaItem } from '../../types';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/services/api/upload';
+import { sanitizeArticleHtmlForDisplay } from '@/lib/sanitizeArticleHtml';
+import ArticleCoverEditor from './ArticleCoverEditor';
+import { DiscardConfirmOverlay } from '@/features/create-post/components/shared/DiscardConfirmOverlay';
+
+// Allowed structure for pasted content: matches what the toolbar itself can produce
+// (bold/italic/headings/lists/links). style/class/id are stripped so pasted text always
+// inherits the editor's own formatting instead of the source's (fixes ID-227: white/colored
+// text pasted from dark-mode sources like ChatGPT becoming invisible on our light editor).
+const ALLOWED_PASTE_TAGS = ['b', 'strong', 'i', 'em', 'u', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'a', 'span'];
+const ALLOWED_PASTE_ATTR = ['href'];
+
+const sanitizePastedHtml = (dirtyHtml: string) =>
+  DOMPurify.sanitize(dirtyHtml, {
+    ALLOWED_TAGS: ALLOWED_PASTE_TAGS,
+    ALLOWED_ATTR: ALLOWED_PASTE_ATTR,
+    FORBID_ATTR: ['style', 'class', 'id'],
+    // img/video are only ever inserted by our own toolbar (blob: URLs + control markup) -
+    // a pasted <img>/<video> from an external source is never wanted here.
+    FORBID_TAGS: ['img', 'video', 'iframe', 'style', 'script', 'object', 'embed', 'div'],
+    ALLOW_DATA_ATTR: false,
+  });
+
+const createUniqueNamedFile = (file: File, uniqueId: string): File => {
+  const parts = file.name.split('.');
+  const ext = parts.length > 1 ? `.${parts.pop()}` : (file.type.startsWith('video/') ? '.mp4' : '.jpg');
+  return new File([file], `${uniqueId}${ext}`, { type: file.type || (file.type.startsWith('video/') ? 'video/mp4' : 'image/jpeg') });
+};
 
 type ArticleIdentity = {
   name?: string | null;
@@ -25,10 +53,10 @@ interface ArticleFlowProps {
   content: string;
   onContentChange: (html: string) => void;
   coverImage: MediaItem | null;
-  onCoverUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Called with the resolved URL after the modal saves, or null when removed */
+  onCoverChange: (url: string | null) => void;
   onRemoveCover: () => void;
   isEdit: boolean;
-  coverInputRef: React.RefObject<HTMLInputElement | null>;
   caption: string;
   onCaptionChange: (value: string) => void;
   onPost: (inlineFiles?: File[]) => Promise<void>;
@@ -48,10 +76,9 @@ const ArticleFlow = ({
   content,
   onContentChange,
   coverImage,
-  onCoverUpload,
+  onCoverChange,
   onRemoveCover,
   isEdit,
-  coverInputRef,
   caption,
   onCaptionChange,
   onPost,
@@ -73,32 +100,280 @@ const ArticleFlow = ({
   const [isUploadingInline, setIsUploadingInline] = useState(false);
   const [editingImgSrc, setEditingImgSrc] = useState<string | null>(null);
   const [localFiles, setLocalFiles] = useState<{ id: string; file: File }[]>([]);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const inlineImageInputRef = useRef<HTMLInputElement>(null);
   const editImageInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLDivElement>(null);
 
-  // Initialize innerHTML only once
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== content) {
-      editorRef.current.innerHTML = content;
+    if (titleInputRef.current && title !== undefined) {
+      if (titleInputRef.current.innerText !== (title || '')) {
+        titleInputRef.current.innerText = title || '';
+      }
+    }
+  }, [title]);
+
+  // Initialize innerHTML only once. Sanitized so legacy/external content (e.g. articles saved
+  // before write-time sanitization existed, or containing inline styles from any other source)
+  // renders using the editor's own default formatting instead of whatever styling it carries -
+  // otherwise the editor can visually diverge from how the same content renders once published.
+  const EDIT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`;
+  const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
+
+  const TOOLS_INNER_HTML = `
+    <button type="button" class="edit-img-btn p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
+      ${EDIT_SVG}
+    </button>
+    <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
+      ${DELETE_SVG}
+    </button>
+  `;
+
+  const initializeArticleImageNodes = (container: HTMLElement) => {
+    if (!container) return;
+
+    // 1. Process all <img> elements loaded into the editor
+    const images = Array.from(container.querySelectorAll('img'));
+    images.forEach(img => {
+      // Find or create standard media wrapper div
+      let wrapper = img.closest('[contenteditable="false"]') as HTMLElement | null;
+
+      if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.className = "relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9] mx-auto";
+        wrapper.setAttribute('contenteditable', 'false');
+
+        const parent = img.parentNode;
+        if (parent) {
+          parent.insertBefore(wrapper, img);
+          wrapper.appendChild(img);
+        }
+      } else {
+        wrapper.classList.add('relative', 'group', 'overflow-hidden', 'my-4', 'w-fit', 'max-w-full');
+        wrapper.setAttribute('contenteditable', 'false');
+      }
+
+      img.className = "max-w-full h-auto object-contain block mx-auto";
+
+      // Ensure overlay container with full action buttons exists
+      let tools = wrapper.querySelector('.img-tools') as HTMLElement | null;
+      if (!tools) {
+        tools = document.createElement('div');
+        tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+        tools.innerHTML = TOOLS_INNER_HTML;
+        wrapper.appendChild(tools);
+      } else {
+        const editBtn = tools.querySelector('.edit-img-btn, button[title="Edit"]');
+        const deleteBtn = tools.querySelector('.delete-img-btn, button[title="Delete"]');
+        if (!editBtn || !deleteBtn || !editBtn.querySelector('svg path') || !deleteBtn.querySelector('svg path')) {
+          tools.innerHTML = TOOLS_INNER_HTML;
+        }
+      }
+    });
+
+    // 2. Process all <video> elements loaded into the editor
+    const videos = Array.from(container.querySelectorAll('video'));
+    videos.forEach(video => {
+      let wrapper = video.closest('[contenteditable="false"]') as HTMLElement | null;
+      if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.className = "relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9] mx-auto";
+        wrapper.setAttribute('contenteditable', 'false');
+        const parent = video.parentNode;
+        if (parent) {
+          parent.insertBefore(wrapper, video);
+          wrapper.appendChild(video);
+        }
+      }
+
+      let tools = wrapper.querySelector('.img-tools') as HTMLElement | null;
+      if (!tools) {
+        tools = document.createElement('div');
+        tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+        tools.innerHTML = TOOLS_INNER_HTML;
+        wrapper.appendChild(tools);
+      }
+    });
+  };
+
+  const stripEditorControls = (html: string): string => {
+    if (!html) return '';
+    if (typeof window === 'undefined') return html;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const tools = tempDiv.querySelectorAll('.img-tools');
+    tools.forEach(t => t.remove());
+    return tempDiv.innerHTML;
+  };
+
+  useEffect(() => {
+    if (editorRef.current) {
+      const currentClean = stripEditorControls(editorRef.current.innerHTML);
+      const incomingClean = stripEditorControls(content);
+
+      if (currentClean !== incomingClean) {
+        editorRef.current.innerHTML = sanitizeArticleHtmlForDisplay(content);
+        initializeArticleImageNodes(editorRef.current);
+      }
     }
   }, []);
 
   // Update innerHTML from parent if it diverges and editor is not focused
   useEffect(() => {
-    if (editorRef.current && document.activeElement !== editorRef.current && editorRef.current.innerHTML !== content) {
-      editorRef.current.innerHTML = content;
+    if (editorRef.current && document.activeElement !== editorRef.current) {
+      const currentClean = stripEditorControls(editorRef.current.innerHTML);
+      const incomingClean = stripEditorControls(content);
+
+      if (currentClean !== incomingClean) {
+        editorRef.current.innerHTML = sanitizeArticleHtmlForDisplay(content);
+        initializeArticleImageNodes(editorRef.current);
+      }
     }
   }, [content]);
 
+  const cleanStrayInlineStyles = (container: HTMLElement) => {
+    // 1. Unwrap any <font> tags inserted dynamically by Chrome
+    const fontTags = container.querySelectorAll('font');
+    fontTags.forEach(font => {
+      while (font.firstChild) {
+        font.parentNode?.insertBefore(font.firstChild, font);
+      }
+      font.remove();
+    });
+
+    // 2. Strip inline background/font styles that Chrome adds when backspacing list items
+    const styledElements = container.querySelectorAll('[style]');
+    styledElements.forEach(el => {
+      // Keep link capsules, image containers, or top-level editor ref
+      if (
+        el.classList.contains('group') ||
+        el.classList.contains('img-tools') ||
+        el.closest('[contenteditable="false"]') ||
+        el === container
+      ) return;
+      el.removeAttribute('style');
+    });
+
+    initializeArticleImageNodes(container);
+  };
+
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    if (editorRef.current) {
+      cleanStrayInlineStyles(editorRef.current);
+    }
     onContentChange(e.currentTarget.innerHTML);
   };
 
-  const format = (command: string, value: string = '') => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Backspace') {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
+        const range = sel.getRangeAt(0);
+        if (range.startOffset === 0) {
+          let node: Node | null = range.startContainer;
+          if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+
+          const li = (node as HTMLElement | null)?.closest?.('li');
+          if (li) {
+            e.preventDefault();
+            document.execCommand('outdent', false);
+            if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+            onContentChange(editorRef.current?.innerHTML || '');
+            return;
+          }
+
+          const heading = (node as HTMLElement | null)?.closest?.('h1, h2');
+          if (heading && range.startOffset === 0) {
+            e.preventDefault();
+            document.execCommand('formatBlock', false, '<p>');
+            if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+            onContentChange(editorRef.current?.innerHTML || '');
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const plainToParagraphs = (text: string) => {
+    const paragraphs = text.split(/\r?\n\r?\n/);
+    return paragraphs
+      .map(p => {
+        const escaped = escapeHtml(p.trim()).replace(/\r?\n/g, '<br>');
+        return escaped ? `<p>${escaped}</p>` : '';
+      })
+      .filter(Boolean)
+      .join('');
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const plain = e.clipboardData.getData('text/plain');
+
+    let insertHtml: string;
+    if (html) {
+      insertHtml = sanitizePastedHtml(html);
+      // Sanitizing left nothing usable (e.g. pure inline-styled div/span soup) - fall back to plain text
+      if (!insertHtml.replace(/<[^>]*>/g, '').trim() && plain.trim()) {
+        insertHtml = plainToParagraphs(plain);
+      }
+    } else {
+      insertHtml = plainToParagraphs(plain);
+    }
+
     editorRef.current?.focus();
+    document.execCommand('insertHTML', false, insertHtml);
+    if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+    onContentChange(editorRef.current?.innerHTML || '');
+  };
+
+  const isSelectionInsideEditor = (): boolean => {
+    if (typeof window === 'undefined' || !editorRef.current) return false;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+    const node = selection.getRangeAt(0).commonAncestorContainer;
+    return editorRef.current.contains(node.nodeType === Node.TEXT_NODE ? node.parentElement : node);
+  };
+
+  const format = (command: string, value: string = '') => {
+    if (!isSelectionInsideEditor()) return;
     document.execCommand(command, false, value);
+    if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+    onContentChange(editorRef.current?.innerHTML || '');
+  };
+
+  // Unlike 'bold'/'italic', 'formatBlock' isn't a native toggle command - clicking H1 on text
+  // that's already H1 just re-applies H1 instead of reverting to a normal paragraph, so there
+  const getCurrentHeading = (): string | null => {
+    if (typeof window === 'undefined' || !isSelectionInsideEditor()) return null;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    let node: Node | null = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+
+    let heading = (node as HTMLElement | null)?.closest?.('h1, h2, h3');
+    if (!heading && selection.anchorNode) {
+      let anchor: Node | null = selection.anchorNode;
+      if (anchor.nodeType === Node.TEXT_NODE) anchor = anchor.parentElement;
+      heading = (anchor as HTMLElement | null)?.closest?.('h1, h2, h3');
+    }
+
+    return heading ? heading.tagName.toUpperCase() : null;
+  };
+
+  const toggleHeading = (tag: 'H1' | 'H2' | 'H3') => {
+    if (!isSelectionInsideEditor()) return;
+    const currentHeading = getCurrentHeading();
+    const isSameHeading = currentHeading === tag;
+    const targetBlock = isSameHeading ? '<p>' : `<${tag.toLowerCase()}>`;
+    document.execCommand('formatBlock', false, targetBlock);
+    if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+    onContentChange(editorRef.current?.innerHTML || '');
   };
 
   const saveSelection = () => {
@@ -168,7 +443,7 @@ const ArticleFlow = ({
     const safeUrl = escapeHtml(formattedUrl);
     const safeTitle = escapeHtml(linkLabel);
 
-    const linkHtml = `&nbsp;<span class="inline group" contenteditable="false" style="position:relative;"><a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium no-underline hover:underline cursor-pointer" style="font-family: 'Poppins', sans-serif; font-size: inherit; line-height: inherit;">${safeTitle}</a><span class="inline-flex items-center gap-4 px-3 py-1.5 bg-[#EEF2FF] rounded-[24px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute left-0 top-full mt-1 z-10 whitespace-nowrap" style="font-size:12px;"><span class="text-[12px] text-[#6366F1] max-w-[200px] truncate">${safeUrl}</span><span class="flex items-center gap-2"><button type="button" class="edit-link-btn cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button type="button" class="delete-link-btn cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button></span></span></span>&nbsp;`;
+    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium no-underline hover:underline cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-between w-[301px] h-[40px] px-4 py-2 bg-[#EEF2FF] rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute left-0 top-full mt-1.5 z-50 whitespace-nowrap pointer-events-auto"><span class="text-[14px] font-medium text-[#6366F1] max-w-[180px] min-w-0 truncate mr-2">${safeUrl}</span><span class="flex items-center gap-3 shrink-0"><button type="button" class="edit-link-btn flex items-center justify-center cursor-pointer p-0.5 hover:opacity-80 transition-opacity" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg></button><button type="button" class="delete-link-btn flex items-center justify-center cursor-pointer p-0.5 hover:opacity-80 transition-opacity" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16"><path fill="#FF6B6B" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg></button></span></span></span>&nbsp;`;
 
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
@@ -188,9 +463,9 @@ const ArticleFlow = ({
     const target = e.target as HTMLElement;
 
     // Handle inline image/video Edit button
-    const editImgBtn = target.closest('.edit-img-btn') || (target.closest('button') && target.closest('button')?.getAttribute('title') === 'Edit' && target.closest('.img-tools'));
-    if (editImgBtn) {
-      const container = editImgBtn.closest('[contenteditable="false"]');
+    const editImgBtn = target.closest('.edit-img-btn, [title="Edit"]');
+    if (editImgBtn && editImgBtn.closest('.img-tools')) {
+      const container = editImgBtn.closest('[contenteditable="false"]') || editImgBtn.closest('.relative') || editImgBtn.closest('.img-tools')?.parentElement;
       if (container) {
         const img = container.querySelector('img');
         const src = img?.getAttribute('src');
@@ -203,9 +478,9 @@ const ArticleFlow = ({
     }
 
     // Handle inline image/video Delete button
-    const deleteImgBtn = target.closest('.delete-img-btn') || (target.closest('button') && target.closest('button')?.getAttribute('title') === 'Delete' && target.closest('.img-tools'));
-    if (deleteImgBtn) {
-      const container = deleteImgBtn.closest('[contenteditable="false"]');
+    const deleteImgBtn = target.closest('.delete-img-btn, [title="Delete"]');
+    if (deleteImgBtn && deleteImgBtn.closest('.img-tools')) {
+      const container = deleteImgBtn.closest('[contenteditable="false"]') || deleteImgBtn.closest('.relative') || deleteImgBtn.closest('.img-tools')?.parentElement;
       if (container) {
         const video = container.querySelector('video');
         if (video) {
@@ -225,7 +500,7 @@ const ArticleFlow = ({
     // Handle inline link Edit button
     const editLinkBtn = target.closest('.edit-link-btn');
     if (editLinkBtn) {
-      const linkBlock = editLinkBtn.closest('span.inline.group') as HTMLElement | null;
+      const linkBlock = (editLinkBtn.closest('span.group') || editLinkBtn.closest('span[contenteditable="false"]')) as HTMLElement | null;
       if (linkBlock) {
         const aTag = linkBlock.querySelector('a');
         if (aTag) {
@@ -241,9 +516,15 @@ const ArticleFlow = ({
     // Handle inline link Delete button
     const deleteLinkBtn = target.closest('.delete-link-btn');
     if (deleteLinkBtn) {
-      const linkBlock = deleteLinkBtn.closest('span.inline.group');
+      const linkBlock = deleteLinkBtn.closest('span.group') || deleteLinkBtn.closest('span[contenteditable="false"]');
       if (linkBlock) {
-        linkBlock.remove();
+        const aTag = linkBlock.querySelector('a');
+        const plainText = aTag ? aTag.textContent || '' : '';
+        if (plainText) {
+          linkBlock.replaceWith(document.createTextNode(plainText));
+        } else {
+          linkBlock.remove();
+        }
         onContentChange(editorRef.current?.innerHTML || '');
         return;
       }
@@ -268,14 +549,14 @@ const ArticleFlow = ({
       if (isVideo) {
         const videoUrl = URL.createObjectURL(file);
         const uniqueId = videoUrl.split('/').pop() || Date.now().toString();
-        const namedFile = new File([file], uniqueId, { type: file.type });
+        const namedFile = createUniqueNamedFile(file, uniqueId);
         setLocalFiles(prev => [...prev, { id: videoUrl, file: namedFile }]);
 
         const pId = 'p-' + Date.now();
         const videoHtml = `
-          <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
-            <video controls src="${videoUrl}" style="max-width: 100%; border-radius: 8px;"></video>
-            <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
+          <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false">
+            <video controls src="${videoUrl}" class="max-w-full rounded-lg"></video>
+            <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
               </button>
@@ -303,14 +584,14 @@ const ArticleFlow = ({
         try {
           const imageUrl = URL.createObjectURL(file);
           const uniqueId = imageUrl.split('/').pop() || Date.now().toString();
-          const namedFile = new File([file], uniqueId, { type: file.type });
+          const namedFile = createUniqueNamedFile(file, uniqueId);
           setLocalFiles(prev => [...prev, { id: imageUrl, file: namedFile }]);
           
           const pId = 'p-' + Date.now();
           const imageHtml = `
-            <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
+            <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false">
               <img src="${imageUrl}" class="max-w-full h-auto object-contain block mx-auto" />
-              <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
+              <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button type="button" class="edit-img-btn p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
                 </button>
@@ -356,7 +637,7 @@ const ArticleFlow = ({
       try {
         const imageUrl = URL.createObjectURL(file);
         const uniqueId = imageUrl.split('/').pop() || Date.now().toString();
-        const namedFile = new File([file], uniqueId, { type: file.type });
+        const namedFile = createUniqueNamedFile(file, uniqueId);
         setLocalFiles(prev => [...prev, { id: imageUrl, file: namedFile }]);
         
         // Replace the old src with the new local blobUrl in the content HTML string
@@ -395,12 +676,39 @@ const ArticleFlow = ({
     return filesToUpload;
   };
 
+
+
   const handleOnPost = async () => {
+    if (editorRef.current) {
+      const cleanContent = stripEditorControls(editorRef.current.innerHTML);
+      onContentChange(cleanContent);
+    }
     const files = getFilesToUpload();
     await onPost(files);
   };
 
-  const handleOnClose = async () => {
+  const hasUnsavedChanges = () => {
+    const cleanContent = editorRef.current ? stripEditorControls(editorRef.current.innerHTML) : content;
+    const textContent = cleanContent.replace(/<[^>]*>/g, '').trim();
+    return (
+      title.trim().length > 0 ||
+      textContent.length > 0 ||
+      cleanContent.includes('<img') ||
+      coverImage !== null ||
+      localFiles.length > 0 ||
+      isEdit
+    );
+  };
+
+  const handleOnClose = async (skipConfirm?: boolean | React.MouseEvent) => {
+    if (skipConfirm !== true && hasUnsavedChanges()) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    if (editorRef.current) {
+      const cleanContent = stripEditorControls(editorRef.current.innerHTML);
+      onContentChange(cleanContent);
+    }
     const files = getFilesToUpload();
     await onClose(files);
   };
@@ -515,10 +823,22 @@ const ArticleFlow = ({
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-background select-none h-full overflow-hidden">
+    <div className="relative flex flex-col flex-1 bg-background select-none h-full overflow-hidden">
       {/* Custom Styles */}
+      {/* Typography (h1/h2/p/ul/img/etc.) is shared with the published article views via the
+          .article-editor selectors in globals.css, so what you see while writing matches what
+          gets published. Only editor-specific chrome (the placeholder) lives here. */}
       <style>{`
-        [contenteditable]:empty:before {
+        .article-title-editor[contenteditable]:empty:before {
+          content: attr(placeholder);
+          color: #6B7280;
+          font-family: var(--font-poppins), 'Poppins', sans-serif;
+          font-weight: 600;
+          font-size: 40px;
+          line-height: 48px;
+          cursor: text;
+        }
+        [contenteditable]:not(.article-title-editor):empty:before {
           content: attr(placeholder);
           color: #6B7280;
           font-family: 'Poppins', sans-serif;
@@ -527,43 +847,10 @@ const ArticleFlow = ({
           line-height: 24px;
           cursor: text;
         }
-        .article-editor h1 {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-top: 1rem;
-          margin-bottom: 0.5rem;
-        }
-        .article-editor h2 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin-top: 0.75rem;
-          margin-bottom: 0.5rem;
-        }
-        .article-editor ul {
-          list-style-type: disc;
-          padding-left: 1.25rem;
-          margin-bottom: 0.75rem;
-        }
-        .article-editor p {
-          margin-bottom: 0.5rem;
-        }
-        .article-editor img {
-          max-width: 100% !important;
-          height: auto !important;
-          object-fit: contain !important;
-          display: block !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
-        }
-        .article-editor div[contenteditable="false"] {
-          width: fit-content !important;
-          max-width: 100% !important;
-          height: auto !important;
-        }
       `}</style>
 
       {/* Header Area */}
-      <div className="flex flex-col">
+      <div className="flex-shrink-0 bg-background flex flex-col pb-3 border-b border-border/20 shadow-xs z-30">
         {/* Top Row: Title & Back */}
         <div className="flex items-center gap-3 px-[16px] pt-4 pb-4">
           <button 
@@ -604,8 +891,9 @@ const ArticleFlow = ({
           </div>
 
           {/* Pill Toolbar */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex flex-row justify-center items-center gap-[8px] bg-[#FFFFFF] border border-[#000000] rounded-[24px]" style={{ width: '472px', height: '56px', padding: '8px 16px' }}>
+          <div className="absolute left-1/2 -translate-x-1/2 flex flex-row justify-center items-center gap-[8px] bg-[#FFFFFF] border border-[#000000] rounded-[24px]" style={{ width: '536px', height: '56px', padding: '8px 16px' }}>
             <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('bold')}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
@@ -614,6 +902,7 @@ const ArticleFlow = ({
               <Bold className="w-[20px] h-[20px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('italic')}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
@@ -622,7 +911,8 @@ const ArticleFlow = ({
               <Italic className="w-[20px] h-[20px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
-              onClick={() => format('formatBlock', 'H1')}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => toggleHeading('H1')}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Heading 1"
@@ -630,7 +920,8 @@ const ArticleFlow = ({
               <Heading1 className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
-              onClick={() => format('formatBlock', 'H2')}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => toggleHeading('H2')}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Heading 2"
@@ -638,6 +929,16 @@ const ArticleFlow = ({
               <Heading2 className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => toggleHeading('H3')}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
+              style={{ width: '56px', height: '40px' }}
+              title="Heading 3"
+            >
+              <Heading3 className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('insertUnorderedList')}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
@@ -646,6 +947,7 @@ const ArticleFlow = ({
               <List className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={openLinkModal}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
@@ -654,6 +956,7 @@ const ArticleFlow = ({
               <Icon icon="ant-design:link-outlined" className="w-[24px] h-[24px] text-[#000000]" />
             </button>
             <button
+              onMouseDown={(e) => e.preventDefault()}
               onClick={triggerInlineImage}
               disabled={isUploadingInline}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all disabled:opacity-50"
@@ -719,69 +1022,15 @@ const ArticleFlow = ({
       </div>
 
       {/* Editor Body Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pt-6 pb-8 flex flex-col space-y-6 max-w-[600px] mx-auto w-full">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-8 pt-6 pb-8 flex flex-col space-y-6 max-w-[600px] mx-auto w-full">
 
-        {/* Cover Image cloud box / preview */}
-        <div className="w-full">
-          {coverImage ? (
-            <div className="relative aspect-[16/3] max-w-[600px] w-full overflow-hidden border border-border group bg-[#D9D9D9] mx-auto">
-              <img src={coverImage.url} className="w-full h-full object-cover" />
-              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => coverInputRef.current?.click()}
-                  className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
-                  title="Edit"
-                >
-                  <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
-                </button>
-                <button
-                  type="button"
-                  onClick={onRemoveCover}
-                  className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
-                  title="Delete"
-                >
-                  <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              onClick={() => coverInputRef.current?.click()}
-              className="flex flex-col items-center justify-center bg-[#FFFFFF] rounded-2xl cursor-pointer p-4 text-center w-full gap-10 aspect-[16/3] max-w-[600px] mx-auto"
-            >
-              {/* First Group: Title + Subtitle */}
-              <div className="flex flex-col items-center gap-2">
-                <h5 className="w-[118px] h-[26px] font-medium text-[18px] leading-[26px] text-[#000000] text-center font-poppins">Cover image</h5>
-                <p className="w-[255px] h-[16px] font-normal text-[12px] leading-[16px] text-[#6B7280] text-center font-poppins">Add a cover image or video to your article.</p>
-              </div>
-
-              {/* Second Group: Upload Icon + File Type Hints */}
-              <div className="flex flex-col items-center gap-4">
-                <Icon
-                  icon="iconoir:cloud-upload"
-                  className="w-[40px] h-[40px] text-muted-foreground flex-shrink-0"
-                />
-
-                <div className="flex flex-col items-center font-poppins">
-                  <span className="inline-block w-[105px] h-[16px] font-normal text-[8px] leading-[16px] text-[#6B7280] text-center font-poppins">
-                    JPG, PNG, WEBP (Max 5MB)
-                  </span>
-                  <span className="inline-block w-full max-w-[350px] mt-1 font-normal text-[10px] leading-[16px] text-[#6B7280] text-center font-poppins">
-                    Use a 16:3 banner, Minimum size: 960 x 180 px. Recommended size: 1920 x 360 px for optimal quality.
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept="image/*"
-            onChange={onCoverUpload}
-            className="hidden"
-          />
-        </div>
+        {/* Cover Image — dedicated 2:1 cover preview modal & upload UI */}
+        <ArticleCoverEditor
+          coverImage={coverImage?.url ?? null}
+          onCoverChange={(url) => onCoverChange(url)}
+          onRemoveCover={onRemoveCover}
+          isEdit={isEdit}
+        />
 
         {/* Hidden inputs & triggers */}
         <input
@@ -800,13 +1049,33 @@ const ArticleFlow = ({
         />
 
         {/* Big Bold Title */}
-        <input
-          type="text"
-          value={title || ''}
-          onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Title"
-          className="w-full px-0 bg-transparent border-none outline-none focus:ring-0 placeholder-[#6B7280] text-[#000000]"
-          style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 600, fontSize: '24px', lineHeight: '32px' }}
+        <div
+          ref={titleInputRef}
+          contentEditable
+          role="textbox"
+          onInput={(e) => {
+            onTitleChange(e.currentTarget.innerText || '');
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              editorRef.current?.focus();
+            }
+          }}
+          onPaste={(e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+          }}
+          {...{ placeholder: "Title" }}
+          className="article-title-editor w-full p-0 bg-transparent border-none outline-none focus:ring-0 text-[#000000] block h-auto min-h-[48px] flex-shrink-0 overflow-visible"
+          style={{
+            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+            fontWeight: 600,
+            fontSize: '40px',
+            lineHeight: '48px',
+            height: 'auto',
+          }}
         />
 
         {/* Rich contentEditable area */}
@@ -814,10 +1083,12 @@ const ArticleFlow = ({
           ref={editorRef}
           contentEditable
           onInput={handleInput}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onClick={handleEditorClick}
           {...{ placeholder: "Write your thoughts..." }}
-          className="article-editor outline-none focus:ring-0 text-[#000000] min-h-[250px] pb-12"
-          style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, fontSize: '16px', lineHeight: '24px' }}
+          className="article-editor outline-none focus:ring-0 text-[#000000] min-h-[250px] pb-12 h-auto flex-shrink-0 overflow-visible"
+          style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif' }}
         />
       </div>
 
@@ -885,6 +1156,16 @@ const ArticleFlow = ({
           </div>
         </div>
       )}
+
+      {/* Discard Confirmation Overlay */}
+      <DiscardConfirmOverlay
+        isOpen={showDiscardConfirm}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          handleOnClose(true);
+        }}
+      />
     </div>
   );
 };

@@ -30,10 +30,12 @@ export function useChannelSearch() {
         ? channelService.unsubscribeFromCommunity(channelId)
         : channelService.subscribeToCommunity(channelId);
     },
-    onSuccess: () => {
+    onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: ['channel-search'] });
       queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
       queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel', channelId] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel'] });
     },
   });
 

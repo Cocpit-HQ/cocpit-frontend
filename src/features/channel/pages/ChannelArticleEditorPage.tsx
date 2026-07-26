@@ -12,9 +12,9 @@ export default function ChannelArticleEditorPage() {
   const goBackToChannel = () => router.push('/channel');
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="pt-4 md:pt-6 pb-4 md:pb-8">
-        <div className="mx-auto w-full max-w-[1128px] px-0 md:px-4 xl:px-0">
+    <div className="h-screen max-h-screen overflow-hidden bg-background text-foreground flex flex-col">
+      <div className="flex-1 p-2 md:p-4 overflow-hidden flex flex-col">
+        <div className="mx-auto w-full max-w-[1128px] h-full flex flex-col px-0 md:px-4 xl:px-0 overflow-hidden">
           <ChannelArticleEditor articleId={id} onClose={goBackToChannel} onSuccess={goBackToChannel} />
         </div>
       </div>

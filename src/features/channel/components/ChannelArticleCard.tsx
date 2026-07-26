@@ -32,10 +32,21 @@ const formatDate = (iso?: string) => {
   return `${day} ${month} ${year}`;
 };
 
+const getDisplayExcerpt = (article: ChannelArticle) => {
+  if (article.excerpt && article.excerpt.trim() !== '') return article.excerpt;
+  if (!article.content) return '';
+  return article.content.replace(/<[^>]+>/g, ' ').replace(/[#*`~>_]/g, '').replace(/\s+/g, ' ').trim();
+};
+
 export default function ChannelArticleCard({ article, onClick, onEdit, onDelete }: ChannelArticleCardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const showOwnerActions = !!onEdit || !!onDelete;
+  const isEdited = Boolean(
+    article.updatedAt && 
+    article.publishedAt && 
+    new Date(article.updatedAt).getTime() - new Date(article.publishedAt).getTime() > 1000
+  );
 
   return (
     <>
@@ -50,21 +61,26 @@ export default function ChannelArticleCard({ article, onClick, onEdit, onDelete 
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center py-2">
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2.5 mb-0.5">
             {article.status === 'draft' && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-['Poppins'] uppercase bg-slate-100 dark:bg-[#2A2D35] text-slate-500 dark:text-[#A1A8B3]">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold font-['Poppins'] uppercase bg-slate-100 dark:bg-[#2A2D35] text-slate-500 dark:text-[#A1A8B3]">
                 Draft
               </span>
             )}
-            <span className="text-gray-400 dark:text-[#A1A8B3] text-[10px] font-['Poppins']">
+            <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-medium font-['Poppins']">
               {formatDate(article.publishedAt || article.updatedAt)}
             </span>
+            {(isEdited || (article.status === 'draft' && article.updatedAt)) && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium font-['Poppins'] bg-[#E5E7EB] dark:bg-[#2A2D35] text-[#6B7280] dark:text-[#D1D5DB]">
+                Edited {timeAgo(article.updatedAt || article.publishedAt)}
+              </span>
+            )}
           </div>
-          <h4 className="text-black dark:text-[#FFFFFF] text-[14px] font-bold font-['Poppins'] truncate">
+          <h4 className="text-black dark:text-[#FFFFFF] text-[15px] font-bold font-['Poppins'] truncate">
             {article.title}
           </h4>
-          <p className="text-gray-400 dark:text-[#6B7280] text-[12px] font-['Poppins'] truncate">
-            {article.excerpt}
+          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[13px] font-['Poppins'] truncate mt-0.5">
+            {getDisplayExcerpt(article)}
           </p>
         </div>
 
@@ -76,26 +92,26 @@ export default function ChannelArticleCard({ article, onClick, onEdit, onDelete 
             <>
               <button
                 onClick={onEdit}
-                className="text-gray-600 dark:text-[#A1A8B3] hover:text-[#1A73E8] transition-colors"
+                className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] dark:hover:text-[#4D9CFF] transition-colors"
                 title="Edit"
               >
-                <Icon icon="fluent:edit-24-regular" className="w-5 h-5" />
+                <Icon icon="fluent:edit-24-regular" className="w-[24px] h-[24px]" />
               </button>
               <button
                 onClick={onDelete}
-                className="text-gray-600 dark:text-[#A1A8B3] hover:text-red-500 transition-colors"
+                className="text-black dark:text-[#FFFFFF] hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 title="Delete"
               >
-                <Icon icon="fluent:delete-24-regular" className="w-5 h-5" />
+                <Icon icon="fluent:delete-24-regular" className="w-[24px] h-[24px]" />
               </button>
             </>
           )}
           <button
             onClick={() => setIsShareModalOpen(true)}
-            className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] transition-colors self-center"
+            className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] dark:hover:text-[#4D9CFF] transition-colors"
             title="Share"
           >
-            <Icon icon="fluent:share-28-regular" className="w-[18px] h-[18px]" />
+            <Icon icon="fluent:share-24-regular" className="w-[24px] h-[24px]" />
           </button>
         </div>
       </div>

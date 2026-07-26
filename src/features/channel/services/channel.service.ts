@@ -41,6 +41,9 @@ export async function getMyChannel(orgId: string): Promise<Channel | null> {
       bannerUrl: data.bannerUrl || data.banner_url,
       subscriberCount: data.subscriberCount || data.subscriber_count || 0,
       createdAt: new Date().toISOString(), // Backend doesn't provide this yet
+      companyName: data.companyName || data.company_name,
+      companySlug: data.companySlug || data.company_slug,
+      logoUrl: data.logoUrl || data.logo_url,
     };
   } catch (error: any) {
     if (error.response?.status === 404) return null;
@@ -75,6 +78,9 @@ export async function createChannel(orgId: string, input: ChannelInput): Promise
     bannerUrl: data.bannerUrl || data.banner_url,
     subscriberCount: 0,
     createdAt: new Date().toISOString(),
+    companyName: data.companyName || data.company_name,
+    companySlug: data.companySlug || data.company_slug,
+    logoUrl: data.logoUrl || data.logo_url,
   };
 }
 
@@ -105,6 +111,9 @@ export async function updateChannel(orgId: string, input: Partial<ChannelInput>)
     bannerUrl: data.bannerUrl || data.banner_url,
     subscriberCount: 0,
     createdAt: new Date().toISOString(),
+    companyName: data.companyName || data.company_name,
+    companySlug: data.companySlug || data.company_slug,
+    logoUrl: data.logoUrl || data.logo_url,
   };
 }
 
@@ -113,6 +122,17 @@ export interface ArticlesResponse {
   nextCursor: string | null;
   total: number;
 }
+
+const extractExcerpt = (content?: string, maxLength = 160): string => {
+  if (!content) return '';
+  const cleaned = content
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#*`~>_]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.substring(0, maxLength) + '...';
+};
 
 export async function getArticles(
   communityId: string,
@@ -131,7 +151,7 @@ export async function getArticles(
     title: item.title,
     content: item.content,
     coverImage: item.coverImage || item.banner_url || null,
-    excerpt: '', // Backend doesn't support excerpt
+    excerpt: item.excerpt || extractExcerpt(item.content || item.description || ''),
     status: item.status || 'published',
     publishedAt: item.publishedAt || item.created_at,
     updatedAt: item.updatedAt || item.updated_at,
@@ -162,7 +182,7 @@ export async function getArticleById(id: string): Promise<ChannelArticle | null>
       title: item.title || '',
       content: item.content || '',
       coverImage: coverImage,
-      excerpt: '',
+      excerpt: item.excerpt || extractExcerpt(item.content || item.description || ''),
       status: item.status || 'published',
       publishedAt: item.publishedAt || item.created_at || new Date().toISOString(),
       updatedAt: item.updatedAt || item.updated_at || new Date().toISOString(),

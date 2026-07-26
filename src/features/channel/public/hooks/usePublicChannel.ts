@@ -8,6 +8,8 @@ export function usePublicChannel(communityId: string | undefined, includeArticle
     queryKey: ['public-channel', communityId],
     queryFn: () => (communityId ? channelService.getPublicChannel(communityId) : Promise.resolve(null)),
     enabled: !!communityId,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: articlesResponse, isLoading: isArticlesLoading } = useQuery({
@@ -27,8 +29,10 @@ export function usePublicChannel(communityId: string | undefined, includeArticle
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['public-channel', communityId] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel'] });
       queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
       queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
+      queryClient.invalidateQueries({ queryKey: ['channel-search'] });
     },
   });
 

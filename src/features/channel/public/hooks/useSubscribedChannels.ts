@@ -28,10 +28,12 @@ export function useSubscribedChannels() {
 
   const unsubscribeMutation = useMutation({
     mutationFn: (channelId: string) => channelService.unsubscribeFromCommunity(channelId),
-    onSuccess: () => {
+    onSuccess: (_, channelId) => {
       queryClient.invalidateQueries({ queryKey: ['subscribed-channels'] });
       queryClient.invalidateQueries({ queryKey: ['recommended-channels'] });
       queryClient.invalidateQueries({ queryKey: ['channel-search'] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel', channelId] });
+      queryClient.invalidateQueries({ queryKey: ['public-channel'] });
     },
   });
 

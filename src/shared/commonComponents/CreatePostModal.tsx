@@ -1200,10 +1200,15 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       content={state.articleContent}
                       onContentChange={state.setArticleContent}
                       coverImage={media.uploadedImages[0] || null}
-                      onCoverUpload={(e) => media.handlePhotoUpload(e, isEdit)}
+                      onCoverChange={(url) => {
+                        if (url) {
+                          media.setUploadedImages([{ id: `cover-${Date.now()}`, url, type: 'image', crop: { x: 0, y: 0 }, zoom: 1, isExisting: true }]);
+                        } else {
+                          media.clearMedia();
+                        }
+                      }}
                       onRemoveCover={() => media.clearMedia()}
                       isEdit={isEdit}
-                      coverInputRef={articleCoverInputRef}
                       caption={state.description}
                       onCaptionChange={state.setDescription}
                       onPost={handlePostClick}

@@ -13,27 +13,27 @@ export default function ChannelSearchPage() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-[1128px] mx-auto min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-8 px-4 xl:px-0">
-        <div className="w-full max-w-[998px] mx-auto flex flex-col gap-6">
-          <div className="w-full flex flex-col gap-6 divide-y divide-gray-100 dark:divide-[#2A2D35]">
+      <div className="w-full min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-12 px-4 xl:px-0">
+        <div className="w-full max-w-[960px] mx-auto flex flex-col gap-[24px]">
+          <div className="w-full flex flex-col gap-[24px]">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="w-full flex flex-col gap-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 w-full">
-                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-                    <div className="flex flex-col gap-2 w-1/4">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-3 w-1/2" />
+              <div key={i} className="w-full flex flex-col gap-[16px]">
+                <div className="w-full h-[40px] flex items-center justify-between">
+                  <div className="flex items-center gap-[8px] w-full">
+                    <Skeleton className="w-[40px] h-[40px] rounded-full shrink-0" />
+                    <div className="flex flex-col gap-1 w-1/4">
+                      <Skeleton className="h-[16px] w-full" />
+                      <Skeleton className="h-[12px] w-1/2" />
                     </div>
                   </div>
-                  <Skeleton className="h-8 w-24 rounded-full shrink-0" />
+                  <Skeleton className="h-[40px] w-[113px] rounded-[24px] shrink-0" />
                 </div>
-                <div className="flex gap-4 ml-[52px]">
-                  <Skeleton className="w-[140px] h-[80px] rounded-xl shrink-0" />
-                  <div className="flex flex-col gap-2 w-1/2">
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-3 w-3/4" />
+                <div className="w-full flex flex-col sm:flex-row items-start gap-[16px]">
+                  <Skeleton className="w-full sm:w-[177px] h-[88.5px] rounded-[24px] shrink-0" />
+                  <div className="flex flex-col gap-[8px] flex-1 min-w-0">
+                    <Skeleton className="h-[20px] w-3/4" />
+                    <Skeleton className="h-[16px] w-full" />
+                    <Skeleton className="h-[16px] w-5/6" />
                   </div>
                 </div>
               </div>
@@ -45,11 +45,11 @@ export default function ChannelSearchPage() {
   }
 
   return (
-    <div className="w-full max-w-[1128px] mx-auto min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-8 px-4 xl:px-0">
-      <div className="w-full max-w-[998px] mx-auto flex flex-col gap-6">
-        <div className="w-full flex flex-col divide-y divide-gray-100 dark:divide-[#2A2D35]">
+    <div className="w-full min-h-screen bg-white dark:bg-[#0F1115] pt-4 md:pt-6 pb-12 px-4 xl:px-0">
+      <div className="w-full max-w-[960px] mx-auto flex flex-col gap-[24px]">
+        <div className="w-full flex flex-col gap-[24px]">
           {results.length === 0 ? (
-            <p className="py-12 text-center text-gray-400 text-xs font-['Poppins']">
+            <p className="py-12 text-center text-gray-400 text-[14px] font-['Poppins']">
               No channels found for "{query}".
             </p>
           ) : (
