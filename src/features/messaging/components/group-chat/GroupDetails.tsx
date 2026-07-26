@@ -21,6 +21,7 @@ import { Icon } from "@iconify/react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@radix-ui/react-dropdown-menu";
 import { CocpitProfileUpload } from "@/shared/commonComponents/Cocpitprofileupload";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 
 interface GroupDetailsProps {
     isOpen: boolean;
@@ -41,6 +42,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
     const [isSaving, setIsSaving] = useState(false);
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [userToShareProfile, setUserToShareProfile] = useState<string | null>(null);
 
     // Edit Form State
     const [editData, setEditData] = useState({
@@ -393,7 +395,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                                             <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
                                                         </DropdownMenuItem>
                                                     )}
-                                                    <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                    <DropdownMenuItem onClick={() => setUserToShareProfile(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
                                                         <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
                                                         <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
                                                     </DropdownMenuItem>
@@ -867,6 +869,12 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     }
                 }}
                 onCancel={() => setUserToDemote(null)}
+            />
+
+            <CocpitShareModel
+                isOpen={!!userToShareProfile}
+                onClose={() => setUserToShareProfile(null)}
+                profileId={userToShareProfile || undefined}
             />
         </div>
     );

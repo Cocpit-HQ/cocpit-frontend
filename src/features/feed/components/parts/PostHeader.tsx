@@ -55,7 +55,9 @@ export const PostHeader = ({
   onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport, onNotInterested,
   location, tags, authorRole, title, hideOptions, variant = 'default'
 }: PostHeaderProps) => {
-  const avatarSrc = authorAvatar || '/assets/pngegg.png';
+  const [imgError, setImgError] = React.useState(false);
+  const hasValidAvatar = Boolean(authorAvatar && authorAvatar !== '/assets/pngegg.png' && !imgError);
+  const initial = author ? author.charAt(0).toUpperCase() : 'U';
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const isRepostWithoutThoughts = !!shared_post && (!content || content.trim() === '');
   const authorUserId = authorId?.toString();
@@ -170,7 +172,18 @@ export const PostHeader = ({
       >
         {/* Avatar (Ellipse 10) */}
         <div className="w-10 h-10 min-w-10 min-h-10 rounded-full overflow-hidden flex-shrink-0 bg-white">
-          <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
+          {hasValidAvatar ? (
+            <img
+              src={authorAvatar}
+              alt={author}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-semibold text-lg flex items-center justify-center font-[family-name:var(--font-poppins)] select-none">
+              {initial}
+            </div>
+          )}
         </div>
 
         {/* Name & Role (Frame 2608568) */}
@@ -253,7 +266,13 @@ export const PostHeader = ({
                             : (isAuthorFollowing ? `Unfollow user` : `Follow user`)
                           }
                         </span>
-                        <img src={avatarSrc} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                        {hasValidAvatar ? (
+                          <img src={authorAvatar} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] font-semibold text-xs flex items-center justify-center font-[family-name:var(--font-poppins)] select-none flex-shrink-0">
+                            {initial}
+                          </div>
+                        )}
                       </button>
                       <button
                         onClick={() => { onReport(); setShowOptions(false); }}

@@ -78,7 +78,7 @@ export function ProfileSwitcher({
                 className="object-cover"
               />
               <AvatarFallback>
-                {activeProfile.name?.slice(0, 2).toUpperCase()}
+                {activeProfile.name?.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             {showArrow && (
@@ -102,7 +102,7 @@ export function ProfileSwitcher({
                   className="object-cover"
                 />
                 <AvatarFallback>
-                  {user.name?.slice(0, 2).toUpperCase()}
+                  {user.name?.slice(0, 1).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
@@ -165,7 +165,7 @@ export function ProfileSwitcher({
                   className="object-cover"
                 />
                 <AvatarFallback>
-                  {user.name?.slice(0, 2).toUpperCase()}
+                  {user.name?.slice(0, 1).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <span className="text-[15px] leading-[22px] font-normal text-profile-text font-[family-name:var(--font-poppins)]">
@@ -201,7 +201,7 @@ export function ProfileSwitcher({
                         className="object-cover"
                       />
                       <AvatarFallback>
-                        {org.name.slice(0, 2).toUpperCase()}
+                        {org.name.slice(0, 1).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-[15px] leading-[22px] font-normal text-profile-text font-[family-name:var(--font-poppins)] truncate">

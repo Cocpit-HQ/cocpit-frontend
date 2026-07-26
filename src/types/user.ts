@@ -187,9 +187,11 @@ export interface AddEducationResponse {
 export interface SearchedUser {
   id: string;
   full_name: string;
+  name?: string;
   account_name?: string;
   headline: string | null;
   avatar_url: string | null;
+  avatar?: string | null;
   account_type: string;
   type?: 'USER' | 'COMPANY';
   slug?: string;

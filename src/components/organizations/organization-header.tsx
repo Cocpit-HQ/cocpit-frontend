@@ -290,7 +290,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                             <Avatar className="h-[120px] w-[120px] rounded-xl border-4 border-background bg-background shadow-md cursor-pointer" onClick={() => canManageCompany && setIsEditAvatarOpen(true)}>
                                 <AvatarImage src={company?.logo_url} className="object-cover" />
                                 <AvatarFallback className="text-4xl font-bold rounded-xl text-primary/70 bg-muted">
-                                    {company?.name?.slice(0, 2).toUpperCase()}
+                                    {company?.name?.slice(0, 1).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
 

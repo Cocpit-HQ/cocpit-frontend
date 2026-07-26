@@ -241,20 +241,16 @@ export default function AddMemberModal({
                       className="w-full h-[48px] flex flex-row justify-between items-center p-0 gap-[16px] flex-none order-0 self-stretch grow-0 mb-[8px] cursor-pointer hover:bg-[#F9FAFB] rounded-lg transition-colors group"
                     >
                       <div className="flex flex-row items-center gap-[8px]">
-                        <div className="w-[32px] h-[32px] rounded-full overflow-hidden flex-none order-0 grow-0">
-                          {user.avatar_url ? (
+                        <div className="relative w-[32px] h-[32px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-none font-['Poppins'] select-none">
+                          <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
+                          {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
                             <img
                               src={user.avatar_url}
                               alt={user.full_name}
-                              className="w-full h-full object-cover"
+                              className="absolute inset-0 w-full h-full object-cover"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                             />
-                          ) : (
-                            <div className="w-full h-full bg-[#E5E7EB] flex items-center justify-center text-[12px] text-gray-500 font-['Poppins']">
-                              {(user.full_name || user.account_name || "?")
-                                .substring(0, 2)
-                                .toUpperCase()}
-                            </div>
-                          )}
+                          ) : null}
                         </div>
                         <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-black flex-none order-0 grow-0 whitespace-nowrap py-[4px]">
                           {user.full_name || user.account_name || "cocpit user"}

@@ -267,12 +267,16 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
           }}
         >
           {/* Avatar (Ellipse 10) */}
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
-            <img
-              src={localPost.authorAvatar || "/assets/profilephoto.png"}
-              alt={localPost.author || "User"}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+            {localPost.authorAvatar && localPost.authorAvatar !== '/assets/profilephoto.png' && localPost.authorAvatar !== '/assets/pngegg.png' ? (
+              <img
+                src={localPost.authorAvatar}
+                alt={localPost.author || "User"}
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            ) : null}
+            <span>{(localPost.author || 'U').charAt(0).toUpperCase()}</span>
           </div>
           {/* Text Info (Frame 2608568) */}
           <div className="flex flex-col justify-center overflow-hidden min-w-0">
@@ -392,8 +396,11 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
         <div className="w-full h-[300px] mb-4 relative overflow-hidden">
           <div className="w-full h-full p-3 bg-[#F8FAFF] dark:bg-[#131C2E]/30 border border-[#E3E9FF] dark:border-[#232F45] rounded-[16px] flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
-                <img src={localPost.shared_post.authorAvatar || "/assets/pngegg.png"} className="w-full h-full object-cover" />
+              <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+                {localPost.shared_post.authorAvatar && localPost.shared_post.authorAvatar !== '/assets/pngegg.png' ? (
+                  <img src={localPost.shared_post.authorAvatar} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : null}
+                <span>{(localPost.shared_post.author || 'U').charAt(0).toUpperCase()}</span>
               </div>
               <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.author}</span>
             </div>
@@ -537,15 +544,19 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             return (
               <div className="flex -space-x-1.5 overflow-hidden">
                 {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                  <img
-                    key={idx}
-                    src={user.avatar_url || "/assets/pngegg.png"}
-                    alt={user.username || "user"}
-                    className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/assets/pngegg.png";
-                    }}
-                  />
+                  <div key={idx} className="inline-flex h-5 w-5 rounded-full ring-2 ring-background bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[10px] flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                    {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.username || "user"}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                    <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                  </div>
                 ))}
               </div>
             );

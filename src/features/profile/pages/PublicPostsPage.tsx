@@ -134,7 +134,12 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
       {/* Target User Commented Header */}
       {activeTab === 'Comments' && targetProfile && (
         <div className="flex w-full items-center gap-2 px-4 py-3 border-b border-border bg-muted/20">
-          <img src={targetProfile.avatar_url || "/assets/pngegg.png"} alt={targetProfile.full_name} className="w-5 h-5 rounded-full object-cover" />
+          <div className="w-5 h-5 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden shrink-0 font-['Poppins'] select-none">
+            {targetProfile.avatar_url && targetProfile.avatar_url !== '/assets/pngegg.png' ? (
+              <img src={targetProfile.avatar_url} alt={targetProfile.full_name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ) : null}
+            <span>{(targetProfile.full_name || targetProfile.account_name || 'U').charAt(0).toUpperCase()}</span>
+          </div>
           <span className="font-[family-name:var(--font-poppins)] text-xs text-muted-foreground font-medium">
             <span className="text-foreground font-semibold">{targetProfile.full_name || targetProfile.account_name}</span> commented on this
           </span>
@@ -151,12 +156,18 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
             router.push(authorLink);
           }}
         >
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0 mt-0.5">
-            <img
-              src={post.authorAvatar || "/assets/pngegg.png"}
-              alt={post.author}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#EEF2FF] text-[#6366F1] relative flex-shrink-0 mt-0.5 flex items-center justify-center font-semibold text-xs font-['Poppins'] select-none">
+            {post.authorAvatar && post.authorAvatar !== '/assets/pngegg.png' ? (
+              <img
+                src={post.authorAvatar}
+                alt={post.author}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : null}
+            <span>{(post.author || 'U').charAt(0).toUpperCase()}</span>
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden flex-1">
             <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight truncate">{post.isCompanyPost ? formatCompanyName(post.author) : post.author}</span>
@@ -302,12 +313,16 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
         {post.shared_post && (
           <div className="w-full border border-border rounded-[16px] p-3 mt-2 mb-4 bg-card">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0">
-                <img
-                  src={post.shared_post.authorAvatar || "/assets/pngegg.png"}
-                  alt={post.shared_post.author}
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+                {post.shared_post.authorAvatar && post.shared_post.authorAvatar !== '/assets/pngegg.png' ? (
+                  <img
+                    src={post.shared_post.authorAvatar}
+                    alt={post.shared_post.author}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ) : null}
+                <span>{(post.shared_post.author || 'U').charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-[family-name:var(--font-poppins)] font-semibold text-[14px] text-foreground truncate max-w-[200px]">
@@ -463,15 +478,19 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
               return (
                 <div className="flex -space-x-1.5 overflow-hidden">
                   {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                    <img
-                      key={idx}
-                      src={user.avatar_url || "/assets/pngegg.png"}
-                      alt={user.username || "user"}
-                      className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/assets/pngegg.png";
-                      }}
-                    />
+                  <div key={idx} className="inline-flex h-5 w-5 rounded-full ring-2 ring-background bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[10px] flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                    {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.username || "user"}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                    <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                  </div>
                   ))}
                 </div>
               );

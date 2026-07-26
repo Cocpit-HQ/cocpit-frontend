@@ -191,11 +191,17 @@ export default function SearchPage() {
                                                         href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
                                                         className="flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all group"
                                                     >
-                                                        <img 
-                                                            src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} 
-                                                            alt={user.full_name} 
-                                                            className="w-12 h-12 rounded-full object-cover group-hover:scale-110 transition-transform shadow-sm"
-                                                        />
+                                                        <div className="relative w-12 h-12 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base flex-shrink-0 overflow-hidden font-['Poppins'] select-none shadow-sm group-hover:scale-110 transition-transform">
+                                                            <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                            {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                                                                <img 
+                                                                    src={user.avatar_url} 
+                                                                    alt={user.full_name} 
+                                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                                />
+                                                            ) : null}
+                                                        </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2">
                                                                 <p className="font-bold text-foreground truncate">{user.full_name}</p>

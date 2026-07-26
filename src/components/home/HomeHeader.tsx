@@ -487,7 +487,15 @@ export const HomeHeader = () => {
                                                             setSearchQuery("");
                                                         }}
                                                     >
-                                                        <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                        {user.avatar || user.avatar_url ? (
+                                                            <img src={(user.avatar || user.avatar_url)!} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                        ) : user.type === 'COMPANY' ? (
+                                                            <img src="/assets/company-placeholder.png" alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] font-light text-xl flex items-center justify-center font-[family-name:var(--font-poppins)] flex-shrink-0 select-none">
+                                                                {(user.full_name || user.name || "C").charAt(0).toUpperCase()}
+                                                            </div>
+                                                        )}
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2">
                                                                 <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
@@ -597,11 +605,8 @@ export const HomeHeader = () => {
                                                                     flexGrow: 1,
                                                                 }}
                                                             >
-                                                                {/* Ellipse 2 / Ellipse 24 */}
-                                                                <img
-                                                                    src={item.value.avatar_url || (item.value.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')}
-                                                                    alt={item.value.full_name}
-                                                                    className="rounded-full object-cover"
+                                                                <div
+                                                                    className="relative rounded-full bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm flex items-center justify-center font-['Poppins'] select-none shrink-0 overflow-hidden"
                                                                     style={{
                                                                         width: '40px',
                                                                         height: '40px',
@@ -609,7 +614,17 @@ export const HomeHeader = () => {
                                                                         order: 0,
                                                                         flexGrow: 0,
                                                                     }}
-                                                                />
+                                                                >
+                                                                    <span>{(item.value.full_name || item.value.name || "U").charAt(0).toUpperCase()}</span>
+                                                                    {(item.value.avatar || item.value.avatar_url) && (item.value.avatar || item.value.avatar_url) !== '/assets/pngegg.png' ? (
+                                                                        <img
+                                                                            src={(item.value.avatar || item.value.avatar_url)!}
+                                                                            alt={item.value.full_name}
+                                                                            className="absolute inset-0 w-full h-full object-cover"
+                                                                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                                        />
+                                                                    ) : null}
+                                                                </div>
 
                                                                 {/* Frame 2608728 */}
                                                                 <div
@@ -954,7 +969,17 @@ export const HomeHeader = () => {
                                                         setSearchQuery("");
                                                     }}
                                                 >
-                                                    <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                    <div className="relative w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                                                        <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                        {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                                                            <img
+                                                                src={user.avatar_url}
+                                                                alt={user.full_name}
+                                                                className="absolute inset-0 w-full h-full object-cover"
+                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                        ) : null}
+                                                    </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2">
                                                             <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
@@ -1012,7 +1037,17 @@ export const HomeHeader = () => {
                                                         className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? '' : 'hover:bg-muted/50'}`}
                                                         onClick={() => saveSearch(item.value)}
                                                     >
-                                                        <img src={item.value.avatar_url || (item.value.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={item.value.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                        <div className="relative w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                                                            <span>{(item.value.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                            {(item.value.avatar || item.value.avatar_url) && (item.value.avatar || item.value.avatar_url) !== '/assets/pngegg.png' ? (
+                                                                <img
+                                                                    src={(item.value.avatar || item.value.avatar_url)!}
+                                                                    alt={item.value.full_name}
+                                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                                />
+                                                            ) : null}
+                                                        </div>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-sm font-semibold text-foreground truncate">{item.value.full_name}</p>
                                                             <p className="text-[10px] text-muted-foreground truncate uppercase font-medium">Recent Profile</p>

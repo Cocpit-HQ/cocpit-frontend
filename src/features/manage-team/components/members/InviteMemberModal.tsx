@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { InviteCandidate } from '../../types/team.types';
 import * as teamService from '../../services/team.service';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function InviteMemberModal({
 }: InviteMemberModalProps) {
   const { activeProfile } = useActiveProfile();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [candidates, setCandidates] = useState<InviteCandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -32,10 +34,10 @@ export default function InviteMemberModal({
     if (!activeProfile?.id) return;
     setLoading(true);
     teamService
-      .getInviteCandidates(activeProfile.id, search)
+      .getInviteCandidates(activeProfile.id, debouncedSearch)
       .then(setCandidates)
       .finally(() => setLoading(false));
-  }, [isOpen, search, activeProfile?.id]);
+  }, [isOpen, debouncedSearch, activeProfile?.id]);
 
   if (!isOpen) return null;
 

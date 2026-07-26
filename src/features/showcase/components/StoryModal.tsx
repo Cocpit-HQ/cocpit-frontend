@@ -354,14 +354,19 @@ export function StoryModal({
 
             {/* Profile Row */}
             <div className="flex items-center gap-2 mt-1">
-              <img 
-                src={activeStory.author?.avatar || "/assets/pngegg.png"} 
-                alt={activeStory.author?.name || "Profile"}
-                className="w-10 h-10 rounded-full object-cover border border-white/20"
-                onError={(e) => {
-                  e.currentTarget.src = "/assets/pngegg.png"
-                }}
-              />
+              <div className="relative w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm border border-white/20 overflow-hidden shrink-0 font-['Poppins'] select-none">
+                <span>{(activeStory.author?.name || "S").charAt(0).toUpperCase()}</span>
+                {activeStory.author?.avatar && activeStory.author.avatar !== '/assets/pngegg.png' ? (
+                  <img 
+                    src={activeStory.author.avatar} 
+                    alt={activeStory.author?.name || "Profile"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : null}
+              </div>
               <div className="flex flex-col">
                 <span className="text-lg font-medium text-white leading-tight">
                   {activeStory.author?.name || "Cocpit"}

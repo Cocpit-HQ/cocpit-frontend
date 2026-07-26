@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Smile, X, Send } from 'lucide-react';
 import { searchUsers, UserMention } from '@/services/api/users';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface CommentInputProps {
     onAddComment: (text: string) => void;
@@ -32,6 +33,7 @@ export default function CommentInput({
     className = "",
     autoFocus = false,
 }: CommentInputProps) {
+    const { activeProfile } = useActiveProfile();
     const [commentText, setCommentText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [mentions, setMentions] = useState<UserMention[]>([]);
@@ -250,9 +252,25 @@ export default function CommentInput({
             )}
 
             <div className="flex flex-row items-end p-0 gap-[8px] w-[524px] max-w-full min-h-[56px] h-auto flex-none order-4 flex-grow-0">
-                <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#D9D9D9] mb-[8px]">
-                    <img src={currentUserAvatar} alt="User" className="w-full h-full object-cover" />
-                </div>
+                {(() => {
+                    const avatar = (currentUserAvatar && currentUserAvatar !== '/assets/pngegg.png') ? currentUserAvatar : activeProfile?.avatar_url;
+                    const initial = (activeProfile?.name || 'U').charAt(0).toUpperCase();
+                    return (
+                        <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm mb-[8px] font-['Poppins'] select-none">
+                            <span>{initial}</span>
+                            {avatar && avatar !== '/assets/pngegg.png' ? (
+                                <img 
+                                    src={avatar} 
+                                    alt={activeProfile?.name || "User"} 
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                    }} 
+                                />
+                            ) : null}
+                        </div>
+                    );
+                })()}
 
                 <div className={`box-border flex flex-row items-end py-[16px] px-[16px] gap-[8px] w-[476px] min-h-[56px] h-auto bg-white border border-[#E0E7FF] ${replyingTo ? 'rounded-b-[24px] border-t-0' : 'rounded-[24px]'} flex-none order-1 flex-grow focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary transition-all relative`}>
                     <div className="flex-1 relative flex items-end h-auto min-h-[24px]">
@@ -284,8 +302,16 @@ export default function CommentInput({
                                             onMouseEnter={() => setMentionIndex(index)}
                                             className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${index === mentionIndex ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
                                         >
-                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                                                <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-full h-full object-cover" />
+                                            <div className="relative w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+                                                <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                                                    <img
+                                                        src={user.avatar_url}
+                                                        alt={user.full_name}
+                                                        className="absolute inset-0 w-full h-full object-cover"
+                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                    />
+                                                ) : null}
                                             </div>
                                             <div className="flex flex-col items-start min-w-0">
                                                 <span className="text-sm font-semibold truncate w-full">{user.full_name}</span>

@@ -222,7 +222,7 @@ export function ChatList({
                 {activeProfile?.name || session?.user?.name || "Cocpit"}
               </h2>
               <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 whitespace-nowrap">
-                @{(activeProfile as any)?.account_name || (session?.user as any)?.username || "cocpit23"}
+                @{(activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit"}
               </p>
             </div>
           </div>

@@ -101,14 +101,21 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
       <div className="relative w-full h-[224px] sm:rounded-2xl">
         
         {/* 1. Cover Banner (960x160) */}
-        <div className="relative w-full h-[160px] bg-slate-900 overflow-hidden sm:rounded-[24px]">
-          <Image
-            src={coverUrl || (data.entityType === "INSTITUTE" ? "/images/companyonboarding/AluminiCoverPage.png" : "/images/companyonboarding/companycoverphotoDefault.png")}
-            alt="Cover"
-            fill
-            className="object-cover opacity-80"
-            priority
-          />
+        <div className="relative w-full h-[160px] overflow-hidden sm:rounded-[24px]">
+          {coverUrl ? (
+            <Image
+              src={coverUrl}
+              alt="Cover"
+              fill
+              className="object-cover opacity-80"
+              priority
+            />
+          ) : (
+            <div
+              className="w-full h-full"
+              style={{ background: 'linear-gradient(186.03deg, #EEF2FF 4.68%, #6366F1 332.65%)' }}
+            />
+          )}
           
           {/* Cover Edit Icon */}
           {isOwnProfile && orgId && (

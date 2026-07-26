@@ -461,7 +461,7 @@ export function NotificationPopover({
           </h3>
 
         </div>
-        
+
         {/* Scrollable area for notifications */}
         <div className="w-full flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-4">
           {todayNotifications.length > 0 && (

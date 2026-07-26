@@ -58,6 +58,12 @@ export const isJobUrl = (text?: string): boolean => {
   return jobUrlRegex.test(text.trim());
 };
 
+export const isProfileUrl = (text?: string): boolean => {
+  if (!text) return false;
+  const profileUrlRegex = /(?:https?:\/\/[^\s]+)?\/(?:profile|organization|messaging)\b/i;
+  return profileUrlRegex.test(text.trim());
+};
+
 export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread => {
   if (!backendChat.other_user_id && !backendChat.is_group) {
     console.warn(`Conversation ${backendChat.conversation_id} is missing 'other_user_id'. This conversation might not support direct messaging.`);
@@ -67,7 +73,13 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     name: backendChat.other_user_name || "Deleted User",
     role: backendChat.other_user_headline || "",
     orgHeadline: backendChat.org_headline || "",
-    lastMessage: isPostUrl(backendChat.last_message_text) ? "Shared a post" : (isJobUrl(backendChat.last_message_text) ? "Shared a job" : backendChat.last_message_text),
+    lastMessage: isPostUrl(backendChat.last_message_text)
+      ? "Shared a post"
+      : isJobUrl(backendChat.last_message_text)
+      ? "Shared a job"
+      : isProfileUrl(backendChat.last_message_text)
+      ? "Shared a profile"
+      : backendChat.last_message_text,
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
       : (backendChat.timeAgo || ""),

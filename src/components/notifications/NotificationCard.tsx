@@ -74,8 +74,13 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             router.push(`/profile/${notification.reference_id}`)
         } else if (notification.type === 'repost' && postReferenceId) {
             router.push(`/post/${postReferenceId}`)
-        } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request') && notification.reference_id) {
-            router.push(`/profile/${notification.reference_id}`)
+        } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request' || notification.type === 'new_connection') && notification.reference_id) {
+            const url = notification.is_company_actor
+                ? `/organization/${notification.actor_slug}`
+                : `/profile/${notification.reference_id}`;
+            router.push(url)
+        } else if (notification.type === 'company_connection_accepted' && notification.reference_id) {
+            router.push(`/organization/${notification.reference_id}`)
         } else if ((notification.type === 'comment' || notification.type === 'mention' || notification.type === 'reply' || notification.type === 'post_tag') && postReferenceId) {
             let commentId;
             try {
@@ -92,7 +97,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             const url = (notification.type !== 'post_tag' && commentId)
                 ? `/post/${postReferenceId}?commentId=${commentId}`
                 : `/post/${postReferenceId}`;
-                
+
             router.push(url);
         } else if (notification.type === 'advocacy' && postReferenceId) {
             router.push(`/post/${postReferenceId}`)
@@ -138,7 +143,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                     </p>
                 </div>
             </div>
-            
+
             <div className="flex items-center gap-2 flex-shrink-0">
                 <span
                     className="font-poppins text-black dark:text-white"
@@ -171,11 +176,11 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                             </svg>
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent 
-                        align="end" 
+                    <DropdownMenuContent
+                        align="end"
                         sideOffset={4}
                         alignOffset={12}
-                        className="box-border flex flex-col items-center w-[206px] h-[96px] p-2 rounded-[24px] rounded-tr-none border border-[#C7D2FE] bg-white shadow-none dark:bg-white" 
+                        className="box-border flex flex-col items-center w-[206px] h-[96px] p-2 rounded-[24px] rounded-tr-none border border-[#C7D2FE] bg-white shadow-none dark:bg-white"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <DropdownMenuItem className="w-full h-10 grid grid-cols-[1fr_20px] items-center gap-3 cursor-pointer px-5 rounded-xl focus:bg-muted" onClick={() => handleMarkAsRead()}>

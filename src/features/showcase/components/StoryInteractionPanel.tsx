@@ -166,7 +166,12 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                             {loading && <p className="text-center text-sm py-4">Loading views...</p>}
                             {!loading && currentViewers.map((viewer: StoryAuthor, idx: number) => (
                                 <div key={idx} className="flex items-center gap-3">
-                                    <img src={viewer.avatar || '/assets/pngegg.png'} alt={viewer.name} className="w-10 h-10 rounded-full object-cover" />
+                                    <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden shrink-0 font-['Poppins'] select-none">
+                                        {viewer.avatar && viewer.avatar !== '/assets/pngegg.png' ? (
+                                            <img src={viewer.avatar} alt={viewer.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                        ) : null}
+                                        <span>{(viewer.name || 'U').charAt(0).toUpperCase()}</span>
+                                    </div>
                                     <span className="font-medium">{viewer.name}</span>
                                 </div>
                             ))}
@@ -181,7 +186,12 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                             {loading && <p className="text-center text-sm py-4">Loading likes...</p>}
                             {!loading && currentLikers.map((liker: StoryAuthor, idx: number) => (
                                 <div key={idx} className="flex items-center gap-3">
-                                    <img src={liker.avatar || '/assets/pngegg.png'} alt={liker.name} className="w-10 h-10 rounded-full object-cover" />
+                                    <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden shrink-0 font-['Poppins'] select-none">
+                                        {liker.avatar && liker.avatar !== '/assets/pngegg.png' ? (
+                                            <img src={liker.avatar} alt={liker.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                        ) : null}
+                                        <span>{(liker.name || 'U').charAt(0).toUpperCase()}</span>
+                                    </div>
                                     <div className="flex-1">
                                         <span className="font-medium">{liker.name}</span>
                                     </div>

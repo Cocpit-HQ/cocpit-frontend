@@ -297,16 +297,16 @@ export default function CocpitShareModel({
                         aria-label={u.name}
                       >
                         <div className="relative h-12 w-12">
-                          <div className="h-full w-full rounded-full overflow-hidden bg-[var(--primary-tint)] flex items-center justify-center">
-                            {u.avatar ? (
+                          <div className="relative h-full w-full rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base font-['Poppins'] select-none overflow-hidden">
+                            <span>{(u.name || 'U').charAt(0).toUpperCase()}</span>
+                            {u.avatar && u.avatar !== '/assets/pngegg.png' ? (
                               <img
                                 src={u.avatar}
                                 alt={u.name}
-                                className="h-full w-full object-cover"
+                                className="absolute inset-0 w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                               />
-                            ) : (
-                              <User className="w-6 h-6 text-[var(--primary)]" strokeWidth={1.5} />
-                            )}
+                            ) : null}
                           </div>
                           {selectedUsers.includes(u.id) && (
                             <div className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
@@ -357,16 +357,16 @@ export default function CocpitShareModel({
                             aria-checked={selectedUsers.includes(u.id)}
                             aria-label={u.name}
                           >
-                            <div className="relative h-8 w-8 rounded-full overflow-hidden bg-[var(--primary-tint)] flex items-center justify-center shrink-0">
-                              {u.avatar ? (
+                            <div className="relative h-8 w-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs shrink-0 font-['Poppins'] select-none overflow-hidden">
+                              <span>{(u.name || 'U').charAt(0).toUpperCase()}</span>
+                              {u.avatar && u.avatar !== '/assets/pngegg.png' ? (
                                 <img
                                   src={u.avatar}
                                   alt={u.name}
-                                  className="h-full w-full object-cover"
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
-                              ) : (
-                                <User className="w-6 h-6 text-[var(--primary)]" strokeWidth={1.5} />
-                              )}
+                              ) : null}
                               {selectedUsers.includes(u.id) && (
                                 <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
                                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

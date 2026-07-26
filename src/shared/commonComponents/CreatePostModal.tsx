@@ -110,9 +110,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
   const currentPosterName = (state.currentPoster as any)?.name || activeUser?.name || 'User';
   const currentPosterHandle = (state.currentPoster as any)?.username || activeUser?.username || currentPosterName.toLowerCase().replace(/\s+/g, '');
-  const currentPosterLogo = state.isCompanyPost
-    ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || '/assets/pngegg.png')
-    : (activeUser?.image || activeUser?.avatar || '/assets/pngegg.png');
+  const rawPosterLogo = state.isCompanyPost
+    ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url)
+    : (activeUser?.image || activeUser?.avatar);
+  const currentPosterLogo = rawPosterLogo && rawPosterLogo !== '/assets/pngegg.png' ? rawPosterLogo : null;
 
   const mediaActions = [
     { icon: 'stash:image', label: 'Image', type: 'photo' },
@@ -752,11 +753,19 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 {(state.postType !== 'article' || !!state.articleData) && (
                   <div className="relative flex flex-row items-center justify-start gap-3.5 w-full mt-5 z-[60]">
                     <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
-                      <img
-                        src={currentPosterLogo}
-                        alt="avatar"
-                        className="w-11 h-11 rounded-full object-cover ring-2 ring-border shadow-sm"
-                      />
+                      <div className="w-11 h-11 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none">
+                        {currentPosterLogo ? (
+                          <img
+                            src={currentPosterLogo}
+                            alt="avatar"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : null}
+                        <span>{currentPosterName.charAt(0).toUpperCase()}</span>
+                      </div>
                       <div className="flex flex-col">
                         <span className="font-semibold text-[17px] leading-[24px] text-foreground">{currentPosterName}</span>
                         <span className="font-normal text-[12px] leading-[16px] text-[#9CA3AF]">@{currentPosterHandle}</span>

@@ -121,7 +121,10 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                 {user.cover_image ? (
                     <img src={user.cover_image} alt="Cover" className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899]"></div>
+                    <div
+                        className="w-full h-full"
+                        style={{ background: 'linear-gradient(186.03deg, #EEF2FF 4.68%, #6366F1 332.65%)' }}
+                    />
                 )}
             </div>
 

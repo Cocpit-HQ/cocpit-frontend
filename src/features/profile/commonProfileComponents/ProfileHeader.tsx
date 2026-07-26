@@ -96,10 +96,17 @@ export const ProfileHeader = React.memo(function ProfileHeader({
             {coverImage ? (
                 <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
             ) : (
-                <div className="w-full h-full bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899]"></div>
+                <div
+                    className="w-full h-full"
+                    style={{ background: 'linear-gradient(186.03deg, #EEF2FF 4.68%, #6366F1 332.65%)' }}
+                />
             )}
         </div>
     );
+
+    const [avatarError, setAvatarError] = useState(false);
+    const hasValidAvatar = Boolean(user?.avatar && !avatarError);
+    const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "C";
 
     return (
         <div className="w-full">
@@ -150,19 +157,17 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                             <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)]" />
 
                             {/* Avatar Logo */}
-                            <div className="absolute inset-[4px] rounded-full overflow-hidden bg-card">
-                                {user?.avatar ? (
+                            <div className="absolute inset-[4px] rounded-full overflow-hidden bg-card flex items-center justify-center">
+                                {hasValidAvatar ? (
                                     <img
                                         src={user.avatar}
-                                        alt="Avatar"
+                                        alt={user?.name || "Avatar"}
                                         className="w-full h-full object-cover"
+                                        onError={() => setAvatarError(true)}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex flex-col justify-center items-center gap-[4px] bg-[#EEF2FF] rounded-full">
-                                        <Icon icon="solar:gallery-linear" className="w-[24px] h-[24px] text-[#000000]" />
-                                        <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] leading-[15px] text-center text-[#000000]">
-                                            Add profile
-                                        </span>
+                                    <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-light text-[48px] leading-none flex items-center justify-center font-[family-name:var(--font-poppins)] select-none">
+                                        {userInitial}
                                     </div>
                                 )}
                             </div>

@@ -84,7 +84,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         account_name: user.account_name,
         name: user.name,
         headline: user.headline || '',
-        avatar: user.avatar || '/assets/pngegg.png',
+        avatar: user.avatar || (user as any).avatar_url || null,
         cover_image: user.cover_image || null,
         location: user.location || '',
         website: (user as any).website || '',

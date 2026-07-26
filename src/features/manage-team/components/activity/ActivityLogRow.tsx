@@ -21,15 +21,19 @@ function ActivityLogRow({ entry }: ActivityLogRowProps) {
   return (
     <div className="w-full flex items-center gap-3 py-3">
       {/* Actor avatar */}
-      <img
-        src={entry.actorAvatarUrl || '/assets/pngegg.png'}
-        alt={entry.actorName}
-        className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-        onError={(e) => {
-          e.currentTarget.onerror = null;
-          e.currentTarget.src = '/assets/pngegg.png';
-        }}
-      />
+      <div className="relative w-9 h-9 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+        <span>{(entry.actorName || 'A').charAt(0).toUpperCase()}</span>
+        {entry.actorAvatarUrl && entry.actorAvatarUrl !== '/assets/pngegg.png' ? (
+          <img
+            src={entry.actorAvatarUrl}
+            alt={entry.actorName}
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : null}
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">

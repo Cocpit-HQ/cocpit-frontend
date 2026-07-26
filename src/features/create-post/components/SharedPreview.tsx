@@ -86,12 +86,17 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
       <div className="self-stretch p-4 bg-white rounded-3xl shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col gap-4">
         {/* Author row */}
         <div className="inline-flex items-center gap-2">
-          <img
-            className="size-10 rounded-full object-cover flex-shrink-0"
-            src={sharedAvatar || '/assets/pngegg.png'}
-            alt={sharedName || 'avatar'}
-            onError={(e) => { e.currentTarget.src = '/assets/pngegg.png'; }}
-          />
+          <div className="size-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+            {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' ? (
+              <img
+                className="w-full h-full object-cover"
+                src={sharedAvatar}
+                alt={sharedName || 'avatar'}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : null}
+            <span>{(sharedName || 'U').charAt(0).toUpperCase()}</span>
+          </div>
           <div className="flex flex-col">
             <span className="text-black text-base font-normal font-['Poppins'] leading-6">
               {sharedName || 'Unknown User'}

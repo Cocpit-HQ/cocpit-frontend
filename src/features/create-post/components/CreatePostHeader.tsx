@@ -90,7 +90,12 @@ const CreatePostHeader = ({
                      onClick={() => { onContextSwitch(null); setShowAccountSelector(false); }}
                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
                    >
-                     <img src={currentUser?.image || '/assets/pngegg.png'} className="w-8 h-8 rounded-full border" />
+                     <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs border overflow-hidden shrink-0 font-['Poppins'] select-none">
+                       {currentUser?.image && currentUser.image !== '/assets/pngegg.png' ? (
+                         <img src={currentUser.image} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                       ) : null}
+                       <span>{(currentUser?.name || 'U').charAt(0).toUpperCase()}</span>
+                     </div>
                      <div className="flex-grow flex flex-col min-w-0">
                         <span className="text-xs font-bold truncate">{currentUser?.name}</span>
                         <span className="text-[10px] text-muted-foreground">Personal Account</span>
@@ -106,7 +111,12 @@ const CreatePostHeader = ({
                          onClick={() => { onContextSwitch(cid); setShowAccountSelector(false); }}
                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
                        >
-                          <img src={c.logo_url || c.avatar_url || '/assets/pngegg.png'} className="w-8 h-8 rounded-full border bg-white" />
+                          <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs border bg-white overflow-hidden shrink-0 font-['Poppins'] select-none">
+                            {(c.logo_url || c.avatar_url) && (c.logo_url || c.avatar_url) !== '/assets/pngegg.png' ? (
+                              <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            ) : null}
+                            <span>{(c.name || 'O').charAt(0).toUpperCase()}</span>
+                          </div>
                           <div className="flex-grow flex flex-col min-w-0">
                              <span className="text-xs font-bold truncate">{c.name}</span>
                              <span className="text-[10px] text-muted-foreground">Organization</span>
@@ -141,7 +151,12 @@ const AccountSelectorOverlay = ({ userCompanies, onSelect, currentUser, onClose,
           onClick={() => { onSelect(null); onClose(); }}
           className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-muted border border-transparent hover:border-border transition-all"
         >
-          <img src={currentUser?.image || '/assets/pngegg.png'} className="w-12 h-12 rounded-full border shadow-sm" />
+          <div className="w-12 h-12 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base border shadow-sm overflow-hidden shrink-0 font-['Poppins'] select-none">
+            {currentUser?.image && currentUser.image !== '/assets/pngegg.png' ? (
+              <img src={currentUser.image} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ) : null}
+            <span>{(currentUser?.name || 'U').charAt(0).toUpperCase()}</span>
+          </div>
           <div className="flex flex-col text-left flex-grow">
             <span className="font-bold">{currentUser?.name}</span>
             <span className="text-xs text-muted-foreground">Your personal profile</span>
@@ -156,7 +171,12 @@ const AccountSelectorOverlay = ({ userCompanies, onSelect, currentUser, onClose,
               onClick={() => { onSelect(cid); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-muted border border-transparent hover:border-border transition-all"
             >
-              <img src={c.logo_url || c.avatar_url || '/assets/pngegg.png'} className="w-12 h-12 rounded-full border bg-white shadow-sm" />
+              <div className="w-12 h-12 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base border bg-white shadow-sm overflow-hidden shrink-0 font-['Poppins'] select-none">
+                {(c.logo_url || c.avatar_url) && (c.logo_url || c.avatar_url) !== '/assets/pngegg.png' ? (
+                  <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : null}
+                <span>{(c.name || 'O').charAt(0).toUpperCase()}</span>
+              </div>
               <div className="flex flex-col text-left flex-grow">
                 <span className="font-bold">{c.name}</span>
                 <span className="text-xs text-muted-foreground">Organization</span>

@@ -363,7 +363,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                 <div className="relative flex-shrink-0">
                                     <Avatar className="h-11 w-11 border border-border">
                                         <AvatarImage src={user.avatar_url || user.avatar} />
-                                        <AvatarFallback className="bg-secondary text-muted-foreground font-semibold">{user.full_name?.[0]}</AvatarFallback>
+                                        <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold">{user.full_name?.[0]?.toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     {isCompany && (
                                         <div className="absolute -bottom-0.5 -right-0.5 bg-[#6366F1] text-white rounded-full p-1 border-2 border-white">

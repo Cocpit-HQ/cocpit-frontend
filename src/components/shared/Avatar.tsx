@@ -27,11 +27,11 @@ export default function Avatar({
     const [error, setError] = useState(false)
 
     const sizeClasses = {
-        xs: "w-6 h-6",
-        sm: "w-8 h-8",
-        md: "w-10 h-10",
-        lg: "w-12 h-12",
-        xl: "w-16 h-16"
+        xs: "w-6 h-6 text-[10px]",
+        sm: "w-8 h-8 text-xs",
+        md: "w-10 h-10 text-sm",
+        lg: "w-12 h-12 text-base",
+        xl: "w-16 h-16 text-xl"
     }
 
     const indicatorSize = {
@@ -42,28 +42,26 @@ export default function Avatar({
         xl: "w-4 h-4"
     }
 
-    // Check if avatar is a URL or a gradient key
-    const isUrl = url && (url.startsWith('http') || url.startsWith('/')) && !error;
-    const gradientClass = getAvatarGradient(isUrl ? "" : (url || fallbackGradient));
+    const isUrl = Boolean(url && url !== '/assets/pngegg.png' && !url.startsWith('gradient-') && !error);
+    const initial = (name || 'U').charAt(0).toUpperCase();
 
     return (
         <div className={`relative shrink-0 ${className}`}>
-            <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 bg-muted`}>
+            <div className={`relative ${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
+                <span>{initial}</span>
                 {isUrl ? (
                     <img
                         src={url}
                         alt={name}
-                        className="w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                         onError={() => setError(true)}
                     />
-                ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${gradientClass}`} />
-                )}
+                ) : null}
             </div>
 
             {online && (
                 <div
-                    className={`absolute bottom-0 right-0 ${indicatorSize[size]} bg-green-500 rounded-full border-2 border-background`}
+                    className={`absolute bottom-0 right-0 ${indicatorSize[size]} bg-green-500 rounded-full border-2 border-background z-10`}
                 />
             )}
         </div>

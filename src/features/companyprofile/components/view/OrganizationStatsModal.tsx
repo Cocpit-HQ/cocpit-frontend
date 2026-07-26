@@ -197,10 +197,10 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
                                 className="flex items-center gap-4 flex-1 min-w-0 hover:opacity-80 transition-opacity"
                                 onClick={onClose}
                             >
-                                <Avatar className="w-10 h-10 bg-transparent border border-[#1A73E8]">
+                                <Avatar className="w-10 h-10 border border-border">
                                     <AvatarImage src={item.avatarUrl || item.avatar} alt={item.name} />
-                                    <AvatarFallback className="bg-transparent text-[#1A73E8] flex items-center justify-center">
-                                        <User className="w-5 h-5" />
+                                    <AvatarFallback className="bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm">
+                                        {(item.name || "O").charAt(0).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col flex-1 min-w-0">

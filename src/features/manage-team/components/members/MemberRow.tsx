@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { useSession } from 'next-auth/react';
 import { TeamMember } from '../../types/team.types';
@@ -12,6 +12,7 @@ interface MemberRowProps {
 
 export default function MemberRow({ member, onRemove }: MemberRowProps) {
   const { data: session } = useSession();
+  const [imgError, setImgError] = useState(false);
   const currentUserId = session?.user?.id || (session?.user as any)?.sub;
 
   const isSelf = Boolean(currentUserId && (member.id === currentUserId || (member as any).userId === currentUserId));
@@ -24,6 +25,9 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
   const displayEmail = member.email ||
     (member.headline?.includes('@') ? member.headline : null) ||
     `${member.name.split(' ')[0].toLowerCase()}.${member.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
+
+  const avatarUrl = member.avatarUrl || (member as any).avatar || (member as any).avatar_url;
+  const initial = member.name ? member.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <div className="w-full flex items-center justify-between py-2.5">

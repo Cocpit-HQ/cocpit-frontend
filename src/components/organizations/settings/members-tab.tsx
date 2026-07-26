@@ -172,7 +172,7 @@ export function MembersTab({ company }: MembersTabProps) {
                             <div className="flex items-center gap-4">
                                 <Avatar>
                                     <AvatarImage src={member.avatar_url} />
-                                    <AvatarFallback>{member.full_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                    <AvatarFallback>{member.full_name?.slice(0, 1).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <p className="font-medium">{member.full_name} {member.role === 'OWNER' && "(Owner)"}</p>

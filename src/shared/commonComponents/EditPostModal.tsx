@@ -292,11 +292,19 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
               {/* Author & Visibility */}
               <div className="relative flex flex-row items-center justify-between w-full mt-2 sm:mt-1 z-[60] shrink-0">
                 <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
-                  <img
-                    src={currentUser?.image || (currentUser as any)?.avatar || "/assets/pngegg.png"}
-                    alt="avatar"
-                    className="w-11 h-11 rounded-full object-cover ring-2 ring-border shadow-sm"
-                  />
+                  <div className="w-11 h-11 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none">
+                    {(currentUser?.image || (currentUser as any)?.avatar) && (currentUser?.image || (currentUser as any)?.avatar) !== '/assets/pngegg.png' ? (
+                      <img
+                        src={currentUser?.image || (currentUser as any)?.avatar}
+                        alt="avatar"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <span>{(currentUser?.name || 'U').charAt(0).toUpperCase()}</span>
+                  </div>
                   <div className="flex flex-col">
                     <span className="font-semibold text-[17px] leading-[24px] text-foreground">{currentUser?.name || 'User'}</span>
                     <span className="font-normal text-[12px] leading-[16px] text-[#9CA3AF]">@{(currentUser as any)?.username || 'user'}</span>

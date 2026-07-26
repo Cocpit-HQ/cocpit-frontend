@@ -221,14 +221,16 @@ export default function CreateGroupModal({
                             className="w-[368px] h-[48px] flex flex-row justify-between items-center p-0 gap-[16px] flex-none order-0 self-stretch grow-0 mb-[8px] cursor-pointer hover:bg-[#F9FAFB] rounded-lg transition-colors group"
                         >
                             <div className="flex flex-row items-center gap-[16px]">
-                                <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-[#E5E7EB] flex-none">
-                                    {user.avatar_url ? (
-                                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-[12px] text-gray-500 font-['Poppins']">
-                                            {(user.full_name || user.account_name || "?").substring(0, 2).toUpperCase()}
-                                        </div>
-                                    )}
+                                <div className="relative w-[32px] h-[32px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-none font-['Poppins'] select-none">
+                                    <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
+                                    {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                                        <img
+                                            src={user.avatar_url}
+                                            alt={user.full_name}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                        />
+                                    ) : null}
                                 </div>
                                 <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-black">
                                     {user.full_name || user.account_name || "cocpit user"}
@@ -386,14 +388,16 @@ export default function CreateGroupModal({
                                         {selectedUsersData.map((user) => (
                                             <div key={user.user_id || user.id} className="flex justify-between items-center h-[48px] w-full">
                                                 <div className="flex items-center gap-[16px]">
-                                                    <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-[#E5E7EB]">
-                                                        {user.avatar_url ? (
-                                                            <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500 font-['Poppins']">
-                                                                {(user.full_name || "?").substring(0, 2).toUpperCase()}
-                                                            </div>
-                                                        )}
+                                                    <div className="relative w-[32px] h-[32px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-none font-['Poppins'] select-none">
+                                                        <span>{(user.full_name || "U").charAt(0).toUpperCase()}</span>
+                                                        {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                                                            <img
+                                                                src={user.avatar_url}
+                                                                alt={user.full_name}
+                                                                className="absolute inset-0 w-full h-full object-cover"
+                                                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                        ) : null}
                                                     </div>
                                                     <span className="font-['Poppins'] font-normal text-[14px] text-black">
                                                         {user.full_name || user.account_name || "User"}

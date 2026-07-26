@@ -141,8 +141,18 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
       {/* Avatar Column */}
       <div className="flex-shrink-0">
         <Link href={authorLink} className="block">
-          <div className={`${avatarSize} rounded-full bg-muted overflow-hidden ring-1 ring-border/50`}>
-            <img src={author?.avatar || '/assets/pngegg.png'} alt={author?.name || 'User'} className="w-full h-full object-cover" />
+          <div className={`${avatarSize} rounded-full bg-[#EEF2FF] text-[#6366F1] overflow-hidden ring-1 ring-border/50 flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none`}>
+            {author?.avatar && author.avatar !== '/assets/pngegg.png' ? (
+              <img 
+                src={author.avatar} 
+                alt={author?.name || 'User'} 
+                className="w-full h-full object-cover" 
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }} 
+              />
+            ) : null}
+            <span>{author?.name ? author.name.charAt(0).toUpperCase() : 'U'}</span>
           </div>
         </Link>
       </div>

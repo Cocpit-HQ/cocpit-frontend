@@ -43,12 +43,16 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
 
             {/* Default Proof Indicator */}
             {hasProof && (
-              <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full border-2 border-card overflow-hidden shadow-sm transition-all duration-1000 ease-in-out opacity-100 group-hover:opacity-0 group-hover:scale-50">
-                <img
-                  src={mentionedInPosts[0]?.authorAvatar || "/assets/avatar.png"}
-                  alt="Proof"
-                  className="w-full h-full object-cover"
-                />
+              <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full border-2 border-card bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden shadow-sm transition-all duration-1000 ease-in-out opacity-100 group-hover:opacity-0 group-hover:scale-50 font-['Poppins'] select-none">
+                {mentionedInPosts[0]?.authorAvatar && mentionedInPosts[0].authorAvatar !== '/assets/avatar.png' ? (
+                  <img
+                    src={mentionedInPosts[0].authorAvatar}
+                    alt="Proof"
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ) : null}
+                <span>{(mentionedInPosts[0]?.author || 'P').charAt(0).toUpperCase()}</span>
               </div>
             )}
 

@@ -321,17 +321,19 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                   {/* User Frame 2608774 */}
                   <div className="flex flex-row items-center md:items-start p-0 gap-[12px] md:gap-[8px] h-[48px] md:h-[44px]">
                     {/* User Avatar */}
-                    {cand.avatar ? (
-                      <img
-                        className="w-[48px] h-[48px] md:w-[40px] md:h-[40px] rounded-full object-cover"
-                        src={cand.avatar}
-                        alt={cand.name}
-                      />
-                    ) : (
-                      <div className={`w-[48px] h-[48px] md:w-[40px] md:h-[40px] rounded-full ${isCompanyMode ? 'bg-blue-100 dark:bg-[#16365F] text-[#1A73E8] dark:text-[#4D9CFF] border-blue-50 dark:border-[#16365F]' : 'bg-indigo-100 dark:bg-[#1C2340] text-indigo-500 dark:text-[#818CF8] border-slate-100 dark:border-[#2E3445]'} md:dark:bg-indigo-100 md:dark:text-indigo-500 flex items-center justify-center font-semibold font-['Poppins'] text-sm border md:dark:border-slate-100`}>
-                        {cand.name.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    <div className="relative w-[48px] h-[48px] md:w-[40px] md:h-[40px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                      <span>{(cand.name || 'C').charAt(0).toUpperCase()}</span>
+                      {cand.avatar && cand.avatar !== '/assets/pngegg.png' ? (
+                        <img
+                          className="absolute inset-0 w-full h-full object-cover"
+                          src={cand.avatar}
+                          alt={cand.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : null}
+                    </div>
                     {/* Text Frame 2609008 */}
                     <div className="flex flex-col justify-center items-start h-[44px]">
                       <span className={`font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} md:dark:text-black text-left`}>

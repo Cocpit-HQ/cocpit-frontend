@@ -760,11 +760,12 @@ const MessageText = ({
   const router = useRouter()
   if (isMediaOnly) return null
 
-  // If the message text contains only the post URL, hide it
+  // If the message text contains only a post URL or profile share URL, hide it
   const rawText = message.text || message.text_content || "";
   const trimmedText = rawText.trim();
   const postUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/post\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/?$/i;
-  if (postUrlRegex.test(trimmedText)) {
+  const profileUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/(?:profile|organization|messaging)\b.*$/i;
+  if (postUrlRegex.test(trimmedText) || (message.sharedProfileId && (profileUrlRegex.test(trimmedText) || trimmedText === "Shared a profile" || !trimmedText))) {
     return null;
   }
 
@@ -1053,6 +1054,9 @@ function MessageBubble(props: MessageBubbleProps) {
     return !text || isDefaultMediaText
   })() || false
 
+  // Helper to determine if message is profile-only
+  const isProfileOnly = !!message.sharedProfileId && !message.is_deleted_for_everyone && !message.is_deleted_for_me;
+
   const { activeProfile } = useActiveProfile()
   const isCompanyProfile = activeProfile?.type === 'COMPANY'
 
@@ -1082,14 +1086,14 @@ function MessageBubble(props: MessageBubbleProps) {
 
     const mediaOnlyClasses = "bg-transparent rounded-[12px] overflow-hidden"
 
-    return isMediaOnly ? mediaOnlyClasses : baseClasses
+    return (isMediaOnly || isProfileOnly) ? mediaOnlyClasses : baseClasses
   }
 
   const paddingClasses = isEditing
     ? "px-[16px] py-[16px]"
     : (message.is_deleted_for_everyone || message.is_deleted_for_me)
       ? "px-[16px] py-[10px]"
-      : (message.media && message.media.length > 0)
+      : ((message.media && message.media.length > 0) || isProfileOnly)
         ? "p-0 overflow-hidden"
         : (message.repliedMessage && message.repliedMessage.senderName)
           ? "px-[8px] pt-[8px] pb-[16px]"
@@ -1292,6 +1296,15 @@ function MessageBubble(props: MessageBubbleProps) {
                 >
                   <CustomReplyIcon className="w-[20px] h-[20px]" />
                 </button>
+                <button
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
+                  onClick={(e) => { e.stopPropagation(); onAction?.('copy', message); }}
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  title="Copy message"
+                >
+                  <Copy className="w-[20px] h-[20px]" />
+                </button>
               </div>
             )}
 
@@ -1409,6 +1422,15 @@ function MessageBubble(props: MessageBubbleProps) {
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                 >
                   <CustomReplyIcon className="w-[20px] h-[20px]" />
+                </button>
+                <button
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
+                  onClick={(e) => { e.stopPropagation(); onAction?.('copy', message); }}
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  title="Copy message"
+                >
+                  <Copy className="w-[20px] h-[20px]" />
                 </button>
               </div>
             )}

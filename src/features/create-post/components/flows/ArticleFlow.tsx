@@ -412,9 +412,10 @@ const ArticleFlow = ({
   const subtitleText = isCompanyPost 
     ? (currentPoster?.company_name || currentPoster?.org_slug || 'company')
     : `@${currentUser?.username || 'user'}`;
-  const avatarSrc = isCompanyPost
-    ? (currentPoster?.logo_url || currentPoster?.avatar_url || '/assets/pngegg.png')
-    : (currentUser?.image || '/assets/pngegg.png');
+  const rawAvatarSrc = isCompanyPost
+    ? (currentPoster?.logo_url || currentPoster?.avatar_url)
+    : (currentUser?.image || (currentUser as any)?.avatar);
+  const avatarSrc = rawAvatarSrc && rawAvatarSrc !== '/assets/pngegg.png' ? rawAvatarSrc : null;
   const articleSlug = title
     .trim()
     .toLowerCase()
@@ -583,7 +584,12 @@ const ArticleFlow = ({
           <div className="flex flex-row items-center gap-[8px]" style={{ height: '42px', padding: '0px' }}>
             {/* Frame 2608495 */}
             <div className="flex flex-row items-center gap-[12px]" style={{ height: '42px', padding: '0px', flex: 'none' }}>
-              <img src={avatarSrc} className="w-[40px] h-[40px] rounded-full object-cover" style={{ flex: 'none' }} />
+              <div className="w-[40px] h-[40px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden font-['Poppins'] select-none shrink-0" style={{ flex: 'none' }}>
+                {avatarSrc ? (
+                  <img src={avatarSrc} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : null}
+                <span>{(authorName || 'A').charAt(0).toUpperCase()}</span>
+              </div>
 
               {/* Frame 2608493 */}
               <div className="flex flex-col items-start justify-center min-w-0" style={{ height: '42px', padding: '0px', flex: 'none', maxWidth: '180px' }}>

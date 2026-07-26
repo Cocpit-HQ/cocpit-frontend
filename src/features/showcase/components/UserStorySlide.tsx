@@ -787,7 +787,7 @@ export const UserStorySlide = ({
 
     const uploader = currentStory.author || group.author;
     const uploaderName = uploader?.name || "Unknown";
-    const uploaderAvatar = uploader?.avatar || "/assets/pngegg.png";
+    const uploaderAvatar = uploader?.avatar && uploader.avatar !== '/assets/pngegg.png' ? uploader.avatar : null;
     const storyTimestamp = formatTimeAgo(currentStory.created_at, currentStory.timeAgo);
     const displayedLikeCount =
         (currentStory.likes || 0) -
@@ -892,14 +892,19 @@ export const UserStorySlide = ({
 
                             <div className="mt-1 px-3 pb-1.5 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <img 
-                                        src={uploaderAvatar} 
-                                        alt={uploaderName}
-                                        className="w-10 h-10 rounded-full object-cover border border-white/20"
-                                        onError={(e) => {
-                                            e.currentTarget.src = "/assets/pngegg.png";
-                                        }}
-                                    />
+                                    <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm border border-white/20 overflow-hidden shrink-0 font-['Poppins'] select-none">
+                                        {uploaderAvatar ? (
+                                            <img 
+                                                src={uploaderAvatar} 
+                                                alt={uploaderName}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <span>{(uploaderName || 'U').charAt(0).toUpperCase()}</span>
+                                    </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-semibold text-white leading-tight truncate">
                                             {uploaderName}

@@ -553,7 +553,10 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
         {coverImage ? (
           <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex flex-col justify-center items-center p-[10px] gap-[10px] bg-[#EEF2FF] rounded-[24px]">
+          <div
+            className="w-full h-full flex flex-col justify-center items-center p-[10px] gap-[10px] rounded-[24px]"
+            style={{ background: 'linear-gradient(186.03deg, #EEF2FF 4.68%, #6366F1 332.65%)' }}
+          >
             <Icon icon="solar:gallery-linear" className="w-6 h-6 text-[#000000]" />
             <div className="flex flex-col items-center gap-[4px] w-full max-w-[414px]">
               <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-center text-[#000000]">

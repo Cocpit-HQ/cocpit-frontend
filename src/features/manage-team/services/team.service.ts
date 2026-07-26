@@ -53,7 +53,7 @@ function mapRole(row: any): TeamRole {
     memberCount: row.member_count ?? row.memberCount ?? 0,
     members: Array.isArray(row.members) ? row.members.map((m: any) => ({
       ...m,
-      avatarUrl: m.avatar || m.avatar_url || '',
+      avatarUrl: m.avatar || m.avatar_url || m.avatarUrl || m.user?.avatar || m.user?.avatar_url || '',
       id: m.id || m.user_id,
       name: m.name || m.full_name,
       status: m.status || 'ACTIVE',
@@ -67,17 +67,17 @@ function mapRole(row: any): TeamRole {
 
 function mapMember(row: any): TeamMember {
   return {
-    id: row.user_id,
+    id: row.user_id || row.id,
     orgId: row.org_id || '',
-    name: row.full_name,
-    avatarUrl: row.avatar_url,
+    name: row.full_name || row.name,
+    avatarUrl: row.avatar || row.avatar_url || row.avatarUrl || row.user?.avatar || row.user?.avatar_url || '',
     email: row.email,
     headline: row.headline,
-    roleId: row.role_id,
-    roleName: row.role_name,
-    roleColor: row.role_color,
+    roleId: row.role_id || row.roleId,
+    roleName: row.role_name || row.roleName,
+    roleColor: row.role_color || row.roleColor,
     status: row.status,
-    joinedAt: row.joined_at,
+    joinedAt: row.joined_at || row.joinedAt,
   };
 }
 

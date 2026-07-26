@@ -436,19 +436,19 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                            }`}
                         >
                           <div className="flex justify-start items-center gap-2">
-                            {cand.avatar ? (
-                              <img
-                                className="w-8 h-8 rounded-full object-cover border border-slate-100"
-                                src={cand.avatar}
-                                alt={cand.name}
-                              />
-                            ) : (
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold font-['Poppins'] text-xs ${
-                                 isCompanyMode ? 'bg-blue-100 text-[#1A73E8]' : 'bg-indigo-100 text-indigo-500'
-                               }`}>
-                                {cand.name.substring(0, 2).toUpperCase()}
-                              </div>
-                            )}
+                            <div className="relative w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+                              <span>{(cand.name || 'C').charAt(0).toUpperCase()}</span>
+                              {cand.avatar && cand.avatar !== '/assets/pngegg.png' ? (
+                                <img
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                  src={cand.avatar}
+                                  alt={cand.name}
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : null}
+                            </div>
                             <div className="inline-flex flex-col justify-center items-start">
                               <div className="flex items-center gap-2">
                                 <span className="text-left text-black text-base font-normal font-['Poppins'] leading-6">{cand.name}</span>
@@ -557,15 +557,19 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                       }}
                     >
                       <div className="relative">
-                        {c.avatar ? (
-                          <img className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" src={c.avatar} alt={c.name} />
-                        ) : (
-                          <div className={`w-14 h-14 rounded-full flex items-center justify-center font-semibold font-['Poppins'] text-lg border-2 border-white shadow-sm ${
-                            isCompanyMode ? 'bg-blue-100 text-[#1A73E8]' : 'bg-indigo-100 text-indigo-500'
-                          }`}>
-                            {c.name.substring(0, 2).toUpperCase()}
-                          </div>
-                        )}
+                        <div className="relative w-14 h-14 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-lg border-2 border-white shadow-sm overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+                          <span>{(c.name || 'C').charAt(0).toUpperCase()}</span>
+                          {c.avatar && c.avatar !== '/assets/pngegg.png' ? (
+                            <img
+                              className="absolute inset-0 w-full h-full object-cover"
+                              src={c.avatar}
+                              alt={c.name}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : null}
+                        </div>
                         <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded border-[1.5px] border-white flex items-center justify-center shadow-sm ${
                           isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
                         }`}>

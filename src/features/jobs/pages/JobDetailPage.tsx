@@ -202,7 +202,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
                   <img
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                    src={job.company_logo || job.recruiter_avatar || "/assets/profilephoto.png"}
+                    src={job.company_logo || job.recruiter_avatar}
                     onError={() => setAvatarError(true)}
                     alt="Company Logo"
                   />
@@ -238,7 +238,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
                   <img
                     className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
-                    src={job.company_logo || job.recruiter_avatar || "/assets/profilephoto.png"}
+                    src={job.company_logo || job.recruiter_avatar}
                     onError={() => setAvatarError(true)}
                     alt="Company Logo"
                   />

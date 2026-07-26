@@ -101,10 +101,17 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
             {coverImage ? (
                 <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
             ) : (
-                <div className="w-full h-full bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899]"></div>
+                <div
+                    className="w-full h-full"
+                    style={{ background: 'linear-gradient(186.03deg, #EEF2FF 4.68%, #6366F1 332.65%)' }}
+                />
             )}
         </div>
     );
+
+    const [avatarError, setAvatarError] = useState(false);
+    const hasValidAvatar = Boolean(user?.avatar && !avatarError);
+    const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "C";
 
     return (
         <div className="w-full">
@@ -152,15 +159,22 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             onClick={onAvatarClick}
                         >
                             {/* Top Half Border Only */}
-                            <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)]" />
+                            <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)] z-10" />
 
                             {/* Avatar Logo */}
-                            <div className="absolute inset-[4px] rounded-full overflow-hidden bg-card">
-                                <img
-                                    src={user?.avatar || "/assets/avatar.png"}
-                                    alt="Avatar"
-                                    className="w-full h-full object-cover"
-                                />
+                            <div className="absolute inset-[4px] rounded-full overflow-hidden bg-card flex items-center justify-center">
+                                {hasValidAvatar ? (
+                                    <img
+                                        src={user.avatar}
+                                        alt={user?.name || "Avatar"}
+                                        className="w-full h-full object-cover"
+                                        onError={() => setAvatarError(true)}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-light text-[48px] leading-none flex items-center justify-center font-[family-name:var(--font-poppins)] select-none">
+                                        {userInitial}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {isOwnProfile && (
