@@ -124,8 +124,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       ? ["polling"]
       : ["websocket", "polling"];
 
+    const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+    const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+
     const newSocket = io(SOCKET_URL, {
-      auth: { token },
+      auth: { token, actorType, actorId },
       path: "/socket.io",
       transports: selectedTransports,
       upgrade: !usePollingOnly,
@@ -138,6 +141,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('connect', () => {
       console.log("Socket connected:", newSocket.id);
       setIsConnected(true);
+
+      const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+      const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+      newSocket.emit('setActorContext', { actorType, actorId });
 
       // Re-join active conversation room on reconnect
       const activeConvId = activeConversationRef.current;
@@ -482,6 +489,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setTypingConversations({});
     };
   }, [session?.user?.accessToken, session?.user?.error, toast, router, queryClient, refreshProfile]);
+
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+    const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+
+    socketRef.current.emit('setActorContext', { actorType, actorId });
+  }, [activeProfile?.id, activeProfile?.type]);
 
   const isUserOnlineMemo = React.useCallback((userId: string) => onlineUsers.has(userId), [onlineUsers]);
 
