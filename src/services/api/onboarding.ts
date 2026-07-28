@@ -87,6 +87,8 @@ export interface SaveDetailsPayload {
   title?: string;
   company_name?: string;
   org_id?: string | null;
+  educations?: any[];
+  experiences?: any[];
 }
 
 export const saveOnboardingDetails = async (payload: SaveDetailsPayload): Promise<any> => {
@@ -97,6 +99,22 @@ export const saveOnboardingDetails = async (payload: SaveDetailsPayload): Promis
 // Save interests (min 3)
 export const saveOnboardingInterests = async (interests: string[]): Promise<any> => {
   const response = await api.patch("/onboarding/interests", { interests });
+  return response.data;
+};
+
+// Parse resume for onboarding
+export const parseResume = async (file: File): Promise<any> => {
+  const formData = new FormData();
+  formData.append("resume", file);
+  
+  const response = await api.post("/onboarding/resume/parse", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    // Increase timeout to 60s because AI parsing can be slow
+    timeout: 60000 
+  });
+  
   return response.data;
 };
 

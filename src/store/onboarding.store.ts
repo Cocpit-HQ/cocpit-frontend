@@ -37,6 +37,13 @@ interface OnboardingState {
   degree: string;
   companyName: string;
   jobTitle: string;
+  
+  // Bulk Profile Data (Parsed from AI)
+  educationList: any[];
+  workExperienceList: any[];
+
+  // Parsed Resume Data
+  parsedResumeData: any | null;
 
   isInitialized: boolean;
 
@@ -54,6 +61,9 @@ interface OnboardingState {
   setSelectedSkills: (skills: string[]) => void;
   setEducation: (school: string, degree: string) => void;
   setWorkExperience: (company: string, title: string) => void;
+  setEducationList: (list: any[]) => void;
+  setWorkExperienceList: (list: any[]) => void;
+  setParsedResumeData: (data: any | null) => void;
   setInitialized: (initialized: boolean) => void;
   resetOnboardingStore: () => void;
 }
@@ -85,6 +95,9 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   degree: '',
   companyName: '',
   jobTitle: '',
+  educationList: [],
+  workExperienceList: [],
+  parsedResumeData: null,
   isInitialized: false,
 
   // Actions
@@ -138,6 +151,9 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   setSelectedSkills: (selectedSkills) => set({ selectedSkills }),
   setEducation: (schoolName, degree) => set({ schoolName, degree }),
   setWorkExperience: (companyName, jobTitle) => set({ companyName, jobTitle }),
+  setEducationList: (educationList) => set({ educationList }),
+  setWorkExperienceList: (workExperienceList) => set({ workExperienceList }),
+  setParsedResumeData: (parsedResumeData) => set({ parsedResumeData }),
   setInitialized: (isInitialized) => set({ isInitialized }),
   resetOnboardingStore: () => set({
     step: 0,

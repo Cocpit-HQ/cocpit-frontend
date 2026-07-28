@@ -16,7 +16,7 @@ interface EducationStepProps {
 }
 
 export default function EducationStep({ onNext, onBack, currentStep, totalSteps }: EducationStepProps) {
-  const { userRole, schoolName: storeSchool, degree: storeDegree, setEducation } = useOnboardingStore();
+  const { userRole, schoolName: storeSchool, degree: storeDegree, setEducation, educationList, workExperienceList } = useOnboardingStore();
   const { toast } = useToast();
   const [education, setEducationLocal] = useState(storeSchool || "");
   const [schoolOrgId, setSchoolOrgId] = useState<string | null>(null);
@@ -67,6 +67,8 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
         school_name: education,   // Selected school → school_name
         school_org_id: schoolOrgId,
         degree: specialization,   // Selected program → degree
+        educations: educationList,
+        experiences: workExperienceList,
       });
       
       setEducation(education, specialization);

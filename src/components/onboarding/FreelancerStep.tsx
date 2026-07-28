@@ -29,7 +29,7 @@ const FREELANCE_ROLES = [
 ];
 
 export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps }: FreelancerStepProps) {
-  const { userRole, jobTitle: storeTitle, setWorkExperience } = useOnboardingStore();
+  const { userRole, jobTitle: storeTitle, setWorkExperience, educationList, workExperienceList } = useOnboardingStore();
   const { toast } = useToast();
   const [role, setRoleLocal] = useState(storeTitle || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -43,7 +43,10 @@ export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps
     try {
       await saveOnboardingDetails({
         role: userRole,
+        company_name: "Freelance", // Default for freelancer
         title: role,
+        educations: educationList,
+        experiences: workExperienceList,
       });
       
       setWorkExperience("", role);

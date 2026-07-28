@@ -27,7 +27,7 @@ const JOB_TYPES = [
 ];
 
 export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps }: OpenToWorkStepProps) {
-  const { userRole, jobTitle: storeTitle, setWorkExperience } = useOnboardingStore();
+  const { userRole, jobTitle: storeTitle, setWorkExperience, educationList, workExperienceList } = useOnboardingStore();
   const { toast } = useToast();
   const [jobType, setJobTypeLocal] = useState(storeTitle || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -42,6 +42,8 @@ export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps
       await saveOnboardingDetails({
         role: userRole,
         title: jobType,
+        educations: educationList,
+        experiences: workExperienceList,
       });
       
       // We use setWorkExperience for OpenToWork too, just without a company

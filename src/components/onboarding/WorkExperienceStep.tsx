@@ -32,7 +32,9 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
     userRole, 
     companyName: storeCompany, 
     jobTitle: storeTitle, 
-    setWorkExperience 
+    setWorkExperience,
+    educationList,
+    workExperienceList
   } = useOnboardingStore();
   
   const { toast } = useToast();
@@ -78,6 +80,8 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
         company_name: company,
         title: role,
         org_id: orgId,
+        educations: educationList,
+        experiences: workExperienceList,
       });
       
       setWorkExperience(company, role);

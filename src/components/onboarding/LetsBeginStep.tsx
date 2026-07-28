@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { ChevronLeft, Type, FileText } from "lucide-react";
+import { ChevronLeft, Type, FileText, Loader2 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import styles from "./LetsBeginStep.module.css";
+import { parseResume } from "@/services/api/onboarding";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { toast } from "sonner";
 
 interface LetsBeginStepProps {
   onNext: () => void;
@@ -15,14 +18,27 @@ export default function LetsBeginStep({
   const [selected, setSelected] = useState<"upload" | "manual" | null>(null);
   const [uploadedName, setUploadedName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    setParsedResumeData,
+    setFullName,
+    setAccountName,
+    setUserRole,
+    setEducation,
+    setWorkExperience,
+    setEducationList,
+    setWorkExperienceList,
+    setSelectedSkills
+  } = useOnboardingStore();
 
   const handleUploadClick = () => {
+    if (isParsing) return;
     setSelected("upload");
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       const validTypes = [
@@ -42,6 +58,44 @@ export default function LetsBeginStep({
       setError(null);
       setSelected("upload");
       setUploadedName(file.name);
+      
+      try {
+        setIsParsing(true);
+        const res = await parseResume(file);
+        if (res.success && res.data) {
+          const parsed = res.data;
+          setParsedResumeData(parsed);
+          
+          if (parsed.profile?.fullName) setFullName(parsed.profile.fullName);
+          if (parsed.profile?.accountName) setAccountName(parsed.profile.accountName);
+          if (parsed.inferredRole) setUserRole(parsed.inferredRole);
+          
+          if (parsed.education?.length > 0) {
+            setEducation(parsed.education[0].schoolName || "", parsed.education[0].degree || "");
+            setEducationList(parsed.education);
+          }
+          if (parsed.workExperience?.length > 0) {
+            setWorkExperience(parsed.workExperience[0].companyName || "", parsed.workExperience[0].jobTitle || "");
+            setWorkExperienceList(parsed.workExperience);
+          }
+          if (parsed.skills?.length > 0) {
+            setSelectedSkills(parsed.skills);
+          }
+
+          toast.success("Resume parsed successfully!");
+          // Automatically go to next step
+          onNext();
+        } else {
+          setError("Failed to parse resume reliably.");
+          toast.error("Could not parse resume data.");
+        }
+      } catch (err: any) {
+        console.error("Resume parse error", err);
+        setError("Parsing failed. Please fill manually.");
+        toast.error(err?.response?.data?.message || "Failed to parse resume.");
+      } finally {
+        setIsParsing(false);
+      }
     }
   };
 
@@ -81,7 +135,15 @@ export default function LetsBeginStep({
               accept=".pdf,.doc,.docx"
               onChange={handleFileChange}
             />
-            {uploadedName && !error ? (
+            {isParsing ? (
+              <>
+                <div className={styles.iconWrapper}>
+                  <Loader2 className="animate-spin text-indigo-500" size={40} />
+                </div>
+                <span className={styles.optionTitle}>Parsing resume...</span>
+                <span className={styles.optionSubtitle}>Please wait a few seconds</span>
+              </>
+            ) : uploadedName && !error ? (
               <>
                 <div className={styles.iconWrapper}>
                   <Icon icon="material-icon-theme:pdf" width={40} height={40} />
@@ -139,11 +201,11 @@ export default function LetsBeginStep({
         <div className={styles.actionRow}>
           <button
             type="button"
-            className={`${styles.continueButton} ${selected ? styles.continueActive : ""}`}
+            className={`${styles.continueButton} ${selected && !isParsing ? styles.continueActive : ""}`}
             onClick={handleContinue}
-            disabled={!selected}
+            disabled={!selected || isParsing}
           >
-            Continue
+            {isParsing ? <Loader2 className="animate-spin inline" size={16} /> : "Continue"}
           </button>
         </div>
       </div>
