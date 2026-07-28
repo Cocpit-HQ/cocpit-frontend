@@ -211,7 +211,7 @@ export function ChatList({
           <div className="flex flex-row items-center p-0 gap-[8px]">
             <div className="w-[32px] h-[32px] flex-none">
               <Avatar
-                url={(activeProfile as any)?.avatar || session?.user?.image}
+                url={(activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image}
                 name={activeProfile?.name || session?.user?.name || "User"}
                 size="sm"
               />
@@ -222,7 +222,9 @@ export function ChatList({
                 {activeProfile?.name || session?.user?.name || "Cocpit"}
               </h2>
               <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 whitespace-nowrap">
-                @{(activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit"}
+                @{activeProfile?.type === 'COMPANY' 
+                    ? ((activeProfile as any)?.slug || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")
+                    : ((activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")}
               </p>
             </div>
           </div>

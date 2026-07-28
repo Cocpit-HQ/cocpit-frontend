@@ -753,7 +753,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 {(state.postType !== 'article' || !!state.articleData) && (
                   <div className="relative flex flex-row items-center justify-start gap-3.5 w-full mt-5 z-[60]">
                     <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
-                      <div className="w-11 h-11 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none">
+                      <div className="w-11 h-11 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none">
                         {currentPosterLogo ? (
                           <img
                             src={currentPosterLogo}
@@ -763,8 +763,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                           />
-                        ) : null}
-                        <span>{currentPosterName.charAt(0).toUpperCase()}</span>
+                        ) : (
+                          <span>{currentPosterName.charAt(0).toUpperCase()}</span>
+                        )}
                       </div>
                       <div className="flex flex-col">
                         <span className="font-semibold text-[17px] leading-[24px] text-foreground">{currentPosterName}</span>

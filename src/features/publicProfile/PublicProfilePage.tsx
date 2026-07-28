@@ -516,6 +516,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             user={user}
             isOwnProfile={isOwnProfile}
             coverImage={user.cover_image}
+            setCoverImage={isOwnProfile ? () => {} : undefined}
             profileStats={profileStats}
             latestExperience={latestExperience}
             latestEducation={latestEducation}

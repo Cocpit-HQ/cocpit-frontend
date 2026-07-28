@@ -1218,40 +1218,42 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                       </>
                     ) : (
                       <>
-                        {(activeTab !== undefined ? activeTab === 'jobs' : Boolean(chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0))) ? (
-                          <DropdownMenuItem
-                            onClick={async () => {
-                              try {
-                                await updateJobChatStatus(chat.id, false);
-                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                                toast({ description: "Conversation removed from jobs" });
-                              } catch (err: any) {
-                                const msg = err?.response?.data?.message || err?.message || "Failed to remove conversation from jobs";
-                                toast({ title: "Error", description: msg, variant: "destructive" });
-                              }
-                            }}
-                            className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
-                          >
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Remove from jobs</span>
-                            <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onClick={async () => {
-                              try {
-                                await updateJobChatStatus(chat.id, true);
-                                queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                                toast({ description: "Conversation moved to jobs" });
-                              } catch (err: any) {
-                                const msg = err?.response?.data?.message || err?.message || "Failed to move conversation to jobs";
-                                toast({ title: "Error", description: msg, variant: "destructive" });
-                              }
-                            }}
-                            className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
-                          >
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Move to jobs</span>
-                            <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
-                          </DropdownMenuItem>
+                        {activeProfile?.type === 'COMPANY' && (
+                          (activeTab !== undefined ? activeTab === 'jobs' : Boolean(chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0))) ? (
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                try {
+                                  await updateJobChatStatus(chat.id, false);
+                                  queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                  toast({ description: "Conversation removed from jobs" });
+                                } catch (err: any) {
+                                  const msg = err?.response?.data?.message || err?.message || "Failed to remove conversation from jobs";
+                                  toast({ title: "Error", description: msg, variant: "destructive" });
+                                }
+                              }}
+                              className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                            >
+                              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Remove from jobs</span>
+                              <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                try {
+                                  await updateJobChatStatus(chat.id, true);
+                                  queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                                  toast({ description: "Conversation moved to jobs" });
+                                } catch (err: any) {
+                                  const msg = err?.response?.data?.message || err?.message || "Failed to move conversation to jobs";
+                                  toast({ title: "Error", description: msg, variant: "destructive" });
+                                }
+                              }}
+                              className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                            >
+                              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Move to jobs</span>
+                              <Icon icon="hugeicons:job-search" width={24} height={24} color="#000000" />
+                            </DropdownMenuItem>
+                          )
                         )}
                         <DropdownMenuItem 
                           onClick={() => setIsShareModalOpen(true)}

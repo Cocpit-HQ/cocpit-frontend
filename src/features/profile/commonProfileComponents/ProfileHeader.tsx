@@ -165,6 +165,13 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                         className="w-full h-full object-cover"
                                         onError={() => setAvatarError(true)}
                                     />
+                                ) : isOwnProfile ? (
+                                    <div className="w-full h-full bg-[#EEF2FF] flex flex-col justify-center items-center gap-[4px] select-none">
+                                        <Icon icon="solar:gallery-linear" className="w-[24px] h-[24px] text-[#000000]" />
+                                        <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] leading-[15px] text-center text-[#000000]">
+                                            Add profile
+                                        </span>
+                                    </div>
                                 ) : (
                                     <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-light text-[48px] leading-none flex items-center justify-center font-[family-name:var(--font-poppins)] select-none">
                                         {userInitial}
