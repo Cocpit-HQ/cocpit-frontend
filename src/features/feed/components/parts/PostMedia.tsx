@@ -37,7 +37,7 @@ export const PostMedia = ({
         className={`post-image w-full relative flex flex-col justify-center gap-[8px] bg-white ${onClick ? 'cursor-pointer' : ''}`}
       >
         <div className="w-full">
-          <div className="relative w-full aspect-[16/10] overflow-hidden rounded-[8px]">
+          <div className="relative w-full aspect-[16/10] overflow-hidden">
             <Image
               src={contentImgSrc}
               alt="Achievement media"
@@ -60,7 +60,7 @@ export const PostMedia = ({
     <div
       onClick={onClick}
       className={`post-image w-full overflow-hidden bg-card relative group flex flex-col justify-center ${forceSquare ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
-        } ${!forceSquare && hasMedia ? 'mt-0 mb-0' : ''} ${!videoSrc && validImages.length > 0 ? 'border border-[#EEF2FF] dark:border-white/10' : ''} ${onClick ? 'cursor-pointer' : ''} rounded-[12px]`}
+        } ${!forceSquare && hasMedia ? 'mt-0 mb-0' : ''} ${!videoSrc && validImages.length > 0 ? 'border border-[#EEF2FF] dark:border-white/10' : ''} ${onClick ? 'cursor-pointer' : ''}`}
       style={
         !forceSquare
           ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio, maxHeight: '700px' } : undefined))

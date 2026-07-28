@@ -286,7 +286,7 @@ export default function ArticleCoverEditor({
         {coverImage ? (
           <div className="relative aspect-[2/1] max-w-[600px] w-full overflow-hidden group bg-[#D9D9D9] mx-auto rounded-[24px]">
             <img src={coverImage} alt="Article cover" className="w-full h-full object-cover" />
-            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm z-10">
+            <div className="absolute bottom-3 right-3 z-10 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-[#EEF2FF] rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 type="button"
                 onClick={() => {
@@ -295,18 +295,18 @@ export default function ArticleCoverEditor({
                   resetTransforms();
                   setIsModalOpen(true);
                 }}
-                className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors cursor-pointer"
+                className="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer"
                 title="Edit"
               >
-                <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
               </button>
               <button
                 type="button"
                 onClick={onRemoveCover}
-                className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer"
+                className="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer"
                 title="Delete"
               >
-                <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="#FF6B6B" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
               </button>
             </div>
           </div>

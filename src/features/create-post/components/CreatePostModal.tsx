@@ -244,7 +244,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             isCompanyPost={state.isCompanyPost}
             currentPosterName={(state.currentPoster as any)?.name || state.currentUser?.name || 'User'}
             currentPosterLogo={state.isCompanyPost
-              ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || '/assets/pngegg.png')
+              ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || (state.currentPoster as any)?.company_logo || (state.currentPoster as any)?.logo || (state.currentPoster as any)?.image)
               : (state.currentUser?.image || '/assets/pngegg.png')}
             visibility={state.visibility}
             onVisibilityToggle={() => state.setVisibility(v => v === 'public' ? 'private' : 'public')}

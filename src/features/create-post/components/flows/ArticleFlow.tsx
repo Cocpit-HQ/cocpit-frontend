@@ -45,6 +45,8 @@ type ArticleIdentity = {
   company_name?: string | null;
   logo_url?: string | null;
   avatar_url?: string | null;
+  logo?: string | null;
+  company_logo?: string | null;
 } | null | undefined;
 
 interface ArticleFlowProps {
@@ -107,6 +109,30 @@ const ArticleFlow = ({
   const editImageInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLDivElement>(null);
 
+  // Track initial state for edit mode to detect actual changes
+  const initialDataRef = useRef({
+    title: '',
+    content: '',
+    coverImage: null as string | null
+  });
+
+  useEffect(() => {
+    if (isEdit && title && initialDataRef.current.title === '') {
+      // Normalize the incoming content exactly how the editor does so we can do a fair equality check later
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = sanitizeArticleHtmlForDisplay(content);
+      // We must call initializeArticleImageNodes on the temp div because the editor will do the same,
+      // adding wrapper divs that would otherwise make the HTML strings look different.
+      initializeArticleImageNodes(tempDiv);
+
+      initialDataRef.current = {
+        title,
+        content: stripEditorControls(tempDiv.innerHTML),
+        coverImage: coverImage?.url || null
+      };
+    }
+  }, [isEdit, title, content, coverImage]);
+
   useEffect(() => {
     if (titleInputRef.current && title !== undefined) {
       if (titleInputRef.current.innerText !== (title || '')) {
@@ -119,14 +145,14 @@ const ArticleFlow = ({
   // before write-time sanitization existed, or containing inline styles from any other source)
   // renders using the editor's own default formatting instead of whatever styling it carries -
   // otherwise the editor can visually diverge from how the same content renders once published.
-  const EDIT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`;
-  const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
+  const EDIT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>`;
+  const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="#FF6B6B" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>`;
 
   const TOOLS_INNER_HTML = `
-    <button type="button" class="edit-img-btn p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
+    <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">
       ${EDIT_SVG}
     </button>
-    <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
+    <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">
       ${DELETE_SVG}
     </button>
   `;
@@ -142,7 +168,7 @@ const ArticleFlow = ({
 
       if (!wrapper) {
         wrapper = document.createElement('div');
-        wrapper.className = "relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9] mx-auto";
+        wrapper.className = "relative my-4 w-full overflow-hidden group bg-transparent mx-auto rounded-[24px]";
         wrapper.setAttribute('contenteditable', 'false');
 
         const parent = img.parentNode;
@@ -151,26 +177,31 @@ const ArticleFlow = ({
           wrapper.appendChild(img);
         }
       } else {
-        wrapper.classList.add('relative', 'group', 'overflow-hidden', 'my-4', 'w-fit', 'max-w-full');
+        wrapper.classList.remove('w-fit', 'max-w-full');
+        wrapper.classList.add('relative', 'group', 'overflow-hidden', 'my-4', 'w-full', 'rounded-[24px]');
         wrapper.setAttribute('contenteditable', 'false');
       }
 
-      img.className = "max-w-full h-auto object-contain block mx-auto";
+      // Force width via direct DOM style — CSS classes alone don't override the
+      // image's intrinsic dimensions, and DOMPurify strips style attributes from
+      // the HTML string.  Direct .style assignment survives both because
+      // cleanStrayInlineStyles skips elements inside [contenteditable="false"].
+      wrapper.style.width = '100%';
+      wrapper.style.display = 'block';
+
+      img.className = "w-full h-auto object-cover block mx-auto";
+      img.style.width = '100%';
+      img.style.height = 'auto';
+      img.style.objectFit = 'cover';
 
       // Ensure overlay container with full action buttons exists
       let tools = wrapper.querySelector('.img-tools') as HTMLElement | null;
       if (!tools) {
         tools = document.createElement('div');
-        tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
-        tools.innerHTML = TOOLS_INNER_HTML;
         wrapper.appendChild(tools);
-      } else {
-        const editBtn = tools.querySelector('.edit-img-btn, button[title="Edit"]');
-        const deleteBtn = tools.querySelector('.delete-img-btn, button[title="Delete"]');
-        if (!editBtn || !deleteBtn || !editBtn.querySelector('svg path') || !deleteBtn.querySelector('svg path')) {
-          tools.innerHTML = TOOLS_INNER_HTML;
-        }
       }
+      tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-[#EEF2FF] rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+      tools.innerHTML = TOOLS_INNER_HTML;
     });
 
     // 2. Process all <video> elements loaded into the editor
@@ -179,7 +210,7 @@ const ArticleFlow = ({
       let wrapper = video.closest('[contenteditable="false"]') as HTMLElement | null;
       if (!wrapper) {
         wrapper = document.createElement('div');
-        wrapper.className = "relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9] mx-auto";
+        wrapper.className = "relative my-4 w-full overflow-hidden group bg-transparent mx-auto rounded-[24px]";
         wrapper.setAttribute('contenteditable', 'false');
         const parent = video.parentNode;
         if (parent) {
@@ -187,14 +218,17 @@ const ArticleFlow = ({
           wrapper.appendChild(video);
         }
       }
+      wrapper.style.width = '100%';
+      video.style.width = '100%';
+      video.style.height = 'auto';
 
       let tools = wrapper.querySelector('.img-tools') as HTMLElement | null;
       if (!tools) {
         tools = document.createElement('div');
-        tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
-        tools.innerHTML = TOOLS_INNER_HTML;
         wrapper.appendChild(tools);
       }
+      tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-[#EEF2FF] rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+      tools.innerHTML = TOOLS_INNER_HTML;
     });
   };
 
@@ -210,13 +244,8 @@ const ArticleFlow = ({
 
   useEffect(() => {
     if (editorRef.current) {
-      const currentClean = stripEditorControls(editorRef.current.innerHTML);
-      const incomingClean = stripEditorControls(content);
-
-      if (currentClean !== incomingClean) {
-        editorRef.current.innerHTML = sanitizeArticleHtmlForDisplay(content);
-        initializeArticleImageNodes(editorRef.current);
-      }
+      editorRef.current.innerHTML = sanitizeArticleHtmlForDisplay(content);
+      initializeArticleImageNodes(editorRef.current);
     }
   }, []);
 
@@ -271,26 +300,48 @@ const ArticleFlow = ({
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
         const range = sel.getRangeAt(0);
-        if (range.startOffset === 0) {
-          let node: Node | null = range.startContainer;
-          if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        let node: Node | null = range.startContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
 
-          const li = (node as HTMLElement | null)?.closest?.('li');
-          if (li) {
-            e.preventDefault();
-            document.execCommand('outdent', false);
-            if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
-            onContentChange(editorRef.current?.innerHTML || '');
-            return;
-          }
+        const currentBlock = (node as HTMLElement | null)?.closest('p, h1, h2, h3, li, blockquote');
+        
+        if (currentBlock) {
+          const tempRange = document.createRange();
+          tempRange.selectNodeContents(currentBlock);
+          tempRange.setEnd(range.startContainer, range.startOffset);
+          
+          if (tempRange.toString().length === 0) {
+            // Cursor is at the absolute beginning of the block
 
-          const heading = (node as HTMLElement | null)?.closest?.('h1, h2');
-          if (heading && range.startOffset === 0) {
-            e.preventDefault();
-            document.execCommand('formatBlock', false, '<p>');
-            if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
-            onContentChange(editorRef.current?.innerHTML || '');
-            return;
+            // 1. Delete preceding non-editable block (images/videos)
+            const prev = currentBlock.previousElementSibling;
+            if (prev && prev.getAttribute('contenteditable') === 'false') {
+              e.preventDefault();
+              prev.remove();
+              if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+              onContentChange(editorRef.current?.innerHTML || '');
+              return;
+            }
+
+            // 2. Handle lists (outdent empty item)
+            const li = currentBlock.closest('li');
+            if (li) {
+              e.preventDefault();
+              document.execCommand('outdent', false);
+              if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+              onContentChange(editorRef.current?.innerHTML || '');
+              return;
+            }
+
+            // 3. Handle headings (turn to paragraph)
+            const heading = currentBlock.closest('h1, h2');
+            if (heading) {
+              e.preventDefault();
+              document.execCommand('formatBlock', false, '<p>');
+              if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+              onContentChange(editorRef.current?.innerHTML || '');
+              return;
+            }
           }
         }
       }
@@ -443,7 +494,7 @@ const ArticleFlow = ({
     const safeUrl = escapeHtml(formattedUrl);
     const safeTitle = escapeHtml(linkLabel);
 
-    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium no-underline hover:underline cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-between w-[301px] h-[40px] px-4 py-2 bg-[#EEF2FF] rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute left-0 top-full mt-1.5 z-50 whitespace-nowrap pointer-events-auto"><span class="text-[14px] font-medium text-[#6366F1] max-w-[180px] min-w-0 truncate mr-2">${safeUrl}</span><span class="flex items-center gap-3 shrink-0"><button type="button" class="edit-link-btn flex items-center justify-center cursor-pointer p-0.5 hover:opacity-80 transition-opacity" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg></button><button type="button" class="delete-link-btn flex items-center justify-center cursor-pointer p-0.5 hover:opacity-80 transition-opacity" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16"><path fill="#FF6B6B" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg></button></span></span></span>&nbsp;`;
+    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium no-underline hover:underline cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-between w-[301px] h-[40px] px-4 py-2 bg-[#EEF2FF] rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute left-0 top-full mt-1.5 z-50 whitespace-nowrap pointer-events-auto"><span class="text-[14px] font-medium text-[#6366F1] max-w-[180px] min-w-0 truncate mr-2">${safeUrl}</span><span class="flex items-center gap-[10px] shrink-0"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">${DELETE_SVG}</button></span></span></span>&nbsp;`;
 
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
@@ -554,11 +605,11 @@ const ArticleFlow = ({
 
         const pId = 'p-' + Date.now();
         const videoHtml = `
-          <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false">
-            <video controls src="${videoUrl}" class="max-w-full rounded-lg"></video>
-            <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
+          <div class="relative my-4 w-full overflow-hidden group bg-transparent rounded-[24px]" style="width: 100%" contenteditable="false">
+            <video controls src="${videoUrl}" class="w-full rounded-lg" style="width: 100%; height: auto"></video>
+            <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-[#EEF2FF] rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">
+                ${DELETE_SVG}
               </button>
             </div>
           </div><p id="${pId}"><br></p>
@@ -589,14 +640,14 @@ const ArticleFlow = ({
           
           const pId = 'p-' + Date.now();
           const imageHtml = `
-            <div class="relative my-4 w-fit max-w-full overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false">
-              <img src="${imageUrl}" class="max-w-full h-auto object-contain block mx-auto" />
-              <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <button type="button" class="edit-img-btn p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
+            <div class="relative my-4 w-full overflow-hidden group bg-transparent rounded-[24px]" style="width:100%;display:block" contenteditable="false">
+              <img src="${imageUrl}" class="w-full h-auto object-cover block mx-auto" style="width:100%;height:auto;object-fit:cover;display:block" />
+              <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-[#EEF2FF] rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">
+                  ${EDIT_SVG}
                 </button>
-                <button type="button" class="delete-img-btn p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
+                <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">
+                  ${DELETE_SVG}
                 </button>
               </div>
             </div><p id="${pId}"><br></p>
@@ -689,15 +740,24 @@ const ArticleFlow = ({
 
   const hasUnsavedChanges = () => {
     const cleanContent = editorRef.current ? stripEditorControls(editorRef.current.innerHTML) : content;
-    const textContent = cleanContent.replace(/<[^>]*>/g, '').trim();
-    return (
-      title.trim().length > 0 ||
-      textContent.length > 0 ||
-      cleanContent.includes('<img') ||
-      coverImage !== null ||
-      localFiles.length > 0 ||
-      isEdit
-    );
+    
+    if (isEdit) {
+      const titleChanged = title.trim() !== initialDataRef.current.title.trim();
+      const contentChanged = cleanContent !== initialDataRef.current.content;
+      const coverChanged = (coverImage?.url || null) !== initialDataRef.current.coverImage;
+      const hasLocalFiles = localFiles.length > 0;
+      
+      return titleChanged || contentChanged || coverChanged || hasLocalFiles;
+    } else {
+      const textContent = cleanContent.replace(/<[^>]*>/g, '').trim();
+      return (
+        title.trim().length > 0 ||
+        textContent.length > 0 ||
+        cleanContent.includes('<img') ||
+        coverImage !== null ||
+        localFiles.length > 0
+      );
+    }
   };
 
   const handleOnClose = async (skipConfirm?: boolean | React.MouseEvent) => {
@@ -720,10 +780,24 @@ const ArticleFlow = ({
   const subtitleText = isCompanyPost 
     ? (currentPoster?.company_name || currentPoster?.org_slug || 'company')
     : `@${currentUser?.username || 'user'}`;
+
+  console.log("DEBUG ArticleFlow:", {
+    isCompanyPost,
+    currentPoster,
+    currentUser,
+    authorName,
+    subtitleText
+  });
+
   const rawAvatarSrc = isCompanyPost
-    ? (currentPoster?.logo_url || currentPoster?.avatar_url)
+    ? (currentPoster?.logo_url || currentPoster?.avatar_url || currentPoster?.company_logo || currentPoster?.logo || currentPoster?.image)
     : (currentUser?.image || (currentUser as any)?.avatar);
-  const avatarSrc = rawAvatarSrc && rawAvatarSrc !== '/assets/pngegg.png' ? rawAvatarSrc : null;
+  
+  const avatarSrc = isCompanyPost 
+    ? rawAvatarSrc 
+    : (rawAvatarSrc && !rawAvatarSrc.includes('pngegg') ? rawAvatarSrc : null);
+
+  console.log("DEBUG ArticleFlow avatarSrc:", { rawAvatarSrc, avatarSrc });
   const articleSlug = title
     .trim()
     .toLowerCase()
@@ -873,9 +947,11 @@ const ArticleFlow = ({
             <div className="flex flex-row items-center gap-[12px]" style={{ height: '42px', padding: '0px', flex: 'none' }}>
               <div className="w-[40px] h-[40px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden font-['Poppins'] select-none shrink-0" style={{ flex: 'none' }}>
                 {avatarSrc ? (
-                  <img src={avatarSrc} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img src={avatarSrc} className="w-full h-full object-cover" onError={(e) => { if (!isCompanyPost) (e.target as HTMLImageElement).style.display = 'none'; }} />
                 ) : null}
-                <span>{(authorName || 'A').charAt(0).toUpperCase()}</span>
+                {!isCompanyPost && (!avatarSrc) && (
+                  <span>{(authorName || 'A').charAt(0).toUpperCase()}</span>
+                )}
               </div>
 
               {/* Frame 2608493 */}

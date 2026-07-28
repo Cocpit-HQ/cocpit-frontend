@@ -1422,21 +1422,21 @@
   text-decoration: underline;
 }
 .article-content img, .article-editor img {
-  max-width: 100% !important;
+  width: 100% !important;
   height: auto !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
   display: block !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
 .article-content video, .article-editor video {
-  max-width: 100% !important;
+  width: 100% !important;
   border-radius: 8px;
 }
 .article-content div[contenteditable="false"], .article-editor div[contenteditable="false"] {
-  width: fit-content !important;
-  max-width: 100% !important;
+  width: 100% !important;
   height: auto !important;
+  display: block !important;
 }
 /* Hide leftover editor-only controls when article HTML is rendered on a read view.
    Scoped to .article-content only — the live editor (.article-editor) still needs these
@@ -1448,24 +1448,21 @@
   display: none !important;
 }
 
-/* Ensure inline image/video edit & delete tools are 100% visible and stacked above images on hover inside the editor */
+/* Ensure inline image/video edit & delete tools are stacked above images inside the editor */
 .article-editor .img-tools {
-  z-index: 30 !important;
-}
-
-.article-editor div[contenteditable="false"]:hover .img-tools,
-.article-editor .group:hover .img-tools {
-  opacity: 1 !important;
-  visibility: visible !important;
   pointer-events: auto !important;
   z-index: 30 !important;
 }
 
 .article-editor .img-tools svg {
   display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  fill: none !important;
   z-index: 31 !important;
+}
+
+.article-editor .edit-img-btn svg,
+.article-editor .delete-img-btn svg {
+  /* SVG colors are now controlled by inline attributes to match Figma precisely */
 }
 
 /* Guarantee link action buttons and icons never compress or squash in flex containers */

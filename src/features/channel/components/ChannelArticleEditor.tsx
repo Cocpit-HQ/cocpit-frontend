@@ -116,7 +116,7 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
           name: channel?.name || activeProfile?.name, 
           company_name: activeProfile?.name,
           org_slug: activeProfile?.slug, 
-          logo_url: channel?.bannerUrl || activeProfile?.avatar_url 
+          logo_url: channel?.logoUrl || activeProfile?.avatar_url 
         }}
         isCompanyPost={true}
         skipNextStep={true}
