@@ -1,5 +1,6 @@
-import { signOut, getSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { env } from "@/config/env";
+import { getHybridSession, clearInMemorySession } from "@/lib/session-cache";
 
 let isLoggingOut = false;
 
@@ -24,7 +25,7 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
     }
 
     // 2. Notify backend of termination if we still have an access token
-    const session = await getSession();
+    const session = await getHybridSession(false);
     if (session?.user?.accessToken) {
       fetch(`${env.API_URL}/auth/logout`, {
         method: "POST",
@@ -36,6 +37,8 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
   } catch (error) {
     console.debug("Session fetch error during logout", error);
   } finally {
+    clearInMemorySession();
+
     // 3. Clear all local storage auth-related artifacts
     if (typeof window !== "undefined") {
       localStorage.removeItem("nextauth.message");

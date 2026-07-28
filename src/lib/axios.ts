@@ -1,7 +1,9 @@
 import axios from "axios";
-import { getSession } from "next-auth/react";
 import { hardLogout } from "@/lib/logout";
 import { env } from "@/config/env";
+import { getHybridSession, setInMemorySession, clearInMemorySession } from "@/lib/session-cache";
+
+export { setInMemorySession, clearInMemorySession, getHybridSession };
 
 // Public API client (No Auth)
 export const publicApi = axios.create({
@@ -19,7 +21,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
-    const session = await getSession();
+    const session = await getHybridSession(false);
 
     if (session?.user?.accessToken) {
       config.headers.Authorization = `Bearer ${session.user.accessToken}`;
@@ -63,7 +65,7 @@ api.interceptors.response.use(
         }
 
         // 2. Trigger a session update to refresh the token on the server
-        const newSession = await getSession();
+        const newSession = await getHybridSession(true);
 
         // 3. Check if refresh failed (indicated by error property or invalid session)
         if (newSession?.user?.error === "RefreshAccessTokenError" || !newSession?.user?.accessToken) {

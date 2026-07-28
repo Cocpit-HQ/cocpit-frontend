@@ -4,10 +4,23 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { useState, useEffect } from "react";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { setInMemorySession } from "@/lib/session-cache";
 import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
+
+function AxiosAuthSync() {
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status !== "loading") {
+      setInMemorySession(session || null);
+    }
+  }, [session, status]);
+
+  return null;
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -25,6 +38,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider refetchOnWindowFocus={false}>
+      <AxiosAuthSync />
       <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
         <ThemeProvider attribute="data-theme" defaultTheme="navy" enableSystem={false} themes={['light', 'dark', 'navy']}>
           <QueryClientProvider client={queryClient}>
