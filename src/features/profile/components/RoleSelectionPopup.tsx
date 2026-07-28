@@ -49,7 +49,7 @@ export function RoleSelectionPopup({ roles, onSelect, onClose, logoUrl }: RoleSe
               className="flex items-start gap-2 px-4 py-3 w-full min-h-[64px] h-auto rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors border border-transparent"
             >
               {/* Logo Section */}
-              <div className="flex flex-row justify-center items-center w-[56px] h-[40px] rounded-[24px] overflow-hidden flex-none bg-card border border-border mt-1">
+              <div className="flex flex-row justify-center items-center w-[48px] h-[48px] rounded-[12px] overflow-hidden flex-none bg-card border border-border mt-1">
                 <img
                   src={logoUrl || "/assets/company-placeholder.png"}
                   alt={role.company_name}

@@ -27,7 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel"
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover"
-import type { Education, Experience, Post } from "@/types/entities"
+import type { Education, Experience, Post, Project } from "@/types/entities"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { LivingResume } from "../commonProfileComponents/LivingResume"
@@ -35,6 +35,7 @@ import { ProfileSkeleton } from "../commonProfileComponents/ProfileSkeleton"
 import { ViewAvatarModal } from "../commonProfileComponents/ViewAvatarModal"
 import AddEducationForm from "../components/AddEducationForm"
 import AddExperienceForm, { type SavedRole } from "../components/AddExperienceForm"
+import AddProjectForm from "../components/AddProjectForm"
 import { CommentModal } from "../components/CommentModal"
 import { CompanyRoleModal } from "../components/CompanyRoleModal"
 import { ContactInfoModal } from "../components/ContactInfoModal"
@@ -49,11 +50,12 @@ import { useUIStore } from "@/store/ui.store"
 import { ProfileAbout } from "../commonProfileComponents/ProfileAbout"
 import { ProfileEducation } from "../commonProfileComponents/ProfileEducation"
 import { ProfileExperience } from "../commonProfileComponents/ProfileExperience"
+import { ProfileProjects } from "../commonProfileComponents/ProfileProjects"
 import { ProfileHeader } from "../commonProfileComponents/ProfileHeader"
 import { ProfilePosts } from "../commonProfileComponents/ProfilePosts"
 import { ProfileSkills } from "../commonProfileComponents/ProfileSkills"
 
-import { useAvatarMutations, useEducationMutations, useExperienceMutations, useMyProfile, useProfileMutation, useSkillMutations } from "@/hooks/use-my-profile"
+import { useAvatarMutations, useEducationMutations, useExperienceMutations, useMyProfile, useProfileMutation, useSkillMutations, useProjectMutations } from "@/hooks/use-my-profile"
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { EditProfileModal } from "../components/EditProfileModal"
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
@@ -698,6 +700,7 @@ export default function ProfilePage() {
   const skillMutations = useSkillMutations();
   const avatarMutations = useAvatarMutations();
   const updateProfileMutation = useProfileMutation();
+  const projMutations = useProjectMutations();
 
   // Live profile stats (includes company follows in following_count)
   const { data: profileStats } = useQuery({
@@ -725,6 +728,9 @@ export default function ProfilePage() {
   const [editingExperiences, setEditingExperiences] = useState<Experience[] | null>(null);
   const [editingExperienceSelectedId, setEditingExperienceSelectedId] = useState<string | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
+
+  const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   const handleUpdateProfile = useCallback(async (data: any) => {
     try {
@@ -969,6 +975,7 @@ export default function ProfilePage() {
   );
   const educations = useMemo(() => profileData?.educations || [], [profileData]);
   const skills = useMemo(() => profileData?.skills || [], [profileData]);
+  const projects = useMemo(() => profileData?.projects || [], [profileData]);
 
   // Merge company_roles into user object for ProfileHeader
   const user = useMemo(() => profileData?.user ? {
@@ -1323,6 +1330,33 @@ export default function ProfilePage() {
     setEditingEducation(null);
   }
 
+  const handleSaveProject = async (data: Project) => {
+    try {
+      if (editingProject) {
+        await projMutations.update.mutateAsync({ id: editingProject.project_id, payload: data });
+        toast.success("Project updated successfully");
+      } else {
+        await projMutations.add.mutateAsync(data);
+        toast.success("Project added successfully");
+      }
+      setIsAddProjectModalOpen(false);
+      setEditingProject(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to save project");
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    try {
+      await projMutations.remove.mutateAsync(id);
+      toast.success("Project removed successfully");
+      setIsAddProjectModalOpen(false);
+      setEditingProject(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to delete project");
+    }
+  };
+
   const profileIdentity: ProfileIdentity = {
     openTo: (user?.open_to as any) || "Full-time",
     availability: (user?.availability as any) || "Immediately",
@@ -1433,6 +1467,24 @@ export default function ProfilePage() {
               }}
             />
 
+            <ProfileProjects
+              projects={projects}
+              isOwnProfile={true}
+              onAddProjectClick={() => {
+                setEditingProject(null);
+                setIsAddProjectModalOpen(true);
+              }}
+              onEditProjectClick={(proj) => {
+                setEditingProject(proj);
+                setIsAddProjectModalOpen(true);
+              }}
+              onMediaClick={(mediaItem) => {
+                if (mediaItem.url || mediaItem.fileUrl) {
+                  window.open(mediaItem.fileUrl || mediaItem.url, "_blank");
+                }
+              }}
+            />
+
           </div>
         )}
       </div>
@@ -1485,6 +1537,19 @@ export default function ProfilePage() {
             initialData={editingEducation}
             existingEducations={educations}
             onDelete={() => editingEducation && handleDeleteEducation(editingEducation.education_id)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto sm:max-h-[88vh] flex flex-col overflow-hidden w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0 [&>button]:hidden">
+          <DialogTitle className="sr-only">Add Project</DialogTitle>
+          <DialogDescription className="sr-only">Fill in the details to add a new project record to your profile.</DialogDescription>
+          <AddProjectForm
+            onSave={handleSaveProject}
+            onCancel={() => setIsAddProjectModalOpen(false)}
+            initialData={editingProject}
+            onDelete={(id) => handleDeleteProject(id)}
           />
         </DialogContent>
       </Dialog>

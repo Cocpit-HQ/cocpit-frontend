@@ -436,6 +436,9 @@ Search Name: Image
 Icon Name: lucide-react:Image # Image action
 
 Search Name: Image
+Icon Name: mage:image # Project Document Image action
+
+Search Name: Image
 Icon Name: lucide-react:Image as ImageIcon # Image action
 
 Search Name: Info
@@ -465,7 +468,7 @@ Icon Name: lucide-react:LayoutDashboard # LayoutDashboard action
 Search Name: LayoutGrid
 Icon Name: lucide-react:LayoutGrid # LayoutGrid action
 
-Search Name: Lightbulb
+Search Name:   
 Icon Name: lucide-react:Lightbulb # Lightbulb action
 
 Search Name: LineChart
@@ -1206,6 +1209,9 @@ Icon Name: solar:copy-outline # copy outline action
 Search Name: document-text-linear
 Icon Name: solar:document-text-linear # document text linear action
 
+Search Name: document-linear
+Icon Name: solar:document-linear # document linear action
+
 Search Name: eye-linear
 Icon Name: solar:eye-linear # eye linear action
 
@@ -1295,6 +1301,9 @@ Icon Name: lucide:trending-up # trending up action
 
 Search Name: lightbulb
 Icon Name: iconoir:lightbulb # lightbulb action
+
+Search Name: lightbulb
+Icon Name: iconoir:light-bulb-on # lightbulb on action
 
 Search Name: shield-check
 Icon Name: lucide:shield-check # shield check action

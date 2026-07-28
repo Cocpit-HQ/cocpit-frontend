@@ -1,4 +1,4 @@
-import { Experience, Education, ExperienceGroup } from './entities';
+import { Experience, Education, ExperienceGroup, Project } from './entities';
 import { ProfileIdentity } from './profile';
 
 export interface User {
@@ -51,6 +51,7 @@ export interface UserProfile {
   experiences: ExperienceGroup[];   // backend returns grouped by company
   educations: Education[];
   skills: SkillResponse[];
+  projects?: Project[];
   company_roles?: CompanyRole[];
   profile_views_count?: number;
   search_appearances_count?: number;

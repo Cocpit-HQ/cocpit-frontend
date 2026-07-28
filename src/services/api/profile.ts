@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse, AddSkillsPayload, AddSkillsResponse, SkillResponse, Skill, UpdateProfilePayload } from "@/types/user";
+import type { Project } from "@/types/entities";
 
 export interface GetUserPostsParams {
   category?: 'All' | 'Personal' | 'Professional';
@@ -320,5 +321,36 @@ export const getResume = async (): Promise<{ file_name: string; file_url: string
 
 export const deleteResume = async (): Promise<{ message: string }> => {
   const response = await api.delete("/profile/resume");
+  return response.data;
+};
+
+// --- Projects ---
+
+export const uploadProjectMedia = async (file: File): Promise<{ message: string; url: string; fileUrl: string; fileName: string; type: 'image' | 'document' }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post("/profile/projects/media", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return response.data;
+};
+
+export const addProject = async (payload: Partial<Project>): Promise<{ message: string; project: Project; version: number }> => {
+  const response = await api.post("/profile/projects", payload);
+  return response.data;
+};
+
+export const updateProject = async (id: string, payload: Partial<Project>): Promise<{ message: string; project: Project; version: number }> => {
+  const response = await api.put(`/profile/projects/${id}`, payload);
+  return response.data;
+};
+
+export const patchProject = async (id: string, payload: Partial<Project>): Promise<{ message: string; project: Project; version: number }> => {
+  const response = await api.patch(`/profile/projects/${id}`, payload);
+  return response.data;
+};
+
+export const deleteProject = async (id: string): Promise<{ message: string; project_id: string; version: number }> => {
+  const response = await api.delete(`/profile/projects/${id}`);
   return response.data;
 };

@@ -366,8 +366,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
                                 <div className="flex items-center gap-[10px]">
                                     <div className={cn(
-                                        "w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0 overflow-hidden",
-                                        ((latestExperience.logo_url || latestExperience.company_logo) && !expImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54] px-[16px] py-[8px]"
+                                        "w-[48px] h-[48px] rounded-[12px] flex items-center justify-center flex-shrink-0 overflow-hidden",
+                                        ((latestExperience.logo_url || latestExperience.company_logo) && !expImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54]"
                                     )}>
                                         {(latestExperience.logo_url || latestExperience.company_logo) && !expImgError ? (
                                             <img
@@ -392,8 +392,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             <div onClick={scrollToEducation} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
                                 <div className="flex items-center gap-[10px]">
                                     <div className={cn(
-                                        "w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0 overflow-hidden",
-                                        (latestEducation.school_logo && !eduImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54] px-[16px] py-[8px]"
+                                        "w-[48px] h-[48px] rounded-[12px] flex items-center justify-center flex-shrink-0 overflow-hidden",
+                                        (latestEducation.school_logo && !eduImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54]"
                                     )}>
                                         {latestEducation.school_logo && !eduImgError ? (
                                             <img

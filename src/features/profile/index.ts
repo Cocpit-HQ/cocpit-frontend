@@ -4,3 +4,5 @@ export * from './types/profile.types';
 export * from './services/profile.service';
 export * from './hooks/useProfile';
 export * from './hooks/useProfilePosts';
+export { ProfileProjects } from './commonProfileComponents/ProfileProjects';
+export { default as AddProjectForm } from './components/AddProjectForm';

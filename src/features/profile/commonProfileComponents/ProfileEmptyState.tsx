@@ -4,7 +4,7 @@ import React from "react";
 import { Icon } from "@iconify/react";
 
 export interface ProfileEmptyStateProps {
-  type: "post" | "experience" | "education";
+  type: "post" | "experience" | "education" | "projects";
   isOwnProfile: boolean;
   userName?: string; // for post public: "[name] hasn't posted"
   onCreateClick?: () => void; // for personal post create button
@@ -141,6 +141,29 @@ export function ProfileEmptyState({
             <span className="w-full md:w-[427px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
               Showcase courses, certifications, colleges, bootcamps, or
               self-learning.
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Projects Empty State ─────────────────────────────────────────────────────
+  if (type === "projects") {
+    return (
+      <div className="flex flex-col justify-center items-center p-4 gap-4 w-full md:w-[904px] h-auto md:h-[254.44px] bg-white rounded-[24px] self-stretch ">
+        <div className="flex flex-col items-center p-0 gap-4 w-full md:w-[427px] h-auto md:h-[222.44px]">
+          <img
+            src="/images/emptyScreenImages/emptyExp.svg"
+            alt="No projects yet"
+            className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
+          />
+          <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[427px] h-auto md:h-11 px-2 md:px-0">
+            <span className="w-auto md:w-[195px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
+              Showcase your projects
+            </span>
+            <span className="w-full md:w-[427px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
+              Add campaigns, applications, designs, or academic projects.
             </span>
           </div>
         </div>

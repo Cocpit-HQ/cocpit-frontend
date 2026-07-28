@@ -51,6 +51,33 @@ export interface Education {
   school_org_id?: string | null;
 }
 
+export interface ProjectMedia {
+  id: string;
+  type: 'link' | 'image' | 'document';
+  title: string;
+  url?: string;
+  fileUrl?: string;
+  fileName?: string;
+}
+
+export interface Project {
+  project_id: string;
+  profile_id?: string;
+  title: string;
+  organization: string;
+  details?: string;
+  start_month: string;
+  start_year: string;
+  end_month?: string;
+  end_year?: string;
+  is_current: boolean;
+  skills: string[];
+  media: ProjectMedia[];
+  role?: string;
+  team_size?: string;
+  role_description?: string;
+}
+
 export interface Comment {
   id: string | number;
   authorId?: string; // Added for permission checks

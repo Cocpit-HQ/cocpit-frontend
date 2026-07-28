@@ -20,6 +20,7 @@ import { ProfilePosts } from "@/features/profile/commonProfileComponents/Profile
 import { ProfileSkills } from "@/features/profile/commonProfileComponents/ProfileSkills";
 import { ProfileExperience } from "@/features/profile/commonProfileComponents/ProfileExperience";
 import { ProfileEducation } from "@/features/profile/commonProfileComponents/ProfileEducation";
+import { ProfileProjects } from "@/features/profile/commonProfileComponents/ProfileProjects";
 import { ViewAvatarModal } from "@/features/profile/commonProfileComponents/ViewAvatarModal";
 import { SendOfferDialog } from "@/features/profile/commonProfileComponents/SendOfferDialog";
 import { ProfileSkeleton } from "@/features/profile/commonProfileComponents/ProfileSkeleton";
@@ -567,6 +568,16 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           <ProfileEducation
             educations={user.educations || []}
             isOwnProfile={isOwnProfile}
+          />
+
+          <ProfileProjects
+            projects={(user as any).projects || []}
+            isOwnProfile={isOwnProfile}
+            onMediaClick={(mediaItem) => {
+              if (mediaItem.url || mediaItem.fileUrl) {
+                window.open(mediaItem.fileUrl || mediaItem.url, "_blank");
+              }
+            }}
           />
 
           <OffersTab isOwnProfile={isOwnProfile} />

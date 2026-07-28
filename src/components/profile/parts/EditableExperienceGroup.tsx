@@ -52,11 +52,11 @@ function RoleRow({
     <div className="flex flex-col md:flex-row group relative w-full items-start justify-between gap-3 md:gap-6">
       {/* Left/Center Content: Logo + Info */}
       <div className="flex gap-4 flex-1 min-w-0">
-        <div className="flex-shrink-0 w-[56px] flex flex-col items-center relative">
+        <div className="flex-shrink-0 w-[48px] flex flex-col items-center relative">
           {isFirst ? (
             <div className={cn(
-              "flex flex-row justify-center items-center w-[56px] h-[40px] rounded-[24px] overflow-hidden flex-none",
-              (logoUrl && !imgError) ? "bg-white border border-[#E5E7EB]" : "bg-[#E0E7FF] px-[16px] py-[8px]"
+              "flex flex-row justify-center items-center w-[48px] h-[48px] rounded-[12px] overflow-hidden flex-none",
+              (logoUrl && !imgError) ? "bg-white border border-[#E5E7EB]" : "bg-[#E0E7FF]"
             )}>
               {logoUrl && !imgError ? (
                 <img
@@ -70,7 +70,7 @@ function RoleRow({
               )}
             </div>
           ) : (
-            <div className="w-[56px] h-[56px]" aria-hidden="true" />
+            <div className="w-[48px] h-[48px]" aria-hidden="true" />
           )}
         </div>
         {/* Middle Section: Roles and Details */}

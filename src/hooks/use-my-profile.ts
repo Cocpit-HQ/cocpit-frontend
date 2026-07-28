@@ -19,6 +19,9 @@ import {
     updateIdentity,
     uploadResume,
     deleteResume,
+    addProject,
+    updateProject,
+    deleteProject,
 } from "@/services/api/profile";
 import {
     UserData,
@@ -28,7 +31,7 @@ import {
     AddEducationPayload,
     AddSkillsPayload
 } from "@/types/user";
-import { Education, ExperienceGroup } from "@/types/entities";
+import { Education, ExperienceGroup, Project } from "@/types/entities";
 
 // ─── Cache helper (used only for optimistic remove) ───────────────────────────
 
@@ -377,4 +380,57 @@ export function useResumeMutations() {
     });
 
     return { upload, remove };
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+export function useProjectMutations() {
+    const queryClient = useQueryClient();
+
+    const add = useMutation({
+        mutationFn: (payload: Partial<Project>) => addProject(payload),
+        onSuccess: (response) => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    projects: [response.project, ...(old.projects || [])],
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
+    });
+
+    const update = useMutation({
+        mutationFn: ({ id, payload }: { id: string; payload: Partial<Project> }) =>
+            updateProject(id, payload),
+        onSuccess: (response) => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    projects: (old.projects || []).map(p =>
+                        p.project_id === response.project.project_id ? response.project : p
+                    ),
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
+    });
+
+    const remove = useMutation({
+        mutationFn: (id: string) => deleteProject(id),
+        onSuccess: (_, id) => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    projects: (old.projects || []).filter(p => p.project_id !== id),
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
+    });
+
+    return { add, update, remove };
 }
