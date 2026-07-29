@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Notification } from "@/types/social"
-import { getNotifications, markNotificationAsRead, markAllNotificationsRead } from "@/services/api/notifications"
+import { getNotifications, markNotificationAsRead, markAllNotificationsRead } from "@/features/notification/api"
 import { useSession } from "next-auth/react"
 import { formatDistanceToNowStrict, isToday, format } from "date-fns"
 

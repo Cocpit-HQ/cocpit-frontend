@@ -62,7 +62,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
   }
 
   const company = profileResponse.org;
-  const isEdu = company.entity_type === "INSTITUTION" || company.entity_type === "INSTITUTE";
+  const isEdu = company.entity_type === "INSTITUTION";
   
   // Check if the user has the permission to manage company details (or is the owner)
   const hasEditPermission = 
@@ -119,7 +119,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
       sampleLikerUsername: p.sample_liker_username || p.sampleLikerUsername || undefined,
       isLiked: p.is_liked || p.isLiked || false,
     })) : [],
-    entityType: isEdu ? "INSTITUTE" : "COMPANY",
+    entityType: isEdu ? "INSTITUTION" : "COMPANY",
     isFollowing: profileResponse.relationship?.is_following || false,
     isSubscribed: profileResponse.relationship?.is_subscribed || false,
     isBlocked: profileResponse.relationship?.is_blocked || false,

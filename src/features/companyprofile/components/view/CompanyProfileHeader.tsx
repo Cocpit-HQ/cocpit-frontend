@@ -161,7 +161,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           {/* Logo overlapping the cover */}
           <div className="absolute -top-12 left-[30px] w-[96px] h-[96px] bg-white rounded-xl border-2 border-white shadow-xl z-10 flex flex-col justify-center items-center max-md:!left-4 max-md:!w-[72px] max-md:!h-[72px] max-md:!-top-9">
             <Image
-              src={logoUrl || (data.entityType === "INSTITUTE" ? "/images/companyonboarding/AluminiProfilePhoto.png" : "/images/companyonboarding/companyprofileDefault.jpg")}
+              src={logoUrl || (data.entityType === "INSTITUTION" ? "/images/companyonboarding/AluminiProfilePhoto.png" : "/images/companyonboarding/companyprofileDefault.jpg")}
               alt={`${data.name} Logo`}
               fill
               className="object-cover rounded-[10px]"

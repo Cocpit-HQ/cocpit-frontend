@@ -21,28 +21,20 @@ export const formatTimeAgo = (isoString: string): string => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // Check if it's yesterday
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = date.getDate() === yesterday.getDate() &&
-                      date.getMonth() === yesterday.getMonth() &&
-                      date.getFullYear() === yesterday.getFullYear();
-
-  if (isYesterday) {
-    return 'Yesterday';
-  }
-
   // Calculate difference in days (ignoring time of day)
   const dateAtMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const nowAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffDays = Math.floor((nowAtMidnight.getTime() - dateAtMidnight.getTime()) / (1000 * 60 * 60 * 24));
 
-  // Within the last 6 days (meaning it falls on a distinct day of the week)
-  if (diffDays > 1 && diffDays < 7) {
-    return date.toLocaleDateString('en-US', { weekday: 'long' }); // 'Monday', 'Tuesday', etc.
+  if (diffDays >= 1 && diffDays <= 7) {
+    return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+  }
+  
+  if (diffDays > 7) {
+    const diffWeeks = Math.floor(diffDays / 7);
+    return `${diffWeeks} week${diffWeeks > 1 ? 's' : ''}`;
   }
 
-  // Older than a week, format as dd/mm/yyyy (en-GB uses this format natively)
   return date.toLocaleDateString('en-GB');
 };
 

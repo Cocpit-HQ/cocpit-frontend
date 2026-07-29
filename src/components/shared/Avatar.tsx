@@ -29,9 +29,9 @@ export default function Avatar({
     const sizeClasses = {
         xs: "w-6 h-6 text-[10px]",
         sm: "w-8 h-8 text-xs",
-        md: "w-10 h-10 text-sm",
-        lg: "w-12 h-12 text-base",
-        xl: "w-16 h-16 text-xl"
+        md: "w-10 h-10 text-[20px]",
+        lg: "w-12 h-12 text-lg",
+        xl: "w-16 h-16 text-2xl"
     }
 
     const indicatorSize = {

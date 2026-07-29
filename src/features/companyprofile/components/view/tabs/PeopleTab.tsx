@@ -21,7 +21,7 @@ interface PeopleTabProps {
 export default function PeopleTab({ data }: PeopleTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const isEdu = data.entityType === "INSTITUTE";
+  const isEdu = data.entityType === "INSTITUTION";
   const { activeProfile } = useActiveProfile();
   const { data: session } = useSession();
   const queryClient = useQueryClient();

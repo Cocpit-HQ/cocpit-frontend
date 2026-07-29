@@ -61,10 +61,10 @@ const ChooseOrganization = React.memo(function ChooseOrganization() {
 
         {/* Institute Card */}
         <div 
-          onClick={() => !loadingType && handleSelect('INSTITUTE')}
+          onClick={() => !loadingType && handleSelect('INSTITUTION')}
           className={`group ${loadingType ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex flex-col items-center justify-start gap-6 rounded-2xl p-0 w-[260px] h-[249.36px] relative`}
         >
-          {loadingType === 'INSTITUTE' && (
+          {loadingType === 'INSTITUTION' && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 z-10 rounded-2xl">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>

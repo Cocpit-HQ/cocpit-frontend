@@ -1,4 +1,4 @@
-export type OrganizationType = 'COMPANY' | 'INSTITUTE';
+export type OrganizationType = 'COMPANY' | 'INSTITUTION';
 
 export interface LocationData {
   country: string;

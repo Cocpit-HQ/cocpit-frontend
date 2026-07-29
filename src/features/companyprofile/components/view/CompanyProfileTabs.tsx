@@ -39,7 +39,7 @@ export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfil
           { label: "About", value: "about" },
           { label: "Posts", value: "posts" },
           { label: "Jobs", value: "jobs" },
-          { label: data.entityType === "INSTITUTE" ? "Alumni" : "People", value: "people" }
+          { label: data.entityType === "INSTITUTION" ? "Alumni" : "People", value: "people" }
         ].map((tab) => {
           return (
             <Tabs.Trigger

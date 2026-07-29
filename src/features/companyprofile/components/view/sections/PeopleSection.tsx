@@ -12,7 +12,7 @@ interface PeopleSectionProps {
 }
 
 export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionProps) {
-  const isEdu = data.entityType === "INSTITUTE";
+  const isEdu = data.entityType === "INSTITUTION";
   const { data: peopleData, isLoading } = useQuery({
     queryKey: ["orgPeople", data.id, "preview", isEdu],
     queryFn: () =>

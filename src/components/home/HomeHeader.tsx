@@ -14,7 +14,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Hash, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { getNotifications } from '@/services/api/notifications';
+import { getNotifications } from '@/features/notification/api';
 import { useSocket } from '@/context/SocketContext';
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -849,7 +849,7 @@ export const HomeHeader = () => {
                                                 height: '6px',
                                                 left: '19px',
                                                 top: '-3px',
-                                                backgroundColor: '#6366F1',
+                                                backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
                                                 borderRadius: '50%'
                                             }}
                                         />
@@ -1117,7 +1117,7 @@ export const HomeHeader = () => {
                                                 height: '6px',
                                                 left: '16px',
                                                 top: '-3px',
-                                                backgroundColor: '#6366F1',
+                                                backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
                                                 borderRadius: '50%'
                                             }}
                                         />

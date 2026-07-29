@@ -1,25 +1,36 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNowStrict } from 'date-fns'
+import { Icon } from '@iconify/react'
+import { differenceInDays, differenceInWeeks } from 'date-fns'
 
 const formatShortTime = (dateString?: string): string => {
     if (!dateString) return 'Just now'
     try {
-        const distance = formatDistanceToNowStrict(new Date(dateString))
+        const date = new Date(dateString)
+        const now = new Date()
+        const days = differenceInDays(now, date)
+
+        if (days >= 1 && days <= 7) {
+            return `${days} day${days > 1 ? 's' : ''}`
+        }
+        if (days > 7) {
+            const weeks = differenceInWeeks(now, date)
+            return `${weeks} week${weeks > 1 ? 's' : ''}`
+        }
+
+        const distance = formatDistanceToNowStrict(date)
         return distance
             .replace(/ seconds?/, 's')
             .replace(/ minutes?/, 'm')
-            .replace(/ hours?/, 'h')
-            .replace(/ days?/, 'd')
-            .replace(/ months?/, 'mo')
-            .replace(/ years?/, 'y') + ' ago'
+            .replace(/ hours?/, 'h') + ' ago'
     } catch (e) {
         return 'Just now'
     }
 }
 import Avatar from '@/components/shared/Avatar'
 import { Notification } from '@/types/social'
-import { markNotificationAsRead, deleteNotification } from '@/services/api/notifications'
+import { markNotificationAsRead, deleteNotification } from '@/features/notification/api'
 import { cn } from '@/lib/utils'
 import {
     DropdownMenu,
@@ -28,6 +39,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 interface NotificationCardProps {
     notification: Notification
@@ -37,6 +49,8 @@ interface NotificationCardProps {
 
 export const NotificationCard: React.FC<NotificationCardProps> = ({ notification, onRead, onDelete }) => {
     const router = useRouter()
+    const { isCompany } = useActiveProfile()
+    
     const postReferenceId =
         notification.reference_id ||
         (notification as any).referenceId ||
@@ -116,110 +130,87 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         <div
             onClick={handleClick}
             className={cn(
-                "p-4 flex flex-row items-start justify-between gap-4 transition-all cursor-pointer",
-                "border-b border-border last:border-0 hover:bg-muted/50",
-                !notification.is_read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : "bg-transparent"
+                "p-[16px] flex flex-row items-start justify-between transition-all cursor-pointer rounded-[12px]",
+                isCompany ? "hover:bg-[#E5F0FF] dark:hover:bg-muted/50" : "hover:bg-[#EEF2FF] dark:hover:bg-muted/50",
+                !notification.is_read
+                    ? (isCompany ? "bg-[#E5F0FF]/50 dark:bg-[#4D9CFF]/10" : "bg-indigo-50/30 dark:bg-indigo-900/10")
+                    : "bg-[#FFFFFF] dark:bg-transparent"
             )}
         >
-            <div className="flex gap-4">
-                <div className="flex-shrink-0 pt-0.5">
+            <div className="flex flex-row items-center gap-[8px]">
+                <div className="flex-shrink-0">
                     <Avatar
                         url={notification.actor_avatar || undefined}
                         name={notification.actor_name || 'User'}
                         size="md"
                     />
                 </div>
-                <div className="flex items-center">
-                    <p className="text-sm text-muted-foreground">
-                        {notification.type !== 'advocacy' && notification.actor_name && (
-                            <span className="font-medium text-foreground mr-1">
-                                {notification.actor_name}
-                            </span>
-                        )}
+                <div className="flex flex-row items-center gap-[4px] flex-wrap">
+                    {notification.type !== 'advocacy' && notification.actor_name && (
+                        <span className="font-poppins font-medium text-[16px] leading-[24px] text-[#000000] dark:text-white">
+                            {notification.actor_name}
+                        </span>
+                    )}
+                    <span className="font-poppins font-normal text-[14px] leading-[20px] text-[#6B7280] dark:text-muted-foreground">
                         {notification.type === 'advocacy'
                             ? notification.text
                             : notification.text.replace(notification.actor_name || '', '').trim()
                         }
-                    </p>
+                    </span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-                <span
-                    className="font-poppins text-black dark:text-white"
-                    style={{
-                        width: '54px',
-                        height: '16px',
-                        fontStyle: 'normal',
-                        fontWeight: 400,
-                        fontSize: '12px',
-                        lineHeight: '16px',
-                        color: 'currentColor',
-                        display: 'flex',
-                        alignItems: 'center',
-                        flex: 'none',
-                        order: 0,
-                        flexGrow: 0,
-                    }}
-                >
+            <div className="flex flex-row items-start gap-[8px] flex-shrink-0">
+                <span className="font-poppins font-normal text-[12px] leading-[16px] text-[#000000] dark:text-white mt-1">
                     {formatShortTime(notification.created_at)}
                 </span>
                 {!notification.is_read && (
-                    <div className="w-2 h-2 rounded-full bg-[#6366F1] shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                    <div className={cn(
+                        "w-[6px] h-[6px] rounded-full mt-1.5",
+                        isCompany ? "bg-[#1A73E8]" : "bg-[#6366F1]"
+                    )} />
                 )}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="p-1 rounded-full hover:bg-muted/50 transition-colors ml-1" onClick={(e) => { e.stopPropagation(); }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512" className="text-foreground" aria-hidden="true">
-                                <path d="M0 0h512v512H0z" fill="none" />
-                                <path fill="currentColor" d="M256 144a64 64 0 1 0-64-64a64.07 64.07 0 0 0 64 64m0-96a32 32 0 1 1-32 32a32.036 32.036 0 0 1 32-32m0 320a64 64 0 1 0 64 64a64.07 64.07 0 0 0-64-64m0 96a32 32 0 1 1 32-32a32.036 32.036 0 0 1-32 32m0-272a64 64 0 1 0 64 64a64.07 64.07 0 0 0-64-64m0 96a32 32 0 1 1 32-32a32.036 32.036 0 0 1-32 32" />
-                            </svg>
+                        <button className="flex justify-center items-center w-[24px] h-[24px] rounded-full hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); }}>
+                            <Icon icon="ph:dots-three-outline-vertical-light" width="24" height="24" className="text-[#000000] dark:text-white" />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="end"
                         sideOffset={4}
                         alignOffset={12}
-                        className="box-border flex flex-col items-center w-[206px] h-[96px] p-2 rounded-[24px] rounded-tr-none border border-[#C7D2FE] bg-white shadow-none dark:bg-white"
+                        className="box-border flex flex-col items-center w-[206px] h-[96px] p-[8px] gap-0 rounded-[24px] rounded-tr-none border border-[#C7D2FE] bg-[#FFFFFF] shadow-none dark:bg-background"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <DropdownMenuItem className="w-full h-10 grid grid-cols-[1fr_20px] items-center gap-3 cursor-pointer px-5 rounded-xl focus:bg-muted" onClick={() => handleMarkAsRead()}>
-                            <span className="text-[14px] font-medium text-foreground leading-none">Mark as read</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                className="text-foreground"
-                                aria-hidden="true"
-                            >
-                                <path d="M0 0h24v24H0z" fill="none" />
-                                <path
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="1.5"
-                                    d="M2.5 13.833L6 17.5l1.024-1.073M16.5 6.5l-6.063 6.352m-2.937.981L11 17.5l10.5-11"
-                                />
-                            </svg>
+                        <DropdownMenuItem className="box-border flex flex-row justify-between items-center py-[8px] px-[16px] gap-[10px] w-[190px] h-[40px] bg-[#FFFFFF] dark:bg-transparent rounded-[24px] cursor-pointer focus:bg-muted/50 focus:text-inherit" onClick={() => handleMarkAsRead()}>
+                            <span className="w-[92px] h-[20px] font-poppins font-normal text-[14px] leading-[20px] text-center text-[#000000] dark:text-white flex-none order-0">Mark as read</span>
+                            <div className="w-[24px] h-[24px] flex-none order-1 relative flex items-center justify-center">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    className="text-[#000000] dark:text-white"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M0 0h24v24H0z" fill="none" />
+                                    <path
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="1.5"
+                                        d="M2.5 13.833L6 17.5l1.024-1.073M16.5 6.5l-6.063 6.352m-2.937.981L11 17.5l10.5-11"
+                                    />
+                                </svg>
+                            </div>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="w-full h-10 grid grid-cols-[1fr_20px] items-center gap-3 cursor-pointer px-5 rounded-xl focus:bg-red-50 dark:focus:bg-red-500/10" onClick={() => handleDelete()}>
-                            <span className="text-[13px] font-medium text-[#FF4D4D] leading-none">Delete notification</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 20 20"
-                                className="text-[#FF4D4D]"
-                                aria-hidden="true"
-                            >
-                                <path d="M0 0h20v20H0z" fill="none" />
-                                <path
-                                    fill="currentColor"
-                                    d="M8.5 4h3a1.5 1.5 0 0 0-3 0m-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.054l-1.194 10.344A3 3 0 0 1 12.272 18H7.728a3 3 0 0 1-2.98-2.656L3.554 5H2.5a.5.5 0 0 1 0-1zM5.741 15.23A2 2 0 0 0 7.728 17h4.544a2 2 0 0 0 1.987-1.77L15.439 5H4.561zM8.5 7.5A.5.5 0 0 1 9 8v6a.5.5 0 0 1-1 0V8a.5.5 0 0 1 .5-.5M12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"
-                                />
-                            </svg>
+                        <DropdownMenuItem className="box-border flex flex-row justify-between items-center py-[8px] px-[16px] gap-[10px] w-[190px] h-[40px] bg-[#FFFFFF] dark:bg-transparent rounded-[24px] cursor-pointer focus:bg-red-50 dark:focus:bg-red-500/10 focus:text-inherit" onClick={() => handleDelete()}>
+                            <span className="w-[128px] h-[20px] font-poppins font-normal text-[14px] leading-[20px] text-center text-[#FF6B6B] flex-none order-0">Delete notification</span>
+                            <div className="w-[24px] h-[24px] flex-none order-1 relative flex items-center justify-center">
+                                <Icon icon="hugeicons:delete-02" width="20" height="20" className="text-[#FF6B6B]" />
+                            </div>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

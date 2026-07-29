@@ -123,7 +123,7 @@ const Stage1Identity = React.memo(function Stage1Identity() {
         </div>
 
         {/* Card 3 - Industry Selection */}
-        {organizationType !== 'INSTITUTE' && (
+        {organizationType !== 'INSTITUTION' && (
           <div className="w-[540px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
             <div className="w-[492px] h-[20px] flex flex-col justify-center flex-none">
               <label className="w-[492px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">

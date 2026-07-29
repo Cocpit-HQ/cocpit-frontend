@@ -84,7 +84,7 @@ export interface CompanyProfileData {
   stats?: CompanyProfileStats;
   coreTeam?: CompanyTeamMember[];
   posts?: CompanyPost[];
-  entityType?: 'COMPANY' | 'INSTITUTE';
+  entityType?: 'COMPANY' | 'INSTITUTION';
   isFollowing?: boolean;
   isSubscribed?: boolean;
   isBlocked?: boolean;
