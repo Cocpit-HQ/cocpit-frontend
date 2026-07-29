@@ -79,13 +79,13 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     activeProfile?.id === (company.company_id || company.org_id);
 
   // Full admin/owner access: any company post, plus all profile-management actions.
-  const canManageCompany = Boolean(hasEditPermission);
+  const canManageCompany = Boolean(ownProfile && hasEditPermission);
 
   // A team member who authored a specific post on behalf of the company can manage
   // that post even when not currently "acting as" the company (e.g. browsing as themselves).
   const currentUserId = (session?.user as any)?.id;
   const canManageOwnPosts = Boolean(
-    canManageCompany || profileResponse.viewer_permissions?.includes('CREATE_POST')
+    ownProfile && (canManageCompany || profileResponse.viewer_permissions?.includes('CREATE_POST'))
   );
 
   // hasEditPermission/canManageCompany can be true via `is_own_profile` (literal org creator)

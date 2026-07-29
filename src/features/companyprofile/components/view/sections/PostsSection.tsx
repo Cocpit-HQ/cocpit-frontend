@@ -13,6 +13,7 @@ import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/store/ui.store";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface PostsSectionProps {
   data: CompanyProfileData;
@@ -30,6 +31,7 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
   const { toast } = useToast();
   const { setActiveModal } = useUIStore();
   const router = useRouter();
+  const { activeProfile } = useActiveProfile();
 
   const { data: postsData, isLoading } = useQuery({
     queryKey: ["orgPostsPreview", data.id],
@@ -237,6 +239,7 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
               createdByUserId: post.created_by_user_id,
               currentUserId,
               explicitPermissions: viewerPermissions,
+              activeProfile,
             }),
             visibility: 'public',
             sampleLikerUsername: post.sampleLikerUsername || post.sample_liker_username || undefined,

@@ -17,13 +17,14 @@ import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess'
 
 export function SavedPosts() {
     const { data: session } = useSession()
-    const { userCompanies } = useActiveProfile()
+    const { userCompanies, activeProfile } = useActiveProfile()
     const getMenuAccess = (post: any) => getPostMenuAccess({
         isCompanyPost: !!post.author_org_id,
         companyId: post.author_org_id,
         createdByUserId: post.author_id,
         currentUserId: session?.user?.id,
         userCompanies,
+        activeProfile,
     })
     const [activeTab, setActiveTab] = useState<'saved' | 'collections'>('saved') // 'saved' = Unsorted, 'collections' = Folders
     const [folders, setFolders] = useState<SavedFolder[]>([])

@@ -26,7 +26,7 @@ export default function SinglePostPage({ params }: PageProps) {
     const [post, setPost] = useState<Post | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
-    const { userCompanies } = useActiveProfile()
+    const { userCompanies, activeProfile } = useActiveProfile()
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -59,6 +59,7 @@ export default function SinglePostPage({ params }: PageProps) {
         createdByUserId: post?.createdByUserId,
         currentUserId: session?.user?.id,
         userCompanies,
+        activeProfile,
     })
 
     return (

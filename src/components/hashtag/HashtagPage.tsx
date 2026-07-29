@@ -18,7 +18,7 @@ export default function HashtagPage() {
   const router = useRouter();
   const tag = (params.tag as string) || "";
   const { data: session } = useSession();
-  const { userCompanies } = useActiveProfile();
+  const { userCompanies, activeProfile } = useActiveProfile();
 
   const { posts, hashtagMetadata, loadMorePosts, hasMore, loading } = useHashtagFeed(tag);
   
@@ -89,6 +89,7 @@ export default function HashtagPage() {
                       createdByUserId: (post as any).createdByUserId,
                       currentUserId: session?.user?.id,
                       userCompanies,
+                      activeProfile,
                     })}
                     priority={index < 2}
                   />

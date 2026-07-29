@@ -436,6 +436,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 createdByUserId: (shared_post as any).createdByUserId,
                 currentUserId,
                 userCompanies,
+                activeProfile,
               })}
               isCompanyPost={shared_post.isCompanyPost || false}
               location={shared_post.location}

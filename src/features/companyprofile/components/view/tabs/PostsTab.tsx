@@ -14,6 +14,7 @@ import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/store/ui.store";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface PostsTabProps {
   data: CompanyProfileData;
@@ -31,6 +32,7 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
   const { toast } = useToast();
   const { setActiveModal } = useUIStore();
   const [activeTab, setActiveTab] = useState<TabFilter>('Posts');
+  const { activeProfile } = useActiveProfile();
 
   const getBackendFilter = (tab: TabFilter) => {
     if (tab === 'Private posts') return 'Private post';
@@ -171,6 +173,7 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
       createdByUserId: p.created_by_user_id,
       currentUserId,
       explicitPermissions: viewerPermissions,
+      activeProfile,
     }),
     visibility: p.visibility || 'public',
     poll: p.poll,

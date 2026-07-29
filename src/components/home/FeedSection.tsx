@@ -131,6 +131,7 @@ export const FeedSection = ({
                                             createdByUserId: (post as any).createdByUserId,
                                             currentUserId: currentUser?.id,
                                             userCompanies,
+                                            activeProfile,
                                         })}
                                         onDelete={deletePost}
                                         onToggleVisibility={togglePostVisibility}

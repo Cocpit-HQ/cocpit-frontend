@@ -16,6 +16,7 @@ export interface CompanyMembershipLike {
   org_id?: string;
   company_id?: string;
   viewer_role_data?: { permissions?: string[] | null } | null;
+  created_by?: string;
 }
 
 export interface GetPostMenuAccessParams {
@@ -27,6 +28,8 @@ export interface GetPostMenuAccessParams {
   explicitPermissions?: string[] | null;
   /** Otherwise, the viewer's full company membership list (e.g. ActiveProfileContext's userCompanies). */
   userCompanies?: CompanyMembershipLike[];
+  /** Optional activeProfile context. If provided and isCompanyPost is true, it enforces that the user must be acting as that company. */
+  activeProfile?: { type: string, id: string } | null;
 }
 
 function hasFullAccess(perms: string[]): boolean {
@@ -34,25 +37,37 @@ function hasFullAccess(perms: string[]): boolean {
 }
 
 export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAccess {
-  const { isCompanyPost, companyId, createdByUserId, currentUserId } = params;
+  const { isCompanyPost, companyId, createdByUserId, currentUserId, activeProfile } = params;
 
   if (!isCompanyPost) {
     if (!currentUserId) return 'outsider';
     return String(createdByUserId) === String(currentUserId) ? 'owner' : 'outsider';
   }
 
+  // Enforce actor context if activeProfile is explicitly provided
+  if (activeProfile !== undefined) {
+    if (activeProfile?.type !== 'COMPANY' || String(activeProfile?.id) !== String(companyId)) {
+      return 'outsider';
+    }
+  }
+
+  const company = params.userCompanies?.find(
+    (c) => String(c.org_id || c.company_id) === String(companyId)
+  );
+
+  // Admin/Owner can manage any of their company's posts, independent of who's logged in as what.
+  const isCreator = Boolean(company && company.created_by && String(company.created_by) === String(currentUserId));
+  if (isCreator) return 'owner';
+
   const rawPerms =
     params.explicitPermissions ??
-    params.userCompanies?.find(
-      (c) => String(c.org_id || c.company_id) === String(companyId)
-    )?.viewer_role_data?.permissions ??
+    company?.viewer_role_data?.permissions ??
     null;
 
   if (!rawPerms || rawPerms.length === 0) return 'outsider'; // not a member of this company
 
   const perms = rawPerms.map((p) => String(p).toUpperCase().trim());
 
-  // Admin/Owner can manage any of their company's posts, independent of who's logged in as what.
   if (hasFullAccess(perms)) return 'owner';
 
   if (!currentUserId) return 'internal';

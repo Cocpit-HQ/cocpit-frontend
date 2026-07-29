@@ -231,6 +231,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                         createdByUserId: (post as any).createdByUserId,
                         currentUserId: session?.user?.id,
                         userCompanies,
+                        activeProfile,
                       });
                       return isMobile ? (
                         <PostCard
