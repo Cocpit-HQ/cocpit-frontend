@@ -94,6 +94,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
             : [],
         experiences: flatExperiences as any,
         educations: educations as any,
+        projects: (data as any).projects || [],
         connectionStatus: (user.connection_request_status === 'connected' ? 'connected' : (user.connection_request_status === 'pending' ? 'pending' : 'none')),
         mutualConnections: 0,
         followers_count: user.followers_count || 0,

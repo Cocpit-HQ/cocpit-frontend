@@ -13,6 +13,7 @@ export interface User {
   skills: string[];
   experiences: Experience[];
   educations: Education[];
+  projects?: Project[];
   connectionStatus: 'connected' | 'pending' | 'none';
   mutualConnections: number; // Mock count
   followers_count?: number;

@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProjectMediaModal } from "./ProjectMediaModal";
+import { getProfileSkills } from "@/services/api/profile";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface AddProjectFormProps {
   onCancel?: () => void;
@@ -33,21 +35,7 @@ const months = [
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 50 }, (_, i) => (currentYear - i).toString());
 
-const sampleSkills = [
-  "Photoshop (software)",
-  "Photoshop",
-  "Figma",
-  "Product management",
-  "Illustrator",
-  "Adobe XD",
-  "Adobe After Effects",
-  "UI/UX Design",
-  "Project Management",
-  "Brand Design",
-  "React",
-  "TypeScript",
-  "Marketing Strategy",
-];
+
 
 export default function AddProjectForm({
   onCancel,
@@ -70,7 +58,10 @@ export default function AddProjectForm({
   const [skills, setSkills] = useState<string[]>(initialData?.skills || []);
   const [skillInput, setSkillInput] = useState("");
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+  const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
   const skillWrapperRef = useRef<HTMLDivElement>(null);
+  
+  const debouncedSkillInput = useDebounce(skillInput, 300);
 
   // Media state
   const [mediaList, setMediaList] = useState<ProjectMedia[]>(initialData?.media || []);
@@ -97,13 +88,26 @@ export default function AddProjectForm({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filter skill suggestions
+  // Fetch skill suggestions
+  useEffect(() => {
+    async function fetchSkills() {
+      if (!debouncedSkillInput.trim()) {
+        setSuggestedSkills([]);
+        return;
+      }
+      try {
+        const response = await getProfileSkills({ q: debouncedSkillInput.trim(), limit: 10 });
+        setSuggestedSkills(response.data.items.map((item) => item.name));
+      } catch (err) {
+        console.error("Error fetching skills", err);
+      }
+    }
+    fetchSkills();
+  }, [debouncedSkillInput]);
+
   const filteredSkills = useMemo(() => {
-    const query = skillInput.trim().toLowerCase();
-    return sampleSkills.filter(
-      (s) => !skills.includes(s) && s.toLowerCase().includes(query)
-    );
-  }, [skillInput, skills]);
+    return suggestedSkills.filter((s) => !skills.includes(s));
+  }, [suggestedSkills, skills]);
 
   const addSkill = (skill: string) => {
     if (!skill.trim()) return;
@@ -427,7 +431,7 @@ export default function AddProjectForm({
 
             {/* Suggestions dropdown */}
             {showSkillDropdown && (
-              <ul className="absolute z-30 left-0 right-0 top-full mt-2 bg-card border border-border rounded-[16px] shadow-xl max-h-[220px] overflow-y-auto py-2 divide-y divide-border/40 animate-in fade-in-90 duration-150">
+              <ul className="absolute z-30 left-0 right-0 top-full mt-2 bg-card border border-border rounded-[16px] shadow-xl max-h-[220px] overflow-y-auto py-2 animate-in fade-in-90 duration-150">
                 {filteredSkills.length > 0 ? (
                   filteredSkills.map((s) => (
                     <li

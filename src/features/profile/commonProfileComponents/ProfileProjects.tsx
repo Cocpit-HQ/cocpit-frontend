@@ -23,6 +23,10 @@ export function ProfileProjects({
 }: ProfileProjectsProps) {
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
 
+  if (!projects?.length && !isOwnProfile) {
+    return null;
+  }
+
   return (
     <div
       id="projects-section"

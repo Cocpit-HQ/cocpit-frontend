@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { Project } from "@/types/entities";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { ProjectSkillsModal } from "./ProjectSkillsModal";
 
 interface EditableProjectItemProps {
   project: Project;
@@ -19,6 +20,7 @@ export function EditableProjectItem({
   onMediaClick,
 }: EditableProjectItemProps) {
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const isLongDescription = project.details && project.details.length > 160;
 
   const displayDescription = useMemo(() => {
@@ -122,7 +124,19 @@ export function EditableProjectItem({
             {project.skills && project.skills.length > 0 && (
               <div className="flex items-center gap-[6px] text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] text-foreground py-[2px]">
                 <Icon icon="iconoir:light-bulb-on" className="w-[15px] h-[15px] text-black dark:text-white flex-shrink-0" />
-                <span className="break-words">{project.skills.join(", ")}</span>
+                <span className="flex flex-wrap items-center gap-[12px] break-words font-medium text-black">
+                  {project.skills.slice(0, 2).map((skill, idx) => (
+                    <span key={idx}>{skill}</span>
+                  ))}
+                  {project.skills.length > 2 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setIsSkillsModalOpen(true); }}
+                      className="hover:underline cursor-pointer"
+                    >
+                      +{project.skills.length - 2} more
+                    </button>
+                  )}
+                </span>
               </div>
             )}
 
@@ -197,6 +211,13 @@ export function EditableProjectItem({
           )}
         </div>
       </div>
+
+      <ProjectSkillsModal 
+        isOpen={isSkillsModalOpen} 
+        onClose={() => setIsSkillsModalOpen(false)} 
+        projectTitle={project.title} 
+        skills={project.skills || []} 
+      />
     </div>
   );
 }
