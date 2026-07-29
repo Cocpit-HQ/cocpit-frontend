@@ -45,11 +45,13 @@ export default function MySubscriptionsList() {
         </p>
       </div>
       {channels.length === 0 ? (
-        <div className="py-10 flex flex-col items-center justify-center gap-3 text-center">
-          <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#121B2B] flex items-center justify-center">
-            <Icon icon="solar:bell-linear" className="w-5 h-5 text-gray-400" />
-          </div>
-          <p className="text-gray-400 text-xs font-['Poppins']">You haven't subscribed to any channels yet.</p>
+        <div className="flex flex-col items-center justify-center gap-[8px] text-center max-w-[320px] mx-auto mt-[36px] mb-[358px]">
+          <p className="text-[#000000] dark:text-white text-[16px] leading-[24px] font-medium font-['Poppins'] max-w-[243px] mx-auto text-center">
+            You haven't subscribed to any channels yet
+          </p>
+          <p className="text-[#6B7280] text-[12px] leading-[16px] font-normal font-['Poppins'] max-w-[277px] mx-auto text-center">
+            Discover expert-led communities, career trajectories, and industry hubs tailored to your professional growth.
+          </p>
         </div>
       ) : (
         <div className="w-full flex flex-col gap-4">

@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { X } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { useCompanyOnboardingStore } from '../../store/company-onboarding.store';
-import { INDUSTRY_OPTIONS } from '../../constants/onboarding.constants';
+import { INDUSTRY_OPTIONS, INSTITUTION_INDUSTRY_OPTIONS } from '../../constants/onboarding.constants';
 import { CocpitProfileUpload } from '@/shared/commonComponents/Cocpitprofileupload';
 
 const Stage1Identity = React.memo(function Stage1Identity() {
@@ -84,7 +84,7 @@ const Stage1Identity = React.memo(function Stage1Identity() {
             <label className={`w-[492px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] flex items-center transition-colors ${
               showValidationErrors && !organizationName.trim() ? 'text-[#EF4444] dark:text-[#F87171]' : 'text-black dark:text-[#A1A8B3]'
             }`}>
-              Organization Name *
+              {organizationType === 'INSTITUTION' ? 'Institution Name *' : 'Company Name *'}
             </label>
           </div>
           <input
@@ -123,22 +123,23 @@ const Stage1Identity = React.memo(function Stage1Identity() {
         </div>
 
         {/* Card 3 - Industry Selection */}
-        {organizationType !== 'INSTITUTION' && (
-          <div className="w-[540px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
-            <div className="w-[492px] h-[20px] flex flex-col justify-center flex-none">
-              <label className="w-[492px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">
-                Industry Selection
-              </label>
-            </div>
-            <div ref={dropdownRef} className="w-[492px] h-[54px] relative flex-none">
-              {/* Custom Trigger */}
-              <div 
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full h-full px-6 rounded-[24px] border border-[#E0E0E7] dark:border-[#1C2840] focus:outline-none hover:border-blue-500 dark:hover:border-[#82B8FF] font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors cursor-pointer flex items-center justify-between select-none"
-              >
-                <span className={industry ? "text-black dark:text-[#FFFFFF]" : "text-[#6B7280] dark:text-[#A1A8B3]"}>
-                  {industry ? INDUSTRY_OPTIONS.find(opt => opt.value === industry)?.label : "Select Industry"}
-                </span>
+        <div className="w-[540px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
+          <div className="w-[492px] h-[20px] flex flex-col justify-center flex-none">
+            <label className="w-[492px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">
+              Industry selection
+            </label>
+          </div>
+          <div ref={dropdownRef} className="w-[492px] h-[54px] relative flex-none">
+            {/* Custom Trigger */}
+            <div 
+              onClick={() => setIsOpen(!isOpen)}
+              className="w-full h-full px-6 rounded-[24px] border border-[#E0E0E7] dark:border-[#1C2840] focus:outline-none hover:border-blue-500 dark:hover:border-[#82B8FF] font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors cursor-pointer flex items-center justify-between select-none"
+            >
+              <span className={industry ? "text-black dark:text-[#FFFFFF]" : "text-[#6B7280] dark:text-[#A1A8B3]"}>
+                {industry 
+                  ? (organizationType === 'INSTITUTION' ? INSTITUTION_INDUSTRY_OPTIONS : INDUSTRY_OPTIONS).find(opt => opt.value === industry)?.label 
+                  : "Select Industry"}
+              </span>
                 <div className="flex items-center justify-center w-6 h-6">
                   <svg 
                     className={`w-4 h-4 text-black dark:text-[#FFFFFF] transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`} 
@@ -164,7 +165,7 @@ const Stage1Identity = React.memo(function Stage1Identity() {
                     className="absolute top-[60px] left-0 w-full bg-white dark:bg-[#161D2E] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_4px_20px_rgba(0,0,0,0.08)] rounded-[16px] py-2 z-[9999] max-h-[220px] overflow-y-auto no-scrollbar"
                     style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                   >
-                    {INDUSTRY_OPTIONS.map((opt) => (
+                    {(organizationType === 'INSTITUTION' ? INSTITUTION_INDUSTRY_OPTIONS : INDUSTRY_OPTIONS).map((opt) => (
                       <div
                         key={opt.value}
                         onClick={() => {
@@ -181,7 +182,6 @@ const Stage1Identity = React.memo(function Stage1Identity() {
               )}
             </div>
           </div>
-        )}
       </div>
 
       {/* Right: Asset Uploads */}
@@ -228,12 +228,14 @@ const Stage1Identity = React.memo(function Stage1Identity() {
         {/* Frame 2608500 - Texts Block */}
         <div className="w-[380px] h-[56px] flex flex-col items-center justify-start gap-2 flex-none">
           {/* Organization Identity Assets */}
-          <span className="w-[205px] h-[20px] font-poppins font-semibold text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#FFFFFF] text-center flex items-center justify-center flex-none">
-            Organization Identity Assets
+          <span className="w-full whitespace-nowrap h-[20px] font-poppins font-semibold text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#FFFFFF] text-center flex items-center justify-center flex-none">
+            {organizationType === 'INSTITUTION' ? 'Institution Identity Assets' : 'Company Identity Assets'}
           </span>
           {/* Description */}
-          <span className="w-[336px] h-[16px] font-poppins font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#A1A8B3] text-center flex items-center justify-center flex-none">
-            Upload your official logo for verification.
+          <span className="w-full whitespace-nowrap h-[16px] font-poppins font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#A1A8B3] text-center flex items-center justify-center flex-none">
+            {organizationType === 'INSTITUTION' 
+              ? 'Upload your official logo to represent your business.' 
+              : 'Upload your official logo for verification.'}
           </span>
         </div>
 

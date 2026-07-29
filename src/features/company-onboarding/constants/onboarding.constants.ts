@@ -14,6 +14,14 @@ export const INDUSTRY_OPTIONS = [
   { label: 'Manufacturing', value: 'manufacturing' },
 ];
 
+export const INSTITUTION_INDUSTRY_OPTIONS = [
+  { label: 'School', value: 'school' },
+  { label: 'College', value: 'college' },
+  { label: 'University', value: 'university' },
+  { label: 'Coaching', value: 'coaching' },
+  { label: 'Tuition', value: 'tuition' },
+];
+
 export const COMPANY_SIZE_OPTIONS = [
   { label: '1–10 members', value: '1-10' },
   { label: '11–50 members', value: '11-50' },

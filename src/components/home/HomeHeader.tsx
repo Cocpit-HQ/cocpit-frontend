@@ -215,7 +215,7 @@ export const HomeHeader = () => {
                     setSearchResults(users);
                     setHashtagResults([]);
                 }
-                setActiveIndex(0);
+                setActiveIndex(-1);
             } catch (error: unknown) {
                 if (!(error instanceof DOMException && error.name === 'AbortError')) {
                     console.error('Error fetching search results:', error);
@@ -429,7 +429,7 @@ export const HomeHeader = () => {
 
                             {/* Search Dropdown */}
                             {isSearchFocused && searchQuery && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-y-auto max-h-[320px] z-50 scrollbar-hide">
                                     {hashtagResults.length > 0 && (
                                         <>
                                             <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
@@ -473,9 +473,6 @@ export const HomeHeader = () => {
 
                                     {searchResults.length > 0 && (
                                         <>
-                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
-                                                People & Organizations
-                                            </div>
                                             {searchResults.map((user, idx) => {
                                                 const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
                                                 const hasSeeMore = hashtagResults.length > 5;
@@ -492,9 +489,9 @@ export const HomeHeader = () => {
                                                         }}
                                                     >
                                                         {user.avatar || user.avatar_url ? (
-                                                            <img src={(user.avatar || user.avatar_url)!} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                            <img src={(user.avatar || user.avatar_url)!} alt={user.full_name} className={`w-10 h-10 object-cover flex-shrink-0 ${user.type === 'COMPANY' ? 'rounded-md' : 'rounded-full'}`} />
                                                         ) : user.type === 'COMPANY' ? (
-                                                            <img src="/assets/company-placeholder.png" alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                            <img src="/assets/company-placeholder.png" alt={user.full_name} className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
                                                         ) : (
                                                             <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] font-light text-xl flex items-center justify-center font-[family-name:var(--font-poppins)] flex-shrink-0 select-none">
                                                                 {(user.full_name || user.name || "C").charAt(0).toUpperCase()}
@@ -535,8 +532,8 @@ export const HomeHeader = () => {
                                     className="absolute top-full left-0 mt-2 notification-popover-custom border rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
                                     style={{
                                         boxSizing: 'border-box',
-                                        width: '421px',
-                                        height: '410px',
+                                        width: '100%',
+                                        maxHeight: '410px',
                                         gap: '16px',
                                     }}
                                 >
@@ -602,7 +599,7 @@ export const HomeHeader = () => {
                                                                     alignItems: 'center',
                                                                     padding: '0px',
                                                                     gap: '8px',
-                                                                    width: '389px',
+                                                                    width: '100%',
                                                                     height: '40px',
                                                                     flex: 'none',
                                                                     order: 0,
@@ -610,7 +607,7 @@ export const HomeHeader = () => {
                                                                 }}
                                                             >
                                                                 <div
-                                                                    className="relative rounded-full bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm flex items-center justify-center font-['Poppins'] select-none shrink-0 overflow-hidden"
+                                                                    className={`relative bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm flex items-center justify-center font-['Poppins'] select-none shrink-0 overflow-hidden ${item.value.type === 'COMPANY' ? 'rounded-md' : 'rounded-full'}`}
                                                                     style={{
                                                                         width: '40px',
                                                                         height: '40px',

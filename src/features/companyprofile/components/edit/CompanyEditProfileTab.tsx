@@ -46,9 +46,24 @@ const INDUSTRY_OPTIONS = [
   "Manufacturing"
 ];
 
-const normalizeIndustry = (val?: string): string => {
-  if (!val) return "Information Technology";
+const INSTITUTION_INDUSTRY_OPTIONS = [
+  "School",
+  "College",
+  "University",
+  "Coaching",
+  "Tuition"
+];
+
+const normalizeIndustry = (val: string | undefined, isInst: boolean): string => {
+  if (!val) return isInst ? "School" : "Information Technology";
   const lower = val.toLowerCase().trim();
+  
+  if (isInst) {
+    const matchedInst = INSTITUTION_INDUSTRY_OPTIONS.find(opt => opt.toLowerCase() === lower);
+    if (matchedInst) return matchedInst;
+    return val;
+  }
+  
   if (lower === "manufacturing") return "Manufacturing";
   if (lower === "information technology" || lower === "information_technology" || lower === "it" || lower === "technology") return "Information Technology";
   if (lower === "software & saas" || lower === "software_saas" || lower.includes("software")) return "Software & SaaS";
@@ -116,6 +131,8 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   const { profileDraft, setProfileDraft, clearProfileDraft, hydrateProfileDraft } = useCompanyEditStore();
   const formData = profileDraft;
   const keyOfferings = profileDraft.keyOfferings;
+
+  const isInstitution = (profileData?.org || profileData)?.entity_type === "INSTITUTION" || (profileData?.org || profileData)?.entityType === "INSTITUTION";
 
   const [initialData, setInitialData] = useState({
     name: "",
@@ -196,9 +213,10 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
   useEffect(() => {
     if (profileData) {
       const org = profileData.org || profileData;
+      const isInst = org.entity_type === "INSTITUTION" || org.entityType === "INSTITUTION";
       const newForm = {
         name: org.name || "",
-        industry: normalizeIndustry(org.industry),
+        industry: normalizeIndustry(org.industry, isInst),
         foundedYear: org.established_year?.toString() || org.founded?.toString() || "",
         size: normalizeCompanySize(org.size || org.employeeCount),
         website: org.website || org.websiteUrl || "",
@@ -331,7 +349,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         {/* Name */}
         <div className="flex flex-col gap-2">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Organization name *
+            {isInstitution ? "Institution name *" : "Company name *"}
           </label>
           <input
             type="text"
@@ -351,11 +369,11 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           <div className="relative w-full h-11">
             <select
               name="industry"
-              value={normalizeIndustry(formData.industry)}
+              value={normalizeIndustry(formData.industry, isInstitution)}
               onChange={handleChange}
               className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
             >
-              {INDUSTRY_OPTIONS.map((opt) => (
+              {(isInstitution ? INSTITUTION_INDUSTRY_OPTIONS : INDUSTRY_OPTIONS).map((opt) => (
                 <option key={opt} value={opt} className="dark:bg-[#0D1117] dark:text-white">
                   {opt}
                 </option>
@@ -385,7 +403,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         {/* Organization Size */}
         <div className="flex flex-col gap-2">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Organization size
+            {isInstitution ? "Institution size" : "Company size"}
           </label>
           <div className="relative w-full h-11">
             <select

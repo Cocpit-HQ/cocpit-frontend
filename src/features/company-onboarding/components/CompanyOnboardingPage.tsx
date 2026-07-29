@@ -24,6 +24,10 @@ export function CompanyOnboardingPage() {
   const setOrganizationType = useCompanyOnboardingStore(s => s.setOrganizationType);
   const setOrgId = useCompanyOnboardingStore(s => s.setOrgId);
 
+  // Always reset the store when entering the onboarding flow for a new session
+  React.useEffect(() => {
+    resetStore();
+  }, [resetStore]);
   
   // Store values needed for validation
   const organizationName = useCompanyOnboardingStore(s => s.organizationName);
@@ -129,7 +133,7 @@ export function CompanyOnboardingPage() {
     isEmailVerified, isPhoneVerified, goNext, updateField, foundedYear
   ]);
 
-  const [hasPublishError, setHasPublishError] = useState(true);
+  const [hasPublishError, setHasPublishError] = useState(false);
 
   const handleCancel = useCallback(() => {
     resetStore();

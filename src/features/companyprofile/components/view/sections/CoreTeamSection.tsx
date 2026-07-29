@@ -178,6 +178,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
           width: "452px",
           height: "168px",
           padding: "16px",
+          gap: "16px",
           background: "#1A73E8",
           borderRadius: "16px",
         }}
@@ -260,8 +261,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
             width: "420px",
             height: "40px",
             padding: "8px 0px",
-            borderRadius: "9999px",
-            border: "1px solid #EFF4FF",
+            borderRadius: "24px",
           }}
           className="flex flex-row justify-center items-center flex-none bg-white rounded-full transition-colors hover:bg-blue-50 active:bg-blue-100 max-md:!w-full max-md:!h-auto max-md:!py-2"
         >

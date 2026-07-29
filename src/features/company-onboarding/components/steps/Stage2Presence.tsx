@@ -39,6 +39,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
   const showValidationErrors = useCompanyOnboardingStore(s => s.showValidationErrors);
   const updateField = useCompanyOnboardingStore(s => s.updateField);
   const orgId = useCompanyOnboardingStore(s => s.orgId);
+  const organizationType = useCompanyOnboardingStore(s => s.organizationType);
 
   // Dynamic Countries
   const [countryOptions, setCountryOptions] = useState<{ label: string, value: string }[]>([]);
@@ -622,7 +623,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
           <div className="w-[460px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
             <div className="w-[412px] h-[20px] flex flex-col justify-center flex-none">
               <label className="w-[412px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">
-                Organization Size
+                {organizationType === 'INSTITUTION' ? 'Institution Size' : 'Company Size'}
               </label>
             </div>
             <div ref={sizeRef} className="w-[412px] h-[54px] relative flex-none">

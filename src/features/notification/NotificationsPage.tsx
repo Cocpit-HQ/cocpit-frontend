@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Notification } from '@/types/social'
-import { getNotifications, deleteNotifications, markAllNotificationsRead } from '@/features/notification/api'
+import { getNotifications, deleteNotifications, markAllNotificationsRead, markNotificationAsRead } from '@/features/notification/api'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -81,8 +81,25 @@ export default function NotificationsPage() {
   const handleMarkAllAsRead = async () => {
     try {
       const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
-      await markAllNotificationsRead(companyId);
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      
+      if (activeTab === 'jobs') {
+        const unreadJobs = jobs.filter(n => !n.is_read);
+        if (unreadJobs.length === 0) return;
+        
+        await Promise.all(
+          unreadJobs.map(n => markNotificationAsRead(n.notification_id, companyId))
+        );
+        
+        setNotifications(prev => prev.map(n => 
+          unreadJobs.some(uj => uj.notification_id === n.notification_id) 
+            ? { ...n, is_read: true } 
+            : n
+        ));
+      } else {
+        await markAllNotificationsRead(companyId);
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      }
+      
       window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (error) {
       console.error('Failed to mark all as read:', error);

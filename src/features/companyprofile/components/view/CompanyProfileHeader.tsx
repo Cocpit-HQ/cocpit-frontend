@@ -17,8 +17,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Link as LinkIcon, Share2 } from "lucide-react";
+import { Link as LinkIcon, Info, Ban } from "lucide-react";
 import { OrganizationStatsModal } from "./OrganizationStatsModal";
+import { ReportModal } from "@/components/shared/ReportModal";
 
 interface CompanyProfileHeaderProps {
   data: CompanyProfileData;
@@ -36,6 +37,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [statsModalTab, setStatsModalTab] = useState<"followers" | "following" | "subscribers">("followers");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const { toast } = useToast();
   const { syncFollowStatus } = useSocial();
 
@@ -226,13 +228,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent side="right" align="end" className="w-48">
-                        <DropdownMenuItem onClick={handleCopyLink} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
-                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy Profile</span>
-                          <LinkIcon className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                        <DropdownMenuItem onClick={handleCopyLink} className="flex items-center justify-between px-4 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-[24px] outline-none group transition-colors">
+                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy profile</span>
+                          <LinkIcon className="w-6 h-6 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
-                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share Profile</span>
-                          <Share2 className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                        <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-4 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-[24px] outline-none group transition-colors">
+                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
+                          <Icon icon="fluent:share-24-regular" className="w-6 h-6 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -285,23 +287,23 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="end" className="w-48">
-                    <DropdownMenuItem onClick={handleCopyLink} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
-                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy Profile</span>
-                      <LinkIcon className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                    <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-4 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-[24px] outline-none group transition-colors">
+                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
+                      <Icon icon="fluent:share-24-regular" className="w-6 h-6 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
-                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share Profile</span>
-                      <Share2 className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                    <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="flex items-center justify-between px-4 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-[24px] outline-none group transition-colors">
+                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Report profile</span>
+                      <Info className="w-6 h-6 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={handleBlockToggle} 
+                    <DropdownMenuItem
+                      onClick={handleBlockToggle}
                       disabled={blockMutation.isPending}
-                      className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/40 rounded-xl outline-none group transition-colors text-red-600 dark:text-red-400"
+                      className="flex items-center justify-between px-4 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-[24px] outline-none group transition-colors"
                     >
-                      <span className="text-sm font-medium group-focus:text-red-600">
-                        {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock Organization" : "Block Organization"}
+                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">
+                        {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock profile" : "Block profile"}
                       </span>
-                      <Icon icon="lucide:ban" className="w-4 h-4 text-red-600 dark:text-red-400 group-focus:text-red-600 transition-colors" />
+                      <Ban className="w-6 h-6 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -430,6 +432,15 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           initialTab={statsModalTab}
           orgId={orgId}
           isOwnProfile={isOwnProfile}
+        />
+      )}
+
+      {orgId && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="COMPANY"
+          targetId={orgId}
         />
       )}
     </div>

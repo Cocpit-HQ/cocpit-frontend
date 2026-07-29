@@ -72,13 +72,13 @@ export default function AboutTab({ data }: AboutTabProps) {
       <div className="grid grid-cols-2 gap-y-[16px] gap-x-[16px] w-full">
         {/* Website */}
         {websiteUrl && (
-          <div className="flex flex-col gap-[8px] py-[8px]">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Website</h3>
             <a
               href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`}
               target="_blank"
               rel="noreferrer"
-              className="font-poppins font-normal text-[16px] leading-[24px] text-[#1A73E8] dark:text-[#1A73E8] hover:underline"
+              className="font-poppins font-normal text-[16px] leading-[24px] text-[#1A73E8] dark:text-[#1A73E8] hover:underline break-all"
             >
               {websiteUrl}
             </a>
@@ -87,7 +87,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
         {/* Phone Number */}
         {phoneNumber && (
-          <div className="flex flex-col gap-[8px] py-[8px]">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Phone Number</h3>
             <a
               href={`tel:${phoneNumber}`}
@@ -100,7 +100,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
         {/* Industry */}
         {industry && (
-          <div className="flex flex-col gap-[8px] py-[8px]">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Industry</h3>
             <span className="inline-flex items-center justify-center w-fit px-[16px] py-[8px] rounded-[24px] bg-[#EFF4FF] dark:bg-zinc-800 text-[#6B7280] dark:text-zinc-300 text-[14px] leading-[16px] font-normal font-poppins">
               {industry}
@@ -110,7 +110,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
         {/* Headquarters */}
         {location && (
-          <div className="flex flex-col gap-[8px] py-[8px]">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Headquarters</h3>
             <p className="font-poppins font-normal text-[16px] leading-[24px] text-[#6B7280] dark:text-zinc-400">
               {location}
@@ -120,7 +120,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
         {/* Organization size */}
         {employeeCount && (
-          <div className="flex flex-col gap-[8px] py-[8px]">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Organization size</h3>
             <p className="font-poppins font-normal text-[16px] leading-[24px] text-[#6B7280] dark:text-zinc-400">
               {employeeCount}
@@ -130,7 +130,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
         {/* Founded */}
         {founded && (
-          <div className="flex flex-col gap-[8px] py-[8px]">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Founded</h3>
             <p className="font-poppins font-normal text-[16px] leading-[24px] text-[#6B7280] dark:text-zinc-400">
               {founded}
