@@ -26,11 +26,14 @@ import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
 import { useUIStore } from '@/store/ui.store';
 import { ReportModal } from '@/components/shared/ReportModal';
+import { PostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 
 interface PostOptionsMenuProps {
   postId: string;
   onDelete?: (id: string) => void;
   isOwnPost?: boolean;
+  /** Tri-state access; when provided, takes precedence over isOwnPost ('internal' hides the menu entirely). */
+  menuAccess?: PostMenuAccess;
   className?: string;
   onToggleVisibility?: (id: string) => void; // Keep for compatibility if needed
   postType?: string; // Need post type to check for poll
@@ -45,6 +48,7 @@ export function PostOptionsMenu({
   postId,
   onDelete,
   isOwnPost,
+  menuAccess,
   className = "",
   onToggleVisibility,
   postType,
@@ -58,10 +62,13 @@ export function PostOptionsMenu({
   const { setEditMode } = useUIStore();
   const router = useRouter();
 
-  // If not own post and no specific actions allowed, we still show the menu for Reporting
-  // if (!isOwnPost) return null; 
+  // menuAccess (tri-state) takes precedence over the legacy isOwnPost boolean when provided.
+  const effectiveIsOwnPost = menuAccess ? menuAccess === 'owner' : isOwnPost;
+  const hideMenuEntirely = menuAccess === 'internal';
 
   const isPoll = postType === 'poll';
+
+  if (hideMenuEntirely) return null;
 
   const handleToggleVisibility = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -92,7 +99,7 @@ export function PostOptionsMenu({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-card border-border">
-            {isOwnPost ? (
+            {effectiveIsOwnPost ? (
               <>
                 {!isPoll && (
                   <>

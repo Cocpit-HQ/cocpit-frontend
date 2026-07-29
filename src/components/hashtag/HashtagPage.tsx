@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useHashtagFeed } from '@/hooks/use-hashtag-feed';
 import { FeedPost } from '@/features/feed/components/FeedPost';
 import PostSkeleton from '@/components/home/PostSkeleton';
@@ -9,12 +10,16 @@ import { useInView } from '@/hooks/use-in-view';
 import { useEffect } from 'react';
 import { ArrowLeft, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 
 export default function HashtagPage() {
   const params = useParams();
   const router = useRouter();
   const tag = (params.tag as string) || "";
-  
+  const { data: session } = useSession();
+  const { userCompanies } = useActiveProfile();
+
   const { posts, hashtagMetadata, loadMorePosts, hasMore, loading } = useHashtagFeed(tag);
   
   const { ref: loadMoreRef, inView } = useInView({
@@ -76,8 +81,15 @@ export default function HashtagPage() {
                   className="transform transition-all duration-500 animate-in fade-in slide-in-from-bottom-4"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <FeedPost 
-                    {...post} 
+                  <FeedPost
+                    {...post}
+                    menuAccess={getPostMenuAccess({
+                      isCompanyPost: post.isCompanyPost,
+                      companyId: (post as any).author_org_id,
+                      createdByUserId: (post as any).createdByUserId,
+                      currentUserId: session?.user?.id,
+                      userCompanies,
+                    })}
                     priority={index < 2}
                   />
                 </div>

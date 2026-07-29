@@ -23,9 +23,10 @@ interface TeamMemberInfo {
 interface CoreTeamSectionProps {
   data: CompanyProfileData;
   isOwnProfile?: boolean;
+  canManageCompany?: boolean;
 }
 
-export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamSectionProps) {
+export default function CoreTeamSection({ data, isOwnProfile = true, canManageCompany = false }: CoreTeamSectionProps) {
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ["orgTeam", data.id],
     queryFn: () => companyProfileService.getOrgTeam(data.id),
@@ -79,7 +80,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
           </h2>
 
           {/* Frame 2609121: Manage button */}
-          {isOwnProfile && (
+          {canManageCompany && (
             <Link
               href="/team"
               style={{ height: "32px", gap: "8px" }}
@@ -256,30 +257,33 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
         </p>
 
         {/* Manage Documents Button */}
-        <button
-          style={{
-            width: "420px",
-            height: "40px",
-            padding: "8px 0px",
-            borderRadius: "24px",
-          }}
-          className="flex flex-row justify-center items-center flex-none bg-white rounded-full transition-colors hover:bg-blue-50 active:bg-blue-100 max-md:!w-full max-md:!h-auto max-md:!py-2"
-        >
-          <span
+        {canManageCompany && (
+          <button
             style={{
-              width: "163px",
-              height: "24px",
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 400,
-              fontSize: "16px",
-              lineHeight: "24px",
-              color: "#1A73E8",
+              width: "420px",
+              height: "40px",
+              padding: "8px 0px",
+              borderRadius: "9999px",
+              border: "1px solid #EFF4FF",
             }}
-            className="flex items-center justify-center text-center flex-none"
+            className="flex flex-row justify-center items-center flex-none bg-white rounded-full transition-colors hover:bg-blue-50 active:bg-blue-100 max-md:!w-full max-md:!h-auto max-md:!py-2"
           >
-            Manage Documents
-          </span>
-        </button>
+            <span
+              style={{
+                width: "163px",
+                height: "24px",
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 400,
+                fontSize: "16px",
+                lineHeight: "24px",
+                color: "#1A73E8",
+              }}
+              className="flex items-center justify-center text-center flex-none"
+            >
+              Manage Documents
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -59,7 +59,7 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
           {pendingInvites.map((invite) => {
             const displayEmail = invite.email ||
               (invite.headline?.includes('@') ? invite.headline : null) ||
-              `${invite.name.split(' ')[0].toLowerCase()}.${invite.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
+              'Email unavailable';
 
             const avatarUrl = invite.avatarUrl || (invite as any).avatar || (invite as any).avatar_url;
             const initial = invite.name ? invite.name.charAt(0).toUpperCase() : 'U';

@@ -10,6 +10,7 @@ import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopov
 import { useSocial } from '@/context/SocialContext';
 import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PostMenuAccess } from '../../utils/postMenuAccess';
 
 interface PostHeaderProps {
   id: string | number;
@@ -21,6 +22,8 @@ interface PostHeaderProps {
   visibility: string;
   isMe: boolean;
   isOwnPost?: boolean;
+  /** Tri-state access; when provided, takes precedence over isOwnPost ('internal' hides the menu entirely). */
+  menuAccess?: PostMenuAccess;
   isCompanyPost?: boolean;
   poll?: any;
   shared_post?: any;
@@ -50,12 +53,15 @@ const formatCompanyName = (name?: string): string => {
 
 export const PostHeader = ({
   id, author, authorId, authorAvatar, authorSlug, timeAgo, visibility,
-  isMe, isOwnPost, isCompanyPost, poll, shared_post, content,
+  isMe, isOwnPost, menuAccess, isCompanyPost, poll, shared_post, content,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
   onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport, onNotInterested,
   location, tags, authorRole, title, hideOptions, variant = 'default'
 }: PostHeaderProps) => {
   const [imgError, setImgError] = React.useState(false);
+  // menuAccess (tri-state) takes precedence over the legacy isOwnPost boolean when provided.
+  const effectiveIsOwnPost = menuAccess ? menuAccess === 'owner' : isOwnPost;
+  const hideMenuEntirely = menuAccess === 'internal';
   const hasValidAvatar = Boolean(authorAvatar && authorAvatar !== '/assets/pngegg.png' && !imgError);
   const initial = author ? author.charAt(0).toUpperCase() : 'U';
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
@@ -235,7 +241,7 @@ export const PostHeader = ({
             <TaggedPeoplePopover tags={tags} />
           )}
 
-          {!hideOptions && (
+          {!hideOptions && !hideMenuEntirely && (
           <div className="relative">
             <button
               ref={optionsBtnRef}
@@ -253,7 +259,7 @@ export const PostHeader = ({
                   style={{ top: optionsPos.top, right: optionsPos.right }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {!isOwnPost && (
+                  {!effectiveIsOwnPost && (
                     <>
                       <button
                         onClick={handleToggleFollowAuthor}
@@ -294,7 +300,7 @@ export const PostHeader = ({
                     </>
                   )}
 
-                  {isOwnPost && (
+                  {effectiveIsOwnPost && (
                     <div className="flex flex-col gap-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); setShowOptions(false); }}

@@ -24,13 +24,14 @@ import { ReportModal } from "@/components/shared/ReportModal";
 interface CompanyProfileHeaderProps {
   data: CompanyProfileData;
   isOwnProfile: boolean;
+  canManageCompany?: boolean;
   logoUrl?: string | null;
   coverUrl?: string | null;
   orgId?: string;
   onShareClick?: () => void;
 }
 
-export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, coverUrl, orgId, onShareClick }: CompanyProfileHeaderProps) {
+export default function CompanyProfileHeader({ data, isOwnProfile, canManageCompany = false, logoUrl, coverUrl, orgId, onShareClick }: CompanyProfileHeaderProps) {
   const params = useParams();
   const slug = params.slug as string || "nexsus-global-systems";
   
@@ -147,7 +148,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           )}
           
           {/* Cover Edit Icon */}
-          {isOwnProfile && orgId && (
+          {canManageCompany && orgId && (
             <button 
               onClick={() => setModalType("cover")}
               className="absolute bottom-4 right-4 w-8 h-8 bg-[#1A73E8] rounded-full flex items-center justify-center text-white shadow-md z-10"
@@ -169,7 +170,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
               className="object-cover rounded-[10px]"
             />
             {/* Logo Edit Icon */}
-            {isOwnProfile && orgId && (
+            {canManageCompany && orgId && (
               <button 
                 onClick={() => setModalType("logo")}
                 className="absolute bottom-[6px] right-[6px] w-8 h-8 bg-[#1A73E8] rounded-full flex items-center justify-center text-white shadow-md z-10"
@@ -180,7 +181,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           </div>
 
           {/* Action Buttons overlapping cover right edge (Only for own profile) */}
-          {isOwnProfile && (
+          {canManageCompany && (
             <div className="absolute top-[14px] right-[30px] flex gap-[10px] z-10 max-md:!hidden">
               <Link
                 href={`/organization/${slug}/edit`}
@@ -431,7 +432,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           onClose={() => setIsStatsModalOpen(false)}
           initialTab={statsModalTab}
           orgId={orgId}
-          isOwnProfile={isOwnProfile}
+          isOwnProfile={canManageCompany}
         />
       )}
 

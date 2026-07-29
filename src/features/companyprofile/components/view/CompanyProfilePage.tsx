@@ -3,6 +3,7 @@
 
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
@@ -28,6 +29,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
   });
 
   const { activeProfile } = useActiveProfile();
+  const { data: session } = useSession();
 
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
 
@@ -70,10 +72,30 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     profileResponse.viewer_permissions?.includes('*') || 
     profileResponse.viewer_permissions?.includes('MANAGE_COMPANY_DETAILS');
     
-  // They must be acting as the company AND have the edit permission to see the private view
-  const ownProfile = activeProfile?.type === "COMPANY" && 
-    activeProfile?.id === (company.company_id || company.org_id) && 
-    hasEditPermission;
+  // Any team member currently acting as this company sees the private/internal template,
+  // regardless of their specific permission level — "just viewing" is not a privileged action.
+  // Mutating action buttons are separately gated on `canManageCompany`/`canManageOwnPosts` below.
+  const ownProfile = activeProfile?.type === "COMPANY" &&
+    activeProfile?.id === (company.company_id || company.org_id);
+
+  // Full admin/owner access: any company post, plus all profile-management actions.
+  const canManageCompany = Boolean(hasEditPermission);
+
+  // A team member who authored a specific post on behalf of the company can manage
+  // that post even when not currently "acting as" the company (e.g. browsing as themselves).
+  const currentUserId = (session?.user as any)?.id;
+  const canManageOwnPosts = Boolean(
+    canManageCompany || profileResponse.viewer_permissions?.includes('CREATE_POST')
+  );
+
+  // hasEditPermission/canManageCompany can be true via `is_own_profile` (literal org creator)
+  // even when the viewer's assigned role permissions array doesn't literally contain '*'
+  // (e.g. the creator is also on a limited custom role). Downstream per-post permission
+  // checks (getPostMenuAccess) only look at the raw permissions array, so make sure that
+  // array reflects the same effective full-access signal as canManageCompany.
+  const effectiveViewerPermissions = canManageCompany
+    ? Array.from(new Set([...(profileResponse.viewer_permissions || []), '*']))
+    : (profileResponse.viewer_permissions || []);
 
   const data: CompanyProfileData = {
     id: company.company_id || company.org_id,
@@ -131,7 +153,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
       description: profileResponse.community_details.description,
       isSubscribed: profileResponse.community_details.is_subscribed || false,
       subscriberCount: profileResponse.community_details.subscriber_count || 0,
-      isOwner: profileResponse.community_details.is_owner || profileResponse.is_own_profile || false,
+      isOwner: profileResponse.community_details.is_owner || canManageCompany,
     } : undefined,
   };
 
@@ -148,6 +170,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
         <CompanyProfileHeader
           data={data}
           isOwnProfile={ownProfile}
+          canManageCompany={canManageCompany}
           logoUrl={company.logo_url}
           coverUrl={company.cover_url}
           orgId={orgId}
@@ -156,7 +179,14 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
 
         {/* Tabs and Content Section */}
         <div className="mt-4 pl-[40px] pr-0 max-md:!px-4">
-          <CompanyProfileTabs data={data} isOwnProfile={ownProfile} />
+          <CompanyProfileTabs
+            data={data}
+            isOwnProfile={ownProfile}
+            canManageCompany={canManageCompany}
+            currentUserId={currentUserId}
+            canManageOwnPosts={canManageOwnPosts}
+            viewerPermissions={effectiveViewerPermissions}
+          />
         </div>
 
       </div>

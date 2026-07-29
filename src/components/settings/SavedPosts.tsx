@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, ArrowLeft, Grid, LayoutGrid, Plus, Bookmark, Folder } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { getSavedPosts, getSavedFolders, deleteSavedFolder, renameSavedFolder } from '@/services/api/savedPost'
 import PostCard from '@/components/shared/PostCard'
 import { SavedFolder } from '@/types/entities'
@@ -11,8 +12,19 @@ import { CreateFolderModal } from './CreateFolderModal'
 import { toast } from 'sonner'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess'
 
 export function SavedPosts() {
+    const { data: session } = useSession()
+    const { userCompanies } = useActiveProfile()
+    const getMenuAccess = (post: any) => getPostMenuAccess({
+        isCompanyPost: !!post.author_org_id,
+        companyId: post.author_org_id,
+        createdByUserId: post.author_id,
+        currentUserId: session?.user?.id,
+        userCompanies,
+    })
     const [activeTab, setActiveTab] = useState<'saved' | 'collections'>('saved') // 'saved' = Unsorted, 'collections' = Folders
     const [folders, setFolders] = useState<SavedFolder[]>([])
     const [posts, setPosts] = useState<any[]>([])
@@ -220,7 +232,7 @@ export function SavedPosts() {
                                 <PostCard
                                     key={post.post_id || post.id}
                                     post={post}
-                                    isOwnPost={false}
+                                    menuAccess={getMenuAccess(post)}
                                     onDelete={() => setPosts(prev => prev.filter(p => p.id !== post.id))}
                                 />
                             ))}
@@ -301,7 +313,7 @@ export function SavedPosts() {
                                         <PostCard
                                             key={post.post_id || post.id}
                                             post={post}
-                                            isOwnPost={false}
+                                            menuAccess={getMenuAccess(post)}
                                             onDelete={() => setPosts(prev => prev.filter(p => p.id !== post.id))} // Local remove on unsave
                                         />
                                     ))}

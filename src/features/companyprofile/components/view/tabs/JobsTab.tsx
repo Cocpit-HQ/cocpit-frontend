@@ -15,10 +15,13 @@ dayjs.extend(relativeTime);
 interface JobsTabProps {
   data: CompanyProfileData;
   isOwnProfile?: boolean;
+  canManageCompany?: boolean;
+  viewerPermissions?: string[];
 }
 
-export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
+export default function JobsTab({ data, isOwnProfile = false, canManageCompany, viewerPermissions }: JobsTabProps) {
   const router = useRouter();
+  const canManageJobs = Boolean(canManageCompany || viewerPermissions?.includes('POST_JOBS'));
   const { data: jobsResponse, isLoading } = useQuery({
     queryKey: ["orgJobs", data.id],
     queryFn: () => companyProfileService.getOrgJobs(data.id, { scope: "public", limit: 10 }),
@@ -56,8 +59,8 @@ export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
         <p className="font-poppins text-sm text-gray-500 dark:text-zinc-400 text-center mb-4">
           {data.name} hasn't posted jobs yet
         </p>
-        {isOwnProfile && (
-          <button 
+        {canManageJobs && (
+          <button
             onClick={() => router.push('/jobs')}
             className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center"
           >
@@ -73,12 +76,14 @@ export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
       {isOwnProfile && (
         <div className="flex justify-between items-center w-full max-w-[960px]">
           <h2 className="text-xl font-semibold font-poppins text-black dark:text-white">Active Jobs</h2>
-          <button 
-            onClick={() => router.push('/jobs')}
-            className="text-[#1A73E8] hover:text-blue-700 font-medium font-poppins text-sm transition-colors cursor-pointer"
-          >
-            Manage jobs →
-          </button>
+          {canManageJobs && (
+            <button
+              onClick={() => router.push('/jobs')}
+              className="text-[#1A73E8] hover:text-blue-700 font-medium font-poppins text-sm transition-colors cursor-pointer"
+            >
+              Manage jobs →
+            </button>
+          )}
         </div>
       )}
       <div

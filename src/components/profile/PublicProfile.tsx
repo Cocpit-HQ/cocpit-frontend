@@ -33,6 +33,7 @@ import { initialSkills as currentUserSkills } from "@/lib/data/profile";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { getProfileStats } from "@/services/api/social";
 import { recordProfileView, getProfileViewCount } from "@/services/api/dashboard";
+import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 
 interface PublicProfileProps {
   userId: string;
@@ -42,7 +43,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading } = useSocial();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, userCompanies } = useActiveProfile();
   const isMobile = useIsMobile();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
 
@@ -223,22 +224,31 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                   </div>
                 ) : visiblePosts && visiblePosts.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4">
-                    {visiblePosts.slice(0, 4).map((post) => (
-                      isMobile ? (
+                    {visiblePosts.slice(0, 4).map((post) => {
+                      const menuAccess = getPostMenuAccess({
+                        isCompanyPost: post.isCompanyPost,
+                        companyId: (post as any).author_org_id,
+                        createdByUserId: (post as any).createdByUserId,
+                        currentUserId: session?.user?.id,
+                        userCompanies,
+                      });
+                      return isMobile ? (
                         <PostCard
                           key={post.id}
                           post={post}
+                          menuAccess={menuAccess}
                           href={`/profile/${profileSlug}/posts?focusPostId=${post.id}`}
                         />
                       ) : (
                         <FeedPost
                           key={post.id}
                           {...post}
+                          menuAccess={menuAccess}
                           initialComments={post.commentData}
                           isProfileView={true}
                         />
-                      )
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm">

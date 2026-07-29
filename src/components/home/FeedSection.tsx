@@ -8,6 +8,7 @@ import { FeedPostCardSkeleton } from '@/features/feed/components/skeletons/FeedP
 import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 import { StoryRail } from '@/features/home/components/StoryRail';
 import { SuggestedPeopleStrip } from '@/features/home/components/SuggestedPeopleStrip';
 import { FeedSortDropdown } from './FeedSortDropdown';
@@ -35,7 +36,7 @@ export const FeedSection = ({
     setActiveTab
 }: FeedSectionProps) => {
     const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading } = useFeed();
-    const { activeProfile, isCompany } = useActiveProfile();
+    const { activeProfile, isCompany, userCompanies } = useActiveProfile();
 
     const activeAccount = useMemo(() => (
         isCompany && activeProfile
@@ -124,13 +125,13 @@ export const FeedSection = ({
                                         {...post}
                                         sessionId={sessionId}
                                         initialComments={post.commentData}
-                                        isOwnPost={
-                                            post.isCompanyPost
-                                                // Company post: only the matching active company account is the owner
-                                                ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
-                                                // Personal post: only the personal account is the owner (not when acting as company)
-                                                : !isCompany && post.authorId?.toString() === currentUser?.id?.toString()
-                                        }
+                                        menuAccess={getPostMenuAccess({
+                                            isCompanyPost: post.isCompanyPost,
+                                            companyId: post.authorId,
+                                            createdByUserId: (post as any).createdByUserId,
+                                            currentUserId: currentUser?.id,
+                                            userCompanies,
+                                        })}
                                         onDelete={deletePost}
                                         onToggleVisibility={togglePostVisibility}
                                         priority={index < 4}

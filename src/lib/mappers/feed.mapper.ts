@@ -207,6 +207,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       sharedPost = {
         id: sp.post_id,
         authorId: sp.author.user_id,
+        author_org_id: sp.author.author_org_id,
+        createdByUserId: sp.author.created_by_user_id,
         author: sp.author.full_name,
         authorAvatar: sp.author.avatar_url || undefined,
         timeAgo: spShortTimeAgo,
@@ -287,6 +289,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     achievementImageTitle: backendPost.achievement_image_title || (backendPost.category_name === 'Achievement' ? 'Achievement' : undefined),
     is_community_article: backendPost.is_community_article,
     author_org_id: backendPost.author_org_id,
+    createdByUserId: backendPost.created_by_user_id,
     communityId: backendPost.community_id,
   };
 };

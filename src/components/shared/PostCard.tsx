@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { PostOptionsMenu } from '@/components/home/PostOptionsMenu';
+import { PostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 import DOMPurify from 'dompurify';
 import { usePostImpression } from '@/hooks/usePostImpression';
 import { Briefcase } from 'lucide-react';
@@ -13,10 +14,11 @@ interface PostCardProps {
     href?: string;
     onDelete?: (id: string) => void;
     isOwnPost?: boolean;
+    menuAccess?: PostMenuAccess;
     companyId?: string;
 }
 
-export default function PostCard({ post, href, onDelete, isOwnPost, companyId }: PostCardProps) {
+export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, companyId }: PostCardProps) {
     const impressionRef = usePostImpression(post.post_id || post.id);
     // Support both backend (post_id, image_url, media[]) and frontend (id, imageSrc, images[])
     const id = post.post_id || post.id;
@@ -111,6 +113,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
                 <PostOptionsMenu
                     postId={id.toString()}
                     isOwnPost={isOwnPost}
+                    menuAccess={menuAccess}
                     onDelete={onDelete}
                     className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
                     postType={post.poll ? 'poll' : (displayVideo ? 'video' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text')))}

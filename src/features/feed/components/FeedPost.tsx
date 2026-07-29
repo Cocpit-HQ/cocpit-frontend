@@ -10,6 +10,7 @@ import { FeedPostProps } from '../types';
 import { usePostInteractions } from '../hooks/use-post-interactions';
 import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
+import { getPostMenuAccess } from '../utils/postMenuAccess';
 import { trackFeedEvent, hidePost } from '@/services/api/feed';
 import { createRepost, deletePost, getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
@@ -40,8 +41,9 @@ const LikesModal = dynamic(() => import('./LikesModal').then(m => m.LikesModal),
 
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody, imageFit, forceSquareMedia, likedUsers } = props;
-  const { activeProfile, isCompany } = useActiveProfile();
+  const { activeProfile, isCompany, userCompanies } = useActiveProfile();
   const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.id;
   const router = useRouter();
   const isArticlePost = category === 'Article' || props.post_type === 'article';
   const isArticleFeedCard = isArticlePost && !props.isFullContent;
@@ -428,7 +430,13 @@ export const FeedPost = (props: FeedPostProps) => {
               timeAgo={shared_post.timeAgo || timeAgo}
               visibility="public"
               isMe={shared_post.authorId?.toString() === activeProfile?.id?.toString()}
-              isOwnPost={shared_post.authorId?.toString() === activeProfile?.id?.toString()}
+              menuAccess={getPostMenuAccess({
+                isCompanyPost: shared_post.isCompanyPost || false,
+                companyId: (shared_post as any).author_org_id,
+                createdByUserId: (shared_post as any).createdByUserId,
+                currentUserId,
+                userCompanies,
+              })}
               isCompanyPost={shared_post.isCompanyPost || false}
               location={shared_post.location}
               tags={shared_post.tags || []}

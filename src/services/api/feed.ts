@@ -72,6 +72,7 @@ export interface BackendPost {
   created_at: string;
   visibility: 'public' | 'private';
   author_id: string;
+  created_by_user_id?: string;
   author_name: string;
   author_avatar: string | null;
   author_slug?: string;
@@ -101,6 +102,8 @@ export interface BackendPost {
     created_at?: string;
     author?: {
       user_id: string;
+      author_org_id?: string;
+      created_by_user_id?: string;
       full_name: string;
       avatar_url: string | null;
       author_slug?: string;

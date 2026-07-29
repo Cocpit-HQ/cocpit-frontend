@@ -8,6 +8,7 @@ import { Post } from "@/types/entities"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess"
 import { ArrowLeft, Loader2 } from "lucide-react"
 
 interface PageProps {
@@ -25,7 +26,7 @@ export default function SinglePostPage({ params }: PageProps) {
     const [post, setPost] = useState<Post | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
-    const { isCompany, activeProfile } = useActiveProfile()
+    const { userCompanies } = useActiveProfile()
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -52,11 +53,13 @@ export default function SinglePostPage({ params }: PageProps) {
         }
     }, [id])
 
-    const isOwnPost = post
-        ? post.isCompanyPost
-            ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
-            : !isCompany && !!session?.user?.id && post.authorId?.toString() === session.user.id.toString()
-        : false
+    const menuAccess = getPostMenuAccess({
+        isCompanyPost: post?.isCompanyPost,
+        companyId: post?.author_org_id,
+        createdByUserId: post?.createdByUserId,
+        currentUserId: session?.user?.id,
+        userCompanies,
+    })
 
     return (
         <div className="min-h-screen bg-background">
@@ -94,7 +97,7 @@ export default function SinglePostPage({ params }: PageProps) {
                             <div className="w-full bg-card rounded-[24px] overflow-hidden">
                                 <FeedPost
                                     {...post}
-                                    isOwnPost={isOwnPost}
+                                    menuAccess={menuAccess}
                                     isFullContent={true}
                                     initialShowComments={showComments}
                                 />

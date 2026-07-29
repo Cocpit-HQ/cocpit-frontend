@@ -428,6 +428,7 @@ export async function getPendingInvites(
     userId: item.user_id,
     name: item.full_name || 'Unknown',
     avatarUrl: item.avatar || '/assets/pngegg.png',
+    email: item.email || undefined,
     headline: item.headline || '',
     roleId: item.role_id,
     roleName: item.role_name || '',

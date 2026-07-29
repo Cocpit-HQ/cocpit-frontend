@@ -1,4 +1,5 @@
 import { Post, Comment as CommentType, Poll } from '@/types/entities';
+import { PostMenuAccess } from './utils/postMenuAccess';
 
 export interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[];
@@ -6,6 +7,8 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   onLike?: () => void;
   onShare?: () => void;
   isOwnPost?: boolean;
+  /** Tri-state post-menu visibility; takes precedence over isOwnPost when set. */
+  menuAccess?: PostMenuAccess;
   onDelete?: (id: string) => void;
   onToggleVisibility?: (id: string) => void;
   isLiked?: boolean;

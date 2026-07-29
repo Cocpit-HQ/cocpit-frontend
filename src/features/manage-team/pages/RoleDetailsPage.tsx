@@ -303,6 +303,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
                 userId: m.id,
                 name: m.name,
                 avatarUrl: m.avatarUrl,
+                email: m.email,
                 headline: m.headline,
                 roleId: role.id,
                 roleName: role.name,

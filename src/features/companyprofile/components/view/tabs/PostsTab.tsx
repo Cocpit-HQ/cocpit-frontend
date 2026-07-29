@@ -13,15 +13,19 @@ import { useInView } from "@/hooks/use-in-view";
 import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/store/ui.store";
+import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 
 interface PostsTabProps {
   data: CompanyProfileData;
   isOwnProfile?: boolean;
+  currentUserId?: string;
+  canManageOwnPosts?: boolean;
+  viewerPermissions?: string[];
 }
 
 type TabFilter = 'Posts' | 'Reposts' | 'Private posts';
 
-export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) {
+export default function PostsTab({ data, isOwnProfile = false, currentUserId, canManageOwnPosts, viewerPermissions }: PostsTabProps) {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -69,7 +73,7 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
 
   const handleDeletePost = async (postId: string) => {
     try {
-      await apiDeletePost(postId);
+      await apiDeletePost(postId, data.id);
       toast({ title: "Post deleted successfully" });
       
       queryClient.setQueryData(["orgPosts", data.id], (oldData: any) => {
@@ -161,7 +165,13 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
     isLiked: p.isLiked || p.is_liked || false,
     is_commented: p.isCommented || p.is_commented || false,
     is_saved: p.isSaved || p.is_saved || false,
-    isOwnPost: isOwnProfile,
+    menuAccess: getPostMenuAccess({
+      isCompanyPost: true,
+      companyId: data.id,
+      createdByUserId: p.created_by_user_id,
+      currentUserId,
+      explicitPermissions: viewerPermissions,
+    }),
     visibility: p.visibility || 'public',
     poll: p.poll,
     shared_post: p.shared_post ? mapPost(p.shared_post) : undefined,
@@ -218,8 +228,8 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
           <p className="font-poppins text-sm text-gray-500 dark:text-zinc-400 text-center mb-4">
             <span className="font-semibold text-black dark:text-white">{data.name}</span> hasn't posted anything yet
           </p>
-          {isOwnProfile && (
-            <button 
+          {canManageOwnPosts && (
+            <button
               onClick={() => setActiveModal('create-post')}
               className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center"
             >

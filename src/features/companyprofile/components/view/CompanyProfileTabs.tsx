@@ -14,9 +14,13 @@ import PeopleTab from "./tabs/PeopleTab";
 interface CompanyProfileTabsProps {
   data: CompanyProfileData;
   isOwnProfile: boolean;
+  canManageCompany?: boolean;
+  currentUserId?: string;
+  canManageOwnPosts?: boolean;
+  viewerPermissions?: string[];
 }
 
-export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfileTabsProps) {
+export default function CompanyProfileTabs({ data, isOwnProfile, canManageCompany, currentUserId, canManageOwnPosts, viewerPermissions }: CompanyProfileTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -55,7 +59,7 @@ export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfil
 
       <TabPermissionGuard activeTab={activeTab}>
         <Tabs.Content value="home" className="mt-6 outline-none">
-          <HomeTab data={data} isOwnProfile={isOwnProfile} onTabChange={handleTabChange} />
+          <HomeTab data={data} isOwnProfile={isOwnProfile} canManageCompany={canManageCompany} onTabChange={handleTabChange} currentUserId={currentUserId} canManageOwnPosts={canManageOwnPosts} viewerPermissions={viewerPermissions} />
         </Tabs.Content>
 
         <Tabs.Content value="about" className="mt-6 outline-none">
@@ -63,11 +67,11 @@ export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfil
         </Tabs.Content>
 
         <Tabs.Content value="posts" className="mt-6 outline-none">
-          <PostsTab data={data} isOwnProfile={isOwnProfile} />
+          <PostsTab data={data} isOwnProfile={isOwnProfile} currentUserId={currentUserId} canManageOwnPosts={canManageOwnPosts} viewerPermissions={viewerPermissions} />
         </Tabs.Content>
 
         <Tabs.Content value="jobs" className="mt-6 outline-none">
-          <JobsTab data={data} isOwnProfile={isOwnProfile} />
+          <JobsTab data={data} isOwnProfile={isOwnProfile} canManageCompany={canManageCompany} viewerPermissions={viewerPermissions} />
         </Tabs.Content>
 
         <Tabs.Content value="people" className="mt-6 outline-none">
