@@ -348,7 +348,7 @@ export async function getThoughts(articleId: string): Promise<ChannelThought[]> 
     authorAvatarUrl: comment.avatar_url || comment.author_avatar,
     text: comment.content || comment.text,
     createdAt: comment.created_at || new Date().toISOString(),
-    authorId: comment.author_id,
+    authorId: comment.author_org_id || comment.author_id,
   }));
 }
  
@@ -370,7 +370,7 @@ export async function addThought(
     authorAvatarUrl: comment.avatar_url || authorAvatarUrl,
     text: comment.content || text,
     createdAt: comment.created_at || new Date().toISOString(),
-    authorId: comment.author_id,
+    authorId: comment.author_org_id || comment.author_id,
   };
 }
 
@@ -471,5 +471,41 @@ export async function subscribeToCommunity(communityId: string): Promise<any> {
 export async function unsubscribeFromCommunity(communityId: string): Promise<any> {
   const res = await api.delete(`/communities/${communityId}/unsubscribe`);
   return res.data;
+}
+
+// ── Article Search ─────────────────────────────────────────────────────────────
+
+export interface SearchedArticle {
+  id: string;
+  title: string;
+  excerpt: string;
+  coverImage: string | null;
+  publishedAt: string;
+  updatedAt: string;
+  channelId: string;
+  channelName: string;
+  orgId: string;
+  companyName: string;
+  logoUrl: string | null;
+}
+
+export async function searchArticles(query: string, page = 1, limit = 10): Promise<SearchedArticle[]> {
+  if (!query.trim()) return [];
+  const res = await api.get('/communities/articles/search', {
+    params: { q: query, page, limit }
+  });
+  return (res.data.data || []).map((item: any): SearchedArticle => ({
+    id: item.id,
+    title: item.title,
+    excerpt: item.excerpt || '',
+    coverImage: item.coverImage || null,
+    publishedAt: item.publishedAt,
+    updatedAt: item.updatedAt,
+    channelId: item.channelId,
+    channelName: item.channelName,
+    orgId: item.orgId,
+    companyName: item.companyName,
+    logoUrl: item.logoUrl || null,
+  }));
 }
 

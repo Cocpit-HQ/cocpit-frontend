@@ -105,6 +105,7 @@ export default function PublicChannelArticlePage() {
               articleId={articleId}
               isSubscribed={channel ? (channel.isSubscribed || false) : (article.isSubscribed || false)}
               isOwner={channel?.isOwner || false}
+              channelOrgId={channel?.orgId}
             />
           </div>
         </div>

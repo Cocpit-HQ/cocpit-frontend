@@ -11,6 +11,7 @@ interface PublicChannelThoughtsPanelProps {
   articleId: string;
   isSubscribed: boolean;
   isOwner?: boolean;
+  channelOrgId?: string;
 }
 
 const timeAgo = (iso: string) => {
@@ -24,7 +25,7 @@ const timeAgo = (iso: string) => {
   return `${days}d ago`;
 };
 
-export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, isOwner }: PublicChannelThoughtsPanelProps) {
+export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, isOwner, channelOrgId }: PublicChannelThoughtsPanelProps) {
   const { activeProfile } = useActiveProfile();
   const { thoughts, addThought, deleteThought, error } = usePublicChannelThoughts(articleId, isSubscribed);
   const [draft, setDraft] = useState('');
@@ -168,7 +169,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                       <Icon icon="ion:arrow-undo-outline" className="w-4 h-4" />
                       Reply
                     </button>
-                    {isOwner || thought.authorId === activeProfile?.id ? (
+                    {((isOwner && activeProfile?.id === channelOrgId) || thought.authorId === activeProfile?.id) ? (
                       <button
                         onClick={() => deleteThought(thought.id)}
                         className="flex items-center gap-1.5 text-[13px] text-[#EF4444] hover:opacity-80 font-medium font-['Poppins']"
@@ -217,7 +218,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                             <Icon icon="ion:arrow-undo-outline" className="w-3.5 h-3.5" />
                             Reply
                           </button>
-                          {isOwner || reply.authorId === activeProfile?.id ? (
+                          {((isOwner && activeProfile?.id === channelOrgId) || reply.authorId === activeProfile?.id) ? (
                             <button
                               onClick={() => deleteThought(reply.id)}
                               className="flex items-center gap-1 text-[12px] text-[#EF4444] hover:opacity-80 font-medium font-['Poppins']"
