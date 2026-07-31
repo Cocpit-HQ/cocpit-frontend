@@ -136,20 +136,36 @@ export const companyProfileService = {
 
   async getOrganizationFollowing(orgId: string, params?: { search?: string }): Promise<any> {
     const res = await api.get(`/organizations/${orgId}/following`, { params });
-    return res.data?.data || res.data;
+    const rawList = res.data?.data || res.data || [];
+    // Normalize both user and company items into a consistent shape
+    return rawList.map((item: any) => {
+      const isCompany = item.type === 'company' || item.entity_type === 'COMPANY' || item.entity_type === 'INSTITUTION' || !!item.org_id;
+      return {
+        ...item,
+        type: isCompany ? 'company' : 'user',
+        id: item.id || item.org_id || item.company_id || item.user_id,
+        name: item.name || item.full_name,
+        avatarUrl: item.avatarUrl || item.avatar_url || item.logo_url,
+        isFollowedBack: item.is_followed_back || false,
+      };
+    });
   },
 
   async getOrganizationFollowers(orgId: string, params?: { search?: string }): Promise<any> {
     const res = await api.get(`/organizations/${orgId}/followers`, { params });
-    // Map backend fields to frontend expected format
-    const data = res.data.map((user: any) => ({
-      ...user,
-      id: user.user_id,
-      name: user.full_name,
-      avatarUrl: user.avatar_url,
-      isFollowedBack: user.is_followed_back
-    }));
-    return data;
+    const rawList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+    // Normalize both user and company items into a consistent shape
+    return rawList.map((item: any) => {
+      const isCompany = item.type === 'company' || item.entity_type === 'COMPANY' || item.entity_type === 'INSTITUTION' || !!item.org_id;
+      return {
+        ...item,
+        type: isCompany ? 'company' : 'user',
+        id: item.id || item.org_id || item.company_id || item.user_id,
+        name: item.name || item.full_name,
+        avatarUrl: item.avatarUrl || item.avatar_url || item.logo_url,
+        isFollowedBack: item.is_followed_back || false,
+      };
+    });
   },
 
   async removeCompanyFollower(orgId: string, followerId: string): Promise<any> {

@@ -73,6 +73,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser, unblockUser, isBlocked } = useSocial();
   const { activeProfile } = useActiveProfile();
+
+  // Only admins/owners of the acting company may follow on behalf of it
+  const activeProfilePermissions: string[] = (activeProfile?.viewer_role_data?.permissions as string[]) || [];
+  const canFollow = activeProfile?.type === 'COMPANY'
+    ? (activeProfilePermissions.includes('*') || (activeProfile?.viewer_role_data?.name || '').toUpperCase() === 'ADMIN')
+    : true;
   
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
@@ -322,7 +328,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   }, [userId, session?.user?.id, user]);
 
   const isOwnProfile = !!(activeProfile?.type === 'USER' && (session?.user?.id === userId || (user && session?.user?.id === user.id)));
-  const isUserFollowing = user ? isFollowing(user.id) : false;
+  // In company mode, SocialContext's followingIds is NOT seeded from the org's following list,
+  // so we read the follow state directly from the API data to get the correct initial state.
+  const isUserFollowing = user
+    ? (activeProfile?.type === 'COMPANY' ? !!(user as any).is_following : isFollowing(user.id))
+    : false;
   const isUserBlocked = user ? isBlocked(user.id) : false;
 
   const queryClient = useQueryClient();
@@ -422,12 +432,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     <>
       <button
         onClick={handleFollowToggle}
-        disabled={isFollowLoading(user.id)}
-        className={`w-36 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-colors cursor-pointer ${
+        disabled={isFollowLoading(user.id) || !canFollow}
+        title={!canFollow ? "Only company admins/owners can follow users" : ""}
+        className={`w-36 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-colors ${
           isUserFollowing
             ? "bg-muted text-foreground hover:bg-muted/80"
             : "bg-indigo-500 dark:bg-[#818CF8] text-white hover:opacity-90"
-        } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
+        } ${(isFollowLoading(user.id) || !canFollow) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span className="text-center text-sm font-normal font-['Poppins'] leading-5">
           {isUserFollowing ? "Following" : "Follow"}

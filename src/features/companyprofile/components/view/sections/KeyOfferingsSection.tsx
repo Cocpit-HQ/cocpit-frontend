@@ -35,12 +35,7 @@ interface KeyOfferingsSectionProps {
   };
 }
 
-const DEFAULT_OFFERINGS = [
-  "May offer exposure to emerging technologies",
-  "Operates across multiple markets",
-  "Focuses on innovation and growth",
-  "Diverse project opportunities",
-];
+
 
 const OFFERING_ICONS = [
   "iconoir:rocket",
@@ -64,7 +59,8 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function KeyOfferingsSection({ keyOfferings, employeeGrowth }: KeyOfferingsSectionProps) {
-  const offerings = keyOfferings && keyOfferings.length > 0 ? keyOfferings : DEFAULT_OFFERINGS;
+  const offerings = keyOfferings || [];
+  const hasOfferings = offerings.length > 0;
 
   // --- Growth Chart Calculations ---
   const yTicks = useMemo(() => {
@@ -110,7 +106,8 @@ export default function KeyOfferingsSection({ keyOfferings, employeeGrowth }: Ke
       className="bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-4 max-md:!mx-auto"
     >
       {/* Top Section: Key Offerings */}
-      <div className="flex flex-col gap-6 w-full max-w-[920px]">
+      {hasOfferings && (
+        <div className="flex flex-col gap-6 w-full max-w-[920px]">
         <h2
           style={{
             fontFamily: "'Poppins', sans-serif",
@@ -163,6 +160,7 @@ export default function KeyOfferingsSection({ keyOfferings, employeeGrowth }: Ke
           })}
         </div>
       </div>
+      )}
 
       {/* Bottom Section: Growth Trends */}
       <div className="flex flex-col gap-6 w-full max-w-[920px]">

@@ -33,6 +33,22 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
 
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
 
+  // Derive these early (before conditional returns) so hook order is stable.
+  // company is null until profileResponse loads, so we guard with optional chaining.
+  const derivedOrgId = profileResponse?.org?.company_id || profileResponse?.org?.org_id || null;
+  const ownProfileEarly = activeProfile?.type === 'COMPANY' &&
+    activeProfile?.id === derivedOrgId;
+  const actingAsCompanyOnExternalProfile = activeProfile?.type === 'COMPANY' && !ownProfileEarly;
+
+  // Fetch the org-level relationship when acting as a company on an external org profile.
+  // This must be called before any early returns to obey the Rules of Hooks.
+  const { data: orgRelationship } = useQuery({
+    queryKey: ['orgRelationship', derivedOrgId ?? '', activeProfile?.id ?? ''],
+    queryFn: () => companyProfileService.getOrgRelationship(derivedOrgId!),
+    enabled: actingAsCompanyOnExternalProfile && !!derivedOrgId,
+    staleTime: 0,
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
@@ -80,6 +96,9 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
 
   // Full admin/owner access: any company post, plus all profile-management actions.
   const canManageCompany = Boolean(ownProfile && hasEditPermission);
+
+  // orgId and actingAsCompanyOnExternalProfile are already computed above (before early returns)
+  const orgId = derivedOrgId;
 
   // A team member who authored a specific post on behalf of the company can manage
   // that post even when not currently "acting as" the company (e.g. browsing as themselves).
@@ -142,7 +161,10 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
       isLiked: p.is_liked || p.isLiked || false,
     })) : [],
     entityType: isEdu ? "INSTITUTION" : "COMPANY",
-    isFollowing: profileResponse.relationship?.is_following || false,
+    // When acting as a company on an external org profile, override with the org-level follow state
+    isFollowing: actingAsCompanyOnExternalProfile && orgRelationship !== undefined
+      ? orgRelationship.isFollowing
+      : (profileResponse.relationship?.is_following || false),
     isSubscribed: profileResponse.relationship?.is_subscribed || false,
     isBlocked: profileResponse.relationship?.is_blocked || false,
     employeeGrowth: profileResponse.relevance?.employee_growth || profileResponse.employee_growth || undefined,
@@ -157,7 +179,6 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     } : undefined,
   };
 
-  const orgId = company.company_id || company.org_id;
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 font-poppins pb-20">

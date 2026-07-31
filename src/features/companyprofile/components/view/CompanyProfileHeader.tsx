@@ -9,6 +9,7 @@ import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
 import { Icon } from "@iconify/react";
 import { useSocial } from "@/context/SocialContext";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { EditAvatarModal, EditCoverModal } from "@/shared/commonComponents/Cocpitprofileupload";
 import {
   DropdownMenu,
@@ -31,6 +32,15 @@ interface CompanyProfileHeaderProps {
   onShareClick?: () => void;
 }
 
+const formatIndustryType = (industry?: string | null) => {
+  if (!industry) return '';
+  return industry
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 export default function CompanyProfileHeader({ data, isOwnProfile, canManageCompany = false, logoUrl, coverUrl, orgId, onShareClick }: CompanyProfileHeaderProps) {
   const params = useParams();
   const slug = params.slug as string || "nexsus-global-systems";
@@ -41,6 +51,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const { toast } = useToast();
   const { syncFollowStatus } = useSocial();
+  const { activeProfile } = useActiveProfile();
+
+  // If viewing as a company, only admins/owners of that company can follow/unfollow
+  const activeProfilePermissions: string[] = (activeProfile?.viewer_role_data?.permissions as string[]) || [];
+  const activeIsOwner = activeProfilePermissions.includes('*');
+  const activeIsAdmin = (activeProfile?.viewer_role_data?.name || '').toUpperCase() === 'ADMIN';
+  const actingCompanyCanFollow = activeProfile?.type !== 'COMPANY' || activeIsOwner || activeIsAdmin;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -56,9 +73,19 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
   const queryClient = useQueryClient();
 
   const followMutation = useMutation({
-    mutationFn: () => data.isFollowing 
-      ? companyProfileService.unfollowOrganization(orgId!)
-      : companyProfileService.followOrganization(orgId!),
+    mutationFn: () => {
+      const actingAsCompany = activeProfile?.type === 'COMPANY' && activeProfile.id;
+      if (actingAsCompany) {
+        // Company following/unfollowing another org — use org-level endpoints
+        return data.isFollowing
+          ? companyProfileService.organizationUnfollowOrganization(activeProfile.id, orgId!)
+          : companyProfileService.organizationFollowOrganization(activeProfile.id, orgId!);
+      }
+      // Regular user following/unfollowing an org
+      return data.isFollowing
+        ? companyProfileService.unfollowOrganization(orgId!)
+        : companyProfileService.followOrganization(orgId!);
+    },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["companyProfile", slug] });
       const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
@@ -92,6 +119,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
         queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
         queryClient.invalidateQueries({ queryKey: ["profileStats"] });
         queryClient.invalidateQueries({ queryKey: ["following"] });
+      }
+      // If acting as company, also refresh the acting company's following list and the relationship
+      if (activeProfile?.type === 'COMPANY' && activeProfile.id) {
+        queryClient.invalidateQueries({ queryKey: ["org_following", activeProfile.id] });
+        queryClient.invalidateQueries({ queryKey: ["org_followers", orgId] });
+        // Invalidate the relationship so the follow button state re-fetches correctly
+        queryClient.invalidateQueries({ queryKey: ["orgRelationship", orgId, activeProfile.id] });
       }
     }
   });
@@ -251,7 +285,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             
             {/* Meta Info (Frame 2609071) */}
             <div className="flex flex-wrap items-center gap-[8px] w-full md:w-[608.4px] text-[12px] text-[#6B7280] dark:text-zinc-400">
-              <span>{data.industry}</span>
+              <span>{formatIndustryType(data.industry)}</span>
               <span className="w-[2px] h-[2px] bg-[#6B7280] dark:bg-zinc-600 rounded-full" />
               <span>{data.location}</span>
               <span className="w-[2px] h-[2px] bg-[#6B7280] dark:bg-zinc-600 rounded-full" />
@@ -270,8 +304,9 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
               <div className="flex gap-[10px] pt-2 items-center">
                 <button 
                   onClick={() => followMutation.mutate()}
-                  disabled={followMutation.isPending || !orgId}
-                  className={`h-[36px] w-[140px] ${data.isFollowing ? 'bg-transparent text-[#6B7280] border border-[#6B7280]' : 'bg-[#1A73E8] text-white'} font-normal text-[14px] leading-[20px] rounded-[24px] hover:opacity-80 transition-colors shadow-sm flex items-center justify-center`}
+                  disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
+                  title={!actingCompanyCanFollow ? "Only company admins/owners can follow on behalf of the company" : ""}
+                  className={`h-[36px] w-[140px] ${data.isFollowing ? 'bg-transparent text-[#6B7280] border border-[#6B7280]' : 'bg-[#1A73E8] text-white'} font-normal text-[14px] leading-[20px] rounded-[24px] hover:opacity-80 transition-colors shadow-sm flex items-center justify-center ${!actingCompanyCanFollow ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
                 </button>

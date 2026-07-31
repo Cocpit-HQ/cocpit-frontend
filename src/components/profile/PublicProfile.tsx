@@ -97,6 +97,12 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   // Use account_name (username) for profile URLs, fall back to userId
   const profileSlug = user?.account_name || userId;
 
+  // Only admins/owners of the acting company may follow on behalf of it
+  const activeProfilePermissions: string[] = (activeProfile?.viewer_role_data?.permissions as string[]) || [];
+  const canFollow = activeProfile?.type === 'COMPANY'
+    ? (activeProfilePermissions.includes('*') || (activeProfile?.viewer_role_data?.name || '').toUpperCase() === 'ADMIN')
+    : true;
+
   const handleFollowToggle = () => {
     if (!user) return;
     if (isUserFollowing) {
@@ -156,6 +162,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
               onFollowToggle={handleFollowToggle}
               onMessage={handleMessage}
               onAvatarClick={() => setIsViewAvatarOpen(true)}
+              canFollow={canFollow}
             />
 
             <ProfileStats

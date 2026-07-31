@@ -32,7 +32,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
     queryFn: () => companyProfileService.getOrgTeam(data.id),
   });
 
-  const teamMembers = teamData?.data || data.coreTeam;
+  const teamMembers = (teamData?.data || data.coreTeam)?.slice(0, 4);
 
   // Don't render the section at all on public view (Global Company Profile)
   if (!isOwnProfile) {
@@ -114,10 +114,11 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
             </div>
           ) : teamMembers && teamMembers.length > 0 ? (
             teamMembers.map((member: TeamMemberInfo) => (
-              <div
+              <Link
+                href={`/profile/${member.user_id || member.id}`}
                 key={member.id || member.user_id || member.name}
                 style={{ width: "90px", height: "84px", gap: "8px" }}
-                className="flex flex-col items-center flex-none max-md:!shrink-0"
+                className="flex flex-col items-center flex-none max-md:!shrink-0 cursor-pointer hover:opacity-80 transition-opacity no-underline"
               >
                 {/* Ellipse 24 */}
                 <div
@@ -163,7 +164,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
                     {member.role || member.title || "Core Team"}
                   </span>
                 </div>
-              </div>
+              </Link>
             ))
           ) : (
             <div className="flex items-center justify-center w-full h-full text-zinc-500 dark:text-zinc-400 text-sm ml-[25px]">

@@ -26,6 +26,7 @@ interface ProfileHeaderProps {
     onFollowToggle: () => void;
     onMessage: () => void;
     onAvatarClick: () => void;
+    canFollow?: boolean;
 }
 
 import {
@@ -61,6 +62,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     onFollowToggle,
     onMessage,
     onAvatarClick,
+    canFollow = true,
 }: ProfileHeaderProps) {
     const router = useRouter();
     const { blockUser } = useSocial();
@@ -153,12 +155,19 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                 </button>
                                 <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
                                 <button
-                                    onClick={onFollowToggle}
-                                    disabled={isFollowLoading}
+                                    onClick={(e) => {
+                                        if (!canFollow) {
+                                            e.preventDefault();
+                                            return;
+                                        }
+                                        onFollowToggle();
+                                    }}
+                                    disabled={isFollowLoading || !canFollow}
+                                    title={!canFollow ? "You need MANAGE_COMPANY permission to follow users as a company" : ""}
                                     className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
                                         ? "bg-muted text-foreground hover:bg-muted/80"
                                         : "bg-primary text-primary-foreground hover:opacity-90"
-                                        } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                        } ${(isFollowLoading || !canFollow) ? "opacity-50 cursor-not-allowed" : ""}`}
                                 >
                                     {isUserFollowing ? (
                                         <>
