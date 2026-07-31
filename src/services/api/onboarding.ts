@@ -37,6 +37,7 @@ export interface CompanyOption {
   name: string;
   org_id: string | null;
   logo_url: string | null;
+  established_year: number | null;
 }
 
 export interface CompanyListResponse {

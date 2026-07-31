@@ -682,6 +682,7 @@ export default function AddExperienceForm({
   const [company, setCompany] = useState(() => companyName ?? firstExp?.company_name ?? "")
   const [orgId, setOrgId] = useState<string | null>(() => firstExp?.org_id ?? null)
   const [logoUrl, setLogoUrl] = useState<string | null>(() => firstExp?.logo_url ?? null)
+  const [establishedYear, setEstablishedYear] = useState<number | null>(null)
   const [location, setLocation] = useState(() => firstExp?.location ?? "")
   const [roles, setRoles] = useState<RoleFormState[]>(() =>
     initialExperiences && initialExperiences.length > 0
@@ -733,6 +734,7 @@ export default function AddExperienceForm({
       setCompany(companyName ?? "")
       setOrgId(null)
       setLogoUrl(null)
+      setEstablishedYear(null)
       setLocation("")
       setRoles([emptyRole()])
       setInitialRoleSnapshots({})
@@ -806,9 +808,9 @@ export default function AddExperienceForm({
   const selectCompany = (opt: string | CompanyOption) => {
     companySelectedRef.current = true
     if (typeof opt === "string") {
-      setCompany(opt); setCompanySearch(opt); setOrgId(null); setLogoUrl(null)
+      setCompany(opt); setCompanySearch(opt); setOrgId(null); setLogoUrl(null); setEstablishedYear(null)
     } else {
-      setCompany(opt.name); setCompanySearch(opt.name); setOrgId(opt.org_id); setLogoUrl(opt.logo_url)
+      setCompany(opt.name); setCompanySearch(opt.name); setOrgId(opt.org_id); setLogoUrl(opt.logo_url); setEstablishedYear(opt.established_year)
     }
     setShowCompanyDropdown(false); setCompanyOptions([])
   }
@@ -901,6 +903,12 @@ export default function AddExperienceForm({
         // Future start date — amber warning only, does NOT block save
         if (dayjs(startDate).isAfter(dayjs())) {
           roleWarnings.startDate = "Start date is in the future — double-check this"
+        }
+
+        // Start date cannot predate the selected company's founding year
+        if (establishedYear && dayjs(startDate).year() < establishedYear) {
+          roleErrors.startDate = `Start date cannot be before ${company.trim()}'s founding year (${establishedYear})`
+          valid = false
         }
 
         // Auto-termination chronology guard: you can't end a role "with" a new role
@@ -1232,12 +1240,12 @@ export default function AddExperienceForm({
       <div className={acStyles.wrapper}>
         <div className={cn(acStyles.inputWrapper, showCompanyDropdown && acStyles.isOpen)} onClick={() => companyInputRef.current?.focus()}>
           <input ref={companyInputRef} type="text" className={acStyles.input} placeholder="e.g. Google" value={companySearch}
-            onChange={(e) => { setCompanySearch(e.target.value); setCompany(e.target.value); setOrgId(null) }}
+            onChange={(e) => { setCompanySearch(e.target.value); setCompany(e.target.value); setOrgId(null); setEstablishedYear(null) }}
             onFocus={handleCompanyFocus}
             onKeyDown={handleCompanyKeyDown} autoComplete="off" />
           <div className={acStyles.suffix}>
             {companyLoading ? <Loader2 className={acStyles.spinner} /> : companySearch ? (
-              <button type="button" onClick={(e) => { e.stopPropagation(); setCompanySearch(""); setCompany(""); setOrgId(null); setCompanyOptions([]); setShowCompanyDropdown(false) }} className={acStyles.clearBtn}>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setCompanySearch(""); setCompany(""); setOrgId(null); setEstablishedYear(null); setCompanyOptions([]); setShowCompanyDropdown(false) }} className={acStyles.clearBtn}>
                 <X className={acStyles.clearIcon} />
               </button>
             ) : (

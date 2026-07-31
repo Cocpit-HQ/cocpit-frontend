@@ -210,7 +210,7 @@ export async function createArticle(channelId: string, input: ArticleInput, file
   if (input.coverImage) {
     try {
       const file = await urlToFile(input.coverImage, 'cover.jpg');
-      formData.append('media', file);
+      formData.append('cover_media', file);
     } catch (e) {
       console.warn("Failed to convert coverImage to File", e);
     }
