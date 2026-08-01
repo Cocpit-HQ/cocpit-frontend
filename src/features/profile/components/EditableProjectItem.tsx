@@ -35,12 +35,28 @@ export function EditableProjectItem({
     return truncated;
   }, [project.details, isDescExpanded, isLongDescription]);
 
+  const formatDate = (month: string | undefined | null, year: string | undefined | null) => {
+    if (!month && !year) return "";
+    const dateStr = `${month || "January"} 1, ${year || new Date().getFullYear()}`;
+    const date = new Date(dateStr);
+    
+    if (isNaN(date.getTime())) {
+      return `${month ? month.slice(0, 3) : ""} ${year || ""}`.trim();
+    }
+    
+    const options: Intl.DateTimeFormatOptions = {};
+    if (month) options.month = "short";
+    if (year) options.year = "numeric";
+    
+    return date.toLocaleDateString("en-US", options);
+  };
+
   const formattedStart = useMemo(() => {
-    return `${project.start_month || ""} ${project.start_year || ""}`.trim();
+    return formatDate(project.start_month, project.start_year);
   }, [project.start_month, project.start_year]);
 
   const formattedEnd = useMemo(() => {
-    return project.is_current || !project.end_year ? "Present" : `${project.end_month || ""} ${project.end_year || ""}`.trim();
+    return project.is_current || !project.end_year ? "Present" : formatDate(project.end_month, project.end_year);
   }, [project.is_current, project.end_month, project.end_year]);
 
   const formattedTeamSize = useMemo(() => {
@@ -146,7 +162,10 @@ export function EditableProjectItem({
                 {project.media.map((item, idx) => (
                   <div
                     key={`${item.id}-${idx}`}
-                    onClick={() => onMediaClick?.(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMediaClick?.(item);
+                    }}
                     className="flex items-center gap-[6px] text-[12px] leading-[16px] font-medium font-[family-name:var(--font-poppins)] text-[#6366F1] dark:text-primary cursor-pointer hover:underline"
                   >
                     <Icon icon={getMediaIcon(item.type)} className="w-[15px] h-[15px] text-[#6366F1] dark:text-primary flex-shrink-0" />

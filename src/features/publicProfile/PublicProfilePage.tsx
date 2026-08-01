@@ -585,8 +585,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             projects={(user as any).projects || []}
             isOwnProfile={isOwnProfile}
             onMediaClick={(mediaItem) => {
-              if (mediaItem.url || mediaItem.fileUrl) {
-                window.open(mediaItem.fileUrl || mediaItem.url, "_blank");
+              let url = mediaItem.fileUrl || mediaItem.url;
+              if (url) {
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                  url = 'https://' + url;
+                }
+                window.open(url, "_blank");
               }
             }}
           />

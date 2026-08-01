@@ -33,9 +33,9 @@ const OFFERING_ICONS = [
   "iconoir:rocket",
   "iconoir:globe",
   "lucide:trending-up",
-  "lucide:sparkles",
-  "lucide:briefcase",
-  "lucide:award",
+  "lucide:folder-tree",
+  "iconoir:lightbulb",
+  "lucide:shield-check",
 ];
 
 const INDUSTRY_OPTIONS = [
@@ -231,7 +231,11 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       const newOfferings = Array.from({ length: 4 }).map((_, idx) => {
         const existing = existingOfferings[idx];
         const text = existing?.content || "";
-        const icon = existing?.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
+        
+        let icon = existing?.icon;
+        if (!icon || !AVAILABLE_ICONS.includes(icon)) {
+          icon = OFFERING_ICONS[idx % OFFERING_ICONS.length];
+        }
 
         return {
           id: String(idx),
@@ -315,7 +319,10 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       city: formData.city,
       established_year: parseInt(formData.foundedYear) || undefined,
       keyOfferings: keyOfferings.map((o, idx) => {
-        const icon = o.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
+        let icon = o.icon;
+        if (!icon || !AVAILABLE_ICONS.includes(icon)) {
+          icon = OFFERING_ICONS[idx % OFFERING_ICONS.length];
+        }
         const ICON_LABELS: Record<string, string> = {
           "iconoir:rocket": "Rocket",
           "iconoir:globe": "Globe",
@@ -542,7 +549,10 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         </label>
         <div className="flex flex-col gap-3 w-full">
           {keyOfferings.map((offering, idx) => {
-            const currentIcon = offering.icon || OFFERING_ICONS[idx % OFFERING_ICONS.length];
+            let currentIcon = offering.icon;
+            if (!currentIcon || !AVAILABLE_ICONS.includes(currentIcon)) {
+              currentIcon = OFFERING_ICONS[idx % OFFERING_ICONS.length];
+            }
             return (
               <div key={offering.id} className="w-full flex flex-row items-center gap-4 relative">
                 {/* Icon Selector */}

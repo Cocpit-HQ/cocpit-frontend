@@ -154,7 +154,7 @@ export function ProfileEmptyState({
       <div className="flex flex-col justify-center items-center p-4 gap-4 w-full md:w-[904px] h-auto md:h-[254.44px] bg-white rounded-[24px] self-stretch ">
         <div className="flex flex-col items-center p-0 gap-4 w-full md:w-[427px] h-auto md:h-[222.44px]">
           <img
-            src="/images/emptyScreenImages/emptyExp.svg"
+            src="/images/emptyScreenImages/project_empty_screen.png"
             alt="No projects yet"
             className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
           />

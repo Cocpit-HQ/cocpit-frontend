@@ -710,7 +710,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     formData.school_name.trim() !== "" &&
     formData.degree.trim() !== "" &&
     formData.startMonth !== "" &&
-    formData.startYear !== "";
+    formData.startYear !== "" &&
+    (stillStudying || (formData.endMonth !== "" && formData.endYear !== ""));
 
   return (
     <div className="relative bg-card rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">

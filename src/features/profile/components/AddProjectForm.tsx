@@ -28,8 +28,8 @@ interface AddProjectFormProps {
 }
 
 const months = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 const currentYear = new Date().getFullYear();
@@ -160,9 +160,17 @@ export default function AddProjectForm({
     return new Date(parseInt(year, 10), mIdx, 1).getTime();
   };
 
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [touchedEndDate, setTouchedEndDate] = useState(false);
+
   const endDateError = useMemo(() => {
     if (isCurrent) return null;
-    if (!endMonth || !endYear) return "End date is required when not currently working on this project";
+    if (!endMonth || !endYear) {
+      if (submitAttempted || touchedEndDate) {
+        return "End date is required when not currently working on this project";
+      }
+      return null;
+    }
     if (startMonth && startYear) {
       const sTime = buildDateVal(startMonth, startYear);
       const eTime = buildDateVal(endMonth, endYear);
@@ -171,11 +179,16 @@ export default function AddProjectForm({
       }
     }
     return null;
-  }, [isCurrent, startMonth, startYear, endMonth, endYear]);
+  }, [isCurrent, startMonth, startYear, endMonth, endYear, submitAttempted, touchedEndDate]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!title.trim() || !organization.trim() || endDateError !== null) return;
+    setSubmitAttempted(true);
+    
+    const missingEndDate = !isCurrent && (!endMonth || !endYear);
+    const hasDateLogicError = startMonth && startYear && endMonth && endYear && buildDateVal(startMonth, startYear)! >= buildDateVal(endMonth, endYear)!;
+    
+    if (!title.trim() || !organization.trim() || missingEndDate || hasDateLogicError) return;
 
     const savedProject: Project = {
       project_id: initialData?.project_id || `project-${Date.now()}`,
@@ -335,7 +348,7 @@ export default function AddProjectForm({
             <div className="space-y-2 animate-in fade-in-90 duration-200">
               <Label className={labelStyles}>End date*</Label>
               <div className="grid grid-cols-2 gap-4">
-                <Select value={endMonth} onValueChange={setEndMonth}>
+                <Select value={endMonth} onValueChange={(val) => { setEndMonth(val); setTouchedEndDate(true); }}>
                   <SelectTrigger className={cn(inputStyles, !endMonth && "text-muted-foreground", endDateError && "border-red-400")}>
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
@@ -348,7 +361,7 @@ export default function AddProjectForm({
                   </SelectContent>
                 </Select>
 
-                <Select value={endYear} onValueChange={setEndYear}>
+                <Select value={endYear} onValueChange={(val) => { setEndYear(val); setTouchedEndDate(true); }}>
                   <SelectTrigger className={cn(inputStyles, !endYear && "text-muted-foreground", endDateError && "border-red-400")}>
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
@@ -530,13 +543,16 @@ export default function AddProjectForm({
             <button
               type="button"
               onClick={() => setShowMoreDetails(!showMoreDetails)}
-              className="inline-flex items-center gap-1.5 text-[14px] font-[family-name:var(--font-poppins)] text-[#6366F1] dark:text-primary hover:underline transition-all cursor-pointer select-none font-medium"
+              className={cn(
+                "inline-flex items-center gap-1.5 text-[14px] font-[family-name:var(--font-poppins)] hover:underline transition-all cursor-pointer select-none font-medium",
+                showMoreDetails ? "text-[#6366F1] dark:text-primary" : "text-foreground"
+              )}
             >
               <span>Add more details</span>
               {showMoreDetails ? (
-                <ChevronUp className="w-4 h-4 text-[#6366F1] dark:text-primary transition-transform" />
+                <ChevronUp className="w-4 h-4 transition-transform" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-[#6366F1] dark:text-primary transition-transform" />
+                <ChevronDown className="w-4 h-4 transition-transform" />
               )}
             </button>
           </div>
