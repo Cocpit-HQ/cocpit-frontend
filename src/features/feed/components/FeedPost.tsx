@@ -33,7 +33,7 @@ const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer
 const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then(m => m.ReportModal), { ssr: false });
 const PollAnalyticsModal = dynamic(() => import('@/components/home/PollAnalyticsModal').then(m => m.PollAnalyticsModal), { ssr: false });
 const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
-const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const CreatePostModal = dynamic(() => import('@/shared/commonComponents/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 const EditPostModal = dynamic(() => import('@/shared/commonComponents/EditPostModal').then(m => m.EditPostModal), { ssr: false });
 const DeleteConfirmationModal = dynamic(() => import('@/components/shared/DeleteConfirmationModal').then(m => m.DeleteConfirmationModal), { ssr: false });

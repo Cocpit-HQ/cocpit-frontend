@@ -9,14 +9,18 @@ export interface UserMention {
     account_type?: string;
 }
 
-export const searchUsers = async (query: string): Promise<UserMention[]> => {
+export const searchUsers = async (query: string, forTagging?: boolean): Promise<UserMention[]> => {
     if (!query) return [];
-    const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
+    let url = `/users/search?q=${encodeURIComponent(query)}`;
+    if (forTagging) url += '&forTagging=true';
+    const response = await api.get(url);
     return response.data;
 };
 
-export const getSuggestedUsers = async (): Promise<UserMention[]> => {
-    const response = await api.get('/users/suggested');
+export const getSuggestedUsers = async (forTagging?: boolean): Promise<UserMention[]> => {
+    let url = '/users/suggested';
+    if (forTagging) url += '?forTagging=true';
+    const response = await api.get(url);
     return response.data;
 };
 

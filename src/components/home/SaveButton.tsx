@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { toast } from 'sonner'
-import { toggleSavePost } from '@/services/api/savedPost'
+import { toggleSavePost } from '@/features/settings/api/savedPost'
 import { cn } from '@/lib/utils'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@iconify/react'

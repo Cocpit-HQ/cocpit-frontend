@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
-export default async function OrganizationSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
-    redirect(`/organization/${slug}/dashboard?tab=settings`);
+export default async function OrganizationSettingsRoute({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  redirect(`/organization/${resolvedParams.slug}/settings/account`);
 }

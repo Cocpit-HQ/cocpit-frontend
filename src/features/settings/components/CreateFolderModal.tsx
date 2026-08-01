@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, FolderPlus, User, Plus, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createSavedFolder } from '@/services/api/savedPost'
+import { createSavedFolder, renameSavedFolder } from '@/features/settings/api/savedPost'
 import { SavedFolder } from '@/types/entities'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@iconify/react'
@@ -14,14 +14,25 @@ import { CocpitProfileUpload } from '@/shared/commonComponents/Cocpitprofileuplo
 interface CreateFolderModalProps {
     isOpen: boolean
     onClose: () => void
-    onFolderCreated: (folder: SavedFolder) => void
+    onSuccess: (folder: SavedFolder) => void
+    isEditing?: boolean
+    initialName?: string
+    initialCoverImage?: string
+    folderId?: string
 }
 
-export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFolderModalProps) {
+export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initialName = '', initialCoverImage = '', folderId }: CreateFolderModalProps) {
     const { isCompany, activeProfile } = useActiveProfile()
-    const [folderName, setFolderName] = useState('')
-    const [coverImage, setCoverImage] = useState('')
+    const [folderName, setFolderName] = useState(initialName)
+    const [coverImage, setCoverImage] = useState(initialCoverImage)
     const [isLoading, setIsLoading] = useState(false)
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setFolderName(initialName)
+            setCoverImage(initialCoverImage)
+        }
+    }, [isOpen, initialName, initialCoverImage])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -30,21 +41,23 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
         setIsLoading(true)
         try {
             const companyId = isCompany ? activeProfile?.id : undefined;
-            console.log("Creating folder with image:", { folderName, coverImage: coverImage ? "present" : "missing" });
-            const response = await createSavedFolder(folderName, companyId, coverImage)
+            let response;
+            if (isEditing && folderId) {
+                response = await renameSavedFolder(folderId, folderName, companyId, coverImage);
+            } else {
+                response = await createSavedFolder(folderName, companyId, coverImage);
+            }
             if (response.success) {
-                toast.success("Folder created")
-                onFolderCreated(response.folder)
-                setFolderName('')
-                setCoverImage('')
+                toast.success(isEditing ? "Folder updated" : "Folder created")
+                onSuccess(response.folder)
                 onClose()
             }
         } catch (error: any) {
-            console.error("Failed to create folder:", error)
+            console.error("Failed to save folder:", error)
             if (error.response?.status === 409) {
                 toast.error("Folder with this name already exists")
             } else {
-                toast.error("Failed to create folder")
+                toast.error(isEditing ? "Failed to update folder" : "Failed to create folder")
             }
         } finally {
             setIsLoading(false)
@@ -86,7 +99,7 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
                         {/* Title & Subtitle */}
                         <div className="flex flex-col items-center gap-2">
                             <h3 className="font-medium text-[18px] leading-[26px] text-foreground text-center">
-                                Collection
+                                {isEditing ? "Edit collection" : "Collection"}
                             </h3>
                             <p className="font-normal text-[12px] leading-[16px] text-muted-foreground text-center">
                                 Share this with others
@@ -109,7 +122,9 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
                                             <Plus className="w-6 h-6 text-white opacity-0 group-hover:opacity-100" />
                                         </div>
                                     </div>
-                                    <span className="font-normal text-[12px] leading-[16px] text-foreground">Add cover image</span>
+                                    <span className="font-normal text-[12px] leading-[16px] text-foreground">
+                                        {isEditing ? "Cover image" : "Add cover image"}
+                                    </span>
                                 </div>
                             }
                         />
@@ -144,7 +159,7 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
                                 >
                                     {isLoading ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : "Add"}
+                                    ) : (isEditing ? "Save" : "Add")}
                                 </button>
                             </div>
                         </form>

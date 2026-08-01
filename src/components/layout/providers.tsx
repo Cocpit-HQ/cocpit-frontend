@@ -40,7 +40,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider refetchOnWindowFocus={false}>
       <AxiosAuthSync />
       <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-        <ThemeProvider attribute="data-theme" defaultTheme="navy" enableSystem={false} themes={['light', 'dark', 'navy']}>
+        <ThemeProvider attribute="data-theme" defaultTheme="navy" enableSystem={true} themes={['light', 'dark', 'navy']}>
           <QueryClientProvider client={queryClient}>
             <ActiveProfileProvider>
               <TooltipProvider>

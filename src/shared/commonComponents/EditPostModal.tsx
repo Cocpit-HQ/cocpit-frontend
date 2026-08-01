@@ -199,6 +199,8 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
 
       if (postType === 'article') {
         updatePayload.title = articleTitle;
+      } else if (postType === 'poll') {
+        updatePayload.title = originalPost?.title;
       }
 
       await postApi.update(editPostId, updatePayload);

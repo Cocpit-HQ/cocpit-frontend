@@ -37,7 +37,7 @@ import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import type { Post } from "@/types/entities";
 import { createRepost, toggleLike, toggleSavePost, updatePost, deletePost } from "../services/profile.service";
 
-const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then(m => m.ReportModal), { ssr: false });
 
 const mergeProfilePostState = (current: Post, incoming: Post): Post => ({

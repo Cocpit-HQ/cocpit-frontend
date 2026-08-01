@@ -151,7 +151,9 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             const res = await updatePost(postId, {
                 content,
                 location: selectedLocation?.name || null,
-                media_urls: localImages
+                media_urls: localImages,
+                // Pass title to prevent overriding in case of polls
+                title: (post as any)?.post_type === 'poll' ? (post as any).title : undefined
             });
 
             // 2. Sync Tags

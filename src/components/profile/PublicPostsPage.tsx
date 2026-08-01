@@ -21,7 +21,7 @@ import {
 import { getPublicProfilePosts } from "@/services/api/public-profile"
 import { Icon } from "@iconify/react"
 import { getUserPosts } from "@/services/api/profile"
-import { toggleSavePost } from "@/services/api/savedPost"
+import { toggleSavePost } from "@/features/settings/api/savedPost"
 import { toggleLike, updatePost, deletePost } from "@/services/api/posts"
 import { mapPublicPostToPost } from "@/lib/mappers/public-profile.mapper"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 const CommentSection = dynamic(() => import('@/features/feed/components/comments/CommentSection'), { ssr: false });
-const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
 const mergePostState = (current: Post, incoming: Post): Post => ({
   ...current,

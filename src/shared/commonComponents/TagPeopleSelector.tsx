@@ -30,7 +30,7 @@ export function TagPeopleSelector({
 
     const loadInitialUsers = useCallback(async () => {
         try {
-            const suggested = await getSuggestedUsers();
+            const suggested = await getSuggestedUsers(true);
             setSearchResults(suggested);
         } catch (err) {
             console.error("Failed to load suggested users", err);
@@ -44,7 +44,7 @@ export function TagPeopleSelector({
                 return;
             }
             try {
-                const results = await searchUsers(query);
+                const results = await searchUsers(query, true);
                 setSearchResults(results);
             } catch (err) {
                 console.error("User search failed", err);

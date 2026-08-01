@@ -7,14 +7,14 @@ import { env } from "@/config/env";
 export const ROUTES = {
   // Public routes
   HOME: "/",
-  LOGIN: "/login",
+  LOGIN: "/",
   SIGNUP: "/signup",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   
   // Auth routes
   AUTH: {
-    LOGIN: "/login",
+    LOGIN: "/",
     SIGNUP: "/signup",
     FORGOT_PASSWORD: "/forgot-password",
   },

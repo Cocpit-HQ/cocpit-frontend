@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, FolderPlus, Bookmark, Check, Loader2, Folder, Plus } from 'lucide-react'
 import { SavedFolder } from '@/types/entities'
-import { getSavedFolders, toggleSavePost } from '@/services/api/savedPost'
+import { getSavedFolders, toggleSavePost } from '@/features/settings/api/savedPost'
 import { CreateFolderModal } from './CreateFolderModal'
 import { toast } from 'sonner'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
@@ -160,11 +160,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                                                         <img src={folder.cover_image} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-muted">
-                                                            {activeProfile?.avatar_url ? (
-                                                                <img src={activeProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <Icon icon="solar:folder-linear" className="w-5 h-5 text-muted-foreground" />
-                                                            )}
+                                                            <Icon icon="solar:folder-linear" className="w-5 h-5 text-muted-foreground" />
                                                         </div>
                                                     )}
                                                 </div>
@@ -201,7 +197,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                 <CreateFolderModal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
-                    onFolderCreated={handleCreateFolder}
+                    onSuccess={handleCreateFolder}
                 />
             </div>
         </AnimatePresence>

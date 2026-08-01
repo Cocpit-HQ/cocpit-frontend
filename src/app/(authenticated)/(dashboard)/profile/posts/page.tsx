@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Search, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { FeedPost } from "@/features/feed/components/FeedPost";
 import { getUserPosts } from "@/services/api/profile";
-import { getSavedPosts } from "@/services/api/savedPost";
+import { getSavedPosts } from "@/features/settings/api/savedPost";
 import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";

@@ -1,7 +1,10 @@
-"use client";
+import React from 'react';
+import { SettingsLayout } from '@/features/settings/components';
 
-import React from "react";
-
-export default function SettingsRouteLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default function SettingsRootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <SettingsLayout>{children}</SettingsLayout>;
 }

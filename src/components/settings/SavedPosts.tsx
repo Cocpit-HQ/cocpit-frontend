@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, ArrowLeft, Grid, LayoutGrid, Plus, Bookmark, Folder } from 'lucide-react'
 import { useSession } from 'next-auth/react'
-import { getSavedPosts, getSavedFolders, deleteSavedFolder, renameSavedFolder } from '@/services/api/savedPost'
+import { getSavedPosts, getSavedFolders, deleteSavedFolder, renameSavedFolder } from '@/features/settings/api/savedPost'
 import PostCard from '@/components/shared/PostCard'
 import { SavedFolder } from '@/types/entities'
 import { FolderCard } from './FolderCard'
-import { CreateFolderModal } from './CreateFolderModal'
+import { CreateFolderModal } from '@/features/settings/components/CreateFolderModal'
 import { toast } from 'sonner'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -384,7 +384,7 @@ export function SavedPosts() {
             <CreateFolderModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                onFolderCreated={(folder) => {
+                onSuccess={(folder) => {
                     setFolders([folder, ...folders])
                     toast.success("Collection created")
                 }}

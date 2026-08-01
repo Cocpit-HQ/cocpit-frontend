@@ -400,7 +400,7 @@ export const HomeHeader = () => {
         }
     };
 
-    if (pathname.includes('/article/')) {
+    if (pathname.includes('/article/') || pathname.includes('/settings')) {
         return null;
     }
  

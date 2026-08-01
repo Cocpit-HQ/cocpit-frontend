@@ -27,10 +27,10 @@ import { CocpitSelectedUserChips } from "@/shared/commonComponents/CocpitSelecte
 import { POPULAR_LOCATIONS } from "@/data/staticLocations";
 
 const DEFAULT_LOCATIONS: LocationSuggestion[] = POPULAR_LOCATIONS.map((loc, i) => ({
-  id: -(i + 1),
-  name: loc.formattedAddress,
-  latitude: String(loc.latitude),
-  longitude: String(loc.longitude)
+    id: -(i + 1),
+    name: loc.formattedAddress,
+    latitude: String(loc.latitude),
+    longitude: String(loc.longitude)
 }));
 
 interface EditPostModalProps {
@@ -151,7 +151,8 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             const res = await updatePost(postId, {
                 content,
                 location: selectedLocation?.name || null,
-                media_urls: localImages
+                media_urls: localImages,
+                title: post?.post_type === 'poll' ? (post.title ?? undefined) : undefined
             });
 
             // 2. Sync Tags
@@ -391,7 +392,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     );
 
     const renderLocationView = () => {
-        const uniqueResults = locationSearchQuery.trim() === "" 
+        const uniqueResults = locationSearchQuery.trim() === ""
             ? DEFAULT_LOCATIONS
             : locationResults.filter((loc, index, self) =>
                 index === self.findIndex((t) => t.name === loc.name)

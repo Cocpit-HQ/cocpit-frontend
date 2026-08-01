@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { ToggleSaveResponse, SavedPostsResponse } from "../../types/savedPost";
+import { ToggleSaveResponse, SavedPostsResponse } from "@/types/savedPost";
 import { SavedFolder } from "@/types/entities";
 
 // Toggle save (with optional folder)
@@ -41,9 +41,9 @@ export const getSavedFolders = async (companyId?: string): Promise<{ success: bo
     return res.data;
 };
 
-export const renameSavedFolder = async (folderId: string, name: string, companyId?: string): Promise<{ success: boolean; folder: SavedFolder }> => {
+export const renameSavedFolder = async (folderId: string, name: string, companyId?: string, coverImage?: string): Promise<{ success: boolean; folder: SavedFolder }> => {
     void companyId;
-    const res = await api.put(`/saved-folders/${folderId}`, { name });
+    const res = await api.put(`/saved-folders/${folderId}`, { name, coverImage });
     return res.data;
 };
 

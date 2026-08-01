@@ -58,7 +58,7 @@ import { ProfileSkills } from "../commonProfileComponents/ProfileSkills"
 import { useAvatarMutations, useEducationMutations, useExperienceMutations, useMyProfile, useProfileMutation, useSkillMutations, useProjectMutations } from "@/hooks/use-my-profile"
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { EditProfileModal } from "../components/EditProfileModal"
-const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
 const routes: Record<string, string> = {
   home: "/feed",

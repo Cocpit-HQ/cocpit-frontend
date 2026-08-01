@@ -1,6 +1,5 @@
-import SettingsPage from "@/components/settings/SettingsPage";
+import { redirect } from 'next/navigation';
 
 export default function SettingsRoute() {
-  return <SettingsPage />;
+  redirect('/settings/account');
 }
-

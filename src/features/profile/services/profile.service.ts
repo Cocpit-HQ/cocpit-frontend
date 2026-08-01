@@ -59,6 +59,6 @@ export {
 } from "@/services/api/social";
 
 export { deletePost, toggleLike, createRepost, updatePost } from "@/services/api/posts";
-export { toggleSavePost, getSavedPosts } from "@/services/api/savedPost";
+export { toggleSavePost, getSavedPosts } from "@/features/settings/api/savedPost";
 export { recordProfileView, getProfileViewCount } from "@/services/api/dashboard";
 export { getUserById } from "@/services/api/user";
