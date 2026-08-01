@@ -26,6 +26,12 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
   const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
+  // Sync local state with global store when it updates (e.g., when restoring from parsed resume)
+  useEffect(() => {
+    if (storeSchool) setEducationLocal(storeSchool);
+    if (storeDegree) setSpecializationLocal(storeDegree);
+  }, [storeSchool, storeDegree]);
+
   // Fetch school_names and degrees from the backend on mount
   useEffect(() => {
     let isMounted = true;

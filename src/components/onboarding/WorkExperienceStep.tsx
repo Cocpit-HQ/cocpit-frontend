@@ -46,6 +46,12 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
   const [roleOptions, setRoleOptions] = useState<string[]>(FALLBACK_ROLES);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
+  // Sync local state with global store when it updates (e.g., when restoring from parsed resume)
+  useEffect(() => {
+    if (storeCompany) setCompanyLocal(storeCompany);
+    if (storeTitle) setRoleLocal(storeTitle);
+  }, [storeCompany, storeTitle]);
+
   // Fetch live company names and titles from the backend on mount
   useEffect(() => {
     const fetchOptions = async () => {

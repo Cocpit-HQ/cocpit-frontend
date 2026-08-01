@@ -181,6 +181,8 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
     degree: '',
     companyName: '',
     jobTitle: '',
+    educationList: [],
+    workExperienceList: [],
     isInitialized: false,
   }),
 }));

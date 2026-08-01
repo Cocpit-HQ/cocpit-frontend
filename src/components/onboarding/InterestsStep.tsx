@@ -63,7 +63,7 @@ export default function InterestsStep({
 
   const toggleItem = (item: string) => {
     const isSelected = selectedItems.includes(item);
-    
+
     if (!isSelected && maxSelection && selectedItems.length >= maxSelection) {
       setShowError(true);
       return;
@@ -72,7 +72,7 @@ export default function InterestsStep({
     const next = isSelected
       ? selectedItems.filter((i) => i !== item)
       : [...selectedItems, item];
-    
+
     onChange?.(next);
     setShowError(next.length > 0 && next.length < minSelection);
   };
@@ -92,7 +92,7 @@ export default function InterestsStep({
   };
 
   // Include selected items so custom additions remain visible
-  const allKnownItems = Array.from(new Set([...initialData, ...selectedItems]));
+  const allKnownItems = Array.from(new Set([...selectedItems, ...initialData]));
 
   // Client-side filter — instant feedback while server debounce is in-flight
   const filteredItems = allKnownItems.filter((item) =>

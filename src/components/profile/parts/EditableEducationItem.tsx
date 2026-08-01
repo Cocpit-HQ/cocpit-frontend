@@ -15,23 +15,28 @@ export function EditableEducationItem({
 }: EditableEducationItemProps) {
     const [isDescExpanded, setIsDescExpanded] = React.useState(false);
 
-    const isLongDescription = education.description && education.description.length > 160;
+    const renderField = (value: string | null | undefined) => {
+        if (!value || value === "null") return "Not Specified";
+        return value;
+    };
+
+    const rawDescription = renderField(education.description);
+    const isLongDescription = rawDescription.length > 160;
 
     const displayDescription = React.useMemo(() => {
-        if (!education.description) return "";
-        if (isDescExpanded || !isLongDescription) return education.description;
+        if (isDescExpanded || !isLongDescription) return rawDescription;
 
-        const truncated = education.description.slice(0, 160);
+        const truncated = rawDescription.slice(0, 160);
         const lastSpace = truncated.lastIndexOf(" ");
         if (lastSpace > 50) {
             return truncated.slice(0, lastSpace);
         }
         return truncated;
-    }, [education.description, isDescExpanded, isLongDescription]);
+    }, [rawDescription, isDescExpanded, isLongDescription]);
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
-        const date = new Date(dateStr);
+        const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00Z`);
         return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     };
 
@@ -49,7 +54,7 @@ export function EditableEducationItem({
                     <div className="flex flex-col gap-[8px]">
                         <div className="flex justify-between items-start w-full">
                             <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
-                                {education.school_name}
+                                {renderField(education.school_name)}
                             </h3>
                             <button
                                 onClick={onEdit}
@@ -62,43 +67,39 @@ export function EditableEducationItem({
                             </button>
                         </div>
 
-                        {education.description && (
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
-                                {displayDescription}
-                                {!isDescExpanded && isLongDescription && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsDescExpanded(true);
-                                        }}
-                                        className="text-muted-foreground hover:text-primary font-semibold transition-colors cursor-pointer ml-1 inline-flex items-center"
-                                    >
-                                        ... More
-                                    </button>
-                                )}
-                                {isDescExpanded && isLongDescription && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsDescExpanded(false);
-                                        }}
-                                        className="text-primary hover:underline ml-1 font-medium cursor-pointer inline-flex items-center"
-                                    >
-                                        See less
-                                    </button>
-                                )}
-                            </p>
-                        )}
+                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
+                            {displayDescription}
+                            {!isDescExpanded && isLongDescription && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsDescExpanded(true);
+                                    }}
+                                    className="text-muted-foreground hover:text-primary font-semibold transition-colors cursor-pointer ml-1 inline-flex items-center"
+                                >
+                                    ... More
+                                </button>
+                            )}
+                            {isDescExpanded && isLongDescription && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsDescExpanded(false);
+                                    }}
+                                    className="text-primary hover:underline ml-1 font-medium cursor-pointer inline-flex items-center"
+                                >
+                                    See less
+                                </button>
+                            )}
+                        </p>
 
                         <div className="flex flex-col gap-[8px]">
                             <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                                {education.degree}
+                                {renderField(education.degree)}
                             </p>
-                            {education.location && (
-                                <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                                    {education.location}
-                                </p>
-                            )}
+                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                                {renderField(education.location)}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -107,22 +108,26 @@ export function EditableEducationItem({
             {/* Right Column: Metadata + Edit Button */}
             <div className="flex flex-row items-start justify-between md:justify-end flex-shrink-0 w-full md:w-[220px] gap-[12px] md:gap-[16px] md:ml-auto pl-[72px] md:pl-0 hidden md:flex">
                 <div className="flex flex-col items-start p-0 gap-[8px] md:w-[130px]">
-                    <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
-                        <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
-                            {formatDate(education.start_date)}
-                        </span>
-                        <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
-                            -
-                        </span>
-                        <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
-                            {education.end_date ? formatDate(education.end_date) : 'Present'}
-                        </span>
-                    </div>
-                    {education.field_of_study && (
-                        <div className="w-full break-words font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground">
-                            {education.field_of_study}
+                    {!(!education.start_date && !education.end_date) && (
+                        <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
+                            {education.start_date && (
+                                <>
+                                    <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                                        {formatDate(education.start_date)}
+                                    </span>
+                                    <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
+                                        -
+                                    </span>
+                                </>
+                            )}
+                            <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                                {education.end_date ? formatDate(education.end_date) : (education.start_date ? 'Present' : '')}
+                            </span>
                         </div>
                     )}
+                    <div className="w-full break-words font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground">
+                        {renderField(education.field_of_study)}
+                    </div>
                 </div>
                 <div className="w-[32px] flex justify-end flex-shrink-0">
                     <button

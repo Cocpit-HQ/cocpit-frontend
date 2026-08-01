@@ -458,9 +458,13 @@ function RoleSection({
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
-              className="w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none"
+              maxLength={1500}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", role.description.length >= 1500 && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
+            <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
+              {role.description.length}/1500 characters
+            </span>
           </div>
         )}
 
@@ -654,9 +658,13 @@ function RoleSection({
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
-              className="w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none"
+              maxLength={1500}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", role.description.length >= 1500 && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
+            <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
+              {role.description.length}/1500 characters
+            </span>
           </div>
         )}
       </div>

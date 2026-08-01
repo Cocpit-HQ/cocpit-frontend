@@ -126,6 +126,9 @@ export default function OnboardingPage() {
     isInitialized, setInitialized,
     setFullName, setAccountName, setInitialAccountName, setProfileImage,
     setLocation, setEducation, setWorkExperience,
+    educationList, setEducationList,
+    workExperienceList, setWorkExperienceList,
+    parsedResumeData,
   } = useOnboardingStore();
 
   const maxAllowedStepRef = useRef<{ step: number; showSubStep: boolean }>({ step: 1, showSubStep: false });
@@ -402,10 +405,15 @@ export default function OnboardingPage() {
 
   const handleRoleSelect = async (role: string) => {
     setUserRole(role);
+
     if (role === "unemployed") {
       setShowSubStep(false);
       try {
-        await saveOnboardingDetails({ role: "unemployed" });
+        await saveOnboardingDetails({ 
+          role: "unemployed",
+          educations: educationList,
+          experiences: workExperienceList,
+        });
       } catch (error) {
         console.error("Failed to advance onboarding step for unemployed:", error);
         toast.error("Failed to save role. Please try again.");

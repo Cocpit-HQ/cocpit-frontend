@@ -52,7 +52,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       return {
         school_name: initialData.school_name ?? "",
         degree: initialData.degree ?? "",
-        field_of_study: initialData.field_of_study ?? "",
+        field_of_study: (initialData.field_of_study && initialData.field_of_study !== "null") ? initialData.field_of_study : "",
         location: (initialData as any).location ?? "",
         startMonth: initialData.start_date ? months[start.month()] : "",
         startYear: initialData.start_date ? start.year().toString() : "",
@@ -125,7 +125,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   const lastDegreeQueryRef = useRef(initialData?.degree ?? "")
   const degreeCacheRef = useRef<Record<string, string[]>>({})
 
-  const lastSpecializationQueryRef = useRef(initialData?.field_of_study ?? "")
+  const lastSpecializationQueryRef = useRef((initialData?.field_of_study && initialData.field_of_study !== "null") ? initialData.field_of_study : "")
   const specializationCacheRef = useRef<Record<string, string[]>>({})
 
   const debouncedSpecializationSearch = useDebounce(specializationSearch, 300)
@@ -138,7 +138,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       setFormData({
         school_name: initialData.school_name ?? "",
         degree: initialData.degree ?? "",
-        field_of_study: initialData.field_of_study ?? "",
+        field_of_study: (initialData.field_of_study && initialData.field_of_study !== "null") ? initialData.field_of_study : "",
         location: (initialData as any).location ?? "",
         startMonth: initialData.start_date ? months[start.month()] : "",
         startYear: initialData.start_date ? start.year().toString() : "",
@@ -151,10 +151,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       setSchoolOrgId(initialData.school_org_id ?? null)
       setSchoolLogo(initialData.school_logo ?? null)
       setDegreeSearch(initialData.degree ?? "")
-      setSpecializationSearch(initialData.field_of_study ?? "")
+      setSpecializationSearch((initialData.field_of_study && initialData.field_of_study !== "null") ? initialData.field_of_study : "")
       lastSchoolQueryRef.current = initialData.school_name ?? ""
       lastDegreeQueryRef.current = initialData.degree ?? ""
-      lastSpecializationQueryRef.current = initialData.field_of_study ?? ""
+      lastSpecializationQueryRef.current = (initialData.field_of_study && initialData.field_of_study !== "null") ? initialData.field_of_study : ""
     } else {
       setFormData({
         school_name: "",
@@ -1099,9 +1099,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full h-[40px] min-h-[40px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none"
+              maxLength={1500}
+              className={cn("w-full h-[40px] min-h-[40px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", formData.description.length >= 1500 && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
+            <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", formData.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
+              {formData.description.length}/1500 characters
+            </span>
           </div>
 
           {/* Action Buttons */}

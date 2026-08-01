@@ -18,23 +18,28 @@ export function EditableExperienceItem({
 
     const [imgError, setImgError] = React.useState(false);
 
-    const isLongDescription = experience.description && experience.description.length > 160;
+    const renderField = (value: string | null | undefined) => {
+        if (!value || value === "null") return "Not Specified";
+        return value;
+    };
+
+    const rawDescription = renderField(experience.description);
+    const isLongDescription = rawDescription.length > 160;
 
     const displayDescription = React.useMemo(() => {
-        if (!experience.description) return "";
-        if (isDescExpanded || !isLongDescription) return experience.description;
-        
-        const truncated = experience.description.slice(0, 160);
+        if (isDescExpanded || !isLongDescription) return rawDescription;
+
+        const truncated = rawDescription.slice(0, 160);
         const lastSpace = truncated.lastIndexOf(" ");
         if (lastSpace > 50) {
             return truncated.slice(0, lastSpace);
         }
         return truncated;
-    }, [experience.description, isDescExpanded, isLongDescription]);
+    }, [rawDescription, isDescExpanded, isLongDescription]);
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
-        const date = new Date(dateStr);
+        const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00Z`);
         return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     };
 
@@ -73,47 +78,38 @@ export function EditableExperienceItem({
                                 <Icon icon="eva:edit-outline" className="w-[20px] h-[20px] transition-colors" />
                             </button>
                         </div>
-                        {experience.description && (
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
-                                {displayDescription}
-                                {!isDescExpanded && isLongDescription && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsDescExpanded(true);
-                                        }}
-                                        className="text-muted-foreground hover:text-primary font-semibold transition-colors cursor-pointer ml-1 inline-flex items-center"
-                                    >
-                                        ... More
-                                    </button>
-                                )}
-                                {isDescExpanded && isLongDescription && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsDescExpanded(false);
-                                        }}
-                                        className="text-primary hover:underline ml-1 font-medium cursor-pointer inline-flex items-center"
-                                    >
-                                        See less
-                                    </button>
-                                )}
-                            </p>
-                        )}
+                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
+                            {displayDescription}
+                            {!isDescExpanded && isLongDescription && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsDescExpanded(true);
+                                    }}
+                                    className="text-muted-foreground hover:text-primary font-semibold transition-colors cursor-pointer ml-1 inline-flex items-center"
+                                >
+                                    ... More
+                                </button>
+                            )}
+                            {isDescExpanded && isLongDescription && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsDescExpanded(false);
+                                    }}
+                                    className="text-primary hover:underline ml-1 font-medium cursor-pointer inline-flex items-center"
+                                >
+                                    See less
+                                </button>
+                            )}
+                        </p>
                         <div className="flex flex-col gap-[8px]">
                             <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                                 {experience.company_name}
                             </p>
-                            {experience.location && (
-                                <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                                    {experience.location}
-                                </p>
-                            )}
-                            {experience.location && (
-                                <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                                    {experience.location}
-                                </p>
-                            )}
+                            <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                                {renderField(experience.location)}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -123,11 +119,30 @@ export function EditableExperienceItem({
             <div className="flex items-start flex-shrink-0 w-[240px] justify-between hidden md:flex">
                 <div className="w-full">
                     <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                        <span className="whitespace-nowrap text-left">{formatDate(experience.start_date)}</span>
-                        <span className="flex items-center justify-center w-[9px] h-[16px]">
-                            <span className="text-center">-</span>
-                        </span>
-                        <span className="whitespace-nowrap text-left">{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
+                        {!(!experience.start_date && !experience.end_date && !experience.is_current) ? (
+                            <>
+                                {experience.start_date ? (
+                                    <>
+                                        <span className="whitespace-nowrap text-left">{formatDate(experience.start_date)}</span>
+                                        <span className="flex items-center justify-center w-[9px] h-[16px]">
+                                            <span className="text-center">-</span>
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="whitespace-nowrap text-left"></span>
+                                        <span className="flex items-center justify-center w-[9px] h-[16px]"></span>
+                                    </>
+                                )}
+                                <span className="whitespace-nowrap text-left">{experience.end_date ? formatDate(experience.end_date) : (experience.is_current ? 'Present' : '')}</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="whitespace-nowrap text-left"></span>
+                                <span className="flex items-center justify-center w-[9px] h-[16px]"></span>
+                                <span className="whitespace-nowrap text-left"></span>
+                            </>
+                        )}
 
                         <span className="whitespace-nowrap text-left">{experience.work_type || ''}</span>
                         <span className="flex items-center justify-center w-[9px] h-[16px]">

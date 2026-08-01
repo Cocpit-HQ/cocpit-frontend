@@ -256,7 +256,13 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           </div>
           {nameAvailable === false && !checking && (
             <p className={styles.errorText}>
-              {validateAccountName(accountName) ? "Username already taken" : "Invalid format. Use only lowercase letters, numbers, and underscores."}
+              {validateAccountName(accountName) 
+                ? "Username already taken" 
+                : accountName.length > 20 
+                  ? "Username exceeds the maximum allowed length of 20 characters." 
+                  : accountName.length < 2
+                    ? "Username must be at least 3 characters long."
+                    : "Invalid format. Use only lowercase letters, numbers, and underscores."}
             </p>
           )}
         </div>

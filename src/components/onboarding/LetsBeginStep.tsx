@@ -65,7 +65,18 @@ export default function LetsBeginStep({
         if (res.success && res.data) {
           const parsed = res.data;
           setParsedResumeData(parsed);
-          
+
+          // ── Reset stale data before applying the fresh resume ──
+          // This prevents old education/work lists from leaking into
+          // the new submission when the user re-uploads a different resume.
+          setUserRole(null);
+          setEducation("", "");
+          setWorkExperience("", "");
+          setEducationList([]);
+          setWorkExperienceList([]);
+          setSelectedSkills([]);
+          // ──────────────────────────────────────────────────────
+
           if (parsed.profile?.fullName) setFullName(parsed.profile.fullName);
           if (parsed.profile?.accountName) setAccountName(parsed.profile.accountName);
           if (parsed.inferredRole) setUserRole(parsed.inferredRole);
@@ -79,7 +90,7 @@ export default function LetsBeginStep({
             setWorkExperienceList(parsed.workExperience);
           }
           if (parsed.skills?.length > 0) {
-            setSelectedSkills(parsed.skills);
+            setSelectedSkills(parsed.skills.slice(0, 15));
           }
 
           toast.success("Resume parsed successfully!");
@@ -132,7 +143,7 @@ export default function LetsBeginStep({
               type="file"
               ref={fileInputRef}
               style={{ display: 'none' }}
-              accept=".pdf,.doc,.docx"
+              accept=".pdf"
               onChange={handleFileChange}
             />
             {isParsing ? (
@@ -164,6 +175,7 @@ export default function LetsBeginStep({
                 {error && <span style={{ color: '#f87171', fontSize: '10px', marginBottom: '8px', fontWeight: 500 }}>{error}</span>}
                 <span className={styles.optionTitle}>Drop or upload resume</span>
                 <span className={styles.optionSubtitle}>We'll auto-fill your details</span>
+                <span className={styles.optionLimitText}>PDF (Max 5MB)</span>
               </>
             )}
           </button>
