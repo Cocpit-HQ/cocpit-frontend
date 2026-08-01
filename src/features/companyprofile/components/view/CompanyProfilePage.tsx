@@ -26,6 +26,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     queryKey: ["companyProfile", slug],
     queryFn: () => companyProfileService.getOrgProfile(slug),
     retry: false,
+    staleTime: 0,
   });
 
   const { activeProfile } = useActiveProfile();

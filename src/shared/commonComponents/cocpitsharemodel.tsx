@@ -11,10 +11,20 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
 
+export interface ShareUser {
+  id: string;
+  name: string;
+  avatar?: string;
+  slug?: string;
+  headline?: string;
+  type?: string;
+  conversation_id?: string;
+}
+
 export interface CocpitShareModelProps {
   isOpen: boolean;
   onClose: () => void;
-  users?: { id: string; name: string; avatar?: string; slug?: string }[];
+  users?: ShareUser[];
   onShare?: (selectedIds: string[]) => void;
   postId?: string;
   profileId?: string;
@@ -108,12 +118,14 @@ export default function CocpitShareModel({
     [handleLoadMore]
   );
 
-  const users = useMemo(() => {
+  const users: ShareUser[] = useMemo(() => {
     if (propUsers) return propUsers;
     return searchResults.map((f: any) => ({
       id: f.user_id || f.id,
-      name: f.full_name,
-      avatar: f.avatar_url || undefined,
+      name: f.full_name || f.name,
+      avatar: f.avatar_url || f.logo_url || undefined,
+      headline: f.headline || f.account_name || undefined,
+      type: f.type || (f.org_id ? 'COMPANY' : 'USER'),
       conversation_id: f.conversation_id,
     }));
   }, [propUsers, searchResults]);
@@ -122,8 +134,9 @@ export default function CocpitShareModel({
 
   const filteredUsers = useMemo(() => {
     if (!isSearching) return users;
-    return users.filter((u: { id: string; name: string; avatar?: string; slug?: string }) =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const term = searchTerm.toLowerCase();
+    return users.filter((u: ShareUser) =>
+      (u.name || '').toLowerCase().includes(term)
     );
   }, [users, isSearching, searchTerm]);
 
@@ -316,8 +329,13 @@ export default function CocpitShareModel({
                             </div>
                           )}
                         </div>
-                        <div className="mt-2 text-[12px] text-[var(--foreground)] font-medium font-['Poppins'] text-center line-clamp-1">
-                          {u.name}
+                        <div className="mt-2 text-[12px] text-[var(--foreground)] font-medium font-['Poppins'] text-center flex flex-col items-center gap-0.5">
+                          <span className="line-clamp-1">{u.name}</span>
+                          {u.type === 'COMPANY' && (
+                            <span className="text-[9px] bg-[var(--primary-tint)] text-[var(--primary)] font-medium px-1.5 py-0.2 rounded-full">
+                              Company
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -375,8 +393,20 @@ export default function CocpitShareModel({
                                 </div>
                               )}
                             </div>
-                            <div className="text-[14px] text-[var(--foreground)] font-normal font-['Poppins']">
-                              {u.name}
+                            <div className="flex flex-col text-left">
+                              <div className="text-[14px] text-[var(--foreground)] font-normal font-['Poppins'] flex items-center gap-1.5">
+                                <span>{u.name}</span>
+                                {u.type === 'COMPANY' && (
+                                  <span className="text-[10px] bg-[var(--primary-tint)] text-[var(--primary)] font-medium px-1.5 py-0.5 rounded-full">
+                                    Company
+                                  </span>
+                                )}
+                              </div>
+                              {u.headline && (
+                                <div className="text-[11px] text-[var(--muted-foreground)] font-['Poppins'] truncate max-w-[200px]">
+                                  {u.headline}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

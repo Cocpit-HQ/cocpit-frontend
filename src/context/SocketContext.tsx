@@ -390,12 +390,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
     };
 
     const handleUnblock = (payload: any) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
-      if (!conversationId) return;
 
       const isMeUnblocker = String(payload.unblocked_by_user_id) === String(session?.user?.id);
       const currentProfile = activeProfileRef.current;
@@ -406,25 +407,29 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         currentProfile?.id ?? "me",
       ];
 
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: any[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((c) => {
-            if (String(c.id) === String(conversationId)) {
-              return {
-                ...c,
-                isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
-                isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
-              };
-            }
-            return c;
-          });
-        }
-      );
+      if (conversationId) {
+        queryClient.setQueryData(
+          queryKey,
+          (oldData: any[] | undefined) => {
+            if (!oldData) return oldData;
+            return oldData.map((c) => {
+              if (String(c.id) === String(conversationId)) {
+                return {
+                  ...c,
+                  isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
+                  isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
+                };
+              }
+              return c;
+            });
+          }
+        );
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      }
 
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
     };
 
     // Fired by acceptTeamsInvite / declineTeamsInvite / removeMember whenever
