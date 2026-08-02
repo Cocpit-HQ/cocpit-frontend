@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Info, ChevronRight, Star, Loader2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { HelpCentre } from './HelpCentre';
@@ -8,23 +8,62 @@ import { ContactSupport } from './ContactSupport';
 import { submitFeedback } from '@/features/settings/api/support';
 import { toast } from 'sonner';
 import { useSettingsStore } from '@/store/settings.store';
+import api from '@/lib/axios';
+import { useSocket } from '@/context/SocketContext';
 
 export function SupportSettingsPage() {
-  // Which sub-view (main/help/contact) is shown now lives in the shared
-  // settings store instead of local useState.
   const view = useSettingsStore((state) => state.support.view);
   const setView = useSettingsStore((state) => state.setSupportView);
   const [rating, setRating] = useState<number>(1);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Version + feedback state
+  const [appVersion, setAppVersion] = useState<string>('');
+  const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState<boolean>(false);
+  const [versionLoading, setVersionLoading] = useState(true);
+
+  const { socket } = useSocket();
+
+  // Fetch version and per-user feedback status on mount
+  useEffect(() => {
+    api.get('/settings/support/version')
+      .then((res) => {
+        setAppVersion(res.data.version || '');
+        setHasSubmittedFeedback(res.data.has_submitted_feedback || false);
+      })
+      .catch(() => {
+        setAppVersion('');
+      })
+      .finally(() => setVersionLoading(false));
+  }, []);
+
+  // Listen for real-time FEEDBACK_SUBMITTED event from backend
+  // Works across all connected platforms (web tabs, mobile, etc.)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleFeedbackSubmitted = (data: { app_version: string; has_submitted_feedback: boolean }) => {
+      if (data.app_version === appVersion && data.has_submitted_feedback) {
+        setHasSubmittedFeedback(true);
+      }
+    };
+
+    socket.on('FEEDBACK_SUBMITTED', handleFeedbackSubmitted);
+    return () => {
+      socket.off('FEEDBACK_SUBMITTED', handleFeedbackSubmitted);
+    };
+  }, [socket, appVersion]);
+
   const handleSubmitFeedback = async () => {
     if (rating < 1 || rating > 5) return;
-    
+    if (!appVersion) return;
+
     setIsSubmitting(true);
     try {
-      await submitFeedback({ rating, comment, app_version: "v2.4.1" });
+      await submitFeedback({ rating, comment, app_version: appVersion });
       toast.success("Feedback submitted successfully!");
+      setHasSubmittedFeedback(true);
       setComment("");
       setRating(1);
     } catch (error) {
@@ -54,8 +93,7 @@ export function SupportSettingsPage() {
         {/* Content */}
         <div className="flex flex-col w-full">
           
-          {/* Platform version */}
-          <div className="flex flex-row justify-between items-center py-3 w-full border-t border-transparent">
+            <div className="flex flex-row justify-between items-center py-3 w-full border-t border-transparent">
             <div className="flex flex-row items-center gap-4">
               <Layout className="w-6 h-6 text-black" strokeWidth={1.5} />
               <div className="flex flex-col justify-center">
@@ -63,7 +101,9 @@ export function SupportSettingsPage() {
                 <p className="text-[14px] font-normal text-[#6B7280] leading-[20px]">You are up to date</p>
               </div>
             </div>
-            <span className="text-[16px] font-normal text-[#6B7280] leading-[24px] px-3 py-1 bg-white rounded-full">v2.4.1</span>
+            <span className="text-[16px] font-normal text-[#6B7280] leading-[24px] px-3 py-1 bg-white rounded-full">
+              {versionLoading ? '...' : appVersion || '—'}
+            </span>
           </div>
 
           {/* Help center */}
@@ -98,7 +138,8 @@ export function SupportSettingsPage() {
 
         </div>
 
-        {/* Share feedback card */}
+        {/* Share feedback card — hidden if user already submitted for this version */}
+        {!hasSubmittedFeedback && (
         <div className="flex flex-col justify-center p-4 gap-4 w-full border border-[#E0E7FF] rounded-[24px] mt-4">
           <div className="flex flex-col gap-1 w-full">
             <h3 className="text-[16px] font-normal text-black leading-[24px]">Share feedback</h3>
@@ -137,6 +178,7 @@ export function SupportSettingsPage() {
             </button>
           </div>
         </div>
+        )}
 
       </div>
     </div>
