@@ -1,6 +1,6 @@
 import api from "@/lib/axios";
 
-export const getBlockedUsers = async () => {
+export const getBlockedUsers = async (): Promise<any[]> => {
     const res = await api.get("/user/blocked");
     return res.data;
 };

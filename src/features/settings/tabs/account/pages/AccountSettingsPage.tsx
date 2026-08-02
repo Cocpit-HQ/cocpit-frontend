@@ -1,16 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { KeyRound, Mail, Phone, LogOut } from 'lucide-react';
 import { LogoutModal } from '../components/modals/LogoutModal';
 import { DeleteAccountModal } from '../components/modals/DeleteAccountModal';
 import { useAccountSettings } from '../../../hooks/useAccountSettings';
+import { useSettingsStore } from '@/store/settings.store';
 
 export function AccountSettingsPage() {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
-  
+  // UI-only state (which modal is open) now lives in the shared settings
+  // store instead of local useState — see src/store/settings.store.ts for why.
+  const activeModal = useSettingsStore((state) => state.account.activeModal);
+  const setActiveModal = useSettingsStore((state) => state.setAccountModal);
+
   const pathname = usePathname() || '/settings/account';
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';

@@ -1,54 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Ban, Loader2 } from 'lucide-react';
-import { getBlockedUsers, unblockUser } from '@/features/settings/api/blocked';
-import { toast } from 'sonner';
-
-interface BlockedUser {
-  id: number | string;
-  name: string;
-  date: string;
-  avatar: string;
-}
+import { useBlockedUsers } from '../../hooks/useBlockedUsers';
+import { useSettingsStore } from '@/store/settings.store';
 
 export function BlockedSettingsPage() {
-  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userToUnblock, setUserToUnblock] = useState<BlockedUser | null>(null);
+  // Server state (the list + the unblock mutation) is now owned by
+  // TanStack Query via useBlockedUsers, instead of a manual
+  // useEffect + useState + try/catch fetch.
+  const { blockedUsers, isLoading, unblockUser, isUnblocking } = useBlockedUsers();
 
-  useEffect(() => {
-    const fetchBlockedUsers = async () => {
-      try {
-        const users = await getBlockedUsers();
-        // Assuming the backend returns an array of objects mapping to the UI
-        // We'll map the backend response to the BlockedUser interface
-        setBlockedUsers(users.map((u: any) => ({
-          id: u.id || u.user_id,
-          name: u.name || u.full_name || u.username || 'Unknown User',
-          date: u.date || (u.created_at ? `Blocked ${new Date(u.created_at).toLocaleDateString()}` : 'Blocked recently'),
-          avatar: u.avatar || u.avatar_url || ''
-        })));
-      } catch (err) {
-        toast.error("Failed to load blocked accounts");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchBlockedUsers();
-  }, []);
+  // UI-only state (which user the "confirm unblock" modal targets) still
+  // lives in the shared settings store — only the id is kept there, per
+  // settings.store.ts's rule of never duplicating server-fetched objects
+  // in Zustand. The full row is looked up from `blockedUsers` below.
+  const userToUnblockId = useSettingsStore((state) => state.blocked.userToUnblockId);
+  const setUserToUnblockId = useSettingsStore((state) => state.setBlockedUserToUnblock);
+  const userToUnblock = blockedUsers.find((u) => u.id === userToUnblockId) || null;
 
-  const handleUnblockConfirm = async () => {
+  const handleUnblockConfirm = () => {
     if (userToUnblock) {
-      try {
-        await unblockUser(userToUnblock.id);
-        setBlockedUsers(prev => prev.filter(u => u.id !== userToUnblock.id));
-        toast.success("User unblocked successfully");
-      } catch (err) {
-        toast.error("Failed to unblock user");
-      } finally {
-        setUserToUnblock(null);
-      }
+      unblockUser(userToUnblock.id);
+      setUserToUnblockId(null);
     }
   };
 
@@ -91,8 +65,8 @@ export function BlockedSettingsPage() {
                     <p className="text-[12px] font-normal text-[#6B7280] leading-[16px]">{user.date}</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setUserToUnblock(user)}
+                <button
+                  onClick={() => setUserToUnblockId(user.id)}
                   className="flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border border-[#6366F1] rounded-[24px] hover:bg-indigo-50 transition-colors"
                 >
                   <span className="text-[14px] font-normal text-[#6366F1] leading-[20px] text-center">Unblock</span>
@@ -114,7 +88,7 @@ export function BlockedSettingsPage() {
       {/* Unblock Modal */}
       {userToUnblock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center font-poppins">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUserToUnblock(null)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUserToUnblockId(null)} />
           <div className="relative bg-white rounded-[24px] p-8 max-w-[400px] w-full mx-4 shadow-xl flex flex-col items-center text-center gap-6">
             <div className="flex flex-col gap-4">
               <h2 className="text-[18px] font-medium text-black leading-[26px]">
@@ -127,14 +101,15 @@ export function BlockedSettingsPage() {
             
             <div className="flex flex-row gap-4 w-full">
               <button 
-                onClick={() => setUserToUnblock(null)}
+                onClick={() => setUserToUnblockId(null)}
                 className="flex-1 py-3 px-6 rounded-full border border-[#6366F1] text-[#6366F1] font-medium text-[16px] hover:bg-indigo-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleUnblockConfirm}
-                className="flex-1 py-3 px-6 rounded-full bg-[#6366F1] text-white font-medium text-[16px] hover:bg-[#4F46E5] transition-colors"
+                disabled={isUnblocking}
+                className="flex-1 py-3 px-6 rounded-full bg-[#6366F1] text-white font-medium text-[16px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50"
               >
                 Unblock
               </button>

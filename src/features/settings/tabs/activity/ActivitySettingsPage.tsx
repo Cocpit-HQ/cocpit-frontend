@@ -1,51 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ThumbsUp, UserMinus, Image as ImageIcon, BarChart2, Edit3, Loader2 } from 'lucide-react';
-import { getActivityLogs, removeActivity } from '@/features/settings/api/activity';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { feedApi } from '@/features/feed/api/feed.api';
 import { Icon } from '@iconify/react';
+import { useSettingsStore } from '@/store/settings.store';
+import { useActivityLogs } from '../../hooks/useActivityLogs';
 
 export function ActivitySettingsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'Likes' | 'Comments' | 'Tags'>('Likes');
-  const [data, setData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // Which pill is active lives in the shared settings store — this is the
+  // "tab parameter" referenced in settings.store.ts. It's passed straight
+  // into useActivityLogs, which threads it into the TanStack Query
+  // queryKey (see useActivityLogs.ts) so switching pills is a cache
+  // lookup/fetch instead of a manual useEffect + setState.
+  const activeTab = useSettingsStore((state) => state.activity.activeTab);
+  const setActiveTab = useSettingsStore((state) => state.setActivityTab);
 
   const tabs = ['Likes', 'Comments', 'Tags'] as const;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const typeMap = { Likes: 'likes', Comments: 'comments', Tags: 'tags' } as const;
-        const res = await getActivityLogs(typeMap[activeTab]);
-        setData(res || []);
-      } catch (error) {
-        toast.error(`Failed to fetch ${activeTab.toLowerCase()}`);
-        setData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [activeTab]);
+  const { data, isLoading, removeActivity } = useActivityLogs(activeTab);
 
-  const handleRemove = async (id: number | string, activeTabType: 'Likes' | 'Comments' | 'Tags') => {
-    try {
-      if (activeTabType === 'Likes') {
-        await feedApi.toggleLike(id as string);
-      } else {
-        const typeMap = { Likes: 'like', Comments: 'comment', Tags: 'tag' } as const;
-        await removeActivity(typeMap[activeTabType], id);
-      }
-      setData(prev => prev.filter(item => item.id !== id));
-      toast.success('Activity removed');
-    } catch (error) {
-      toast.error('Failed to remove activity');
-    }
+  const handleRemove = (id: number | string) => {
+    removeActivity(id);
   };
 
   return (
@@ -103,7 +80,7 @@ export function ActivitySettingsPage() {
                       </div>
                     </div>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleRemove(like.id, 'Likes'); }}
+                      onClick={(e) => { e.stopPropagation(); handleRemove(like.id); }}
                       className="group relative flex items-center justify-center p-1"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="text-[#6366F1]">
@@ -216,7 +193,7 @@ export function ActivitySettingsPage() {
                     </div>
 
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleRemove(tag.id, 'Tags'); }}
+                      onClick={(e) => { e.stopPropagation(); handleRemove(tag.id); }}
                       className="group relative flex items-center justify-center p-1"
                     >
                       <Icon icon="la:user-tag" className="w-6 h-6 text-[#6366F1]" />

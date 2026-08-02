@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, BadgeCheck } from 'lucide-react';
+import { X, BadgeCheck, XCircle } from 'lucide-react';
 
 import { useSetPhone, useConfirmPhone, useDeletePhone } from '../../../../hooks/useAccountSettings';
 import { useQueryClient } from '@tanstack/react-query';
@@ -86,7 +86,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
           onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['userAccount'] });
             toast.success(data.message || 'Phone number updated successfully');
-            setTimeout(() => handleClose(), 600);
+            setTimeout(() => handleClose(), 1000);
           },
           onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
         }
@@ -149,10 +149,15 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
             type="tel"
             value={phone}
             onChange={(e) => {
-              setPhone(e.target.value);
+              const val = e.target.value.replace(/\D/g, '');
+              if (val.length > 10) {
+                setErrorMsg('Phone number cannot exceed 10 digits.');
+                return;
+              }
+              setPhone(val);
               setErrorMsg('');
             }}
-            placeholder="+91 1234567890"
+            placeholder="1234567890"
             className={`w-full h-[48px] px-4 bg-white border ${errorMsg ? 'border-[#FF6B6B]' : 'border-[#DADADA]'} rounded-[24px] text-[16px] text-black focus:outline-none focus:border-[#6366F1] transition-colors`}
           />
         </div>
@@ -169,15 +174,34 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
               maxLength={6}
               value={code}
               onChange={(e) => {
-                setCode(e.target.value.replace(/\D/g, ''));
+                const val = e.target.value.replace(/\D/g, '');
+                setCode(val);
                 setErrorMsg('');
+                if (val.length === 6) {
+                  confirmPhoneMutation.mutate(
+                    { otp: val },
+                    {
+                      onSuccess: (data) => {
+                        queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+                        toast.success(data.message || 'Phone number updated successfully');
+                        setTimeout(() => handleClose(), 1000);
+                      },
+                      onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
+                    }
+                  );
+                }
               }}
               placeholder="000000"
-              className={`w-full h-[48px] px-4 text-center bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : confirmPhoneMutation.isSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
+              className={`w-full h-[48px] px-4 bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : confirmPhoneMutation.isSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
             />
             {confirmPhoneMutation.isSuccess && !errorMsg && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4ADE80]">
                 <BadgeCheck className="w-5 h-5" />
+              </div>
+            )}
+            {errorMsg && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#FF6B6B]">
+                <XCircle className="w-5 h-5" />
               </div>
             )}
           </div>

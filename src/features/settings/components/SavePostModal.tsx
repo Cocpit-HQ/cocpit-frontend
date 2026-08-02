@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@iconify/react'
 import { cn } from '@/lib/utils'
+import { useQueryClient } from '@tanstack/react-query'
+import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolders'
 
 interface SavePostModalProps {
     isOpen: boolean
@@ -24,6 +26,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     const [isLoading, setIsLoading] = useState(true)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [savingToFolderId, setSavingToFolderId] = useState<string | null>(null)
+    const queryClient = useQueryClient()
 
     const { isCompany, activeProfile } = useActiveProfile()
 
@@ -56,6 +59,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
             const response = await toggleSavePost(postId, folderId, companyId)
             if (response.success) {
                 toast.success(folderId ? "Saved to folder" : "Saved to All Posts")
+                queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY })
                 onSaved(true)
                 onClose()
             }

@@ -6,9 +6,13 @@ import { HelpCentre } from './HelpCentre';
 import { ContactSupport } from './ContactSupport';
 import { submitFeedback } from '@/features/settings/api/support';
 import { toast } from 'sonner';
+import { useSettingsStore } from '@/store/settings.store';
 
 export function SupportSettingsPage() {
-  const [view, setView] = useState<'main' | 'help' | 'contact'>('main');
+  // Which sub-view (main/help/contact) is shown now lives in the shared
+  // settings store instead of local useState.
+  const view = useSettingsStore((state) => state.support.view);
+  const setView = useSettingsStore((state) => state.setSupportView);
   const [rating, setRating] = useState<number>(1);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

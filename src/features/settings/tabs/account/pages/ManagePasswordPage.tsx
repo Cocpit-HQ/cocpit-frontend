@@ -132,7 +132,7 @@ export function ManagePasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your new password"
-                className="w-full h-[48px] px-4 py-2 bg-white border border-gray-200 rounded-[16px] text-[14px] text-black focus:outline-none focus:border-[#818CF8] placeholder:text-gray-400"
+                className={`w-full h-[48px] px-4 py-2 bg-white border ${confirmPassword && confirmPassword !== newPassword ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : 'border-gray-200 focus:border-[#818CF8]'} rounded-[16px] text-[14px] text-black focus:outline-none placeholder:text-gray-400`}
               />
               <button 
                 type="button" 
@@ -142,6 +142,9 @@ export function ManagePasswordPage() {
                 {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {confirmPassword && confirmPassword !== newPassword && (
+              <span className="text-[12px] text-[#FF6B6B] mt-1">Passwords do not match</span>
+            )}
           </div>
 
           {errorMsg && <p className="text-[14px] text-[#FF6B6B]">{errorMsg}</p>}
@@ -157,7 +160,7 @@ export function ManagePasswordPage() {
             </button>
             <button 
               onClick={handleUpdatePassword}
-              disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword}
+              disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
               className="flex items-center justify-center h-[40px] px-8 rounded-[24px] border border-[#6366F1] bg-[#6366F1] text-white text-[14px] font-medium transition-colors disabled:opacity-50 disabled:border-[#C7D2FE] disabled:bg-[#C7D2FE]"
             >
               {updatePasswordMutation.isPending ? "Updating..." : "Update"}

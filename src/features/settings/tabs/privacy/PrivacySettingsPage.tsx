@@ -1,18 +1,23 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Laptop, Smartphone, LogOut, Loader2 } from 'lucide-react';
 import { LogoutModal } from '../account/components/modals/LogoutModal';
 import { usePrivacySettings } from '../../hooks/usePrivacySettings';
 import { useActiveSessions } from '../../hooks/useActiveSessions';
 import { formatDistanceToNow } from 'date-fns';
+import { useSettingsStore } from '@/store/settings.store';
 
 export function PrivacySettingsPage() {
   const { settings: privacy, isLoading: isPrivacyLoading, updateSettings } = usePrivacySettings();
   const { sessions, isLoading: isSessionsLoading, logoutSession, logoutOtherSessions, isLoggingOut, isLoggingOutOthers } = useActiveSessions();
-  
-  const [logoutTarget, setLogoutTarget] = useState<'single' | 'all' | null>(null);
-  const [sessionToLogout, setSessionToLogout] = useState<string | number | null>(null);
+
+  // UI-only state (which logout confirmation is open, for which session)
+  // now lives in the shared settings store instead of local useState.
+  const logoutTarget = useSettingsStore((state) => state.privacy.logoutTarget);
+  const sessionToLogout = useSettingsStore((state) => state.privacy.sessionToLogout);
+  const openPrivacyLogout = useSettingsStore((state) => state.openPrivacyLogout);
+  const closePrivacyLogout = useSettingsStore((state) => state.closePrivacyLogout);
 
   const showEmail = privacy?.showEmail ?? false;
   const showPhone = privacy?.showPhone ?? false;
@@ -156,11 +161,8 @@ export function PrivacySettingsPage() {
                     <span className="text-[14px] font-normal text-[#22C55E]">This device</span>
                   </div>
                 ) : (
-                  <button 
-                    onClick={() => {
-                      setSessionToLogout(session.id);
-                      setLogoutTarget('single');
-                    }}
+                  <button
+                    onClick={() => openPrivacyLogout('single', session.id)}
                     className="flex flex-row items-center justify-center gap-2 px-3 py-1 rounded-full"
                   >
                     <LogOut className="w-4 h-4 text-[#FF6B6B]" strokeWidth={1.5} />
@@ -173,8 +175,8 @@ export function PrivacySettingsPage() {
           
           {sessions.length > 1 && (
             <div className="flex justify-center w-full py-3 mt-4">
-              <button 
-                onClick={() => setLogoutTarget('all')}
+              <button
+                onClick={() => openPrivacyLogout('all')}
                 className="text-[14px] font-normal text-[#FF6B6B]"
               >
                 Log out from all other device
@@ -186,20 +188,16 @@ export function PrivacySettingsPage() {
         </div>
 
         {/* Modals */}
-        <LogoutModal 
+        <LogoutModal
           isOpen={logoutTarget !== null}
-          onClose={() => {
-            setLogoutTarget(null);
-            setSessionToLogout(null);
-          }}
+          onClose={closePrivacyLogout}
           onConfirm={() => {
             if (logoutTarget === 'all') {
               logoutOtherSessions();
-              setLogoutTarget(null);
+              closePrivacyLogout();
             } else if (logoutTarget === 'single' && sessionToLogout !== null) {
               logoutSession(sessionToLogout);
-              setLogoutTarget(null);
-              setSessionToLogout(null);
+              closePrivacyLogout();
             }
           }}
           mode={logoutTarget || 'single'}

@@ -208,7 +208,11 @@ export default function CustomSavedPostsPage() {
         initialName={folder?.name || ""}
         initialCoverImage={folder?.cover_image || ""}
         onSuccess={(updatedFolder) => {
-          setFolder(updatedFolder);
+          // The rename PUT only returns the updated name/cover_image — it doesn't
+          // include an aggregated post_count. Merge instead of overwrite so we
+          // don't clobber the post_count we already loaded with a missing field
+          // (which rendered as 0 until a full refresh re-fetched the folder list).
+          setFolder(prev => (prev ? { ...prev, ...updatedFolder, post_count: prev.post_count } : updatedFolder));
           queryClient.invalidateQueries({ queryKey: ["saved-folders"] });
           setIsRenameModalOpen(false);
         }}

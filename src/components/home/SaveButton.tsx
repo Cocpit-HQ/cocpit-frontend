@@ -6,7 +6,8 @@ import { toggleSavePost } from '@/features/settings/api/savedPost'
 import { cn } from '@/lib/utils'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@iconify/react'
-
+import { useQueryClient } from '@tanstack/react-query'
+import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolders'
 interface SaveButtonProps {
     postId: string
     initialIsSaved?: boolean
@@ -18,6 +19,7 @@ interface SaveButtonProps {
 export function SaveButton({ postId, initialIsSaved = false, className, onSaveChange, onToggle }: SaveButtonProps) {
     const [isSaved, setIsSaved] = useState(initialIsSaved)
     const [isLoading, setIsLoading] = useState(false)
+    const queryClient = useQueryClient()
 
     // Sync state with props
     React.useEffect(() => {
@@ -55,6 +57,9 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             } else {
                 toast.info("Post removed from saved")
             }
+            
+            // Invalidate the saved folders query to update the post_count in the UI
+            queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY })
         } catch (error) {
             console.error("Save Error:", error)
             toast.error("Something went wrong")

@@ -1,6 +1,6 @@
 import api from "@/lib/axios";
 
-export const getActivityLogs = async (type: 'likes' | 'comments' | 'tags') => {
+export const getActivityLogs = async (type: 'likes' | 'comments' | 'tags'): Promise<any[]> => {
     const res = await api.get(`/user/activity?type=${type}`);
     return res.data;
 };

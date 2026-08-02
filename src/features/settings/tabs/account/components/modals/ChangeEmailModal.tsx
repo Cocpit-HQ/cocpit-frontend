@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, BadgeCheck } from 'lucide-react';
+import { X, BadgeCheck, XCircle } from 'lucide-react';
 import { 
   useVerifyCurrentEmailInit, 
   useVerifyCurrentEmailConfirm,
@@ -83,7 +83,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
         verifyCurrentEmailConfirm.mutate(
           { otp: currentEmailCode },
           {
-            onSuccess: () => setTimeout(() => setStep(2), 600),
+            onSuccess: () => setTimeout(() => setStep(2), 1000),
             onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
           }
         );
@@ -103,7 +103,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             onSuccess: (data) => {
               queryClient.invalidateQueries({ queryKey: ['userAccount'] });
               toast.success(data.message || 'Email updated successfully');
-              setTimeout(() => handleClose(), 600);
+              setTimeout(() => handleClose(), 1000);
             },
             onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify new email')
           }
@@ -127,7 +127,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             onSuccess: (data) => {
               queryClient.invalidateQueries({ queryKey: ['userAccount'] });
               toast.success(data.message || 'Recovery email updated successfully');
-              setTimeout(() => handleClose(), 600);
+              setTimeout(() => handleClose(), 1000);
             },
             onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify recovery email')
           }
@@ -225,15 +225,30 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
               maxLength={6}
               value={currentEmailCode}
               onChange={(e) => {
-                setCurrentEmailCode(e.target.value.replace(/\D/g, ''));
+                const val = e.target.value.replace(/\D/g, '');
+                setCurrentEmailCode(val);
                 setErrorMsg('');
+                if (val.length === 6) {
+                  verifyCurrentEmailConfirm.mutate(
+                    { otp: val },
+                    {
+                      onSuccess: () => setTimeout(() => setStep(2), 1000),
+                      onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
+                    }
+                  );
+                }
               }}
               placeholder="000000"
-              className={`w-full h-[48px] px-4 text-center bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : verifyCurrentEmailConfirm.isSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
+              className={`w-full h-[48px] px-4 bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : verifyCurrentEmailConfirm.isSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
             />
             {verifyCurrentEmailConfirm.isSuccess && !errorMsg && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4ADE80]">
                 <BadgeCheck className="w-5 h-5" />
+              </div>
+            )}
+            {errorMsg && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#FF6B6B]">
+                <XCircle className="w-5 h-5" />
               </div>
             )}
           </div>
@@ -277,15 +292,48 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
               maxLength={6}
               value={newEmailCode}
               onChange={(e) => {
-                setNewEmailCode(e.target.value.replace(/\D/g, ''));
+                const val = e.target.value.replace(/\D/g, '');
+                setNewEmailCode(val);
                 setErrorMsg('');
+                if (val.length === 6) {
+                  if (isPrimary && step === 3) {
+                    verifyEmailMutation.mutate(
+                      { otp: val },
+                      {
+                        onSuccess: (data) => {
+                          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+                          toast.success(data.message || 'Email updated successfully');
+                          setTimeout(() => handleClose(), 1000);
+                        },
+                        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify new email')
+                      }
+                    );
+                  } else if (isRecovery && step === 2) {
+                    verifyRecoveryEmailMutation.mutate(
+                      { otp: val },
+                      {
+                        onSuccess: (data) => {
+                          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+                          toast.success(data.message || 'Recovery email updated successfully');
+                          setTimeout(() => handleClose(), 1000);
+                        },
+                        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify recovery email')
+                      }
+                    );
+                  }
+                }
               }}
               placeholder="000000"
-              className={`w-full h-[48px] px-4 text-center bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : isNewEmailSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
+              className={`w-full h-[48px] px-4 bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : isNewEmailSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
             />
             {isNewEmailSuccess && !errorMsg && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4ADE80]">
                 <BadgeCheck className="w-5 h-5" />
+              </div>
+            )}
+            {errorMsg && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#FF6B6B]">
+                <XCircle className="w-5 h-5" />
               </div>
             )}
           </div>

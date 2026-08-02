@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bookmark } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { Post } from '@/types/entities';
 import { toggleSavePost } from '@/features/settings/api/savedPost';
 import { toast } from 'sonner';
@@ -65,10 +65,14 @@ export function SavedPostCard({ post, folderId, onUnsave }: SavedPostCardProps) 
           onMouseLeave={() => setIsHovering(false)}
           onClick={handleUnsave}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[24px] h-[24px] transition-opacity group-hover:opacity-80">
-            <path d="M5 2C3.89543 2 3 2.89543 3 4V22L12 17L21 22V4C21 2.89543 20.1054 2 19 2H5Z" fill="#6366F1"/>
-            <rect x="8.5" y="6" width="7" height="1.5" rx="0.5" fill="white"/>
-          </svg>
+          {/* Every post here is already saved, so this always renders the
+              filled/bold bookmark — same icon + state SaveButton (feed) uses
+              for isSaved === true. Clicking it unsaves via handleUnsave. */}
+          <Icon
+            icon="solar:bookmark-bold"
+            className="w-6 h-6 text-primary transition-opacity group-hover:opacity-80"
+            aria-hidden="true"
+          />
           
           {/* Hover Tooltip - 'Unsave' Pill */}
           {isHovering && (

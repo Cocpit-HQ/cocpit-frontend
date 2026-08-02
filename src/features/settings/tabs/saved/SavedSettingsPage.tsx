@@ -1,17 +1,21 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Folder, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CreateFolderModal } from '@/features/settings/components/CreateFolderModal';
 import { SavedFolder } from '@/types/entities';
 import { useSavedFolders } from '../../hooks/useSavedFolders';
+import { useSettingsStore } from '@/store/settings.store';
 
 export function SavedSettingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // UI-only state (is the "create collection" modal open) now lives in the
+  // shared settings store instead of local useState.
+  const isCreateModalOpen = useSettingsStore((state) => state.saved.isCreateFolderModalOpen);
+  const setIsCreateModalOpen = useSettingsStore((state) => state.setSavedCreateFolderModalOpen);
   const { folders, isLoading } = useSavedFolders();
 
   const handleFolderCreated = () => {
