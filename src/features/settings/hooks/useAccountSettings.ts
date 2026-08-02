@@ -100,6 +100,26 @@ export function useUpdatePassword() {
   });
 }
 
+export function useRequestPasswordResetLink() {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/auth/forgot-password-link');
+      return response.data;
+    },
+  });
+}
+
+export function useResetLinkStatus() {
+  return useQuery({
+    queryKey: ['resetLinkStatus'],
+    queryFn: async () => {
+      const response = await api.get('/auth/reset-link-status');
+      return response.data as { hasActiveLink: boolean; remainingSeconds: number };
+    },
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useSetPhone() {
   return useMutation({
     mutationFn: async (data: { phone: string }) => {

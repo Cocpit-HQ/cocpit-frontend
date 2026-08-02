@@ -116,3 +116,26 @@ export const resetPassword = async (email: string, newPassword: string, otp: str
   return response.data;
 };
 
+export const requestPasswordResetLink = async () => {
+  const response = await api.post("/auth/forgot-password-link");
+  return response.data;
+};
+
+export const verifyResetToken = async (token: string) => {
+  const response = await publicApi.get(`/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+  return response.data;
+};
+
+export const resetPasswordWithToken = async (token: string, newPassword: string) => {
+  const response = await publicApi.post("/auth/reset-password-token", {
+    token,
+    newPassword,
+  });
+  return response.data;
+};
+
+export const getResetLinkStatus = async () => {
+  const response = await api.get("/auth/reset-link-status");
+  return response.data as { hasActiveLink: boolean; remainingSeconds: number };
+};
+

@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
-import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
-
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, Eye, EyeOff, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUpdatePassword, useLogout } from '../../../hooks/useAccountSettings';
+import { useUpdatePassword, useRequestPasswordResetLink, useResetLinkStatus } from '../../../hooks/useAccountSettings';
 
 export function ManagePasswordPage() {
   const pathname = usePathname() || '/settings/account-password';
@@ -20,11 +19,47 @@ export function ManagePasswordPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [resetSuccessMsg, setResetSuccessMsg] = useState('');
+  const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
   
   const updatePasswordMutation = useUpdatePassword();
+  const requestResetLinkMutation = useRequestPasswordResetLink();
+  const { data: resetStatus, refetch: refetchResetStatus } = useResetLinkStatus();
+
+  // Sync active reset link timer from server
+  useEffect(() => {
+    if (resetStatus?.hasActiveLink && resetStatus?.remainingSeconds > 0) {
+      setCooldownSeconds(resetStatus.remainingSeconds);
+    }
+  }, [resetStatus]);
+
+  // Interval countdown manager
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          refetchResetStatus();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldownSeconds, refetchResetStatus]);
+
+  const formatTime = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   const handleUpdatePassword = () => {
     setErrorMsg('');
+    setResetSuccessMsg('');
     if (newPassword !== confirmPassword) {
       setErrorMsg("New passwords do not match");
       return;
@@ -35,7 +70,6 @@ export function ManagePasswordPage() {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
-        // Show toast or some success state
       },
       onError: (error: any) => {
         setErrorMsg(error?.response?.data?.message || "Failed to update password");
@@ -43,18 +77,18 @@ export function ManagePasswordPage() {
     });
   };
 
-
-  const logoutMutation = useLogout();
-  const router = useRouter();
-
   const handleForgotPassword = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        router.push('/forgot-password');
+    if (cooldownSeconds > 0) return;
+    setErrorMsg('');
+    setResetSuccessMsg('');
+    requestResetLinkMutation.mutate(undefined, {
+      onSuccess: (data: any) => {
+        setResetSuccessMsg(data?.message || "Password reset link sent to your registered email!");
+        setCooldownSeconds(900); // 15 minutes = 900 seconds
+        refetchResetStatus();
       },
-      onError: () => {
-        // Fallback if logout fails
-        router.push('/forgot-password');
+      onError: (error: any) => {
+        setErrorMsg(error?.response?.data?.message || "Failed to send password reset email link");
       }
     });
   };
@@ -148,16 +182,26 @@ export function ManagePasswordPage() {
           </div>
 
           {errorMsg && <p className="text-[14px] text-[#FF6B6B]">{errorMsg}</p>}
+          {resetSuccessMsg && <p className="text-[14px] text-green-600 font-medium">{resetSuccessMsg}</p>}
           {updatePasswordMutation.isSuccess && <p className="text-[14px] text-green-500">Password updated successfully!</p>}
 
           {/* Buttons */}
           <div className="flex flex-row justify-end items-center gap-4">
-            <button 
-              onClick={handleForgotPassword}
-              className="flex items-center justify-center h-[40px] px-6 rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-medium transition-colors"
-            >
-              Forgot password
-            </button>
+            {cooldownSeconds > 0 ? (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-[24px] bg-amber-50 border border-amber-200 text-amber-700 text-[13px] font-medium">
+                <Clock className="w-4 h-4 animate-pulse text-amber-600" />
+                <span>Reset link active ({formatTime(cooldownSeconds)})</span>
+              </div>
+            ) : (
+              <button 
+                onClick={handleForgotPassword}
+                disabled={requestResetLinkMutation.isPending}
+                className="flex items-center justify-center h-[40px] px-6 rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-medium transition-colors disabled:opacity-50 hover:bg-indigo-50"
+              >
+                {requestResetLinkMutation.isPending ? "Sending link..." : "Forgot password"}
+              </button>
+            )}
+            
             <button 
               onClick={handleUpdatePassword}
               disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
