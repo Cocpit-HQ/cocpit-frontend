@@ -162,7 +162,7 @@ function RoleRow({
                   </>
                 )}
                 <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
-                  {experience.end_date ? formatDate(experience.end_date) : (experience.is_current ? 'Present' : '')}
+                  {experience.end_date ? formatDate(experience.end_date) : (experience.start_date ? 'Present' : '')}
                 </span>
               </div>
             )}

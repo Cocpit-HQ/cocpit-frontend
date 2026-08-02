@@ -134,7 +134,7 @@ export function EditableExperienceItem({
                                         <span className="flex items-center justify-center w-[9px] h-[16px]"></span>
                                     </>
                                 )}
-                                <span className="whitespace-nowrap text-left">{experience.end_date ? formatDate(experience.end_date) : (experience.is_current ? 'Present' : '')}</span>
+                                <span className="whitespace-nowrap text-left">{experience.end_date ? formatDate(experience.end_date) : (experience.start_date ? 'Present' : '')}</span>
                             </>
                         ) : (
                             <>

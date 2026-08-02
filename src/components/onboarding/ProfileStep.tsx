@@ -44,8 +44,8 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   const { update } = useSession();
 
   const validateAccountName = (name: string) => {
-    // 3-20 characters, lowercase letters, numbers, underscore only
-    const regex = /^[a-z0-9_]{3,20}$/;
+    // 3-20 characters, lowercase letters, numbers, dot, underscore only
+    const regex = /^[a-z0-9_.]{3,20}$/;
     return regex.test(name);
   };
 
@@ -262,7 +262,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
                   ? "Username exceeds the maximum allowed length of 20 characters." 
                   : accountName.length < 2
                     ? "Username must be at least 3 characters long."
-                    : "Invalid format. Use only lowercase letters, numbers, and underscores."}
+                    : "Invalid format. Use only lowercase letters, numbers, dots, and underscores."}
             </p>
           )}
         </div>
