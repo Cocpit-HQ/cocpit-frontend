@@ -35,6 +35,7 @@ export function usePrivacySettings() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: PRIVACY_SETTINGS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 

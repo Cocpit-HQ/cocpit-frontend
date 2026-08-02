@@ -24,6 +24,8 @@ export interface User {
   is_following?: boolean;
   is_followed_by?: boolean;
   cover_image?: string | null;
+  email?: string | null;
+  mobile_number?: string | null;
   connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;

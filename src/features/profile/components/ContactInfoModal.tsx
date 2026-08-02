@@ -111,48 +111,46 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
 
                     <div className="space-y-6 px-4 pb-4">
                         {/* Email */}
-                        <div className="flex items-start gap-4">
-                            <Mail className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
-                            <div className="flex-1 flex flex-col gap-1">
-                                <p className="text-[16px] font-medium text-foreground">Email</p>
-                                <div className="flex items-center justify-between group h-5">
-                                    <a href={`mailto:${user.email}`} className="text-muted-foreground text-[14px] font-normal break-all">
-                                        {user.email || 'Not provided'}
-                                    </a>
-                                    {user.email && (
+                        {Boolean(user.email) && (
+                            <div className="flex items-start gap-4">
+                                <Mail className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
+                                <div className="flex-1 flex flex-col gap-1">
+                                    <p className="text-[16px] font-medium text-foreground">Email</p>
+                                    <div className="flex items-center justify-between group h-5">
+                                        <a href={`mailto:${user.email}`} className="text-muted-foreground text-[14px] font-normal break-all">
+                                            {user.email}
+                                        </a>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => handleCopy(user.email, 'Email')}
+                                            onClick={() => handleCopy(user.email || '', 'Email')}
                                         >
                                             {copiedField === 'Email' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
                                         </Button>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Phone */}
-                        {isOwnProfile && (
+                        {Boolean(user.mobile_number) && (
                             <div className="flex items-start gap-4">
                                 <Phone className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                                 <div className="flex-1 flex flex-col gap-1">
                                     <p className="text-[16px] font-medium text-foreground">Phone</p>
                                     <div className="flex items-center justify-between group h-5">
                                         <span className="text-muted-foreground text-[14px] font-normal">
-                                            {user.mobile_number || 'Not provided'}
+                                            {user.mobile_number}
                                         </span>
-                                        {user.mobile_number && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => handleCopy(user.mobile_number || '', 'Phone')}
-                                            >
-                                                {copiedField === 'Phone' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-                                            </Button>
-                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleCopy(user.mobile_number || '', 'Phone')}
+                                        >
+                                            {copiedField === 'Phone' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                                        </Button>
                                     </div>
                                 </div>
                             </div>

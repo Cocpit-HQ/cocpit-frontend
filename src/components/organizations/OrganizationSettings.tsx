@@ -112,7 +112,7 @@ function TransferOwnership({ companyId, members }: { companyId: string; members:
     const router = useRouter(); // Error: useRouter must be imported from next/navigation
 
     const transferMutation = useMutation({
-        mutationFn: () => companyService.transferOwnership(companyId, selectedMember, password),
+        mutationFn: () => companyService.transferOwnership(companyId, selectedMember),
         onSuccess: () => {
             toast.success("Ownership transferred successfully");
             setIsOpen(false);

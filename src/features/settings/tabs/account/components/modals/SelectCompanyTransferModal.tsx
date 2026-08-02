@@ -5,9 +5,10 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 
 export interface CompanyInfo {
-  id: number;
+  id: string;
   name: string;
-  type: string;
+  type?: string;
+  logo_url?: string;
 }
 
 interface SelectCompanyTransferModalProps {
@@ -18,7 +19,7 @@ interface SelectCompanyTransferModalProps {
 }
 
 export function SelectCompanyTransferModal({ isOpen, onClose, onContinue, companies }: SelectCompanyTransferModalProps) {
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -47,28 +48,40 @@ export function SelectCompanyTransferModal({ isOpen, onClose, onContinue, compan
 
           {/* Company List */}
           <div className="flex flex-col w-full gap-4 mb-4 flex-1 overflow-y-auto pr-1">
-            {companies.map(company => (
-              <div 
-                key={company.id} 
-                onClick={() => setSelectedCompanyId(company.id)}
-                className={`flex items-center gap-2 px-4 py-2 w-full min-h-[64px] rounded-[12px] cursor-pointer transition-colors ${
-                  selectedCompanyId === company.id ? 'bg-[#EEF2FF]' : 'hover:bg-gray-50'
-                }`}
-              >
-                <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden relative flex-shrink-0">
-                  <Image 
-                    src="/assets/defaultcompany image.png" 
-                    alt={company.name} 
-                    fill 
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-col flex-1 justify-center">
-                  <span className="text-[16px] font-medium text-black leading-[24px]">{company.name}</span>
-                  <span className="text-[12px] font-normal text-[#6B7280] leading-[16px]">{company.type}</span>
-                </div>
+            {companies.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-center text-sm text-gray-500">
+                No owned companies available to transfer.
               </div>
-            ))}
+            ) : (
+              companies.map(company => (
+                <div 
+                  key={company.id} 
+                  onClick={() => setSelectedCompanyId(company.id)}
+                  className={`flex items-center gap-2 px-4 py-2 w-full min-h-[64px] rounded-[12px] cursor-pointer transition-colors ${
+                    selectedCompanyId === company.id ? 'bg-[#EEF2FF]' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden relative flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                    {company.logo_url ? (
+                      <Image 
+                        src={company.logo_url} 
+                        alt={company.name} 
+                        fill 
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="font-semibold text-indigo-600 text-lg">
+                        {company.name?.charAt(0) || 'C'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col flex-1 justify-center">
+                    <span className="text-[16px] font-medium text-black leading-[24px]">{company.name}</span>
+                    {company.type && <span className="text-[12px] font-normal text-[#6B7280] leading-[16px]">{company.type}</span>}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Action Buttons */}

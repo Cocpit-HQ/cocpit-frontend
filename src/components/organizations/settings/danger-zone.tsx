@@ -31,8 +31,8 @@ export function DangerZone({ company }: DangerZoneProps) {
     };
 
     const handleTransfer = () => {
-        if (!transferUserId || !transferPassword) return;
-        transferMutation.mutate({ companyId: company.company_id, newOwnerId: transferUserId, password: transferPassword });
+        if (!transferUserId) return;
+        transferMutation.mutate({ companyId: company.company_id, newOwnerId: transferUserId });
     };
 
     return (
@@ -58,7 +58,7 @@ export function DangerZone({ company }: DangerZoneProps) {
                                 <DialogHeader>
                                     <DialogTitle>Transfer Ownership</DialogTitle>
                                     <DialogDescription>
-                                        Enter the User ID of the new owner and your password to confirm.
+                                        Enter the User ID of an active member to make them the new owner.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4 space-y-4">
@@ -70,18 +70,9 @@ export function DangerZone({ company }: DangerZoneProps) {
                                             placeholder="UUID"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Current Password</Label>
-                                        <Input
-                                            type="password"
-                                            value={transferPassword}
-                                            onChange={(e) => setTransferPassword(e.target.value)}
-                                            placeholder="Enter your password"
-                                        />
-                                    </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button onClick={handleTransfer} disabled={transferMutation.isPending || !transferUserId || !transferPassword}>
+                                    <Button onClick={handleTransfer} disabled={transferMutation.isPending || !transferUserId}>
                                         {transferMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Transfer
                                     </Button>

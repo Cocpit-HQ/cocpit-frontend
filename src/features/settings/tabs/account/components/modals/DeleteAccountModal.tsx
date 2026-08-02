@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { TransferOwnershipModal } from './TransferOwnershipModal';
 import { SelectCompanyTransferModal, CompanyInfo } from './SelectCompanyTransferModal';
 import { useDeleteAccount } from '../../../../hooks/useAccountSettings';
+import { companyService } from '@/services/organization.service';
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -13,14 +14,10 @@ interface DeleteAccountModalProps {
   hasCompanyAccount?: boolean;
 }
 
-const mockCompanies: CompanyInfo[] = [
-  { id: 1, name: 'Acme Inc.', type: 'SaaS' },
-  { id: 2, name: 'Cocpit', type: 'SaaS' },
-  { id: 3, name: 'Muenchener Rueckversicherungs-Gesellschaft', type: 'SaaS' }
-];
-
 export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false }: DeleteAccountModalProps) {
-  const [checkedCompanyIds, setCheckedCompanyIds] = useState<number[]>([]);
+  const [ownedCompanies, setOwnedCompanies] = useState<CompanyInfo[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [checkedCompanyIds, setCheckedCompanyIds] = useState<string[]>([]);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isSelectCompanyModalOpen, setIsSelectCompanyModalOpen] = useState(false);
   const [selectedCompanyToTransfer, setSelectedCompanyToTransfer] = useState<CompanyInfo | null>(null);
@@ -28,6 +25,30 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
 
   const router = useRouter();
   const deleteAccountMutation = useDeleteAccount();
+
+  useEffect(() => {
+    if (isOpen && hasCompanyAccount) {
+      fetchOwnedCompanies();
+    }
+  }, [isOpen, hasCompanyAccount]);
+
+  const fetchOwnedCompanies = async () => {
+    setLoadingCompanies(true);
+    try {
+      const companies = await companyService.getOwnedCompanies();
+      const mapped: CompanyInfo[] = companies.map(c => ({
+        id: c.company_id || c.org_id || '',
+        name: c.name,
+        type: c.industry || c.entity_type || 'Company',
+        logo_url: c.logo_url
+      }));
+      setOwnedCompanies(mapped);
+    } catch (err: any) {
+      console.error("Failed to fetch owned companies:", err);
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -43,11 +64,11 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
     });
   };
 
-  const allChecked = mockCompanies.length > 0 && checkedCompanyIds.length === mockCompanies.length;
+  const allChecked = ownedCompanies.length > 0 && checkedCompanyIds.length === ownedCompanies.length;
   const anyChecked = checkedCompanyIds.length > 0;
-  const isDeleteDisabled = hasCompanyAccount && !anyChecked;
+  const isDeleteDisabled = hasCompanyAccount && ownedCompanies.length > 0 && !anyChecked;
 
-  const toggleCompanyChecked = (id: number) => {
+  const toggleCompanyChecked = (id: string) => {
     if (checkedCompanyIds.includes(id)) {
       setCheckedCompanyIds(checkedCompanyIds.filter(cId => cId !== id));
     } else {
@@ -56,10 +77,10 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
   };
 
   const handleOpenTransfer = () => {
-    if (mockCompanies.length > 1) {
+    if (ownedCompanies.length > 1) {
       setIsSelectCompanyModalOpen(true);
-    } else if (mockCompanies.length === 1) {
-      setSelectedCompanyToTransfer(mockCompanies[0]);
+    } else if (ownedCompanies.length === 1) {
+      setSelectedCompanyToTransfer(ownedCompanies[0]);
       setIsTransferModalOpen(true);
     }
   };
@@ -69,7 +90,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
       <SelectCompanyTransferModal
         isOpen={true}
         onClose={() => setIsSelectCompanyModalOpen(false)}
-        companies={mockCompanies}
+        companies={ownedCompanies}
         onContinue={(company) => {
           setIsSelectCompanyModalOpen(false);
           setSelectedCompanyToTransfer(company);
@@ -79,17 +100,22 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
     );
   }
 
-  if (isTransferModalOpen) {
+  if (isTransferModalOpen && selectedCompanyToTransfer) {
     return (
       <TransferOwnershipModal 
         isOpen={true}
         onClose={() => setIsTransferModalOpen(false)}
-        companyName={selectedCompanyToTransfer?.name}
-        onTransfer={() => {
+        onBack={() => {
           setIsTransferModalOpen(false);
-          if (selectedCompanyToTransfer && !checkedCompanyIds.includes(selectedCompanyToTransfer.id)) {
-            setCheckedCompanyIds([...checkedCompanyIds, selectedCompanyToTransfer.id]);
+          if (ownedCompanies.length > 1) {
+            setIsSelectCompanyModalOpen(true);
           }
+        }}
+        companyId={selectedCompanyToTransfer.id}
+        companyName={selectedCompanyToTransfer.name}
+        onTransferSuccess={() => {
+          setIsTransferModalOpen(false);
+          fetchOwnedCompanies();
         }}
       />
     );
@@ -120,23 +146,31 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           <div className="flex flex-col items-center w-[418px] bg-[#EEF2FF] rounded-[24px] p-4 gap-2 mb-6">
             <h3 className="text-[14px] font-semibold text-black leading-[20px] mb-1">Company accounts</h3>
             
-            <div className="flex flex-col items-start w-full gap-2 mb-2 px-[73px]">
-              {mockCompanies.map(company => (
-                <label key={company.id} className="flex items-center gap-2 cursor-pointer w-full h-[20px]">
-                  <input 
-                    type="checkbox" 
-                    checked={checkedCompanyIds.includes(company.id)} 
-                    onChange={() => toggleCompanyChecked(company.id)} 
-                    className="w-[18px] h-[18px] rounded-[2px] border-[#6B7280] cursor-pointer flex-shrink-0"
-                  />
-                  <span className="text-[14px] font-normal text-[#6B7280] leading-[20px] truncate">
-                    Also delete <span className="font-semibold text-black">{company.name}</span>
-                  </span>
-                </label>
-              ))}
-            </div>
+            {loadingCompanies ? (
+              <div className="flex items-center justify-center py-4 text-xs text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin mr-1" /> Loading owned companies...
+              </div>
+            ) : (
+              <div 
+                className="flex flex-col items-start w-full gap-2 mb-2 px-[40px] max-h-[160px] overflow-y-auto pr-2 [&:not(:hover)]:[scrollbar-width:none] [&:not(:hover)::-webkit-scrollbar]:w-0 [&:not(:hover)::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+              >
+                {ownedCompanies.map(company => (
+                  <label key={company.id} className="flex items-center gap-2 cursor-pointer w-full h-[20px]">
+                    <input 
+                      type="checkbox" 
+                      checked={checkedCompanyIds.includes(company.id)} 
+                      onChange={() => toggleCompanyChecked(company.id)} 
+                      className="w-[18px] h-[18px] rounded-[2px] border-[#6B7280] cursor-pointer flex-shrink-0"
+                    />
+                    <span className="text-[14px] font-normal text-[#6B7280] leading-[20px] truncate">
+                      Also delete <span className="font-semibold text-black">{company.name}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
             
-            {!allChecked && (
+            {!allChecked && ownedCompanies.length > 0 && (
               <>
                 <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] text-center">Or</span>
                 

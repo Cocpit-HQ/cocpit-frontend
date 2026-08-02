@@ -466,6 +466,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     };
 
+    const handlePrivacyUpdated = (payload: { userId?: string }) => {
+      console.log("[Socket] USER_PRIVACY_UPDATED received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -478,6 +483,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
+    newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     socketRef.current = newSocket;
     queueMicrotask(() => {
       setSocket(newSocket);
@@ -505,6 +511,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('block_confirmed', handleBlock);
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
+      newSocket.off('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
       newSocket.off('member_sync', handleMemberSync);
       newSocket.disconnect();
       setTypingConversations({});

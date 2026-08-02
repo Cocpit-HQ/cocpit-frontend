@@ -42,7 +42,7 @@ export function useCheckSlug() {
 export function useCompanyMembers(companyId: string | undefined) {
     return useInfiniteQuery({
         queryKey: COMP_KEYS.members(companyId!),
-        queryFn: ({ pageParam = 1 }) => companyService.getMembers(companyId!, pageParam as number),
+        queryFn: ({ pageParam = 1 }) => companyService.getMembers(companyId!, { page: pageParam as number }),
         getNextPageParam: (lastPage: any) => {
             const { page, totalPages } = lastPage.meta;
             return page < totalPages ? page + 1 : undefined;
@@ -115,10 +115,10 @@ export function useVerifyDomain() {
 export function useTransferOwnership() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ companyId, newOwnerId, password }: { companyId: string; newOwnerId: string; password?: string }) =>
-            companyService.transferOwnership(companyId, newOwnerId, password),
+        mutationFn: ({ companyId, newOwnerId }: { companyId: string; newOwnerId: string }) =>
+            companyService.transferOwnership(companyId, newOwnerId),
         onSuccess: (_, { companyId }) => {
-            toast.success("Ownership transferred");
+            toast.success("Ownership transferred successfully");
             queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
         },
         onError: (err) => toast.error(companyService.normalizeError(err))

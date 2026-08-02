@@ -107,6 +107,14 @@ export const companyService = {
         }));
     },
 
+    async getOwnedCompanies(): Promise<(Company & { role: string; is_owner?: boolean })[]> {
+        const res = await api.get('/organizations/owned');
+        return res.data.map((c: any) => ({
+            ...c,
+            company_id: c.company_id || c.org_id
+        }));
+    },
+
     async updateCompany(companyId: string, data: Partial<Company>) {
         const res = await api.put(`/organizations/${companyId}`, data);
         return res.data;
@@ -117,18 +125,14 @@ export const companyService = {
         return res.data;
     },
 
-    async getMembers(companyId: string, pageParam = 1): Promise<{ data: CompanyMember[], meta: any }> {
-        // This endpoint was also not explicitly in the backend checklist!
-        // The backend checklist had `inviteMember`.
-        // We probably need `GET /organizations/:id/members`.
-        // I should stick to the plan. The plan says "List members".
-        // I might need to add this endpoint to the backend or use `getCompany` to return members?
-        // Usually `getCompany` returns the company info. Members are separate.
-        // I will assume `GET /organizations/:id/members` exists or I need to create it.
-        // Since I just finished backend, I know I didn't create `getMembers`.
-        // I will add a TODO in the frontend to handle this (mock or fetch).
-        // For now, I'll define the service method.
-        const res = await api.get(`/organizations/${companyId}/members`, { params: { page: pageParam, limit: 10 } });
+    async getMembers(companyId: string, params: { page?: number; limit?: number; search?: string; status?: string; exclude_owner?: boolean } = {}): Promise<{ data: any[], meta: any }> {
+        const res = await api.get(`/organizations/${companyId}/teams/members`, {
+            params,
+            headers: {
+                'x-actor-type': 'ORGANIZATION',
+                'x-actor-id': companyId,
+            }
+        });
         return res.data;
     },
 
@@ -142,8 +146,13 @@ export const companyService = {
         return res.data;
     },
 
-    async transferOwnership(companyId: string, newOwnerId: string, password?: string) {
-        const res = await api.post(`/organizations/${companyId}/transfer-ownership`, { newOwnerId, password });
+    async transferOwnership(companyId: string, newOwnerId: string) {
+        const res = await api.post(`/organizations/${companyId}/transfer-ownership`, { newOwnerId }, {
+            headers: {
+                'x-actor-type': 'ORGANIZATION',
+                'x-actor-id': companyId,
+            }
+        });
         return res.data;
     },
 
