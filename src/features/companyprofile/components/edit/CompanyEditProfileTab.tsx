@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyEditStore } from "../../store/useCompanyEditStore";
+import { INDUSTRY_OPTIONS, INSTITUTION_INDUSTRY_OPTIONS } from "@/constants/organizationOptions";
 
 interface CompanyEditProfileTabProps {
   onCancel: () => void;
@@ -38,32 +39,16 @@ const OFFERING_ICONS = [
   "lucide:shield-check",
 ];
 
-const INDUSTRY_OPTIONS = [
-  "Information Technology",
-  "Software & SaaS",
-  "Healthcare",
-  "Finance & Banking",
-  "Manufacturing"
-];
-
-const INSTITUTION_INDUSTRY_OPTIONS = [
-  "School",
-  "College",
-  "University",
-  "Coaching",
-  "Tuition"
-];
-
 const normalizeIndustry = (val: string | undefined, isInst: boolean): string => {
-  if (!val) return isInst ? "School" : "Information Technology";
+  if (!val) return isInst ? INSTITUTION_INDUSTRY_OPTIONS[0].value : INDUSTRY_OPTIONS[0].label;
   const lower = val.toLowerCase().trim();
-  
+
   if (isInst) {
-    const matchedInst = INSTITUTION_INDUSTRY_OPTIONS.find(opt => opt.toLowerCase() === lower);
-    if (matchedInst) return matchedInst;
+    const matchedInst = INSTITUTION_INDUSTRY_OPTIONS.find(opt => opt.value.toLowerCase() === lower || opt.label.toLowerCase() === lower);
+    if (matchedInst) return matchedInst.value;
     return val;
   }
-  
+
   if (lower === "manufacturing") return "Manufacturing";
   if (lower === "information technology" || lower === "information_technology" || lower === "it" || lower === "technology") return "Information Technology";
   if (lower === "software & saas" || lower === "software_saas" || lower.includes("software")) return "Software & SaaS";
@@ -72,9 +57,9 @@ const normalizeIndustry = (val: string | undefined, isInst: boolean): string => 
   if (lower.includes("education")) return "Education";
   if (lower.includes("retail")) return "Retail & E-commerce";
   if (lower.includes("media")) return "Media & Entertainment";
-  
-  const matched = INDUSTRY_OPTIONS.find(opt => opt.toLowerCase() === lower);
-  return matched || val;
+
+  const matched = INDUSTRY_OPTIONS.find(opt => opt.label.toLowerCase() === lower);
+  return matched?.label || val;
 };
 
 const SIZE_OPTIONS = [
@@ -216,7 +201,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       const isInst = org.entity_type === "INSTITUTION" || org.entityType === "INSTITUTION";
       const newForm = {
         name: org.name || "",
-        industry: normalizeIndustry(org.industry, isInst),
+        industry: normalizeIndustry(isInst ? org.institution_type : org.industry, isInst),
         foundedYear: org.established_year?.toString() || org.founded?.toString() || "",
         size: normalizeCompanySize(org.size || org.employeeCount),
         website: org.website || org.websiteUrl || "",
@@ -381,8 +366,8 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
               className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
             >
               {(isInstitution ? INSTITUTION_INDUSTRY_OPTIONS : INDUSTRY_OPTIONS).map((opt) => (
-                <option key={opt} value={opt} className="dark:bg-[#0D1117] dark:text-white">
-                  {opt}
+                <option key={opt.value} value={isInstitution ? opt.value : opt.label} className="dark:bg-[#0D1117] dark:text-white">
+                  {opt.label}
                 </option>
               ))}
             </select>

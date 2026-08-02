@@ -74,7 +74,11 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
       const currentUserId = session?.user?.id;
       queryClient.invalidateQueries({ queryKey: ['profileStats', id] });
-      queryClient.invalidateQueries({ queryKey: ['profile', id] });
+      // Profile pages may key this query by UUID or by account handle depending
+      // on how the caller linked here — invalidate by prefix so whichever one
+      // is actually cached for this user gets refetched instead of silently
+      // missing (which otherwise requires a hard refresh to pick up the change).
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['followers', id] });
       queryClient.invalidateQueries({ queryKey: ['following', id] });
       queryClient.invalidateQueries({ queryKey: ['followersCount', id] });
@@ -128,7 +132,11 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
       const currentUserId = session?.user?.id;
       queryClient.invalidateQueries({ queryKey: ['profileStats', id] });
-      queryClient.invalidateQueries({ queryKey: ['profile', id] });
+      // Profile pages may key this query by UUID or by account handle depending
+      // on how the caller linked here — invalidate by prefix so whichever one
+      // is actually cached for this user gets refetched instead of silently
+      // missing (which otherwise requires a hard refresh to pick up the change).
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['followers', id] });
       queryClient.invalidateQueries({ queryKey: ['following', id] });
       queryClient.invalidateQueries({ queryKey: ['followersCount', id] });

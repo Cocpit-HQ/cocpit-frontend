@@ -44,14 +44,17 @@ export default function PeopleTab({ data }: PeopleTabProps) {
       { title: "Location Distribution", items: mapItems(peopleData.insights.locationDistribution) },
       { title: "Top Skills", items: mapItems(peopleData.insights.topSkills) },
       { title: "Role Distribution", items: mapItems(peopleData.insights.roleDistribution) },
-      { title: "Education Breakdown", items: mapItems(peopleData.insights.educationBreakdown) },
+      isEdu
+        ? { title: "Current Employer", items: mapItems(peopleData.insights.currentEmployerBreakdown) }
+        : { title: "Education Breakdown", items: mapItems(peopleData.insights.educationBreakdown) },
     ].filter((dist) => dist.items.length > 0);
   }
 
-  const employeesList = (peopleData?.people || []).map((emp: any) => {
+  const currentUserIdStr = String(session?.user?.id || (session?.user as any)?.user_id || (session?.user as any)?.sub || activeProfile?.id || "").toLowerCase();
+
+  const employeesList = (peopleData?.people || peopleData?.alumni || []).map((emp: any) => {
     let action = "connect";
     const empId = String(emp.user_id || emp.id || emp._id || "").toLowerCase();
-    const currentUserIdStr = String(session?.user?.id || (session?.user as any)?.user_id || (session?.user as any)?.sub || "").toLowerCase();
 
     if (empId && currentUserIdStr && empId === currentUserIdStr) {
       action = "empty"; // Hide button for oneself
@@ -79,19 +82,29 @@ export default function PeopleTab({ data }: PeopleTabProps) {
     };
   });
 
-  // Backend returns people pre-sorted connected-first, so a simple count-based
-  // split is enough — no re-sorting needed on the frontend.
   const isCompanyViewer = activeProfile?.type === "COMPANY";
-  const connectedCount = isCompanyViewer ? 0 : employeesList.filter((e: any) => e.is_connected).length;
-  const peopleYouKnow = isCompanyViewer ? [] : employeesList.slice(0, connectedCount);
-  const suggestedPeople = isCompanyViewer ? employeesList : employeesList.slice(connectedCount);
+  let you: any[] = [];
+  let peopleYouKnow: any[] = [];
+  let suggestedPeople: any[] = [];
+
+  if (isCompanyViewer) {
+    suggestedPeople = employeesList;
+  } else {
+    you = employeesList.filter((e: any) => e.id === currentUserIdStr);
+    peopleYouKnow = employeesList.filter((e: any) => e.is_connected && e.id !== currentUserIdStr);
+    suggestedPeople = employeesList.filter((e: any) => !e.is_connected && e.id !== currentUserIdStr);
+  }
+
   const showGroupHeaders = !isCompanyViewer && peopleYouKnow.length > 0 && suggestedPeople.length > 0;
 
   // Flex "order" values must stay monotonically increasing after the distributions
   // block (order: 2) for the two groups to render in the right visual sequence.
   let orderCursor = 3;
+  const youRows = you.map((emp: any) => ({ emp, order: orderCursor++ }));
+  
   const peopleYouKnowHeaderOrder = showGroupHeaders ? orderCursor++ : null;
   const peopleYouKnowRows = peopleYouKnow.map((emp: any) => ({ emp, order: orderCursor++ }));
+  
   const suggestedPeopleHeaderOrder = showGroupHeaders ? orderCursor++ : null;
   const suggestedPeopleRows = suggestedPeople.map((emp: any) => ({ emp, order: orderCursor++ }));
 
@@ -139,7 +152,8 @@ export default function PeopleTab({ data }: PeopleTabProps) {
       className="bg-white dark:bg-zinc-950"
     >
       {/* Avatar & Info Row (Frame 2608774) */}
-      <div
+      <Link
+        href={`/profile/${emp.account_name}`}
         style={{
           display: "flex",
           flexDirection: "row",
@@ -150,6 +164,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
           flex: "1 1 auto",
           order: 0,
           overflow: "hidden",
+          textDecoration: "none",
         }}
       >
         {/* Avatar Ellipse */}
@@ -241,7 +256,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
             </span>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* Action Buttons */}
       {emp.action === "view" && (
@@ -820,6 +835,8 @@ export default function PeopleTab({ data }: PeopleTabProps) {
       )}
 
       {/* Grouped: connected people first (backend-sorted), then suggestions */}
+      {youRows.map(({ emp, order }: { emp: any; order: number }) => renderEmployeeRow(emp, order))}
+
       {showGroupHeaders && (
         <h3 style={{ ...groupHeaderStyle, order: peopleYouKnowHeaderOrder as number }} className="text-black dark:text-white">
           People you know

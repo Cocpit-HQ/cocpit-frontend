@@ -289,7 +289,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
               <span className="w-[2px] h-[2px] bg-[#6B7280] dark:bg-zinc-600 rounded-full" />
               <span>{data.location}</span>
               <span className="w-[2px] h-[2px] bg-[#6B7280] dark:bg-zinc-600 rounded-full" />
-              <span>{data.employeeCount}</span>
+              <span>{data.employeeCount ? `${data.employeeCount}${String(data.employeeCount).toLowerCase().includes('member') ? '' : ' members'}` : ''}</span>
             </div>
             
             {/* Website Link */}

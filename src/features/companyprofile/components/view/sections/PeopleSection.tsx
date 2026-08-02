@@ -44,10 +44,12 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
   const pillLabel = isConnectionsMode ? "Connections" : "Suggestions";
   const firstName = displayEmployees[0]?.name;
   const otherCount = Math.max(displayCount - 1, 0);
+  const verb = isEdu ? "studied here" : "works here";
+  const pluralVerb = isEdu ? "studied here" : "work here";
   const bodyText =
     displayCount <= 1
-      ? `${firstName} works here`
-      : `${firstName} and ${otherCount} other${otherCount === 1 ? "" : "s"} work here`;
+      ? `${firstName} ${verb}`
+      : `${firstName} and ${otherCount} other${otherCount === 1 ? "" : "s"} ${pluralVerb}`;
 
   return (
     <div
@@ -95,7 +97,7 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
           }}
           className="text-black dark:text-white"
         >
-          People
+          {isEdu ? "Alumni" : "People"}
         </h2>
       </div>
 

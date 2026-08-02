@@ -676,6 +676,18 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     e?.preventDefault()
     if (!validate()) return
 
+    // If the typed school name exactly matches a real institute in the fetched
+    // suggestions but the user typed instead of clicking it, link it anyway —
+    // a linked school_org_id is what makes this entry count as Alumni on that
+    // institute's profile, regardless of which interaction path got us here.
+    let resolvedSchoolOrgId = schoolOrgId
+    if (!resolvedSchoolOrgId) {
+      const matched = schoolOptions.find(
+        opt => opt.org_id && opt.name.trim().toLowerCase() === schoolSearch.trim().toLowerCase()
+      )
+      if (matched) resolvedSchoolOrgId = matched.org_id
+    }
+
     // Combine month/year into YYYY-MM-DD
     const startMonthIdx = months.indexOf(formData.startMonth)
     const startDate = formData.startYear && startMonthIdx !== -1
@@ -690,7 +702,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     onSave?.({
       ...initialData,
       school_name: formData.school_name,
-      school_org_id: schoolOrgId,
+      school_org_id: resolvedSchoolOrgId,
       school_logo: schoolLogo,
       degree: formData.degree,
       field_of_study: formData.field_of_study,
