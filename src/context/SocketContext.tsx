@@ -9,6 +9,8 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
 import Avatar from '@/components/shared/Avatar';
 import { useQueryClient } from '@tanstack/react-query';
+import { NOTIFICATION_SETTINGS_QUERY_KEY } from '@/features/settings/hooks/useNotificationSettings';
+import type { NotificationPreferences } from '@/services/api/settings';
 
 type TargetedMessageNotification = NotificationPayload & {
   targetProfileType?: 'USER' | 'COMPANY';
@@ -199,6 +201,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleNotification = (payload: NotificationPayload) => {
+      // Check user preferences to suppress toast if disabled
+      const prefs = queryClient.getQueryData<NotificationPreferences>(NOTIFICATION_SETTINGS_QUERY_KEY);
+      if (prefs) {
+        // The 'all' preference is just a UI convenience (select all / deselect all).
+        // If we return here, we accidentally block everything if just ONE setting (like emails) is turned off!
+        const type = payload.type;
+        const isMessage = type === 'message' || type.includes('message');
+        const isPost = ['like', 'comment', 'post_tag'].includes(type) || type.includes('post');
+        const isJob = type === 'job' || type === 'company_job';
+
+        if (isMessage && prefs.messages === false) return;
+        if (isPost && prefs.posts === false) return;
+        if (isJob && prefs.jobs === false) return;
+      }
+
       if (payload.type === 'message') {
         refreshMessagingCaches(payload.conversationId);
 
@@ -248,15 +265,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           ),
           duration: 5000,
         });
-      } else if (['company_job', 'company_event', 'company_post'].includes(payload.type)) {
-        // Company notification from followed companies
+      } else if (['job', 'company_job', 'company_event', 'company_post'].includes(payload.type)) {
+        // Company or User Job notification
         const companyPayload = payload as CompanyUpdateNotification;
-        const companyName = companyPayload.actor_name || 'A company';
-        const companyAvatar = companyPayload.actor_avatar;
-        const notifText = companyPayload.text || 'New company update';
-        const referenceId = companyPayload.reference_id;
+        const companyName = companyPayload.actor_name || payload.senderName || 'Someone';
+        const companyAvatar = companyPayload.actor_avatar || payload.senderAvatar;
+        const notifText = companyPayload.text || 'New job posted';
+        const referenceId = companyPayload.reference_id || payload.referenceId;
         let navigateTo = '/notifications';
-        if (payload.type === 'company_job' && referenceId) navigateTo = `/jobs/${referenceId}`;
+        if ((payload.type === 'job' || payload.type === 'company_job') && referenceId) navigateTo = `/jobs/${referenceId}`;
         else if (payload.type === 'company_event' && referenceId) navigateTo = `/events/${referenceId}`;
         else if (payload.type === 'company_post' && referenceId) navigateTo = `/post/${referenceId}`;
 
@@ -461,7 +478,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
-
     socketRef.current = newSocket;
     queueMicrotask(() => {
       setSocket(newSocket);

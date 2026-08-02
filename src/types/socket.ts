@@ -4,7 +4,7 @@ export interface UserStatusPayload {
 }
 
 export interface NotificationPayload {
-  type: 'message' | 'system' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement' | 'post_tag';
+  type: 'message' | 'system' | 'job' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement' | 'post_tag';
   from?: string; // Sender User ID
   senderName?: string;
   senderAvatar?: string;
