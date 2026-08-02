@@ -99,7 +99,7 @@ export function PostCarousel({
                 e.stopPropagation();
                 scrollPrev();
               }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md border border-white/20 text-white transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100 hidden md:flex"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100 hidden md:flex"
             >
               <ChevronLeft className="w-5 h-5 shadow-sm" />
             </button>
@@ -110,7 +110,7 @@ export function PostCarousel({
                 e.stopPropagation();
                 scrollNext();
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md border border-white/20 text-white transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100 hidden md:flex"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md text-white transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100 hidden md:flex"
             >
               <ChevronRight className="w-5 h-5 shadow-sm" />
             </button>

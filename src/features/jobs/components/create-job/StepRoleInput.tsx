@@ -85,7 +85,7 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
       <div className="w-full max-w-md mx-auto py-6 md:py-12 flex flex-col items-center justify-center gap-6">
         <div className="flex flex-col items-center text-center gap-1.5">
           <span className={`text-xs font-semibold font-['Poppins'] tracking-wide ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'}`}>
-            Hey, Cocpit
+            Hey, {activeProfile?.name || 'Cocpit'}
           </span>
           <h3 className={`text-black text-xl md:text-2xl font-bold font-['Poppins'] leading-tight ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
             What role are you hiring for?

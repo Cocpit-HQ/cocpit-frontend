@@ -405,7 +405,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                     )}
                                     {type === 'followers' && (
                                         <div className="flex items-center gap-2">
-                                            {!user.is_following_back && (
+                                            {!user.is_following_back ? (
                                                 <button
                                                     className="h-[36px] px-5 bg-[#6366F1] text-white text-[13px] font-medium rounded-full hover:opacity-90 transition-all shadow-sm font-[family-name:var(--font-poppins)]"
                                                     onClick={(e) => {
@@ -415,17 +415,17 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                                 >
                                                     Follow back
                                                 </button>
+                                            ) : (
+                                                <button
+                                                    className="text-[#818CF8] text-[14px] font-normal hover:opacity-80 transition-colors font-[family-name:var(--font-poppins)] whitespace-nowrap"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        handleRemoveFollower(id, user.full_name);
+                                                    }}
+                                                >
+                                                    Remove follower
+                                                </button>
                                             )}
-
-                                            <button
-                                                className="p-1.5 text-[#6B7280] hover:bg-secondary rounded-full transition-colors"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    handleRemoveFollower(id, user.full_name);
-                                                }}
-                                            >
-                                                <Icon icon="fluent:dismiss-24-regular" className="w-5 h-5" />
-                                            </button>
                                         </div>
                                     )}
                                     {type === 'connections' && (
