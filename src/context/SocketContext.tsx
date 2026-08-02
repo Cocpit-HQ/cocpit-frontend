@@ -9,7 +9,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
 import Avatar from '@/components/shared/Avatar';
 import { useQueryClient } from '@tanstack/react-query';
-import { NOTIFICATION_SETTINGS_QUERY_KEY } from '@/features/settings/hooks/useNotificationSettings';
+import { useNotificationSettings, NOTIFICATION_SETTINGS_QUERY_KEY } from '@/features/settings/hooks/useNotificationSettings';
 import type { NotificationPreferences } from '@/services/api/settings';
 
 type TargetedMessageNotification = NotificationPayload & {
@@ -53,6 +53,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
+  useNotificationSettings(); // Eagerly fetch preferences so the cache is always populated
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
@@ -203,20 +204,20 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const handleNotification = (payload: NotificationPayload) => {
       // Check user preferences to suppress toast if disabled
       const prefs = queryClient.getQueryData<NotificationPreferences>(NOTIFICATION_SETTINGS_QUERY_KEY);
+      const type = payload.type;
+      const isMessage = type === 'message' || type.includes('message') || type === 'mention';
+      const isPost = ['like', 'comment', 'post_tag'].includes(type) || type.includes('post');
+      const isJob = type.includes('job'); // Catch all job-related events (job_offer_received, job_offer_accepted, etc.)
+
       if (prefs) {
         // The 'all' preference is just a UI convenience (select all / deselect all).
         // If we return here, we accidentally block everything if just ONE setting (like emails) is turned off!
-        const type = payload.type;
-        const isMessage = type === 'message' || type.includes('message');
-        const isPost = ['like', 'comment', 'post_tag'].includes(type) || type.includes('post');
-        const isJob = type === 'job' || type === 'company_job';
-
         if (isMessage && prefs.messages === false) return;
         if (isPost && prefs.posts === false) return;
         if (isJob && prefs.jobs === false) return;
       }
 
-      if (payload.type === 'message') {
+      if (isMessage) {
         refreshMessagingCaches(payload.conversationId);
 
         // Suppress notification if user is currently viewing this conversation

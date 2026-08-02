@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { usePostSync } from './use-post-sync';
 import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const usePostInteractions = (props: FeedPostProps) => {
   const {
@@ -20,6 +21,8 @@ export const usePostInteractions = (props: FeedPostProps) => {
     onSaveChange,
     isReposted: initialIsReposted = false
   } = props;
+
+  const queryClient = useQueryClient();
 
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [isReposted, setIsReposted] = useState(initialIsReposted);
@@ -89,6 +92,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
       const result = await feedApi.toggleLike(id, companyId);
       setIsLiked(result.liked);
       setLikeCount(result.likeCount);
+      queryClient.invalidateQueries({ queryKey: ["activityLogs"] });
     } catch (error) {
       console.error("Failed to toggle like:", error);
       setIsLiked(prevLiked);

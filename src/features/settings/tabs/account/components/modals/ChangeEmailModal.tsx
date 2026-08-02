@@ -189,7 +189,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
       if (step === 3) return `A 6-digit verification code has been sent to ${newEmail}`;
     }
     if (isRecovery) {
-      if (step === 1) return "Enter a valid email address. You'll need to verify it before the change is applied";
+      if (step === 1) return "Enter a valid email address. You'll need to verify it before adding.";
       if (step === 2) return `A 6-digit verification code has been sent to ${newEmail}`;
     }
     return '';

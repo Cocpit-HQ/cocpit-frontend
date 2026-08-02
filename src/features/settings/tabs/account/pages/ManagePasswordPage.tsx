@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Eye, EyeOff, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+
+
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUpdatePassword, useRequestPasswordResetLink, useResetLinkStatus } from '../../../hooks/useAccountSettings';
@@ -10,6 +13,7 @@ export function ManagePasswordPage() {
   const pathname = usePathname() || '/settings/account-password';
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';
+  const router = useRouter();
   
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -61,15 +65,21 @@ export function ManagePasswordPage() {
     setErrorMsg('');
     setResetSuccessMsg('');
     if (newPassword !== confirmPassword) {
-      setErrorMsg("New passwords do not match");
+      setErrorMsg("Passwords do not match.");
       return;
     }
-    
+    if (newPassword === currentPassword) {
+      setErrorMsg("New password must be different from current password.");
+      return;
+    }
+
     updatePasswordMutation.mutate({ currentPassword, newPassword }, {
       onSuccess: () => {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        toast.success("Password reset successful.");
+        router.push(`${basePath}/account`);
       },
       onError: (error: any) => {
         setErrorMsg(error?.response?.data?.message || "Failed to update password");
@@ -121,9 +131,12 @@ export function ManagePasswordPage() {
               <input 
                 type={showCurrent ? "text" : "password"} 
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  if (errorMsg === "Current password is incorrect") setErrorMsg('');
+                }}
                 placeholder="Enter current password"
-                className="w-full h-[48px] px-4 py-2 bg-white border border-gray-200 rounded-[16px] text-[14px] text-black focus:outline-none focus:border-[#818CF8] placeholder:text-gray-400"
+                className={`w-full h-[48px] px-4 py-2 bg-white border ${errorMsg === "Current password is incorrect" ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : 'border-gray-200 focus:border-[#818CF8]'} rounded-[16px] text-[14px] text-black focus:outline-none placeholder:text-gray-400`}
               />
               <button 
                 type="button" 
@@ -133,28 +146,38 @@ export function ManagePasswordPage() {
                 {showCurrent ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {errorMsg === "Current password is incorrect" && (
+              <span className="text-[12px] text-[#FF6B6B] mt-1">Current password does not match.</span>
+            )}
           </div>
 
           {/* New Password */}
           <div className="flex flex-col gap-2 w-full">
             <label className="text-[14px] font-medium text-black">New password</label>
             <div className="relative w-full">
-              <input 
-                type={showNew ? "text" : "password"} 
+              <input
+                type={showNew ? "text" : "password"}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (errorMsg === "New password must be different from current password.") setErrorMsg('');
+                }}
                 placeholder="Enter your new password"
-                className="w-full h-[48px] px-4 py-2 bg-white border border-gray-200 rounded-[16px] text-[14px] text-black focus:outline-none focus:border-[#818CF8] placeholder:text-gray-400"
+                className={`w-full h-[48px] px-4 py-2 bg-white border ${newPassword && currentPassword && newPassword === currentPassword ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : 'border-gray-200 focus:border-[#818CF8]'} rounded-[16px] text-[14px] text-black focus:outline-none placeholder:text-gray-400`}
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowNew(!showNew)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:opacity-70"
               >
                 {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <span className="text-[12px] text-[#6B7280] mt-1">*Use at least 8 characters</span>
+            {newPassword && currentPassword && newPassword === currentPassword ? (
+              <span className="text-[12px] text-[#FF6B6B] mt-1">New password must be different from current password.</span>
+            ) : (
+              <span className="text-[12px] text-[#6B7280] mt-1">*Use at least 8 characters</span>
+            )}
           </div>
 
           {/* Confirm New Password */}
@@ -177,11 +200,16 @@ export function ManagePasswordPage() {
               </button>
             </div>
             {confirmPassword && confirmPassword !== newPassword && (
-              <span className="text-[12px] text-[#FF6B6B] mt-1">Passwords do not match</span>
+              <span className="text-[12px] text-[#FF6B6B] mt-1">Passwords do not match.</span>
             )}
           </div>
 
-          {errorMsg && <p className="text-[14px] text-[#FF6B6B]">{errorMsg}</p>}
+          {errorMsg &&
+            errorMsg !== "Current password is incorrect" &&
+            errorMsg !== "Passwords do not match." &&
+            errorMsg !== "New password must be different from current password." && (
+              <p className="text-[14px] text-[#FF6B6B]">{errorMsg}</p>
+          )}
           {resetSuccessMsg && <p className="text-[14px] text-green-600 font-medium">{resetSuccessMsg}</p>}
           {updatePasswordMutation.isSuccess && <p className="text-[14px] text-green-500">Password updated successfully!</p>}
 
@@ -204,7 +232,7 @@ export function ManagePasswordPage() {
             
             <button 
               onClick={handleUpdatePassword}
-              disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+              disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword === currentPassword}
               className="flex items-center justify-center h-[40px] px-8 rounded-[24px] border border-[#6366F1] bg-[#6366F1] text-white text-[14px] font-medium transition-colors disabled:opacity-50 disabled:border-[#C7D2FE] disabled:bg-[#C7D2FE]"
             >
               {updatePasswordMutation.isPending ? "Updating..." : "Update"}

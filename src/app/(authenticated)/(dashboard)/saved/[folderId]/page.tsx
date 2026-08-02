@@ -102,6 +102,7 @@ export default function CustomSavedPostsPage() {
   const handlePostUnsaved = (id: string) => {
     setPosts(prev => prev.filter(post => post.id !== id));
     setFolder(prev => prev ? { ...prev, post_count: Math.max(0, (prev.post_count || 1) - 1) } : null);
+    queryClient.invalidateQueries({ queryKey: ["saved-folders"] });
   };
 
   useEffect(() => {

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Layout, Info, Headphones, ChevronRight, Star, Loader2 } from 'lucide-react';
+import { Layout, Info, ChevronRight, Star, Loader2 } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { HelpCentre } from './HelpCentre';
 import { ContactSupport } from './ContactSupport';
 import { submitFeedback } from '@/features/settings/api/support';
@@ -86,7 +87,7 @@ export function SupportSettingsPage() {
             onClick={() => setView('contact')}
           >
             <div className="flex flex-row items-center gap-4">
-              <Headphones className="w-6 h-6 text-black" strokeWidth={1.5} />
+              <Icon icon="streamline:customer-support-1" className="w-6 h-6 text-black" />
               <div className="flex flex-col justify-center">
                 <h3 className="text-[16px] font-normal text-black leading-[24px]">Contact support</h3>
                 <p className="text-[14px] font-normal text-[#6B7280] leading-[20px]">We're here to help — our team typically responds within 24 hours</p>

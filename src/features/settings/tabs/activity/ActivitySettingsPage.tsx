@@ -99,18 +99,18 @@ export function ActivitySettingsPage() {
                         <img src={like.mediaUrl} alt="" className="w-[60px] h-[60px] rounded-[12px] object-cover flex-shrink-0" />
                       )}
                       <p className="text-[14px] font-normal text-black leading-[20px] max-w-[450px] line-clamp-3">
-                        {like.content}
+                        {like.content?.replace(/<[^>]*>?/gm, '')}
                       </p>
                     </div>
                   )}
                   {like.type === 'text' && (
                     <p className="text-[14px] font-normal text-black leading-[20px] ml-1 max-w-[480px] line-clamp-3">
-                      {like.content}
+                      {like.content?.replace(/<[^>]*>?/gm, '')}
                     </p>
                   )}
                   {like.type === 'poll' && (
                     <div className="flex flex-col justify-center gap-1 bg-[#EEF2FF] px-4 py-3 rounded-[12px] ml-1 mr-4">
-                      <span className="text-[14px] font-medium text-[#1F2937] leading-[20px]">{like.postTitle}</span>
+                      <span className="text-[14px] font-medium text-[#1F2937] leading-[20px]">{like.postTitle?.replace(/<[^>]*>?/gm, '')}</span>
                       <span className="text-[10px] font-normal text-gray-500">{like.votes || 0} votes • {like.isPollActive ? 'Poll active' : 'Poll closed'}</span>
                     </div>
                   )}
@@ -147,7 +147,7 @@ export function ActivitySettingsPage() {
                         </div>
                       )}
                       <p className="text-[14px] font-normal text-black leading-[20px] max-w-[450px] line-clamp-1">
-                        <span className="font-semibold">{comment.postAuthor}</span> {comment.postTitle}
+                        <span className="font-semibold">{comment.postAuthor}</span> {comment.postTitle?.replace(/<[^>]*>?/gm, '')}
                       </p>
                     </div>
                     <div className="flex flex-row items-center gap-2 ml-8">
@@ -159,7 +159,7 @@ export function ActivitySettingsPage() {
                         </div>
                       )}
                       <p className="text-[14px] font-normal text-black leading-[20px] line-clamp-3">
-                        <span className="font-semibold">{comment.commenter}</span> {comment.comment}
+                        <span className="font-semibold">{comment.commenter}</span> {comment.comment?.replace(/<[^>]*>?/gm, '')}
                       </p>
                     </div>
                     <div className="flex flex-row items-center gap-3 ml-[68px] mt-1">
@@ -209,18 +209,18 @@ export function ActivitySettingsPage() {
                         <img src={tag.mediaUrl} alt="" className="w-[60px] h-[60px] rounded-[12px] object-cover flex-shrink-0" />
                       )}
                       <p className="text-[14px] font-normal text-black leading-[20px] max-w-[450px] line-clamp-3">
-                        {tag.content}
+                        {tag.content?.replace(/<[^>]*>?/gm, '')}
                       </p>
                     </div>
                   )}
                   {(tag.type === 'text' || tag.type === 'article' || !tag.type) && (
                     <p className="text-[14px] font-normal text-black leading-[20px] ml-1 max-w-[480px] line-clamp-3">
-                      {tag.content}
+                      {tag.content?.replace(/<[^>]*>?/gm, '')}
                     </p>
                   )}
                   {tag.type === 'poll' && (
                     <div className="flex flex-col justify-center gap-1 bg-[#EEF2FF] px-4 py-3 rounded-[12px] ml-1 mr-4">
-                      <span className="text-[14px] font-medium text-[#1F2937] leading-[20px]">{tag.postTitle}</span>
+                      <span className="text-[14px] font-medium text-[#1F2937] leading-[20px]">{tag.postTitle?.replace(/<[^>]*>?/gm, '')}</span>
                       <span className="text-[10px] font-normal text-gray-500">{tag.votes || 0} votes • {tag.isPollActive ? 'Poll active' : 'Poll closed'}</span>
                     </div>
                   )}
