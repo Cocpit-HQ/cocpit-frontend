@@ -1401,19 +1401,7 @@ export default function AddExperienceForm({
         </div>
 
         <div className="pb-4">
-          <StrengthenProfileChips
-            chips={[
-              ...(!roles[0]?.description.trim() ? [{ key: "description", label: "Description", fieldRef: "description-field" }] : []),
-              ...(!location.trim() ? [{ key: "location", label: "Location", fieldRef: "location-field" }] : [])
-            ]}
-            onChipClick={(chip) => {
-              if (chip.key === "description") {
-                descriptionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              } else if (chip.key === "location") {
-                locationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }}
-          />
+
         </div>
 
         <div className="space-y-6">

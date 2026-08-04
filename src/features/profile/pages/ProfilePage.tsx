@@ -694,8 +694,8 @@ export default function ProfilePage() {
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
 
-  // Profile Score
-  const { data: profileScoreData } = useProfileScore();
+  // Profile Score is now embedded in profileData
+  const profileScoreData = profileData?.profile_score;
 
   // Mutation Hooks
   const expMutations = useExperienceMutations();
@@ -1377,6 +1377,10 @@ export default function ProfilePage() {
     document.getElementById("experience-section")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const scrollToProjects = () => {
+    document.getElementById("projects-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const openFollowList = (tab: "followers" | "following" | "connections") => {
     setActiveFollowTab(tab);
     setIsFollowListModalOpen(true);
@@ -1415,6 +1419,11 @@ export default function ProfilePage() {
               <ProfileScoreCard
                 score={profileScoreData.score}
                 breakdown={profileScoreData.breakdown}
+                hasExperience={(profileData?.experiences?.length ?? 0) > 0}
+                hasEducation={(profileData?.educations?.length ?? 0) > 0}
+                hasProjects={(profileData?.projects?.length ?? 0) > 0}
+                hasAvatar={!!profileData?.user?.avatar}
+                hasCoverImage={!!profileData?.user?.cover_image}
                 onActionClick={(action) => {
                   switch (action) {
                     case 'edit-profile':
@@ -1438,6 +1447,9 @@ export default function ProfilePage() {
                       break;
                     case 'add-avatar':
                       setIsEditAvatarOpen(true);
+                      break;
+                    case 'add-cover':
+                      window.scrollTo({ top: 0, behavior: "smooth" });
                       break;
                   }
                 }}

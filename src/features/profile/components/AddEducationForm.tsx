@@ -769,23 +769,6 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-1">{isEditing ? 'Edit Education' : 'Add Education'}</h2>
           <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Update your professional information</p>
         </div>
-
-        <div className="px-6 sm:px-8 pb-4">
-          <StrengthenProfileChips
-            chips={[
-              ...(!formData.description.trim() ? [{ key: "description", label: "Description", fieldRef: "description-field" }] : []),
-              ...(!formData.location.trim() ? [{ key: "location", label: "Location", fieldRef: "location-field" }] : [])
-            ]}
-            onChipClick={(chip) => {
-              if (chip.key === "description") {
-                descriptionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              } else if (chip.key === "location") {
-                locationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }}
-          />
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-6 px-6 sm:px-8">
           {/* Row 1: Education & Qualification */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

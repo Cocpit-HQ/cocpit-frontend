@@ -7,6 +7,11 @@ interface ProfileScoreCardProps {
   score: number;
   breakdown: ProfileScoreBreakdown;
   onActionClick: (action: string) => void;
+  hasExperience?: boolean;
+  hasEducation?: boolean;
+  hasProjects?: boolean;
+  hasAvatar?: boolean;
+  hasCoverImage?: boolean;
 }
 
 /** Maps a backend missing-category key to a user-friendly action label + action id */
@@ -16,7 +21,7 @@ const ACTION_MAP: Record<string, { label: string; action: string }> = {
   experience: { label: "Add experience", action: "add-experience" },
   projects: { label: "Add a project", action: "add-project" },
   education: { label: "Add education", action: "add-education" },
-  profile_banner: { label: "Add profile photo", action: "add-avatar" },
+  profile_banner: { label: "Upload profile photo", action: "add-avatar" },
 };
 
 /**
@@ -26,7 +31,7 @@ const ACTION_MAP: Record<string, { label: string; action: string }> = {
  *
  * Hidden when the score reaches 100%.
  */
-export function ProfileScoreCard({ score, breakdown, onActionClick }: ProfileScoreCardProps) {
+export function ProfileScoreCard({ score, breakdown, onActionClick, hasExperience, hasEducation, hasProjects, hasAvatar, hasCoverImage }: ProfileScoreCardProps) {
   // Don't render when profile is fully complete
   if (score >= 100) return null;
 
@@ -37,12 +42,31 @@ export function ProfileScoreCard({ score, breakdown, onActionClick }: ProfileSco
 
     for (const [key, category] of categories) {
       if (category.earned < category.max && ACTION_MAP[key]) {
-        links.push(ACTION_MAP[key]);
+        if (key === 'experience' && hasExperience) continue;
+        if (key === 'education' && hasEducation) continue;
+        
+        let { label, action } = ACTION_MAP[key];
+
+        if (key === 'projects' && hasProjects) {
+          label = "Update project";
+        }
+
+        if (key === 'profile_banner') {
+          if (!hasAvatar) {
+            links.push({ label: "Upload profile photo", action: "add-avatar" });
+          }
+          if (!hasCoverImage) {
+            links.push({ label: "Upload cover photo", action: "add-cover" });
+          }
+          continue;
+        }
+
+        links.push({ label, action });
       }
     }
 
     return links;
-  }, [breakdown]);
+  }, [breakdown, hasExperience, hasEducation, hasProjects, hasAvatar, hasCoverImage]);
 
   // Clamp score to 0–100 range for display
   const displayScore = Math.min(100, Math.max(0, Math.round(score)));

@@ -3,7 +3,7 @@ import { getProfileScore } from "../services/profileScore.service";
 import type { ProfileScoreResponse } from "../types/profileScore.types";
 
 /**
- * React Query hook to fetch and cache the profile score.
+ * React Query hook to fetch and cache the profile score independently.
  * The score is invalidated after any profile mutation via the
  * PROFILE_SCORE_QUERY_KEY exported below.
  */

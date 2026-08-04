@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { UserData } from "@/types/user"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
+import { StrengthenProfileChips } from "@/features/profile-score/components/StrengthenProfileChips"
 
 interface EditProfileModalProps {
   isOpen: boolean
@@ -56,6 +57,15 @@ const ROLES = [
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
   const getWordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
+  const nameRef = React.useRef<HTMLDivElement>(null);
+  const headlineRef = React.useRef<HTMLDivElement>(null);
+  const locationRef = React.useRef<HTMLDivElement>(null);
+  const statusRef = React.useRef<HTMLDivElement>(null);
+  const aboutRef = React.useRef<HTMLDivElement>(null);
+  const lookingForRef = React.useRef<HTMLDivElement>(null);
+  const availabilityRef = React.useRef<HTMLDivElement>(null);
+  const workSetupRef = React.useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -239,8 +249,34 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           </DialogHeader>
 
           <div className="flex flex-col gap-4 text-left pt-2 pb-10 sm:pb-0">
+            <StrengthenProfileChips
+              chips={[
+                ...(!formData.name.trim() ? [{ key: "name", label: "Name", fieldRef: "name" }] : []),
+                ...(!formData.headline.trim() ? [{ key: "headline", label: "Headline", fieldRef: "headline" }] : []),
+                ...(!formData.location.trim() ? [{ key: "location", label: "Location", fieldRef: "location" }] : []),
+                ...(!formData.status.trim() ? [{ key: "status", label: "Status", fieldRef: "status" }] : []),
+                ...(!formData.about.trim() ? [{ key: "about", label: "About", fieldRef: "about" }] : []),
+                ...(!formData.open_to.trim() ? [{ key: "open_to", label: "Looking for", fieldRef: "lookingFor" }] : []),
+                ...(!formData.availability.trim() ? [{ key: "availability", label: "Availability", fieldRef: "availability" }] : []),
+                ...(!formData.work_preference.trim() ? [{ key: "work_preference", label: "Work setup", fieldRef: "workSetup" }] : [])
+              ]}
+              onChipClick={(chip) => {
+                const refMap: Record<string, any> = {
+                  name: nameRef,
+                  headline: headlineRef,
+                  location: locationRef,
+                  status: statusRef,
+                  about: aboutRef,
+                  lookingFor: lookingForRef,
+                  availability: availabilityRef,
+                  workSetup: workSetupRef
+                };
+                refMap[chip.fieldRef!]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={nameRef}>
                 <Label className={labelStyles}>Full name*</Label>
                 <Input
                   value={formData.name}
@@ -280,8 +316,13 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <Label className={labelStyles}>Headline*</Label>
+              <div className="flex flex-col" ref={headlineRef}>
+                <div className="flex justify-between items-center mb-[8px]">
+                  <Label className="text-[14px] font-normal text-foreground font-[family-name:var(--font-poppins)] leading-[20px] mb-0">Headline*</Label>
+                  <span className={`text-[12px] font-normal leading-[16px] font-[family-name:var(--font-poppins)] ${formData.headline.length > 200 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                    {formData.headline.length}/200
+                  </span>
+                </div>
                 <Input
                   value={formData.headline}
                   onChange={(e) => setFormData(prev => ({ ...prev, headline: e.target.value }))}
@@ -289,11 +330,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   className={cn(inputStyles, formData.headline.length > 200 && "border-destructive focus:border-destructive")}
                   placeholder="Headline"
                 />
-                <span className={cn("text-[10px] mt-1 text-right", formData.headline.length > 200 ? "text-destructive" : "text-muted-foreground")}>
-                  {formData.headline.length}/200 characters
-                </span>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={statusRef}>
                 <Label className={labelStyles}>Status*</Label>
                 <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
                   <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.status))}>
@@ -309,7 +347,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={locationRef}>
                 <Label className={labelStyles}>Location*</Label>
                 <div className="relative">
                   <LocationAutocomplete
@@ -340,7 +378,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={lookingForRef}>
                 <Label className={labelStyles}>Looking for</Label>
                 <div className="flex flex-wrap gap-2">
                   {LOOKING_FOR_OPTIONS.map(opt => (
@@ -358,7 +396,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 </div>
               </div>
 
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={availabilityRef}>
                 <Label className={labelStyles}>Availability</Label>
                 <div className="flex flex-wrap gap-2">
                   {AVAILABILITY_OPTIONS.map(opt => (
@@ -376,7 +414,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 </div>
               </div>
 
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={workSetupRef}>
                 <Label className={labelStyles}>Work setup</Label>
                 <div className="flex flex-wrap gap-2">
                   {WORK_SETUP_OPTIONS.map(opt => (
@@ -395,7 +433,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               </div>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col" ref={aboutRef}>
               <Label className={labelStyles}>About*</Label>
               <Textarea
                 value={formData.about}

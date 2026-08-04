@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { SkillProofPill } from "../components/SkillProofPill";
+import { StrengthenProfileChips } from "@/features/profile-score/components/StrengthenProfileChips";
 
 interface ProfileSkillsProps {
     skills: any[];
@@ -66,6 +67,16 @@ export function ProfileSkills({
 
                 {/* Main Content Area */}
                 <div className="px-4 md:pl-10 md:pr-4">
+                    {isOwnProfile && skills.length < 5 && (
+                        <div className="pb-2">
+                            <StrengthenProfileChips
+                                chips={[{ key: "add-skills", label: "Add 5+ skills", fieldRef: "skills" }]}
+                                onChipClick={() => {
+                                    if (onAddSkillClick) onAddSkillClick();
+                                }}
+                            />
+                        </div>
+                    )}
                     <div className="w-full flex flex-col items-center">
                         {/* Chips Wrapper */}
                         <div

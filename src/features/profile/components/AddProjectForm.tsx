@@ -311,25 +311,27 @@ export default function AddProjectForm({
       {/* 2. Scrollable Middle Form Body */}
       <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-6 min-h-0 custom-scrollbar pb-8">
         {/* Strengthen Profile Chips */}
-        <StrengthenProfileChips
-          chips={[
-            ...(mediaList.length === 0 ? [{ key: 'media', label: 'Media(choose 1)', fieldRef: 'media-section' }] : []),
-            ...(!role.trim() ? [{ key: 'role', label: 'Role in project', fieldRef: 'role-section' }] : []),
-            ...(!teamSize.trim() ? [{ key: 'team', label: 'Team', fieldRef: 'team-section' }] : []),
-          ]}
-          onChipClick={(chip) => {
-            // Expand "Add more details" if needed
-            if (chip.key === 'role' || chip.key === 'team') {
-              setShowMoreDetails(true);
-              setTimeout(() => {
-                if (chip.key === 'role') roleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                if (chip.key === 'team') teamRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }, 150);
-            } else if (chip.key === 'media') {
-              mediaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }}
-        />
+        {isEditing && (
+          <StrengthenProfileChips
+            chips={[
+              ...(mediaList.length === 0 ? [{ key: 'media', label: 'Media(choose 1)', fieldRef: 'media-section' }] : []),
+              ...(!role.trim() ? [{ key: 'role', label: 'Role in project', fieldRef: 'role-section' }] : []),
+              ...(!teamSize.trim() ? [{ key: 'team', label: 'Team', fieldRef: 'team-section' }] : []),
+            ]}
+            onChipClick={(chip) => {
+              // Expand "Add more details" if needed
+              if (chip.key === 'role' || chip.key === 'team') {
+                setShowMoreDetails(true);
+                setTimeout(() => {
+                  if (chip.key === 'role') roleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  if (chip.key === 'team') teamRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+              } else if (chip.key === 'media') {
+                mediaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }}
+          />
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Row 1: Title & Organization */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

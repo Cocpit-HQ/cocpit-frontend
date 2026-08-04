@@ -1,5 +1,6 @@
 import { Experience, Education, ExperienceGroup, Project } from './entities';
 import { ProfileIdentity } from './profile';
+import { ProfileScoreResponse } from '@/features/profile-score/types/profileScore.types';
 
 export interface User {
   id: string;
@@ -62,6 +63,7 @@ export interface UserProfile {
     url: string;
     originalName: string;
   } | null;
+  profile_score?: ProfileScoreResponse;
 }
 
 export interface UserData {

@@ -132,7 +132,7 @@ export function useExperienceMutations() {
 
     const batchUpdate = useMutation({
         mutationFn: (payload: BatchUpdatePayload) => {
-            const requestId = payload.requestId ?? crypto.randomUUID();
+            const requestId = payload.requestId ?? (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
             return batchUpdateExperiences({ ...payload, requestId } as any);
         },
         onSuccess: (data) => {
