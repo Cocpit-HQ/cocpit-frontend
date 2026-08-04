@@ -22,6 +22,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
   const [isSelectCompanyModalOpen, setIsSelectCompanyModalOpen] = useState(false);
   const [selectedCompanyToTransfer, setSelectedCompanyToTransfer] = useState<CompanyInfo | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [password, setPassword] = useState('');
 
   const router = useRouter();
   const deleteAccountMutation = useDeleteAccount();
@@ -53,7 +54,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
   if (!isOpen) return null;
 
   const handleDelete = () => {
-    deleteAccountMutation.mutate(undefined, {
+    deleteAccountMutation.mutate({ password, companyIdsToDelete: checkedCompanyIds }, {
       onSuccess: () => {
         onClose();
         router.push('/login');
@@ -77,10 +78,11 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
   };
 
   const handleOpenTransfer = () => {
-    if (ownedCompanies.length > 1) {
+    const companiesToTransfer = ownedCompanies.filter(c => !checkedCompanyIds.includes(c.id));
+    if (companiesToTransfer.length > 1) {
       setIsSelectCompanyModalOpen(true);
-    } else if (ownedCompanies.length === 1) {
-      setSelectedCompanyToTransfer(ownedCompanies[0]);
+    } else if (companiesToTransfer.length === 1) {
+      setSelectedCompanyToTransfer(companiesToTransfer[0]);
       setIsTransferModalOpen(true);
     }
   };
@@ -90,7 +92,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
       <SelectCompanyTransferModal
         isOpen={true}
         onClose={() => setIsSelectCompanyModalOpen(false)}
-        companies={ownedCompanies}
+        companies={ownedCompanies.filter(c => !checkedCompanyIds.includes(c.id))}
         onContinue={(company) => {
           setIsSelectCompanyModalOpen(false);
           setSelectedCompanyToTransfer(company);
@@ -191,6 +193,16 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
 
         {errorMsg && <p className="text-[14px] text-[#FF6B6B] mb-2">{errorMsg}</p>}
 
+        <div className="w-[418px] mb-4">
+          <input
+            type="password"
+            className="w-full p-2.5 rounded-[12px] border border-[#E5E7EB] text-[14px] focus:outline-none focus:ring-1 focus:ring-[#818CF8]"
+            placeholder="Enter your password to confirm"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
         {/* Action Buttons */}
         <div className={`flex flex-row justify-center items-center w-[418px] h-[40px] gap-4 ${hasCompanyAccount ? 'mt-auto' : 'mt-4'}`}>
           <button 
@@ -202,7 +214,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           
           <button 
             onClick={handleDelete} 
-            disabled={isDeleteDisabled || deleteAccountMutation.isPending} 
+            disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}  
             className={`flex items-center justify-center w-[140px] h-[40px] rounded-[24px] text-[14px] font-normal leading-[20px] transition-colors ${
               isDeleteDisabled ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white'
             }`}

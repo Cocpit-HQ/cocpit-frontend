@@ -149,9 +149,9 @@ export function useDeletePhone() {
 
 export function useDeleteAccount() {
   return useMutation({
-    mutationFn: async () => {
-      const response = await api.delete('/user/account');
-      return response.data;
+    mutationFn: async (credential: { password?: string; idToken?: string; companyIdsToDelete?: string[] }) => {
+      const { deleteAccount } = await import('../../../services/api/user');
+      return deleteAccount(credential);
     },
   });
 }

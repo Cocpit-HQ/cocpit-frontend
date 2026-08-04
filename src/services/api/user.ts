@@ -18,7 +18,7 @@ export const getUserById = async (id: string): Promise<PublicUserProfileResponse
  * - Google users: pass { idToken } from Google re-authentication
  */
 export const deleteAccount = async (
-  credential: { password?: string; idToken?: string }
+  credential: { password?: string; idToken?: string; companyIdsToDelete?: string[] }
 ): Promise<{ message: string; deletionDate: string }> => {
   const response = await api.delete("/users/account", {
     data: credential,
