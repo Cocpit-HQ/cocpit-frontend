@@ -22,10 +22,9 @@ export function QuickChatWidget() {
   const [panelAlign, setPanelAlign] = useState<'left' | 'right'>('left');
   const { activeProfile } = useActiveProfile();
 
-  // Hide widget completely if on the main messaging page or non-authenticated pages (like auth)
-  if (pathname?.startsWith("/messaging") || pathname === "/login" || pathname === "/signup") {
-    return null;
-  }
+  const shouldHide = Boolean(
+    pathname?.startsWith("/messaging") || pathname === "/login" || pathname === "/signup"
+  );
 
   // Fetch chats logic duplicated from MessagingPage (will share cache with the same query key)
   const rawChatsQuery = useQuery({
@@ -48,7 +47,7 @@ export function QuickChatWidget() {
     },
     staleTime: 0,
     refetchOnWindowFocus: false,
-    enabled: isOpen, // Only fetch when opened to save bandwidth
+    enabled: isOpen && !shouldHide, // Only fetch when opened and not hidden to save bandwidth
   });
 
   const chats = useMemo(() => {
@@ -69,6 +68,7 @@ export function QuickChatWidget() {
   }, [isOpen]);
 
   useEffect(() => {
+    if (shouldHide) return;
     let pollInterval: NodeJS.Timeout;
 
     const updatePosition = () => {
@@ -129,7 +129,7 @@ export function QuickChatWidget() {
       clearInterval(pollInterval);
       window.removeEventListener('resize', updatePosition);
     };
-  }, [pathname]);
+  }, [pathname, shouldHide]);
 
   const handleSelectChat = (chat: ChatThread) => {
     setSelectedChat(chat);
@@ -138,6 +138,10 @@ export function QuickChatWidget() {
   const handleBackToList = () => {
     setSelectedChat(null);
   };
+
+  if (shouldHide) {
+    return null;
+  }
 
   return (
     <motion.div 
