@@ -83,7 +83,10 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
         verifyCurrentEmailConfirm.mutate(
           { otp: currentEmailCode },
           {
-            onSuccess: () => setTimeout(() => setStep(2), 1000),
+            onSuccess: () => {
+              toast.success('Code verified');
+              setTimeout(() => setStep(2), 1000);
+            },
             onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
           }
         );
@@ -232,7 +235,10 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                   verifyCurrentEmailConfirm.mutate(
                     { otp: val },
                     {
-                      onSuccess: () => setTimeout(() => setStep(2), 1000),
+                      onSuccess: () => {
+                        toast.success('Code verified');
+                        setTimeout(() => setStep(2), 1000);
+                      },
                       onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
                     }
                   );
@@ -252,8 +258,11 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
               </div>
             )}
           </div>
+          {verifyCurrentEmailConfirm.isSuccess && !errorMsg && (
+            <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully.</p>
+          )}
           <div className="w-full text-right mt-1">
-            <button 
+            <button
               onClick={handleResend}
               disabled={countdown > 0}
               className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6366F1] hover:underline'}`}

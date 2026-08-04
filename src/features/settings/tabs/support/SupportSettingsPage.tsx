@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Info, ChevronRight, Star, Loader2 } from 'lucide-react';
+import { Layout, Info, Headphones, ChevronRight, Star, Loader2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { HelpCentre } from './HelpCentre';
 import { ContactSupport } from './ContactSupport';
