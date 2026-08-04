@@ -10,17 +10,26 @@ interface LegalDoc {
   url: string;
 }
 
+const DEFAULT_LEGAL_DOCS: LegalDoc[] = [
+  { title: "Privacy Policy", url: "https://res.cloudinary.com/doxkaqqt4/raw/upload/v1/cocpit_legal/privacy_policy.pdf" },
+  { title: "Terms of Service", url: "https://res.cloudinary.com/doxkaqqt4/raw/upload/v1/cocpit_legal/terms_of_service.pdf" },
+  { title: "Community Guidelines", url: "https://res.cloudinary.com/doxkaqqt4/raw/upload/v1/cocpit_legal/community_guidelines.pdf" },
+  { title: "Cookie Policy", url: "https://res.cloudinary.com/doxkaqqt4/raw/upload/v1/cocpit_legal/cookie_policy.pdf" },
+];
+
 export function LegalSettingsPage() {
-  const [docs, setDocs] = useState<LegalDoc[]>([]);
+  const [docs, setDocs] = useState<LegalDoc[]>(DEFAULT_LEGAL_DOCS);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDocs = async () => {
       try {
         const res = await getLegalDocs();
-        setDocs(res.docs || []);
+        if (res?.docs && Array.isArray(res.docs) && res.docs.length > 0) {
+          setDocs(res.docs);
+        }
       } catch (error) {
-        toast.error("Failed to fetch legal documents");
+        console.error("Failed to fetch legal documents, using default Cloudinary links", error);
       } finally {
         setIsLoading(false);
       }
