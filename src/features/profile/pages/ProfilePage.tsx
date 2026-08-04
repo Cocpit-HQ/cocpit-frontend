@@ -58,6 +58,8 @@ import { ProfileSkills } from "../commonProfileComponents/ProfileSkills"
 import { useAvatarMutations, useEducationMutations, useExperienceMutations, useMyProfile, useProfileMutation, useSkillMutations, useProjectMutations } from "@/hooks/use-my-profile"
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { EditProfileModal } from "../components/EditProfileModal"
+import { useProfileScore } from "@/features/profile-score/hooks/useProfileScore"
+import { ProfileScoreCard } from "@/features/profile-score/components/ProfileScoreCard"
 const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
 const routes: Record<string, string> = {
@@ -692,7 +694,8 @@ export default function ProfilePage() {
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
 
-
+  // Profile Score
+  const { data: profileScoreData } = useProfileScore();
 
   // Mutation Hooks
   const expMutations = useExperienceMutations();
@@ -1406,6 +1409,40 @@ export default function ProfilePage() {
               scrollToExperience={scrollToExperience}
               scrollToEducation={scrollToEducation}
             />
+
+            {/* Profile Score Card — only shown on own profile when score < 100% */}
+            {profileScoreData && (
+              <ProfileScoreCard
+                score={profileScoreData.score}
+                breakdown={profileScoreData.breakdown}
+                onActionClick={(action) => {
+                  switch (action) {
+                    case 'edit-profile':
+                      setIsEditProfileModalOpen(true);
+                      break;
+                    case 'add-skills':
+                      setIsAddSkillModalOpen(true);
+                      break;
+                    case 'add-experience':
+                      setEditingExperiences(null);
+                      setEditingExperienceSelectedId(null);
+                      setIsAddExperienceModalOpen(true);
+                      break;
+                    case 'add-project':
+                      setEditingProject(null);
+                      setIsAddProjectModalOpen(true);
+                      break;
+                    case 'add-education':
+                      setEditingEducation(null);
+                      setIsAddEducationModalOpen(true);
+                      break;
+                    case 'add-avatar':
+                      setIsEditAvatarOpen(true);
+                      break;
+                  }
+                }}
+              />
+            )}
 
             <ProfileAbout
               aboutText={user?.about}

@@ -1060,33 +1060,47 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                           {/* Video preview attachment */}
                           {state.postType === 'video' && hasVideos && (
-                            <>
-                              <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
-                                <div
-                                  className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
-                                  style={{ aspectRatio: media.aspectRatio }}
-                                >
-                                  <CustomVideoPlayer
-                                    src={media.previewMediaUrls[0] || media.uploadedVideos[0]?.url}
-                                    hideControls={true}
-                                    className="object-cover w-full h-full bg-black"
-                                    style={{
-                                      transform: `scaleX(${media.uploadedVideos[0]?.flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0]?.flipV ? -1 : 1}) rotate(${media.uploadedVideos[0]?.rotation || 0}deg)`
-                                    }}
-                                  />
+                            isCompactView ? (
+                              <div className="flex items-center justify-between w-full p-2 bg-card border border-[#EEF2FF] rounded-[16px]">
+                                {/* Left: Thumbnail + File Info */}
+                                <div className="flex items-center gap-3">
+                                  <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50 pointer-events-none">
+                                    <CustomVideoPlayer
+                                      src={media.previewMediaUrls[0] || media.uploadedVideos[0]?.url}
+                                      hideControls={true}
+                                      className="object-cover w-full h-full bg-black"
+                                      style={{
+                                        transform: `scaleX(${media.uploadedVideos[0]?.flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0]?.flipV ? -1 : 1}) rotate(${media.uploadedVideos[0]?.rotation || 0}deg)`
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="flex flex-col overflow-hidden max-w-[200px]">
+                                    <span className="text-[14px] font-medium text-foreground truncate font-poppins">
+                                      {media.uploadedVideos[0]?.file?.name || 'Attached_Video.mp4'}
+                                    </span>
+                                    <span className="text-[12px] text-gray-500 uppercase font-poppins">
+                                      {media.uploadedVideos[0]?.file?.type?.split('/')[1] || 'MP4'}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                              {/* Controls row for video */}
-                              <div className="flex items-center justify-between w-full px-1">
-                                <div />
+
+                                {/* Right: Controls */}
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
+                                    onClick={() => setIsCompactView(false)}
+                                    className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                    title="Show full preview"
+                                  >
+                                    <Icon icon="fluent:eye-off-24-regular" className="w-[24px] h-[24px]" />
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => setVideoStep('edit')}
-                                    className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
+                                    className="p-1.5 text-[#000000] rounded-full transition-colors"
                                     title="Edit video"
                                   >
-                                    <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                    <Icon icon="proicons:pencil" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
                                   </button>
                                   <button
                                     type="button"
@@ -1098,7 +1112,55 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   </button>
                                 </div>
                               </div>
-                            </>
+                            ) : (
+                              <>
+                                <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
+                                  <div
+                                    className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
+                                    style={{ aspectRatio: media.aspectRatio }}
+                                  >
+                                    <CustomVideoPlayer
+                                      src={media.previewMediaUrls[0] || media.uploadedVideos[0]?.url}
+                                      hideControls={true}
+                                      className="object-cover w-full h-full bg-black"
+                                      style={{
+                                        transform: `scaleX(${media.uploadedVideos[0]?.flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0]?.flipV ? -1 : 1}) rotate(${media.uploadedVideos[0]?.rotation || 0}deg)`
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Controls row for video */}
+                                <div className="flex items-center justify-between w-full px-1">
+                                  <div />
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsCompactView(true)}
+                                      className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                      title="Hide full preview"
+                                    >
+                                      <Icon icon="fluent:eye-24-regular" className="w-[24px] h-[24px]" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setVideoStep('edit')}
+                                      className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                      title="Edit video"
+                                    >
+                                      <Icon icon="proicons:pencil" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => media.clearMedia()}
+                                      className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
+                                      title="Remove video"
+                                    >
+                                      <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )
                           )}
                         </div>
                       )}

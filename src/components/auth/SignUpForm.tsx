@@ -7,7 +7,9 @@ import { MailWarning, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AuthImagePanel from "@/components/auth/AuthImagePanel";
 import { register, requestOTP, verifyOTP } from "@/services/api/auth";
-import { registrationSchema } from "@/lib/validators";
+import { registrationSchema, getFirstMissingPasswordRequirement, isPasswordFullyValid } from "@/lib/validators";
+import { PasswordRequirementsCard } from "@/components/shared/PasswordRequirementsCard";
+
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
@@ -264,11 +266,8 @@ export default function SignUpForm() {
     await handleRegister(result.data);
   };
 
-  const isPasswordValid = password.length >= 8 &&
-    password.length <= 15 &&
-    /[A-Z]/.test(password) &&
-    /[a-z]/.test(password) &&
-    /[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(password);
+  const isPasswordValid = isPasswordFullyValid(password);
+
 
   return (
     <div className={styles.pageWrapper} data-theme="light">
@@ -552,44 +551,12 @@ export default function SignUpForm() {
                       </button>
                     )}
                   </div>
+                  <PasswordRequirementsCard password={password} className="mt-2" />
                 </div>
 
-                {/* Password Requirements Checklist */}
-                <div className={styles.checklistContainer}>
-                  <p className={styles.checklistTitle}>Password must contain:</p>
-                  <ul className={styles.checklist}>
-                    <li className={(password.length >= 8 && password.length <= 15) ? styles.checkMet : styles.checkUnmet}>
-                      <Icon
-                        icon={(password.length >= 8 && password.length <= 15) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
-                      />
-                      <span>8 to 15 characters</span>
-                    </li>
-                    <li className={/[A-Z]/.test(password) ? styles.checkMet : styles.checkUnmet}>
-                      <Icon
-                        icon={/[A-Z]/.test(password) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
-                      />
-                      <span>At least 1 uppercase letter (A–Z)</span>
-                    </li>
-                    <li className={/[a-z]/.test(password) ? styles.checkMet : styles.checkUnmet}>
-                      <Icon
-                        icon={/[a-z]/.test(password) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
-                      />
-                      <span>At least 1 lowercase letter (a–z)</span>
-                    </li>
-                    <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(password) ? styles.checkMet : styles.checkUnmet}>
-                      <Icon
-                        icon={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(password) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
-                      />
-                      <span>At least 1 special character (e.g., @, #, $, %, &, *)</span>
-                    </li>
-                  </ul>
-                </div>
 
                 {/* Continue Button - turns blue when password meets requirements */}
+
                 <button
                   type="submit"
                   disabled={!isPasswordValid || isVerifying}

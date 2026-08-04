@@ -26,6 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { StrengthenProfileChips } from "@/features/profile-score/components/StrengthenProfileChips"
+
 interface AddEducationFormProps {
   onCancel?: () => void
   onSave?: (data: Partial<Education>) => void
@@ -44,6 +46,8 @@ const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 60 }, (_, i) => (currentYear - i).toString())
 
 export default function AddEducationForm({ onCancel, onSave, onDelete, initialData, existingEducations = [] }: AddEducationFormProps) {
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const locationRef = useRef<HTMLDivElement>(null);
   const isEditing = !!initialData;
   const [formData, setFormData] = useState(() => {
     if (initialData) {
@@ -766,11 +770,27 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Update your professional information</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="px-6 sm:px-8 pb-4">
+          <StrengthenProfileChips
+            chips={[
+              ...(!formData.description.trim() ? [{ key: "description", label: "Description", fieldRef: "description-field" }] : []),
+              ...(!formData.location.trim() ? [{ key: "location", label: "Location", fieldRef: "location-field" }] : [])
+            ]}
+            onChipClick={(chip) => {
+              if (chip.key === "description") {
+                descriptionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              } else if (chip.key === "location") {
+                locationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }}
+          />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6 px-6 sm:px-8">
           {/* Row 1: Education & Qualification */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex flex-col" ref={schoolWrapperRef}>
-              <Label className={labelStyles}>Education</Label>
+              <Label className={labelStyles}>Education*</Label>
               <div className={acStyles.wrapper}>
                 <div className={cn(acStyles.inputWrapper, showSchoolDropdown && acStyles.isOpen)} onClick={() => schoolInputRef.current?.focus()}>
                   <input ref={schoolInputRef} type="text" className={acStyles.input} placeholder="Enter your school or university" value={schoolSearch}
@@ -833,7 +853,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
               </div>
             </div>
             <div className="flex flex-col" ref={degreeWrapperRef}>
-              <Label className={labelStyles}>Qualification</Label>
+              <Label className={labelStyles}>Qualification*</Label>
               <div className={acStyles.wrapper}>
                 <div className={cn(acStyles.inputWrapper, showDegreeDropdown && acStyles.isOpen)} onClick={() => degreeInputRef.current?.focus()}>
                   <input ref={degreeInputRef} type="text" className={acStyles.input} placeholder="e.g. MBA" value={degreeSearch}
@@ -968,7 +988,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 )}
               </div>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col" ref={locationRef} id="location-field">
               <Label className={labelStyles}>Location</Label>
               <LocationAutocomplete
                 value={formData.location}
@@ -991,7 +1011,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
 
           {/* Start Date */}
           <div className="space-y-2">
-            <Label className={labelStyles}>Start date</Label>
+            <Label className={labelStyles}>Start date*</Label>
             <div className="grid grid-cols-2 gap-6">
               <Select
                 value={formData.startMonth}
@@ -1112,7 +1132,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           )}
 
           {/* Details Textarea */}
-          <div className="flex flex-col">
+          <div className="flex flex-col" ref={descriptionRef} id="description-field">
             <Label className={labelStyles}>Details</Label>
             <Textarea
               value={formData.description}

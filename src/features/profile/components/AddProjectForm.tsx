@@ -9,6 +9,7 @@ import { X, ChevronDown, ChevronUp, Plus, AlertTriangle } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { Project, ProjectMedia } from "@/types/entities";
+import { StrengthenProfileChips, type StrengthenChip } from "@/features/profile-score/components/StrengthenProfileChips";
 import {
   Select,
   SelectContent,
@@ -78,6 +79,11 @@ export default function AddProjectForm({
   const [role, setRole] = useState(initialData?.role || "");
   const [teamSize, setTeamSize] = useState(initialData?.team_size || "");
   const [roleDescription, setRoleDescription] = useState(initialData?.role_description || "");
+
+  // Refs for strengthen chip scroll targets
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const roleRef = useRef<HTMLDivElement>(null);
+  const teamRef = useRef<HTMLDivElement>(null);
 
   // Handle clicking outside skill suggestions dropdown
   useEffect(() => {
@@ -190,7 +196,7 @@ export default function AddProjectForm({
     const missingEndDate = !isCurrent && (!endMonth || !endYear);
     const hasDateLogicError = startMonth && startYear && endMonth && endYear && buildDateVal(startMonth, startYear)! >= buildDateVal(endMonth, endYear)!;
     
-    if (!title.trim() || !organization.trim() || missingEndDate || hasDateLogicError) return;
+    if (!title.trim() || !details.trim() || missingEndDate || hasDateLogicError) return;
 
     setIsSaving(true);
     try {
@@ -244,7 +250,7 @@ export default function AddProjectForm({
 
   const isFormValid =
     title.trim().length > 0 &&
-    organization.trim().length > 0 &&
+    details.trim().length > 0 &&
     startMonth.length > 0 &&
     startYear.length > 0 &&
     skills.length > 0 &&
@@ -304,6 +310,26 @@ export default function AddProjectForm({
 
       {/* 2. Scrollable Middle Form Body */}
       <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-6 min-h-0 custom-scrollbar pb-8">
+        {/* Strengthen Profile Chips */}
+        <StrengthenProfileChips
+          chips={[
+            ...(mediaList.length === 0 ? [{ key: 'media', label: 'Media(choose 1)', fieldRef: 'media-section' }] : []),
+            ...(!role.trim() ? [{ key: 'role', label: 'Role in project', fieldRef: 'role-section' }] : []),
+            ...(!teamSize.trim() ? [{ key: 'team', label: 'Team', fieldRef: 'team-section' }] : []),
+          ]}
+          onChipClick={(chip) => {
+            // Expand "Add more details" if needed
+            if (chip.key === 'role' || chip.key === 'team') {
+              setShowMoreDetails(true);
+              setTimeout(() => {
+                if (chip.key === 'role') roleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (chip.key === 'team') teamRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 150);
+            } else if (chip.key === 'media') {
+              mediaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+        />
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Row 1: Title & Organization */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -331,7 +357,7 @@ export default function AddProjectForm({
 
           {/* Row 2: Project details (Height aligned to CSS layer specs: 89px) */}
           <div className="flex flex-col">
-            <Label className={labelStyles}>Project details</Label>
+            <Label className={labelStyles}>Project details*</Label>
             <Textarea
               value={details}
               onChange={(e) => setDetails(e.target.value)}
@@ -501,8 +527,8 @@ export default function AddProjectForm({
           </div>
 
           {/* Row 6: Media */}
-          <div className="flex flex-col space-y-3">
-            <Label className={labelStyles}>Media</Label>
+          <div className="flex flex-col space-y-3" ref={mediaRef} id="media-section">
+            <Label className={labelStyles}>Media(max 3 media)</Label>
             
             {/* Action buttons matching CSS border: 1px solid #818CF8, text: #6366F1 */}
             <div className="flex flex-wrap items-center gap-3">
@@ -607,7 +633,7 @@ export default function AddProjectForm({
           {showMoreDetails && (
             <div className="space-y-6 animate-in fade-in-90 slide-in-from-top-2 duration-200 pt-3 border-t border-border/40">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex flex-col">
+                <div className="flex flex-col" ref={roleRef} id="role-section">
                   <Label className={labelStyles}>Role in project</Label>
                   <input
                     type="text"
@@ -617,7 +643,7 @@ export default function AddProjectForm({
                     className={inputStyles}
                   />
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col" ref={teamRef} id="team-section">
                   <Label className={labelStyles}>Team size</Label>
                   <input
                     type="text"

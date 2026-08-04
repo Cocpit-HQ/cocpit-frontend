@@ -340,6 +340,7 @@ export const FeedPost = (props: FeedPostProps) => {
       ref={feedCardRef}
       onClick={handleCardClick}
       className={`feed-card-shell flex w-full max-w-[560px] max-md:!max-w-full flex-col gap-[8px] overflow-hidden h-full ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      style={videoSrc && !props.isFullContent ? { borderRadius: 0 } : undefined}
     >
       {isRepostWithoutThoughts ? (
         <>
@@ -520,7 +521,7 @@ export const FeedPost = (props: FeedPostProps) => {
         <>
           {/* NEW VIDEO FEED CARD DESIGN */}
           <div 
-            className="relative w-full max-w-[560px] max-h-[500px] rounded-[24px] overflow-hidden bg-black flex-shrink-0 cursor-pointer shadow-sm group transition-all duration-300"
+            className="relative w-full max-w-[560px] max-h-[500px] overflow-hidden bg-black flex-shrink-0 cursor-pointer shadow-sm group transition-all duration-300"
             style={{ aspectRatio: finalAspectRatio || '16/9' }}
           >
             <video

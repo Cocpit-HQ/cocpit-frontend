@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { StrengthenProfileChips } from "@/features/profile-score/components/StrengthenProfileChips"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -167,6 +168,7 @@ interface RoleSectionProps {
   existingCurrentRoleId?: string          // ID of the role to end if checkbox is checked
   companyNode?: React.ReactNode
   locationNode?: React.ReactNode
+  descriptionRef?: React.RefObject<HTMLDivElement | null>
 }
 
 function RoleSection({
@@ -183,6 +185,7 @@ function RoleSection({
   existingCurrentRoleId,
   companyNode,
   locationNode,
+  descriptionRef,
 }: RoleSectionProps) {
   const inputStyles =
     "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
@@ -307,7 +310,7 @@ function RoleSection({
           const roleInputBlock = (
             <>
               <div className="flex items-center justify-between">
-                <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
+                <Label className={labelStyles}>{isFirst ? "Role*" : "New role*"}</Label>
               </div>
               <div className={acStyles.wrapper}>
                 <div className={cn(
@@ -454,17 +457,22 @@ function RoleSection({
         {/* Details textarea (only for non-first roles shown before dates) */}
         {!isFirst && (
           <div className="flex flex-col">
-            <Label className={labelStyles}>Details</Label>
+            <Label className={labelStyles}>Details*</Label>
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
               maxLength={1500}
-              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", role.description.length >= 1500 && "border-destructive focus:border-destructive")}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
             <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
               {role.description.length}/1500 characters
             </span>
+            {fieldErrors.description && (
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+                <AlertTriangle className="w-3 h-3" />{fieldErrors.description}
+              </p>
+            )}
           </div>
         )}
 
@@ -514,7 +522,7 @@ function RoleSection({
 
         {/* Start date */}
         <div className="space-y-2">
-          <Label className={labelStyles}>Start date</Label>
+          <Label className={labelStyles}>Start date*</Label>
           <div className="grid grid-cols-2 gap-6">
             <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
               <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
@@ -566,7 +574,7 @@ function RoleSection({
 
         {/* End date */}
         <div className={cn("space-y-2", role.is_current && "opacity-50")}>
-          <Label className={cn(labelStyles, role.is_current && "text-muted-foreground")}>End date</Label>
+          <Label className={cn(labelStyles, role.is_current && "text-muted-foreground")}>End date{!role.is_current && "*"}</Label>
           <div className="grid grid-cols-2 gap-6">
             <Select
               value={role.endMonth}
@@ -653,18 +661,23 @@ function RoleSection({
 
         {/* Details — only for first role, shown at the bottom */}
         {isFirst && (
-          <div className="flex flex-col">
-            <Label className={labelStyles}>Details</Label>
+          <div className="flex flex-col" ref={descriptionRef} id="description-field">
+            <Label className={labelStyles}>Details*</Label>
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
               maxLength={1500}
-              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", role.description.length >= 1500 && "border-destructive focus:border-destructive")}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
             <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
               {role.description.length}/1500 characters
             </span>
+            {fieldErrors.description && (
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+                <AlertTriangle className="w-3 h-3" />{fieldErrors.description}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -684,6 +697,8 @@ export default function AddExperienceForm({
   existingExperiences = [],
   initialActiveRoleId,
 }: AddExperienceFormProps) {
+  const descriptionRef = useRef<HTMLDivElement>(null)
+  const locationRef = useRef<HTMLDivElement>(null)
   const isEditing = !!initialExperiences && initialExperiences.length > 0
   const firstExp = initialExperiences?.[0]
 
@@ -898,6 +913,12 @@ export default function AddExperienceForm({
       // Title required
       if (!role.title.trim()) {
         roleErrors.title = "Role title is required"
+        valid = false
+      }
+
+      // Description required
+      if (!role.description.trim()) {
+        roleErrors.description = "Description is required"
         valid = false
       }
 
@@ -1168,6 +1189,7 @@ export default function AddExperienceForm({
     roles.every(
       (r) =>
         r.title.trim() !== "" &&
+        r.description.trim() !== "" &&
         r.startMonth !== "" &&
         r.startYear !== "" &&
         (r.is_current || (r.endMonth !== "" && r.endYear !== ""))
@@ -1244,7 +1266,7 @@ export default function AddExperienceForm({
 
   const companyBlock = (
     <div className="flex flex-col" ref={companyWrapperRef}>
-      <Label className={labelStyles}>Company</Label>
+      <Label className={labelStyles}>Company*</Label>
       <div className={acStyles.wrapper}>
         <div className={cn(acStyles.inputWrapper, showCompanyDropdown && acStyles.isOpen)} onClick={() => companyInputRef.current?.focus()}>
           <input ref={companyInputRef} type="text" className={acStyles.input} placeholder="e.g. Google" value={companySearch}
@@ -1295,7 +1317,7 @@ export default function AddExperienceForm({
   )
 
   const locationBlock = (
-    <div className="flex flex-col">
+    <div className="flex flex-col" ref={locationRef} id="location-field">
       <Label className={labelStyles}>Location</Label>
       <LocationAutocomplete
         value={location}
@@ -1378,6 +1400,22 @@ export default function AddExperienceForm({
           )}
         </div>
 
+        <div className="pb-4">
+          <StrengthenProfileChips
+            chips={[
+              ...(!roles[0]?.description.trim() ? [{ key: "description", label: "Description", fieldRef: "description-field" }] : []),
+              ...(!location.trim() ? [{ key: "location", label: "Location", fieldRef: "location-field" }] : [])
+            ]}
+            onChipClick={(chip) => {
+              if (chip.key === "description") {
+                descriptionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              } else if (chip.key === "location") {
+                locationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }}
+          />
+        </div>
+
         <div className="space-y-6">
 
           {/* Multiple current roles warning */}
@@ -1412,6 +1450,7 @@ export default function AddExperienceForm({
                   fieldWarnings={fieldWarnings[index]}
                   companyNode={index === 0 ? companyBlock : undefined}
                   locationNode={index === 0 ? locationBlock : undefined}
+                  descriptionRef={descriptionRef}
                 />
               </div>
             );

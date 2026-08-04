@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { PROFILE_SCORE_QUERY_KEY } from "@/features/profile-score/hooks/useProfileScore";
 import { useSession } from "next-auth/react";
 import {
     getProfile,
@@ -79,6 +80,7 @@ export function useExperienceMutations() {
             // Always refetch so the backend's consecutive groupByCompany logic
             // determines the correct group structure — client can't replicate this.
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         },
         onError: () => {
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
@@ -93,6 +95,7 @@ export function useExperienceMutations() {
             // Updating a role's company_name or dates can change which group it
             // belongs to — manual patching cannot handle that correctly.
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         },
         onError: () => {
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
@@ -123,6 +126,7 @@ export function useExperienceMutations() {
         onSettled: () => {
             // Always confirm final state from server after delete
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         },
     });
 
@@ -156,6 +160,7 @@ export function useExperienceMutations() {
 
             // Still invalidate to ensure grouping and final state are correct
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
             toast.success("Experience updated successfully");
         },
         onError: (err: any) => {
@@ -188,6 +193,7 @@ export function useEducationMutations() {
                     educations: [...old.educations, newItem.education]
                 };
             });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -204,6 +210,7 @@ export function useEducationMutations() {
                     )
                 };
             });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -217,6 +224,7 @@ export function useEducationMutations() {
                     educations: old.educations.filter(edu => edu.education_id !== id)
                 };
             });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -236,6 +244,7 @@ export function useSkillMutations() {
                     skills: response.skills
                 };
             });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -249,6 +258,7 @@ export function useSkillMutations() {
                     skills: old.skills.filter(s => s.skill_id !== id)
                 };
             });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -262,6 +272,7 @@ export function useSkillMutations() {
                     skills: response.skills
                 };
             });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -283,6 +294,7 @@ export function useAvatarMutations() {
                 };
             });
             void update({ image: response.avatarUrl });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -297,6 +309,7 @@ export function useAvatarMutations() {
                 };
             });
             void update({ image: null });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
 
@@ -334,6 +347,7 @@ export function useProfileMutation() {
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: ["profile-identity"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
             if (variables?.name) {
                 void updateSession({ name: variables.name });
             }
@@ -398,6 +412,7 @@ export function useProjectMutations() {
                 };
             });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         },
     });
 
@@ -415,6 +430,7 @@ export function useProjectMutations() {
                 };
             });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         },
     });
 
@@ -429,6 +445,7 @@ export function useProjectMutations() {
                 };
             });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         },
     });
 

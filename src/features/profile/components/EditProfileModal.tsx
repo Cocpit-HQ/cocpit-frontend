@@ -241,7 +241,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           <div className="flex flex-col gap-4 text-left pt-2 pb-10 sm:pb-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
-                <Label className={labelStyles}>Full name</Label>
+                <Label className={labelStyles}>Full name*</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -281,7 +281,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
-                <Label className={labelStyles}>Headline</Label>
+                <Label className={labelStyles}>Headline*</Label>
                 <Input
                   value={formData.headline}
                   onChange={(e) => setFormData(prev => ({ ...prev, headline: e.target.value }))}
@@ -294,7 +294,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 </span>
               </div>
               <div className="flex flex-col">
-                <Label className={labelStyles}>Status</Label>
+                <Label className={labelStyles}>Status*</Label>
                 <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
                   <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.status))}>
                     <SelectValue placeholder="Select status" />
@@ -310,7 +310,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
-                <Label className={labelStyles}>Location</Label>
+                <Label className={labelStyles}>Location*</Label>
                 <div className="relative">
                   <LocationAutocomplete
                     value={formData.location}
@@ -396,7 +396,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </div>
 
             <div className="flex flex-col">
-              <Label className={labelStyles}>About</Label>
+              <Label className={labelStyles}>About*</Label>
               <Textarea
                 value={formData.about}
                 onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}

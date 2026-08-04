@@ -1,13 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Eye, EyeOff, Clock } from 'lucide-react';
+import { ChevronLeft, Clock } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUpdatePassword, useRequestPasswordResetLink, useResetLinkStatus } from '../../../hooks/useAccountSettings';
+import { getFirstMissingPasswordRequirement, isPasswordFullyValid } from '@/lib/validators';
+import { PasswordRequirementsCard } from '@/components/shared/PasswordRequirementsCard';
+
+
 
 export function ManagePasswordPage() {
   const pathname = usePathname() || '/settings/account-password';
@@ -64,6 +69,11 @@ export function ManagePasswordPage() {
   const handleUpdatePassword = () => {
     setErrorMsg('');
     setResetSuccessMsg('');
+    const missingReq = getFirstMissingPasswordRequirement(newPassword);
+    if (missingReq) {
+      setErrorMsg(missingReq);
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setErrorMsg("Passwords do not match.");
       return;
@@ -86,6 +96,7 @@ export function ManagePasswordPage() {
       }
     });
   };
+
 
   const handleForgotPassword = () => {
     if (cooldownSeconds > 0) return;
@@ -143,7 +154,7 @@ export function ManagePasswordPage() {
                 onClick={() => setShowCurrent(!showCurrent)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:opacity-70"
               >
-                {showCurrent ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showCurrent ? <Icon icon="fluent:eye-20-regular" className="w-5 h-5 text-gray-500" /> : <Icon icon="fluent:eye-off-20-regular" className="w-5 h-5 text-gray-500" />}
               </button>
             </div>
             {errorMsg === "Current password is incorrect" && (
@@ -163,6 +174,7 @@ export function ManagePasswordPage() {
                   if (errorMsg === "New password must be different from current password.") setErrorMsg('');
                 }}
                 placeholder="Enter your new password"
+                maxLength={15}
                 className={`w-full h-[48px] px-4 py-2 bg-white border ${newPassword && currentPassword && newPassword === currentPassword ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : 'border-gray-200 focus:border-[#818CF8]'} rounded-[16px] text-[14px] text-black focus:outline-none placeholder:text-gray-400`}
               />
               <button
@@ -170,15 +182,15 @@ export function ManagePasswordPage() {
                 onClick={() => setShowNew(!showNew)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:opacity-70"
               >
-                {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showNew ? <Icon icon="fluent:eye-20-regular" className="w-5 h-5 text-gray-500" /> : <Icon icon="fluent:eye-off-20-regular" className="w-5 h-5 text-gray-500" />}
               </button>
             </div>
             {newPassword && currentPassword && newPassword === currentPassword ? (
               <span className="text-[12px] text-[#FF6B6B] mt-1">New password must be different from current password.</span>
-            ) : (
-              <span className="text-[12px] text-[#6B7280] mt-1">*Use at least 8 characters</span>
-            )}
+            ) : null}
+            <PasswordRequirementsCard password={newPassword} className="mt-1" />
           </div>
+
 
           {/* Confirm New Password */}
           <div className="flex flex-col gap-2 w-full">
@@ -196,7 +208,7 @@ export function ManagePasswordPage() {
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:opacity-70"
               >
-                {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showConfirm ? <Icon icon="fluent:eye-20-regular" className="w-5 h-5 text-gray-500" /> : <Icon icon="fluent:eye-off-20-regular" className="w-5 h-5 text-gray-500" />}
               </button>
             </div>
             {confirmPassword && confirmPassword !== newPassword && (
@@ -208,10 +220,11 @@ export function ManagePasswordPage() {
             errorMsg !== "Current password is incorrect" &&
             errorMsg !== "Passwords do not match." &&
             errorMsg !== "New password must be different from current password." && (
-              <p className="text-[14px] text-[#FF6B6B]">{errorMsg}</p>
+              <span className="text-[12px] text-[#FF6B6B] mt-1">{errorMsg}</span>
           )}
-          {resetSuccessMsg && <p className="text-[14px] text-green-600 font-medium">{resetSuccessMsg}</p>}
-          {updatePasswordMutation.isSuccess && <p className="text-[14px] text-green-500">Password updated successfully!</p>}
+          {resetSuccessMsg && (
+            <span className="text-[12px] text-emerald-600 mt-1">{resetSuccessMsg}</span>
+          )}
 
           {/* Buttons */}
           <div className="flex flex-row justify-end items-center gap-4">
@@ -232,7 +245,7 @@ export function ManagePasswordPage() {
             
             <button 
               onClick={handleUpdatePassword}
-              disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword === currentPassword}
+              disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword === currentPassword || !isPasswordFullyValid(newPassword)}
               className="flex items-center justify-center h-[40px] px-8 rounded-[24px] border border-[#6366F1] bg-[#6366F1] text-white text-[14px] font-medium transition-colors disabled:opacity-50 disabled:border-[#C7D2FE] disabled:bg-[#C7D2FE]"
             >
               {updatePasswordMutation.isPending ? "Updating..." : "Update"}
