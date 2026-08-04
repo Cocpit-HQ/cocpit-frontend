@@ -133,8 +133,8 @@ export function useProfile(userId: string) {
             return transformUserData(userData);
         },
         enabled: !!userId,
-        staleTime: Infinity,
-        refetchOnMount: false,
+        retry: false,
+        staleTime: 1000 * 30, // 30 seconds
     });
 }
 
@@ -146,16 +146,11 @@ export function useProfilePosts(userId: string) {
             return data.posts.map(mapPublicPostToPost);
         },
         enabled: !!userId,
+        retry: false,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
 }
 
-// Global Profile's 3-post preview strip: server-ordered to prefer image/caption
-// posts over polls/reposts (falling back to them only if fewer than 3 plain
-// posts exist), across the user's full post history — not just whatever the
-// general list's first page happens to contain. Deliberately a separate query
-// from useProfilePosts above, which still needs the full recency-ordered list
-// (e.g. for the Skills section's post-evidence lookup).
 export function useProfilePostsPreview(userId: string) {
     return useQuery({
         queryKey: ["profile-posts-preview", userId],
@@ -164,6 +159,7 @@ export function useProfilePostsPreview(userId: string) {
             return data.posts.map(mapPublicPostToPost);
         },
         enabled: !!userId,
+        retry: false,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
 }

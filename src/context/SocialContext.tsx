@@ -196,10 +196,32 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
   const isBlocked = (id: string) => blockedIds.includes(id);
 
+  const notifyBlockEvent = (targetId: string, isBlocked: boolean) => {
+    if (typeof window !== 'undefined') {
+      // 1. In-tab custom DOM event
+      window.dispatchEvent(new CustomEvent('cocpit:block_status_changed', { detail: { targetId, isBlocked } }));
+
+      // 2. Cross-tab localStorage event
+      try {
+        localStorage.setItem('cocpit_block_event', JSON.stringify({ targetId, isBlocked, timestamp: Date.now() }));
+      } catch (e) {}
+    }
+
+    // 3. React Query cache purges
+    queryClient.removeQueries({ queryKey: ['profile', targetId] });
+    queryClient.removeQueries({ queryKey: ['companyProfile', targetId] });
+    queryClient.removeQueries({ queryKey: ['profileStats', targetId] });
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
+    queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
+    queryClient.invalidateQueries({ queryKey: ['feed'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+  };
+
   const blockUser = async (id: string) => {
     setBlockedIds(prev => [...prev, id]);
-
     setFollowingIds(prev => prev.filter(uid => uid !== id));
+
+    notifyBlockEvent(id, true);
 
     try {
       await api.post(`/users/${id}/block`);
@@ -214,6 +236,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
   const unblockUser = async (id: string) => {
     setBlockedIds(prev => prev.filter(uid => uid !== id));
+    notifyBlockEvent(id, false);
     try {
       await api.delete(`/users/${id}/unblock`);
       toast({ title: "User unblocked" });
@@ -224,6 +247,49 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
     }
   };
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleBlockEvent = (e: any) => {
+      const detail = e.detail || {};
+      if (detail.targetId) {
+        queryClient.removeQueries({ queryKey: ['profile', detail.targetId] });
+        queryClient.removeQueries({ queryKey: ['companyProfile', detail.targetId] });
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+      }
+    };
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'cocpit_block_event' && e.newValue) {
+        try {
+          const payload = JSON.parse(e.newValue);
+          if (payload.targetId) {
+            if (payload.isBlocked) {
+              setBlockedIds(prev => [...new Set([...prev, payload.targetId])]);
+            } else {
+              setBlockedIds(prev => prev.filter(id => id !== payload.targetId));
+            }
+            queryClient.removeQueries({ queryKey: ['profile', payload.targetId] });
+            queryClient.removeQueries({ queryKey: ['companyProfile', payload.targetId] });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+            queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
+          }
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('cocpit:block_status_changed', handleBlockEvent);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      window.removeEventListener('cocpit:block_status_changed', handleBlockEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, [queryClient]);
 
   const { data: session, status } = useSession();
 
