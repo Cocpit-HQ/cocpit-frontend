@@ -1,6 +1,27 @@
 import type { NextConfig } from "next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 
+const EXPRESS_AUTH_ROUTES = [
+  "login",
+  "register",
+  "logout",
+  "me",
+  "refresh",
+  "actor-context",
+  "sessions",
+  "request-otp",
+  "verify-otp",
+  "forgot-password",
+  "forgot-password-link",
+  "reset-password",
+  "reset-link-status",
+  "verify-reset-token",
+  "reset-password-token",
+  "google",
+  "apple",
+  "admin",
+];
+
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
@@ -58,11 +79,17 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     const backendUrl = process.env.INTERNAL_API_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api` : null) || 'http://localhost:5001/api';
+    const authPattern = EXPRESS_AUTH_ROUTES.join("|");
     return [
       {
-        // Proxy specific backend auth routes
-        source: "/api/auth/:path(login|refresh|register|google|logout|me|actor-context|sessions|reset-password|request-otp|verify-otp)",
-        destination: `${backendUrl}/auth/:path*`,
+        // Explicitly proxy Express backend auth endpoints (with sub-paths)
+        source: `/api/auth/:path(${authPattern})/:rest*`,
+        destination: `${backendUrl}/auth/:path/:rest*`,
+      },
+      {
+        // Explicitly proxy Express backend auth endpoints (single path segment)
+        source: `/api/auth/:path(${authPattern})`,
+        destination: `${backendUrl}/auth/:path`,
       },
       {
         // Proxy all other /api routes except /api/auth
