@@ -290,7 +290,7 @@ export default function UnifiedMessageInput({
                                 }
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder={disabledMessage || placeholder || (isDisabled ? "Loading..." : "Write a message...")}
+                            placeholder={disabledMessage || placeholder || (isDisabled ? "Loading..." : "Message...")}
                             rows={1}
                             className="w-full px-2 py-2.5 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-[15px] text-foreground placeholder:text-muted-foreground/60 scrollbar-hide overflow-hidden"
                             style={{ minHeight: "40px" }}

@@ -178,7 +178,7 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
                             }
                         }}
                         onKeyDown={handleKeyDown}
-                        placeholder="Type a message..."
+                        placeholder="Message..."
                         rows={1}
                         className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground scrollbar-hide overflow-hidden"
                         style={{ minHeight: "44px" }}

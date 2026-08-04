@@ -52,6 +52,7 @@ interface ChatListProps {
   isCompany?: boolean;
   activeTab?: 'chat' | 'jobs' | 'requests';
   setActiveTab?: (tab: 'chat' | 'jobs' | 'requests') => void;
+  isQuickChat?: boolean;
 }
 
 export function ChatList({
@@ -65,6 +66,7 @@ export function ChatList({
   isCompany = false,
   activeTab: propActiveTab,
   setActiveTab: propSetActiveTab,
+  isQuickChat = false,
 }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline, typingConversations } = useSocket();
@@ -203,12 +205,13 @@ export function ChatList({
   });
 
   return (
-    <div className="box-border flex flex-col items-start p-[16px] gap-[16px] w-full h-full bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
+    <div className={`box-border flex flex-col items-start p-[16px] gap-[16px] w-full h-full bg-[#FFFFFF] ${isQuickChat ? 'border-none rounded-none' : 'border border-[#EEF2FF] rounded-[24px]'} overflow-hidden`}>
       <div className="w-full flex flex-col gap-[16px] shrink-0">
         {/* Chat List Header (Frame 43) */}
-        <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[348px] h-[42px] self-stretch">
-          {/* Left Group — Avatar + Text */}
-          <div className="flex flex-row items-center p-0 gap-[8px]">
+        {!isQuickChat && (
+          <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[42px] self-stretch">
+            {/* Left Group — Avatar + Text */}
+            <div className="flex flex-row items-center p-0 gap-[8px]">
             <div className="w-[32px] h-[32px] flex-none">
               <Avatar
                 url={(activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image}
@@ -238,6 +241,7 @@ export function ChatList({
             </button>
           )}
         </div>
+        )}
 
         {/* Search Bar (Frame 2608500) */}
         <div className="box-border flex flex-row justify-between items-center px-[16px] py-[8px] gap-[10px] w-full h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] relative">

@@ -48,6 +48,7 @@ interface ChatWindowProps {
   onAcceptSuccess?: () => void
   initialEntityContext?: { type: 'job' | 'offer' | 'event', id: string }
   activeTab?: 'chat' | 'jobs' | 'requests'
+  isQuickChat?: boolean
 }
 
 const getAvatarGradient = (avatar: string) => {
@@ -132,7 +133,7 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
   );
 }
 
-export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess, initialEntityContext, activeTab }: ChatWindowProps) {
+export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess, initialEntityContext, activeTab, isQuickChat }: ChatWindowProps) {
   const { socket, isUserOnline, setActiveConversationId } = useSocket();
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
@@ -1390,7 +1391,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
               disabledMessage={isBlockedByOther ? "User not found" : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined))}
               pendingEntityContext={pendingEntityContext}
               onDismissEntityContext={() => setPendingEntityContext(null)}
-              placeholder="Type a message..."
+              placeholder="Message..."
               replyingTo={replyingTo}
               onCancelReply={() => setReplyingTo(null)}
               pendingSharedPost={pendingSharedPost}

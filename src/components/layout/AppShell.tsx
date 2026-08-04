@@ -10,6 +10,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { QuickChatWidget } from '@/features/messaging/components/quick-chat/QuickChatWidget';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -75,6 +76,7 @@ export function AppShell({
           <MobileBottomNav />
         </>
       )}
+      <QuickChatWidget />
     </div>
   );
 }
