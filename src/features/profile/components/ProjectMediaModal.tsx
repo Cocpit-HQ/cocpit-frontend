@@ -6,8 +6,6 @@ import { X, Upload, FileText, Image as ImageIcon, Link as LinkIcon } from "lucid
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { uploadProjectMedia } from "@/services/api/profile";
-import { toast } from "sonner";
 
 interface ProjectMediaModalProps {
   isOpen: boolean;
@@ -31,7 +29,7 @@ export function ProjectMediaModal({
   const [url, setUrl] = useState("");
   const [fileUrl, setFileUrl] = useState<string | undefined>(undefined);
   const [fileName, setFileName] = useState<string | undefined>(undefined);
-  const [isUploading, setIsUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | undefined>(undefined);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,34 +40,37 @@ export function ProjectMediaModal({
         setUrl(initialData.url || "");
         setFileUrl(initialData.fileUrl || initialData.url || undefined);
         setFileName(initialData.fileName || initialData.title || undefined);
+        setPendingFile(initialData.pendingFile);
       } else {
         setTitle("");
         setUrl("");
         setFileUrl(undefined);
         setFileName(undefined);
+        setPendingFile(undefined);
       }
     }
   }, [isOpen, initialData]);
 
+  useEffect(() => {
+    return () => {
+      if (fileUrl && fileUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(fileUrl);
+      }
+    };
+  }, [fileUrl]);
+
   if (!isOpen) return null;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUploading(true);
-      try {
-        const res = await uploadProjectMedia(file);
-        setFileUrl(res.fileUrl || res.url);
-        setFileName(res.fileName || file.name);
-        if (!title.trim()) {
-          const nameWithoutExt = file.name.split(".")[0];
-          setTitle(nameWithoutExt);
-        }
-        toast.success("File uploaded successfully");
-      } catch (err: any) {
-        toast.error(err?.response?.data?.message || "Failed to upload media file");
-      } finally {
-        setIsUploading(false);
+      const newFileUrl = URL.createObjectURL(file);
+      setFileUrl(newFileUrl);
+      setFileName(file.name);
+      setPendingFile(file);
+      if (!title.trim()) {
+        const nameWithoutExt = file.name.split(".")[0];
+        setTitle(nameWithoutExt);
       }
     }
   };
@@ -85,6 +86,7 @@ export function ProjectMediaModal({
       url: mediaType === "link" ? url.trim() : fileUrl || url.trim(),
       fileUrl,
       fileName,
+      pendingFile,
     };
 
     onSave(mediaItem, isEditing);
@@ -102,7 +104,7 @@ export function ProjectMediaModal({
   const labelStyles =
     "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2";
 
-  const isFormValid = !isUploading && title.trim().length > 0 && (mediaType === "link" ? url.trim().length > 0 : !!(fileUrl || url.trim()));
+  const isFormValid = title.trim().length > 0 && (mediaType === "link" ? url.trim().length > 0 : !!(fileUrl || url.trim()));
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in-90">
@@ -260,7 +262,7 @@ export function ProjectMediaModal({
             disabled={!isFormValid}
             className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)] cursor-pointer shadow-sm"
           >
-            {isUploading ? "Uploading..." : isEditing ? "Save" : "Add"}
+            {isEditing ? "Save" : "Add"}
           </Button>
         </div>
       </div>

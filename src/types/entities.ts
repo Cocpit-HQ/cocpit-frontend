@@ -58,6 +58,7 @@ export interface ProjectMedia {
   url?: string;
   fileUrl?: string;
   fileName?: string;
+  pendingFile?: File;
 }
 
 export interface Project {

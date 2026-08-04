@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProjectMediaModal } from "./ProjectMediaModal";
-import { getProfileSkills } from "@/services/api/profile";
+import { getProfileSkills, uploadProjectMedia } from "@/services/api/profile";
+import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface AddProjectFormProps {
@@ -53,6 +54,7 @@ export default function AddProjectForm({
   const [endMonth, setEndMonth] = useState(initialData?.end_month || "");
   const [endYear, setEndYear] = useState(initialData?.end_year || "");
   const [isCurrent, setIsCurrent] = useState(initialData?.is_current ?? false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Skills state
   const [skills, setSkills] = useState<string[]>(initialData?.skills || []);
@@ -181,7 +183,7 @@ export default function AddProjectForm({
     return null;
   }, [isCurrent, startMonth, startYear, endMonth, endYear, submitAttempted, touchedEndDate]);
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSubmitAttempted(true);
     
@@ -190,24 +192,49 @@ export default function AddProjectForm({
     
     if (!title.trim() || !organization.trim() || missingEndDate || hasDateLogicError) return;
 
-    const savedProject: Project = {
-      project_id: initialData?.project_id || `project-${Date.now()}`,
-      title: title.trim(),
-      organization: organization.trim(),
-      details: details.trim(),
-      start_month: startMonth,
-      start_year: startYear,
-      end_month: isCurrent ? undefined : endMonth,
-      end_year: isCurrent ? undefined : endYear,
-      is_current: isCurrent,
-      skills,
-      media: mediaList,
-      role: role.trim() || undefined,
-      team_size: teamSize.trim() || undefined,
-      role_description: roleDescription.trim() || undefined,
-    };
+    setIsSaving(true);
+    try {
+      const updatedMediaList = [...mediaList];
+      for (let i = 0; i < updatedMediaList.length; i++) {
+        const item = updatedMediaList[i];
+        if (item.pendingFile) {
+          const res = await uploadProjectMedia(item.pendingFile);
+          updatedMediaList[i] = {
+            ...item,
+            fileUrl: res.fileUrl || res.url,
+            fileName: res.fileName || item.pendingFile.name,
+            pendingFile: undefined,
+          };
+          
+          if (item.fileUrl && item.fileUrl.startsWith("blob:")) {
+            URL.revokeObjectURL(item.fileUrl);
+          }
+        }
+      }
 
-    onSave?.(savedProject);
+      const savedProject: Project = {
+        project_id: initialData?.project_id || `project-${Date.now()}`,
+        title: title.trim(),
+        organization: organization.trim(),
+        details: details.trim(),
+        start_month: startMonth,
+        start_year: startYear,
+        end_month: isCurrent ? undefined : endMonth,
+        end_year: isCurrent ? undefined : endYear,
+        is_current: isCurrent,
+        skills,
+        media: updatedMediaList,
+        role: role.trim() || undefined,
+        team_size: teamSize.trim() || undefined,
+        role_description: roleDescription.trim() || undefined,
+      };
+
+      onSave?.(savedProject);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to upload media files");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputStyles =
@@ -222,6 +249,8 @@ export default function AddProjectForm({
     startYear.length > 0 &&
     skills.length > 0 &&
     endDateError === null;
+
+  const isMediaLimitReached = mediaList.length >= 3;
 
   const getMediaSublabel = (type: string) => {
     switch (type) {
@@ -480,25 +509,42 @@ export default function AddProjectForm({
               <button
                 type="button"
                 onClick={() => handleAddMediaClick("link")}
-                className="border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] hover:bg-[#818CF8]/10 transition-colors cursor-pointer flex items-center justify-center shadow-none"
+                disabled={isMediaLimitReached}
+                className={cn(
+                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-colors flex items-center justify-center shadow-none",
+                  isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
+                )}
               >
                 Add link
               </button>
               <button
                 type="button"
                 onClick={() => handleAddMediaClick("image")}
-                className="border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] hover:bg-[#818CF8]/10 transition-colors cursor-pointer flex items-center justify-center shadow-none"
+                disabled={isMediaLimitReached}
+                className={cn(
+                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-colors flex items-center justify-center shadow-none",
+                  isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
+                )}
               >
                 Add image
               </button>
               <button
                 type="button"
                 onClick={() => handleAddMediaClick("document")}
-                className="border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] hover:bg-[#818CF8]/10 transition-colors cursor-pointer flex items-center justify-center shadow-none"
+                disabled={isMediaLimitReached}
+                className={cn(
+                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-colors flex items-center justify-center shadow-none",
+                  isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
+                )}
               >
                 Add document
               </button>
             </div>
+            {isMediaLimitReached && (
+              <p className="text-[12px] text-muted-foreground mt-1 font-[family-name:var(--font-poppins)]">
+                Maximum 3 media items allowed.
+              </p>
+            )}
 
             {/* Added media items list */}
             {mediaList.length > 0 && (
@@ -611,15 +657,15 @@ export default function AddProjectForm({
         <Button
           type="button"
           onClick={() => handleSubmit()}
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSaving}
           className={cn(
-            "h-[40px] px-8 rounded-full font-medium w-[142px] font-[family-name:var(--font-poppins)] cursor-pointer transition-all shadow-none",
-            isFormValid
-              ? "bg-[#6366F1] text-white hover:bg-[#4F46E5]"
+            "h-[40px] px-8 rounded-full font-medium w-[142px] font-[family-name:var(--font-poppins)] transition-all shadow-none",
+            isFormValid && !isSaving
+              ? "bg-[#6366F1] text-white hover:bg-[#4F46E5] cursor-pointer"
               : "bg-[#C7D2FE] text-white border border-white dark:border-transparent dark:bg-[#6366F1]/40 opacity-100 cursor-not-allowed hover:bg-[#C7D2FE] dark:hover:bg-[#6366F1]/40"
           )}
         >
-          Save
+          {isSaving ? "Saving..." : "Save"}
         </Button>
       </div>
 
