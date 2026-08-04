@@ -126,7 +126,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     coverUrl: company.cover_url,
     isVerified: company.verification_status === 'DOMAIN_VERIFIED',
     tagline: company.headline || company.slogan || "",
-    industry: company.industry || (isEdu ? "Higher Education" : ""),
+    industry: (isEdu ? company.institution_type : company.industry) || (isEdu ? "Higher Education" : ""),
     location: company.location || [company.city, company.country].filter(Boolean).join(", ") || "",
     employeeCount: company.size || "",
     websiteUrl: company.website || "",

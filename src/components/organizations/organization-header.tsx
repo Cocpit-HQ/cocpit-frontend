@@ -420,7 +420,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                 entityName={company.name}
                 entityUrl={`/organization/${company.slug}`}
                 entityAvatar={company.logo_url}
-                entityHeadline={company.headline || company.industry}
+                entityHeadline={company.headline || company.institution_type || company.industry}
                 entityLocation={company.location}
             />
         </div>

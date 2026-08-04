@@ -3,12 +3,15 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useRouter } from "next/navigation";
 
 interface TaggedPeoplePopoverProps {
   tags: any[];
 }
 
 export function TaggedPeoplePopover({ tags }: TaggedPeoplePopoverProps) {
+  const router = useRouter();
+
   if (!tags || tags.length === 0) return null;
 
   return (
@@ -25,7 +28,17 @@ export function TaggedPeoplePopover({ tags }: TaggedPeoplePopoverProps) {
       >
         <div className="flex flex-col gap-1">
           {tags.map((tag: any, idx: number) => (
-            <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-muted rounded-[12px] transition-colors cursor-pointer">
+            <div 
+              key={idx} 
+              className="flex items-center gap-3 px-3 py-2 hover:bg-muted rounded-[12px] transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                const slug = tag.account_name || tag.id || tag.user_id;
+                if (slug) {
+                  router.push(`/profile/${slug}`);
+                }
+              }}
+            >
               <div className="w-8 h-8 min-w-[32px] min-h-[32px] aspect-square rounded-full border border-border flex items-center justify-center overflow-hidden bg-muted flex-shrink-0">
                 {tag.avatar_url || tag.avatar ? (
                   <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover rounded-full" />

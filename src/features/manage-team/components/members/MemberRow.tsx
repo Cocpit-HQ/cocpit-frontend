@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Icon } from '@iconify/react';
 import { useSession } from 'next-auth/react';
 import { TeamMember } from '../../types/team.types';
+import Avatar from '@/components/shared/Avatar';
 
 interface MemberRowProps {
   member: TeamMember;
@@ -12,7 +13,6 @@ interface MemberRowProps {
 
 export default function MemberRow({ member, onRemove }: MemberRowProps) {
   const { data: session } = useSession();
-  const [imgError, setImgError] = useState(false);
   const currentUserId = session?.user?.id || (session?.user as any)?.sub;
 
   const isSelf = Boolean(currentUserId && (member.id === currentUserId || (member as any).userId === currentUserId));
@@ -27,18 +27,14 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
     `${member.name.split(' ')[0].toLowerCase()}.${member.name.split(' ')[1]?.toLowerCase() || 'user'}@example.com`;
 
   const avatarUrl = member.avatarUrl || (member as any).avatar || (member as any).avatar_url;
-  const initial = member.name ? member.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <div className="w-full flex items-center justify-between py-2.5">
       <div className="flex items-center gap-3 min-w-0">
-        <img
-          src={member.avatarUrl || '/assets/pngegg.png'}
-          alt={member.name}
-          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/assets/pngegg.png';
-          }}
+        <Avatar
+          url={avatarUrl}
+          name={member.name || 'User'}
+          size="md"
         />
         <div className="flex flex-col min-w-0">
           <span className="text-[14px] font-semibold text-company-text font-['Poppins'] truncate">

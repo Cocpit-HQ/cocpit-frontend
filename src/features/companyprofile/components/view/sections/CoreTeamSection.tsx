@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CompanyProfileData } from "../../../types/company-profile.types";
+import Avatar from "@/components/shared/Avatar";
 import { ShieldCheck, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
@@ -120,18 +121,12 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
                 style={{ width: "90px", height: "84px", gap: "8px" }}
                 className="flex flex-col items-center flex-none max-md:!shrink-0 cursor-pointer hover:opacity-80 transition-opacity no-underline"
               >
-                {/* Ellipse 24 */}
-                <div
-                  style={{ width: "40px", height: "40px" }}
-                  className="relative rounded-full overflow-hidden flex-none border border-[#E0E0E7] dark:border-zinc-800"
-                >
-                  <Image
-                    src={member.avatar_url || member.avatarUrl || member.avatar || "/images/companyonboarding/companyprofileDefault.jpg"}
-                    alt={member.full_name || member.name || "Team Member"}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+                <Avatar
+                  url={member.avatar_url || member.avatarUrl || member.avatar}
+                  name={member.full_name || member.name || "Team Member"}
+                  size="md"
+                  className="flex-none"
+                />
 
                 {/* Frame 2609075 */}
                 <div

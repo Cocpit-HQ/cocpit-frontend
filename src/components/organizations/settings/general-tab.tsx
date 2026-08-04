@@ -58,7 +58,7 @@ export function GeneralTab({ company }: GeneralTabProps) {
             name: company.name || "",
             headline: company.headline || "",
             slogan: company.slogan || "",
-            industry: company.industry || "",
+            industry: company.institution_type || company.industry || "",
             size: company.size || "",
             website: company.website || "",
             location: company.location || "",

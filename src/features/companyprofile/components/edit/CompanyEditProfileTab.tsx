@@ -278,6 +278,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
       queryClient.invalidateQueries({ queryKey: ["orgProfile", slug], refetchType: "none" });
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+      queryClient.invalidateQueries({ queryKey: ["orgAbout", orgId] });
 
       onCancel();
     },

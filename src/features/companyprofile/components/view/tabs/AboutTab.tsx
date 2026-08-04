@@ -22,7 +22,19 @@ export default function AboutTab({ data }: AboutTabProps) {
   const slogan = about.slogan || data.slogan;
   const websiteUrl = about.website || data.websiteUrl;
   const phoneNumber = about.phone || about.phoneNumber || data.phoneNumber;
-  const industry = about.industry || data.industry;
+  const formatIndustryType = (ind?: string | null) => {
+    if (!ind) return '';
+    return ind
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const isEdu = about.entity_type === "INSTITUTION" || data.entityType === "INSTITUTION";
+  const rawIndustry = (isEdu ? about.institution_type : about.industry) || data.industry;
+  const industry = formatIndustryType(rawIndustry);
+  
   const location = about.location || data.location;
   const employeeCount = about.size || about.employeeCount || data.employeeCount;
   const founded = about.established_year || about.founded || data.founded;

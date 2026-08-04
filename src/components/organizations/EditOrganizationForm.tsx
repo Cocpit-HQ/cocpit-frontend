@@ -40,7 +40,7 @@ export function EditOrganizationForm({ company }: EditOrganizationFormProps) {
         defaultValues: {
             name: company.name || "",
             headline: company.headline || "",
-            industry: company.industry || "",
+            industry: company.institution_type || company.industry || "",
             size: company.size || "1-10",
             website: company.website || "",
             location: company.location || "",
