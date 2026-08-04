@@ -9,6 +9,8 @@ import { SavedFolder } from '@/types/entities';
 import { useSavedFolders } from '../../hooks/useSavedFolders';
 import { useSettingsStore } from '@/store/settings.store';
 
+const isValidImageUrl = (url?: string | null): boolean => !!url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:'));
+
 export function SavedSettingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -76,8 +78,8 @@ export function SavedSettingsPage() {
                   className="flex flex-row items-center py-2 gap-4 w-[240px] cursor-pointer hover:bg-gray-50 rounded-lg px-2 -ml-2 transition-colors"
                 >
                   {/* Image or Folder Placeholder */}
-                  {collection.cover_image ? (
-                    <img src={collection.cover_image} alt={collection.name} className="w-[40px] h-[40px] rounded-full object-cover flex-shrink-0" />
+                  {isValidImageUrl(collection.cover_image) ? (
+                    <img src={collection.cover_image!} alt={collection.name} className="w-[40px] h-[40px] rounded-full object-cover flex-shrink-0" />
                   ) : (
                     <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-gray-100 flex-shrink-0">
                       <Folder className="w-5 h-5 text-gray-500" strokeWidth={1.5} />

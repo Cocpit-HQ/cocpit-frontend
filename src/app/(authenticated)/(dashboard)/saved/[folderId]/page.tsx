@@ -14,6 +14,8 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { CreateFolderModal } from "@/features/settings/components/CreateFolderModal";
 import { useQueryClient } from "@tanstack/react-query";
 
+const isValidImageUrl = (url?: string | null): boolean => !!url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:'));
+
 export default function CustomSavedPostsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -142,8 +144,8 @@ export default function CustomSavedPostsPage() {
           {/* Folder Details Card */}
           <div className="flex flex-row justify-between items-center bg-white border border-[#E0E7FF] rounded-[12px] p-2 w-full h-[60px] max-w-[666px]">
             <div className="flex flex-row items-center gap-[16px]">
-              {folder?.cover_image ? (
-                <img src={folder.cover_image} alt={folder.name} className="w-[40px] h-[40px] rounded-full object-cover" />
+              {isValidImageUrl(folder?.cover_image) ? (
+                <img src={folder!.cover_image!} alt={folder!.name} className="w-[40px] h-[40px] rounded-full object-cover" />
               ) : (
                 <div className="flex items-center justify-center w-[40px] h-[40px] rounded-full bg-orange-50">
                   <Folder className="w-5 h-5 text-orange-500" strokeWidth={2} />

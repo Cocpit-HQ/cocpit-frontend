@@ -53,3 +53,19 @@ export const deleteSavedFolder = async (folderId: string, companyId?: string): P
     return res.data;
 };
 
+export const createSavedFolderWithFile = async (formData: FormData): Promise<{ success: boolean; folder: SavedFolder }> => {
+    const res = await api.post("/saved-folders", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+};
+
+export const updateSavedFolderWithFile = async (folderId: string, formData: FormData): Promise<{ success: boolean; folder: SavedFolder }> => {
+    const res = await api.put(`/saved-folders/${folderId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+};
+
+
+

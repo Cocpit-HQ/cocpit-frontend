@@ -5,11 +5,20 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, FolderPlus, User, Plus, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createSavedFolder, renameSavedFolder } from '@/features/settings/api/savedPost'
+import { createSavedFolderWithFile, updateSavedFolderWithFile } from '@/features/settings/api/savedPost'
 import { SavedFolder } from '@/types/entities'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@iconify/react'
 import { CocpitProfileUpload } from '@/shared/commonComponents/Cocpitprofileupload'
+
+function dataUrlToBlob(dataUrl: string): Blob {
+    const [header, data] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bytes = atob(data);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+}
 
 interface CreateFolderModalProps {
     isOpen: boolean
@@ -41,11 +50,23 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initi
         setIsLoading(true)
         try {
             const companyId = isCompany ? activeProfile?.id : undefined;
+            const formData = new FormData();
+            formData.append('name', folderName.trim());
+            if (companyId) formData.append('companyId', companyId);
+
+            if (coverImage && coverImage.startsWith('data:')) {
+                const blob = dataUrlToBlob(coverImage);
+                const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
+                formData.append('cover_image', file);
+            } else if (coverImage && coverImage.startsWith('http')) {
+                formData.append('coverImage', coverImage);
+            }
+
             let response;
             if (isEditing && folderId) {
-                response = await renameSavedFolder(folderId, folderName, companyId, coverImage);
+                response = await updateSavedFolderWithFile(folderId, formData);
             } else {
-                response = await createSavedFolder(folderName, companyId, coverImage);
+                response = await createSavedFolderWithFile(formData);
             }
             if (response.success) {
                 toast.success(isEditing ? "Folder updated" : "Folder created")

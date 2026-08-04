@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolders'
 
+const isValidImageUrl = (url?: string | null): boolean => !!url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:'));
+
 interface SavePostModalProps {
     isOpen: boolean
     onClose: () => void
@@ -72,8 +74,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     }
 
     const handleCreateFolder = (newFolder: SavedFolder) => {
-        setFolders([newFolder, ...folders])
-        // Optionally auto-save to new folder
+        setFolders(prev => [newFolder, ...prev])
         handleSaveToFolder(newFolder.folder_id)
     }
 
@@ -160,8 +161,8 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                                                    {folder.cover_image ? (
-                                                        <img src={folder.cover_image} alt="" className="w-full h-full object-cover" />
+                                                    {isValidImageUrl(folder.cover_image) ? (
+                                                        <img src={folder.cover_image!} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-muted">
                                                             <Icon icon="solar:folder-linear" className="w-5 h-5 text-muted-foreground" />
