@@ -26,15 +26,32 @@ export const getNotificationPreferences = async (companyId?: string): Promise<No
   const response = await api.get("/settings/notifications", {
     headers: getActorHeaders(companyId)
   });
-  // Map backend naming to frontend naming if necessary, assuming backend returns camelCase or we just use it directly
-  return response.data;
+  const prefs = response.data?.preferences || response.data || {};
+  return {
+    all: prefs.all_notifications ?? prefs.all ?? true,
+    posts: prefs.post_notifications ?? prefs.posts ?? true,
+    jobs: prefs.job_alerts ?? prefs.jobs ?? true,
+    messages: prefs.message_notifications ?? prefs.messages ?? true,
+    emails: prefs.email_notifications ?? prefs.emails ?? true,
+    messageChats: prefs.messages_chat_enabled ?? prefs.messageChats ?? true,
+    messageJobs: prefs.messages_jobs_enabled ?? prefs.messageJobs ?? true,
+  };
 };
 
 export const updateNotificationPreferences = async (
   preferences: Partial<NotificationPreferences>,
   companyId?: string
 ): Promise<{ success: boolean }> => {
-  const response = await api.put("/settings/notifications", preferences, {
+  const payload: Record<string, any> = {};
+  if (preferences.all !== undefined) payload.all_notifications = preferences.all;
+  if (preferences.posts !== undefined) payload.post_notifications = preferences.posts;
+  if (preferences.jobs !== undefined) payload.job_alerts = preferences.jobs;
+  if (preferences.messages !== undefined) payload.message_notifications = preferences.messages;
+  if (preferences.emails !== undefined) payload.email_notifications = preferences.emails;
+  if (preferences.messageChats !== undefined) payload.messages_chat_enabled = preferences.messageChats;
+  if (preferences.messageJobs !== undefined) payload.messages_jobs_enabled = preferences.messageJobs;
+
+  const response = await api.put("/settings/notifications", payload, {
     headers: getActorHeaders(companyId)
   });
   return response.data;
@@ -56,14 +73,31 @@ export const getPrivacySettings = async (companyId?: string): Promise<PrivacySet
   const response = await api.get("/settings/privacy", {
     headers: getActorHeaders(companyId)
   });
-  return response.data;
+  const raw = response.data?.privacy || response.data || {};
+  return {
+    showEmail: raw.showEmail ?? raw.show_email ?? false,
+    showPhone: raw.showPhone ?? raw.show_phone ?? false,
+    tagPermission: raw.tagPermission ?? raw.tag_permission ?? 'everyone',
+    followingVisibility: raw.followingVisibility ?? raw.following_visibility ?? 'everyone',
+    followersVisibility: raw.followersVisibility ?? raw.followers_visibility ?? 'everyone',
+    messagePermission: raw.messagePermission ?? raw.message_permission ?? 'everyone',
+  };
 };
 
 export const updatePrivacySettings = async (
   settings: Partial<PrivacySettings>,
   companyId?: string
 ): Promise<{ success: boolean }> => {
-  const response = await api.put("/settings/privacy", settings, {
+  const payload = {
+    ...settings,
+    show_email: settings.showEmail,
+    show_phone: settings.showPhone,
+    tag_permission: settings.tagPermission,
+    following_visibility: settings.followingVisibility,
+    followers_visibility: settings.followersVisibility,
+    message_permission: settings.messagePermission,
+  };
+  const response = await api.put("/settings/privacy", payload, {
     headers: getActorHeaders(companyId)
   });
   return response.data;

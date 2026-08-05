@@ -202,16 +202,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleNotification = (payload: NotificationPayload) => {
-      // Check user preferences to suppress toast if disabled
-      const prefs = queryClient.getQueryData<NotificationPreferences>(NOTIFICATION_SETTINGS_QUERY_KEY);
-      const type = payload.type;
-      const isMessage = type === 'message' || type.includes('message') || type === 'mention';
-      const isPost = ['like', 'comment', 'post_tag'].includes(type) || type.includes('post');
-      const isJob = type.includes('job'); // Catch all job-related events (job_offer_received, job_offer_accepted, etc.)
+      // Always refresh notification badge & dropdown first — regardless of preferences.
+      // Preferences ONLY control the toast popup, never the notification component.
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
 
+      // Bug 1 Fix: Read prefs from the correct query key.
+      // When acting as org, prefs are cached under ["companyNotificationSettings", companyId].
+      // When acting as personal user, they are under NOTIFICATION_SETTINGS_QUERY_KEY.
+      const currentProfile = activeProfileRef.current;
+      const isOrgProfile = currentProfile?.type === 'COMPANY';
+      const prefsQueryKey = isOrgProfile
+        ? ["companyNotificationSettings", currentProfile?.id]
+        : NOTIFICATION_SETTINGS_QUERY_KEY;
+      const prefs = queryClient.getQueryData<NotificationPreferences>(prefsQueryKey);
+
+      const type = payload.type;
+      const isMessage = type === 'message' || type.includes('message');
+      const isPost = ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention'].includes(type) || type.includes('post');
+      const isJob = type.includes('job'); // Catch all job-related events
+
+      // Toast suppression: only controls the popup — DB notification is already saved
       if (prefs) {
-        // The 'all' preference is just a UI convenience (select all / deselect all).
-        // If we return here, we accidentally block everything if just ONE setting (like emails) is turned off!
         if (isMessage && prefs.messages === false) return;
         if (isPost && prefs.posts === false) return;
         if (isJob && prefs.jobs === false) return;
@@ -266,17 +278,47 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           ),
           duration: 5000,
         });
-      } else if (['job', 'company_job', 'company_event', 'company_post'].includes(payload.type)) {
+      } else if (isPost || ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention', 'company_post'].includes(payload.type)) {
+        const senderName = payload.senderName || (payload as any).actor_name || 'Someone';
+        const senderAvatar = payload.senderAvatar || (payload as any).actor_avatar;
+        const notifText = payload.text || `${senderName} interacted with your post`;
+        const postId = payload.referenceId || (payload as any).reference_id || payload.metadata?.post_id;
+
+        toast({
+          title: senderName,
+          description: (
+            <div
+              className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                if (postId) {
+                  router.push(`/post/${postId}`);
+                } else {
+                  router.push('/notifications');
+                }
+              }}
+            >
+              {senderAvatar && (
+                <Avatar
+                  name={senderName}
+                  url={senderAvatar}
+                  size="sm"
+                />
+              )}
+              <span className="text-sm">{notifText}</span>
+            </div>
+          ),
+          duration: 5000,
+        });
+      } else if (['job', 'company_job', 'company_event'].includes(payload.type) || isJob) {
         // Company or User Job notification
         const companyPayload = payload as CompanyUpdateNotification;
         const companyName = companyPayload.actor_name || payload.senderName || 'Someone';
         const companyAvatar = companyPayload.actor_avatar || payload.senderAvatar;
-        const notifText = companyPayload.text || 'New job posted';
+        const notifText = companyPayload.text || 'New job alert';
         const referenceId = companyPayload.reference_id || payload.referenceId;
         let navigateTo = '/notifications';
         if ((payload.type === 'job' || payload.type === 'company_job') && referenceId) navigateTo = `/jobs/${referenceId}`;
         else if (payload.type === 'company_event' && referenceId) navigateTo = `/events/${referenceId}`;
-        else if (payload.type === 'company_post' && referenceId) navigateTo = `/post/${referenceId}`;
 
         toast({
           title: companyName,
@@ -297,42 +339,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           ),
           duration: 5000,
         });
-      } else if (payload.type === 'post_tag') {
-        const taggedBy = payload.senderName || payload.actor_name || 'Someone';
-        const senderAvatar = payload.senderAvatar || payload.actor_avatar;
-        const notifText = payload.text || `${taggedBy} tagged you in a post`;
-        const postId = payload.referenceId || payload.reference_id || payload.metadata?.post_id;
-
-        toast({
-          title: "Tagged in a post",
-          description: (
-            <div
-              className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                if (postId) {
-                  router.push(`/post/${postId}`);
-                } else {
-                  router.push('/notifications');
-                }
-              }}
-            >
-              {senderAvatar && (
-                <Avatar
-                  name={taggedBy}
-                  url={senderAvatar}
-                  size="sm"
-                />
-              )}
-              <span className="text-sm">{notifText}</span>
-            </div>
-          ),
-          duration: 5000,
-        });
       } else {
-        toast({
-          title: "New Notification",
-          description: "System Notification",
-        });
+        if (payload.text) {
+          toast({
+            title: payload.senderName || "Notification",
+            description: payload.text,
+            duration: 5000,
+          });
+        }
       }
     };
 
@@ -481,6 +495,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     };
 
+    // Bug 5 Fix: Listen for user notification preference changes so all open tabs
+    // refresh their cached prefs in real time — toast suppression stays consistent.
+    const handleUserNotificationsUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: NOTIFICATION_SETTINGS_QUERY_KEY });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -494,6 +514,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
+    newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     socketRef.current = newSocket;
     queueMicrotask(() => {
       setSocket(newSocket);
@@ -522,6 +543,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
       newSocket.off('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
+      newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
       newSocket.off('member_sync', handleMemberSync);
       newSocket.disconnect();
       setTypingConversations({});

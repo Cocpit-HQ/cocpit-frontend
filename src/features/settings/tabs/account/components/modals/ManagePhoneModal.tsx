@@ -48,6 +48,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
       deletePhoneMutation.mutate(undefined, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+          queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
           toast.success('Phone number removed successfully');
           onClose();
         },
@@ -85,6 +86,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
         {
           onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+            queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
             toast.success(data.message || 'Phone number updated successfully');
             setTimeout(() => handleClose(), 1000);
           },

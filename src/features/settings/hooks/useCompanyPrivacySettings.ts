@@ -49,6 +49,9 @@ export function useCompanyPrivacySettings() {
     onSettled: () => {
       // Sync with server once mutation has finished
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["company"] });
+      queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
     },
   });
 

@@ -21,7 +21,19 @@ export default function AboutTab({ data }: AboutTabProps) {
   const description = about.description || data.description;
   const slogan = about.slogan || data.slogan;
   const websiteUrl = about.website || data.websiteUrl;
-  const phoneNumber = about.phone || about.phoneNumber || data.phoneNumber;
+  const isEmailShow = aboutData 
+    ? (about.isEmailShow ?? about.is_email_show ?? true)
+    : (data.isEmailShow ?? true);
+
+  const isMobileShow = aboutData 
+    ? (about.isMobileShow ?? about.is_mobile_show ?? true)
+    : (data.isMobileShow ?? true);
+
+  const rawEmail = aboutData ? (about.email ?? null) : (data.email || null);
+  const rawPhone = aboutData ? (about.phone || about.phoneNumber || null) : (data.phoneNumber || null);
+
+  const email = isEmailShow ? rawEmail : null;
+  const phoneNumber = isMobileShow ? rawPhone : null;
   const formatIndustryType = (ind?: string | null) => {
     if (!ind) return '';
     return ind
@@ -84,7 +96,7 @@ export default function AboutTab({ data }: AboutTabProps) {
       <div className="grid grid-cols-2 gap-y-[16px] gap-x-[16px] w-full">
         {/* Website */}
         {websiteUrl && (
-          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0 col-span-2">
             <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Website</h3>
             <a
               href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`}
@@ -97,10 +109,23 @@ export default function AboutTab({ data }: AboutTabProps) {
           </div>
         )}
 
-        {/* Phone Number */}
+        {/* Email */}
+        {email && (
+          <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
+            <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Email</h3>
+            <a
+              href={`mailto:${email}`}
+              className="font-poppins font-normal text-[16px] leading-[24px] text-[#1A73E8] dark:text-[#1A73E8] hover:underline break-all"
+            >
+              {email}
+            </a>
+          </div>
+        )}
+
+        {/* Phone number */}
         {phoneNumber && (
           <div className="flex flex-col gap-[8px] py-[8px] min-w-0">
-            <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Phone Number</h3>
+            <h3 className="font-poppins font-medium text-[18px] leading-[27px] text-[#000000] dark:text-zinc-100">Phone number</h3>
             <a
               href={`tel:${phoneNumber}`}
               className="font-poppins font-normal text-[16px] leading-[24px] text-[#1A73E8] dark:text-[#1A73E8] hover:underline"

@@ -76,7 +76,13 @@ export interface CompanyProfileData {
   description: string;
   slogan: string;
   socialLinks: { label: string; platform?: string; url: string }[];
+  email?: string;
   phoneNumber?: string;
+  isEmailShow?: boolean;
+  isMobileShow?: boolean;
+  showMessage?: boolean;
+  showFollowersList?: boolean;
+  showFollowingList?: boolean;
   founded?: string;
   offices?: { city: string; address: string }[];
   specialties?: string[];

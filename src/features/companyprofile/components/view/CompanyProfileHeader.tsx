@@ -310,12 +310,14 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
                 >
                   {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
                 </button>
-                <Link 
-                  href={`/messaging?companyId=${orgId}`}
-                  className="h-[36px] px-4 min-w-[120px] bg-transparent text-[#1A73E8] border border-[#1A73E8] font-normal text-[14px] leading-[20px] rounded-[24px] hover:bg-blue-50 transition-colors shadow-sm flex items-center justify-center"
-                >
-                  Message
-                </Link>
+                {data.showMessage !== false && (
+                  <Link 
+                    href={`/messaging?companyId=${orgId}`}
+                    className="h-[36px] px-4 min-w-[120px] bg-transparent text-[#1A73E8] border border-[#1A73E8] font-normal text-[14px] leading-[20px] rounded-[24px] hover:bg-blue-50 transition-colors shadow-sm flex items-center justify-center"
+                  >
+                    Message
+                  </Link>
+                )}
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <button className="w-[36px] h-[36px] bg-transparent text-[#1A73E8] border border-[#1A73E8] rounded-full flex items-center justify-center hover:bg-blue-50 transition-colors shadow-sm outline-none focus:outline-none focus:ring-0">
@@ -351,8 +353,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
           <div className="flex gap-[40px] items-center w-[295.6px] h-[48px] mt-6 md:mt-0 max-md:!gap-2 max-md:!w-full max-md:!h-auto max-md:!justify-start">
             {/* Following */}
             <div 
-              onClick={() => { setStatsModalTab("following"); setIsStatsModalOpen(true); }}
-              className="flex flex-col gap-[8px] w-[65.3px] cursor-pointer hover:opacity-80 transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
+              onClick={() => {
+                if (data.showFollowingList !== false) {
+                  setStatsModalTab("following");
+                  setIsStatsModalOpen(true);
+                }
+              }}
+              className={`flex flex-col gap-[8px] w-[65.3px] transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px] ${data.showFollowingList !== false ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
             >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.following || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Following</span>
@@ -360,8 +367,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
 
             {/* Followers */}
             <div 
-              onClick={() => { setStatsModalTab("followers"); setIsStatsModalOpen(true); }}
-              className="flex flex-col gap-[8px] w-[65.3px] cursor-pointer hover:opacity-80 transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
+              onClick={() => {
+                if (data.showFollowersList !== false) {
+                  setStatsModalTab("followers");
+                  setIsStatsModalOpen(true);
+                }
+              }}
+              className={`flex flex-col gap-[8px] w-[65.3px] transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px] ${data.showFollowersList !== false ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
             >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.followers || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Followers</span>

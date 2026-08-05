@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { ChangeEmailModal } from '../components/modals/ChangeEmailModal';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useAccountSettings, useDeleteRecoveryEmail } from '../../../hooks/useAccountSettings';
-import { useQueryClient } from '@tanstack/react-query';
 
 export function ManageEmailPage() {
   const pathname = usePathname() || '/settings/account-email';
@@ -20,6 +21,8 @@ export function ManageEmailPage() {
   const queryClient = useQueryClient();
   const { data: accountData } = useAccountSettings();
   const deleteRecoveryEmailMutation = useDeleteRecoveryEmail();
+  const { isCompany } = useActiveProfile();
+  const isOrg = isCompany;
 
   const userEmail = accountData?.primaryEmail || "";
   const recoveryEmail = accountData?.recoveryEmail || "";
@@ -74,9 +77,10 @@ export function ManageEmailPage() {
             </div>
           </div>
 
-          {/* Recovery Email */}
-          <div className="flex flex-col gap-2 w-full">
-            <label className="text-[14px] font-medium text-black">Recovery email</label>
+          {/* Recovery Email - User Accounts Only */}
+          {!isOrg && (
+            <div className="flex flex-col gap-2 w-full">
+              <label className="text-[14px] font-medium text-black">Recovery email</label>
             
             {!hasRecovery ? (
               <>
@@ -117,6 +121,7 @@ export function ManageEmailPage() {
               </>
             )}
           </div>
+          )}
         </div>
 
         {/* Footer Note */}

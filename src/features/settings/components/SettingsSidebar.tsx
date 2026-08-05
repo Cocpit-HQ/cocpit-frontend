@@ -55,7 +55,11 @@ export function SettingsSidebar() {
       <nav className="flex flex-col w-full gap-4">
         {items.map((item) => {
           // Check if current path matches this tab
-          const isActive = pathname === `${basePath}/${item.id}` || pathname.startsWith(`${basePath}/${item.id}-`);
+          const isActive = 
+            pathname === `${basePath}/${item.id}` || 
+            pathname.startsWith(`${basePath}/${item.id}-`) ||
+            pathname.startsWith(`${basePath}/${item.id}/`) ||
+            (item.id === 'saved' && (pathname.startsWith('/saved') || pathname.includes('/saved')));
           const Icon = item.icon;
           
           return (

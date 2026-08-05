@@ -4,13 +4,14 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
 import CompanyProfileHeader from "./CompanyProfileHeader";
 import CompanyProfileTabs from "./CompanyProfileTabs";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSocket } from "@/context/SocketContext";
 import { Icon } from "@iconify/react";
 
 interface CompanyProfilePageProps {
@@ -21,6 +22,8 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
   const params = useParams();
   const router = useRouter();
   const slug = (params?.slug as string) || "nexsus-global-systems";
+  const queryClient = useQueryClient();
+  const { socket } = useSocket();
 
   const { data: profileResponse, isLoading, isError } = useQuery({
     queryKey: ["companyProfile", slug],
@@ -37,6 +40,26 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
   // Derive these early (before conditional returns) so hook order is stable.
   // company is null until profileResponse loads, so we guard with optional chaining.
   const derivedOrgId = profileResponse?.org?.company_id || profileResponse?.org?.org_id || null;
+
+  React.useEffect(() => {
+    if (!socket) return;
+
+    const handlePrivacyUpdate = (payload: { orgId?: string }) => {
+      if (!derivedOrgId || !payload?.orgId || payload.orgId === derivedOrgId) {
+        queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+        queryClient.invalidateQueries({ queryKey: ["orgProfile", slug] });
+      }
+    };
+
+    socket.on("company_privacy_updated", handlePrivacyUpdate);
+    socket.on("ORGANIZATION_PRIVACY_UPDATED", handlePrivacyUpdate);
+
+    return () => {
+      socket.off("company_privacy_updated", handlePrivacyUpdate);
+      socket.off("ORGANIZATION_PRIVACY_UPDATED", handlePrivacyUpdate);
+    };
+  }, [socket, derivedOrgId, slug, queryClient]);
+
   const ownProfileEarly = activeProfile?.type === 'COMPANY' &&
     activeProfile?.id === derivedOrgId;
   const actingAsCompanyOnExternalProfile = activeProfile?.type === 'COMPANY' && !ownProfileEarly;
@@ -133,6 +156,13 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     description: company.description || "",
     slogan: company.slogan || "",
     socialLinks: profileResponse.links ? profileResponse.links.map((link: any) => ({ label: link.display_label || link.platform, platform: link.platform, url: link.url })) : [],
+    email: company.email || "",
+    phoneNumber: company.phone || company.phoneNumber || "",
+    isEmailShow: company.isEmailShow ?? company.is_email_show ?? true,
+    isMobileShow: company.isMobileShow ?? company.is_mobile_show ?? true,
+    showMessage: company.showMessage ?? true,
+    showFollowersList: company.showFollowersList ?? true,
+    showFollowingList: company.showFollowingList ?? true,
     keyOfferings: company.key_offerings || company.keyOfferings || [],
     stats: {
       following: company.following_count || 0,

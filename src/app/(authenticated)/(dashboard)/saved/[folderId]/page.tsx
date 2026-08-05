@@ -123,8 +123,8 @@ export default function CustomSavedPostsPage() {
   }, [hasMore, fetchPosts]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-[700px] mx-auto px-4 py-10">
+    <div className="flex-1 w-full p-6 md:p-8 bg-white rounded-r-[24px]">
+      <div className="w-full max-w-[666px]">
         {/* Navigation Header */}
         <div className="flex flex-col gap-[20px] mb-8 w-full max-w-[666px]">
           {/* Back Button */}
