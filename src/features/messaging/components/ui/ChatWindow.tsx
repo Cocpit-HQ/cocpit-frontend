@@ -171,7 +171,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const [pendingSharedProfile, setPendingSharedProfile] = useState<any | null>(null);
   const processedEntityContextRef = useRef<string | null>(null);
 
-  const isBlockedByMe = initialChat.isBlockedByMe || (initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false);
+  const isBlockedByMe = typeof initialChat.isBlockedByMe === 'boolean' 
+    ? initialChat.isBlockedByMe 
+    : (initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false);
   const isBlockedByOther = initialChat.isBlockedByOther;
 
   const isCompanyMode = activeProfile?.type === 'COMPANY';

@@ -801,10 +801,14 @@ export default function MessagingPage() {
 
     const handleBlock = (payload: any) => {
       if (!payload) return;
-      const conversationId = payload.conversation_id;
+      const conversationId = payload.conversation_id || payload.conversationId;
       if (!conversationId) return;
 
-      const isMeBlocker = String(payload.blocked_by_user_id) === String(user?.id);
+      const isMeBlocker =
+        String(payload.blocked_by_user_id) === String(user?.id) ||
+        String(payload.blocked_by_user_id) === String(activeProfile?.id) ||
+        String(payload.blocker_id) === String(user?.id) ||
+        String(payload.blocker_id) === String(activeProfile?.id);
 
       const queryKey = [
         "conversations",
@@ -839,20 +843,19 @@ export default function MessagingPage() {
             : null
         );
       }
-
-      // if (!isMeBlocker) {
-      //   toast({
-      //     description: `${payload.blocked_by_name || "Someone"} has blocked you`,
-      //   });
-      // }
     };
 
     const handleUnblock = (payload: any) => {
       if (!payload) return;
-      const conversationId = payload.conversation_id;
+      const conversationId = payload.conversation_id || payload.conversationId;
       if (!conversationId) return;
 
-      const isMeUnblocker = String(payload.unblocked_by_user_id) === String(user?.id);
+      const isMeUnblocker =
+        String(payload.unblocked_by_user_id) === String(user?.id) ||
+        String(payload.unblocked_by_user_id) === String(activeProfile?.id) ||
+        String(payload.blocker_id) === String(user?.id) ||
+        String(payload.blocker_id) === String(activeProfile?.id) ||
+        payload.is_blocked === false;
 
       const queryKey = [
         "conversations",
@@ -887,12 +890,6 @@ export default function MessagingPage() {
             : null
         );
       }
-
-      // if (!isMeUnblocker) {
-      //   toast({
-      //     description: `${payload.unblocked_by_name || "Someone"} has unblocked you`,
-      //   });
-      // }
     };
 
     const handlePreferenceUpdated = (payload: {

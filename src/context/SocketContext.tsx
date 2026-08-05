@@ -380,7 +380,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const conversationId = payload.conversation_id || payload.conversationId;
       if (!conversationId) return;
 
-      const isMeBlocker = String(payload.blocked_by_user_id) === String(session?.user?.id);
+      const isMeBlocker =
+        String(payload.blocked_by_user_id) === String(session?.user?.id) ||
+        String(payload.blocked_by_user_id) === String(activeProfileRef.current?.id) ||
+        String(payload.blocker_id) === String(session?.user?.id) ||
+        String(payload.blocker_id) === String(activeProfileRef.current?.id);
       const currentProfile = activeProfileRef.current;
 
       const queryKey = [
@@ -416,7 +420,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
 
-      const isMeUnblocker = String(payload.unblocked_by_user_id) === String(session?.user?.id);
+      const isMeUnblocker =
+        String(payload.unblocked_by_user_id) === String(session?.user?.id) ||
+        String(payload.unblocked_by_user_id) === String(activeProfileRef.current?.id) ||
+        String(payload.blocker_id) === String(session?.user?.id) ||
+        String(payload.blocker_id) === String(activeProfileRef.current?.id) ||
+        payload.is_blocked === false;
       const currentProfile = activeProfileRef.current;
 
       const queryKey = [
