@@ -3,12 +3,14 @@ import { ChevronLeft, CloudUpload, Loader2, X, FileText } from 'lucide-react';
 import { createTicket } from '@/features/settings/api/support';
 import { useAccountSettings } from '../../hooks/useAccountSettings';
 import { toast } from 'sonner';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface ContactSupportProps {
   onBack: () => void;
 }
 
 export function ContactSupport({ onBack }: ContactSupportProps) {
+  const { isCompany } = useActiveProfile();
   const { data: accountData, isLoading: isLoadingAccount } = useAccountSettings();
   const [email, setEmail] = useState('');
   const [hasInitializedEmail, setHasInitializedEmail] = useState(false);
@@ -128,7 +130,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={isLoadingAccount ? "Loading email..." : "Enter your email"}
-              className="w-full h-[48px] border border-[#DADADA] rounded-[12px] px-4 text-[16px] text-black font-poppins focus:outline-none focus:border-[#6366F1] focus:ring-1 focus:ring-[#6366F1] transition-colors"
+              className={`w-full h-[48px] border border-[#DADADA] rounded-[12px] px-4 text-[16px] text-black font-poppins focus:outline-none transition-colors ${isCompany ? 'focus:border-[#1A73E8] focus:ring-[#1A73E8]' : 'focus:border-[#6366F1] focus:ring-[#6366F1]'}`}
             />
           </div>
 
@@ -141,7 +143,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
               value={issue}
               onChange={(e) => setIssue(e.target.value)}
               placeholder="Tell us what is issue..."
-              className="w-full h-[120px] border border-[#DADADA] rounded-[12px] p-4 text-[16px] text-black font-poppins focus:outline-none focus:border-[#6366F1] focus:ring-1 focus:ring-[#6366F1] resize-none placeholder-[#6B7280] transition-colors"
+              className={`w-full h-[120px] border border-[#DADADA] rounded-[12px] p-4 text-[16px] text-black font-poppins focus:outline-none resize-none placeholder-[#6B7280] transition-colors ${isCompany ? 'focus:border-[#1A73E8] focus:ring-[#1A73E8]' : 'focus:border-[#6366F1] focus:ring-[#6366F1]'}`}
             />
           </div>
 
@@ -156,11 +158,11 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
               onChange={handleFileChange}
             />
             {file ? (
-              <div className="flex flex-row items-center justify-between w-full h-[60px] border border-[#6366F1] rounded-[12px] bg-[#EEF2FF] px-4 transition-all">
+              <div className={`flex flex-row items-center justify-between w-full h-[60px] border rounded-[12px] px-4 transition-all ${isCompany ? 'border-[#1A73E8] bg-blue-50' : 'border-[#6366F1] bg-[#EEF2FF]'}`}>
                 <div className="flex items-center gap-3 truncate max-w-[85%]">
-                  <FileText className="w-5 h-5 text-[#6366F1] flex-shrink-0" />
+                  <FileText className={`w-5 h-5 flex-shrink-0 ${isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} />
                   <div className="flex flex-col truncate">
-                    <span className="text-[14px] font-medium text-[#6366F1] truncate">{file.name}</span>
+                    <span className={`text-[14px] font-medium truncate ${isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>{file.name}</span>
                     <span className="text-[11px] text-[#818CF8]">{formatFileSize(file.size)}</span>
                   </div>
                 </div>
@@ -170,7 +172,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
                   className="p-1 hover:bg-[#C7D2FE] rounded-full transition-colors focus:outline-none"
                   aria-label="Remove attachment"
                 >
-                  <X className="w-5 h-5 text-[#6366F1]" strokeWidth={1.5} />
+                  <X className={`w-5 h-5 ${isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} strokeWidth={1.5} />
                 </button>
               </div>
             ) : (
@@ -180,10 +182,10 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
                 className={`flex flex-col items-center justify-center w-full h-[100px] border ${
-                  isDragging ? 'border-[#6366F1] bg-[#EEF2FF]' : 'border-[#DADADA] bg-white hover:bg-gray-50'
+                  isDragging ? (isCompany ? 'border-[#1A73E8] bg-blue-50' : 'border-[#6366F1] bg-[#EEF2FF]') : 'border-[#DADADA] bg-white hover:bg-gray-50'
                 } rounded-[12px] cursor-pointer transition-all duration-150 border-dashed`}
               >
-                <CloudUpload className={`w-8 h-8 ${isDragging ? 'text-[#6366F1]' : 'text-[#6B7280]'} mb-2 transition-colors`} strokeWidth={1.5} />
+                <CloudUpload className={`w-8 h-8 ${isDragging ? (isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]') : 'text-[#6B7280]'} mb-2 transition-colors`} strokeWidth={1.5} />
                 <span className="text-[12px] font-medium text-gray-700 mb-0.5">
                   {isDragging ? 'Drop file here' : 'Click or drag & drop to upload'}
                 </span>

@@ -12,7 +12,10 @@ import {
   SupportSettingsPage,
   ManagePasswordPage,
   ManageEmailPage,
-  ManagePhonePage
+  ManagePhonePage,
+  CompanyAccountSettingsPage,
+  CompanyNotificationSettingsPage,
+  CompanyPrivacySettingsPage
 } from '@/features/settings';
 
 export default async function OrganizationSettingsTabPage({ params }: { params: Promise<{ slug: string, tab: string }> }) {
@@ -21,13 +24,13 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
 
   switch (tab) {
     case 'account':
-      return <AccountSettingsPage />;
+      return <CompanyAccountSettingsPage />;
     case 'appearance':
       return <AppearanceSettingsPage />;
     case 'notifications':
-      return <NotificationSettingsPage />;
+      return <CompanyNotificationSettingsPage />;
     case 'privacy':
-      return <PrivacySettingsPage />;
+      return <CompanyPrivacySettingsPage />;
     case 'saved':
       return <SavedSettingsPage />;
     case 'activity':
@@ -38,8 +41,6 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
       return <BlockedSettingsPage />;
     case 'support':
       return <SupportSettingsPage />;
-    case 'legal':
-      return <LegalSettingsPage />;
     case 'account-password':
       return <ManagePasswordPage />;
     case 'account-email':

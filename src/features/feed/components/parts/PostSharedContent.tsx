@@ -80,11 +80,11 @@ export const PostSharedContent = ({
           <div className="feed-card-shell box-border flex flex-col items-start p-[12px] gap-[8px] w-full border border-[#EEF2FF] dark:border-card-border-inner bg-white dark:bg-card rounded-[12px] mt-[8px] shadow-[0px_2px_4px_0px_#6366F10D] overflow-hidden">
             {/* Header (Frame 2608569) */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-full h-[56px]">
-              <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none">
-                {shared_post.authorAvatar && shared_post.authorAvatar !== '/assets/pngegg.png' ? (
-                  <img src={shared_post.authorAvatar} alt={shared_post.author} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : null}
+              <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none">
                 <span>{(shared_post.author || 'U').charAt(0).toUpperCase()}</span>
+                {shared_post.authorAvatar && shared_post.authorAvatar !== '/assets/pngegg.png' ? (
+                  <img src={shared_post.authorAvatar} alt={shared_post.author} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : null}
               </div>
               <div className="flex flex-col items-start p-0 min-w-0 overflow-hidden">
                 <span className="text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] font-normal text-[#000000] dark:text-foreground truncate w-full block">

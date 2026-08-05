@@ -6,8 +6,10 @@ import { ReportDetails } from './ReportDetails';
 import { ActionDetails } from './ActionDetails';
 import { useSettingsStore } from '@/store/settings.store';
 import { useUserReports, useReportDetail, useAccountActions, useActionDetail } from '../../hooks/useReports';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export function ReportsSettingsPage() {
+  const { isCompany } = useActiveProfile();
   // Which pill is active, and which row is selected, live in the shared
   // settings store — only the *id* is stored there (never the fetched
   // detail object, per settings.store.ts's separation-of-concerns rule).
@@ -31,10 +33,10 @@ export function ReportsSettingsPage() {
 
   const getReportIcon = (type: string) => {
     const upper = type.toUpperCase();
-    if (upper.includes('USER') || upper.includes('PROFILE')) return <UserCircle2 className="w-8 h-8 text-[#6366F1]" strokeWidth={1.5} />;
-    if (upper.includes('POLL'))    return <BarChart2  className="w-8 h-8 text-[#6366F1]" strokeWidth={1.5} />;
-    if (upper.includes('ARTICLE')) return <FileEdit   className="w-8 h-8 text-[#6366F1]" strokeWidth={1.5} />;
-    return <ImageIcon className="w-8 h-8 text-[#6366F1]" strokeWidth={1.5} />;
+    if (upper.includes('USER') || upper.includes('PROFILE')) return <UserCircle2 className={`w-8 h-8 ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} strokeWidth={1.5} />;
+    if (upper.includes('POLL'))    return <BarChart2  className={`w-8 h-8 ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} strokeWidth={1.5} />;
+    if (upper.includes('ARTICLE')) return <FileEdit   className={`w-8 h-8 ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} strokeWidth={1.5} />;
+    return <ImageIcon className={`w-8 h-8 ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} strokeWidth={1.5} />;
   };
 
   const getActionIcon = (actionType: string) => {
@@ -49,7 +51,7 @@ export function ReportsSettingsPage() {
     return (
       <div className="flex flex-col w-full h-full min-h-full font-poppins pb-20">
         <div className="flex justify-center items-center py-24">
-          <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+          <Loader2 className={`w-8 h-8 animate-spin ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} />
         </div>
       </div>
     );
@@ -67,8 +69,8 @@ export function ReportsSettingsPage() {
           <>
             {/* Header */}
             <div className="flex flex-col items-start justify-center mb-2">
-              <h1 className="text-[24px] font-semibold text-black leading-[32px]">Account status</h1>
-              <p className="text-[16px] font-normal text-[#6B7280] leading-[24px] mt-1">View reports and account actions</p>
+              <h1 className="text-[24px] font-semibold text-black dark:text-foreground leading-[32px]">Account status</h1>
+              <p className="text-[16px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[24px] mt-1">View reports and account actions</p>
 
               {/* Tabs */}
               <div className="flex flex-row items-center gap-3 mt-4 mb-2">
@@ -76,8 +78,8 @@ export function ReportsSettingsPage() {
                   onClick={() => setActiveTab('reports')}
                   className={`px-4 py-1.5 rounded-full text-[14px] font-medium leading-[20px] transition-colors ${
                     activeTab === 'reports'
-                      ? 'bg-[#EEF2FF] text-[#6366F1]'
-                      : 'border border-[#E5E7EB] text-[#6366F1] hover:bg-[#EEF2FF]'
+                      ? (isCompany ? 'bg-blue-50 text-[#1A73E8]' : 'bg-[#EEF2FF] text-[#6366F1]')
+                      : (isCompany ? 'border border-[#E5E7EB] dark:border-border text-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint' : 'border border-[#E5E7EB] dark:border-border text-[#6366F1] hover:bg-[#EEF2FF]')
                   }`}
                 >
                   Your reports
@@ -86,8 +88,8 @@ export function ReportsSettingsPage() {
                   onClick={() => setActiveTab('actions')}
                   className={`px-4 py-1.5 rounded-full text-[14px] font-medium leading-[20px] transition-colors ${
                     activeTab === 'actions'
-                      ? 'bg-[#EEF2FF] text-[#6366F1]'
-                      : 'border border-[#E5E7EB] text-[#6366F1] hover:bg-[#EEF2FF]'
+                      ? (isCompany ? 'bg-blue-50 text-[#1A73E8]' : 'bg-[#EEF2FF] text-[#6366F1]')
+                      : (isCompany ? 'border border-[#E5E7EB] dark:border-border text-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint' : 'border border-[#E5E7EB] dark:border-border text-[#6366F1] hover:bg-[#EEF2FF]')
                   }`}
                 >
                   Account actions
@@ -100,12 +102,12 @@ export function ReportsSettingsPage() {
               {activeTab === 'reports' ? (
                 isLoadingReports ? (
                   <div className="flex justify-center items-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+                    <Loader2 className={`w-8 h-8 animate-spin ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} />
                   </div>
                 ) : reportsData.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 gap-3">
                     <FileEdit className="w-12 h-12 text-[#D1D5DB]" strokeWidth={1.5} />
-                    <p className="text-[14px] text-[#6B7280]">You haven&apos;t submitted any reports yet.</p>
+                    <p className="text-[14px] text-[#6B7280] dark:text-muted-foreground">You haven&apos;t submitted any reports yet.</p>
                   </div>
                 ) : (
                   reportsData.map((report) => (
@@ -119,14 +121,14 @@ export function ReportsSettingsPage() {
                       </div>
                       <div className="flex flex-col justify-center gap-1 w-full">
                         <div className="flex flex-row items-center gap-2">
-                          <span className="text-[14px] font-normal text-[#6B7280] leading-[20px]">{report.date}</span>
+                          <span className="text-[14px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[20px]">{report.date}</span>
                           <div className="w-1 h-1 bg-[#6B7280] rounded-full" />
-                          <span className="text-[12px] font-medium text-[#6366F1] leading-[16px]">{report.reason}</span>
+                          <span className={`text-[12px] font-medium ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'} leading-[16px]`}>{report.reason}</span>
                         </div>
-                        <h3 className="text-[14px] font-semibold text-black leading-[20px] group-hover:text-[#6366F1] transition-colors">
+                        <h3 className={`text-[14px] font-semibold text-black dark:text-foreground leading-[20px] transition-colors ${isCompany ? 'group-hover:text-[#1A73E8]' : 'group-hover:text-[#6366F1]'}`}>
                           {report.title}
                         </h3>
-                        <span className="text-[12px] font-medium text-[#6B7280] leading-[16px] mt-0.5">
+                        <span className="text-[12px] font-medium text-[#6B7280] dark:text-muted-foreground leading-[16px] mt-0.5">
                           {report.statusLabel}
                         </span>
                       </div>
@@ -136,12 +138,12 @@ export function ReportsSettingsPage() {
               ) : (
                 isLoadingActions ? (
                   <div className="flex justify-center items-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+                    <Loader2 className={`w-8 h-8 animate-spin ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} />
                   </div>
                 ) : actionsData.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 gap-3">
                     <AlertTriangle className="w-12 h-12 text-[#D1D5DB]" strokeWidth={1.5} />
-                    <p className="text-[14px] text-[#6B7280]">No account actions have been taken against your account.</p>
+                    <p className="text-[14px] text-[#6B7280] dark:text-muted-foreground">No account actions have been taken against your account.</p>
                   </div>
                 ) : (
                   actionsData.map((action) => (
@@ -155,14 +157,14 @@ export function ReportsSettingsPage() {
                       </div>
                       <div className="flex flex-col justify-center gap-1 w-full">
                         <div className="flex flex-row items-center gap-2">
-                          <span className="text-[14px] font-normal text-[#6B7280] leading-[20px]">{action.date}</span>
+                          <span className="text-[14px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[20px]">{action.date}</span>
                           <div className="w-1 h-1 bg-[#6B7280] rounded-full" />
                           <span className="text-[12px] font-medium text-[#EF4444] leading-[16px]">{action.reason}</span>
                         </div>
-                        <h3 className="text-[14px] font-semibold text-black leading-[20px] group-hover:text-[#EF4444] transition-colors">
+                        <h3 className="text-[14px] font-semibold text-black dark:text-foreground leading-[20px] group-hover:text-[#EF4444] transition-colors">
                           {action.label}
                         </h3>
-                        <span className="text-[12px] font-medium text-[#6B7280] leading-[16px] mt-0.5">
+                        <span className="text-[12px] font-medium text-[#6B7280] dark:text-muted-foreground leading-[16px] mt-0.5">
                           {action.statusLabel}
                         </span>
                       </div>

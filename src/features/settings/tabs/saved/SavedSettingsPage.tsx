@@ -8,10 +8,12 @@ import { CreateFolderModal } from '@/features/settings/components/CreateFolderMo
 import { SavedFolder } from '@/types/entities';
 import { useSavedFolders } from '../../hooks/useSavedFolders';
 import { useSettingsStore } from '@/store/settings.store';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 const isValidImageUrl = (url?: string | null): boolean => !!url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:'));
 
 export function SavedSettingsPage() {
+  const { isCompany } = useActiveProfile();
   const router = useRouter();
   const queryClient = useQueryClient();
   // UI-only state (is the "create collection" modal open) now lives in the
@@ -32,16 +34,16 @@ export function SavedSettingsPage() {
         {/* Header section */}
         <div className="flex flex-row justify-between items-center w-full min-h-[56px] mb-2">
           <div className="flex flex-col items-start justify-center">
-            <h1 className="text-[24px] font-semibold text-black leading-[32px]">Saved</h1>
-            <p className="text-[16px] font-normal text-[#6B7280] leading-[24px]">Everything you've saved, organized your way</p>
+            <h1 className={`text-[24px] font-semibold text-black leading-[32px] ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`}>Saved</h1>
+            <p className={`text-[16px] font-normal text-[#6B7280] leading-[24px] ${isCompany ? 'dark:text-company-secondary' : 'dark:text-muted-foreground'}`}>Everything you've saved, organized your way</p>
           </div>
           
           <button 
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex flex-row justify-center items-center px-3 py-2 gap-2 h-[40px] border border-[#6366F1] rounded-[24px] transition-colors"
+            className={`flex flex-row justify-center items-center px-3 py-2 gap-2 h-[40px] border ${isCompany ? 'border-[#1A73E8]' : 'border-[#6366F1]'} rounded-[24px] transition-colors`}
           >
-            <span className="text-[16px] font-medium text-[#6366F1] leading-[24px]">New collections</span>
-            <Plus className="w-5 h-5 text-[#6366F1]" strokeWidth={1.5} />
+            <span className={`text-[16px] font-medium ${isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]'} leading-[24px]`}>New collections</span>
+            <Plus className={`w-5 h-5 ${isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} strokeWidth={1.5} />
           </button>
         </div>
 
@@ -51,17 +53,17 @@ export function SavedSettingsPage() {
           {/* General Folder */}
           <div 
             onClick={() => router.push('/saved')}
-            className="flex flex-row items-center py-2 gap-4 w-full h-[56px] cursor-pointer hover:bg-gray-50 rounded-lg px-2 -ml-2 transition-colors"
+            className={`flex flex-row items-center py-2 gap-4 w-full h-[56px] cursor-pointer hover:bg-gray-50 rounded-lg px-2 -ml-2 transition-colors ${isCompany ? 'dark:hover:bg-company-card' : 'dark:hover:bg-secondary'}`}
           >
             <div className="flex items-center justify-center w-10 h-10">
-              <Folder className="w-6 h-6 text-black" strokeWidth={1.5} />
+              <Folder className={`w-6 h-6 text-black ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`} strokeWidth={1.5} />
             </div>
-            <span className="text-[16px] font-normal text-black leading-[24px]">General</span>
+            <span className={`text-[16px] font-normal text-black leading-[24px] ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`}>General</span>
           </div>
 
           {/* Collections List Header */}
           <div className="flex flex-row items-center py-0 gap-[10px] w-full h-[16px] mt-1">
-            <span className="text-[12px] font-normal text-[#6B7280] leading-[16px]">Collections</span>
+            <span className={`text-[12px] font-normal text-[#6B7280] leading-[16px] ${isCompany ? 'dark:text-company-secondary' : 'dark:text-muted-foreground'}`}>Collections</span>
           </div>
 
           {/* Collections Grid */}
@@ -75,7 +77,7 @@ export function SavedSettingsPage() {
                 <div 
                   key={collection.folder_id} 
                   onClick={() => router.push(`/saved/${collection.folder_id}`)}
-                  className="flex flex-row items-center py-2 gap-4 w-[240px] cursor-pointer hover:bg-gray-50 rounded-lg px-2 -ml-2 transition-colors"
+                  className={`flex flex-row items-center py-2 gap-4 w-[240px] cursor-pointer hover:bg-gray-50 rounded-lg px-2 -ml-2 transition-colors ${isCompany ? 'dark:hover:bg-company-card' : 'dark:hover:bg-secondary'}`}
                 >
                   {/* Image or Folder Placeholder */}
                   {isValidImageUrl(collection.cover_image) ? (
@@ -88,8 +90,8 @@ export function SavedSettingsPage() {
                   
                   {/* Details */}
                   <div className="flex flex-col justify-center gap-1">
-                    <span className="text-[16px] font-normal text-black leading-[24px]">{collection.name}</span>
-                    <span className="text-[12px] font-normal text-[#6B7280] leading-[16px]">Posts - {collection.post_count || 0}</span>
+                    <span className={`text-[16px] font-normal text-black leading-[24px] ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`}>{collection.name}</span>
+                    <span className={`text-[12px] font-normal text-[#6B7280] leading-[16px] ${isCompany ? 'dark:text-company-secondary' : 'dark:text-muted-foreground'}`}>Posts - {collection.post_count || 0}</span>
                   </div>
                 </div>
               ))

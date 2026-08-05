@@ -45,10 +45,15 @@ export default function Avatar({
     const isUrl = Boolean(url && url !== '/assets/pngegg.png' && !url.startsWith('gradient-') && !error);
     const initial = (name || 'U').charAt(0).toUpperCase();
 
+    const gradientKey = (url && url.startsWith('gradient-')) ? url : fallbackGradient;
+    const backgroundClass = !isUrl 
+        ? `bg-gradient-to-br ${getAvatarGradient(gradientKey)} text-white` 
+        : "bg-[#EEF2FF] text-[#6366F1]";
+
     return (
         <div className={`relative shrink-0 ${className}`}>
-            <div className={`relative ${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
-                <span>{initial}</span>
+            <div className={`relative ${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
+                {!isUrl && <span>{initial}</span>}
                 {isUrl ? (
                     <img
                         src={url}

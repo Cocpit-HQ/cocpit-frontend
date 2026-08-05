@@ -58,6 +58,9 @@ import { create } from 'zustand';
 // ─── Account tab (`AccountSettingsPage`) ────────────────────────────────
 export type AccountModal = 'logout' | 'delete' | null;
 
+// ─── Company Account tab (`CompanyAccountSettingsPage`) ─────────────
+export type CompanyAccountModal = 'deactivate' | 'transfer' | 'delete' | null;
+
 // ─── Privacy tab (`PrivacySettingsPage`) ────────────────────────────────
 export type PrivacyLogoutTarget = 'single' | 'all' | null;
 
@@ -123,6 +126,11 @@ export interface SettingsUIState {
     view: SupportView;
   };
 
+  // ─── Company Account slice ─────────────────────────────────
+  companyAccount: {
+    activeModal: CompanyAccountModal;
+  };
+
   // ─── Actions ─────────────────────────────────────────────────
   setAccountModal: (modal: AccountModal) => void;
 
@@ -140,6 +148,8 @@ export interface SettingsUIState {
   selectAction: (id: string | null) => void;
 
   setSupportView: (view: SupportView) => void;
+
+  setCompanyAccountModal: (modal: CompanyAccountModal) => void;
 
   // Resets every slice back to its default. Call this from the settings
   // layout's unmount (or a "Cancel"/logout flow) so a stale modal/tab from
@@ -159,6 +169,7 @@ const initialState: Omit<
   | 'selectReport'
   | 'selectAction'
   | 'setSupportView'
+  | 'setCompanyAccountModal'
   | 'resetSettingsUI'
 > = {
   account: {
@@ -184,6 +195,9 @@ const initialState: Omit<
   },
   support: {
     view: 'main',
+  },
+  companyAccount: {
+    activeModal: null,
   },
 };
 
@@ -232,6 +246,10 @@ export const useSettingsStore = create<SettingsUIState>()((set) => ({
 
   // ─── Support actions ─────────────────────────────────────────
   setSupportView: (view) => set((state) => ({ support: { ...state.support, view } })),
+
+  // ─── Company Account actions ──────────────────────────────────
+  setCompanyAccountModal: (modal) =>
+    set((state) => ({ companyAccount: { ...state.companyAccount, activeModal: modal } })),
 
   // ─── Reset ─────────────────────────────────────────────────────
   resetSettingsUI: () => set({ ...initialState }),

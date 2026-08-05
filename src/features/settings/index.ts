@@ -10,6 +10,11 @@ export { ReportsSettingsPage } from './tabs/reports/ReportsSettingsPage';
 export { SavedSettingsPage } from './tabs/saved/SavedSettingsPage';
 export { SupportSettingsPage } from './tabs/support/SupportSettingsPage';
 
+// Company variants
+export { CompanyAccountSettingsPage } from './tabs/account/pages/CompanyAccountSettingsPage';
+export { CompanyNotificationSettingsPage } from './tabs/notifications/CompanyNotificationSettingsPage';
+export { CompanyPrivacySettingsPage } from './tabs/privacy/CompanyPrivacySettingsPage';
+
 // Modals & Components
 export { ChangeEmailModal } from './tabs/account/components/modals/ChangeEmailModal';
 export { ManagePhoneModal } from './tabs/account/components/modals/ManagePhoneModal';

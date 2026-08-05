@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { getLegalDocs } from '@/features/settings/api/support';
 import { toast } from 'sonner';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface LegalDoc {
   title: string;
@@ -18,6 +19,7 @@ const DEFAULT_LEGAL_DOCS: LegalDoc[] = [
 ];
 
 export function LegalSettingsPage() {
+  const { isCompany } = useActiveProfile();
   const [docs, setDocs] = useState<LegalDoc[]>(DEFAULT_LEGAL_DOCS);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,30 +54,30 @@ export function LegalSettingsPage() {
       <div className="w-full relative flex-1 flex flex-col py-2 px-4 gap-4 max-w-[698px]">
         {/* Header section */}
         <div className="flex flex-col items-start justify-center mb-2">
-          <h1 className="text-[24px] font-semibold text-black leading-[32px]">Legal</h1>
-          <p className="text-[16px] font-normal text-[#6B7280] leading-[24px] mt-1">Review our policies and terms</p>
+          <h1 className="text-[24px] font-semibold text-black dark:text-foreground leading-[32px]">Legal</h1>
+          <p className="text-[16px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[24px] mt-1">Review our policies and terms</p>
         </div>
 
         {/* Content Box */}
         <div className="flex flex-col w-full">
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+              <Loader2 className={`w-8 h-8 animate-spin ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} />
             </div>
           ) : (
             docs.map((item, index) => (
               <div 
                 key={index}
                 onClick={() => window.open(item.url, '_blank')}
-                className={`flex flex-row justify-between items-center py-3 w-full cursor-pointer hover:bg-gray-50 transition-colors ${
-                  index === 0 ? 'border-t border-transparent' : 'border-t border-[#DADADA]'
+                className={`flex flex-row justify-between items-center py-3 w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-secondary transition-colors ${
+                  index === 0 ? 'border-t border-transparent' : 'border-t border-[#DADADA] dark:border-border'
                 }`}
               >
                 <div className="flex flex-col justify-center">
-                  <h3 className="text-[16px] font-normal text-black leading-[24px]">{item.title}</h3>
-                  <p className="text-[14px] font-normal text-[#6B7280] leading-[20px]">{getSubtitle(item.title)}</p>
+                  <h3 className="text-[16px] font-normal text-black dark:text-foreground leading-[24px]">{item.title}</h3>
+                  <p className="text-[14px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[20px]">{getSubtitle(item.title)}</p>
                 </div>
-                <ChevronRight className="w-6 h-6 text-black" strokeWidth={1.5} />
+                <ChevronRight className="w-6 h-6 text-black dark:text-foreground" strokeWidth={1.5} />
               </div>
             ))
           )}

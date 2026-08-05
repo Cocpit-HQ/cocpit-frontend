@@ -4,8 +4,10 @@ import React from 'react';
 import { Ban, Loader2 } from 'lucide-react';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { useSettingsStore } from '@/store/settings.store';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export function BlockedSettingsPage() {
+  const { isCompany } = useActiveProfile();
   // Server state (the list + the unblock mutation) is now owned by
   // TanStack Query via useBlockedUsers, instead of a manual
   // useEffect + useState + try/catch fetch.
@@ -31,12 +33,12 @@ export function BlockedSettingsPage() {
       <div className="w-full relative flex-1 flex flex-col py-2 px-4 gap-4 max-w-[698px]">
         {/* Header section */}
         <div className="flex flex-col items-start justify-center mb-2">
-          <h1 className="text-[24px] font-semibold text-black leading-[32px]">Blocked accounts</h1>
-          <p className="text-[16px] font-normal text-[#6B7280] leading-[24px] mt-1">Manage restricted users and community safety settings.</p>
+          <h1 className="text-[24px] font-semibold text-black dark:text-foreground leading-[32px]">Blocked accounts</h1>
+          <p className="text-[16px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[24px] mt-1">Manage restricted users and community safety settings.</p>
         </div>
 
         <div className="flex flex-row items-center gap-4 w-full">
-          <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] text-center">
+          <span className="text-[12px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[16px] text-center">
             Block - {blockedUsers.length}
           </span>
         </div>
@@ -45,7 +47,7 @@ export function BlockedSettingsPage() {
         <div className="flex flex-col w-full">
           {isLoading ? (
             <div className="flex justify-center items-center pt-24">
-              <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
+              <Loader2 className={`w-8 h-8 animate-spin ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`} />
             </div>
           ) : blockedUsers.length > 0 ? (
             blockedUsers.map(user => (
@@ -55,30 +57,30 @@ export function BlockedSettingsPage() {
                     <img src={user.avatar} alt={user.name} className="w-[42px] h-[42px] rounded-full object-cover" />
                   ) : (
                     <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center bg-[#EEF2FF]">
-                      <span className="text-[18px] font-medium text-[#6366F1]">
+                      <span className={`text-[18px] font-medium ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'}`}>
                         {user.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                   )}
                   <div className="flex flex-col justify-center">
-                    <h3 className="text-[18px] font-medium text-black leading-[26px]">{user.name}</h3>
-                    <p className="text-[12px] font-normal text-[#6B7280] leading-[16px]">{user.date}</p>
+                    <h3 className="text-[18px] font-medium text-black dark:text-foreground leading-[26px]">{user.name}</h3>
+                    <p className="text-[12px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[16px]">{user.date}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setUserToUnblockId(user.id)}
-                  className="flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border border-[#6366F1] rounded-[24px] hover:bg-indigo-50 transition-colors"
+                  className={`flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border ${isCompany ? 'border-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint' : 'border-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint'} rounded-[24px] transition-colors`}
                 >
-                  <span className="text-[14px] font-normal text-[#6366F1] leading-[20px] text-center">Unblock</span>
+                  <span className={`text-[14px] font-normal ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'} leading-[20px] text-center`}>Unblock</span>
                 </button>
               </div>
             ))
           ) : (
             <div className="flex flex-col items-center justify-center pt-24 gap-4">
-              <Ban className="w-12 h-12 text-black" strokeWidth={1.5} />
+              <Ban className="w-12 h-12 text-black dark:text-foreground" strokeWidth={1.5} />
               <div className="flex flex-col items-center gap-1">
-                <h3 className="text-[16px] font-medium text-black">Blocked Accounts</h3>
-                <p className="text-[14px] text-[#6B7280] text-center">Manage restricted users and community safety settings.</p>
+                <h3 className="text-[16px] font-medium text-black dark:text-foreground">Blocked Accounts</h3>
+                <p className="text-[14px] text-[#6B7280] dark:text-muted-foreground text-center">Manage restricted users and community safety settings.</p>
               </div>
             </div>
           )}
@@ -89,12 +91,12 @@ export function BlockedSettingsPage() {
       {userToUnblock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center font-poppins">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUserToUnblockId(null)} />
-          <div className="relative bg-white rounded-[24px] p-8 max-w-[400px] w-full mx-4 shadow-xl flex flex-col items-center text-center gap-6">
+          <div className="relative bg-white dark:bg-card rounded-[24px] p-8 max-w-[400px] w-full mx-4 shadow-xl flex flex-col items-center text-center gap-6">
             <div className="flex flex-col gap-4">
-              <h2 className="text-[18px] font-medium text-black leading-[26px]">
+              <h2 className="text-[18px] font-medium text-black dark:text-foreground leading-[26px]">
                 Unblock this {userToUnblock.name} ?
               </h2>
-              <p className="text-[14px] font-normal text-[#6B7280] leading-[20px]">
+              <p className="text-[14px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[20px]">
                 {userToUnblock.name} will be able to message or find you.They won't be notified that you unblocked them.
               </p>
             </div>
@@ -102,14 +104,14 @@ export function BlockedSettingsPage() {
             <div className="flex flex-row gap-4 w-full">
               <button 
                 onClick={() => setUserToUnblockId(null)}
-                className="flex-1 py-3 px-6 rounded-full border border-[#6366F1] text-[#6366F1] font-medium text-[16px] hover:bg-indigo-50 transition-colors"
+                className={`flex-1 py-3 px-6 rounded-full border ${isCompany ? 'border-[#1A73E8] text-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint' : 'border-[#6366F1] text-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint'} font-medium text-[16px] transition-colors`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleUnblockConfirm}
                 disabled={isUnblocking}
-                className="flex-1 py-3 px-6 rounded-full bg-[#6366F1] text-white font-medium text-[16px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50"
+                className={`flex-1 py-3 px-6 rounded-full ${isCompany ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#4F46E5]'} text-white font-medium text-[16px] transition-colors disabled:opacity-50`}
               >
                 Unblock
               </button>

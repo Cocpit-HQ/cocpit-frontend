@@ -24,6 +24,26 @@ const config: Config = {
         "feed-card": "24px",
         "3xl": "24px",
       },
+      colors: {
+        company: {
+          bg: "var(--company-bg)",
+          card: "var(--company-card)",
+          text: "var(--company-text)",
+          secondary: "var(--company-secondary)",
+          border: "var(--company-border)",
+          primary: "var(--company-primary)",
+          "primary-dark": "var(--company-primary-dark)",
+          "ultra-light": "var(--company-ultra-light)",
+          "light-primary": "var(--company-light-primary)",
+          success: "var(--company-success)",
+          warning: "var(--company-warning)",
+          error: "var(--company-error)",
+          "light-green": "var(--company-light-green)",
+          "light-yellow": "var(--company-light-yellow)",
+          "light-red": "var(--company-light-red)",
+          light: "var(--company-light)",
+        }
+      }
     },
   },
   plugins: [],
