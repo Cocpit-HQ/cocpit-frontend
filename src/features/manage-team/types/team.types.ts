@@ -7,7 +7,8 @@ export type TeamPermission =
   | 'ACTIVITY_LOGS'
   | 'JOBS'
   | 'JOBS_CHAT'
-  | 'ANALYTICS';
+  | 'ANALYTICS'
+  | 'SETTINGS';
 
 // Human-readable labels for permissions (used in UI)
 export const PERMISSION_LABELS: Record<string, string> = {
@@ -19,6 +20,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   JOBS: 'Jobs',
   JOBS_CHAT: 'Jobs chat',
   ANALYTICS: 'Analytics',
+  SETTINGS: 'Settings',
   // System / RBAC permission key mappings
   SWITCH_TO_COMPANY: 'Switch to company',
   MANAGE_COMPANY: 'Manage company',
@@ -64,6 +66,7 @@ export const ALL_PERMISSIONS: TeamPermission[] = [
   'JOBS',
   'JOBS_CHAT',
   'ANALYTICS',
+  'SETTINGS',
 ];
 
 // Predefined role colors from the design

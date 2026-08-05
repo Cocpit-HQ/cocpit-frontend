@@ -124,7 +124,12 @@ export default function AccessDenied({
         path: isCompany && slug ? `/organization/${slug}` : '/profile',
         alwaysAvailable: true,
       },
-      { label: 'Settings', path: '/settings', alwaysAvailable: true },
+      {
+        label: 'Settings',
+        path: isCompany && slug ? `/organization/${slug}/settings` : '/settings',
+        alwaysAvailable: !isCompany,
+        permission: 'SETTINGS',
+      },
       { label: 'Chat', path: '/messaging', permission: 'CHAT' },
       { label: 'Job chat', path: '/messaging', permission: 'JOBS_CHAT' },
       { label: 'Channel', path: '/channel', permission: 'CHANNELS' },

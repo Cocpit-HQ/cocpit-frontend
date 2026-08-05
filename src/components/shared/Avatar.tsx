@@ -46,7 +46,7 @@ export default function Avatar({
     const initial = (name || 'U').charAt(0).toUpperCase();
 
     const gradientKey = (url && url.startsWith('gradient-')) ? url : fallbackGradient;
-    const backgroundClass = !isUrl 
+    const backgroundClass = (url && url.startsWith('gradient-')) 
         ? `bg-gradient-to-br ${getAvatarGradient(gradientKey)} text-white` 
         : "bg-[#EEF2FF] text-[#6366F1]";
 

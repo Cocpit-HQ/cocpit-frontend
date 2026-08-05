@@ -83,8 +83,8 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           title: 'Account',
           items: [
             { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
-            { icon: Settings, label: 'Settings', href: settingsHref, show: true },
-            { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: true },
+            { icon: Settings, label: 'Settings', href: settingsHref, show: true, disabled: !checkPermission('SETTINGS') },
+            { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: true, disabled: !checkPermission('SETTINGS') },
           ]
         }
       ];

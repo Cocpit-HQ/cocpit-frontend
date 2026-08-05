@@ -8,7 +8,7 @@ import AccessDenied from './AccessDenied';
 
 interface RouteGuardProps {
   /** Permission key or array of keys to check */
-  permission: string | string[];
+  permission?: string | string[];
   /** If true, user needs ANY one of the permissions (OR logic). Default: false (AND logic). */
   matchAny?: boolean;
   /** If true, personal profiles are denied access. Default: false. */

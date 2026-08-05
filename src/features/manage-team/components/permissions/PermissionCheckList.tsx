@@ -20,7 +20,8 @@ const PERMISSION_GROUPS = [
   { id: 'JOBS', label: 'Jobs', icon: 'hugeicons:job-search', children: [
     { id: 'JOBS_CHAT', label: 'Jobs chat' }
   ]},
-  { id: 'ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up' }
+  { id: 'ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up' },
+  { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings' }
 ] as const;
 
 export default function PermissionCheckList({

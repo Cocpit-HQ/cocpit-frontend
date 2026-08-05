@@ -4,7 +4,6 @@ import React from 'react';
 import { Monitor, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
-import { updateAppearance } from '@/features/settings/api/preferences';
 
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -12,14 +11,9 @@ export function AppearanceSettingsPage() {
   const { theme, setTheme } = useTheme();
   const { isCompany } = useActiveProfile();
 
-  const handleThemeChange = async (newTheme: 'system' | 'light' | 'dark') => {
+  const handleThemeChange = (newTheme: 'system' | 'light' | 'dark') => {
     setTheme(newTheme);
-    try {
-      await updateAppearance(newTheme);
-      toast.success('Appearance settings updated');
-    } catch (error) {
-      toast.error('Failed to save appearance settings');
-    }
+    toast.success('Appearance settings updated');
   };
 
   const themes = [

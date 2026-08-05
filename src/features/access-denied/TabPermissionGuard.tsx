@@ -19,7 +19,7 @@ const TAB_PERMISSION_MAP: Record<string, string | string[]> = {
   jobs: ['POST_JOBS', 'JOBS', 'VIEW_APPLICANTS'],
   analytics: ['VIEW_ANALYTICS', 'ANALYTICS'],
   members: ['TEAMS', 'MANAGE_MEMBERS', 'INVITE_MEMBERS'],
-  settings: ['MANAGE_COMPANY_DETAILS'],
+  settings: ['SETTINGS'],
   channel: ['CHANNEL', 'CHANNELS'],
   team: ['TEAMS', 'MANAGE_MEMBERS'],
 };

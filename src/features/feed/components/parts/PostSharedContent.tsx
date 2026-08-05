@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PollCard } from '@/components/home/PollCard';
@@ -27,6 +29,8 @@ export const PostSharedContent = ({
   handleSharedVote,
   isProfileView
 }: PostSharedContentProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (!shared_post) return null;
 
   return (
@@ -77,62 +81,72 @@ export const PostSharedContent = ({
         </Link>
       ) : (
         <Link href={`/post/${shared_post.id}`} className="block">
-          <div className="feed-card-shell box-border flex flex-col items-start p-[12px] gap-[8px] w-full border border-[#EEF2FF] dark:border-card-border-inner bg-white dark:bg-card rounded-[12px] mt-[8px] shadow-[0px_2px_4px_0px_#6366F10D] overflow-hidden">
-            {/* Header (Frame 2608569) */}
-            <div className="flex flex-row items-center p-0 gap-[8px] w-full h-[56px]">
-              <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none">
-                <span>{(shared_post.author || 'U').charAt(0).toUpperCase()}</span>
-                {shared_post.authorAvatar && shared_post.authorAvatar !== '/assets/pngegg.png' ? (
-                  <img src={shared_post.authorAvatar} alt={shared_post.author} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : null}
-              </div>
-              <div className="flex flex-col items-start p-0 min-w-0 overflow-hidden">
-                <span className="text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] font-normal text-[#000000] dark:text-foreground truncate w-full block">
-                  {shared_post.isCompanyPost ? formatCompanyName(shared_post.author) : shared_post.author}
-                </span>
-                <span className="text-[10px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-[#6B7280] truncate w-full block">
-                  {shared_post.authorHeadline || shared_post.title || 'Member'}
-                </span>
-                <div className="flex items-center gap-[8px] text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
-                  {shared_post.location && (() => {
-                    const displayLocation = shared_post.location.split(',')[0].trim();
-                    const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
-                    return <span>{truncatedLocation}</span>;
-                  })()}
-                  {shared_post.location && (shared_post.timeAgo || 'Recently') && (
-                    <span className="w-[6px] h-[6px] rounded-full bg-[#6B7280] shrink-0" />
-                  )}
-                  <span className="shrink-0">{shared_post.timeAgo || 'Recently'}</span>
+          <div className="feed-card-shell box-border flex flex-row items-start p-[16px] gap-[16px] w-full border border-transparent border-l-[1px] border-l-[#000000] bg-[#F3F5F7] dark:bg-zinc-800/50 rounded-[24px] rounded-tl-none mt-[8px] overflow-hidden transition-all hover:bg-gray-100 dark:hover:bg-zinc-800">
+            
+            {/* Left Column: Author Info & Text Content */}
+            <div className="flex flex-col flex-1 min-w-0 justify-start gap-[8px]">
+              {/* Header */}
+              <div className="flex flex-row items-center gap-[8px] w-full">
+                <div className="flex flex-row items-center gap-[8px]">
+                  <div className="relative w-[32px] h-[32px] rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs font-['Poppins'] select-none">
+                    <span>{(shared_post.author || 'U').charAt(0).toUpperCase()}</span>
+                    {shared_post.authorAvatar && shared_post.authorAvatar !== '/assets/pngegg.png' ? (
+                      <img src={shared_post.authorAvatar} alt={shared_post.author} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col items-start min-w-0 overflow-hidden">
+                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000] dark:text-foreground truncate w-full block">
+                      {shared_post.isCompanyPost ? formatCompanyName(shared_post.author) : shared_post.author}
+                    </span>
+                    <div className="flex flex-row items-center gap-[8px] text-[8px] leading-[12px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
+                      {shared_post.location && (() => {
+                        const displayLocation = shared_post.location.split(',')[0].trim();
+                        const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
+                        return <span className="truncate">{truncatedLocation}</span>;
+                      })()}
+                      {shared_post.location && (shared_post.timeAgo || 'Recently') && (
+                        <span className="w-[4px] h-[4px] rounded-full bg-[#6B7280] shrink-0" />
+                      )}
+                      <span className="shrink-0">{shared_post.timeAgo || 'Recently'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Content (Frame 2608605) */}
-            <div className="flex flex-col items-start p-0 gap-[8px] w-full">
+              {/* Text Content */}
               {shared_post.content && (
-                <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground w-full line-clamp-3 whitespace-pre-wrap">
-                  {shared_post.content}
-                </p>
+                <div className="w-full relative mt-1">
+                  <p className="text-[12px] md:text-[13px] leading-[18px] md:leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000] dark:text-foreground w-full whitespace-pre-wrap line-clamp-3">
+                    {(() => {
+                      let c = shared_post.content;
+                      if (!c) return c;
+                      // Only replace trailing newlines and ellipsis if it ends with one
+                      if (/[\s\r\n]+(…|\.{3})[\s\r\n]*$/.test(c)) {
+                        return c.replace(/[\s\r\n]+(…|\.{3})[\s\r\n]*$/, '...');
+                      }
+                      return c;
+                    })()}
+                  </p>
+                </div>
               )}
 
               {sharedPollData && (
-                <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                <div className="w-full mt-3" onClick={(e) => e.stopPropagation()}>
                   <PollCard poll={sharedPollData} onVote={handleSharedVote!} isLoading={isSharedVoting!} votedOptionId={sharedPollData.user_vote} />
                 </div>
               )}
-
-              {shared_post.videoSrc ? (
-                <div className="relative w-[calc(100%+24px)] aspect-video -mx-[12px] -mb-[12px] border-t border-[#EEF2FF]">
-                  <video src={shared_post.videoSrc} className="w-full h-full object-cover" preload="metadata" playsInline />
-                </div>
-              ) : shared_post.imageSrc ? (
-                <div className="relative w-[calc(100%+24px)] aspect-video -mx-[12px] -mb-[12px] border-t border-[#EEF2FF]">
-                  <Image src={shared_post.imageSrc} alt="Shared post" fill className="object-cover" />
-                </div>
-              ) : null}
-
-
             </div>
+
+            {/* Right Column: Media Thumbnail */}
+            {(shared_post.imageSrc || shared_post.videoSrc) && (
+              <div className="flex-none relative w-[88px] h-[88px] rounded-[16px] overflow-hidden self-start bg-[#D9D9D9]">
+                {shared_post.videoSrc ? (
+                  <video src={shared_post.videoSrc} className="w-full h-full object-cover" preload="metadata" playsInline />
+                ) : shared_post.imageSrc ? (
+                  <Image src={shared_post.imageSrc} alt="Shared post media" fill className="object-cover" sizes="88px" />
+                ) : null}
+              </div>
+            )}
           </div>
         </Link>
       )}
