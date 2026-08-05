@@ -52,6 +52,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Do NOT treat 401 as session expiration if it is a password or credential validation failure
+    const errorMessage = error.response?.data?.message || error.response?.data?.error || "";
+    const isCredentialError = typeof errorMessage === "string" && (
+      errorMessage.toLowerCase().includes("password") ||
+      errorMessage.toLowerCase().includes("google account") ||
+      errorMessage.toLowerCase().includes("credentials")
+    );
+
+    if (isCredentialError) {
+      return Promise.reject(error);
+    }
+
     // Prevent infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
