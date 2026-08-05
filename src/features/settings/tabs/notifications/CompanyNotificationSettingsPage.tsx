@@ -1,14 +1,15 @@
 "use client";
 
 import React from 'react';
-import { useCompanyNotificationSettings, CompanyNotificationSettings } from '../../hooks/useCompanyNotificationSettings';
+import { useCompanyNotificationSettings } from '../../hooks/useCompanyNotificationSettings';
+import { NotificationPreferences } from '@/services/api/settings';
 import { Loader2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 
 export function CompanyNotificationSettingsPage() {
   const { settings, isLoading, isError, updateSettings, isUpdating } = useCompanyNotificationSettings();
 
-  const handleToggle = (key: keyof CompanyNotificationSettings) => {
+  const handleToggle = (key: keyof NotificationPreferences) => {
     if (!settings) return;
     
     const newState = { ...settings, [key]: !settings[key] };
@@ -16,7 +17,7 @@ export function CompanyNotificationSettingsPage() {
     // If toggling 'all', set all others to match
     if (key === 'all') {
       Object.keys(newState).forEach(k => {
-        newState[k as keyof CompanyNotificationSettings] = newState.all;
+        newState[k as keyof NotificationPreferences] = newState.all;
       });
     } else {
       // If unchecking a specific one, uncheck 'all'
@@ -24,7 +25,7 @@ export function CompanyNotificationSettingsPage() {
       // If checking a specific one and all others are checked, check 'all'
       const allOthersChecked = Object.keys(newState)
         .filter(k => k !== 'all')
-        .every(k => newState[k as keyof CompanyNotificationSettings]);
+        .every(k => newState[k as keyof NotificationPreferences]);
       if (allOthersChecked) newState.all = true;
     }
     
@@ -53,7 +54,7 @@ export function CompanyNotificationSettingsPage() {
   }: { 
     title: string, 
     description?: string,
-    settingKey: keyof CompanyNotificationSettings 
+    settingKey: keyof NotificationPreferences 
   }) => {
     const isChecked = settings?.[settingKey] ?? false;
 
@@ -85,7 +86,7 @@ export function CompanyNotificationSettingsPage() {
     settingKey 
   }: { 
     title: string, 
-    settingKey: keyof CompanyNotificationSettings 
+    settingKey: keyof NotificationPreferences 
   }) => {
     const isChecked = settings?.[settingKey] ?? false;
 

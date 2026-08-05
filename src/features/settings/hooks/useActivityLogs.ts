@@ -22,12 +22,12 @@ const REMOVE_TYPE: Record<ActivityTab, "like" | "comment" | "tag"> = {
 // useEffect + setState dance.
 export const activityLogsQueryKey = (tab: ActivityTab) => ["activityLogs", tab] as const;
 
-export function useActivityLogs(tab: ActivityTab) {
+export function useActivityLogs(tab: ActivityTab, companyId?: string) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: activityLogsQueryKey(tab),
-    queryFn: () => getActivityLogs(LOG_TYPE[tab]),
+    queryFn: () => getActivityLogs(LOG_TYPE[tab], companyId),
   });
 
   const removeMutation = useMutation({
@@ -35,9 +35,9 @@ export function useActivityLogs(tab: ActivityTab) {
       // "Likes" removal goes through the feed's like-toggle endpoint, not
       // the generic activity-removal endpoint the other two tabs use.
       if (tab === "Likes") {
-        await feedApi.toggleLike(id as string);
+        await feedApi.toggleLike(id as string, companyId);
       } else {
-        await removeActivity(REMOVE_TYPE[tab], id);
+        await removeActivity(REMOVE_TYPE[tab], id, companyId);
       }
       return id;
     },

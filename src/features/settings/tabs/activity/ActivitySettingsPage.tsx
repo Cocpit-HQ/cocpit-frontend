@@ -9,7 +9,8 @@ import { useActivityLogs } from '../../hooks/useActivityLogs';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export function ActivitySettingsPage() {
-  const { isCompany } = useActiveProfile();
+  const { isCompany, activeProfile } = useActiveProfile();
+  const companyId = isCompany ? activeProfile?.id : undefined;
   const router = useRouter();
   // Which pill is active lives in the shared settings store — this is the
   // "tab parameter" referenced in settings.store.ts. It's passed straight
@@ -21,7 +22,7 @@ export function ActivitySettingsPage() {
 
   const tabs = ['Likes', 'Comments', 'Tags'] as const;
 
-  const { data, isLoading, removeActivity } = useActivityLogs(activeTab);
+  const { data, isLoading, removeActivity } = useActivityLogs(activeTab, companyId);
 
   const handleRemove = (id: number | string) => {
     removeActivity(id);

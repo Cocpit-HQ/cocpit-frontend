@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { deactivateOrganization, reactivateOrganization } from '@/services/api/settings';
 import { useCompanyAccountSettings } from '../../../../hooks/useCompanyAccountSettings';
+import { toast } from 'sonner';
 
 interface DeactivateCompanyModalProps {
   isOpen: boolean;
@@ -10,17 +13,37 @@ interface DeactivateCompanyModalProps {
 }
 
 export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyModalProps) {
-  const { deactivateCompany, entityLabel, isLoading } = useCompanyAccountSettings();
+  const { activeProfile, switchProfile } = useActiveProfile();
+  const { data: accountData, refetch } = useCompanyAccountSettings();
   const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen || !activeProfile) return null;
 
-  const handleDeactivate = async () => {
+  const entityLabel = activeProfile.entityType === 'INSTITUTION' ? 'institution' : 'company';
+  const isDeactivated = accountData?.isDeactivated;
+
+  const handleAction = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
     try {
-      await deactivateCompany();
-      onClose();
+      if (isDeactivated) {
+        await reactivateOrganization(activeProfile.id);
+        toast.success(`Your ${entityLabel} page has been reactivated`);
+        await refetch();
+        onClose();
+      } else {
+        await deactivateOrganization(activeProfile.id);
+        toast.success(`Your ${entityLabel} page has been deactivated`);
+        onClose();
+        // On success, switch back to user context and go to feed since the company is deactivated
+        switchProfile("USER", "");
+        window.location.href = '/feed';
+      }
     } catch (err: any) {
-      setErrorMsg(err?.message || `Failed to deactivate ${entityLabel}`);
+      setErrorMsg(err.response?.data?.message || err.message || `Failed to ${isDeactivated ? 'reactivate' : 'deactivate'} ${entityLabel}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,10 +62,12 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
         {/* Title & Description */}
         <div className="flex flex-col items-center gap-2 mb-4 w-[418px] mt-2">
           <h2 className="text-[18px] font-medium text-black leading-[26px] text-center m-0">
-            Deactivate {entityLabel} page
+            {isDeactivated ? 'Reactivate' : 'Deactivate'} {entityLabel} page
           </h2>
           <p className="text-[14px] font-normal text-[#6B7280] leading-[20px] text-center m-0 px-2">
-            Your {entityLabel} page will be hidden from cocpit. You can reactivate it at any time.
+            {isDeactivated 
+              ? `Your ${entityLabel} page will become visible again to everyone.` 
+              : `Your ${entityLabel} page will be hidden from cocpit. You can reactivate it at any time.`}
           </p>
         </div>
 
@@ -58,13 +83,13 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
           </button>
           
           <button 
-            onClick={handleDeactivate} 
+            onClick={handleAction} 
             disabled={isLoading}  
             className={`flex items-center justify-center w-[140px] h-[40px] rounded-[24px] text-[14px] font-normal leading-[20px] transition-colors ${
-              isLoading ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white'
+              isLoading ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : (isDeactivated ? 'bg-[#1A73E8] text-white hover:opacity-90' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white')
             }`}
           >
-            {isLoading ? "Deactivating..." : "Deactivate"}
+            {isLoading ? (isDeactivated ? "Reactivating..." : "Deactivating...") : (isDeactivated ? "Reactivate" : "Deactivate")}
           </button>
         </div>
         

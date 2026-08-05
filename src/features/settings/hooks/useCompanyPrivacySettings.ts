@@ -1,56 +1,69 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getPrivacySettings, updatePrivacySettings, PrivacySettings } from "@/services/api/settings";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
-export type PermissionOption = "everyone" | "connections" | "followers" | "noone";
-export type VisibilityOption = "everyone" | "followers" | "noone";
-
-export interface CompanyPrivacySettings {
-  showEmail: boolean;
-  showPhone: boolean;
-  tagPermission: PermissionOption;
-  followingVisibility: VisibilityOption;
-  followersVisibility: VisibilityOption;
-  messagePermission: VisibilityOption;
-}
-
-const MOCK_SETTINGS: CompanyPrivacySettings = {
-  showEmail: true,
-  showPhone: true,
-  tagPermission: "everyone",
-  followingVisibility: "everyone",
-  followersVisibility: "everyone",
-  messagePermission: "everyone",
-};
-
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/**
- * Mock hook for company privacy settings.
- * TODO: Replace mock with real API calls when backend is ready:
- *   GET  /organizations/:orgId/privacy
- *   PUT  /organizations/:orgId/privacy
- */
 export function useCompanyPrivacySettings() {
-  const [settings, setSettings] = useState<CompanyPrivacySettings>(MOCK_SETTINGS);
-  const [isLoading] = useState(false);
-  const [isError] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient();
+  const { activeProfile, isCompany } = useActiveProfile();
+  
+  const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+  
+  const queryKey = ["companyPrivacySettings", companyId];
 
-  const updateSettings = useCallback(async (partial: Partial<CompanyPrivacySettings>) => {
-    setIsUpdating(true);
-    // Optimistic update
-    setSettings((prev) => ({ ...prev, ...partial }));
-    await delay(300);
-    setIsUpdating(false);
-  }, []);
+  const { data: settings, isLoading, isError } = useQuery({
+    queryKey,
+    queryFn: () => getPrivacySettings(companyId),
+    enabled: !!companyId, // Only fetch if we have a company ID
+  });
+
+  const mutation = useMutation({
+    mutationFn: (partial: Partial<PrivacySettings>) => updatePrivacySettings(partial, companyId),
+    onMutate: async (newSettings) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot the previous value
+      const previousSettings = queryClient.getQueryData<PrivacySettings>(queryKey);
+
+      // Optimistically update to the new value
+      if (previousSettings) {
+        queryClient.setQueryData<PrivacySettings>(queryKey, {
+          ...previousSettings,
+          ...newSettings,
+        });
+      }
+
+      return { previousSettings };
+    },
+    onError: (err, newSettings, context) => {
+      // Return to previous state if error
+      if (context?.previousSettings) {
+        queryClient.setQueryData(queryKey, context.previousSettings);
+      }
+      toast.error("Failed to update privacy settings");
+    },
+    onSettled: () => {
+      // Sync with server once mutation has finished
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const updateSettings = useCallback(
+    (partial: Partial<PrivacySettings>) => {
+      mutation.mutate(partial);
+    },
+    [mutation]
+  );
 
   return {
     settings,
     isLoading,
     isError,
     updateSettings,
-    isUpdating,
+    isUpdating: mutation.isPending,
   };
 }

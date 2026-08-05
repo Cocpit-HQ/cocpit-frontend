@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { useCompanyPrivacySettings, CompanyPrivacySettings } from '../../hooks/useCompanyPrivacySettings';
+import { useCompanyPrivacySettings } from '../../hooks/useCompanyPrivacySettings';
+import { PrivacySettings } from '@/services/api/settings';
 
 export function CompanyPrivacySettingsPage() {
   const { settings: privacy, isLoading, updateSettings } = useCompanyPrivacySettings();
@@ -42,7 +43,7 @@ export function CompanyPrivacySettingsPage() {
     description?: string;
     options: { id: string; label: string }[];
     value: string;
-    settingKey: keyof CompanyPrivacySettings;
+    settingKey: keyof PrivacySettings;
   }) => (
     <div className="flex flex-col w-full gap-2">
       <div className="flex flex-col w-full mb-2">
@@ -134,8 +135,8 @@ export function CompanyPrivacySettingsPage() {
             description="Control who is allowed to tag you across COCPIT"
             options={[
               { id: 'everyone', label: 'Everyone' },
-              { id: 'followers', label: 'Followers only' },
-              { id: 'noone', label: 'No One' }
+              { id: 'followers_only', label: 'Followers only' },
+              { id: 'no_one', label: 'No One' }
             ]}
             value={privacy?.tagPermission || 'everyone'}
             settingKey="tagPermission"
@@ -149,8 +150,8 @@ export function CompanyPrivacySettingsPage() {
             description="Control who is allowed to see your following"
             options={[
               { id: 'everyone', label: 'Everyone' },
-              { id: 'followers', label: 'Followers only' },
-              { id: 'noone', label: 'No One' }
+              { id: 'followers_only', label: 'Followers only' },
+              { id: 'no_one', label: 'No One' }
             ]}
             value={privacy?.followingVisibility || 'everyone'}
             settingKey="followingVisibility"
@@ -164,8 +165,8 @@ export function CompanyPrivacySettingsPage() {
             description="Control who is allowed to see your followers"
             options={[
               { id: 'everyone', label: 'Everyone' },
-              { id: 'followers', label: 'Followers only' },
-              { id: 'noone', label: 'No One' }
+              { id: 'followers_only', label: 'Followers only' },
+              { id: 'no_one', label: 'No One' }
             ]}
             value={privacy?.followersVisibility || 'everyone'}
             settingKey="followersVisibility"
@@ -179,8 +180,8 @@ export function CompanyPrivacySettingsPage() {
             description="Control who can send direct messages to your company"
             options={[
               { id: 'everyone', label: 'Everyone' },
-              { id: 'followers', label: 'Followers only' },
-              { id: 'noone', label: 'No one' }
+              { id: 'followers_only', label: 'Followers only' },
+              { id: 'no_one', label: 'No one' }
             ]}
             value={privacy?.messagePermission || 'everyone'}
             settingKey="messagePermission"

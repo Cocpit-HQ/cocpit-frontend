@@ -9,7 +9,7 @@ export function usePrivacySettings() {
 
   const query = useQuery({
     queryKey: PRIVACY_SETTINGS_QUERY_KEY,
-    queryFn: getPrivacySettings,
+    queryFn: () => getPrivacySettings(),
   });
 
   const mutation = useMutation({

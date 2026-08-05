@@ -115,6 +115,11 @@ export const companyService = {
         }));
     },
 
+    async getAccountSettings(companyId: string) {
+        const res = await api.get(`/organizations/${companyId}/account-settings`);
+        return res.data;
+    },
+
     async updateCompany(companyId: string, data: Partial<Company>) {
         const res = await api.put(`/organizations/${companyId}`, data);
         return res.data;

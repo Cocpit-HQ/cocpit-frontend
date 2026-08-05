@@ -10,9 +10,14 @@ import { DeleteCompanyModal } from '../components/modals/DeleteCompanyModal';
 import { TransferOwnershipModal } from '../components/modals/TransferOwnershipModal';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
+import { usePathname } from 'next/navigation';
+
 export function CompanyAccountSettingsPage() {
   const { data, isLoading, entityLabel } = useCompanyAccountSettings();
   const { activeProfile } = useActiveProfile();
+  const pathname = usePathname() || '/settings/account';
+  const match = pathname.match(/^(.*\/settings)/);
+  const basePath = match ? match[1] : '/settings';
   
   const activeModal = useSettingsStore(state => state.companyAccount.activeModal);
   const setModal = useSettingsStore(state => state.setCompanyAccountModal);
@@ -44,14 +49,14 @@ export function CompanyAccountSettingsPage() {
         <div className="flex flex-col items-start w-full">
           {/* Email */}
           <div className="flex flex-row justify-between items-center py-3 w-full group">
-            <Link href={`/settings/account/email`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
+            <Link href={`${basePath}/account-email`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
               <Mail className="w-6 h-6 text-black dark:text-company-text" />
               <div className="flex flex-col justify-center items-start">
                 <h3 className="flex items-center h-[24px] font-normal text-[16px] text-black dark:text-company-text leading-[24px]">Manage email</h3>
                 <p className="text-[14px] text-[#6B7280] dark:text-company-secondary leading-[20px]">Current: {data.email}</p>
               </div>
             </Link>
-            <Link href={`/settings/account/email`}>
+            <Link href={`${basePath}/account-email`}>
               <button className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[169px] h-[40px] bg-white dark:bg-company-card border border-[#1A73E8] dark:border-company-primary rounded-[24px] transition-colors">
                 <span className="whitespace-nowrap text-[14px] text-[#1A73E8] dark:text-company-primary leading-[20px] text-center">Change email</span>
               </button>
@@ -60,7 +65,7 @@ export function CompanyAccountSettingsPage() {
 
           {/* Phone */}
           <div className="flex flex-row justify-between items-center py-3 w-full border-t border-[#DADADA] dark:border-company-border group">
-            <Link href={`/settings/account/phone`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
+            <Link href={`${basePath}/account-phone`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
               <Phone className="w-6 h-6 text-black dark:text-company-text" />
               <div className="flex flex-col justify-center items-start">
                 <h3 className="flex items-center h-[24px] font-normal text-[16px] text-black dark:text-company-text leading-[24px]">Manage phone number</h3>
@@ -69,7 +74,7 @@ export function CompanyAccountSettingsPage() {
                 </p>
               </div>
             </Link>
-            <Link href={`/settings/account/phone`}>
+            <Link href={`${basePath}/account-phone`}>
               <button className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[169px] h-[40px] bg-white dark:bg-company-card border border-[#1A73E8] dark:border-company-primary rounded-[24px] transition-colors">
                 <span className="whitespace-nowrap text-[14px] text-[#1A73E8] dark:text-company-primary leading-[20px] text-center">
                   {data.phone ? "Change number" : "Add phone number"}

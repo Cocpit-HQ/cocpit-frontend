@@ -1,55 +1,63 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getNotificationPreferences, updateNotificationPreferences, NotificationPreferences } from "@/services/api/settings";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
-export interface CompanyNotificationSettings {
-  all: boolean;
-  posts: boolean;
-  jobs: boolean;
-  messages: boolean;
-  messageChats: boolean;
-  messageJobs: boolean;
-  emails: boolean;
-}
-
-const MOCK_SETTINGS: CompanyNotificationSettings = {
-  all: true,
-  posts: true,
-  jobs: true,
-  messages: true,
-  messageChats: true,
-  messageJobs: true,
-  emails: true,
-};
-
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/**
- * Mock hook for company notification settings.
- * TODO: Replace mock with real API calls when backend is ready:
- *   GET  /organizations/:orgId/notification-preferences
- *   PUT  /organizations/:orgId/notification-preferences
- */
 export function useCompanyNotificationSettings() {
-  const [settings, setSettings] = useState<CompanyNotificationSettings>(MOCK_SETTINGS);
-  const [isLoading] = useState(false);
-  const [isError] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient();
+  const { activeProfile, isCompany } = useActiveProfile();
+  
+  const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+  
+  const queryKey = ["companyNotificationSettings", companyId];
 
-  const updateSettings = useCallback(async (newSettings: CompanyNotificationSettings) => {
-    setIsUpdating(true);
-    // Optimistic update
-    setSettings(newSettings);
-    await delay(300);
-    setIsUpdating(false);
-  }, []);
+  const { data: settings, isLoading, isError } = useQuery({
+    queryKey,
+    queryFn: () => getNotificationPreferences(companyId),
+    enabled: !!companyId,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (partial: Partial<NotificationPreferences>) => updateNotificationPreferences(partial, companyId),
+    onMutate: async (newSettings) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousSettings = queryClient.getQueryData<NotificationPreferences>(queryKey);
+
+      if (previousSettings) {
+        queryClient.setQueryData<NotificationPreferences>(queryKey, {
+          ...previousSettings,
+          ...newSettings,
+        });
+      }
+
+      return { previousSettings };
+    },
+    onError: (err, newSettings, context) => {
+      if (context?.previousSettings) {
+        queryClient.setQueryData(queryKey, context.previousSettings);
+      }
+      toast.error("Failed to update notification settings");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const updateSettings = useCallback(
+    (partial: Partial<NotificationPreferences>) => {
+      mutation.mutate(partial);
+    },
+    [mutation]
+  );
 
   return {
     settings,
     isLoading,
     isError,
     updateSettings,
-    isUpdating,
+    isUpdating: mutation.isPending,
   };
 }

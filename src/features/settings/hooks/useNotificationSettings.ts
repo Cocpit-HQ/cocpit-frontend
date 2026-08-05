@@ -9,7 +9,7 @@ export function useNotificationSettings() {
 
   const query = useQuery({
     queryKey: NOTIFICATION_SETTINGS_QUERY_KEY,
-    queryFn: getNotificationPreferences,
+    queryFn: () => getNotificationPreferences(),
   });
 
   const mutation = useMutation({
