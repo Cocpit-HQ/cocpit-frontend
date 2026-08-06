@@ -13,7 +13,7 @@ import { useSocket } from '@/context/SocketContext';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export function SupportSettingsPage() {
-  const { isCompany } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
   const view = useSettingsStore((state) => state.support.view);
   const setView = useSettingsStore((state) => state.setSupportView);
   const [rating, setRating] = useState<number>(1);
@@ -27,27 +27,41 @@ export function SupportSettingsPage() {
 
   const { socket } = useSocket();
 
-  // Fetch version and per-user feedback status on mount
+  // Fetch version and actor-scoped feedback status whenever active actor context changes
   useEffect(() => {
-    api.get('/settings/support/version')
+    setVersionLoading(true);
+    const currentActorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+    const currentActorId = activeProfile?.id || '';
+
+    api.get('/settings/support/version', {
+      headers: {
+        'x-actor-type': currentActorType,
+        'x-actor-id': currentActorId,
+      }
+    })
       .then((res) => {
         setAppVersion(res.data.version || '');
         setHasSubmittedFeedback(res.data.has_submitted_feedback || false);
       })
       .catch(() => {
         setAppVersion('');
+        setHasSubmittedFeedback(false);
       })
       .finally(() => setVersionLoading(false));
-  }, []);
+  }, [activeProfile?.type, activeProfile?.id]);
 
   // Listen for real-time FEEDBACK_SUBMITTED event from backend
-  // Works across all connected platforms (web tabs, mobile, etc.)
   useEffect(() => {
     if (!socket) return;
 
-    const handleFeedbackSubmitted = (data: { app_version: string; has_submitted_feedback: boolean }) => {
+    const handleFeedbackSubmitted = (data: { app_version: string; actor_type?: string; actor_id?: string; has_submitted_feedback: boolean }) => {
+      const currentActorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+      const currentActorId = activeProfile?.id;
+
       if (data.app_version === appVersion && data.has_submitted_feedback) {
-        setHasSubmittedFeedback(true);
+        if (data.actor_type === currentActorType && String(data.actor_id) === String(currentActorId)) {
+          setHasSubmittedFeedback(true);
+        }
       }
     };
 
@@ -55,15 +69,27 @@ export function SupportSettingsPage() {
     return () => {
       socket.off('FEEDBACK_SUBMITTED', handleFeedbackSubmitted);
     };
-  }, [socket, appVersion]);
+  }, [socket, appVersion, activeProfile?.type, activeProfile?.id]);
 
   const handleSubmitFeedback = async () => {
     if (rating < 1 || rating > 5) return;
     if (!appVersion) return;
 
     setIsSubmitting(true);
+    const currentActorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+    const currentActorId = activeProfile?.id || '';
+
     try {
-      await submitFeedback({ rating, comment, app_version: appVersion });
+      await api.post('/settings/support/feedback', {
+        rating,
+        comment,
+        app_version: appVersion
+      }, {
+        headers: {
+          'x-actor-type': currentActorType,
+          'x-actor-id': currentActorId,
+        }
+      });
       toast.success("Feedback submitted successfully!");
       setHasSubmittedFeedback(true);
       setComment("");
@@ -140,49 +166,52 @@ export function SupportSettingsPage() {
 
         </div>
 
-        {/* Share feedback card — hidden if user already submitted for this version */}
-        {!hasSubmittedFeedback && (
-        <div className="flex flex-col justify-center p-4 gap-4 w-full border border-[#E0E7FF] rounded-[24px] mt-4">
-          <div className="flex flex-col gap-1 w-full">
-            <h3 className="text-[16px] font-normal text-black dark:text-foreground leading-[24px]">Share feedback</h3>
-            <p className="text-[16px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[24px]">How is your experience with Cocpit?</p>
-          </div>
-          
-          <div className="flex flex-row items-center gap-2 w-full">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star 
-                key={star}
-                onClick={() => setRating(star)}
-                className={`w-6 h-6 cursor-pointer transition-colors ${rating >= star ? 'text-[#FBBF24] fill-[#FBBF24]' : 'text-[#6B7280] dark:text-muted-foreground'}`}
-                strokeWidth={1.5}
-              />
-            ))}
-          </div>
+        {/* Share feedback card — skeleton placeholder while checking, hidden if already submitted */}
+        {versionLoading ? (
+          <div className="w-full h-[180px] bg-gray-100 dark:bg-slate-800/50 rounded-[24px] mt-4 animate-pulse" />
+        ) : !hasSubmittedFeedback ? (
+          <div className="flex flex-col justify-center p-4 gap-4 w-full border border-[#E0E7FF] dark:border-slate-800 rounded-[24px] mt-4 transition-all">
+            <div className="flex flex-col gap-1 w-full">
+              <h3 className="text-[16px] font-normal text-black dark:text-foreground leading-[24px]">Share feedback</h3>
+              <p className="text-[16px] font-normal text-[#6B7280] dark:text-muted-foreground leading-[24px]">How is your experience with Cocpit?</p>
+            </div>
+            
+            <div className="flex flex-row items-center gap-2 w-full">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star 
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`w-6 h-6 cursor-pointer transition-colors ${rating >= star ? 'text-[#FBBF24] fill-[#FBBF24]' : 'text-[#6B7280] dark:text-muted-foreground'}`}
+                  strokeWidth={1.5}
+                />
+              ))}
+            </div>
 
-          <textarea 
-            className={`w-full h-[72px] border border-[#DADADA] dark:border-border rounded-[12px] p-3 text-[16px] text-black dark:text-foreground font-poppins focus:outline-none ${isCompany ? 'focus:border-[#1A73E8]' : 'focus:border-[#6366F1]'} resize-none placeholder-[#6B7280]`}
-            placeholder="Tell us what we can improve..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
+            <textarea 
+              className={`w-full h-[72px] border border-[#DADADA] dark:border-border bg-transparent rounded-[12px] p-3 text-[16px] text-black dark:text-foreground font-poppins focus:outline-none ${isCompany ? 'focus:border-[#1A73E8]' : 'focus:border-[#6366F1]'} resize-none placeholder-[#6B7280]`}
+              placeholder="Tell us what we can improve..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
 
-          <div className="flex flex-row justify-end items-center w-full mt-2">
-            <button 
-              className={`flex flex-row justify-center items-center py-2 px-4 min-w-[140px] h-[40px] ${isCompany ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#4F46E5]'} rounded-[24px] transition-colors disabled:opacity-50`}
-              onClick={handleSubmitFeedback}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 text-white animate-spin" />
-              ) : (
-                <span className="text-[16px] font-medium text-white leading-[24px]">Send Feedback</span>
-              )}
-            </button>
+            <div className="flex flex-row justify-end items-center w-full mt-2">
+              <button 
+                className={`flex flex-row justify-center items-center py-2 px-4 min-w-[140px] h-[40px] ${isCompany ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#4F46E5]'} rounded-[24px] transition-colors disabled:opacity-50`}
+                onClick={handleSubmitFeedback}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                ) : (
+                  <span className="text-[16px] font-medium text-white leading-[24px]">Send Feedback</span>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-        )}
+        ) : null}
 
       </div>
     </div>
   );
 }
+
