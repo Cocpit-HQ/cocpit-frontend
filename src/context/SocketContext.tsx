@@ -49,7 +49,7 @@ const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
-  const { activeProfile, refreshProfile } = useActiveProfile();
+  const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -501,6 +501,34 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATION_SETTINGS_QUERY_KEY });
     };
 
+    const handleOrgStatusChanged = (payload: any) => {
+      console.log("[Socket] org_status_changed event received:", payload);
+      const targetOrgId = payload?.orgId || payload?.companyId;
+      const currentProfile = activeProfileRef.current;
+
+      // If current active actor is this company and it's being deleted or deactivated, auto-switch back to USER context
+      if (
+        currentProfile &&
+        currentProfile.type === 'COMPANY' &&
+        targetOrgId &&
+        String(currentProfile.id) === String(targetOrgId) &&
+        (payload.status === 'deleted' || payload.status === 'deactivated' || payload.action === 'deleted')
+      ) {
+        if (switchProfile && session?.user?.id) {
+          switchProfile('USER', session.user.id);
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('cocpit:refresh-actor-context'));
+      }
+      if (refreshProfile) {
+        refreshProfile();
+      }
+      queryClient.invalidateQueries({ queryKey: ['user-companies'] });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -509,6 +537,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('isTyping', handleTyping);
     newSocket.on('stoppedTyping', handleStopTyping);
     newSocket.on('member_sync', handleMemberSync);
+    newSocket.on('org_status_changed', handleOrgStatusChanged);
+    newSocket.on('org_deleted', handleOrgStatusChanged);
     newSocket.on('user_blocked', handleBlock);
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
@@ -516,6 +546,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     socketRef.current = newSocket;
+
+
     queueMicrotask(() => {
       setSocket(newSocket);
     });

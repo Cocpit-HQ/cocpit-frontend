@@ -239,6 +239,21 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         }
     };
 
+    useEffect(() => {
+        const handleRefreshEvent = () => {
+            void refreshCompanies();
+        };
+        if (typeof window !== "undefined") {
+            window.addEventListener("cocpit:refresh-actor-context", handleRefreshEvent);
+        }
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("cocpit:refresh-actor-context", handleRefreshEvent);
+            }
+        };
+    }, []);
+
+
     const switchProfile = (type: ProfileType, id: string) => {
         const performSwitch = async () => {
             try {

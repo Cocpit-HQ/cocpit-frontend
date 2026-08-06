@@ -424,4 +424,41 @@ export const companyService = {
         const res = await api.delete(`/organizations/${orgId}/parent`);
         return res.data;
     },
+
+    // --- User Settings Organization Management ---
+    async getUserOrganizationsSettings(): Promise<{ owned: any[]; associated: any[] }> {
+        const res = await api.get('/user/organizations');
+        return res.data;
+    },
+
+    async sendReactivateOrgOTP(orgId: string): Promise<{ success: boolean; message: string; email_masked: string; expires_in_seconds: number; cooldown_seconds: number }> {
+        const res = await api.post(`/organizations/${orgId}/reactivate/send-otp`);
+        return res.data;
+    },
+
+    async reactivateOrgWithOTP(orgId: string, otp: string) {
+        const res = await api.post(`/organizations/${orgId}/reactivate/verify-otp`, { otp });
+        return res.data;
+    },
+
+    async sendRecoverOrgOTP(orgId: string): Promise<{ success: boolean; message: string; email_masked: string; expires_in_seconds: number; cooldown_seconds: number }> {
+        const res = await api.post(`/organizations/${orgId}/recover/send-otp`);
+        return res.data;
+    },
+
+    async recoverOrgWithOTP(orgId: string, otp: string) {
+        const res = await api.post(`/organizations/${orgId}/recover/verify-otp`, { otp });
+        return res.data;
+    },
+
+    async leaveOrg(orgId: string) {
+        const res = await api.delete(`/organizations/${orgId}/leave`);
+        return res.data;
+    },
+
+    async switchContext(orgId: string) {
+        const res = await api.post(`/organizations/${orgId}/switch-context`);
+        return res.data;
+    },
 };
+
