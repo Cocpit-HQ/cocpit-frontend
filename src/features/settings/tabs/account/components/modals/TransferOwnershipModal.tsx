@@ -5,6 +5,7 @@ import { X, Search, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { companyService } from '@/services/organization.service';
 import { toast } from 'react-hot-toast';
+import { useSession } from 'next-auth/react';
 
 interface MemberInfo {
   user_id: string;
@@ -34,6 +35,9 @@ export function TransferOwnershipModal({
   companyId,
   companyName = 'Organization'
 }: TransferOwnershipModalProps) {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
+
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -71,11 +75,17 @@ export function TransferOwnershipModal({
         page: targetPage,
         limit: PAGE_LIMIT,
         exclude_owner: true,
+        exclude_self: true,
         status: 'ACTIVE',
         search: searchQuery.trim()
       });
 
-      const newMembers: MemberInfo[] = res.data || [];
+      // Client-side safety: also filter out the logged-in user
+      const rawMembers: MemberInfo[] = res.data || [];
+      const newMembers = currentUserId
+        ? rawMembers.filter((m) => m.user_id !== currentUserId)
+        : rawMembers;
+
       const totalPages = res.meta?.total_pages || 1;
 
       if (isReset) {

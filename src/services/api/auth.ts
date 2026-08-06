@@ -13,11 +13,11 @@ export interface ActorContextResponse {
     name?: string;
     avatar_url?: string;
     entity_type?: "COMPANY" | "INSTITUTION";
-    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null;
+    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null;
   };
   organizations: Array<Company & {
     role?: string;
-    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null;
+    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null;
   }>;
   source: "default_user" | "cookie" | "explicit_user" | "explicit_organization";
 }

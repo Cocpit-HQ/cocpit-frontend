@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Mail, Phone } from 'lucide-react';
 import { useCompanyAccountSettings } from '../../../hooks/useCompanyAccountSettings';
@@ -9,22 +9,67 @@ import { DeactivateCompanyModal } from '../components/modals/DeactivateCompanyMo
 import { DeleteCompanyModal } from '../components/modals/DeleteCompanyModal';
 import { TransferOwnershipModal } from '../components/modals/TransferOwnershipModal';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useSocket } from '@/context/SocketContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { usePathname } from 'next/navigation';
 
 export function CompanyAccountSettingsPage() {
   const { data, isLoading, entityLabel } = useCompanyAccountSettings();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, refreshProfile } = useActiveProfile();
+  const { socket } = useSocket();
+  const queryClient = useQueryClient();
   const pathname = usePathname() || '/settings/account';
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';
-  
+
   const activeModal = useSettingsStore(state => state.companyAccount.activeModal);
   const setModal = useSettingsStore(state => state.setCompanyAccountModal);
 
   // Transfer ownership needs company ID
   const companyId = activeProfile?.id || '';
   const companyName = activeProfile?.name || 'Company';
+
+  // Owner detection: is_owner comes from actor context (created_by === userId check in backend)
+  const roleData = activeProfile?.viewer_role_data;
+  const [isOwner, setIsOwner] = useState<boolean>(roleData?.is_owner === true);
+
+  // Keep isOwner in sync when activeProfile changes (e.g. after refreshProfile)
+  useEffect(() => {
+    setIsOwner(roleData?.is_owner === true);
+  }, [roleData?.is_owner]);
+
+  // Listen for real-time ownership transfer events — disable owner actions immediately
+  useEffect(() => {
+    if (!socket || !companyId) return;
+
+    const handleOwnershipTransferred = (payload: { orgId: string; previousOwnerId: string; newOwnerId: string }) => {
+      if (payload.orgId !== companyId) return;
+      // Current user is no longer the owner — disable owner-only UI immediately
+      setIsOwner(false);
+      if (refreshProfile) refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ['companyAccountSettings', companyId] });
+    };
+
+    const handleOrgListUpdated = (payload: { orgId: string; action: string }) => {
+      if (payload.orgId !== companyId) return;
+      if (payload.action === 'demoted_to_admin') {
+        setIsOwner(false);
+      } else if (payload.action === 'promoted_to_owner') {
+        setIsOwner(true);
+      }
+      if (refreshProfile) refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ['companyAccountSettings', companyId] });
+    };
+
+    socket.on('org_ownership_transferred', handleOwnershipTransferred);
+    socket.on('org_list_updated', handleOrgListUpdated);
+
+    return () => {
+      socket.off('org_ownership_transferred', handleOwnershipTransferred);
+      socket.off('org_list_updated', handleOrgListUpdated);
+    };
+  }, [socket, companyId, refreshProfile, queryClient]);
 
   if (isLoading) {
     return (
@@ -85,6 +130,8 @@ export function CompanyAccountSettingsPage() {
         </div>
       </div>
 
+      {/* ──── OWNER-ONLY SECTION ──── */}
+
       {/* Deactivate */}
       <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full">
         <div className="flex flex-row justify-between items-center w-full">
@@ -94,11 +141,17 @@ export function CompanyAccountSettingsPage() {
               Temporarily hide your {entityLabel.toLowerCase()} page. You can reactivate it at any time.
             </p>
           </div>
-          <button 
-            onClick={() => setModal('deactivate')}
-            className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] bg-white dark:bg-company-card border border-[#1A73E8] dark:border-company-primary rounded-[24px] transition-colors hover:bg-blue-50 dark:hover:bg-company-light-primary"
+          <button
+            onClick={() => isOwner && setModal('deactivate')}
+            className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
+              isOwner
+                ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
+                : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed'
+            }`}
           >
-            <span className="text-[14px] text-[#1A73E8] dark:text-company-primary leading-[20px] text-center">{data.isDeactivated ? 'Reactivate' : 'Deactivate'}</span>
+            <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
+              {data.isDeactivated ? 'Reactivate' : 'Deactivate'}
+            </span>
           </button>
         </div>
       </div>
@@ -112,11 +165,17 @@ export function CompanyAccountSettingsPage() {
               Transfer ownership of this {entityLabel.toLowerCase()} page to another administrator.
             </p>
           </div>
-          <button 
-            onClick={() => setModal('transfer')}
-            className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] bg-white dark:bg-company-card border border-[#1A73E8] dark:border-company-primary rounded-[24px] transition-colors hover:bg-blue-50 dark:hover:bg-company-light-primary"
+          <button
+            onClick={() => isOwner && setModal('transfer')}
+            className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
+              isOwner
+                ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
+                : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed'
+            }`}
           >
-            <span className="text-[14px] text-[#1A73E8] dark:text-company-primary leading-[20px] text-center">Transfer</span>
+            <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
+              Transfer
+            </span>
           </button>
         </div>
       </div>
@@ -130,31 +189,42 @@ export function CompanyAccountSettingsPage() {
               Permanently delete your {entityLabel.toLowerCase()} page and all associated data.
             </p>
           </div>
-          <button 
-            onClick={() => setModal('delete')}
-            className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] bg-[#EF4444] dark:bg-company-error border border-white dark:border-company-border rounded-[24px] transition-colors hover:opacity-90"
+          <button
+            onClick={() => isOwner && setModal('delete')}
+            className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
+              isOwner
+                ? 'bg-[#EF4444] dark:bg-company-error border-white dark:border-company-border hover:opacity-90 cursor-pointer'
+                : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed'
+            }`}
           >
-            <span className="text-[14px] text-white leading-[20px] text-center">Delete</span>
+            <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-white' : 'text-[#9CA3AF]'}`}>
+              Delete
+            </span>
           </button>
         </div>
       </div>
 
       {/* Modals */}
-      <DeactivateCompanyModal 
-        isOpen={activeModal === 'deactivate'} 
-        onClose={() => setModal(null)} 
+      <DeactivateCompanyModal
+        isOpen={activeModal === 'deactivate'}
+        onClose={() => setModal(null)}
       />
-      
-      <TransferOwnershipModal 
-        isOpen={activeModal === 'transfer'} 
-        onClose={() => setModal(null)} 
+
+      <TransferOwnershipModal
+        isOpen={activeModal === 'transfer'}
+        onClose={() => setModal(null)}
         companyId={companyId}
         companyName={companyName}
+        onTransferSuccess={() => {
+          // Immediately disable owner actions on successful transfer
+          setIsOwner(false);
+          setModal(null);
+        }}
       />
-      
-      <DeleteCompanyModal 
-        isOpen={activeModal === 'delete'} 
-        onClose={() => setModal(null)} 
+
+      <DeleteCompanyModal
+        isOpen={activeModal === 'delete'}
+        onClose={() => setModal(null)}
       />
     </div>
   );

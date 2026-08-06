@@ -19,7 +19,7 @@ interface ActiveProfile {
     name: string;
     slug?: string;
     avatar_url?: string;
-    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null;
+    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null;
 }
 
 interface ActiveProfileContextType {
@@ -47,7 +47,7 @@ const createUserProfile = (user: User): ActiveProfile => ({
     avatar_url: user.image || undefined,
 });
 
-const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number } | null }): ActiveProfile => ({
+const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null }): ActiveProfile => ({
     type: "COMPANY",
     entityType: company.entity_type as "COMPANY" | "INSTITUTION",
     id: company.org_id || company.company_id,

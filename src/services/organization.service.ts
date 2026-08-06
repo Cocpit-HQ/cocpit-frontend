@@ -26,7 +26,7 @@ export interface Company {
     verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED';
     is_deleted: boolean;
     created_at: string;
-    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null; // Populated by backend if authenticated
+    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null; // Populated by backend if authenticated
     member_count?: number;
     parent_org?: { org_id: string; name: string; slug: string; logo_url?: string; entity_type: string } | null;
     children_count?: number;
@@ -130,7 +130,7 @@ export const companyService = {
         return res.data;
     },
 
-    async getMembers(companyId: string, params: { page?: number; limit?: number; search?: string; status?: string; exclude_owner?: boolean } = {}): Promise<{ data: any[], meta: any }> {
+    async getMembers(companyId: string, params: { page?: number; limit?: number; search?: string; status?: string; exclude_owner?: boolean; exclude_self?: boolean } = {}): Promise<{ data: any[], meta: any }> {
         const res = await api.get(`/organizations/${companyId}/teams/members`, {
             params,
             headers: {
@@ -163,6 +163,26 @@ export const companyService = {
 
     async deleteCompany(companyId: string, password?: string) {
         const res = await api.delete(`/organizations/${companyId}`, { data: { password } });
+        return res.data;
+    },
+
+    async sendDeleteOrgOTP(companyId: string): Promise<{ success: boolean; message: string; email_masked: string; expires_in_seconds: number; cooldown_seconds: number }> {
+        const res = await api.post(`/organizations/${companyId}/delete/send-otp`, {}, {
+            headers: {
+                'x-actor-type': 'ORGANIZATION',
+                'x-actor-id': companyId,
+            }
+        });
+        return res.data;
+    },
+
+    async verifyAndDeleteCompany(companyId: string, otp: string) {
+        const res = await api.post(`/organizations/${companyId}/delete/verify-otp`, { otp }, {
+            headers: {
+                'x-actor-type': 'ORGANIZATION',
+                'x-actor-id': companyId,
+            }
+        });
         return res.data;
     },
 
