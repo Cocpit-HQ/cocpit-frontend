@@ -12,7 +12,8 @@ import {
   SupportSettingsPage,
   ManagePasswordPage,
   ManageEmailPage,
-  ManagePhonePage
+  ManagePhonePage,
+  OrganizationsSettingsPage
 } from '@/features/settings';
 
 export default async function SettingsTabPage({ params }: { params: Promise<{ tab: string }> }) {
@@ -40,6 +41,8 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
       return <SupportSettingsPage />;
     case 'legal':
       return <LegalSettingsPage />;
+    case 'organizations':
+      return <OrganizationsSettingsPage />;
     // Handle sub-routes manually if they are hit as [tab]
     case 'account-password':
       return <ManagePasswordPage />;

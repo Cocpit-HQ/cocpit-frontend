@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { 
-  Bell
+  Bell,
+  Building2
 } from 'lucide-react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -17,6 +18,7 @@ const userSidebarItems = [
   { id: 'saved', label: 'Saved posts', icon: (props: any) => <Icon icon="solar:bookmark-linear" width={24} height={24} {...props} /> },
   { id: 'activity', label: 'Your activity', icon: (props: any) => <Icon icon="hugeicons:activity-03" width={24} height={24} {...props} /> },
   { id: 'reports', label: 'Account status', icon: (props: any) => <Icon icon="si:info-line" width={24} height={24} {...props} /> },
+  { id: 'organizations', label: 'Organizations', icon: (props: any) => <Building2 width={24} height={24} {...props} /> },
   { id: 'blocked', label: 'Blocked accounts', icon: (props: any) => <Icon icon="ic:baseline-block" width={24} height={24} {...props} /> },
   { id: 'support', label: 'Help & Support', icon: (props: any) => <Icon icon="streamline:customer-support-1" width={24} height={24} {...props} /> },
   { id: 'legal', label: 'Legal & Privacy', icon: (props: any) => <Icon icon="hugeicons:legal-01" width={24} height={24} {...props} /> },

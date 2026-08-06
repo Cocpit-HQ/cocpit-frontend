@@ -9,6 +9,7 @@ export { PrivacySettingsPage } from './tabs/privacy/PrivacySettingsPage';
 export { ReportsSettingsPage } from './tabs/reports/ReportsSettingsPage';
 export { SavedSettingsPage } from './tabs/saved/SavedSettingsPage';
 export { SupportSettingsPage } from './tabs/support/SupportSettingsPage';
+export { OrganizationsSettingsPage } from './tabs/organizations/OrganizationsSettingsPage';
 
 // Company variants
 export { CompanyAccountSettingsPage } from './tabs/account/pages/CompanyAccountSettingsPage';
