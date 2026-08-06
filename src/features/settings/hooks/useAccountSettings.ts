@@ -7,6 +7,7 @@ interface AccountData {
   recoveryEmail?: string;
   phone?: string | null;
   hasCompanyAccount?: boolean;
+  isDeactivated?: boolean;
 }
 
 export function useAccountSettings() {
@@ -152,6 +153,15 @@ export function useDeleteAccount() {
     mutationFn: async (credential: { password?: string; idToken?: string; companyIdsToDelete?: string[] }) => {
       const { deleteAccount } = await import('../../../services/api/user');
       return deleteAccount(credential);
+    },
+  });
+}
+
+export function useDeactivateAccount() {
+  return useMutation({
+    mutationFn: async (data: { password?: string }) => {
+      const response = await api.patch('/user/account/deactivate', data);
+      return response.data;
     },
   });
 }

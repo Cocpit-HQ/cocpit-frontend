@@ -56,7 +56,7 @@ import { create } from 'zustand';
 // ═══════════════════════════════════════════════════════════════════════
 
 // ─── Account tab (`AccountSettingsPage`) ────────────────────────────────
-export type AccountModal = 'logout' | 'delete' | null;
+export type AccountModal = 'logout' | 'delete' | 'deactivate' | null;
 
 // ─── Company Account tab (`CompanyAccountSettingsPage`) ─────────────
 export type CompanyAccountModal = 'deactivate' | 'transfer' | 'delete' | null;

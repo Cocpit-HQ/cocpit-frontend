@@ -57,7 +57,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
     deleteAccountMutation.mutate({ password, companyIdsToDelete: checkedCompanyIds }, {
       onSuccess: () => {
         onClose();
-        router.push('/login');
+        router.push('/');
       },
       onError: (err: any) => {
         setErrorMsg(err?.response?.data?.message || 'Failed to delete account');

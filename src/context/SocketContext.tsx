@@ -501,6 +501,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATION_SETTINGS_QUERY_KEY });
     };
 
+    const handleOrganizationDeactivated = (payload: { orgId: string }) => {
+      console.log("[Socket] ORGANIZATION_DEACTIVATED received:", payload);
+      const currentProfile = activeProfileRef.current;
+      if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
+        if (session?.user) {
+          toast({
+            title: "Organization Deactivated",
+            description: "The organization you were acting as has been deactivated.",
+            variant: "destructive",
+          });
+          switchProfile('USER', (session.user as any).id || "user");
+        }
+      }
+    };
+
     const handleOrgStatusChanged = (payload: any) => {
       console.log("[Socket] org_status_changed event received:", payload);
       const targetOrgId = payload?.orgId || payload?.companyId;
@@ -545,6 +560,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('unblock_confirmed', handleUnblock);
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
+    newSocket.on('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
     socketRef.current = newSocket;
 
 
@@ -576,11 +592,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('unblock_confirmed', handleUnblock);
       newSocket.off('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
       newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
+      newSocket.off('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
       newSocket.off('member_sync', handleMemberSync);
       newSocket.disconnect();
       setTypingConversations({});
     };
-  }, [session?.user?.accessToken, session?.user?.error, toast, router, queryClient, refreshProfile]);
+  }, [session?.user?.accessToken, session?.user?.error, session?.user?.id, toast, router, queryClient, refreshProfile, switchProfile]);
 
   useEffect(() => {
     if (!socketRef.current) return;

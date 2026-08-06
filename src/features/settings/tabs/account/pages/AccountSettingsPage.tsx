@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { KeyRound, Mail, Phone, LogOut } from 'lucide-react';
 import { LogoutModal } from '../components/modals/LogoutModal';
 import { DeleteAccountModal } from '../components/modals/DeleteAccountModal';
+import { DeactivateAccountModal } from '../components/modals/DeactivateAccountModal';
 import { useAccountSettings } from '../../../hooks/useAccountSettings';
 import { useSettingsStore } from '@/store/settings.store';
 
@@ -115,6 +116,24 @@ export function AccountSettingsPage() {
         </div>
       </div>
 
+      {/* Deactivate Account */}
+      <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full border-t border-[#DADADA]">
+        <div className="flex flex-row justify-between items-center w-full">
+          <div className="flex flex-col justify-center items-start max-w-[435px]">
+            <h3 className="text-[16px] text-black leading-[24px]">Deactivate account</h3>
+            <p className="text-[14px] text-[#6B7280] leading-[20px]">
+              Temporarily hide your profile, posts, and comments. You can reactivate by logging back in.
+            </p>
+          </div>
+          <button 
+            onClick={() => setActiveModal('deactivate')}
+            className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[113px] h-[40px] bg-white border border-[#FF6B6B] rounded-[24px] transition-colors hover:bg-red-50"
+          >
+            <span className="text-[14px] text-[#FF6B6B] leading-[20px] text-center">Deactivate</span>
+          </button>
+        </div>
+      </div>
+
       {/* Delete Account */}
       <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full">
         <div className="flex flex-row justify-between items-center w-full">
@@ -140,6 +159,11 @@ export function AccountSettingsPage() {
       />
       <DeleteAccountModal 
         isOpen={activeModal === 'delete'} 
+        onClose={() => setActiveModal(null)}
+        hasCompanyAccount={hasCompanyAccount}
+      />
+      <DeactivateAccountModal 
+        isOpen={activeModal === 'deactivate'} 
         onClose={() => setActiveModal(null)}
         hasCompanyAccount={hasCompanyAccount}
       />

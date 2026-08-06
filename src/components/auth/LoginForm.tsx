@@ -205,6 +205,28 @@ const LoginForm = () => {
         </div>
       )}
 
+      {reason === "deactivated" && (
+        <div style={{
+          background: "#f3f4f6",
+          border: "1px solid #d1d5db",
+          borderRadius: "12px",
+          padding: "16px",
+          display: "flex",
+          gap: "10px",
+          marginBottom: "16px",
+        }}>
+          <AlertCircle size={20} style={{ color: "#4b5563", flexShrink: 0, marginTop: "2px" }} />
+          <div>
+            <p style={{ fontWeight: 600, fontSize: "14px", color: "#374151", margin: 0 }}>
+              Account deactivated
+            </p>
+            <p style={{ fontSize: "13px", color: "#4b5563", margin: "4px 0 0" }}>
+              Your account is currently deactivated. Simply log in with your credentials to automatically reactivate it.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Pending Deletion Banner */}
       {pendingDeletion && (
         <div style={{
