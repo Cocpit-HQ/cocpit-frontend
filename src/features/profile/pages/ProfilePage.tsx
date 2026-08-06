@@ -1433,16 +1433,34 @@ export default function ProfilePage() {
                       setIsAddSkillModalOpen(true);
                       break;
                     case 'add-experience':
-                      setEditingExperiences(null);
-                      setEditingExperienceSelectedId(null);
+                      if (experiences.length > 0) {
+                        // User already has experience — open edit modal for the first (most recent) entry
+                        // so they can fill in the missing field (e.g. description)
+                        setEditingExperiences(experiences[0].experiences);
+                        setEditingExperienceSelectedId(experiences[0].experiences[0]?.experience_id || null);
+                      } else {
+                        // No experience yet — open blank Add modal
+                        setEditingExperiences(null);
+                        setEditingExperienceSelectedId(null);
+                      }
                       setIsAddExperienceModalOpen(true);
                       break;
                     case 'add-project':
-                      setEditingProject(null);
+                      if (projects.length > 0) {
+                        // User already has a project — open edit modal on the first (most recent) one
+                        setEditingProject(projects[0]);
+                      } else {
+                        setEditingProject(null);
+                      }
                       setIsAddProjectModalOpen(true);
                       break;
                     case 'add-education':
-                      setEditingEducation(null);
+                      if (educations.length > 0) {
+                        // User already has education — open edit modal for the first entry
+                        setEditingEducation(educations[0]);
+                      } else {
+                        setEditingEducation(null);
+                      }
                       setIsAddEducationModalOpen(true);
                       break;
                     case 'add-avatar':

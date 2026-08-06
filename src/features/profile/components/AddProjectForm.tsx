@@ -77,7 +77,8 @@ export default function AddProjectForm({
     !!(initialData?.role || initialData?.team_size || initialData?.role_description)
   );
   const [role, setRole] = useState(initialData?.role || "");
-  const [teamSize, setTeamSize] = useState(initialData?.team_size || "");
+  const [teamSize, setTeamSize] = useState(initialData?.team_size ? String(initialData.team_size) : "");
+  const [teamSizeError, setTeamSizeError] = useState("");
   const [roleDescription, setRoleDescription] = useState(initialData?.role_description || "");
 
   // Refs for strengthen chip scroll targets
@@ -196,7 +197,16 @@ export default function AddProjectForm({
     const missingEndDate = !isCurrent && (!endMonth || !endYear);
     const hasDateLogicError = startMonth && startYear && endMonth && endYear && buildDateVal(startMonth, startYear)! >= buildDateVal(endMonth, endYear)!;
     
-    if (!title.trim() || !details.trim() || missingEndDate || hasDateLogicError) return;
+    // Validate team size before submitting
+    if (teamSize.trim() !== "") {
+      const parsed = parseInt(teamSize.trim(), 10);
+      if (isNaN(parsed) || parsed < 1 || String(parsed) !== teamSize.trim()) {
+        setTeamSizeError("Team size must be a positive whole number");
+        return;
+      }
+    }
+
+    if (!title.trim() || !details.trim() || missingEndDate || hasDateLogicError || teamSizeError) return;
 
     setIsSaving(true);
     try {
@@ -648,12 +658,44 @@ export default function AddProjectForm({
                 <div className="flex flex-col" ref={teamRef} id="team-section">
                   <Label className={labelStyles}>Team size</Label>
                   <input
-                    type="text"
+                    type="number"
+                    min={1}
+                    max={9999}
                     value={teamSize}
-                    onChange={(e) => setTeamSize(e.target.value)}
-                    placeholder="e.g. Self, client etc"
-                    className={inputStyles}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      // Allow empty (clearing the field)
+                      if (raw === "") {
+                        setTeamSize("");
+                        setTeamSizeError("");
+                        return;
+                      }
+                      // Only allow positive integers
+                      const parsed = parseInt(raw, 10);
+                      if (isNaN(parsed) || parsed < 1 || parsed > 9999) {
+                        setTeamSizeError("Team size must be a positive whole number (1–9999)");
+                      } else {
+                        setTeamSizeError("");
+                      }
+                      setTeamSize(raw);
+                    }}
+                    onKeyDown={(e) => {
+                      // Block non-numeric keys (allow: digits, Backspace, Delete, Arrow keys, Tab)
+                      if (["e", "E", "+", "-", ".", ","].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    placeholder="e.g. 5"
+                    className={cn(
+                      inputStyles,
+                      teamSizeError && "border-red-400 focus:border-red-400"
+                    )}
                   />
+                  {teamSizeError && (
+                    <span className="mt-1 text-[12px] text-red-500 font-[family-name:var(--font-poppins)]">
+                      {teamSizeError}
+                    </span>
+                  )}
                 </div>
               </div>
 

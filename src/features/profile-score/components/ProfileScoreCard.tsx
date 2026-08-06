@@ -16,7 +16,7 @@ interface ProfileScoreCardProps {
 
 /** Maps a backend missing-category key to a user-friendly action label + action id */
 const ACTION_MAP: Record<string, { label: string; action: string }> = {
-  basic_info: { label: "Add basic info", action: "edit-profile" },
+  basic_info: { label: "Complete basic info", action: "edit-profile" },
   skills: { label: "Add skills", action: "add-skills" },
   experience: { label: "Add experience", action: "add-experience" },
   projects: { label: "Add a project", action: "add-project" },
@@ -42,13 +42,17 @@ export function ProfileScoreCard({ score, breakdown, onActionClick, hasExperienc
 
     for (const [key, category] of categories) {
       if (category.earned < category.max && ACTION_MAP[key]) {
-        if (key === 'experience' && hasExperience) continue;
-        if (key === 'education' && hasEducation) continue;
-        
         let { label, action } = ACTION_MAP[key];
 
-        if (key === 'projects' && hasProjects) {
-          label = "Update project";
+        // Contextual labels: distinguish "Add" (section empty) from "Complete" (section exists but incomplete)
+        if (key === 'experience') {
+          label = hasExperience ? "Complete your experience" : "Add experience";
+        } else if (key === 'education') {
+          label = hasEducation ? "Complete your education" : "Add education";
+        } else if (key === 'projects') {
+          label = hasProjects ? "Complete your project" : "Add a project";
+        } else if (key === 'basic_info') {
+          label = "Complete basic info";
         }
 
         if (key === 'profile_banner') {
