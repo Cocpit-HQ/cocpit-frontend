@@ -142,7 +142,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log("Socket connected:", newSocket.id);
       setIsConnected(true);
 
       const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
@@ -208,8 +207,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
 
       // Bug 1 Fix: Read prefs from the correct query key.
-      // When acting as org, prefs are cached under ["companyNotificationSettings", companyId].
-      // When acting as personal user, they are under NOTIFICATION_SETTINGS_QUERY_KEY.
       const currentProfile = activeProfileRef.current;
       const isOrgProfile = currentProfile?.type === 'COMPANY';
       const prefsQueryKey = isOrgProfile
@@ -220,7 +217,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const type = payload.type;
       const isMessage = type === 'message' || type.includes('message');
       const isPost = ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention'].includes(type) || type.includes('post');
-      const isJob = type.includes('job'); // Catch all job-related events
+      const isJob = type.includes('job') || type.includes('application'); // Catch all job-related events
 
       // Toast suppression: only controls the popup — DB notification is already saved
       if (prefs) {
@@ -310,6 +307,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           duration: 5000,
         });
       } else if (['job', 'company_job', 'company_event'].includes(payload.type) || isJob) {
+        console.log("[SOCKET] EXECUTING JOB TOAST BLOCK with payload:", payload);
         // Company or User Job notification
         const companyPayload = payload as CompanyUpdateNotification;
         const companyName = companyPayload.actor_name || payload.senderName || 'Someone';
@@ -317,8 +315,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const notifText = companyPayload.text || 'New job alert';
         const referenceId = companyPayload.reference_id || payload.referenceId;
         let navigateTo = '/notifications';
-        if ((payload.type === 'job' || payload.type === 'company_job') && referenceId) navigateTo = `/jobs/${referenceId}`;
+        if ((payload.type === 'job' || payload.type === 'company_job' || payload.type === 'application_shortlisted' || payload.type === 'job_offer') && referenceId) navigateTo = `/jobs/${referenceId}`;
         else if (payload.type === 'company_event' && referenceId) navigateTo = `/events/${referenceId}`;
+
+        console.log("[SOCKET] Toast title:", companyName, "Text:", notifText);
 
         toast({
           title: companyName,

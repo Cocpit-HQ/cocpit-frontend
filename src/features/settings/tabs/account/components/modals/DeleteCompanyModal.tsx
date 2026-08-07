@@ -182,12 +182,18 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
                   type="text"
                   maxLength={6}
                   value={otpCode}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const val = e.target.value.replace(/\D/g, '');
                     setOtpCode(val);
                     setErrorMsg('');
+                    setIsSuccess(false);
                     if (val.length === 6) {
-                      handleVerifyAndDelete(val);
+                      try {
+                        await companyService.validateDeleteCompanyOTP(activeProfile.id, val);
+                        setIsSuccess(true);
+                      } catch (err: any) {
+                        setErrorMsg(err.response?.data?.message || err.message || `Invalid verification code`);
+                      }
                     }
                   }}
                   placeholder="000000"
@@ -208,7 +214,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
               </div>
 
               {isSuccess && !errorMsg && (
-                <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully. Deleting...</p>
+                <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully.</p>
               )}
 
               {/* Resend Link */}
@@ -242,10 +248,10 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Verifying...
+                    <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
                   </span>
                 ) : (
-                  "Verify & Delete"
+                  "Delete"
                 )}
               </button>
             </div>

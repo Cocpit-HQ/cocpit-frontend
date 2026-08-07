@@ -176,6 +176,16 @@ export const companyService = {
         return res.data;
     },
 
+    async validateDeleteCompanyOTP(companyId: string, otp: string) {
+        const res = await api.post(`/organizations/${companyId}/delete/validate-otp`, { otp }, {
+            headers: {
+                'x-actor-type': 'ORGANIZATION',
+                'x-actor-id': companyId,
+            }
+        });
+        return res.data;
+    },
+
     async verifyAndDeleteCompany(companyId: string, otp: string) {
         const res = await api.post(`/organizations/${companyId}/delete/verify-otp`, { otp }, {
             headers: {

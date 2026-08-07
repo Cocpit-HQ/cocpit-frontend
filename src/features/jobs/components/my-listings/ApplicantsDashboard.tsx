@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { useToast } from '@/hooks/use-toast';
 import { JobListing } from '../../types/jobs.types';
 import {
   getJobApplicants,
@@ -210,6 +211,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
   const canJobsChat = !isCompanyMode || companyPermissions.canJobsChat;
   const router = useRouter();
+  const { toast } = useToast();
 
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
@@ -362,6 +364,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       if (selectedCandId === candId && candidateDetail) {
         setCandidateDetail({ ...candidateDetail, status: 'Shortlisted' });
       }
+      toast({ title: 'Candidate Shortlisted', description: 'The candidate has been notified.' });
     } catch (error) {
       console.error(error);
     }
@@ -374,6 +377,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       if (selectedCandId === candId && candidateDetail) {
         setCandidateDetail({ ...candidateDetail, status: 'Rejected' });
       }
+      toast({ title: 'Candidate Declined', description: 'The candidate status has been updated.' });
     } catch (error) {
       console.error(error);
     }

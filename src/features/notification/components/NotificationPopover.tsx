@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useToast } from "@/hooks/use-toast";
 import { Notification } from "@/types/social"
 import { getNotifications, markNotificationAsRead, markAllNotificationsRead } from "@/features/notification/api"
 import { useSession } from "next-auth/react"
@@ -55,6 +56,7 @@ export function NotificationPopover({
 
   const { socket } = useSocket()
   const { activeProfile, isCompany } = useActiveProfile()
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -136,7 +138,10 @@ export function NotificationPopover({
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.is_read) handleMarkAsRead(notification.notification_id)
 
-    if (notification.type === 'like' && notification.reference_id) {
+    if ((notification.type === 'application_shortlisted' || notification.type === 'job_offer') && notification.reference_id) {
+      router.push(`/jobs/${notification.reference_id}`)
+      setIsOpen(false)
+    } else if (notification.type === 'like' && notification.reference_id) {
       router.push(`/post/${notification.reference_id}`)
       setIsOpen(false)
     } else if (notification.type === 'follow' && notification.reference_id) {

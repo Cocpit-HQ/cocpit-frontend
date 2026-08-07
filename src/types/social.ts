@@ -32,7 +32,7 @@ export interface Notification {
     notification_id: string;
     user_id: string; // recipient
     sender_id: string; // actor
-    type: 'connection_request' | 'connection_accepted' | 'new_connection' | 'company_connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'post_tag' | 'advocacy' | 'company_invite' | 'company_job' | 'company_event' | 'company_post' | 'profile_share' | 'share' | 'organization_job' | 'job_offer' | 'community_invite' | 'community_invite_accepted' | 'organization_invite' | 'ORGANIZATION_INVITE';
+    type: 'connection_request' | 'connection_accepted' | 'new_connection' | 'company_connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'post_tag' | 'advocacy' | 'company_invite' | 'company_job' | 'company_event' | 'company_post' | 'profile_share' | 'share' | 'organization_job' | 'job_offer' | 'community_invite' | 'community_invite_accepted' | 'organization_invite' | 'ORGANIZATION_INVITE' | 'application_shortlisted';
     actor_name: string;
     actor_avatar: string | null;
     actor_slug?: string;

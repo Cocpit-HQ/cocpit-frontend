@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { companyService } from '@/services/organization.service';
 import { ActionModal } from './ActionModal';
+import { toast } from 'sonner';
 
 type PageStatus = 'active' | 'deactivated' | 'scheduled_for_deletion' | 'associated';
 
@@ -86,6 +87,7 @@ export function OrganizationsSettingsPage() {
     setActionError(null);
     try {
       await companyService.reactivateOrgWithOTP(selectedOrg.id, otp || '');
+      toast.success('Your company account has been reactivated');
       setModalState(null);
       await fetchOrgs();
       triggerActorContextRefresh();
@@ -134,7 +136,7 @@ export function OrganizationsSettingsPage() {
     if (!selectedOrg) return;
     try {
       await companyService.switchContext(selectedOrg.id);
-      window.location.href = `/company/${selectedOrg.id}`;
+      window.location.href = `/organization/${selectedOrg.id}`;
     } catch (err: any) {
       console.error('Switch context error:', err);
     }
@@ -204,12 +206,14 @@ export function OrganizationsSettingsPage() {
               <p className="text-[14px] text-[#6B7280] dark:text-slate-400 leading-[20px]">{selectedOrg.type}</p>
             </div>
           </div>
-          <button
-            onClick={handleViewPage}
-            className="text-[14px] text-[#818CF8] font-medium transition-colors hover:text-[#6c79f7]"
-          >
-            View page
-          </button>
+          {selectedOrg.pageStatus !== 'deactivated' && selectedOrg.pageStatus !== 'scheduled_for_deletion' && (
+            <button
+              onClick={handleViewPage}
+              className="text-[14px] text-[#818CF8] font-medium transition-colors hover:text-[#6c79f7]"
+            >
+              View page
+            </button>
+          )}
         </div>
 
         {/* Metadata section */}
@@ -245,10 +249,12 @@ export function OrganizationsSettingsPage() {
           )}
 
           {selectedOrg.pageStatus === 'deactivated' && (
-            <div className="w-full bg-[#EEF2FF] dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-[16px] p-4 flex flex-col items-end gap-4">
-              <p className="text-[14px] text-black dark:text-slate-200 leading-[20px] w-full">
-                This page is currently deactivated and is not visible to visitors. Its content and features are temporarily unavailable until the page is reactivated
-              </p>
+            <div className="flex flex-col items-end w-full gap-4">
+              <div className="w-full bg-[#EEF2FF] dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-[16px] p-4">
+                <p className="text-[14px] text-black dark:text-slate-200 leading-[20px] w-full">
+                  This page is currently deactivated and is not visible to visitors. Its content and features are temporarily unavailable until the page is reactivated
+                </p>
+              </div>
               <button 
                 onClick={() => { setActionError(null); setModalState('reactivate'); }}
                 className="px-4 py-2 bg-transparent border border-[#818CF8] rounded-[24px] text-[#818CF8] text-[14px] font-medium hover:bg-[#EEF2FF] dark:hover:bg-slate-800 transition-colors"
@@ -259,10 +265,12 @@ export function OrganizationsSettingsPage() {
           )}
 
           {selectedOrg.pageStatus === 'scheduled_for_deletion' && (
-            <div className="w-full bg-[#FFF5F5] dark:bg-red-950/40 border border-red-100 dark:border-red-900 rounded-[16px] p-4 flex flex-col items-end gap-4">
-              <p className="text-[14px] text-black dark:text-slate-200 leading-[20px] w-full">
-                This page has been scheduled for deletion and will be permanently removed after 40 days. You can recover and reactivate the page at any time within this period. Once the 40-day period ends, the page and its associated data cannot be restored
-              </p>
+            <div className="flex flex-col items-end w-full gap-4">
+              <div className="w-full bg-[#FFF5F5] dark:bg-red-950/40 border border-red-100 dark:border-red-900 rounded-[16px] p-4">
+                <p className="text-[14px] text-black dark:text-slate-200 leading-[20px] w-full">
+                  This page has been scheduled for deletion and will be permanently removed after 40 days. You can recover and reactivate the page at any time within this period. Once the 40-day period ends, the page and its associated data cannot be restored
+                </p>
+              </div>
               <button 
                 onClick={() => { setActionError(null); setModalState('recover'); }}
                 className="px-4 py-2 bg-transparent border border-[#818CF8] rounded-[24px] text-[#818CF8] text-[14px] font-medium hover:bg-[#EEF2FF] dark:hover:bg-slate-800 transition-colors"
@@ -273,10 +281,12 @@ export function OrganizationsSettingsPage() {
           )}
 
           {selectedOrg.pageStatus === 'associated' && (
-            <div className="w-full bg-[#EEF2FF] dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-[16px] p-4 flex flex-col items-end gap-4">
-              <p className="text-[14px] text-black dark:text-slate-200 leading-[20px] w-full">
-                You are currently associated with this page and have access to its content and features. You can choose to leave the page at any time, after which your access and permissions will be removed
-              </p>
+            <div className="flex flex-col items-end w-full gap-4">
+              <div className="w-full bg-[#EEF2FF] dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-[16px] p-4">
+                <p className="text-[14px] text-black dark:text-slate-200 leading-[20px] w-full">
+                  You are currently associated with this page and have access to its content and features. You can choose to leave the page at any time, after which your access and permissions will be removed
+                </p>
+              </div>
               <button 
                 onClick={() => { setActionError(null); setModalState('leave'); }}
                 className="px-4 py-2 bg-transparent border border-[#FF6B6B] rounded-[24px] text-[#FF6B6B] text-[14px] font-medium hover:bg-[#FFF5F5] dark:hover:bg-slate-800 transition-colors"
@@ -341,7 +351,7 @@ export function OrganizationsSettingsPage() {
         </div>
         
         <button 
-          onClick={() => window.location.href = '/onboarding/company'}
+          onClick={() => window.location.href = '/company-onboarding'}
           className="flex flex-row justify-center items-center px-4 py-2 gap-2 h-[40px] bg-white border border-[#818CF8] rounded-[24px] dark:bg-transparent hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
           <span className="whitespace-nowrap text-[14px] font-medium text-[#818CF8] leading-[20px] text-center">

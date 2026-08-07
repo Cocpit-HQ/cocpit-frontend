@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { MessageCircle, X, GripHorizontal } from "lucide-react";
+import { MessageCircle, X, GripHorizontal, ArrowUpLeft, Plus } from "lucide-react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { ChatThread } from "@/types/messaging";
 import { getConversations } from "@/services/api/messaging";
@@ -16,11 +16,13 @@ import { Icon } from "@iconify/react";
 export function QuickChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const widgetRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null);
   const [leftOffset, setLeftOffset] = useState<string | null>(null);
   const [panelAlign, setPanelAlign] = useState<'left' | 'right'>('left');
   const { activeProfile } = useActiveProfile();
+  const router = useRouter();
 
   const shouldHide = Boolean(
     pathname?.startsWith("/messaging") || pathname === "/login" || pathname === "/signup"
@@ -131,6 +133,21 @@ export function QuickChatWidget() {
     };
   }, [pathname, shouldHide]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (widgetRef.current && !widgetRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   const handleSelectChat = (chat: ChatThread) => {
     setSelectedChat(chat);
   };
@@ -145,6 +162,7 @@ export function QuickChatWidget() {
 
   return (
     <motion.div 
+      ref={widgetRef}
       drag
       dragMomentum={false}
       onDragStart={() => setIsDragging(true)}
@@ -153,12 +171,12 @@ export function QuickChatWidget() {
       style={{
         left: leftOffset || undefined,
         right: !leftOffset ? '16px' : undefined,
-        bottom: '20px' // Figma specifies bottom: 20px for the collapsed state
+        bottom: '10px'
       }}
     >
-      <div className="relative flex items-end justify-center w-12 h-12">
+      <div className="relative flex items-end justify-center w-[50px] h-[50px]">
         {isOpen && (
-          <div className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0 rounded-bl-none' : 'right-0 rounded-br-none'} w-[320px] h-[480px] bg-white border border-[#EEF2FF] shadow-[0_12px_24px_rgba(0,0,0,0.1)] rounded-[12px] flex flex-col overflow-hidden`}>
+          <div className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0' : 'right-0'} w-[320px] h-[335px] bg-white border border-[#EEF2FF] shadow-[0_12px_24px_rgba(0,0,0,0.1)] rounded-[12px] flex flex-col overflow-hidden`}>
           {/* Main Content Area */}
           <div className="flex-1 overflow-hidden relative flex flex-col bg-background">
             {selectedChat ? (
@@ -186,17 +204,21 @@ export function QuickChatWidget() {
               <div className="flex flex-col h-full">
                 {/* Header for ChatList since ChatWindow brings its own header usually */}
                 <div 
-                  className="flex justify-between items-center px-4 py-4 bg-[#EEF2FF] rounded-t-[12px] cursor-grab active:cursor-grabbing shrink-0 h-[56px]"
+                  className="flex justify-between items-center px-4 py-4 bg-white rounded-t-[12px] cursor-grab active:cursor-grabbing shrink-0 h-[56px]"
                   style={{ touchAction: "none" }}
                 >
                   <h3 className="font-medium text-[16px] text-[#0B1C30] select-none">Messaging</h3>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-1 hover:bg-secondary rounded-full transition-colors"
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </button>
+                  <div className="flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setIsOpen(false); router.push("/messaging"); }} className="text-[#6B7280] hover:text-black transition-colors w-6 h-6 flex items-center justify-center" title="Expand to full view">
+                      <ArrowUpLeft className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
+                    <button className="text-[#6B7280] hover:text-black transition-colors w-6 h-6 flex items-center justify-center">
+                      <Plus className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
+                    <button onClick={() => setIsOpen(false)} className="text-[#6B7280] hover:text-black transition-colors w-6 h-6 flex items-center justify-center">
+                      <X className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
+                  </div>
                 </div>
                 <div 
                   className="flex-1 overflow-y-auto"
@@ -222,9 +244,9 @@ export function QuickChatWidget() {
           if (isOpen) setIsOpen(false);
           else if (!isDragging) setIsOpen(true);
         }}
-        className="relative w-12 h-12 bg-white text-black border border-[#EEF2FF] rounded-[12px] rounded-tl-none shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex items-center justify-center hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing shrink-0"
+        className="relative w-[50px] h-[50px] bg-white text-black border border-[#EEF2FF] rounded-[12px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex items-center justify-center hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing shrink-0"
       >
-        <Icon icon="proicons:chat" className="w-6 h-6" />
+        <Icon icon="proicons:chat" className="w-[28px] h-[28px]" />
         <div className="absolute top-[8px] right-[8px] w-1.5 h-1.5 bg-[#6366F1] rounded-full"></div>
       </button>
       </div>

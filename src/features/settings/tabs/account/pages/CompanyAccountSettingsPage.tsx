@@ -136,9 +136,9 @@ export function CompanyAccountSettingsPage() {
       <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full">
         <div className="flex flex-row justify-between items-center w-full">
           <div className="flex flex-col justify-center items-start max-w-[435px]">
-            <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Deactivate {entityLabel.toLowerCase()} page</h3>
+            <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Deactivate {entityLabel.toLowerCase()} account</h3>
             <p className="text-[14px] text-[#6B7280] dark:text-company-secondary leading-[20px]">
-              Temporarily hide your {entityLabel.toLowerCase()} page. You can reactivate it at any time.
+              Temporarily hide your {entityLabel.toLowerCase()} account. You can reactivate it at any time.
             </p>
           </div>
           <button

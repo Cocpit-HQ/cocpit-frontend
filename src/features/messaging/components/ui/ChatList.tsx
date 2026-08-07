@@ -200,13 +200,13 @@ export function ChatList({
   const rowVirtualizer = useVirtualizer({
     count: filteredChats.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 88, // 80px item + 8px gap
+    estimateSize: () => isQuickChat ? 74 : 88, // 74px for Quick Chat, 88px (80+8) for main list
     overscan: 6,
   });
 
   return (
-    <div className={`box-border flex flex-col items-start p-[16px] gap-[16px] w-full h-full bg-[#FFFFFF] ${isQuickChat ? 'border-none rounded-none' : 'border border-[#EEF2FF] rounded-[24px]'} overflow-hidden`}>
-      <div className="w-full flex flex-col gap-[16px] shrink-0">
+    <div className={`box-border flex flex-col items-start w-full h-full bg-[#FFFFFF] ${isQuickChat ? 'p-0 gap-0 border-none rounded-none' : 'p-[16px] gap-[16px] border border-[#EEF2FF] rounded-[24px]'} overflow-hidden`}>
+      <div className={`w-full flex flex-col ${isQuickChat ? 'gap-0' : 'gap-[16px]'} shrink-0`}>
         {/* Chat List Header (Frame 43) */}
         {!isQuickChat && (
           <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[42px] self-stretch">
@@ -244,20 +244,24 @@ export function ChatList({
         )}
 
         {/* Search Bar (Frame 2608500) */}
-        <div className="box-border flex flex-row justify-between items-center px-[16px] py-[8px] gap-[10px] w-full h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] relative">
-          <Search className="w-[20px] h-[20px] text-[#6B7280]" />
-          <input
-            type="text"
-            placeholder="Search messages, people, roles.."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-transparent font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] placeholder-[#6B7280] focus:outline-none"
-          />
+        <div className={isQuickChat ? "p-[8px]" : ""}>
+          <div className="box-border flex flex-row justify-between items-center px-[16px] py-[8px] gap-[10px] w-full h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] relative">
+            <Search className="w-[20px] h-[20px] text-[#6B7280]" />
+            <input
+              type="text"
+              placeholder="Search messages, people, roles.."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] placeholder-[#6B7280] focus:outline-none"
+            />
+          </div>
         </div>
 
         {/* Tags Row (Frame 2608634) */}
-        <div className="flex flex-row items-start p-0 gap-[16px] w-[298px] h-[40px] overflow-x-auto scrollbar-hide shrink-0">
-          <TagChip
+        {!isQuickChat && (
+          <>
+            <div className="flex flex-row items-start p-0 gap-[16px] w-[298px] h-[40px] overflow-x-auto scrollbar-hide shrink-0">
+              <TagChip
             active={activeTab === 'chat'}
             label="Chat"
             hasIndicator={hasUnreadChats}
@@ -288,16 +292,17 @@ export function ChatList({
               onClick={() => setActiveTab('requests')}
             />
           )}
-        </div>
+            </div>
 
-        {/* Inbox Count */}
-        <div className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ">
-          Inbox - {filteredChats.length}
-        </div>
+            {/* Inbox Count */}
+            <div className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ">
+              Inbox - {filteredChats.length}
+            </div>
+          </>
+        )}
       </div>
 
       <div ref={parentRef} className="flex flex-col flex-1 w-full overflow-y-auto pb-24 md:pb-0 scrollbar-hide relative gap-[8px]">
-
         {/* ... */}
         {isLoading && <ConversationListSkeleton />}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
@@ -346,6 +351,8 @@ export function ChatList({
                     isMobile={isMobile}
                     isGroupInvitationRead={chat.is_read}
                     isTyping={!!typingConversations?.[chat.id]}
+                    isQuickChat={isQuickChat}
+                    isFirst={virtualRow.index === 0}
                   />
                 </div>
               );

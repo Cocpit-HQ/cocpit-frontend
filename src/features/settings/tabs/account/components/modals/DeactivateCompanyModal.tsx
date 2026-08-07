@@ -29,12 +29,12 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
     try {
       if (isDeactivated) {
         await reactivateOrganization(activeProfile.id);
-        toast.success(`Your ${entityLabel} page has been reactivated`);
+        toast.success(`Your ${entityLabel} account has been reactivated`);
         await refetch();
         onClose();
       } else {
         await deactivateOrganization(activeProfile.id);
-        toast.success(`Your ${entityLabel} page has been deactivated`);
+        toast.success(`Your ${entityLabel} account has been deactivated`);
         onClose();
         // On success, switch back to user context and go to feed since the company is deactivated
         switchProfile("USER", "");
@@ -62,12 +62,12 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
         {/* Title & Description */}
         <div className="flex flex-col items-center gap-2 mb-4 w-[418px] mt-2">
           <h2 className="text-[18px] font-medium text-black leading-[26px] text-center m-0">
-            {isDeactivated ? 'Reactivate' : 'Deactivate'} {entityLabel} page
+            {isDeactivated ? 'Reactivate' : 'Deactivate'} {entityLabel} account
           </h2>
           <p className="text-[14px] font-normal text-[#6B7280] leading-[20px] text-center m-0 px-2">
             {isDeactivated 
-              ? `Your ${entityLabel} page will become visible again to everyone.` 
-              : `Your ${entityLabel} page will be hidden from cocpit. You can reactivate it at any time.`}
+              ? `Your ${entityLabel} account will become visible again to everyone.` 
+              : `Your ${entityLabel} account will be hidden from cocpit. You can reactivate it at any time.`}
           </p>
         </div>
 

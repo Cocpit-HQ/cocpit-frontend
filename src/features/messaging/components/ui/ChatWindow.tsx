@@ -207,7 +207,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
   const isGroupInvitation = !!chat.is_requesting && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
   const isSingleRequest = !!chat.is_requesting && !isGroupInvitation;
-  const isDeactivatedAccount = !chat.isGroup && (chat.name === "Deleted Page" || chat.name === "Deactivated User" || chat.name === "Deleted User");
+  const isDeactivatedAccount = !chat.isGroup && (chat.name === "Deleted Page" || chat.name === "Deactivated User" || chat.name === "Deleted User" || chat.name === "Unknown User");
 
   // Sync state with URL parameter on mount or when chat/param changes
   useEffect(() => {
@@ -1406,7 +1406,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
               onTyping={handleTypingInput}
               searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
               disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || isJobChatDisabled || isGeneralChatDisabled || isDeactivatedAccount}
-              disabledMessage={isDeactivatedAccount ? "This account has been deactivated" : (isBlockedByOther ? "User not found" : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined)))}
+              disabledMessage={isDeactivatedAccount ? "This user has gone offline - for a while." : (isBlockedByOther ? "User not found" : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined)))}
               pendingEntityContext={pendingEntityContext}
               onDismissEntityContext={() => setPendingEntityContext(null)}
               placeholder="Message..."
