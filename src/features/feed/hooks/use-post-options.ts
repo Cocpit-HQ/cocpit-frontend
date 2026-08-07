@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { feedApi } from '../api/feed.api';
 import { FeedPostProps } from '../types';
+import { useFeed } from '@/hooks/use-feed';
 
 export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any, data: any) => void) => {
   const { id, visibility: initialVisibility = 'public', onDelete, onToggleVisibility } = props;
+  const { deletePost } = useFeed();
   
   const [showOptions, setShowOptions] = useState(false);
   const [optionsPos, setOptionsPos] = useState<{ top: number; right: number } | null>(null);
@@ -38,7 +40,12 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
   };
 
   const confirmDelete = async () => {
-    if (onDelete) onDelete(id.toString());
+    if (onDelete) {
+      onDelete(id.toString());
+    } else {
+      // Call the global deletePost from useFeed to update the UI
+      deletePost(id.toString());
+    }
     setIsDeleteDialogOpen(false);
   };
 

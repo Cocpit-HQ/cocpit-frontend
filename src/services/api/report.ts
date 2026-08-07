@@ -7,7 +7,7 @@ export interface ReportReason {
 }
 
 export interface CreateReportRequest {
-  targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY';
+  targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY' | 'THOUGHT';
   targetId: string | number;
   reasonId?: number;
   customReason?: string;

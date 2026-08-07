@@ -116,6 +116,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+        queryClient.invalidateQueries({ queryKey: ["org_followers", orgId] });
         queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
         queryClient.invalidateQueries({ queryKey: ["profileStats"] });
         queryClient.invalidateQueries({ queryKey: ["following"] });

@@ -120,6 +120,12 @@ export function NotificationSettingsPage() {
             settingKey="emails" 
           />
 
+          <ToggleItem 
+            title="Push notification" 
+            description="Push notifications on your mobile device for real-time awareness." 
+            settingKey="push" 
+          />
+
           </>
           )}
 

@@ -177,6 +177,12 @@ export function CompanyNotificationSettingsPage() {
                 description="Control updates and alerts sent directly to your email" 
                 settingKey="emails" 
               />
+
+              <ToggleItem 
+                title="Push notification" 
+                description="Push notifications on your mobile device for real-time awareness." 
+                settingKey="push" 
+              />
             </>
           )}
 

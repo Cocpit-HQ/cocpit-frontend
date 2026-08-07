@@ -13,6 +13,7 @@ import { sendConnectionRequest } from "@/services/api/connections";
 import { companyService } from "@/services/organization.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface PeopleTabProps {
   data: CompanyProfileData;
@@ -73,8 +74,8 @@ export default function PeopleTab({ data }: PeopleTabProps) {
     return {
       id: empId,
       name: emp.full_name || emp.name || "Unknown",
-      role: emp.headline || emp.role_display || emp.title || emp.role || "Associate",
-      avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
+      role: emp.headline || emp.role_display || emp.title || emp.role || "",
+      avatar: emp.avatar_url || emp.avatar || emp.profile_image || null,
       account_name: emp.account_name || emp.id,
       action,
       textWidth: "125px",
@@ -168,26 +169,12 @@ export default function PeopleTab({ data }: PeopleTabProps) {
         }}
       >
         {/* Avatar Ellipse */}
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            overflow: "hidden",
-            position: "relative",
-            flex: "none",
-            order: 0,
-            flexGrow: 0,
-          }}
-        >
-          <Image
-            src={emp.avatar}
-            alt={emp.name}
-            fill
-            className="object-cover"
-            unoptimized
-          />
-        </div>
+        <Avatar className="w-[40px] h-[40px] flex-none">
+          <AvatarImage src={emp.avatar || ""} alt={emp.name} className="object-cover" />
+          <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+            {emp.name?.charAt(0)?.toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
 
         {/* Text Frame (Frame 2609008) */}
         <div

@@ -6,6 +6,7 @@ export interface NotificationPreferences {
   jobs: boolean;
   messages: boolean;
   emails: boolean;
+  push: boolean;
   // Organization specific fields mapping to DB:
   // messages_chat_enabled, messages_jobs_enabled
   messageChats?: boolean;
@@ -33,6 +34,7 @@ export const getNotificationPreferences = async (companyId?: string): Promise<No
     jobs: prefs.job_alerts ?? prefs.jobs ?? true,
     messages: prefs.message_notifications ?? prefs.messages ?? true,
     emails: prefs.email_notifications ?? prefs.emails ?? true,
+    push: prefs.push_notifications ?? prefs.push ?? true,
     messageChats: prefs.messages_chat_enabled ?? prefs.messageChats ?? true,
     messageJobs: prefs.messages_jobs_enabled ?? prefs.messageJobs ?? true,
   };
@@ -48,6 +50,7 @@ export const updateNotificationPreferences = async (
   if (preferences.jobs !== undefined) payload.job_alerts = preferences.jobs;
   if (preferences.messages !== undefined) payload.message_notifications = preferences.messages;
   if (preferences.emails !== undefined) payload.email_notifications = preferences.emails;
+  if (preferences.push !== undefined) payload.push_notifications = preferences.push;
   if (preferences.messageChats !== undefined) payload.messages_chat_enabled = preferences.messageChats;
   if (preferences.messageJobs !== undefined) payload.messages_jobs_enabled = preferences.messageJobs;
 

@@ -12,7 +12,7 @@ import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
 import { getPostMenuAccess } from '../utils/postMenuAccess';
 import { trackFeedEvent, hidePost } from '@/services/api/feed';
-import { createRepost, deletePost, getPostById } from '@/services/api/posts';
+import { createRepost, getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useToast } from "@/hooks/use-toast";
 import { createPortal } from 'react-dom';
@@ -49,7 +49,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const isArticleFeedCard = isArticlePost && !props.isFullContent;
 
   // Custom Hooks
-  const { updatePostInFeed, addPost } = useFeed(false);
+  const { updatePostInFeed, addPost, deletePost: globalDeletePost } = useFeed(false);
   const { toast } = useToast();
 
   const {
@@ -163,10 +163,32 @@ export const FeedPost = (props: FeedPostProps) => {
       if (props.onDelete) {
         Promise.resolve(props.onDelete(targetRepostId)).catch((err) => {
           console.error("Background onDelete failed:", err);
+          // rollback
+          setIsReposted(true);
+          setShareCount(prev => prev + 1);
+          setRepostId(targetRepostId);
+          try {
+            updatePostInFeed(id.toString(), { isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId });
+          } catch (feedErr) {}
+          toast({
+            title: "Error",
+            description: "Failed to remove repost",
+            variant: "destructive",
+          });
         });
       } else {
-        deletePost(targetRepostId).catch((err) => {
-          console.error("Background deletePost failed:", err);
+        globalDeletePost(targetRepostId).catch(() => {
+          setIsReposted(true);
+          setShareCount(prev => prev + 1);
+          setRepostId(targetRepostId);
+          try {
+            updatePostInFeed(id.toString(), { isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId });
+          } catch (feedErr) {}
+          toast({
+            title: "Error",
+            description: "Failed to remove repost",
+            variant: "destructive",
+          });
         });
       }
       toast({ title: "Repost removed successfully", variant: "default" });

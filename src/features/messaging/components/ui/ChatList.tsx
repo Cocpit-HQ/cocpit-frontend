@@ -168,7 +168,7 @@ export function ChatList({
   // Merge online status into chats
   const chatsWithStatus = React.useMemo(() => chats.map(chat => ({
     ...chat,
-    online: chat.isMock ? chat.online : (chat.otherUserId ? isUserOnline(chat.otherUserId) : false)
+    online: chat.isMock ? chat.online : (chat.otherUserId && !chat.isBlockedByMe && !chat.isBlockedByOther ? isUserOnline(chat.otherUserId) : false)
   })), [chats, isUserOnline]);
 
   const filteredChats = React.useMemo(() => {

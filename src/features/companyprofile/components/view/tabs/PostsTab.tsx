@@ -75,7 +75,10 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
 
   const handleDeletePost = async (postId: string) => {
     try {
-      await apiDeletePost(postId, data.id);
+      // Only pass companyId when the viewer is a company owner/member.
+      // External users undoing their own personal reposts must NOT send the org id,
+      // as they are not members and the backend will reject it with 403.
+      await apiDeletePost(postId, isOwnProfile ? data.id : undefined);
       toast({ title: "Post deleted successfully" });
       
       queryClient.setQueryData(["orgPosts", data.id], (oldData: any) => {
@@ -165,6 +168,8 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
     comments: (p.comment_count || p.comments_count || p.commentsCount || 0).toString(),
     shares: (p.share_count || p.shares_count || p.sharesCount || 0).toString(),
     isLiked: p.isLiked || p.is_liked || false,
+    isReposted: p.isReposted || p.is_reposted || false,
+    repostId: p.repostId || p.repost_id || null,
     is_commented: p.isCommented || p.is_commented || false,
     is_saved: p.isSaved || p.is_saved || false,
     menuAccess: getPostMenuAccess({

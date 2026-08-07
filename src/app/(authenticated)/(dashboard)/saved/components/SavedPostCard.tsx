@@ -4,6 +4,7 @@ import { Post } from '@/types/entities';
 import { toggleSavePost } from '@/features/settings/api/savedPost';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { FileEdit } from 'lucide-react';
 
 interface SavedPostCardProps {
   post: Post;
@@ -32,6 +33,7 @@ export function SavedPostCard({ post, folderId, onUnsave }: SavedPostCardProps) 
     }
   };
 
+  const isRepost = !!post.shared_post;
   // Find the first image if any
   const imageUrl = post.imageSrc || post.images?.[0];
 
@@ -84,7 +86,35 @@ export function SavedPostCard({ post, folderId, onUnsave }: SavedPostCardProps) 
       </div>
 
       {/* Content section */}
-      {imageUrl ? (
+      {isRepost ? (
+        <div className="flex flex-row items-center gap-[16px] w-full px-2 pb-2">
+          <div className="flex flex-col justify-center items-center w-[76px] h-[76px] bg-[#EEF2FF] rounded-[12px] flex-shrink-0 overflow-hidden">
+            <FileEdit className="w-8 h-8 text-[#6366F1]" strokeWidth={1.5} />
+          </div>
+          <div className="flex flex-col items-start gap-[6px] flex-1">
+            {post.content && (
+              <p className="text-[14px] font-[family-name:var(--font-poppins)] font-normal text-black leading-[20px] line-clamp-1">
+                {post.content}
+              </p>
+            )}
+            <div className="w-full bg-gray-50 border border-gray-100 rounded-[8px] p-2 flex flex-col gap-1">
+               <div className="flex flex-row gap-2 items-center">
+                 <img 
+                   src={post.shared_post?.authorAvatar || "https://ui-avatars.com/api/?name=" + encodeURIComponent(post.shared_post?.author || "User")} 
+                   alt={post.shared_post?.author} 
+                   className="w-[16px] h-[16px] rounded-full object-cover"
+                 />
+                 <span className="text-[12px] font-[family-name:var(--font-poppins)] font-semibold text-gray-700 leading-tight">
+                   {post.shared_post?.author}
+                 </span>
+               </div>
+               <p className="text-[12px] font-[family-name:var(--font-poppins)] text-gray-500 line-clamp-1 leading-tight">
+                 {post.shared_post?.content || "View shared post"}
+               </p>
+            </div>
+          </div>
+        </div>
+      ) : imageUrl ? (
         <div className="flex flex-row items-center gap-[16px] w-full h-[76px] px-2 pb-2">
           <div className="flex flex-col justify-center items-center w-[76px] h-[76px] bg-[#F3F4F6] border border-[#E5E7EB] rounded-[12px] flex-shrink-0 overflow-hidden">
             <img 

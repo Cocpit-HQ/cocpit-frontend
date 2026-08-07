@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useSocial } from "@/context/SocialContext";
 import { Icon } from "@iconify/react";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { FollowListItemSkeleton } from "./skeletons/FollowListItemSkeleton";
 
 interface FollowListModalProps {
@@ -51,7 +52,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     const { toast } = useToast();
     const { user: currentUser } = useAuth();
     const { syncFollowStatus } = useSocial();
-    const isOwnProfile = currentUser?.id === userId;
+    const { activeProfile } = useActiveProfile();
+    const isOwnProfile = activeProfile?.type === 'USER' && currentUser?.id === userId;
 
     useEffect(() => {
         if (isOpen) {

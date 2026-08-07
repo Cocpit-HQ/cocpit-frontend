@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY';
+  targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY' | 'THOUGHT';
   targetId: string | number;
 }
 
@@ -76,6 +76,7 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
     switch (targetType) {
       case 'POST': return 'post';
       case 'COMMENT': return 'comment';
+      case 'THOUGHT': return 'thought';
       case 'USER': return 'profile';
       case 'COMPANY': return 'company';
       default: return 'content';

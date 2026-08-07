@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Icon } from '@iconify/react';
 import { usePublicChannelThoughts } from '../hooks/usePublicChannelThoughts';
 import { ChannelThought } from '../../types/channel.types';
+import { ReportModal } from '@/components/shared/ReportModal';
 
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -31,6 +32,8 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
   const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState<string | null>(null);
 
   const isSubscriptionError = !isSubscribed || (error as any)?.response?.status === 403 || 
     error?.message?.includes('403') || 
@@ -179,6 +182,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                       </button>
                     ) : (
                       <button
+                        onClick={() => { setReportTargetId(thought.id); setIsReportModalOpen(true); }}
                         className="flex items-center gap-1.5 text-[13px] text-[#6B7280] dark:text-[#A1A8B3] hover:opacity-80 font-medium font-['Poppins']"
                       >
                         <Icon icon="fluent:info-16-regular" className="w-4 h-4" />
@@ -228,6 +232,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                             </button>
                           ) : (
                             <button
+                              onClick={() => { setReportTargetId(reply.id); setIsReportModalOpen(true); }}
                               className="flex items-center gap-1 text-[12px] text-[#6B7280] dark:text-[#A1A8B3] hover:opacity-80 font-medium font-['Poppins']"
                             >
                               <Icon icon="fluent:info-16-regular" className="w-3.5 h-3.5" />
@@ -244,6 +249,15 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
           ))
         )}
       </div>
+
+      {isReportModalOpen && reportTargetId && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="THOUGHT"
+          targetId={reportTargetId}
+        />
+      )}
     </div>
   );
 }

@@ -19,6 +19,7 @@ export interface UpdatePostRequest {
 export const deletePost = async (postId: string, companyId?: string): Promise<DeletePostResponse> => {
   const response = await api.delete<DeletePostResponse>(`/post/${postId}`, {
     data: companyId ? { companyId } : undefined,
+    params: companyId ? { companyId } : undefined,
   });
   return response.data;
 };

@@ -96,9 +96,9 @@ export function PrivacySettingsPage() {
           <div className="flex flex-col w-full">
             {[
               { id: 'everyone', label: 'Everyone' },
-              { id: 'connections', label: 'Connections Only' },
-              { id: 'followers', label: 'Followers Only' },
-              { id: 'noone', label: 'No One' }
+              { id: 'connections_only', label: 'Connections Only' },
+              { id: 'followers_only', label: 'Followers Only' },
+              { id: 'no_one', label: 'No One' }
             ].map(option => {
               const isSelected = tagPermission === option.id;
               return (

@@ -15,8 +15,8 @@ import { useUIStore } from '@/store/ui.store';
 import { uploadMedia } from '@/services/api/upload';
 import { useQueryClient } from '@tanstack/react-query';
 const USER_CATEGORIES: CategoryType[] = ['Professional', 'Achievement'];
-const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
-const INSTITUTION_CATEGORIES: CategoryType[] = ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
+const COMPANY_CATEGORIES: CategoryType[] = ['Professional', 'Update', 'Hiring', 'Milestone', 'Insight'];
+const INSTITUTION_CATEGORIES: CategoryType[] = ['Professional', 'Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
 
 export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: boolean }) => {
   const {
@@ -193,7 +193,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             setPostType('text');
           }
 
-          setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
+          setPostCategory(post.category as any || 'Professional');
           setVisibility(post.visibility || 'public');
 
           if (!isArticlePost && (type === 'text' || type === 'photo' || type === 'video')) {
@@ -241,7 +241,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     } else if (isOpen && sharedPostId) {
       postApi.getById(sharedPostId).then(post => {
         setSharedPost(post);
-        setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
+        setPostCategory(post.category as any || 'Professional');
         setVisibility(post.visibility || 'public');
       }).catch((error) => {
         console.error("Failed to load shared post:", error);
