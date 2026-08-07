@@ -392,7 +392,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const handleBlock = (payload: any) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
-      if (!conversationId) return;
 
       const isMeBlocker =
         String(payload.blocked_by_user_id) === String(session?.user?.id) ||
@@ -407,27 +406,35 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         currentProfile?.id ?? "me",
       ];
 
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: any[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((c) => {
-            if (String(c.id) === String(conversationId)) {
-              return {
-                ...c,
-                isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
-                isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
-              };
-            }
-            return c;
-          });
-        }
-      );
+      if (conversationId) {
+        queryClient.setQueryData(
+          queryKey,
+          (oldData: any[] | undefined) => {
+            if (!oldData) return oldData;
+            return oldData.map((c) => {
+              if (String(c.id) === String(conversationId)) {
+                return {
+                  ...c,
+                  isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
+                  isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
+                };
+              }
+              return c;
+            });
+          }
+        );
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      }
 
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
       queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-jobs'] });
     };
 
     const handleUnblock = (payload: any) => {
@@ -471,6 +478,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
       queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-jobs'] });
     };
 
     // Fired by acceptTeamsInvite / declineTeamsInvite / removeMember whenever
