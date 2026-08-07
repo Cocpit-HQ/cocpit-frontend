@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, MessageCircle, UserPlus, UserCheck, Share2, Link as LinkIcon, Flag } from "lucide-react";
 import { BackButton } from "@/components/shared/BackButton";
 import { toast } from "sonner";
+import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
 
 import { SkillOverlap } from "./components/SkillOverlap";
 import { ConnectionButton } from "./components/ConnectionButton";
@@ -73,6 +74,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser, unblockUser, isBlocked } = useSocial();
   const { activeProfile } = useActiveProfile();
+  const { canManageBlock, canBlockTarget } = useOrgBlockPermissions(userId);
 
   // Only admins/owners of the acting company may follow on behalf of it
   const activeProfilePermissions: string[] = (activeProfile?.viewer_role_data?.permissions as string[]) || [];
@@ -492,26 +494,30 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         <Flag className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       {isUserBlocked ? (
-        <DropdownMenuItem
-          onClick={async () => {
-            if (user) {
-              await unblockUser(user.id);
-              window.location.reload();
-            }
-          }}
-          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
-        >
-          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Unblock User</span>
-          <Ban className="w-4 h-4 group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
-        </DropdownMenuItem>
+        canManageBlock && (
+          <DropdownMenuItem
+            onClick={async () => {
+              if (user) {
+                await unblockUser(user.id);
+                window.location.reload();
+              }
+            }}
+            className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
+          >
+            <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Unblock User</span>
+            <Ban className="w-4 h-4 group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
+          </DropdownMenuItem>
+        )
       ) : (
-        <DropdownMenuItem
-          onClick={() => setShowBlockDialog(true)}
-          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 dark:focus:bg-[#4A1C1C] focus:text-destructive dark:focus:text-[#F87171] text-destructive dark:text-[#F87171] rounded-xl outline-none group transition-colors"
-        >
-          <span className="text-sm font-medium group-focus:text-destructive dark:group-focus:text-[#F87171]">Block User</span>
-          <Ban className="w-4 h-4 group-focus:text-destructive dark:group-focus:text-[#F87171] transition-colors" />
-        </DropdownMenuItem>
+        canBlockTarget && (
+          <DropdownMenuItem
+            onClick={() => setShowBlockDialog(true)}
+            className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 dark:focus:bg-[#4A1C1C] focus:text-destructive dark:focus:text-[#F87171] text-destructive dark:text-[#F87171] rounded-xl outline-none group transition-colors"
+          >
+            <span className="text-sm font-medium group-focus:text-destructive dark:group-focus:text-[#F87171]">Block User</span>
+            <Ban className="w-4 h-4 group-focus:text-destructive dark:group-focus:text-[#F87171] transition-colors" />
+          </DropdownMenuItem>
+        )
       )}
     </>
   );

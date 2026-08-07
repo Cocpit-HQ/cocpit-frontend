@@ -14,17 +14,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { getComments, addComment } from "@/services/api/posts";
+import { BackendComment } from "@/lib/mappers/feed.mapper";
 import { toast } from "sonner";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import CommentListSkeleton from "@/features/feed/components/comments/CommentSkeleton";
-
-interface Comment {
-    comment_id: string;
-    content: string;
-    created_at: string;
-    full_name: string;
-    avatar_url: string | null;
-}
 
 interface CommentModalProps {
     isOpen: boolean;
@@ -35,7 +28,7 @@ interface CommentModalProps {
 
 export function CommentModal({ isOpen, onClose, postId, onCommentAdded }: CommentModalProps) {
     const { activeProfile } = useActiveProfile();
-    const [comments, setComments] = useState<Comment[]>([]);
+    const [comments, setComments] = useState<BackendComment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -67,10 +60,11 @@ export function CommentModal({ isOpen, onClose, postId, onCommentAdded }: Commen
             setSubmitting(true);
             const res = await addComment(postId, newComment);
             // Backend returns { message, comment }
-            const createdComment = res.comment || {
+            const createdComment: BackendComment = res.comment || {
                 comment_id: Math.random().toString(),
                 content: newComment,
                 created_at: new Date().toISOString(),
+                user_id: activeProfile?.id || "",
                 full_name: activeProfile?.name || "Me",
                 avatar_url: activeProfile?.avatar_url || null
             };

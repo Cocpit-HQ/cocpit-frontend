@@ -126,6 +126,21 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         }
     }
 
+    const isCompanyActor = Boolean(
+        notification.is_company_actor ||
+        (notification as any).isCompanyActor ||
+        (notification as any).actor_type === 'company' ||
+        (notification as any).actor_type === 'organization' ||
+        notification.type === 'company_connection_accepted' ||
+        notification.type === 'company_invite' ||
+        notification.type === 'company_job' ||
+        notification.type === 'company_event' ||
+        notification.type === 'company_post' ||
+        notification.type === 'organization_job' ||
+        notification.type === 'organization_invite' ||
+        notification.type === 'ORGANIZATION_INVITE'
+    );
+
     return (
         <div
             onClick={handleClick}
@@ -143,6 +158,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                         url={notification.actor_avatar || undefined}
                         name={notification.actor_name || 'User'}
                         size="md"
+                        isCompany={isCompanyActor}
                     />
                 </div>
                 <div className="flex flex-row items-center gap-[4px] flex-wrap">

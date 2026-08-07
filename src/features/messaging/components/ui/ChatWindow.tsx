@@ -23,6 +23,7 @@ import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
 import { useSocial } from "@/context/SocialContext"
 import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service"
+import { cn } from "@/lib/utils"
 import { ReportModal } from "@/components/shared/ReportModal"
 import MessageInfoModal from "../../MessageInfoModal"
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel"
@@ -31,6 +32,7 @@ import { Icon } from "@iconify/react"
 import { Plus } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
+import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,6 +140,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
   const { activeProfile } = useActiveProfile();
+  const targetUserId = initialChat.otherUserId || (initialChat as any).other_user_id;
+  const { canManageBlock, canBlockTarget } = useOrgBlockPermissions(targetUserId);
   const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
   const canJobsChat = activeProfile?.type !== 'COMPANY' || companyPermissions.canJobsChat;
   const canChat = activeProfile?.type !== 'COMPANY' || companyPermissions.canChat;
@@ -175,8 +179,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     ? initialChat.isBlockedByMe 
     : (initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false);
   const isBlockedByOther = initialChat.isBlockedByOther;
-
-  const isCompanyMode = activeProfile?.type === 'COMPANY';
 
   const chat = {
     ...initialChat,
@@ -1271,15 +1273,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                           <Icon icon="fluent:info-16-regular" width={24} height={24} color="#000000" />
                         </DropdownMenuItem>
                         {isBlockedByMe ? (
-                          <DropdownMenuItem onClick={handleUnblock} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unblock profile</span>
-                            <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
-                          </DropdownMenuItem>
+                          canManageBlock && (
+                            <DropdownMenuItem onClick={handleUnblock} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unblock profile</span>
+                              <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                            </DropdownMenuItem>
+                          )
                         ) : (
-                          <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Block profile</span>
-                            <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
-                          </DropdownMenuItem>
+                          canBlockTarget && (
+                            <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none">
+                              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Block profile</span>
+                              <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                            </DropdownMenuItem>
+                          )
                         )}
                         <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-red-50 rounded-[24px] transition-colors border-none outline-none">
                           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#EF4444]">Delete Chat</span>
@@ -1355,10 +1361,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
       {isBlockedByMe ? (
         <div className="px-4 py-3.5 border-t border-border bg-muted/20 flex flex-col items-center justify-center gap-2 text-center shrink-0">
-          <p className="text-sm text-muted-foreground">You have blocked this user</p>
+          <p className="text-sm text-muted-foreground">
+            {canManageBlock ? "You have blocked this user" : "This account is blocked by organization administrators"}
+          </p>
           <button
-            onClick={handleUnblock}
-            className="px-5 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-full hover:bg-primary/90 transition-colors"
+            onClick={canManageBlock ? handleUnblock : undefined}
+            disabled={!canManageBlock}
+            title={!canManageBlock ? "Only organization owners or administrators can unblock accounts" : undefined}
+            className={cn(
+              "px-5 py-1.5 text-sm font-medium rounded-full transition-colors",
+              canManageBlock
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed border border-border"
+            )}
           >
             Unblock to chat
           </button>

@@ -253,6 +253,45 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         };
     }, []);
 
+    // Listen for membership revocation / block events to evict org actor if blocked
+    useEffect(() => {
+        if (typeof window === "undefined" || !session?.user) return;
+
+        const checkEviction = (targetId?: string, isBlocked?: boolean) => {
+            const currentUserId = (session.user as any).id || session.user.email;
+            if (
+                activeProfile?.type === "COMPANY" &&
+                isBlocked &&
+                (targetId === currentUserId || targetId === activeProfile.id)
+            ) {
+                console.warn("[ActorContext] Membership revoked or organization blocked. Evicting actor to personal user profile.");
+                switchProfile("USER", currentUserId);
+            }
+        };
+
+        const handleBlockEvent = (e: any) => {
+            const detail = e.detail || {};
+            checkEviction(detail.targetId, detail.isBlocked);
+        };
+
+        const handleStorageEvent = (e: StorageEvent) => {
+            if (e.key === "cocpit_block_event" && e.newValue) {
+                try {
+                    const payload = JSON.parse(e.newValue);
+                    checkEviction(payload.targetId, payload.isBlocked);
+                } catch (err) {}
+            }
+        };
+
+        window.addEventListener("cocpit:block_status_changed", handleBlockEvent);
+        window.addEventListener("storage", handleStorageEvent);
+
+        return () => {
+            window.removeEventListener("cocpit:block_status_changed", handleBlockEvent);
+            window.removeEventListener("storage", handleStorageEvent);
+        };
+    }, [activeProfile?.type, activeProfile?.id, session?.user]);
+
 
     const switchProfile = (type: ProfileType, id: string) => {
         const performSwitch = async () => {

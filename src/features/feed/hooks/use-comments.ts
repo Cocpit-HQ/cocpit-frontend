@@ -24,7 +24,15 @@ export const useComments = (postId: string) => {
       setIsLoading(true);
       const companyId = isCompany ? activeProfile?.id : undefined;
       const data = await getComments(postId, companyId, targetCommentId);
-      setComments(data.map(mapBackendCommentToFrontend));
+      const mapped: CommentType[] = data.map(mapBackendCommentToFrontend);
+      const commentMap = new Map<string, CommentType>();
+      mapped.forEach((c: CommentType) => {
+        if (c && c.id != null) {
+          commentMap.set(c.id.toString(), c);
+        }
+      });
+      const uniqueComments: CommentType[] = Array.from(commentMap.values());
+      setComments(uniqueComments);
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     } finally {
@@ -94,7 +102,14 @@ export const useComments = (postId: string) => {
       
       if (response && response.comment) {
         const mapped = mapBackendCommentToFrontend(response.comment);
-        setComments(prev => prev.map(c => c.id === tempId ? mapped : c));
+        setComments(prev => {
+          const mappedIdStr = mapped.id ? mapped.id.toString() : '';
+          const alreadyExists = prev.some(c => c.id && c.id.toString() === mappedIdStr);
+          if (alreadyExists) {
+            return prev.filter(c => c.id !== tempId);
+          }
+          return prev.map(c => c.id === tempId ? mapped : c);
+        });
       } else {
         fetchComments(); // Fallback
       }
@@ -196,25 +211,40 @@ export const useComments = (postId: string) => {
 
   // Real-time synchronization
   const onCommentAdded = useCallback((data: { postId: string; comment: any }) => {
-    // Check if we are the author to avoid duplicating optimistic updates
-    const isOurComment = data.comment && data.comment.author_id === (isCompany ? activeProfile?.id : session?.user?.id);
-    if (!isOurComment) {
-      setComments(prev => {
-        // Prevent duplicates
-        if (prev.some(c => c.id === data.comment.comment_id)) return prev;
-        const mapped = mapBackendCommentToFrontend(data.comment);
-        let updated = [mapped, ...prev];
-        if (data.comment.parent_id) {
-          const parentIdStr = data.comment.parent_id.toString();
-          updated = updated.map(c =>
-            c.id && c.id.toString() === parentIdStr
-              ? { ...c, reply_count: (c.reply_count || 0) + 1 }
-              : c
-          );
-        }
-        return updated;
-      });
-    }
+    if (!data.comment) return;
+    const commentIdStr = (data.comment.comment_id || data.comment.id)?.toString();
+    if (!commentIdStr) return;
+
+    const isOurComment = data.comment.author_id === (isCompany ? activeProfile?.id : session?.user?.id);
+
+    setComments(prev => {
+      // Prevent duplicate if already in state
+      if (prev.some(c => c.id && c.id.toString() === commentIdStr)) {
+        return prev;
+      }
+
+      const mapped = mapBackendCommentToFrontend(data.comment);
+
+      // If it's our comment and there's a pending temp comment, replace it
+      let updated: CommentType[];
+      const pendingIndex = prev.findIndex(c => c.isPending && c.text === mapped.text);
+      if (isOurComment && pendingIndex !== -1) {
+        updated = [...prev];
+        updated[pendingIndex] = mapped;
+      } else {
+        updated = [mapped, ...prev];
+      }
+
+      if (data.comment.parent_id) {
+        const parentIdStr = data.comment.parent_id.toString();
+        updated = updated.map(c =>
+          c.id && c.id.toString() === parentIdStr
+            ? { ...c, reply_count: (c.reply_count || 0) + 1 }
+            : c
+        );
+      }
+      return updated;
+    });
   }, [isCompany, activeProfile?.id, session?.user?.id]);
 
   const onCommentLikeUpdated = useCallback((data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => {

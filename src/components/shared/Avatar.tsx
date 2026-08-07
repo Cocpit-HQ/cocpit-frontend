@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { avatarGradients } from "@/constants/messaging"
+import { Icon } from "@iconify/react"
 
 interface AvatarProps {
     url?: string
@@ -10,6 +11,7 @@ interface AvatarProps {
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
     online?: boolean
     className?: string
+    isCompany?: boolean
 }
 
 export const getAvatarGradient = (avatar: string) => {
@@ -22,7 +24,8 @@ export default function Avatar({
     name,
     size = 'md',
     online,
-    className = ""
+    className = "",
+    isCompany = false
 }: AvatarProps) {
     const [error, setError] = useState(false)
 
@@ -32,6 +35,14 @@ export default function Avatar({
         md: "w-10 h-10 text-[20px]",
         lg: "w-12 h-12 text-lg",
         xl: "w-16 h-16 text-2xl"
+    }
+
+    const companyRoundedClasses = {
+        xs: "rounded-[6px]",
+        sm: "rounded-[8px]",
+        md: "rounded-[10px]",
+        lg: "rounded-[12px]",
+        xl: "rounded-[16px]"
     }
 
     const indicatorSize = {
@@ -50,10 +61,18 @@ export default function Avatar({
         ? `bg-gradient-to-br ${getAvatarGradient(gradientKey)} text-white` 
         : "bg-[#EEF2FF] text-[#6366F1]";
 
+    const roundedClass = isCompany ? companyRoundedClasses[size] : "rounded-full";
+
     return (
         <div className={`relative shrink-0 ${className}`}>
-            <div className={`relative ${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
-                {!isUrl && <span>{initial}</span>}
+            <div className={`relative ${sizeClasses[size]} ${roundedClass} overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
+                {!isUrl && (
+                    isCompany ? (
+                        <Icon icon="lucide:building-2" className="w-1/2 h-1/2 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                    ) : (
+                        <span>{initial}</span>
+                    )
+                )}
                 {isUrl ? (
                     <img
                         src={url}

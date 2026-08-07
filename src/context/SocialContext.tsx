@@ -18,8 +18,8 @@ interface SocialContextType {
   syncFollowStatus: (userId: string, isFollowing: boolean) => void;
 
   blockedIds: string[];
-  blockUser: (id: string) => Promise<void>;
-  unblockUser: (id: string) => Promise<void>;
+  blockUser: (id: string) => Promise<{ success: boolean; message?: string }>;
+  unblockUser: (id: string) => Promise<{ success: boolean; message?: string }>;
   isBlocked: (id: string) => boolean;
 }
 
@@ -52,6 +52,31 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     return followingLoading.has(id);
   };
 
+  const notifyFollowEvent = (targetId: string, isFollowing: boolean) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cocpit:follow_status_changed", {
+          detail: { targetId, isFollowing, orgId: activeProfile?.id },
+        }),
+      );
+
+      try {
+        localStorage.setItem(
+          "cocpit_follow_event",
+          JSON.stringify({ targetId, isFollowing, orgId: activeProfile?.id, timestamp: Date.now() }),
+        );
+      } catch (e) {}
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["followers"] });
+    queryClient.invalidateQueries({ queryKey: ["following"] });
+    queryClient.invalidateQueries({ queryKey: ["organization-followers"] });
+    queryClient.invalidateQueries({ queryKey: ["organization-following"] });
+    queryClient.invalidateQueries({ queryKey: ["profile"] });
+    queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
+    queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+  };
+
   const followUser = async (id: string) => {
     setFollowingLoading((prev) => {
       const next = new Set(prev);
@@ -77,12 +102,9 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         return next;
       });
 
+      notifyFollowEvent(id, true);
       const currentUserId = session?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["profileStats", id] });
-      // Profile pages may key this query by UUID or by account handle depending
-      // on how the caller linked here — invalidate by prefix so whichever one
-      // is actually cached for this user gets refetched instead of silently
-      // missing (which otherwise requires a hard refresh to pick up the change).
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["followers", id] });
       queryClient.invalidateQueries({ queryKey: ["following", id] });
@@ -143,15 +165,14 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         return next;
       });
 
+      notifyFollowEvent(id, false);
       const currentUserId = session?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["profileStats", id] });
-      // Profile pages may key this query by UUID or by account handle depending
-      // on how the caller linked here — invalidate by prefix so whichever one
-      // is actually cached for this user gets refetched instead of silently
-      // missing (which otherwise requires a hard refresh to pick up the change).
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["followers", id] });
-      queryClient.invalidateQueries({ queryKey: ["following", id] });
+      queryClient.invalidateQueries({ queryKey: ["followers"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+      queryClient.invalidateQueries({ queryKey: ["organization-followers"] });
+      queryClient.invalidateQueries({ queryKey: ["organization-following"] });
       queryClient.invalidateQueries({ queryKey: ["followersCount", id] });
 
       if (currentUserId) {
@@ -247,37 +268,37 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const blockUser = async (id: string) => {
-    setBlockedIds((prev) => [...prev, id]);
-    setFollowingIds((prev) => prev.filter((uid) => uid !== id));
-
-    notifyBlockEvent(id, true);
-
     try {
       await api.post(`/users/${id}/block`);
+      setBlockedIds((prev) => [...prev, id]);
+      setFollowingIds((prev) => prev.filter((uid) => uid !== id));
+      notifyBlockEvent(id, true);
       toast({
         title: "User blocked",
         description: "You will no longer see their content.",
       });
+      return { success: true };
     } catch (error: any) {
       console.error("Block failed", error);
-      setBlockedIds((prev) => prev.filter((uid) => uid !== id));
       const errorMsg = error?.response?.data?.message || "Failed to block user";
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      return { success: false, message: errorMsg };
     }
   };
 
   const unblockUser = async (id: string) => {
-    setBlockedIds((prev) => prev.filter((uid) => uid !== id));
-    notifyBlockEvent(id, false);
     try {
       await api.delete(`/users/${id}/unblock`);
+      setBlockedIds((prev) => prev.filter((uid) => uid !== id));
+      notifyBlockEvent(id, false);
       toast({ title: "User unblocked" });
+      return { success: true };
     } catch (error: any) {
       console.error("Unblock failed", error);
-      setBlockedIds((prev) => [...prev, id]); // Revert
       const errorMsg =
         error?.response?.data?.message || "Failed to unblock user";
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      return { success: false, message: errorMsg };
     }
   };
 

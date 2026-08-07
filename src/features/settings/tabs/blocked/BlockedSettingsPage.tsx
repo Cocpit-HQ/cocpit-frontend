@@ -5,9 +5,11 @@ import { Ban, Loader2 } from 'lucide-react';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { useSettingsStore } from '@/store/settings.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useOrgBlockPermissions } from '@/hooks/useOrgBlockPermissions';
 
 export function BlockedSettingsPage() {
   const { isCompany } = useActiveProfile();
+  const { canManageBlock } = useOrgBlockPermissions();
   // Server state (the list + the unblock mutation) is now owned by
   // TanStack Query via useBlockedUsers, instead of a manual
   // useEffect + useState + try/catch fetch.
@@ -68,10 +70,18 @@ export function BlockedSettingsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setUserToUnblockId(user.id)}
-                  className={`flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border ${isCompany ? 'border-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint' : 'border-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint'} rounded-[24px] transition-colors`}
+                  onClick={() => canManageBlock && setUserToUnblockId(user.id)}
+                  disabled={!canManageBlock}
+                  title={!canManageBlock ? "Only organization owners or administrators can unblock accounts" : undefined}
+                  className={`flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border rounded-[24px] transition-colors ${
+                    !canManageBlock
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 opacity-50 cursor-not-allowed dark:border-muted dark:bg-muted dark:text-muted-foreground'
+                      : isCompany
+                      ? 'border-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint text-[#1A73E8] dark:text-company-primary cursor-pointer'
+                      : 'border-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint text-[#6366F1] dark:text-primary cursor-pointer'
+                  }`}
                 >
-                  <span className={`text-[14px] font-normal ${isCompany ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#6366F1] dark:text-primary'} leading-[20px] text-center`}>Unblock</span>
+                  <span className="text-[14px] font-normal leading-[20px] text-center">Unblock</span>
                 </button>
               </div>
             ))

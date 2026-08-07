@@ -23,12 +23,23 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
   const searchParams = useSearchParams();
   const targetCommentId = searchParams.get('commentId');
 
-  // ✅ CORRECTED: Use parent_id, not heuristics
+  // ✅ CORRECTED: Use parent_id, not heuristics & deduplicate by comment ID
   const { rootComments, replyMap } = useMemo(() => {
+    const uniqueMap = new Map<string, CommentType>();
+    comments.forEach(c => {
+      if (!c || c.id === undefined || c.id === null) return;
+      const key = c.id.toString();
+      const existing = uniqueMap.get(key);
+      if (!existing || (!c.isPending && existing.isPending)) {
+        uniqueMap.set(key, c);
+      }
+    });
+    const uniqueComments = Array.from(uniqueMap.values());
+
     const replyMap = new Map<string | number, CommentType[]>();
 
     // Group by parent_id (O(N))
-    comments.forEach(comment => {
+    uniqueComments.forEach(comment => {
       if (comment.parent_id) {
         if (!replyMap.has(comment.parent_id)) {
           replyMap.set(comment.parent_id, []);
@@ -38,7 +49,7 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
     });
 
     // The backend guarantees the array is sorted correctly (including target threads and pins)
-    const rootComments = comments.filter(c => !c.parent_id);
+    const rootComments = uniqueComments.filter(c => !c.parent_id);
 
     // Sort replies chronologically (ASC) for readability
     replyMap.forEach((replies) => {

@@ -67,6 +67,7 @@ export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ re
                     url={request.sender.avatar || undefined}
                     name={request.sender.name}
                     size="lg"
+                    isCompany={request.isCompanyRequest}
                 />
                 <div>
                     <h3 className="font-semibold text-foreground hover:underline">{request.sender.name}</h3>

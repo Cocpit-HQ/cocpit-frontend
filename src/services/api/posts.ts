@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import { BackendPost } from "./feed";
+import { BackendComment } from "@/lib/mappers/feed.mapper";
 
 export interface DeletePostResponse {
   message: string;
@@ -108,11 +109,11 @@ export const updateComment = async (commentId: string, content: string, companyI
   return response.data;
 };
 
-export const getComments = async (postId: string, companyId?: string, targetCommentId?: string) => {
+export const getComments = async (postId: string, companyId?: string, targetCommentId?: string): Promise<BackendComment[]> => {
   const params = new URLSearchParams();
   if (companyId) params.append('companyId', companyId);
   if (targetCommentId) params.append('target_comment_id', targetCommentId);
-  const response = await api.get(`/post/${postId}/comments?${params.toString()}`);
+  const response = await api.get<BackendComment[]>(`/post/${postId}/comments?${params.toString()}`);
   return response.data;
 };
 
