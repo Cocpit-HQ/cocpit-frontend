@@ -1131,6 +1131,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
           onUnmuteClick={() => setShowUnmuteConfirm(true)}
           onDeleteClick={() => setShowDeleteConfirm(true)}
           onLeaveClick={() => setShowLeaveConfirm(true)}
+          isQuickChat={isQuickChat}
         />
       ) : (
         <div className="px-[16px] py-[12px] border-b border-[var(--border)] flex items-center justify-between bg-[var(--card)] shrink-0">
@@ -1422,6 +1423,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                 setPendingSharedProfileId(null);
                 setPendingSharedProfile(null);
               }}
+              isQuickChat={isQuickChat}
             />
           )}
         </div>

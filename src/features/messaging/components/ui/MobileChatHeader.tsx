@@ -23,6 +23,7 @@ interface MobileChatHeaderProps {
   onUnmuteClick?: () => void;
   onDeleteClick?: () => void;
   onLeaveClick?: () => void;
+  isQuickChat?: boolean;
 }
 
 export default function MobileChatHeader({
@@ -34,107 +35,140 @@ export default function MobileChatHeader({
   onMuteClick,
   onUnmuteClick,
   onDeleteClick,
-  onLeaveClick
+  onLeaveClick,
+  isQuickChat
 }: MobileChatHeaderProps) {
   const router = useRouter()
   const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me');
 
   return (
     <div
-      className="w-full px-3 py-2.5 border-b flex items-center justify-between bg-background border-border overflow-hidden shrink-0"
+      className={isQuickChat 
+        ? "w-full px-[16px] py-[12px] bg-white flex items-center justify-between shrink-0 h-[59px]" 
+        : "w-full px-3 py-2.5 border-b flex items-center justify-between bg-background border-border overflow-hidden shrink-0"}
     >
-      <div className="flex items-center gap-2 overflow-hidden flex-1">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onBack();
-          }}
-          className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground shrink-0"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <div className={`flex items-center gap-2 overflow-hidden flex-1`}>
+        <div className={`flex items-center gap-2.5 overflow-hidden flex-1`}>
+          {isQuickChat && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onBack();
+              }}
+              className="w-6 h-6 flex items-center justify-center transition-colors text-black hover:opacity-70 shrink-0"
+            >
+              <ArrowLeft className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+          )}
+          {!isQuickChat && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onBack();
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-muted text-muted-foreground hover:text-foreground shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
 
-        {!selectedMessage ? (
-          <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-            {chat.isGroup ? (
-              <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-                <Avatar
-                  url={chat.avatar}
-                  name={chat.name}
-                  size="sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-foreground truncate leading-tight">
-                    {chat.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {chat.role ? chat.role : "Group Chat"}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <Link 
-                href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
-                className="flex items-center gap-2.5 overflow-hidden flex-1 group"
-              >
-                <Avatar
-                  url={chat.avatar}
-                  name={chat.name}
-                  size="sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">
-                    {chat.name}
-                  </h3>
-                  {chat.role ? (
-                    <p className="text-xs text-muted-foreground truncate">{chat.role}</p>
-                  ) : (
-                    <p className="text-xs truncate">
-                      {chat.online 
-                        ? <span className="text-emerald-500 font-medium">Active now</span>
-                        : <span className="text-muted-foreground">Offline</span>}
+          {!selectedMessage ? (
+            <div className={`flex items-center gap-2.5 overflow-hidden flex-1`}>
+              {chat.isGroup ? (
+                <div className={`flex items-center gap-2.5 overflow-hidden flex-1`}>
+                  <Avatar
+                    url={chat.avatar}
+                    name={chat.name}
+                    size="sm"
+                  />
+                  <div className={`flex-1 min-w-0 flex flex-col justify-center`}>
+                    <h3 className={`${isQuickChat ? "font-['Poppins'] font-normal text-[14px] leading-[20px] text-black" : "font-semibold text-sm text-foreground truncate leading-tight"}`}>
+                      {chat.name}
+                    </h3>
+                    <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280]" : "text-xs text-muted-foreground truncate"}`}>
+                      {chat.role ? chat.role : "Group Chat"}
                     </p>
-                  )}
+                  </div>
                 </div>
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="font-medium text-sm text-foreground">1 Selected</div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-1 shrink-0">
-        {selectedMessage ? (
-          <>
-            <Button variant="ghost" size="icon" onClick={() => onMessageAction?.('close')} title="Close Selection">
-              <X className="h-5 w-5" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onMessageAction?.('copy')}>
-                  <Copy className="w-4 h-4 mr-2" /> Copy
-                </DropdownMenuItem>
-                {isMyMessage && (
-                  <>
-                    <DropdownMenuItem onClick={() => onMessageAction?.('info')}>
-                      <InfoIcon className="w-4 h-4 mr-2" /> Info
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onMessageAction?.('edit')}>
-                      <Pencil className="w-4 h-4 mr-2" /> Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onMessageAction?.('delete')} className="text-destructive focus:text-destructive">
-                      <Trash2 className="w-4 h-4 mr-2" /> Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              ) : (
+                <Link 
+                  href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+                  className={`flex items-center gap-2.5 overflow-hidden flex-1 group`}
+                >
+                  <Avatar
+                    url={chat.avatar}
+                    name={chat.name}
+                    size="sm"
+                  />
+                  <div className={`flex-1 min-w-0 flex flex-col justify-center`}>
+                    <h3 className={`${isQuickChat ? "font-['Poppins'] font-normal text-[14px] leading-[20px] text-black truncate" : "font-semibold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors"}`}>
+                      {chat.name}
+                    </h3>
+                    {chat.role ? (
+                      <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate" : "text-xs text-muted-foreground truncate"}`}>{chat.role}</p>
+                    ) : (
+                      <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate" : "text-xs truncate"}`}>
+                        {chat.online 
+                          ? <span className={`${isQuickChat ? "text-[#6B7280]" : "text-emerald-500 font-medium"}`}>Active now</span>
+                          : <span className={`${isQuickChat ? "text-[#6B7280]" : "text-muted-foreground"}`}>Offline</span>}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className={`flex items-center gap-2 overflow-hidden flex-1 ${isQuickChat ? "pl-8" : ""}`}>
+              <span className="font-medium text-sm text-foreground truncate">1 Selected</span>
+            </div>
+          )}
+        </div>
+        
+        <div className={`flex items-center gap-1 shrink-0 ml-2`}>
+          {isQuickChat ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onMessageAction && selectedMessage) {
+                  onMessageAction('close');
+                } else if (onBack) {
+                  onBack();
+                }
+              }}
+              className="w-6 h-6 flex items-center justify-center transition-colors text-black hover:opacity-70"
+            >
+              <X className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+          ) : selectedMessage ? (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => onMessageAction?.('close')} title="Close Selection">
+                <X className="h-5 w-5" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onMessageAction?.('copy')}>
+                    <Copy className="w-4 h-4 mr-2" /> Copy
+                  </DropdownMenuItem>
+                  {isMyMessage && (
+                    <>
+                      <DropdownMenuItem onClick={() => onMessageAction?.('info')}>
+                        <InfoIcon className="w-4 h-4 mr-2" /> Info
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onMessageAction?.('edit')}>
+                        <Pencil className="w-4 h-4 mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onMessageAction?.('delete')} className="text-destructive focus:text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
           </>
         ) : (
           <>
@@ -192,6 +226,7 @@ export default function MobileChatHeader({
           </>
         )}
       </div>
+    </div>
     </div>
   )
 }

@@ -19,6 +19,9 @@ import { useSocket } from '@/context/SocketContext';
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import * as channelService from '@/features/channel/services/channel.service';
+import { useQuery } from '@tanstack/react-query';
+import { getConversations } from '@/services/api/messaging';
+import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 
 
 export const HomeHeader = () => {
@@ -30,6 +33,24 @@ export const HomeHeader = () => {
     const pathname = usePathname();
     const isNotificationsActive = pathname === '/notifications';
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+    const rawChatsQuery = useQuery({
+        queryKey: [
+            "conversations",
+            activeProfile?.type ?? "USER",
+            activeProfile?.id ?? "me",
+            "all",
+        ],
+        queryFn: async () => {
+            const params = activeProfile?.type === "COMPANY" ? { companyId: activeProfile.id, tab: "GENERAL" as "JOBS" | "GENERAL" } : {};
+            const backendChats = await getConversations(params);
+            return backendChats.map(mapBackendChatToChatThread);
+        },
+        staleTime: 0,
+        refetchOnWindowFocus: false,
+    });
+    
+    const hasUnreadMessages = rawChatsQuery.data?.some((c: any) => c.unread > 0) || false;
     // Reset popover-open state when navigating away from /notifications
     // so the active pill style doesn't get stuck after "See all" navigation
     useEffect(() => {
@@ -1100,7 +1121,22 @@ export const HomeHeader = () => {
                                             }}
                                             className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'} ${(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) ? '!cursor-not-allowed' : ''}`}
                                         >
-                                            <MessageCircle width={24} height={24} strokeWidth={1.5} />
+                                            <div className="relative">
+                                                <Icon icon="proicons:chat" style={{ width: '24px', height: '24px' }} />
+                                                {hasUnreadMessages && (
+                                                    <span 
+                                                        style={{
+                                                            position: 'absolute',
+                                                            width: '6px',
+                                                            height: '6px',
+                                                            left: '19px',
+                                                            top: '-3px',
+                                                            backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
+                                                            borderRadius: '50%'
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
                                         </Link>
                                     </TooltipTrigger>
                                     {(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) && (

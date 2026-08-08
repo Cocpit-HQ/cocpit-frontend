@@ -325,7 +325,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
 
   return (
     <div
-      className="mb-2.5 rounded-[24px] bg-white border border-[#EEF2FF] p-3 w-[260px] cursor-pointer hover:bg-gray-50/90 transition-all shadow-[0px_2px_4px_rgba(99,102,241,0.05)] overflow-hidden"
+      className="mb-2.5 rounded-[24px] bg-white border border-[#EEF2FF] p-3 w-full max-w-[260px] cursor-pointer hover:bg-gray-50/90 transition-all shadow-[0px_2px_4px_rgba(99,102,241,0.05)] overflow-hidden"
       onClick={() => router.push(`/post/${postToRender.id}`)}
       role="button"
       tabIndex={0}
@@ -1057,6 +1057,13 @@ function MessageBubble(props: MessageBubbleProps) {
   // Helper to determine if message is profile-only
   const isProfileOnly = !!message.sharedProfileId && !message.is_deleted_for_everyone && !message.is_deleted_for_me;
 
+  // Helper to determine if message is post-only
+  const isPostOnly = !!message.sharedPost && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (() => {
+    const text = (message.text || message.text_content || "").trim();
+    const isJustUrl = /^https?:\/\/[^\s]+$/i.test(text);
+    return !text || isJustUrl || text === "Shared a post";
+  })();
+
   const { activeProfile } = useActiveProfile()
   const isCompanyProfile = activeProfile?.type === 'COMPANY'
 
@@ -1086,14 +1093,14 @@ function MessageBubble(props: MessageBubbleProps) {
 
     const mediaOnlyClasses = "bg-transparent rounded-[12px] overflow-hidden"
 
-    return (isMediaOnly || isProfileOnly) ? mediaOnlyClasses : baseClasses
+    return (isMediaOnly || isProfileOnly || isPostOnly) ? mediaOnlyClasses : baseClasses
   }
 
   const paddingClasses = isEditing
     ? "px-[16px] py-[16px]"
     : (message.is_deleted_for_everyone || message.is_deleted_for_me)
       ? "px-[16px] py-[10px]"
-      : ((message.media && message.media.length > 0) || isProfileOnly)
+      : ((message.media && message.media.length > 0) || isProfileOnly || isPostOnly)
         ? "p-0 overflow-hidden"
         : (message.repliedMessage && message.repliedMessage.senderName)
           ? "px-[8px] pt-[8px] pb-[16px]"
@@ -1310,7 +1317,9 @@ function MessageBubble(props: MessageBubbleProps) {
 
             <div className={cn(
               "relative flex min-w-0",
-              message.media && message.media.length > 0 && !message.is_deleted_for_everyone && !message.is_deleted_for_me ? "max-w-[300px] w-full" : "max-w-[70%] md:max-w-[85%]",
+              ((message.media && message.media.length > 0) || message.sharedPost || message.entityType) && !message.is_deleted_for_everyone && !message.is_deleted_for_me 
+                ? "max-w-[85%] sm:max-w-[300px] w-full" 
+                : "max-w-[70%] md:max-w-[85%]",
               isEditing && "w-full max-w-full md:max-w-[70%]"
             )}>
               <div
@@ -1377,7 +1386,7 @@ function MessageBubble(props: MessageBubbleProps) {
                     />
                     <MessageText
                       message={message}
-                      isMediaOnly={isMediaOnly}
+                      isMediaOnly={isMediaOnly || isPostOnly}
                       isMe={isMe}
                     />
                   </>

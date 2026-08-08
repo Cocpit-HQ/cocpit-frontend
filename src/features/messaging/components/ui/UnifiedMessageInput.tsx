@@ -24,6 +24,7 @@ interface UnifiedMessageInputProps {
     onCancelPendingSharedProfile?: () => void;
     pendingEntityContext?: { type: 'job' | 'offer' | 'event', id: string } | null;
     onDismissEntityContext?: () => void;
+    isQuickChat?: boolean;
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
@@ -43,7 +44,8 @@ export default function UnifiedMessageInput({
     pendingSharedProfile,
     onCancelPendingSharedProfile,
     pendingEntityContext,
-    onDismissEntityContext
+    onDismissEntityContext,
+    isQuickChat
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -70,7 +72,7 @@ export default function UnifiedMessageInput({
             setText("")
             setFiles([])
             if (textareaRef.current) {
-                textareaRef.current.style.height = '44px';
+                textareaRef.current.style.height = 'auto';
             }
         }
     }
@@ -142,8 +144,8 @@ export default function UnifiedMessageInput({
     };
 
     return (
-        <div className="px-4 py-3 md:px-6 md:py-4 w-full bg-background shrink-0">
-            <div className={`flex flex-col w-full border border-border/60 ${files.length > 0 || replyingTo || pendingSharedPost || pendingSharedProfile ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all relative`}>
+        <div className={`px-4 py-3 md:px-6 md:py-4 w-full bg-background shrink-0 ${isQuickChat ? 'p-4' : ''}`}>
+            <div className={`flex flex-col w-full ${!isQuickChat ? 'border border-border/60 p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20' : ''} ${files.length > 0 || replyingTo || pendingSharedPost || pendingSharedProfile ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent transition-all relative`}>
                 {replyingTo && onCancelReply && (
                     <ReplyPreview replyingTo={replyingTo} onCancel={onCancelReply} />
                 )}
@@ -260,10 +262,10 @@ export default function UnifiedMessageInput({
                     </div>
                 )}
 
-                <div className="flex items-end gap-1.5 w-full">
+                <div className={isQuickChat ? "flex flex-row justify-between items-center w-full box-border px-[16px] py-[4px] gap-[8px] min-h-[44px] bg-[#FFFFFF] border border-[#6B7280] focus-within:border-[var(--primary)] focus-within:ring-1 focus-within:ring-[var(--primary)]/20 transition-all rounded-[24px]" : "flex items-end gap-1.5 w-full"}>
                     {/* Attachment button */}
                     <button
-                        className="w-9 h-9 mb-0.5 flex items-center justify-center rounded-full transition-colors text-muted-foreground hover:bg-muted shrink-0 disabled:opacity-40 ml-1"
+                        className={`mb-0.5 flex items-center justify-center rounded-full transition-colors shrink-0 disabled:opacity-40 ${isQuickChat ? 'w-[20px] h-[20px] text-black hover:opacity-70' : 'w-9 h-9 text-muted-foreground hover:bg-muted ml-1'}`}
                         disabled={isDisabled}
                         onClick={() => fileInputRef.current?.click()}
                         aria-label="Attach file"
@@ -272,7 +274,7 @@ export default function UnifiedMessageInput({
                     </button>
 
                     {/* Input textarea */}
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative flex items-center justify-start h-full">
                         <MentionTextarea
                             innerRef={textareaRef}
                             value={text}
@@ -290,10 +292,10 @@ export default function UnifiedMessageInput({
                                 }
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder={disabledMessage || placeholder || (isDisabled ? "Loading..." : "Message...")}
+                            placeholder={disabledMessage || (isQuickChat ? "Write a message..." : (placeholder || (isDisabled ? "Loading..." : "Message...")))}
                             rows={1}
-                            className="w-full px-2 py-2.5 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-[15px] text-foreground placeholder:text-muted-foreground/60 scrollbar-hide overflow-hidden"
-                            style={{ minHeight: "40px" }}
+                            className={`w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide overflow-hidden ${isQuickChat ? "text-[12px] leading-[18px] font-['Poppins'] text-[#6B7280] placeholder:text-[#6B7280] p-0 my-auto" : "px-2 py-2.5 max-h-32 text-[15px] text-foreground placeholder:text-muted-foreground/60"}`}
+                            style={{ minHeight: isQuickChat ? "18px" : "40px" }}
                             disabled={isDisabled}
                         />
                     </div>
@@ -308,11 +310,11 @@ export default function UnifiedMessageInput({
                     />
 
                     {/* Right side controls */}
-                    <div className="flex items-center gap-[16px] mb-0.5 shrink-0 mr-1">
+                    <div className={`flex items-center shrink-0 ${isQuickChat ? "gap-[16px] mb-0" : "gap-[16px] mb-0.5 mr-1"}`}>
                         <button
                             ref={emojiButtonRef}
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`}
+                            className={`flex items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-primary bg-primary/10' : (isQuickChat ? 'text-black hover:opacity-70' : 'text-muted-foreground hover:bg-muted')} ${isQuickChat ? 'w-[20px] h-[20px]' : 'w-9 h-9'}`}
                             disabled={isDisabled}
                             aria-label="Open emoji picker"
                         >
@@ -322,10 +324,12 @@ export default function UnifiedMessageInput({
                         <button
                             onClick={handleSend}
                             disabled={isDisabled || (!text.trim() && files.length === 0 && !pendingSharedPost && !pendingSharedProfile)}
-                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-sm
-                                ${text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile
-                                    ? 'bg-[var(--primary-tint)] text-[var(--primary)] hover:bg-[var(--primary-tint)]/80'
-                                    : 'bg-transparent text-muted-foreground/40 cursor-not-allowed'
+                            className={`flex items-center justify-center transition-all shadow-sm ${isQuickChat ? 'w-[20px] h-[20px] rounded-none shadow-none text-black hover:opacity-70' : 'w-9 h-9 rounded-full'} 
+                                ${isQuickChat 
+                                    ? (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile ? 'text-[var(--primary)]' : 'text-black')
+                                    : (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile
+                                        ? 'bg-[var(--primary-tint)] text-[var(--primary)] hover:bg-[var(--primary-tint)]/80'
+                                        : 'bg-transparent text-muted-foreground/40 cursor-not-allowed')
                                 }`}
                             aria-label="Send message"
                         >

@@ -53,6 +53,7 @@ interface ChatListProps {
   activeTab?: 'chat' | 'jobs' | 'requests';
   setActiveTab?: (tab: 'chat' | 'jobs' | 'requests') => void;
   isQuickChat?: boolean;
+  chatFilter?: 'All' | 'Groups';
 }
 
 export function ChatList({
@@ -67,6 +68,7 @@ export function ChatList({
   activeTab: propActiveTab,
   setActiveTab: propSetActiveTab,
   isQuickChat = false,
+  chatFilter = 'All',
 }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline, typingConversations } = useSocket();
@@ -184,6 +186,12 @@ export function ChatList({
         if (activeTab === 'requests' && !chat.is_requesting) return false;
       }
 
+      // Filter by Quick Chat dropdown (All | Groups)
+      if (chatFilter === 'Groups') {
+        const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
+        if (!isGroupChat) return false;
+      }
+
       // Filter by Search
       return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     });
@@ -194,7 +202,7 @@ export function ChatList({
       if (b.unread > 0 && a.unread === 0) return 1;
       return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
     });
-  }, [chatsWithStatus, activeTab, searchTerm, isCompany]);
+  }, [chatsWithStatus, activeTab, searchTerm, isCompany, chatFilter]);
 
   // Virtualizer setup
   const rowVirtualizer = useVirtualizer({
@@ -323,7 +331,7 @@ export function ChatList({
 
               return (
                 <div
-                  key={chat.id}
+                  key={virtualRow.key}
                   onClick={(e) => {
                     if (isJobChatDisabled) {
                       e.preventDefault();
