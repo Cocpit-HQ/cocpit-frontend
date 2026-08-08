@@ -116,6 +116,7 @@ export interface UserData {
   user_role?: string | null;
   skill_names?: string[];
   interest_names?: string[];
+  industry?: string | null;
 }
 
 export interface UpdateProfilePayload {
@@ -131,6 +132,7 @@ export interface UpdateProfilePayload {
   account_name?: string;
   website?: string;
   visible_role_ids?: string[];
+  industry?: string;
 }
 
 export interface Skill {

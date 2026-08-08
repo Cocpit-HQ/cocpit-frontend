@@ -238,7 +238,7 @@ export const PostHeader = ({
         <div className="flex items-center gap-1">
           {/* Tag icon */}
           {tags && tags.length > 0 && (
-            <TaggedPeoplePopover tags={tags} />
+            <TaggedPeoplePopover tags={tags} postId={id.toString()} />
           )}
 
           {!hideOptions && !hideMenuEntirely && (

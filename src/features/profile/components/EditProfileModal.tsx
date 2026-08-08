@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react'
 import { cn } from "@/lib/utils"
 import { updateMemberRoleSettings } from "@/services/api/organization"
 import { checkAccountNameAvailability } from "@/services/api/onboarding"
+import { getIndustries } from "@/features/jobs/services/jobs.service"
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,6 @@ const ROLES = [
   { id: "intern", label: "Intern" },
   { id: "self_employed", label: "Self employed" },
   { id: "employed", label: "Employed" },
-  { id: "unemployed", label: "Unemployed" },
 ];
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
@@ -80,6 +80,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     about: "",
     show_owner_badge: true,
     visible_role_ids: [] as string[],
+    industry: "",
   })
 
   const [isSaving, setIsSaving] = useState(false)
@@ -88,6 +89,49 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(true)
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
+
+  const [availableIndustries, setAvailableIndustries] = useState<{ industry_name: string }[]>([]);
+  const [isIndustryOpen, setIsIndustryOpen] = useState(false);
+  const [industrySearch, setIndustrySearch] = useState('');
+  const industryRef = React.useRef<HTMLDivElement>(null);
+
+  const formDataRef = React.useRef(formData);
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    setIndustrySearch(formData.industry || '');
+  }, [formData.industry]);
+
+  useEffect(() => {
+    const fetchIndustries = async () => {
+      try {
+        const data = await getIndustries();
+        setAvailableIndustries(data);
+      } catch (err) {
+        console.error("Failed to fetch industries", err);
+      }
+    };
+    fetchIndustries();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (industryRef.current && !industryRef.current.contains(event.target as Node)) {
+        setIsIndustryOpen(false);
+        setIndustrySearch(formDataRef.current.industry || '');
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const filteredIndustries = availableIndustries.filter(ind => 
+    ind.industry_name.toLowerCase().includes(industrySearch.toLowerCase())
+  );
 
   useEffect(() => {
     if (user) {
@@ -117,6 +161,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
         visible_role_ids: user.company_roles
           ? user.company_roles.filter(r => r.is_role_visible).map(r => r.org_id!)
           : [],
+        industry: (user as any).industry || "",
       }
       setFormData(data)
       setInitialFormData(data)
@@ -316,6 +361,77 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col relative" ref={industryRef}>
+                <Label className={labelStyles}>Industry</Label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={industrySearch}
+                    onChange={(e) => {
+                      setIndustrySearch(e.target.value);
+                      setIsIndustryOpen(true);
+                      if (!e.target.value) {
+                         setFormData(prev => ({ ...prev, industry: '' }));
+                      }
+                    }}
+                    onFocus={() => setIsIndustryOpen(true)}
+                    placeholder="Search industries..."
+                    className={cn(inputStyles, "border text-[14px]", isIndustryOpen ? "ring-2 ring-primary border-primary" : "")}
+                  />
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 pointer-events-none" />
+                </div>
+
+                {isIndustryOpen && (
+                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-card border border-border rounded-2xl shadow-lg z-50 overflow-hidden flex flex-col">
+                    <div className="max-h-[240px] overflow-y-auto scrollbar-thin py-2">
+                      {filteredIndustries.length > 0 ? (
+                        filteredIndustries.map(ind => (
+                          <div
+                            key={ind.industry_name}
+                            className={cn(
+                              "w-full text-left px-4 py-2.5 text-[14px] font-[family-name:var(--font-poppins)] font-normal transition-colors flex items-center justify-between cursor-pointer",
+                              formData.industry === ind.industry_name 
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-foreground hover:bg-secondary"
+                            )}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, industry: ind.industry_name }));
+                              setIsIndustryOpen(false);
+                              setIndustrySearch('');
+                            }}
+                          >
+                            <span className="truncate pr-4">{ind.industry_name}</span>
+                            {formData.industry === ind.industry_name && (
+                              <Icon icon="lucide:check" className="w-4 h-4 flex-shrink-0" />
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <p className="text-[14px] font-[family-name:var(--font-poppins)] font-medium text-foreground mb-1">No industries found</p>
+                          <p className="text-[12px] font-[family-name:var(--font-poppins)] text-muted-foreground">Try a different search term</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col" ref={statusRef}>
+                <Label className={labelStyles}>Status*</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
+                  <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.status))}>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {ROLES.map(role => (
+                      <SelectItem key={role.id} value={role.id}>{role.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
               <div className="flex flex-col" ref={headlineRef}>
                 <div className="flex justify-between items-center mb-[8px]">
                   <Label className="text-[14px] font-normal text-foreground font-[family-name:var(--font-poppins)] leading-[20px] mb-0">Headline*</Label>
@@ -330,19 +446,6 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   className={cn(inputStyles, formData.headline.length > 200 && "border-destructive focus:border-destructive")}
                   placeholder="Headline"
                 />
-              </div>
-              <div className="flex flex-col" ref={statusRef}>
-                <Label className={labelStyles}>Status*</Label>
-                <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
-                  <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.status))}>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {ROLES.map(role => (
-                      <SelectItem key={role.id} value={role.id}>{role.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 

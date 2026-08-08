@@ -397,7 +397,7 @@ const ProfilePostCard = ({
 
         <div className="flex items-center gap-2 flex-shrink-0 z-20">
           {localPost.tags && localPost.tags.length > 0 && (
-            <TaggedPeoplePopover tags={localPost.tags} />
+            <TaggedPeoplePopover tags={localPost.tags} postId={localPost.id} />
           )}
 
           <DropdownMenu onOpenChange={setIsMenuOpen}>
