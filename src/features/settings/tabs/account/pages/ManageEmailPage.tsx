@@ -6,12 +6,13 @@ import { ChevronLeft } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChangeEmailModal } from '../components/modals/ChangeEmailModal';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useAccountSettings, useDeleteRecoveryEmail } from '../../../hooks/useAccountSettings';
 
 export function ManageEmailPage() {
   const pathname = usePathname() || '/settings/account-email';
+  const router = useRouter();
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';
   const [isChangeEmailModalOpen, setIsChangeEmailModalOpen] = useState(false);
@@ -43,12 +44,12 @@ export function ManageEmailPage() {
         
         {/* Header */}
         <div className="flex flex-row items-center gap-4 mb-8">
-          <Link 
-            href={`${basePath}/account`} 
+          <button 
+            onClick={() => router.back()}
             className="flex items-center justify-center w-[40px] h-[40px] rounded-full border border-gray-200 hover:bg-gray-50 transition-colors flex-shrink-0"
           >
             <ChevronLeft className="w-5 h-5 text-black" />
-          </Link>
+          </button>
           <div className="flex flex-col">
             <h2 className="text-[18px] font-semibold text-black leading-tight mb-1">Manage email</h2>
             <p className="text-[13px] font-normal text-[#6B7280] leading-tight">Update your security credentials to keep your account safe.</p>

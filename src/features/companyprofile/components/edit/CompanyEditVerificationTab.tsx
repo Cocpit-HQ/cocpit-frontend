@@ -1,162 +1,230 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, CheckCircle2, FileImage } from "lucide-react";
 import { Icon } from "@iconify/react";
+import { toast } from "sonner";
+import { verifyIdentity } from "@/services/api/settings";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface CompanyEditVerificationTabProps {
   onCancel: () => void;
   orgId: string;
 }
 
-interface DocumentItem {
-  id: string;
-  file: File | null;
-  name?: string;
-}
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const YEARS = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 
 export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyEditVerificationTabProps) {
-  const [country, setCountry] = useState("India");
-  const [documents, setDocuments] = useState<DocumentItem[]>([
-    { id: "1", file: null, name: "BRN.jpeg" }
-  ]);
+  const [legalName, setLegalName] = useState("");
+  const [incorpDay, setIncorpDay] = useState("");
+  const [incorpMonth, setIncorpMonth] = useState("");
+  const [incorpYear, setIncorpYear] = useState("");
+  const [verificationDoc, setVerificationDoc] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { activeProfile, refreshProfile, refreshCompanies } = useActiveProfile();
+  const isVerified = activeProfile?.verification_status === "VERIFIED" || activeProfile?.verification_status === "DOMAIN_VERIFIED";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Verification details saved successfully!");
-    onCancel();
-  };
+    if (!verificationDoc) {
+      toast.error("Please upload a verification document");
+      return;
+    }
 
-  const handleFileChange = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setDocuments(documents.map(doc => doc.id === id ? { ...doc, file } : doc));
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("documentType", "BRN"); // Assuming Business Registration Number
+      formData.append("frontImage", verificationDoc);
+      formData.append("legalName", legalName);
+      formData.append("incorporationDay", incorpDay);
+      formData.append("incorporationMonth", incorpMonth);
+      formData.append("incorporationYear", incorpYear);
+
+      const res = await verifyIdentity(formData, orgId);
+      if (res.success) {
+        toast.success("Verification details submitted successfully!");
+        if (refreshProfile) await refreshProfile();
+        if (refreshCompanies) await refreshCompanies();
+        onCancel();
+      } else {
+        toast.error(res.message || "Failed to submit verification details");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An error occurred while submitting verification details");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const addDocument = () => {
-    setDocuments([...documents, { id: Date.now().toString(), file: null }]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVerificationDoc(file);
+    }
   };
 
-  const removeDocument = (id: string) => {
-    setDocuments(documents.filter(doc => doc.id !== id));
-  };
+  const isDirty = legalName !== "" || incorpDay !== "" || incorpMonth !== "" || incorpYear !== "" || verificationDoc !== null;
 
-  const isDirty = country !== "India" || documents.length !== 1 || documents[0]?.file !== null;
+  if (isVerified) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center gap-6 py-12">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+          <Icon icon="lucide:check-circle-2" className="w-8 h-8 text-emerald-500" />
+        </div>
+        <div className="flex flex-col items-center text-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Your identity has been verified
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-zinc-400 max-w-[400px]">
+            Your company profile is fully verified. You now have access to all premium features including posting jobs.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 font-poppins">
+    <form onSubmit={handleSubmit} className="w-full flex flex-col gap-8 font-poppins pt-4">
       
-      {/* Country of Operation */}
-      <div className="flex flex-col gap-2 w-full">
-        <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-          Country of Operation
-        </label>
-        <div className="relative w-full h-11">
-          <input
-            type="text"
-            value="India"
-            readOnly
-            className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-not-allowed"
-          />
+      {/* Top Row: Legal Name and Date of Incorporation side by side on desktop, stacked on mobile */}
+      <div className="flex flex-col md:flex-row gap-6 w-full">
+        {/* Company full legal name */}
+        <div className="flex flex-col gap-2 w-full md:w-1/2">
+          <label className="text-[14px] font-semibold text-gray-900 dark:text-white">
+            Company full legal name
+          </label>
+          <div className="relative w-full h-11">
+            <input
+              type="text"
+              value={legalName}
+              onChange={(e) => setLegalName(e.target.value)}
+              placeholder="e.g. Nexsus Global System"
+              className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white"
+            />
+          </div>
+        </div>
+
+        {/* Date of incorporation */}
+        <div className="flex flex-col gap-2 w-full md:w-1/2">
+          <label className="text-[14px] font-semibold text-gray-900 dark:text-white">
+            Date of incorporation
+          </label>
+          <div className="flex flex-row gap-2 h-11 w-full">
+            {/* Day */}
+            <div className="relative w-1/3 h-full">
+              <select
+                value={incorpDay}
+                onChange={(e) => setIncorpDay(e.target.value)}
+                className="w-full h-full pl-4 pr-8 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white appearance-none cursor-pointer text-gray-600 dark:text-gray-300"
+              >
+                <option value="" disabled>Date</option>
+                {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <Icon icon="lucide:chevron-down" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            </div>
+
+            {/* Month */}
+            <div className="relative w-1/3 h-full">
+              <select
+                value={incorpMonth}
+                onChange={(e) => setIncorpMonth(e.target.value)}
+                className="w-full h-full pl-4 pr-8 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white appearance-none cursor-pointer text-gray-600 dark:text-gray-300"
+              >
+                <option value="" disabled>Month</option>
+                {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <Icon icon="lucide:chevron-down" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            </div>
+
+            {/* Year */}
+            <div className="relative w-1/3 h-full">
+              <select
+                value={incorpYear}
+                onChange={(e) => setIncorpYear(e.target.value)}
+                className="w-full h-full pl-4 pr-8 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white appearance-none cursor-pointer text-gray-600 dark:text-gray-300"
+              >
+                <option value="" disabled>Year</option>
+                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <Icon icon="lucide:chevron-down" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* DOCUMENTS Header with plus icon */}
-      <div className="flex justify-between items-center w-full pt-6">
-        <h3 className="text-[14px] font-bold text-[#1A73E8] tracking-wider uppercase">
-          DOCUMENTS
-        </h3>
-        <button
-          type="button"
-          onClick={addDocument}
-          className="w-6 h-6 flex items-center justify-center text-[#1A73E8] hover:scale-110 transition-transform cursor-pointer"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Document slots list */}
-      <div className="w-full flex flex-col gap-6">
-        {documents.map((doc) => {
-          const hasFile = doc.file !== null || !!doc.name;
-          const displayName = doc.file ? doc.file.name : (doc.name || "");
-
-          return (
-            <div key={doc.id} className="flex flex-col gap-2 w-full">
-              {/* Label row */}
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-medium text-gray-900 dark:text-white">
-                  Verification Document
-                </span>
-                {hasFile && (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-50 dark:fill-zinc-900" />
-                )}
+      {/* Verification Document */}
+      <div className="flex flex-col gap-2 w-full pt-2">
+        <label className="text-[14px] font-semibold text-gray-900 dark:text-white">
+          Verification Document
+        </label>
+        
+        {verificationDoc ? (
+          <div className="w-full h-12 px-1 py-1 border border-gray-300 dark:border-zinc-800 rounded-full flex items-center justify-between bg-white dark:bg-zinc-900/50 gap-2 overflow-hidden pl-4 pr-4">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-6 h-6 rounded bg-gray-400 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                 <Icon icon="lucide:file-text" className="w-4 h-4 text-white" />
               </div>
-
-              {/* Upload field or Document Pill */}
-              {hasFile ? (
-                <div className="w-full h-12 border border-gray-300 dark:border-zinc-800 rounded-full flex items-center justify-center bg-transparent gap-2">
-                  <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                    <FileImage className="w-4 h-4 text-gray-500" />
-                  </div>
-                  <span className="text-[14px] font-medium text-gray-900 dark:text-white truncate max-w-[80%]">
-                    {displayName}
-                  </span>
-                </div>
-              ) : (
-                <div className="w-full">
-                  <label
-                    htmlFor={`file-input-${doc.id}`}
-                    className="w-full h-12 px-6 rounded-full border border-gray-300 dark:border-zinc-800 bg-transparent hover:border-[#1A73E8] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors flex items-center justify-center cursor-pointer select-none"
-                  >
-                    <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280]" />
-                  </label>
-                  <input
-                    type="file"
-                    id={`file-input-${doc.id}`}
-                    accept=".pdf,.png,.jpg,.jpeg"
-                    onChange={(e) => handleFileChange(doc.id, e)}
-                    className="hidden"
-                  />
-                </div>
-              )}
-
-              {/* Delete Trash Icon bottom-right */}
-              <div className="flex justify-end w-full">
-                <button
-                  type="button"
-                  onClick={() => removeDocument(doc.id)}
-                  className="p-1 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                  title="Remove document"
-                >
-                  <Icon icon="hugeicons:delete-02" className="w-6 h-6" />
-                </button>
-              </div>
+              <span className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                {verificationDoc.name}
+              </span>
             </div>
-          );
-        })}
+            
+            <label
+              htmlFor="file-input-change"
+              className="text-[14px] text-[#1A73E8] font-medium cursor-pointer hover:underline flex-shrink-0"
+            >
+              Change
+            </label>
+            <input
+              type="file"
+              id="file-input-change"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        ) : (
+          <div className="w-full">
+            <label
+              htmlFor="file-input-upload"
+              className="w-full h-12 px-6 rounded-full border border-gray-300 dark:border-zinc-800 bg-transparent hover:border-[#1A73E8] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors flex items-center justify-center cursor-pointer select-none"
+            >
+              <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280]" />
+            </label>
+            <input
+              type="file"
+              id="file-input-upload"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        )}
       </div>
 
       {/* Footer Buttons */}
-      <div className="flex justify-end items-center gap-4 w-full mt-6 pt-6">
+      <div className="flex justify-end items-center gap-4 w-full mt-10">
         <button
           type="button"
           onClick={onCancel}
-          className="h-10 px-6 border border-gray-500 text-gray-700 dark:text-zinc-300 dark:border-zinc-700 rounded-full font-medium text-[14px] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center"
+          className="h-10 px-8 border border-[#9CA3AF] text-gray-700 dark:text-zinc-300 dark:border-zinc-700 rounded-[24px] font-medium text-[14px] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center bg-white dark:bg-zinc-950"
         >
           Cancel
         </button>
         <button
           type="submit"
-          disabled={!isDirty}
-          className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center ${
-            isDirty
-              ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
-              : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
+          disabled={!isDirty || isSubmitting}
+          className={`h-10 px-8 rounded-[24px] font-semibold text-[14px] transition-colors flex items-center justify-center ${
+            isDirty && !isSubmitting
+              ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer shadow-md shadow-blue-500/20"
+              : "bg-[#E5E7EB] text-[#9CA3AF] dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
           }`}
         >
-          Save
+          {isSubmitting ? "Submitting..." : "Submit"}
         </button>
       </div>
 

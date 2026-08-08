@@ -11,6 +11,7 @@ import * as jobsService from '../../services/jobs.service';
 import { useJobStore } from '@/store/job.store';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useMyProfile } from '@/hooks/use-my-profile';
 import { useCreateJobInit } from '../../hooks/useCreateJobInit';
 import { useCreateJobUrlSync } from '../../hooks/useCreateJobUrlSync';
 import { useCreateJobHydration } from '../../hooks/useCreateJobHydration';
@@ -24,12 +25,11 @@ interface CreateJobFlowProps {
 export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing }) => {
   const router = useRouter();
   const { activeProfile, userCompanies } = useActiveProfile();
+  const { data: myProfile } = useMyProfile();
 
-  // Compute if the active company is verified
-  const activeCompany = userCompanies?.find(
-    (c) => (c.org_id || c.company_id) === activeProfile?.id
-  );
-  const isCompanyVerified = activeCompany?.verification_status === 'DOMAIN_VERIFIED';
+  const isUserVerified = activeProfile?.type === 'USER' && myProfile?.user?.is_identity_verified;
+  const isCompanyVerified = activeProfile?.type === 'COMPANY' && activeProfile?.verification_status === 'VERIFIED';
+  const isVerified = Boolean(isUserVerified || isCompanyVerified);
 
   const {
     createJobStep: step,
@@ -48,7 +48,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   // Hook 1: Initialize step/title/jobId from URL params on mount
-  useCreateJobInit({ initialListing, isCompanyVerified });
+  useCreateJobInit({ initialListing, isVerified });
 
   // Hook 2: Hydrate store from API on refresh (details/preview steps with jobId)
   const { isHydrating } = useCreateJobHydration({ initialListing });
@@ -161,7 +161,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   return (
     <StepRoleInput
-      onBack={isCompanyVerified ? handleBack : () => setStep('verification')}
+      onBack={isVerified ? handleBack : () => setStep('verification')}
       title={title}
       setTitle={setTitle}
       onContinue={handleRoleContinue}

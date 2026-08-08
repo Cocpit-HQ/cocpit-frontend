@@ -84,6 +84,7 @@ export interface UserData {
   followers_count: number;
   following_count: number;
   connections_count: number;
+  is_identity_verified?: boolean;
   latest_education: {
     school: string;
     degree: string;

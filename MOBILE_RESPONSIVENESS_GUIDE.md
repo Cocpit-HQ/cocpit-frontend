@@ -77,11 +77,12 @@ These rules are **non-negotiable** and must be respected 100% of the time, regar
 - The `HomeHeader` is `sticky top-0 z-50` — do not change these properties.
 
 ### 4. Theme & Design Token Consistency + Dark Mode
-- All colors MUST use design tokens (`--primary`, `--background`, `--card`, etc.) or the established hardcoded hex values from the design system — **no new arbitrary colors**.
+- **Never use hardcoded hex values (`#FFFFFF`)**. All colors MUST use semantic Tailwind classes (`bg-background`, `text-company-text`, etc.).
+- If a mobile mockup requires a new color, you must add it to `globals.css` and `tailwind.config.ts`. Do not inline it in the `.tsx` file.
 - Every mobile addition **must carry the correct `dark:` Tailwind variant** matching the same element's desktop dark-mode style.
+- The app has **two separate dark mode palettes** (User vs. Company).
+- **Refer to [DARK_MODE_GUIDE.md](./DARK_MODE_GUIDE.md) for the complete list of tokens and the strict instructions for adding new global colors.**
 - Font family must always be `font-poppins` / `var(--font-poppins)`.
-- The app has **two separate dark mode palettes** — one for **User** pages and one for **Company** pages. Using the wrong palette is a bug. See the **Dark Mode Compliance** section below for full tables and rules.
-- Dark mode is toggled via the `[data-theme="dark"]` or `[data-theme="navy"]` attribute on `<html>` / `<body>`. Tailwind's `dark:` utility works because `tailwind.config.ts` sets `darkMode: ['selector', '[data-theme="dark"], [data-theme="navy"]']`.
 
 ### 5. z-index Hierarchy — Never Break Stacking
 | Layer | z-index | Component |
@@ -666,17 +667,10 @@ After making changes, verify ALL of these before declaring done:
 - [ ] Empty states are properly centered and don't cause horizontal scroll
 - [ ] Skeleton loaders match the mobile card layout
 
-**Dark Mode (check both `[data-theme="dark"]` and `[data-theme="navy"]`)**
-- [ ] All new `bg-*` classes have the correct `dark:bg-*` counterpart from the palette tables above
-- [ ] All new `text-*` classes have the correct `dark:text-*` counterpart
-- [ ] No raw `bg-white` or `text-black` without a `dark:` override
-- [ ] Bottom sheets / drawers use `bg-background` or explicit dark background — no white flash
-- [ ] Borders visible in dark mode — not invisible or too bright
-- [ ] User-context elements use the **User dark palette** (`#0B0F19` bg, `#818CF8` primary, etc.)
-- [ ] Company-context elements use the **Company dark palette** (`#0F1115` bg, `#4D9CFF` primary, etc.)
-- [ ] Shared components use `isCompany` conditional for dark class selection — **no bleed between palettes**
-- [ ] Hover states have dark variants (e.g. `dark:hover:bg-[#1C2340]` for user ultra-light hovers)
-- [ ] If this is a new plan item: note any dark mode gaps found so they can be added to the plan
+**Dark Mode**
+- [ ] You have strictly followed [DARK_MODE_GUIDE.md](./DARK_MODE_GUIDE.md) for all new classes and tokens.
+- [ ] No raw `bg-white` or `text-black` exists without a `dark:` override.
+- [ ] You verified if the component is used in User mode, Company mode, or both, and applied tokens accordingly.
 
 ---
 
@@ -732,12 +726,12 @@ From `tailwind.config.ts`:
 12. ❌ **Don't use `min-height: 100vh`** without `dvh` fallback — on iOS, `100vh` includes the browser chrome and causes overflow.
 
 **Dark Mode**
-13. ❌ **Don't add `bg-white` or `text-black` without a `dark:` counterpart** — any mobile element using raw white/black will be broken in dark mode.
-14. ❌ **Don't use the wrong palette for the context** — applying User dark colors (`#0B0F19`, `#818CF8`) to a Company component (or vice versa) is a theming bug, not a cosmetic issue.
+13. ❌ **Don't guess Dark Mode tokens**. Always refer to [DARK_MODE_GUIDE.md](./DARK_MODE_GUIDE.md) and never use hardcoded hex values in `.tsx` files.
+14. ❌ **Don't apply the wrong palette for the context** — applying User dark colors to a Company component (or vice versa) is a theming bug, not a cosmetic issue.
 15. ❌ **Don't use a single hardcoded dark class in shared components** — shared components must use `isCompany` (or equivalent context) to select the correct palette branch.
-16. ❌ **Don't assume the CSS variable covers it** — some elements use hardcoded hex values (e.g. `bg-[#EEF2FF]`) that bypass CSS variables entirely. These need explicit `dark:bg-[#1C2340]` equivalents.
+16. ❌ **Don't assume the CSS variable covers it** — some elements use hardcoded hex values that bypass CSS variables entirely. Use the explicit `dark:` classes from [DARK_MODE_GUIDE.md](./DARK_MODE_GUIDE.md).
 17. ❌ **Don't skip dark mode testing because "it looked fine before"** — adding a new mobile element to an existing component can introduce new un-themed colors even if the component worked before.
-18. ❌ **Don't let Company primary color (`#1A73E8` / `dark:#4D9CFF`) appear in User UI or vice versa** — primary colors are intentionally different between modes and must stay isolated.
+18. ❌ **Don't let Company primary color appear in User UI or vice versa** — primary colors are intentionally different between modes and must stay isolated.
 
 ---
 

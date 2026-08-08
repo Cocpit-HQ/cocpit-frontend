@@ -1,9 +1,11 @@
 "use client";
 
 import React from 'react';
-import { Laptop, Smartphone, LogOut, Loader2 } from 'lucide-react';
+import { Laptop, Smartphone, LogOut, Loader2, BadgeCheck, AlertTriangle } from 'lucide-react';
 import { LogoutModal } from '../account/components/modals/LogoutModal';
 import { usePrivacySettings } from '../../hooks/usePrivacySettings';
+import { useMyProfile } from '@/hooks/use-my-profile';
+import { VerifyIdentityModal } from './components/modals/VerifyIdentityModal';
 import { useActiveSessions } from '../../hooks/useActiveSessions';
 import { formatDistanceToNow } from 'date-fns';
 import { useSettingsStore } from '@/store/settings.store';
@@ -11,6 +13,8 @@ import { useSettingsStore } from '@/store/settings.store';
 export function PrivacySettingsPage() {
   const { settings: privacy, isLoading: isPrivacyLoading, updateSettings } = usePrivacySettings();
   const { sessions, isLoading: isSessionsLoading, logoutSession, logoutOtherSessions, isLoggingOut, isLoggingOutOthers } = useActiveSessions();
+  const { data: myProfile, isLoading: isProfileLoading } = useMyProfile();
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = React.useState(false);
 
   // UI-only state (which logout confirmation is open, for which session)
   // now lives in the shared settings store instead of local useState.
@@ -54,6 +58,7 @@ export function PrivacySettingsPage() {
           <p className="text-[16px] font-normal text-[#6B7280] leading-[24px]">Control how you share your information and manage device access.</p>
         </div>
 
+
         {/* Profile Visibility */}
         <div className="flex flex-col w-full gap-2">
           <h2 className="text-[18px] font-medium text-black leading-[26px]">Profile visibility</h2>
@@ -77,6 +82,32 @@ export function PrivacySettingsPage() {
               state={showPhone} 
               setter={(val) => updateSettings({ showPhone: val })} 
             />
+            <div className="w-full border-t border-[#DADADA]" />
+            <div className="flex flex-row items-center justify-between py-[16px] w-full min-h-[78px]">
+              <div className="flex flex-col justify-center">
+                <span className="text-[16px] font-normal text-black leading-[24px]">
+                  Account verification
+                </span>
+                <span className="text-[14px] font-normal text-[#6B7280] leading-[20px]">
+                  {myProfile?.user?.is_identity_verified 
+                    ? "Your identity has been verified"
+                    : "Verify your identity to unlock more features"}
+                </span>
+              </div>
+              {myProfile?.user?.is_identity_verified ? (
+                <div className="flex flex-row items-center justify-center gap-1.5 px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-full">
+                  <BadgeCheck className="w-4 h-4" strokeWidth={2} />
+                  <span className="text-[14px] font-medium">Verified</span>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsVerifyModalOpen(true)}
+                  className="flex items-center justify-center w-[140px] h-[40px] bg-white border border-[#818CF8] text-[#818CF8] rounded-[24px] text-[14px] font-medium hover:bg-[#818CF8]/5 transition-colors"
+                >
+                  Verify
+                </button>
+              )}
+            </div>
           </div>
           )}
         </div>
@@ -188,6 +219,10 @@ export function PrivacySettingsPage() {
         </div>
 
         {/* Modals */}
+        <VerifyIdentityModal 
+          isOpen={isVerifyModalOpen}
+          onClose={() => setIsVerifyModalOpen(false)}
+        />
         <LogoutModal
           isOpen={logoutTarget !== null}
           onClose={closePrivacyLogout}

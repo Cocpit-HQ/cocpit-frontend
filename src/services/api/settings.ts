@@ -160,3 +160,19 @@ export const confirmAccountDeletion = async (otp: string, companyId?: string): P
   });
   return response.data;
 };
+
+
+// --- Identity Verification ---
+
+export const verifyIdentity = async (
+  formData: FormData,
+  companyId?: string
+): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post("/settings/account/verify-identity", formData, {
+    headers: {
+      ...getActorHeaders(companyId),
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};

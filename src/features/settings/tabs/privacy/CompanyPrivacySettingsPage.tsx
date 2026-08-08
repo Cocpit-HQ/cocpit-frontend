@@ -1,12 +1,16 @@
 "use client";
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BadgeCheck, AlertTriangle } from 'lucide-react';
 import { useCompanyPrivacySettings } from '../../hooks/useCompanyPrivacySettings';
 import { PrivacySettings } from '@/services/api/settings';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { VerifyIdentityModal } from '../privacy/components/modals/VerifyIdentityModal';
 
 export function CompanyPrivacySettingsPage() {
   const { settings: privacy, isLoading, updateSettings } = useCompanyPrivacySettings();
+  const { activeProfile } = useActiveProfile();
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = React.useState(false);
 
   const showEmail = privacy?.showEmail ?? false;
   const showPhone = privacy?.showPhone ?? false;
@@ -97,6 +101,8 @@ export function CompanyPrivacySettingsPage() {
 
       <div className="flex flex-col w-full px-[36px] py-4 gap-4">
         
+
+
         {/* Content */}
         <div className="flex flex-col w-full gap-4 max-w-[698px]">
           
@@ -123,6 +129,32 @@ export function CompanyPrivacySettingsPage() {
                   state={showPhone} 
                   setter={(val) => updateSettings({ showPhone: val })} 
                 />
+                <div className="w-full border-t border-[#EEF2FF]" />
+                <div className="flex flex-row items-center justify-between py-[16px] w-full min-h-[78px]">
+                  <div className="flex flex-col justify-center">
+                    <span className="text-[16px] font-normal text-black dark:text-company-text leading-[24px]">
+                      Business verification
+                    </span>
+                    <span className="text-[14px] font-normal text-[#6B7280] dark:text-company-secondary leading-[20px]">
+                      {activeProfile?.verification_status === 'VERIFIED' 
+                        ? "Your business has been verified"
+                        : "Verify your business to unlock more features"}
+                    </span>
+                  </div>
+                  {activeProfile?.verification_status === 'VERIFIED' ? (
+                    <div className="flex flex-row items-center justify-center gap-1.5 px-3 py-1.5 bg-[#ECFDF5] text-[#10B981] rounded-full">
+                      <BadgeCheck className="w-4 h-4" strokeWidth={2} />
+                      <span className="text-[14px] font-medium">Verified</span>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setIsVerifyModalOpen(true)}
+                      className="flex items-center justify-center w-[140px] h-[40px] bg-white border border-[#818CF8] text-[#818CF8] rounded-[24px] text-[14px] font-medium hover:bg-[#818CF8]/5 transition-colors"
+                    >
+                      Verify
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -190,6 +222,10 @@ export function CompanyPrivacySettingsPage() {
         </div>
 
       </div>
+      <VerifyIdentityModal 
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+      />
     </div>
   );
 }

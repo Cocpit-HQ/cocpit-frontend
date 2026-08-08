@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { KeyRound, Mail, Phone, LogOut } from 'lucide-react';
+import { KeyRound, Mail, Phone, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LogoutModal } from '../components/modals/LogoutModal';
 import { DeleteAccountModal } from '../components/modals/DeleteAccountModal';
 import { DeactivateAccountModal } from '../components/modals/DeactivateAccountModal';
@@ -29,54 +29,68 @@ export function AccountSettingsPage() {
   const hasCompanyAccount = accountData?.hasCompanyAccount ?? true;
 
   return (
-    <div className="flex flex-col items-start px-4 py-2 gap-4 w-full max-w-[698px] font-poppins">
+    <div className="flex flex-col items-start px-0 md:px-4 py-2 gap-6 w-full max-w-[698px] font-poppins pb-24">
       {/* Header */}
-      <div className="flex flex-col items-start w-full">
-        <h1 className="text-[24px] font-semibold text-black leading-[32px]">Account settings</h1>
-        <p className="text-[16px] text-[#6B7280] leading-[24px]">Manage your account settings</p>
+      <div className="flex flex-row items-center md:items-start gap-4 w-full px-4 md:px-0">
+        <button 
+          onClick={() => window.history.back()} 
+          className="md:hidden flex justify-center items-center p-2 w-[48px] h-[48px] border border-[#DADADA] rounded-[100px] backdrop-blur-[12px] shrink-0"
+        >
+          <ChevronLeft className="w-6 h-6 text-[#6B7280]" strokeWidth={1.5} />
+        </button>
+        <div className="flex flex-col items-start w-full">
+          <h1 className="text-[18px] md:text-[24px] font-medium md:font-semibold text-black leading-[26px] md:leading-[32px]">Account settings</h1>
+          <p className="text-[12px] md:text-[16px] text-[#6B7280] leading-[16px] md:leading-[24px]">Manage your account settings</p>
+        </div>
       </div>
 
       {/* Credentials */}
-      <div className="flex flex-col items-start p-6 gap-2 w-full">
+      <div className="flex flex-col items-start px-4 md:px-6 gap-2 w-full">
         <h2 className="text-[18px] font-medium text-black leading-[26px]">Credentials</h2>
         
         <div className="flex flex-col items-start w-full">
           {/* Password */}
           <div className="flex flex-row justify-between items-center py-3 w-full group">
-            <Link href={`${basePath}/account-password`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
-              <KeyRound className="w-6 h-6 text-black" />
+            <Link href={`${basePath}/account-password`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity flex-1">
+              <KeyRound className="w-6 h-6 text-black shrink-0" />
               <div className="flex flex-col justify-center items-start">
-                <h3 className="flex items-center w-[150px] h-[24px] font-normal text-[16px] text-black leading-[24px]">Manage password</h3>
+                <h3 className="flex items-center h-[24px] font-normal text-[16px] text-black leading-[24px]">Manage password</h3>
                 <p className="text-[14px] text-[#6B7280] leading-[20px]">Update your login credentials</p>
               </div>
             </Link>
-            <Link href={`${basePath}/account-password`}>
+            <Link href={`${basePath}/account-password`} className="hidden md:block">
               <button className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[169px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] transition-colors">
                 <span className="whitespace-nowrap text-[14px] text-[#818CF8] leading-[20px] text-center">Reset password</span>
               </button>
             </Link>
+            <Link href={`${basePath}/account-password`} className="md:hidden flex shrink-0 pl-2">
+              <ChevronRight className="w-6 h-6 text-black" strokeWidth={1.5} />
+            </Link>
           </div>
 
           {/* Email */}
-          <div className="flex flex-row justify-between items-center py-3 w-full border-t border-[#DADADA] group">
-            <Link href={`${basePath}/account-email`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
-              <Mail className="w-6 h-6 text-black" />
+          <div className="flex flex-row justify-between items-center py-3 w-full group">
+            <Link href={`${basePath}/account-email`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity flex-1">
+              <Mail className="w-6 h-6 text-black shrink-0" />
               <div className="flex flex-col justify-center items-start">
                 <h3 className="flex items-center h-[24px] font-normal text-[16px] text-black leading-[24px]">Manage email</h3>
                 <p className="text-[14px] text-[#6B7280] leading-[20px]">Current: {userEmail}</p>
               </div>
             </Link>
-            <Link href={`${basePath}/account-email`}>
+            <Link href={`${basePath}/account-email`} className="hidden md:block">
               <button className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[169px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] transition-colors">
                 <span className="whitespace-nowrap text-[14px] text-[#818CF8] leading-[20px] text-center">Change email</span>
               </button>
             </Link>
+            <Link href={`${basePath}/account-email`} className="md:hidden flex shrink-0 pl-2">
+              <ChevronRight className="w-6 h-6 text-black" strokeWidth={1.5} />
+            </Link>
           </div>
 
           {/* Phone */}
-          <div className="flex flex-row justify-between items-center py-3 w-full border-t border-[#DADADA] group">
-            <Link href={`${basePath}/account-phone`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
-              <Phone className="w-6 h-6 text-black" />
+          <div className="flex flex-row justify-between items-center py-3 w-full group">
+            <Link href={`${basePath}/account-phone`} className="flex flex-row items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity flex-1">
+              <Phone className="w-6 h-6 text-black shrink-0" />
               <div className="flex flex-col justify-center items-start">
                 <h3 className="flex items-center h-[24px] font-normal text-[16px] text-black leading-[24px]">Manage phone number</h3>
                 <p className="text-[14px] text-[#6B7280] leading-[20px]">
@@ -84,22 +98,25 @@ export function AccountSettingsPage() {
                 </p>
               </div>
             </Link>
-            <Link href={`${basePath}/account-phone`}>
+            <Link href={`${basePath}/account-phone`} className="hidden md:block">
               <button className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[169px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] transition-colors">
                 <span className="whitespace-nowrap text-[14px] text-[#818CF8] leading-[20px] text-center">
                   {hasPhone ? "Change number" : "Add phone number"}
                 </span>
               </button>
             </Link>
+            <Link href={`${basePath}/account-phone`} className="md:hidden flex shrink-0 pl-2">
+              <ChevronRight className="w-6 h-6 text-black" strokeWidth={1.5} />
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Session */}
-      <div className="flex flex-col items-start p-6 gap-2 w-full">
+      <div className="flex flex-col items-start px-4 md:px-6 gap-2 w-full">
         <h2 className="text-[18px] font-medium text-black leading-[26px]">Session</h2>
         
-        <div className="flex flex-row justify-between items-center w-full">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4 md:gap-0">
           <div className="flex flex-col justify-center items-start">
             <h3 className="text-[16px] text-black leading-[24px]">Logout</h3>
             <p className="text-[14px] text-[#6B7280] leading-[20px]">
@@ -108,7 +125,7 @@ export function AccountSettingsPage() {
           </div>
           <button 
             onClick={() => setActiveModal('logout')}
-            className="flex flex-row justify-center items-center pl-4 pr-3 py-2 gap-1 w-[120px] h-[40px] rounded-[24px] transition-colors"
+            className="flex flex-row justify-center items-center py-2 gap-1 rounded-[24px] transition-colors"
           >
             <LogOut className="w-6 h-6 text-[#FF6B6B]" />
             <span className="text-[16px] text-[#FF6B6B] leading-[24px]">Log out</span>
@@ -117,8 +134,8 @@ export function AccountSettingsPage() {
       </div>
 
       {/* Deactivate Account */}
-      <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full border-t border-[#DADADA]">
-        <div className="flex flex-row justify-between items-center w-full">
+      <div className="flex flex-col justify-center items-start px-4 md:px-6 pt-4 gap-4 w-full border-t border-[#DADADA]">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4 md:gap-0">
           <div className="flex flex-col justify-center items-start max-w-[435px]">
             <h3 className="text-[16px] text-black leading-[24px]">Deactivate account</h3>
             <p className="text-[14px] text-[#6B7280] leading-[20px]">
@@ -135,8 +152,8 @@ export function AccountSettingsPage() {
       </div>
 
       {/* Delete Account */}
-      <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full">
-        <div className="flex flex-row justify-between items-center w-full">
+      <div className="flex flex-col justify-center items-start px-4 md:px-6 gap-4 w-full">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4 md:gap-0">
           <div className="flex flex-col justify-center items-start max-w-[435px]">
             <h3 className="text-[16px] text-black leading-[24px]">Delete account</h3>
             <p className="text-[14px] text-[#6B7280] leading-[20px]">

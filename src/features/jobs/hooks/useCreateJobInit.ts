@@ -6,7 +6,7 @@ type Step = 'verification' | 'role-input' | 'details' | 'preview';
 
 interface UseCreateJobInitOptions {
   initialListing?: JobListing | null;
-  isCompanyVerified: boolean;
+  isVerified: boolean;
 }
 
 /**
@@ -16,7 +16,7 @@ interface UseCreateJobInitOptions {
  * to the correct state after a page refresh. When editing an existing listing
  * (`initialListing`), it pre-populates the store with the listing data instead.
  */
-export function useCreateJobInit({ initialListing, isCompanyVerified }: UseCreateJobInitOptions) {
+export function useCreateJobInit({ initialListing, isVerified }: UseCreateJobInitOptions) {
   const {
     createJobTitle: title,
     setCreateJobStep: setStep,
@@ -48,12 +48,12 @@ export function useCreateJobInit({ initialListing, isCompanyVerified }: UseCreat
       let resolvedStep: Step = 'verification';
       if (urlStep && ['verification', 'role-input', 'details', 'preview'].includes(urlStep)) {
         resolvedStep = urlStep;
-      } else if (isCompanyVerified) {
+      } else if (isVerified) {
         resolvedStep = 'role-input';
       }
 
-      // If the company is verified, prevent landing on or going back to verification
-      if (isCompanyVerified && resolvedStep === 'verification') {
+      // If the company/user is verified, prevent landing on or going back to verification
+      if (isVerified && resolvedStep === 'verification') {
         resolvedStep = 'role-input';
       }
 
@@ -69,5 +69,5 @@ export function useCreateJobInit({ initialListing, isCompanyVerified }: UseCreat
         setJobId(urlJobId);
       }
     }
-  }, [initialListing, isCompanyVerified]);
+  }, [initialListing, isVerified]);
 }

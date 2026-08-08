@@ -14,6 +14,7 @@ import { MobileJobFilters } from "@/components/jobs/MobileJobFilters"
 import { CompanyJobTabs } from "@/components/jobs/company/CompanyJobTabs"
 import { CreateJobModal } from "@/components/jobs/CreateJobModal"
 import { JobPostsDashboard } from "@/components/jobs/dashboard/JobPostsDashboard"
+import { VerifyIdentityModal } from "@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal"
 import { useRecruiterJobs } from "@/features/jobs/hooks/useRecruiterJobs"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useCompanyPermissions } from "@/hooks/use-organization"
@@ -83,6 +84,15 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const [showMobileFilters, setShowMobileFilters] = useState(false)
     const [showCreateJob, setShowCreateJob] = useState(false)
+    const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false)
+
+    const handlePostJobClick = () => {
+        if (activeProfile?.verification_status !== 'VERIFIED') {
+            setIsVerifyModalOpen(true)
+        } else {
+            setShowCreateJob(true)
+        }
+    }
 
     // Scroll behavior for mobile header
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -181,7 +191,7 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
 
                             {canPostJobs && (
                                 <button
-                                    onClick={() => setShowCreateJob(true)}
+                                    onClick={handlePostJobClick}
                                     className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-sm"
                                 >
                                     <Plus className="w-5 h-5" />
@@ -214,7 +224,7 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
                             {canPostJobs && (
                                 <div className="hidden md:block">
                                     <button
-                                        onClick={() => setShowCreateJob(true)}
+                                        onClick={handlePostJobClick}
                                         className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity"
                                     >
                                         <Plus className="w-4 h-4" />
@@ -331,6 +341,11 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
             <CreateJobModal
                 open={showCreateJob}
                 onOpenChange={setShowCreateJob}
+            />
+
+            <VerifyIdentityModal 
+                isOpen={isVerifyModalOpen}
+                onClose={() => setIsVerifyModalOpen(false)}
             />
         </div >
     )

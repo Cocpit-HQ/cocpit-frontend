@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -17,15 +18,14 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
 }) => {
   const { activeProfile } = useActiveProfile();
   const isCompanyMode = activeProfile?.type === 'COMPANY';
-  const [isVerifying, setIsVerifying] = useState(false);
+  const router = useRouter();
 
   const handleVerifyClick = () => {
-    setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      toast.success('Identity verified successfully!');
-      onVerifySuccess();
-    }, 1500);
+    if (isCompanyMode) {
+      router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
+    } else {
+      router.push('/settings/privacy');
+    }
   };
 
   return (
@@ -70,18 +70,10 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         <div className="flex flex-col gap-3 items-center w-full max-w-[280px]">
           <button
             onClick={handleVerifyClick}
-            disabled={isVerifying}
             type="button"
             className={`w-full h-11 px-5 text-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-md ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0] disabled:bg-[#1A73E8]/50 shadow-blue-100' : 'bg-[#6366F1] hover:bg-indigo-600 disabled:bg-indigo-300 shadow-indigo-100'}`}
           >
-            {isVerifying ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Verifying...</span>
-              </>
-            ) : (
-              <span>Verify now</span>
-            )}
+            <span>Verify now</span>
           </button>
           
           <button

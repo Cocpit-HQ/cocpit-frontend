@@ -5,13 +5,14 @@ import { ChevronLeft } from 'lucide-react';
 
 import { ManagePhoneModal } from '../components/modals/ManagePhoneModal';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useAccountSettings, useDeletePhone } from '../../../hooks/useAccountSettings';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function ManagePhonePage() {
   const pathname = usePathname() || '/settings/account-phone';
+  const router = useRouter();
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';
   const [modalMode, setModalMode] = useState<'add' | 'change' | 'delete' | null>(null);
@@ -27,12 +28,12 @@ export function ManagePhonePage() {
         
         {/* Header */}
         <div className="flex flex-row items-center gap-4 mb-8">
-          <Link 
-            href={`${basePath}/account`} 
+          <button 
+            onClick={() => router.back()}
             className="flex items-center justify-center w-[40px] h-[40px] rounded-full border border-gray-200 transition-colors flex-shrink-0"
           >
             <ChevronLeft className="w-5 h-5 text-black" />
-          </Link>
+          </button>
           <div className="flex flex-col">
             <h2 className="text-[18px] font-semibold text-black leading-tight mb-1">Manage phone number</h2>
             <p className="text-[13px] font-normal text-[#6B7280] leading-tight">Keep your account secure by verifying your primary contact number.</p>
