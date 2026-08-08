@@ -102,18 +102,13 @@ export function QuickChatWidget() {
         // Target: Left edge of widget is rect.right + 20px
         const buttonLeft = rect.right + 20;
         
-        // Check if button goes off screen (button is now 48px wide)
-        if (buttonLeft + 48 > viewportWidth - 16) {
+        // Check if full panel (340px) goes off screen
+        if (buttonLeft + 340 > viewportWidth - 16) {
           setLeftOffset(null);
           setPanelAlign('right');
         } else {
           setLeftOffset(`${buttonLeft}px`);
-          // Check if panel (320px) goes off screen if aligned left
-          if (buttonLeft + 320 > viewportWidth - 16) {
-            setPanelAlign('right');
-          } else {
-            setPanelAlign('left');
-          }
+          setPanelAlign('left');
         }
       } else {
         // Fallback for pages without a feed post
@@ -202,11 +197,11 @@ export function QuickChatWidget() {
         dragMomentum={false}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={() => setTimeout(() => setIsDragging(false), 150)}
-      className={`fixed z-50 pointer-events-auto flex flex-col gap-[18px] ${panelAlign === 'left' ? 'items-start' : 'items-end'}`}
+      className="fixed z-50 pointer-events-auto"
       style={{
         left: leftOffset || undefined,
         right: !leftOffset ? '16px' : undefined,
-        bottom: '10px'
+        bottom: '16px'
       }}
     >
         <AnimatePresence>
@@ -216,7 +211,7 @@ export function QuickChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`w-[calc(100vw-32px)] sm:w-[340px] ${selectedChat ? 'h-[65vh] max-h-[480px] sm:h-[480px]' : 'h-[335px]'} bg-white border border-[#EEF2FF] shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-[12px] flex flex-col overflow-hidden transition-all duration-300`}
+            className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0' : 'right-0'} w-[calc(100vw-32px)] sm:w-[340px] ${selectedChat ? 'h-[65vh] max-h-[480px] sm:h-[480px]' : 'h-[335px]'} bg-white border border-[#EEF2FF] shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-[12px] flex flex-col overflow-hidden transition-all duration-300`}
             style={{ transformOrigin: 'bottom' }}
           >
           {/* Main Content Area */}
@@ -320,22 +315,6 @@ export function QuickChatWidget() {
           if (isOpen) {
             setIsOpen(false);
           } else if (!isDragging) {
-            if (widgetRef.current) {
-              const rect = widgetRef.current.getBoundingClientRect();
-              const viewportWidth = window.innerWidth;
-              
-              let newAlign: 'left' | 'right' = 'left';
-              
-              if (rect.left + rect.width / 2 > viewportWidth / 2) {
-                // On right half: strictly extend right (panelAlign = 'left')
-                newAlign = 'left';
-              } else {
-                // On left half: strictly extend left (panelAlign = 'right')
-                newAlign = 'right';
-              }
-              
-              setPanelAlign(newAlign);
-            }
             setIsOpen(true);
           }
           setStripNotification(prev => ({ ...prev, show: false })); // Hide on click

@@ -174,7 +174,7 @@ function JobApplicationContextCard({ entityType, entityId, conversationId }: { e
     retry: false,
   });
 
-  const wrapperClass = "mb-[8px] rounded-[32px] p-[8px] pr-[16px] w-[260px] h-[66px] min-h-[66px] flex items-center justify-start border box-border shadow-sm overflow-hidden";
+  const wrapperClass = "mb-[8px] rounded-[32px] p-[8px] pr-[16px] w-full max-w-[260px] h-[66px] min-h-[66px] flex items-center justify-start border box-border shadow-sm overflow-hidden";
 
   if (loading) {
     return (
@@ -330,7 +330,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
       role="button"
       tabIndex={0}
     >
-      <div className="flex flex-row items-center gap-[10px] w-[236px]">
+      <div className="flex flex-row items-center gap-[10px] w-full min-w-0">
         {/* Avatar pill frame 2608515 */}
         <div className="w-[52px] h-[36px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden shrink-0">
           <img
@@ -684,7 +684,7 @@ const JobPreview = ({ jobId }: { jobId: string }) => {
     return () => { mounted = false; };
   }, [jobId]);
 
-  const wrapperClass = "mb-[8px] rounded-[32px] p-[8px] pr-[16px] w-[260px] h-[66px] min-h-[66px] flex items-center justify-start border box-border shadow-sm overflow-hidden";
+  const wrapperClass = "mb-[8px] rounded-[32px] p-[8px] pr-[16px] w-full max-w-[260px] h-[66px] min-h-[66px] flex items-center justify-start border box-border shadow-sm overflow-hidden";
 
   if (loading) {
     return (

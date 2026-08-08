@@ -23,21 +23,29 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
   const { isCompany } = useActiveProfile();
   const { mutate: verifyIdentity, isPending } = useIdentityVerification();
   
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [documentType, setDocumentType] = useState<string>('DRIVING_LICENSE');
   
   const [frontImage, setFrontImage] = useState<File | null>(null);
   const [backImage, setBackImage] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!frontImage) return;
+    if (!frontImage || !backImage) {
+      setError("Please upload both front and back images of your document.");
+      return;
+    }
+    setError(null);
 
     verifyIdentity(
       { documentType, frontImage, backImage: backImage || undefined },
       {
         onSuccess: () => {
-          handleClose();
+          setStep(3);
+          setTimeout(() => {
+            handleClose();
+          }, 3000);
         }
       }
     );
@@ -119,22 +127,27 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <BareDialogContent 
-        className={`p-0 overflow-y-auto sm:overflow-hidden bg-white ${isCompany ? 'dark:bg-company-card border border-company-border' : 'dark:bg-[#1F2937] border border-gray-700'} rounded-xl w-full sm:w-[960px] h-full sm:h-[720px] max-w-none shadow-2xl flex flex-col items-center`}
+        className={step === 3 
+          ? `p-0 bg-white dark:bg-[#1F2937] w-[300px] h-[92px] rounded-[24px] max-w-none border-none flex flex-col items-center justify-center outline-none shadow-[0px_4px_20px_rgba(0,0,0,0.05)]`
+          : `p-0 overflow-y-auto bg-white ${isCompany ? 'dark:bg-company-card' : 'dark:bg-[#1F2937]'} w-screen h-screen max-w-none border-none flex flex-col items-center justify-center`
+        }
       >
         <DialogTitle className="sr-only">
-          {step === 1 ? 'Verify your identity' : 'Upload document'}
+          {step === 1 ? 'Verify your identity' : step === 2 ? 'Upload document' : 'Verification under review'}
         </DialogTitle>
-        {/* Close Button Row */}
-        <div className="flex flex-row justify-end items-center w-full pt-[24px] pr-[24px]">
-          <button onClick={handleClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-            <X className="w-6 h-6 text-[#EF4444]" />
-          </button>
-        </div>
+        
+        {step !== 3 && (
+          <div className="flex flex-row justify-end items-center w-full pt-[24px] pr-[24px] absolute top-0 right-0">
+            <button onClick={handleClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+              <X className="w-6 h-6 text-[#EF4444]" />
+            </button>
+          </div>
+        )}
 
         {step === 1 ? (
-          <div className="flex flex-col items-center w-full max-w-[412px] mt-[16px] gap-[40px]">
+          <div className="flex flex-col justify-center items-center w-full max-w-[412px] flex-1 pb-16 gap-[40px]">
             
             {/* Header */}
             <div className="flex flex-col items-center gap-[8px]">
@@ -149,16 +162,11 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
             {/* Options List */}
             <div className="flex flex-col items-center gap-[16px] w-[330px]">
               {documentOptions.map((option) => (
-                <button
+                <div
                   key={option.id}
-                  onClick={() => setDocumentType(option.id)}
-                  className={`flex flex-row items-center justify-between px-[24px] w-[330px] h-[96px] rounded-lg border transition-all ${
-                    documentType === option.id 
-                      ? 'border-[#6366F1] bg-white dark:bg-[#121B2B] shadow-[0_0_0_1px_rgba(99,102,241,1)]' 
-                      : `border-transparent bg-white ${isCompany ? 'dark:bg-company-card' : 'dark:bg-[#1F2937]'}`
-                  }`}
+                  className={`flex flex-row items-center justify-between px-[24px] w-[330px] h-[96px] rounded-lg border border-transparent transition-all bg-white ${isCompany ? 'dark:bg-company-card' : 'dark:bg-[#1F2937]'}`}
                   style={{
-                    boxShadow: documentType !== option.id ? '0px 2px 8px rgba(0, 0, 0, 0.04)' : undefined
+                    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)'
                   }}
                 >
                   <div className="flex flex-row items-center gap-[24px]">
@@ -171,16 +179,19 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                   </div>
                   
                   {/* Radio indicator */}
-                  <div className={`flex flex-col items-center justify-center w-[24px] h-[24px] rounded-full border-2 ${
-                    documentType === option.id 
-                      ? 'border-[#6366F1]' 
-                      : 'border-[#6B7280]'
-                  }`}>
+                  <button 
+                    type="button"
+                    onClick={() => setDocumentType(option.id)}
+                    className={`flex flex-col items-center justify-center w-[24px] h-[24px] rounded-full border-2 cursor-pointer transition-colors ${
+                      documentType === option.id 
+                        ? 'border-[#6366F1]' 
+                        : 'border-[#6B7280]'
+                    }`}>
                     {documentType === option.id && (
                       <div className="w-[12px] h-[12px] rounded-full bg-[#6366F1]" />
                     )}
-                  </div>
-                </button>
+                  </button>
+                </div>
               ))}
             </div>
 
@@ -201,8 +212,8 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
             </div>
 
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col items-center w-full max-w-[582px] mt-[16px] gap-[40px] pb-12 sm:pb-0 px-4 sm:px-0">
+        ) : step === 2 ? (
+          <form onSubmit={handleSubmit} className="flex flex-col justify-center items-center w-full max-w-[582px] flex-1 pb-16 gap-[40px] px-4 sm:px-0">
             {/* Header */}
             <div className="flex flex-col items-center gap-[8px]">
               <h1 className={`text-[24px] font-semibold text-center leading-[32px] ${isCompany ? 'dark:text-company-text' : 'text-black dark:text-white'}`}>
@@ -215,9 +226,16 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
 
             {/* Upload Boxes */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start justify-center gap-[16px] w-full">
-              <FileUploader side="front" file={frontImage} setFile={setFrontImage} />
-              <FileUploader side="back" file={backImage} setFile={setBackImage} />
+              <FileUploader side="front" file={frontImage} setFile={(f) => { setFrontImage(f); setError(null); }} />
+              <FileUploader side="back" file={backImage} setFile={(f) => { setBackImage(f); setError(null); }} />
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="text-red-500 text-[12px] font-medium w-full text-center max-w-[526px]">
+                {error}
+              </div>
+            )}
 
             {/* Info Note */}
             <div className="flex flex-row items-center w-full max-w-[526px] bg-[#EEF2FF] dark:bg-[#6366F1]/10 rounded-[24px] py-[8px] px-[16px] gap-[8px]">
@@ -239,14 +257,25 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
               </button>
               <button
                 type="submit"
-                disabled={!frontImage || isPending}
+                disabled={isPending}
                 className="flex items-center justify-center w-[140px] h-[40px] border border-[#FFFFFF] text-[#FFFFFF] rounded-[24px] text-[14px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: (!frontImage || isPending) ? '#C7D2FE' : '#6366F1' }}
+                style={{ background: isPending ? '#C7D2FE' : '#6366F1' }}
               >
                 {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit'}
               </button>
             </div>
           </form>
+        ) : null}
+
+        {step === 3 && (
+          <div className="flex flex-col items-center justify-center w-full h-full p-[16px] text-center gap-[4px]">
+            <h3 className="text-[14px] leading-[20px] font-medium text-black dark:text-white">
+              Verification under review
+            </h3>
+            <p className="text-[12px] leading-[20px] font-normal text-[#6B7280] dark:text-[#9CA3AF]">
+              Our team will review your documents before we verify your identity
+            </p>
+          </div>
         )}
       </BareDialogContent>
     </Dialog>

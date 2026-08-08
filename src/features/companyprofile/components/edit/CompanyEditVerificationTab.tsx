@@ -5,6 +5,13 @@ import { Icon } from "@iconify/react";
 import { toast } from "sonner";
 import { verifyIdentity } from "@/services/api/settings";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CompanyEditVerificationTabProps {
   onCancel: () => void;
@@ -88,94 +95,91 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full flex flex-col gap-8 font-poppins pt-4">
+    <form onSubmit={handleSubmit} className="w-full max-w-[928px] flex flex-col gap-[24px] font-poppins pt-4">
       
       {/* Top Row: Legal Name and Date of Incorporation side by side on desktop, stacked on mobile */}
-      <div className="flex flex-col md:flex-row gap-6 w-full">
+      <div className="flex flex-col md:flex-row gap-[24px] w-full">
         {/* Company full legal name */}
-        <div className="flex flex-col gap-2 w-full md:w-1/2">
-          <label className="text-[14px] font-semibold text-gray-900 dark:text-white">
+        <div className="flex flex-col items-start p-[24px] gap-[8px] w-full md:w-[452px] bg-white dark:bg-[#121B2B] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-[12px]">
+          <label className="w-full text-[14px] leading-[20px] font-medium text-black dark:text-white tracking-[0.14px]">
             Company full legal name
           </label>
-          <div className="relative w-full h-11">
+          <div className="relative w-full h-[50px]">
             <input
               type="text"
               value={legalName}
               onChange={(e) => setLegalName(e.target.value)}
               placeholder="e.g. Nexsus Global System"
-              className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white"
+              className="w-full h-full px-4 border border-[#E0E0E7] dark:border-zinc-800 rounded-[24px] bg-transparent text-[16px] leading-[24px] focus:outline-none focus:border-[#1A73E8] transition-colors text-black dark:text-white"
             />
           </div>
         </div>
 
         {/* Date of incorporation */}
-        <div className="flex flex-col gap-2 w-full md:w-1/2">
-          <label className="text-[14px] font-semibold text-gray-900 dark:text-white">
+        <div className="flex flex-col items-start p-[24px] gap-[8px] w-full md:w-[452px] bg-white dark:bg-[#121B2B] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-[12px]">
+          <label className="w-full text-[14px] leading-[20px] font-medium text-black dark:text-white tracking-[0.14px]">
             Date of incorporation
           </label>
-          <div className="flex flex-row gap-2 h-11 w-full">
+          <div className="flex flex-row gap-[24px] h-[50px] w-full">
             {/* Day */}
-            <div className="relative w-1/3 h-full">
-              <select
-                value={incorpDay}
-                onChange={(e) => setIncorpDay(e.target.value)}
-                className="w-full h-full pl-4 pr-8 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white appearance-none cursor-pointer text-gray-600 dark:text-gray-300"
-              >
-                <option value="" disabled>Date</option>
-                {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <Icon icon="lucide:chevron-down" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <div className="relative flex-1 h-full">
+              <Select value={incorpDay} onValueChange={setIncorpDay}>
+                <SelectTrigger className="w-full h-full pl-[16px] pr-[16px] border border-[#E0E0E7] dark:border-zinc-800 rounded-[24px] bg-transparent text-[16px] leading-[24px] focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1A73E8] transition-colors cursor-pointer text-black dark:text-white data-[placeholder]:text-[#6B7280] dark:data-[placeholder]:text-[#6B7280] [&>svg]:w-6 [&>svg]:h-6 [&>svg]:text-black dark:[&>svg]:text-white [&>svg]:opacity-100 flex items-center justify-between gap-2 shadow-none">
+                  <SelectValue placeholder="Date" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] border-[#E0E0E7] dark:border-zinc-800 rounded-[12px] shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                  {DAYS.map(d => <SelectItem key={d} value={d} className="cursor-pointer">{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Month */}
-            <div className="relative w-1/3 h-full">
-              <select
-                value={incorpMonth}
-                onChange={(e) => setIncorpMonth(e.target.value)}
-                className="w-full h-full pl-4 pr-8 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white appearance-none cursor-pointer text-gray-600 dark:text-gray-300"
-              >
-                <option value="" disabled>Month</option>
-                {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-              <Icon icon="lucide:chevron-down" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <div className="relative flex-1 h-full">
+              <Select value={incorpMonth} onValueChange={setIncorpMonth}>
+                <SelectTrigger className="w-full h-full pl-[16px] pr-[16px] border border-[#E0E0E7] dark:border-zinc-800 rounded-[24px] bg-transparent text-[16px] leading-[24px] focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1A73E8] transition-colors cursor-pointer text-black dark:text-white data-[placeholder]:text-[#6B7280] dark:data-[placeholder]:text-[#6B7280] [&>svg]:w-6 [&>svg]:h-6 [&>svg]:text-black dark:[&>svg]:text-white [&>svg]:opacity-100 flex items-center justify-between gap-2 shadow-none">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] border-[#E0E0E7] dark:border-zinc-800 rounded-[12px] shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                  {MONTHS.map(m => <SelectItem key={m} value={m} className="cursor-pointer">{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Year */}
-            <div className="relative w-1/3 h-full">
-              <select
-                value={incorpYear}
-                onChange={(e) => setIncorpYear(e.target.value)}
-                className="w-full h-full pl-4 pr-8 border border-gray-300 dark:border-zinc-800 rounded-[24px] bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none focus:border-[#1A73E8] transition-colors dark:text-white appearance-none cursor-pointer text-gray-600 dark:text-gray-300"
-              >
-                <option value="" disabled>Year</option>
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <Icon icon="lucide:chevron-down" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <div className="relative flex-1 h-full">
+              <Select value={incorpYear} onValueChange={setIncorpYear}>
+                <SelectTrigger className="w-full h-full pl-[16px] pr-[16px] border border-[#E0E0E7] dark:border-zinc-800 rounded-[24px] bg-transparent text-[16px] leading-[24px] focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-[#1A73E8] transition-colors cursor-pointer text-black dark:text-white data-[placeholder]:text-[#6B7280] dark:data-[placeholder]:text-[#6B7280] [&>svg]:w-6 [&>svg]:h-6 [&>svg]:text-black dark:[&>svg]:text-white [&>svg]:opacity-100 flex items-center justify-between gap-2 shadow-none">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px] border-[#E0E0E7] dark:border-zinc-800 rounded-[12px] shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                  {YEARS.map(y => <SelectItem key={y} value={y.toString()} className="cursor-pointer">{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
       </div>
 
       {/* Verification Document */}
-      <div className="flex flex-col gap-2 w-full pt-2">
-        <label className="text-[14px] font-semibold text-gray-900 dark:text-white">
+      <div className="flex flex-col items-start p-[24px] gap-[8px] w-full md:w-[928px] bg-white dark:bg-[#121B2B] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-[12px]">
+        <label className="w-full text-[14px] leading-[20px] font-medium text-black dark:text-white tracking-[0.14px]">
           Verification Document
         </label>
         
         {verificationDoc ? (
-          <div className="w-full h-12 px-1 py-1 border border-gray-300 dark:border-zinc-800 rounded-full flex items-center justify-between bg-white dark:bg-zinc-900/50 gap-2 overflow-hidden pl-4 pr-4">
+          <div className="w-full h-[50px] px-[24px] py-[12px] border border-[#E0E0E7] dark:border-zinc-800 rounded-[24px] flex items-center justify-between bg-transparent gap-2 overflow-hidden">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-6 h-6 rounded bg-gray-400 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0">
                  <Icon icon="lucide:file-text" className="w-4 h-4 text-white" />
               </div>
-              <span className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+              <span className="text-[14px] font-normal text-black dark:text-white tracking-[0.14px] truncate">
                 {verificationDoc.name}
               </span>
             </div>
             
             <label
               htmlFor="file-input-change"
-              className="text-[14px] text-[#1A73E8] font-medium cursor-pointer hover:underline flex-shrink-0"
+              className="text-[12px] text-[#1A73E8] font-normal cursor-pointer flex-shrink-0 tracking-[0.14px]"
             >
               Change
             </label>
@@ -191,7 +195,7 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
           <div className="w-full">
             <label
               htmlFor="file-input-upload"
-              className="w-full h-12 px-6 rounded-full border border-gray-300 dark:border-zinc-800 bg-transparent hover:border-[#1A73E8] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors flex items-center justify-center cursor-pointer select-none"
+              className="w-full h-[50px] rounded-[24px] border border-[#E0E0E7] dark:border-zinc-800 bg-transparent hover:border-[#1A73E8] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors flex items-center justify-center cursor-pointer select-none"
             >
               <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280]" />
             </label>
@@ -207,21 +211,21 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
       </div>
 
       {/* Footer Buttons */}
-      <div className="flex justify-end items-center gap-4 w-full mt-10">
+      <div className="flex justify-end items-center gap-4 w-full md:w-[928px] h-[40px] mt-[16px]">
         <button
           type="button"
           onClick={onCancel}
-          className="h-10 px-8 border border-[#9CA3AF] text-gray-700 dark:text-zinc-300 dark:border-zinc-700 rounded-[24px] font-medium text-[14px] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center bg-white dark:bg-zinc-950"
+          className="flex justify-center items-center w-[140px] h-[40px] px-4 py-2 gap-[10px] bg-white dark:bg-zinc-950 border border-[#6B7280] rounded-[24px] text-[#6B7280] font-normal text-[14px] leading-[20px] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!isDirty || isSubmitting}
-          className={`h-10 px-8 rounded-[24px] font-semibold text-[14px] transition-colors flex items-center justify-center ${
+          className={`flex justify-center items-center w-[140px] h-[40px] px-4 py-2 gap-[10px] rounded-[24px] font-normal text-[14px] leading-[20px] transition-colors ${
             isDirty && !isSubmitting
-              ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer shadow-md shadow-blue-500/20"
-              : "bg-[#E5E7EB] text-[#9CA3AF] dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
+              ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
+              : "bg-[#E0E0E7] text-white dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed"
           }`}
         >
           {isSubmitting ? "Submitting..." : "Submit"}

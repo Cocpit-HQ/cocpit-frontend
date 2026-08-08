@@ -43,18 +43,18 @@ export default function CompanyProfileEditPage() {
       >
         
         {/* Header with back button */}
-        <div className="flex items-center gap-4 w-full h-[56px] pb-4">
+        <div className="flex items-center gap-[16px] w-full max-w-[928px] h-[48px] mb-[24px]">
           <button
             onClick={handleBack}
-            className="w-10 h-10 rounded-full border border-gray-300 dark:border-zinc-800 flex items-center justify-center text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+            className="w-[48px] h-[48px] shrink-0 rounded-[100px] border border-[#DADADA] flex items-center justify-center text-[#6B7280] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6 text-[#6B7280]" />
           </button>
-          <div className="flex flex-col">
-            <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white leading-[28px]">
+          <div className="flex flex-col justify-center h-[42px]">
+            <h1 className="text-[18px] font-medium text-black dark:text-white leading-[26px]">
               Edit page
             </h1>
-            <span className="text-[12px] text-gray-500 dark:text-zinc-400">
+            <span className="text-[12px] font-normal text-[#6B7280] dark:text-zinc-400 leading-[16px]">
               Update your page details and save your changes.
             </span>
           </div>
@@ -64,7 +64,7 @@ export default function CompanyProfileEditPage() {
         <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="w-full">
           
           {/* Scrollable Tabs List */}
-          <Tabs.List className="flex gap-[16px] h-10 items-center p-0 mb-6">
+          <Tabs.List className="flex gap-[16px] items-center p-0 mb-[24px]">
             {[
               { name: "Profile", value: "profile" },
               { name: "About", value: "about" },
@@ -73,7 +73,7 @@ export default function CompanyProfileEditPage() {
               <Tabs.Trigger
                 key={tab.value}
                 value={tab.value}
-                className="flex justify-center items-center px-4 py-1.5 h-10 text-[14px] leading-5 font-semibold rounded-[24px] border border-[#6B7280] bg-white dark:bg-zinc-950 text-[#6B7280] hover:bg-gray-50 dark:hover:bg-zinc-900 transition-all data-[state=active]:bg-[#E8F1FF] dark:data-[state=active]:bg-blue-950/40 data-[state=active]:text-[#1A73E8] data-[state=active]:border-transparent outline-none cursor-pointer"
+                className="flex justify-center items-center px-[16px] h-[40px] text-[12px] leading-[20px] font-normal rounded-[24px] border border-[#1A73E8] bg-white dark:bg-zinc-950 text-[#1A73E8] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all data-[state=active]:bg-[#E8F1FF] dark:data-[state=active]:bg-blue-900/40 data-[state=active]:font-medium data-[state=active]:border-transparent outline-none cursor-pointer"
               >
                 {tab.name}
               </Tabs.Trigger>
