@@ -43,6 +43,7 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
     if (typeof window !== "undefined") {
       localStorage.removeItem("nextauth.message");
       sessionStorage.removeItem("hideTrendingNow");
+      localStorage.removeItem("cocpit_recent_ai_prompts");
       // Add any other custom cache keys here (Query cache, etc. are cleared by full page reload normally)
     }
 

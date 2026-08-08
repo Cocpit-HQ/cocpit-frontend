@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { CategoryType, CreatePostModalProps, PostType } from '@/features/create-post/types';
 import { useCreatePostForm } from '@/features/create-post/hooks/use-create-post-form';
 import { AdaptiveCropper } from '@/features/create-post/components/AdaptiveCropper';
+import { toast } from '@/hooks/use-toast';
 
 // Post Flows
 import VideoFlow from '@/features/create-post/components/flows/VideoFlow';
@@ -24,6 +25,7 @@ import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { EmojiPickerPortal, EmojiPickerPosition } from '@/shared/commonComponents/EmojiPickerPortal';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/axios';
 
 export interface CreatePostCommonProps extends CreatePostModalProps {
   currentUser?: {
@@ -71,6 +73,125 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const composerTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [showAchievementDialog, setShowAchievementDialog] = useState(false);
   const [showAchievementPhotoPicker, setShowAchievementPhotoPicker] = useState(false);
+
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [showAIToneMenu, setShowAIToneMenu] = useState(false);
+  const [selectedAITone, setSelectedAITone] = useState('Friendly');
+  const aiToneMenuRef = useRef<HTMLDivElement>(null);
+
+  const [showAIHistoryMenu, setShowAIHistoryMenu] = useState(false);
+  const aiHistoryMenuRef = useRef<HTMLDivElement>(null);
+  const [recentPrompts, setRecentPrompts] = useState<string[]>([]);
+  const [aiLimitError, setAiLimitError] = useState<string | null>(null);
+  const [remainingCaptions, setRemainingCaptions] = useState(45);
+
+  const [showAIPopup, setShowAIPopup] = useState(false);
+  const aiPopupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const saved = localStorage.getItem('cocpit_recent_ai_prompts');
+        if (saved) {
+          setRecentPrompts(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error("Failed to load recent prompts", e);
+      }
+      
+      // Fetch AI limit
+      api.get('/ai/usage')
+        .then(res => {
+          if (res.data?.success) {
+            setRemainingCaptions(res.data.remainingMonthly);
+          }
+        })
+        .catch(err => console.error("Failed to fetch AI usage", err));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (aiToneMenuRef.current && !aiToneMenuRef.current.contains(event.target as Node)) {
+        setShowAIToneMenu(false);
+      }
+    };
+    if (showAIToneMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAIToneMenu]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (aiHistoryMenuRef.current && !aiHistoryMenuRef.current.contains(event.target as Node)) {
+        setShowAIHistoryMenu(false);
+      }
+    };
+    if (showAIHistoryMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAIHistoryMenu]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (aiPopupRef.current && !aiPopupRef.current.contains(event.target as Node)) {
+        setShowAIPopup(false);
+      }
+    };
+    if (showAIPopup) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAIPopup]);
+
+  const handleAIGenerate = async (e?: React.FormEvent | React.KeyboardEvent, tone?: string) => {
+    if (e) e.preventDefault();
+    if (!aiPrompt.trim() || isGeneratingAI || aiPrompt.length > 200) return;
+    setIsGeneratingAI(true);
+
+    try {
+      const response = await api.post('/ai/generate', {
+        prompt: aiPrompt,
+        tone: tone || selectedAITone
+      });
+      const generatedText = response.data.text;
+      state.setDescription(generatedText);
+      setRemainingCaptions(prev => Math.max(0, prev - 1));
+      
+      // Save prompt to history
+      const promptToSave = aiPrompt.trim();
+      setRecentPrompts(prev => {
+        const updated = [promptToSave, ...prev.filter(p => p !== promptToSave)].slice(0, 2);
+        try {
+          localStorage.setItem('cocpit_recent_ai_prompts', JSON.stringify(updated));
+        } catch (e) {
+          console.error("Failed to save recent prompts", e);
+        }
+        return updated;
+      });
+
+      setAiPrompt("");
+      if (showAIToneMenu) setShowAIToneMenu(false);
+      setAiLimitError(null); // Clear error on success
+    } catch (error: any) {
+      if (error?.response?.status === 429) {
+        setAiLimitError(error?.response?.data?.message || 'AI limit reached.');
+      } else {
+        toast({ title: 'AI Generation Failed', description: error?.response?.data?.message || 'Please try again later.', variant: 'destructive' });
+      }
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   const handleAchievementPhotoSelect = (image: { id: number; url: string }) => {
     state.setAchievementImageId(image.id);
@@ -751,7 +872,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                 {/* Profile — FIXED */}
                 {(state.postType !== 'article' || !!state.articleData) && (
-                  <div className="relative flex flex-row items-center justify-start gap-3.5 w-full mt-5 z-[60]">
+                  <div className="relative flex flex-row items-center justify-between gap-3.5 w-full mt-5 z-[60]">
                     <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
                       <div className="w-11 h-11 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none">
                         {currentPosterLogo ? (
@@ -772,6 +893,22 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <span className="font-normal text-[12px] leading-[16px] text-[#9CA3AF]">@{currentPosterHandle}</span>
                       </div>
                     </div>
+
+                    <button
+                      onClick={handlePostClick}
+                      disabled={isPostButtonDisabled || aiPrompt.length > 200}
+                      className={`flex flex-row items-center justify-center gap-2 px-6 h-[40px] border border-white/60 rounded-[20px] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm ${isPostButtonDisabled
+                        ? (state.isCompanyPost ? 'bg-[#1A73E8]/50' : 'bg-indigo-200')
+                        : (state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-[#6366F1]')
+                        }`}
+                    >
+                      {state.isSubmitting ? (
+                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                      ) : null}
+                      <span className="font-medium text-[14px] leading-[20px] text-white font-poppins">
+                        {state.isSubmitting ? (isEdit ? 'Saving' : 'Posting') : (isEdit ? 'Save' : 'Post')}
+                      </span>
+                    </button>
                   </div>
                 )}
 
@@ -1289,59 +1426,200 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                 {/* Footer — FIXED */}
                 {(state.postType !== 'article' || !!state.articleData) && (
-                    <div className="flex flex-col gap-4 w-full mt-auto pt-5">
-                      {/* Tag, Location, Smile icons row */}
-                      <div className="flex items-center gap-4 px-1">
-                        <button className="flex items-center gap-2 relative transition-colors group" title="Tag people" onClick={() => { setShowTagSelector(true); }}>
-                          <Icon icon="la:user-tag" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
-                          {taggedUsers.length > 0 && (
-                            <span className={`text-[14px] leading-[20px] font-normal font-poppins ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>
-                              + {taggedUsers.length}
-                            </span>
-                          )}
-                        </button>
-                        <button className="flex items-center gap-2 relative transition-colors group" title="Location" onClick={() => { setShowLocationSelector(true); }}>
-                          <Icon icon="hugeicons:location-05" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
-                          {state.selectedLocation && (
-                            <span className={`text-[14px] leading-[20px] font-normal font-poppins truncate max-w-[200px] text-left ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>
-                              {(state.selectedLocation as any).name || (state.selectedLocation as any).formattedAddress}
-                            </span>
-                          )}
-                        </button>
-                        <button
-                          ref={emojiButtonRef}
-                          type="button"
-                          className="transition-colors"
-                          title="Add emoji"
-                          onClick={(e) => handleEmojiButtonClick(e, composerTextareaRef)}
-                        >
-                          <Icon icon="lucide:smile" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
-                        </button>
-                      </div>
-
-                      <div className="flex flex-row justify-between items-center w-full">
-                        <button className={`flex flex-row items-center justify-center gap-2 px-5 py-2.5 border rounded-full bg-transparent transition-all duration-200 group ${state.isCompanyPost ? 'border-[#1A73E8] hover:bg-[#1A73E8]/10 dark:hover:bg-[#1A73E8]/10' : 'border-[#818CF8] hover:bg-[#818CF8]/10 dark:hover:bg-[#818CF8]/10'}`}>
-                          <Sparkles className={`w-4 h-4 group-hover:scale-110 transition-transform ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`} />
-                          <span className={`font-medium text-[13.5px] leading-[20px] ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>Enhance with AI</span>
-                        </button>
-
-                        <button
-                          onClick={handlePostClick}
-                          disabled={isPostButtonDisabled}
-                          className={`flex flex-row items-center justify-center gap-2 px-7 py-2.5 border border-white/60 rounded-full transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm ${isPostButtonDisabled
-                              ? (state.isCompanyPost ? 'bg-[#1A73E8]/50' : 'bg-indigo-200')
-                              : (state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-indigo-500')
-                            }`}
-                        >
-                          {state.isSubmitting ? (
-                            <Loader2 className="w-4 h-4 text-white animate-spin" />
-                          ) : null}
-                          <span className="font-medium text-[13.5px] leading-[20px] text-white">
-                            {state.isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
+                  <div className="flex flex-col gap-4 w-full mt-auto pt-5">
+                    {/* Tag, Location, Smile icons row */}
+                    <div className="flex items-center gap-4 px-1">
+                      <button className="flex items-center gap-2 relative transition-colors group" title="Tag people" onClick={() => { setShowTagSelector(true); }}>
+                        <Icon icon="la:user-tag" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                        {taggedUsers.length > 0 && (
+                          <span className={`text-[14px] leading-[20px] font-normal font-poppins ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>
+                            + {taggedUsers.length}
                           </span>
-                        </button>
+                        )}
+                      </button>
+                      <button className="flex items-center gap-2 relative transition-colors group" title="Location" onClick={() => { setShowLocationSelector(true); }}>
+                        <Icon icon="hugeicons:location-05" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                        {state.selectedLocation && (
+                          <span className={`text-[14px] leading-[20px] font-normal font-poppins truncate max-w-[200px] text-left ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>
+                            {(state.selectedLocation as any).name || (state.selectedLocation as any).formattedAddress}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        ref={emojiButtonRef}
+                        type="button"
+                        className="transition-colors"
+                        title="Add emoji"
+                        onClick={(e) => handleEmojiButtonClick(e, composerTextareaRef)}
+                      >
+                        <Icon icon="lucide:smile" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2 w-full mt-2">
+                      <div className="flex flex-col gap-1 w-full relative" ref={aiHistoryMenuRef}>
+                        {showAIHistoryMenu && recentPrompts.length > 0 && (
+                          <div className="absolute bottom-full mb-1 left-0 w-[568px] max-w-full flex flex-col items-start py-2 px-4 bg-white border border-[#EEF2FF] rounded-[16px] shadow-[2px_2px_4px_0px_rgba(99,102,241,0.05)] z-50">
+                            <span className="font-poppins font-normal text-[12px] leading-[16px] tracking-[0px] text-[#6366F1] mb-2 shrink-0">Recent</span>
+
+                            {recentPrompts.map((prompt, index) => (
+                              <div key={index} className="w-full flex flex-col">
+                                <button
+                                  className="text-left font-poppins font-normal text-[12px] leading-[16px] tracking-[0px] text-black hover:bg-gray-50 rounded-md transition-colors w-full py-1.5"
+                                  onClick={() => { setAiPrompt(prompt); setShowAIHistoryMenu(false); }}
+                                >
+                                  {prompt}
+                                </button>
+                                {index < recentPrompts.length - 1 && (
+                                  <div className="w-full h-[1px] bg-[#EEF2FF] my-1 shrink-0" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {isGeneratingAI ? (
+                          <div className="relative flex items-center justify-between rounded-[24px] p-[1.5px] h-[56px] w-full overflow-hidden">
+                            <style>{`
+                              @keyframes spinBorder {
+                                0% { transform: translate(-50%, -50%) rotate(0deg); }
+                                100% { transform: translate(-50%, -50%) rotate(360deg); }
+                              }
+                            `}</style>
+                            
+                            {/* Spinning gradient for the full border */}
+                            <div 
+                              className="absolute top-1/2 left-1/2 w-[800px] h-[800px] origin-center"
+                              style={{ 
+                                background: 'conic-gradient(from 0deg, transparent 0%, transparent 75%, #6366F1 100%)',
+                                animation: 'spinBorder 2.5s linear infinite',
+                                transform: 'translate(-50%, -50%) rotate(0deg)'
+                              }} 
+                            />
+                            
+                            {/* Inner content capsule */}
+                            <div className="relative z-10 flex items-center justify-between bg-[#F8FAFC] rounded-[23px] pl-4 pr-2 h-full w-full">
+                              <div className="flex items-center gap-2">
+                                <div className="relative flex items-center justify-center w-[24px] h-[24px]">
+                                  <div className="absolute inset-0 rounded-full bg-[#6366F1]/30 animate-ping" />
+                                  <img src="/assets/AI 2.svg" alt="AI" className="w-[24px] h-[24px] relative z-10 shrink-0 object-contain animate-pulse" />
+                                </div>
+                                <span className="text-[#6366F1] text-[14px] leading-[20px] font-poppins font-medium">
+                                  Generating...
+                                </span>
+                              </div>
+
+                              <button 
+                                className="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E0E7FF] hover:bg-[#C7D2FE] transition-colors animate-[pulse_2s_ease-in-out_infinite]"
+                              >
+                                <div className="w-[12px] h-[12px] bg-[#6366F1] rounded-[2px]" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 bg-white border border-[#DADADA] rounded-[24px] px-4 h-[56px] w-full">
+                            <img src="/assets/AI 2.svg" alt="AI" className="w-[24px] h-[24px] shrink-0 object-contain" />
+                            <input
+                              type="text"
+                              placeholder="Start writing your post..."
+                              value={aiPrompt}
+                              onChange={(e) => {
+                                if (e.target.value.length <= 200) {
+                                  setAiPrompt(e.target.value);
+                                }
+                              }}
+                              maxLength={200}
+                              disabled={isGeneratingAI}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAIGenerate(e);
+                                }
+                              }}
+                              className="flex-1 bg-transparent border-none outline-none text-[14px] leading-[20px] text-black placeholder:text-[#6B7280] font-poppins min-w-0"
+                            />
+                            <div className="flex items-center gap-3">
+                              <div className="relative flex" ref={aiToneMenuRef}>
+                                <button
+                                  onClick={() => setShowAIToneMenu(!showAIToneMenu)}
+                                  disabled={isGeneratingAI}
+                                  className={`w-6 h-6 flex flex-shrink-0 items-center justify-center transition-opacity disabled:opacity-50 ${showAIToneMenu ? 'text-[#6366F1]' : 'text-black'}`}
+                                >
+                                  <Icon icon="lucide:wand-2" className="w-[20px] h-[20px]" />
+                                </button>
+
+                                {showAIToneMenu && (
+                                  <div className="absolute bottom-[36px] right-[50%] translate-x-[50%] flex flex-col items-center p-[8px] bg-white border border-[#C7D2FE] rounded-[24px] rounded-br-[0px] w-[116px] h-[88px] shadow-lg z-50">
+                                    <button onClick={() => { setSelectedAITone('Friendly'); setTimeout(() => setShowAIToneMenu(false), 250); }} className={`flex items-center justify-center w-[100px] h-[36px] rounded-[24px] transition-colors shrink-0 ${selectedAITone === 'Friendly' ? 'bg-[#6366F1] text-white' : 'bg-white hover:bg-gray-100 text-black'}`}>
+                                      <span className={`font-poppins font-normal text-[14px] leading-[20px] ${selectedAITone === 'Friendly' ? 'text-white' : 'text-black'}`}>Friendly</span>
+                                    </button>
+                                    <button onClick={() => { setSelectedAITone('Formalize'); setTimeout(() => setShowAIToneMenu(false), 250); }} className={`flex items-center justify-center w-[100px] h-[36px] rounded-[24px] transition-colors shrink-0 ${selectedAITone === 'Formalize' ? 'bg-[#6366F1] text-white' : 'bg-white hover:bg-gray-100 text-black'}`}>
+                                      <span className={`font-poppins font-normal text-[14px] leading-[20px] ${selectedAITone === 'Formalize' ? 'text-white' : 'text-black'}`}>Formalize</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setShowAIHistoryMenu(!showAIHistoryMenu)}
+                                disabled={recentPrompts.length === 0}
+                                className={`w-6 h-6 flex flex-shrink-0 items-center justify-center transition-opacity disabled:opacity-50 ${showAIHistoryMenu ? 'text-[#6366F1]' : 'text-black'}`}
+                              >
+                                <Icon icon="lucide:history" className="w-[20px] h-[20px]" />
+                              </button>
+
+                              <button
+                                onClick={handleAIGenerate}
+                                disabled={!aiPrompt.trim() || isGeneratingAI || aiPrompt.length > 200 || !!aiLimitError}
+                                className="w-6 h-6 flex flex-shrink-0 items-center justify-center transition-colors"
+                              >
+                                <Icon icon="lucide:send" className={`w-[20px] h-[20px] ${aiPrompt.trim() && aiPrompt.length <= 200 && !aiLimitError ? 'text-[#6366F1]' : 'text-[#000000]'}`} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center px-1 mt-1 relative">
+                          <div 
+                            className="relative flex items-center"
+                            onMouseEnter={() => setShowAIPopup(true)}
+                            onMouseLeave={() => setShowAIPopup(false)}
+                          >
+                            <button
+                              type="button"
+                              className={`flex items-center gap-1.5 text-[10px] leading-[15px] font-poppins transition-colors ${aiLimitError ? 'text-[#FF6B6B]' : 'text-[#6B7280] hover:text-[#6366F1]'}`}
+                            >
+                              <Icon icon="fluent:info-16-regular" className="w-[14px] h-[14px]" />
+                              {aiLimitError || `${remainingCaptions} captions left this month`}
+                            </button>
+                            
+                            {showAIPopup && (
+                              <div 
+                                ref={aiPopupRef}
+                                className="absolute bottom-[calc(100%+8px)] left-0 w-[373px] bg-[#EEF2FF] border border-[#EEF2FF] rounded-[16px] p-4 flex flex-col items-center justify-center gap-2 shadow-[2px_2px_4px_rgba(99,102,241,0.05)] z-[100] box-border cursor-default text-left"
+                              >
+                                <span className="w-[341px] font-poppins font-normal text-[10px] leading-[15px] text-[#6366F1]">
+                                  About AI captions
+                                </span>
+                                <span className="w-[341px] font-poppins font-normal text-[12px] leading-[16px] text-[#000000]">
+                                  Need inspiration? Use AI to generate and refine your post
+                                </span>
+                                <ul className="w-[341px] font-poppins font-normal text-[12px] leading-[16px] text-[#000000] list-disc pl-4 m-0 flex flex-col gap-0.5">
+                                  <li>45 generations every 30 days</li>
+                                  <li>5 generations per day</li>
+                                  <li>Friendly and Formal writing tones</li>
+                                  <li>Access your 2 most recent prompts</li>
+                                  <li>New generations replace the previous result</li>
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                          <span className={`text-[10px] leading-[15px] font-poppins shrink-0 ml-2 ${aiPrompt.length >= 200 ? 'text-[#FF6B6B]' : 'text-[#6B7280]'}`}>
+                            {aiPrompt.length}/200
+                          </span>
+                        </div>
                       </div>
                     </div>
+                  </div>
                 )}
               </div>
             </>
