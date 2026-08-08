@@ -662,7 +662,7 @@ function RoleSection({
         {/* Details — only for first role, shown at the bottom */}
         {isFirst && (
           <div className="flex flex-col" ref={descriptionRef} id="description-field">
-            <Label className={labelStyles}>Details*</Label>
+            <Label className={labelStyles}>Details</Label>
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
@@ -913,12 +913,6 @@ export default function AddExperienceForm({
       // Title required
       if (!role.title.trim()) {
         roleErrors.title = "Role title is required"
-        valid = false
-      }
-
-      // Description required
-      if (!role.description.trim()) {
-        roleErrors.description = "Description is required"
         valid = false
       }
 
@@ -1189,7 +1183,6 @@ export default function AddExperienceForm({
     roles.every(
       (r) =>
         r.title.trim() !== "" &&
-        r.description.trim() !== "" &&
         r.startMonth !== "" &&
         r.startYear !== "" &&
         (r.is_current || (r.endMonth !== "" && r.endYear !== ""))
