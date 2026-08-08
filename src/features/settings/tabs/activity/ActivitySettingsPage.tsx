@@ -4,6 +4,7 @@ import React from 'react';
 import { ThumbsUp, UserMinus, Image as ImageIcon, BarChart2, Edit3, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSettingsStore } from '@/store/settings.store';
 import { useActivityLogs } from '../../hooks/useActivityLogs';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -12,17 +13,21 @@ export function ActivitySettingsPage() {
   const { isCompany, activeProfile } = useActiveProfile();
   const companyId = isCompany ? activeProfile?.id : undefined;
   const router = useRouter();
-  // Which pill is active lives in the shared settings store — this is the
-  // "tab parameter" referenced in settings.store.ts. It's passed straight
-  // into useActivityLogs, which threads it into the TanStack Query
-  // queryKey (see useActivityLogs.ts) so switching pills is a cache
-  // lookup/fetch instead of a manual useEffect + setState.
+  const queryClient = useQueryClient();
   const activeTab = useSettingsStore((state) => state.activity.activeTab);
   const setActiveTab = useSettingsStore((state) => state.setActivityTab);
 
   const tabs = ['Likes', 'Comments', 'Tags'] as const;
 
   const { data, isLoading, removeActivity } = useActivityLogs(activeTab, companyId);
+
+  React.useEffect(() => {
+    const handleRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
+    };
+    window.addEventListener('cocpit:activity-updated', handleRefresh);
+    return () => window.removeEventListener('cocpit:activity-updated', handleRefresh);
+  }, [queryClient]);
 
   const handleRemove = (id: number | string) => {
     removeActivity(id);

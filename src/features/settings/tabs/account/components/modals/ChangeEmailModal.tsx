@@ -21,6 +21,15 @@ interface ChangeEmailModalProps {
   mode?: 'primary' | 'recovery' | 'delete';
 }
 
+const validateEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+};
+
+const getErrorMessage = (err: any, fallback: string) => {
+  return err?.response?.data?.message || err?.response?.data?.errors?.[0]?.message || fallback;
+};
+
 export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmail, mode = 'primary' }: ChangeEmailModalProps) {
   const isPrimary = mode === 'primary';
   const isRecovery = mode === 'recovery';
@@ -48,7 +57,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
       hasInitPrimaryRef.current = true;
       verifyCurrentEmailInit.mutate(undefined, {
         onError: (err: any) => {
-          setErrorMsg(err?.response?.data?.message || 'Failed to send verification code to current email');
+          setErrorMsg(getErrorMessage(err, 'Failed to send verification code to current email'));
         }
       });
     }
@@ -80,23 +89,27 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
 
     if (isPrimary) {
       if (step === 1) {
+        if (verifyCurrentEmailConfirm.isSuccess) {
+          setStep(2);
+          return;
+        }
         verifyCurrentEmailConfirm.mutate(
           { otp: currentEmailCode },
           {
             onSuccess: () => {
               toast.success('Code verified');
-              setTimeout(() => setStep(2), 1000);
+              setStep(2);
             },
-            onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
+            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Invalid code'))
           }
         );
       } else if (step === 2) {
-        if (!newEmail) return setErrorMsg('Please enter a valid email address.');
+        if (!newEmail || !validateEmail(newEmail)) return setErrorMsg('Please enter a valid email address.');
         submitNewEmail.mutate(
           { newEmail },
           {
             onSuccess: () => setStep(3),
-            onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to submit new email')
+            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to submit new email'))
           }
         );
       } else if (step === 3) {
@@ -108,19 +121,19 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
               toast.success(data.message || 'Email updated successfully');
               setTimeout(() => handleClose(), 1000);
             },
-            onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify new email')
+            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify new email'))
           }
         );
       }
     } else if (isRecovery) {
       if (step === 1) {
-        if (!newEmail) return setErrorMsg('Please enter a valid email address.');
-        if (newEmail.toLowerCase() === currentEmail.toLowerCase()) return setErrorMsg('Recovery email cannot match primary email.');
+        if (!newEmail || !validateEmail(newEmail)) return setErrorMsg('Please enter a valid email address.');
+        if (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) return setErrorMsg('Recovery email cannot match primary email.');
         submitRecoveryEmail.mutate(
           { recoveryEmail: newEmail },
           {
             onSuccess: () => setStep(2),
-            onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to submit recovery email')
+            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to submit recovery email'))
           }
         );
       } else if (step === 2) {
@@ -132,7 +145,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
               toast.success(data.message || 'Recovery email updated successfully');
               setTimeout(() => handleClose(), 1000);
             },
-            onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify recovery email')
+            onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify recovery email'))
           }
         );
       }
@@ -145,15 +158,15 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
     setErrorMsg('');
     if (isPrimary && step === 1) {
       verifyCurrentEmailInit.mutate(undefined, {
-        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to resend code')
+        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
       });
     } else if (isPrimary && step === 3) {
       submitNewEmail.mutate({ newEmail }, {
-        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to resend code')
+        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
       });
     } else if (isRecovery && step === 2) {
       submitRecoveryEmail.mutate({ recoveryEmail: newEmail }, {
-        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to resend code')
+        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to resend code'))
       });
     }
   };
@@ -237,9 +250,8 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                     {
                       onSuccess: () => {
                         toast.success('Code verified');
-                        setTimeout(() => setStep(2), 1000);
                       },
-                      onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
+                      onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Invalid code'))
                     }
                   );
                 }
@@ -282,7 +294,15 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             <input 
               type="email"
               value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                if (errorMsg) setErrorMsg('');
+              }}
+              onBlur={() => {
+                if (newEmail.trim() !== '' && !validateEmail(newEmail)) {
+                  setErrorMsg('Please enter a valid email address.');
+                }
+              }}
               placeholder="xyz@gmail.com"
               className={`w-full h-[48px] px-4 bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : 'border-[#DADADA] focus:border-[#6366F1]'} rounded-[24px] text-[16px] text-black focus:outline-none transition-colors`}
             />
@@ -314,7 +334,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                           toast.success(data.message || 'Email updated successfully');
                           setTimeout(() => handleClose(), 1000);
                         },
-                        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify new email')
+                        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify new email'))
                       }
                     );
                   } else if (isRecovery && step === 2) {
@@ -326,7 +346,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                           toast.success(data.message || 'Recovery email updated successfully');
                           setTimeout(() => handleClose(), 1000);
                         },
-                        onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Failed to verify recovery email')
+                        onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify recovery email'))
                       }
                     );
                   }
@@ -365,11 +385,11 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
   const getIsDisabled = () => {
     if (isPrimary) {
       if (step === 1) return currentEmailCode.length !== 6 || verifyCurrentEmailConfirm.isPending;
-      if (step === 2) return !newEmail || submitNewEmail.isPending;
+      if (step === 2) return !newEmail || !validateEmail(newEmail) || submitNewEmail.isPending;
       if (step === 3) return newEmailCode.length !== 6 || verifyEmailMutation.isPending;
     }
     if (isRecovery) {
-      if (step === 1) return !newEmail || submitRecoveryEmail.isPending;
+      if (step === 1) return !newEmail || !validateEmail(newEmail) || (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) || submitRecoveryEmail.isPending;
       if (step === 2) return newEmailCode.length !== 6 || verifyRecoveryEmailMutation.isPending;
     }
     return false;

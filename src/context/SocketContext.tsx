@@ -557,6 +557,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     };
 
+    const handleSavedUpdated = () => {
+      console.log("[Socket] saved_updated event received");
+      queryClient.invalidateQueries({ queryKey: ['saved-folders'] });
+      queryClient.invalidateQueries({ queryKey: ['saved-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['savedPostStatus'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('cocpit:saved-updated'));
+      }
+    };
+
+    const handleActivityUpdated = () => {
+      console.log("[Socket] activity_updated event received");
+      queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('cocpit:activity-updated'));
+      }
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -571,9 +593,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
+    newSocket.on('ORGANIZATION_USER_UNBLOCKED', handleUnblock);
+    newSocket.on('ORGANIZATION_BLOCK_UPDATED', handleUnblock);
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     newSocket.on('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
+    newSocket.on('saved_folders_updated', handleSavedUpdated);
+    newSocket.on('saved_posts_updated', handleSavedUpdated);
+    newSocket.on('activity_updated', handleActivityUpdated);
     socketRef.current = newSocket;
 
 
@@ -607,6 +634,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
       newSocket.off('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
       newSocket.off('member_sync', handleMemberSync);
+      newSocket.off('saved_folders_updated', handleSavedUpdated);
+      newSocket.off('saved_posts_updated', handleSavedUpdated);
       newSocket.disconnect();
       setTypingConversations({});
     };

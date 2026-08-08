@@ -81,6 +81,10 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
         }
       );
     } else if (step === 2) {
+      if (confirmPhoneMutation.isSuccess) {
+        handleClose();
+        return;
+      }
       confirmPhoneMutation.mutate(
         { otp: code },
         {
@@ -88,7 +92,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
             queryClient.invalidateQueries({ queryKey: ['userAccount'] });
             queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
             toast.success(data.message || 'Phone number updated successfully');
-            setTimeout(() => handleClose(), 1000);
+            handleClose();
           },
           onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
         }
@@ -137,7 +141,9 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
   const getButtonText = () => {
     if (isDelete) return deletePhoneMutation.isPending ? 'Removing...' : 'Remove';
     if (step === 1) return setPhoneMutation.isPending ? 'Sending...' : 'Continue';
-    return confirmPhoneMutation.isPending ? 'Saving...' : 'Save';
+    if (confirmPhoneMutation.isPending) return 'Verifying...';
+    if (confirmPhoneMutation.isSuccess) return 'Continue';
+    return 'Verify';
   };
 
   const renderContent = () => {
@@ -185,8 +191,8 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
                     {
                       onSuccess: (data) => {
                         queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-                        toast.success(data.message || 'Phone number updated successfully');
-                        setTimeout(() => handleClose(), 1000);
+                        queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
+                        toast.success(data.message || 'Phone number verified successfully');
                       },
                       onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
                     }

@@ -308,6 +308,11 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     const handleBlockEvent = (e: any) => {
       const detail = e.detail || {};
       if (detail.targetId) {
+        if (detail.isBlocked) {
+          setBlockedIds((prev) => [...new Set([...prev, detail.targetId])]);
+        } else {
+          setBlockedIds((prev) => prev.filter((id) => id !== detail.targetId));
+        }
         queryClient.removeQueries({ queryKey: ["profile", detail.targetId] });
         queryClient.removeQueries({
           queryKey: ["companyProfile", detail.targetId],

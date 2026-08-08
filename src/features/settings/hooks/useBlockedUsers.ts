@@ -45,7 +45,32 @@ export function useBlockedUsers() {
       if (context?.previous) queryClient.setQueryData(BLOCKED_USERS_QUERY_KEY, context.previous);
       toast.error("Failed to unblock user");
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      const targetId = String(id);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("cocpit:block_status_changed", {
+            detail: { targetId, isBlocked: false },
+          })
+        );
+        try {
+          localStorage.setItem(
+            "cocpit_block_event",
+            JSON.stringify({ targetId, isBlocked: false, timestamp: Date.now() })
+          );
+        } catch (e) {}
+      }
+
+      queryClient.removeQueries({ queryKey: ["profile", targetId] });
+      queryClient.removeQueries({ queryKey: ["companyProfile", targetId] });
+      queryClient.removeQueries({ queryKey: ["publicProfile", targetId] });
+      queryClient.removeQueries({ queryKey: ["profileStats", targetId] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["publicProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
+
       toast.success("User unblocked successfully");
     },
     onSettled: () => {

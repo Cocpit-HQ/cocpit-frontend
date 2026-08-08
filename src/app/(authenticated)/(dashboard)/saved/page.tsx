@@ -52,6 +52,12 @@ export default function SavedPostsGeneralPage() {
 
   useEffect(() => {
     fetchPosts(true);
+
+    const handleRefresh = () => {
+      fetchPosts(true);
+    };
+    window.addEventListener("cocpit:saved-updated", handleRefresh);
+    return () => window.removeEventListener("cocpit:saved-updated", handleRefresh);
   }, []);
 
   const handleDeletePost = async (id: string) => {

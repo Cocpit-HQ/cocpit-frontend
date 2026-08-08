@@ -20,13 +20,13 @@ const REMOVE_TYPE: Record<ActivityTab, "like" | "comment" | "tag"> = {
 // from useSettingsStore (UI state) and is threaded into the queryKey here
 // so switching pills is a TanStack Query cache lookup/fetch, not a manual
 // useEffect + setState dance.
-export const activityLogsQueryKey = (tab: ActivityTab) => ["activityLogs", tab] as const;
+export const activityLogsQueryKey = (tab: ActivityTab, companyId?: string) => ["activityLogs", tab, companyId || "me"] as const;
 
 export function useActivityLogs(tab: ActivityTab, companyId?: string) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: activityLogsQueryKey(tab),
+    queryKey: activityLogsQueryKey(tab, companyId),
     queryFn: () => getActivityLogs(LOG_TYPE[tab], companyId),
   });
 
@@ -42,7 +42,7 @@ export function useActivityLogs(tab: ActivityTab, companyId?: string) {
       return id;
     },
     onSuccess: (id) => {
-      queryClient.setQueryData<any[]>(activityLogsQueryKey(tab), (prev) =>
+      queryClient.setQueryData<any[]>(activityLogsQueryKey(tab, companyId), (prev) =>
         (prev || []).filter((item) => item.id !== id)
       );
       toast.success("Activity removed");

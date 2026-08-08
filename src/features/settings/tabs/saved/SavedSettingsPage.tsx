@@ -27,6 +27,14 @@ export function SavedSettingsPage() {
     setIsCreateModalOpen(false);
   };
 
+  React.useEffect(() => {
+    const handleRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-folders"] });
+    };
+    window.addEventListener("cocpit:saved-updated", handleRefresh);
+    return () => window.removeEventListener("cocpit:saved-updated", handleRefresh);
+  }, [queryClient]);
+
   return (
     <div className="flex flex-col w-full h-full min-h-full font-poppins">
       <div className="w-full relative flex-1 flex flex-col py-2 px-4 gap-4 max-w-[698px]">

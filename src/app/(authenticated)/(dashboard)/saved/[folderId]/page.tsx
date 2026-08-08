@@ -13,6 +13,7 @@ import { DeleteAccountModal } from "@/features/settings/tabs/account/components/
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { CreateFolderModal } from "@/features/settings/components/CreateFolderModal";
 import { useQueryClient } from "@tanstack/react-query";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 const isValidImageUrl = (url?: string | null): boolean => !!url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:'));
 
@@ -21,6 +22,7 @@ export default function CustomSavedPostsPage() {
   const queryClient = useQueryClient();
   const params = useParams();
   const folderId = params.folderId as string;
+  const { activeProfile, isCompany } = useActiveProfile();
   
   const [folder, setFolder] = useState<SavedFolder | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -33,6 +35,13 @@ export default function CustomSavedPostsPage() {
 
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+
+  const getSavedSettingsUrl = () => {
+    if (isCompany && activeProfile?.slug) {
+      return `/organization/${activeProfile.slug}/settings/saved`;
+    }
+    return "/settings/saved";
+  };
 
   useEffect(() => {
     // Fetch folder name for the header
@@ -82,6 +91,12 @@ export default function CustomSavedPostsPage() {
 
   useEffect(() => {
     fetchPosts(true);
+
+    const handleRefresh = () => {
+      fetchPosts(true);
+    };
+    window.addEventListener("cocpit:saved-updated", handleRefresh);
+    return () => window.removeEventListener("cocpit:saved-updated", handleRefresh);
   }, [folderId]);
 
   const handleDeleteFolder = async () => {
@@ -92,7 +107,7 @@ export default function CustomSavedPostsPage() {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
       toast.success("Folder deleted");
-      router.push("/settings/saved"); // Go back to settings or saved page
+      router.push(getSavedSettingsUrl());
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete folder");

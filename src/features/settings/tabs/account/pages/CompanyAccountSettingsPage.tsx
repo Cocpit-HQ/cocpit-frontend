@@ -141,18 +141,27 @@ export function CompanyAccountSettingsPage() {
               Temporarily hide your {entityLabel.toLowerCase()} account. You can reactivate it at any time.
             </p>
           </div>
-          <button
-            onClick={() => isOwner && setModal('deactivate')}
-            className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
-              isOwner
-                ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
-                : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed'
-            }`}
-          >
-            <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
-              {data.isDeactivated ? 'Reactivate' : 'Deactivate'}
-            </span>
-          </button>
+          <div className="group relative flex items-center">
+            <button
+              disabled={!isOwner}
+              onClick={() => isOwner && setModal('deactivate')}
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
+                isOwner
+                  ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
+                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed opacity-75'
+              }`}
+            >
+              <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
+                {data.isDeactivated ? 'Reactivate' : 'Deactivate'}
+              </span>
+            </button>
+            {!isOwner && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-row items-center justify-center px-3 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-lg whitespace-nowrap shadow-lg z-50 pointer-events-none transition-opacity">
+                You don't have access
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -165,18 +174,27 @@ export function CompanyAccountSettingsPage() {
               Transfer ownership of this {entityLabel.toLowerCase()} page to another administrator.
             </p>
           </div>
-          <button
-            onClick={() => isOwner && setModal('transfer')}
-            className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
-              isOwner
-                ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
-                : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed'
-            }`}
-          >
-            <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
-              Transfer
-            </span>
-          </button>
+          <div className="group relative flex items-center">
+            <button
+              disabled={!isOwner}
+              onClick={() => isOwner && setModal('transfer')}
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
+                isOwner
+                  ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
+                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed opacity-75'
+              }`}
+            >
+              <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
+                Transfer
+              </span>
+            </button>
+            {!isOwner && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-row items-center justify-center px-3 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-lg whitespace-nowrap shadow-lg z-50 pointer-events-none transition-opacity">
+                You don't have access
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -189,18 +207,27 @@ export function CompanyAccountSettingsPage() {
               Permanently delete your {entityLabel.toLowerCase()} page and all associated data.
             </p>
           </div>
-          <button
-            onClick={() => isOwner && setModal('delete')}
-            className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
-              isOwner
-                ? 'bg-[#EF4444] dark:bg-company-error border-white dark:border-company-border hover:opacity-90 cursor-pointer'
-                : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed'
-            }`}
-          >
-            <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-white' : 'text-[#9CA3AF]'}`}>
-              Delete
-            </span>
-          </button>
+          <div className="group relative flex items-center">
+            <button
+              disabled={!isOwner}
+              onClick={() => isOwner && setModal('delete')}
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
+                isOwner
+                  ? 'bg-[#EF4444] dark:bg-company-error border-white dark:border-company-border hover:opacity-90 cursor-pointer'
+                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed opacity-75'
+              }`}
+            >
+              <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-white' : 'text-[#9CA3AF]'}`}>
+                Delete
+              </span>
+            </button>
+            {!isOwner && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-row items-center justify-center px-3 py-1.5 bg-gray-900 text-white text-[12px] font-medium rounded-lg whitespace-nowrap shadow-lg z-50 pointer-events-none transition-opacity">
+                You don't have access
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
