@@ -132,13 +132,13 @@ export function CompanyPrivacySettingsPage() {
                 <div className="w-full border-t border-[#EEF2FF]" />
                 <div className="flex flex-row items-center justify-between py-[16px] w-full min-h-[78px]">
                   <div className="flex flex-col justify-center">
-                    <span className="text-[16px] font-normal text-black dark:text-company-text leading-[24px]">
-                      Business verification
+                    <span className="flex-none order-none w-[182px] h-[26px] font-medium text-[18px] leading-[26px] flex items-center text-black dark:text-company-text">
+                      Account verification
                     </span>
-                    <span className="text-[14px] font-normal text-[#6B7280] dark:text-company-secondary leading-[20px]">
+                    <span className="flex-none order-1 w-[301px] h-[20px] font-normal text-[14px] leading-[20px] flex items-center text-[#6B7280] dark:text-company-secondary">
                       {activeProfile?.verification_status === 'VERIFIED' 
-                        ? "Your business has been verified"
-                        : "Verify your business to unlock more features"}
+                        ? "Your identity has been verified"
+                        : "Verify your identity to unlock more features"}
                     </span>
                   </div>
                   {activeProfile?.verification_status === 'VERIFIED' ? (

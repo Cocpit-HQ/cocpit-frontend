@@ -15,7 +15,8 @@ interface ViewAvatarModalProps {
 }
 
 export function ViewAvatarModal({ isOpen, onClose, avatarUrl }: ViewAvatarModalProps) {
-  const displayUrl = avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop";
+  if (!avatarUrl) return null;
+  const displayUrl = avatarUrl;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

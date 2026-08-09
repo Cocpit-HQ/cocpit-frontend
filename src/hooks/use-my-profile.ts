@@ -294,6 +294,7 @@ export function useAvatarMutations() {
                 };
             });
             void update({ image: response.avatarUrl });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });
@@ -309,6 +310,7 @@ export function useAvatarMutations() {
                 };
             });
             void update({ image: null });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
         }
     });

@@ -85,10 +85,10 @@ export function PrivacySettingsPage() {
             <div className="w-full border-t border-[#DADADA]" />
             <div className="flex flex-row items-center justify-between py-[16px] w-full min-h-[78px]">
               <div className="flex flex-col justify-center">
-                <span className="text-[16px] font-normal text-black leading-[24px]">
+                <span className="flex-none order-none w-[182px] h-[26px] font-medium text-[18px] leading-[26px] flex items-center text-black">
                   Account verification
                 </span>
-                <span className="text-[14px] font-normal text-[#6B7280] leading-[20px]">
+                <span className="flex-none order-1 w-[301px] h-[20px] font-normal text-[14px] leading-[20px] flex items-center text-[#6B7280]">
                   {myProfile?.user?.is_identity_verified 
                     ? "Your identity has been verified"
                     : "Verify your identity to unlock more features"}

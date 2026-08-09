@@ -473,7 +473,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         onClick={() => setIsShareModalOpen(true)}
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
       >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Share Profile</span>
+        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Share profile</span>
         <Share2 className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       <DropdownMenuItem
@@ -483,14 +483,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         }}
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
       >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Copy Profile Link</span>
+        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Copy profile</span>
         <LinkIcon className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => setIsReportModalOpen(true)}
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
       >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Report Profile</span>
+        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Report profile</span>
         <Flag className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
       </DropdownMenuItem>
       {isUserBlocked ? (
@@ -538,7 +538,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             profileStats={profileStats}
             latestExperience={latestExperience}
             latestEducation={latestEducation}
-            onAvatarClick={() => setIsViewAvatarOpen(true)}
+            onAvatarClick={() => {
+              if (user.avatar) {
+                setIsViewAvatarOpen(true);
+              }
+            }}
             onContactInfoClick={() => setIsContactInfoModalOpen(true)}
             onFollowListClick={openFollowList}
             onRoleClick={handleRoleClick}

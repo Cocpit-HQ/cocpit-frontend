@@ -1402,7 +1402,13 @@ export default function ProfilePage() {
               profileStats={profileStats}
               latestExperience={latestExperience}
               latestEducation={latestEducation}
-              onAvatarClick={() => isMobile ? setIsEditAvatarOpen(true) : setIsViewAvatarOpen(true)}
+              onAvatarClick={() => {
+                if (!profileData?.user?.avatar) {
+                  setIsEditAvatarOpen(true);
+                } else {
+                  isMobile ? setIsEditAvatarOpen(true) : setIsViewAvatarOpen(true);
+                }
+              }}
               onEditAvatarClick={() => setIsEditAvatarOpen(true)}
               onContactInfoClick={() => setIsContactInfoModalOpen(true)}
               onEditProfileClick={() => setIsEditProfileModalOpen(true)}
@@ -1512,10 +1518,10 @@ export default function ProfilePage() {
             <ProfileExperience
               experiences={experiences}
               isOwnProfile={true}
-              onAddExperienceClick={() => { 
-                setEditingExperiences(null); 
+              onAddExperienceClick={() => {
+                setEditingExperiences(null);
                 setEditingExperienceSelectedId(null);
-                setIsAddExperienceModalOpen(true); 
+                setIsAddExperienceModalOpen(true);
               }}
               onEditExperienceClick={(exps, selectedExp) => {
                 setEditingExperiences(exps);

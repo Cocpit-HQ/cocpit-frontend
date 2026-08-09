@@ -44,6 +44,8 @@ export function EditAvatarModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>("edit");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [imgNaturalWidth, setImgNaturalWidth] = useState(0);
+  const [imgNaturalHeight, setImgNaturalHeight] = useState(0);
 
   // Determine initial state when modal opens
   useEffect(() => {
@@ -88,11 +90,22 @@ export function EditAvatarModal({
         containerWidth = containerRef.current.offsetWidth;
         containerHeight = containerRef.current.offsetHeight;
       }
-      const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
-      const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+      
+      let scaledWidth = containerWidth;
+      let scaledHeight = containerHeight;
+      if (imgNaturalWidth && imgNaturalHeight) {
+        const scale = Math.max(containerWidth / imgNaturalWidth, containerHeight / imgNaturalHeight);
+        scaledWidth = imgNaturalWidth * scale;
+        scaledHeight = imgNaturalHeight * scale;
+      }
+
+      const maxTranslateX = (scaledWidth * zoomScale - containerWidth) / 2;
+      const maxTranslateY = (scaledHeight * zoomScale - containerHeight) / 2;
 
       setPositionX(prev => Math.min(Math.max(prev + dx, -maxTranslateX), maxTranslateX));
       setPositionY(prev => Math.min(Math.max(prev + dy, -maxTranslateY), maxTranslateY));
+      
+      lastPointer.current = { x: clientX, y: clientY };
     };
 
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
@@ -118,7 +131,7 @@ export function EditAvatarModal({
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchend", onEnd);
     };
-  }, [isDraggingImage]);
+  }, [isDraggingImage, zoom, imgNaturalWidth, imgNaturalHeight]);
 
   const handlePointerDown = (clientX: number, clientY: number) => {
     lastPointer.current = { x: clientX, y: clientY };
@@ -135,12 +148,21 @@ export function EditAvatarModal({
       containerWidth = containerRef.current.offsetWidth;
       containerHeight = containerRef.current.offsetHeight;
     }
-    const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
-    const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+
+    let scaledWidth = containerWidth;
+    let scaledHeight = containerHeight;
+    if (imgNaturalWidth && imgNaturalHeight) {
+      const scale = Math.max(containerWidth / imgNaturalWidth, containerHeight / imgNaturalHeight);
+      scaledWidth = imgNaturalWidth * scale;
+      scaledHeight = imgNaturalHeight * scale;
+    }
+
+    const maxTranslateX = (scaledWidth * zoomScale - containerWidth) / 2;
+    const maxTranslateY = (scaledHeight * zoomScale - containerHeight) / 2;
 
     setPositionX((prev) => Math.min(Math.max(prev, -maxTranslateX), maxTranslateX));
     setPositionY((prev) => Math.min(Math.max(prev, -maxTranslateY), maxTranslateY));
-  }, [zoom]);
+  }, [zoom, imgNaturalWidth, imgNaturalHeight]);
 
   const handleFileProcess = useCallback((file: File) => {
     // Validate type
@@ -252,13 +274,15 @@ export function EditAvatarModal({
       ctx.drawImage(img, -drawWidth / 2 + canvasPosX, -drawHeight / 2 + canvasPosY, drawWidth, drawHeight);
       ctx.restore();
 
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          const file = new File([blob], "profile_avatar.jpg", { type: "image/jpeg" });
-          await onUpload(file);
-          onClose();
-        }
-      }, "image/jpeg", 0.95);
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/jpeg", 0.95);
+      });
+      
+      if (blob) {
+        const file = new File([blob], "profile_avatar.jpg", { type: "image/jpeg" });
+        await onUpload(file);
+        onClose();
+      }
 
     } catch (error) {
       console.error("Save failed", error);
@@ -310,7 +334,13 @@ export function EditAvatarModal({
         className="p-0 max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0 [&>button]:hidden"
         portalContainer={portalContainerId ? document.getElementById(portalContainerId) : null}
       >
-        <div className="relative bg-card rounded-none sm:rounded-[24px] p-4  w-full h-full sm:h-auto shadow-none flex flex-col outline-none overflow-y-auto overflow-x-hidden">
+        <div 
+          className="relative bg-card rounded-none sm:rounded-[24px] p-4  w-full h-full sm:h-auto shadow-none flex flex-col outline-none overflow-y-auto overflow-x-hidden"
+          onDragEnter={handleDragOver}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           
           {/* Top Close Row (Desktop only) */}
           <div className="hidden sm:flex justify-end w-full ">
@@ -421,10 +451,27 @@ export function EditAvatarModal({
                   <img
                     src={displayUrl!}
                     alt="Current Profile"
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none z-[1]"
+                    className="absolute max-w-none pointer-events-none z-[1]"
                     draggable={false}
+                    onLoad={(e) => {
+                      setImgNaturalWidth(e.currentTarget.naturalWidth);
+                      setImgNaturalHeight(e.currentTarget.naturalHeight);
+                    }}
                     style={{
-                      transform: `translate(${positionX}px, ${positionY}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`
+                      ...(imgNaturalWidth && imgNaturalHeight ? (() => {
+                        const scale = Math.max(200 / imgNaturalWidth, 200 / imgNaturalHeight);
+                        return {
+                          width: imgNaturalWidth * scale,
+                          height: imgNaturalHeight * scale,
+                        }
+                      })() : { 
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover' 
+                      }),
+                      top: '50%',
+                      left: '50%',
+                      transform: `translate(calc(-50% + ${positionX}px), calc(-50% + ${positionY}px)) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`
                     }}
                   />
                 )}
@@ -480,6 +527,7 @@ export function EditAvatarModal({
             >
               {/* Centered Upload Box */}
               <div
+                onDragEnter={handleDragOver}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}

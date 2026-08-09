@@ -149,10 +149,15 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                 className="w-full h-full object-cover" 
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
+                  const parent = (e.target as HTMLImageElement).parentElement;
+                  if (parent) {
+                    const fallback = parent.querySelector('[data-fallback]');
+                    if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                  }
                 }} 
               />
             ) : null}
-            <span>{author?.name ? author.name.charAt(0).toUpperCase() : 'U'}</span>
+            <span data-fallback style={{ display: author?.avatar && author.avatar !== '/assets/pngegg.png' ? 'none' : 'flex' }}>{author?.name ? author.name.charAt(0).toUpperCase() : 'U'}</span>
           </div>
         </Link>
       </div>

@@ -107,7 +107,7 @@ export function AdaptiveCropper({
             onMediaLoaded={onMediaLoaded}
             showGrid={true}
             objectFit="horizontal-cover"
-            restrictPosition={false}
+            restrictPosition={true}
             style={{
               containerStyle: { background: 'transparent', overflow: 'visible' },
               cropAreaStyle,

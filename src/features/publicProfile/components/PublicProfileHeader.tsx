@@ -295,7 +295,7 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                         <div className="flex items-center gap-3 flex-wrap md:flex-nowrap min-w-0">
                             <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight truncate md:overflow-visible md:text-clip md:whitespace-nowrap">{user?.name}</h1>
 
-                            {visibleRoles.length > 0 && (
+                            {/* {visibleRoles.length > 0 && (
                                 <div className="flex items-center gap-2 flex-wrap md:flex-nowrap min-w-0">
                                     <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-[#EEF2FF] dark:bg-[#1C2340] rounded-[24px] border border-transparent flex-shrink-0 w-fit h-[36px]">
                                         <Icon icon="solar:buildings-linear" className="w-5 h-5 text-[#6366F1] dark:text-[#818CF8]" />
@@ -310,7 +310,7 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                         </span>
                                     )}
                                 </div>
-                            )}
+                            )} */}
                         </div>
                     </div>
 

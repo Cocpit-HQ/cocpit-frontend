@@ -216,14 +216,22 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       const type = payload.type;
       const isMessage = type === 'message' || type.includes('message');
+      const isJobMessage = isMessage && payload.isJobChat;
+      const isRegularMessage = isMessage && !isJobMessage;
       const isPost = ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention'].includes(type) || type.includes('post');
       const isJob = type.includes('job') || type.includes('application'); // Catch all job-related events
 
       // Toast suppression: only controls the popup — DB notification is already saved
       if (prefs) {
+        // Master toggles
         if (isMessage && prefs.messages === false) return;
+        // Sub-toggles for messages
+        if (isRegularMessage && prefs.messageChats === false) return;
+        if (isJobMessage && prefs.messageJobs === false) return;
+        
         if (isPost && prefs.posts === false) return;
-        if (isJob && prefs.jobs === false) return;
+        // Exclude job messages from being incorrectly suppressed by the "Job Alerts" toggle
+        if (isJob && !isJobMessage && prefs.jobs === false) return;
       }
 
       if (isMessage) {

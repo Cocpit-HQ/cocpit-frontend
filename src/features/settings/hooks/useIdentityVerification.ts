@@ -24,8 +24,9 @@ export function useIdentityVerification() {
       
       if (isCompany) {
         queryClient.invalidateQueries({ queryKey: ["company", activeProfile?.id] });
+        queryClient.invalidateQueries({ queryKey: ["activeProfile"] });
       } else {
-        queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       }
     },
     onError: (error: any) => {

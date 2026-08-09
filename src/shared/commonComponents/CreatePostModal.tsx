@@ -694,7 +694,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       }}
                     >
                       {activeImage?.isExisting ? (
-                        <img src={activeImage.url} className="w-full h-full object-cover" alt="Post media" />
+                        <img src={activeImage.url} className="w-full h-full object-cover" alt="Post media" draggable={false} />
                       ) : (
                         <div className="relative w-full h-full">
                           <AdaptiveCropper
@@ -731,7 +731,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               }`}
                             type="button"
                           >
-                            <img src={img.url} className="w-full h-full object-cover" alt={`Thumbnail ${idx + 1}`} />
+                            <img src={img.url} className="w-full h-full object-cover" alt={`Thumbnail ${idx + 1}`} draggable={false} />
                           </button>
                           <span className={`text-[10px] leading-[14px] font-poppins transition-colors duration-200 ${isActive
                             ? 'text-foreground font-semibold'
@@ -874,16 +874,35 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 {(state.postType !== 'article' || !!state.articleData) && (
                   <div className="relative flex flex-row items-center justify-between gap-3.5 w-full mt-5 z-[60]">
                     <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
-                      <div className="w-11 h-11 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none">
-                        {currentPosterLogo ? (
-                          <img
-                            src={currentPosterLogo}
-                            alt="avatar"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
+                      <div className="w-11 h-11 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none relative">
+                        {state.isCompanyPost && ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url) ? (
+                          <>
+                            <img 
+                              src={(state.currentPoster as any).logo_url || (state.currentPoster as any).avatar_url} 
+                              className="w-full h-full object-cover relative z-10"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                              draggable={false}
+                            />
+                            <span className="absolute inset-0 flex items-center justify-center z-0">
+                              {((state.currentPoster as any)?.name || 'O').charAt(0).toUpperCase()}
+                            </span>
+                          </>
+                        ) : !state.isCompanyPost && state.currentUser?.image ? (
+                          <>
+                            <img 
+                              src={state.currentUser.image} 
+                              className="w-full h-full object-cover relative z-10"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                              draggable={false}
+                            />
+                            <span className="absolute inset-0 flex items-center justify-center z-0">
+                              {(state.currentUser?.name || 'U').charAt(0).toUpperCase()}
+                            </span>
+                          </>
                         ) : (
                           <span>{currentPosterName.charAt(0).toUpperCase()}</span>
                         )}
@@ -938,6 +957,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                     src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
                                     className="w-full h-full object-cover"
                                     alt="Achievement media"
+                                    draggable={false}
                                   />
                                 </div>
                                 <div className="flex flex-col overflow-hidden max-w-[200px]">
@@ -991,6 +1011,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                     src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
                                     className="w-full h-full object-contain"
                                     alt="Achievement media"
+                                    draggable={false}
                                   />
                                 </div>
                               </div>
@@ -1052,6 +1073,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                       }}
                                       className="w-full h-full object-cover"
                                       alt="Attached media"
+                                      draggable={false}
                                     />
                                   </div>
                                   <div className="flex flex-col overflow-hidden max-w-[200px]">
@@ -1131,6 +1153,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                       }}
                                       className="w-full h-full object-cover"
                                       alt="Cropped post media"
+                                      draggable={false}
                                     />
                                   </div>
                                 </div>
@@ -1316,7 +1339,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             >
                               <div className="w-full h-[180px] overflow-hidden">
                                 {state.articleData.coverImage ? (
-                                  <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
+                                  <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" draggable={false} />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
                                     <Icon icon="ph:article" className="w-8 h-8" />

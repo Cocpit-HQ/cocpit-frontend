@@ -66,15 +66,19 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
         {side === 'front' ? 'Front image' : 'Back image'}
       </span>
       {file ? (
-        <div className={`relative flex flex-col items-center justify-center p-4 h-[192px] border rounded-[12px] ${isCompany ? 'dark:border-company-border dark:bg-[#121B2B]' : 'border-[#EEF2FF] bg-white dark:bg-gray-800'}`}>
-          <span className={`text-[12px] text-center px-4 w-full truncate ${isCompany ? 'dark:text-company-text' : 'text-black dark:text-white'}`}>{file.name}</span>
+        <div className={`relative flex flex-col items-center justify-center p-2 h-[192px] border rounded-[12px] overflow-hidden ${isCompany ? 'dark:border-company-border dark:bg-[#121B2B]' : 'border-[#EEF2FF] bg-white dark:bg-gray-800'}`}>
+          <img
+            src={URL.createObjectURL(file)}
+            alt={`${side} side preview`}
+            className="w-full h-full object-contain rounded-[8px]"
+          />
           <button 
             type="button" 
             onClick={() => setFile(null)}
-            className={`absolute top-2 right-2 p-1.5 rounded-full ${isCompany ? 'hover:bg-gray-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+            className={`absolute top-2 right-2 p-1.5 rounded-full bg-black/40 hover:bg-black/60 transition-colors`}
             disabled={isPending}
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
       ) : (

@@ -76,8 +76,17 @@ const CreatePostHeader = ({
             onClick={() => !isEdit && setShowAccountSelector(!showAccountSelector)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted transition-colors border border-border/50 group"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden border border-border shadow-sm">
-              <img src={currentPosterLogo} alt={currentPosterName} className="w-full h-full object-cover" />
+            <div className="w-6 h-6 rounded-full overflow-hidden border border-border shadow-sm bg-white text-[#6366F1] flex items-center justify-center font-semibold text-xs relative">
+              {currentPosterLogo ? (
+                <>
+                  <img src={currentPosterLogo} alt={currentPosterName} className="w-full h-full object-cover relative z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <span className="absolute inset-0 flex items-center justify-center z-0">
+                    {(currentPosterName || 'O').charAt(0).toUpperCase()}
+                  </span>
+                </>
+              ) : (
+                <span>{(currentPosterName || 'O').charAt(0).toUpperCase()}</span>
+              )}
             </div>
             <span className="text-xs font-semibold max-w-[100px] truncate">{currentPosterName}</span>
             {!isEdit && <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showAccountSelector ? 'rotate-180' : ''}`} />}

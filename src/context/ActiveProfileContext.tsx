@@ -296,6 +296,10 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
 
     const switchProfile = (type: ProfileType, id: string) => {
+        if (activeProfile?.type === type && activeProfile?.id === id) {
+            return;
+        }
+
         const performSwitch = async () => {
             try {
                 queryClient.invalidateQueries({ queryKey: ["jobs"] });

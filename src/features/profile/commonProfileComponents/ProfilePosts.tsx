@@ -353,7 +353,7 @@ const ProfilePostCard = ({
       {/* Header section */}
       <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-4">
         {/* Author Info */}
-        <div 
+        <div
           className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer group"
           onClick={(e) => {
             e.stopPropagation();

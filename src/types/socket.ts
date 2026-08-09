@@ -10,6 +10,7 @@ export interface NotificationPayload {
   senderAvatar?: string;
   conversationId?: string;
   isGroup?: boolean;
+  isJobChat?: boolean; // Indicates if the message originates from a job context chat
   // Company notification fields
   actor_name?: string;
   actor_avatar?: string;

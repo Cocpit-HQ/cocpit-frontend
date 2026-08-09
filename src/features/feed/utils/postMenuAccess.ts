@@ -44,11 +44,9 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
     return String(createdByUserId) === String(currentUserId) ? 'owner' : 'outsider';
   }
 
-  // Enforce actor context if activeProfile is explicitly provided
-  if (activeProfile !== undefined) {
-    if (activeProfile?.type !== 'COMPANY' || String(activeProfile?.id) !== String(companyId)) {
-      return 'outsider';
-    }
+  // If the user is currently acting as a DIFFERENT company, they are an outsider to THIS company's post.
+  if (activeProfile?.type === 'COMPANY' && String(activeProfile.id) !== String(companyId)) {
+    return 'outsider';
   }
 
   const company = params.userCompanies?.find(

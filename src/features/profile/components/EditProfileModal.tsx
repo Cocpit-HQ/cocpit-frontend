@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { X, ChevronDown } from "lucide-react"
+import { toast } from "sonner"
 import { Icon } from '@iconify/react'
 import { cn } from "@/lib/utils"
 import { updateMemberRoleSettings } from "@/services/api/organization"
@@ -86,7 +87,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const [isSaving, setIsSaving] = useState(false)
   const [initialFormData, setInitialFormData] = useState<any>(null)
   const [lastClickTime, setLastClickTime] = useState(0)
-  
+
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(true)
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
 
@@ -129,7 +130,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     };
   }, []);
 
-  const filteredIndustries = availableIndustries.filter(ind => 
+  const filteredIndustries = availableIndustries.filter(ind =>
     ind.industry_name.toLowerCase().includes(industrySearch.toLowerCase())
   );
 
@@ -215,8 +216,12 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const handleSave = async () => {
     const now = Date.now()
     if (now - lastClickTime < 2000 || isSaving || !hasChanges()) return
+    if (!formData.headline.trim()) {
+      toast.error("Headline is mandatory");
+      return;
+    }
     if (formData.headline.length > 200) {
-      alert("Headline cannot exceed 200 characters");
+      toast.error("Headline cannot exceed 200 characters");
       return;
     }
     setLastClickTime(now)
@@ -371,7 +376,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       setIndustrySearch(e.target.value);
                       setIsIndustryOpen(true);
                       if (!e.target.value) {
-                         setFormData(prev => ({ ...prev, industry: '' }));
+                        setFormData(prev => ({ ...prev, industry: '' }));
                       }
                     }}
                     onFocus={() => setIsIndustryOpen(true)}
@@ -390,7 +395,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                             key={ind.industry_name}
                             className={cn(
                               "w-full text-left px-4 py-2.5 text-[14px] font-[family-name:var(--font-poppins)] font-normal transition-colors flex items-center justify-between cursor-pointer",
-                              formData.industry === ind.industry_name 
+                              formData.industry === ind.industry_name
                                 ? "bg-primary/10 text-primary font-medium"
                                 : "text-foreground hover:bg-secondary"
                             )}

@@ -42,8 +42,11 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [modalState, setModalState] = useState<ModalState>("edit");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [imgNaturalWidth, setImgNaturalWidth] = useState(0);
+  const [imgNaturalHeight, setImgNaturalHeight] = useState(0);
 
   const lastPointer = useRef({ x: 0, y: 0 });
+  const dragStartPos = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -65,6 +68,18 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     }
   }, [isModalOpen]);
 
+  // Reliably get natural dimensions whenever displayImage changes
+  useEffect(() => {
+    if (displayImage) {
+      const img = new Image();
+      img.onload = () => {
+        setImgNaturalWidth(img.naturalWidth);
+        setImgNaturalHeight(img.naturalHeight);
+      };
+      img.src = displayImage;
+    }
+  }, [displayImage]);
+
   const resetTransforms = () => {
     setZoom(0);
     setRotation(0);
@@ -81,23 +96,43 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     if (!isDraggingImage) return;
 
     const handleMove = (clientX: number, clientY: number) => {
-      const dx = clientX - lastPointer.current.x;
-      const dy = clientY - lastPointer.current.y;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+      const totalDx = clientX - dragStartPos.current.x;
+      const totalDy = clientY - dragStartPos.current.y;
+      if (Math.abs(totalDx) > 3 || Math.abs(totalDy) > 3) {
         hasMoved.current = true;
       }
+      
+      const dx = clientX - lastPointer.current.x;
+      const dy = clientY - lastPointer.current.y;
       const zoomScale = 1 + (zoom / 100);
       let containerWidth = 800;
-      let containerHeight = 200;
+      let containerHeight = 150;
       if (containerRef.current) {
         containerWidth = containerRef.current.offsetWidth;
         containerHeight = containerRef.current.offsetHeight;
       }
-      const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
-      const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+      
+      let scaledWidth = containerWidth;
+      let scaledHeight = containerHeight;
+      if (imgNaturalWidth && imgNaturalHeight) {
+        const containerAspect = containerWidth / containerHeight;
+        const imgAspect = imgNaturalWidth / imgNaturalHeight;
+        if (imgAspect > containerAspect) {
+          scaledHeight = containerHeight;
+          scaledWidth = containerHeight * imgAspect;
+        } else {
+          scaledWidth = containerWidth;
+          scaledHeight = containerWidth / imgAspect;
+        }
+      }
+
+      const maxTranslateX = (scaledWidth * zoomScale - containerWidth) / 2;
+      const maxTranslateY = (scaledHeight * zoomScale - containerHeight) / 2;
 
       setPositionX(prev => Math.min(Math.max(prev + dx, -maxTranslateX), maxTranslateX));
       setPositionY(prev => Math.min(Math.max(prev + dy, -maxTranslateY), maxTranslateY));
+      
+      lastPointer.current = { x: clientX, y: clientY };
     };
 
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
@@ -123,10 +158,11 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchend", onEnd);
     };
-  }, [isDraggingImage]);
+  }, [isDraggingImage, zoom, imgNaturalWidth, imgNaturalHeight]);
 
   const handlePointerDown = (clientX: number, clientY: number) => {
     lastPointer.current = { x: clientX, y: clientY };
+    dragStartPos.current = { x: clientX, y: clientY };
     hasMoved.current = false;
     setIsDraggingImage(true);
   };
@@ -135,17 +171,32 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   useEffect(() => {
     const zoomScale = 1 + (zoom / 100);
     let containerWidth = 800;
-    let containerHeight = 200;
+    let containerHeight = 150;
     if (containerRef.current) {
       containerWidth = containerRef.current.offsetWidth;
       containerHeight = containerRef.current.offsetHeight;
     }
-    const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
-    const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+
+    let scaledWidth = containerWidth;
+    let scaledHeight = containerHeight;
+    if (imgNaturalWidth && imgNaturalHeight) {
+      const containerAspect = containerWidth / containerHeight;
+      const imgAspect = imgNaturalWidth / imgNaturalHeight;
+      if (imgAspect > containerAspect) {
+        scaledHeight = containerHeight;
+        scaledWidth = containerHeight * imgAspect;
+      } else {
+        scaledWidth = containerWidth;
+        scaledHeight = containerWidth / imgAspect;
+      }
+    }
+
+    const maxTranslateX = (scaledWidth * zoomScale - containerWidth) / 2;
+    const maxTranslateY = (scaledHeight * zoomScale - containerHeight) / 2;
 
     setPositionX((prev) => Math.min(Math.max(prev, -maxTranslateX), maxTranslateX));
     setPositionY((prev) => Math.min(Math.max(prev, -maxTranslateY), maxTranslateY));
-  }, [zoom]);
+  }, [zoom, imgNaturalWidth, imgNaturalHeight]);
 
   const handleCancelPreview = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -172,6 +223,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     setSelectedFile(file);
     resetTransforms();
     setModalState("edit");
+    setIsModalOpen(true);
   }, [toast]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,27 +317,29 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       ctx.drawImage(img, -drawWidth / 2 + canvasPosX, -drawHeight / 2 + canvasPosY, drawWidth, drawHeight);
       ctx.restore();
 
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          const file = new File([blob], "cover_photo.jpg", { type: "image/jpeg" });
-          const formData = new FormData();
-          formData.append("cover", file);
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/jpeg", 0.9);
+      });
 
-          let response;
-          if (onUpload) {
-            response = await onUpload(formData);
-          } else {
-            response = await uploadCoverPhoto(formData);
-          }
+      if (blob) {
+        const file = new File([blob], "cover_photo.jpg", { type: "image/jpeg" });
+        const formData = new FormData();
+        formData.append("cover", file);
 
-          setCoverImage(response.coverUrl || (response as any).url);
-          queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-          toast({ title: "Success", description: "Cover photo updated successfully." });
-
-          handleCancelPreview();
-          setIsModalOpen(false);
+        let response;
+        if (onUpload) {
+          response = await onUpload(formData);
+        } else {
+          response = await uploadCoverPhoto(formData);
         }
-      }, "image/jpeg", 0.9);
+
+        setCoverImage(response.coverUrl || (response as any).url);
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        toast({ title: "Success", description: "Cover photo updated successfully." });
+
+        handleCancelPreview();
+        setIsModalOpen(false);
+      }
 
     } catch (error) {
       console.error("Upload error:", error);
@@ -341,7 +395,13 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
         className="p-0 shadow-none max-w-[800px] sm:rounded-[24px] outline-none [&>button]:hidden"
         portalContainer={portalContainerId ? document.getElementById(portalContainerId) : null}
       >
-        <div className="relative bg-card rounded-[24px] p-4 w-[800px] max-w-full flex flex-col outline-none">
+        <div 
+          className="relative bg-card rounded-[24px] p-4 w-[800px] max-w-full flex flex-col outline-none"
+          onDragEnter={handleDragOver}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           {/* Top Close Row */}
           <div className="flex justify-end w-full">
             <button
@@ -436,9 +496,30 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 <img
                   src={displayImage || "/assets/coverphoto.jpg"}
                   alt="Current Cover"
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  className="absolute max-w-none pointer-events-none z-[1]"
                   draggable={false}
-                  style={{ transform: `translate(${positionX}px, ${positionY}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
+                  onLoad={(e) => {
+                    setImgNaturalWidth(e.currentTarget.naturalWidth);
+                    setImgNaturalHeight(e.currentTarget.naturalHeight);
+                  }}
+                  style={{
+                    ...(imgNaturalWidth && imgNaturalHeight ? (() => {
+                      const containerAspect = 16 / 3;
+                      const imgAspect = imgNaturalWidth / imgNaturalHeight;
+                      if (imgAspect > containerAspect) {
+                        return { height: '100%', width: `${100 * (imgAspect / containerAspect)}%` };
+                      } else {
+                        return { width: '100%', height: `${100 * (containerAspect / imgAspect)}%` };
+                      }
+                    })() : { 
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover' 
+                    }),
+                    top: '50%',
+                    left: '50%',
+                    transform: `translate(calc(-50% + ${positionX}px), calc(-50% + ${positionY}px)) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`
+                  }}
                 />
 
                 {/* ─── Hover Overlay (hidden while dragging) ─── */}
@@ -549,7 +630,14 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
 
   return (
     <>
-      <div className="relative w-full h-[160px] bg-muted rounded-[24px] group overflow-hidden">
+      <div 
+        className="relative w-full h-[160px] bg-muted rounded-[24px] group overflow-hidden cursor-pointer"
+        onDragEnter={handleDragOver}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => !isModalOpen && openFilePicker()}
+      >
         {coverImage ? (
           <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
