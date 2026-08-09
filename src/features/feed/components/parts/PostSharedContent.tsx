@@ -88,10 +88,10 @@ export const PostSharedContent = ({
               {/* Header */}
               <div className="flex flex-row items-center gap-[8px] w-full">
                 <div className="flex flex-row items-center gap-[8px]">
-                  <div className="relative w-[32px] h-[32px] rounded-full overflow-hidden flex-shrink-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs font-['Poppins'] select-none">
+                  <div className="relative w-[32px] h-[32px] min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] shrink-0 flex-shrink-0 aspect-square rounded-full overflow-hidden bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs font-['Poppins'] select-none">
                     <span>{(shared_post.author || 'U').charAt(0).toUpperCase()}</span>
                     {shared_post.authorAvatar && shared_post.authorAvatar !== '/assets/pngegg.png' ? (
-                      <img src={shared_post.authorAvatar} alt={shared_post.author} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      <img src={shared_post.authorAvatar} alt={shared_post.author} className="absolute inset-0 w-full h-full object-cover rounded-full aspect-square z-10 block" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : null}
                   </div>
                   <div className="flex flex-col items-start min-w-0 overflow-hidden">

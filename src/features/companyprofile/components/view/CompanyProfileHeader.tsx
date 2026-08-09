@@ -355,12 +355,10 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             {/* Following */}
             <div 
               onClick={() => {
-                if (data.showFollowingList !== false) {
-                  setStatsModalTab("following");
-                  setIsStatsModalOpen(true);
-                }
+                setStatsModalTab("following");
+                setIsStatsModalOpen(true);
               }}
-              className={`flex flex-col gap-[8px] w-[65.3px] transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px] ${data.showFollowingList !== false ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+              className="flex flex-col gap-[8px] w-[65.3px] transition-opacity cursor-pointer hover:opacity-80 max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
             >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.following || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Following</span>
@@ -369,12 +367,10 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             {/* Followers */}
             <div 
               onClick={() => {
-                if (data.showFollowersList !== false) {
-                  setStatsModalTab("followers");
-                  setIsStatsModalOpen(true);
-                }
+                setStatsModalTab("followers");
+                setIsStatsModalOpen(true);
               }}
-              className={`flex flex-col gap-[8px] w-[65.3px] transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px] ${data.showFollowersList !== false ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+              className="flex flex-col gap-[8px] w-[65.3px] transition-opacity cursor-pointer hover:opacity-80 max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
             >
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.followers || 0)}</span>
               <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Followers</span>
@@ -481,6 +477,8 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
           initialTab={statsModalTab}
           orgId={orgId}
           isOwnProfile={canManageCompany}
+          showFollowersList={data.showFollowersList}
+          showFollowingList={data.showFollowingList}
         />
       )}
 

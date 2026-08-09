@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Experience } from "@/types/entities";
-import { X } from "lucide-react";
+import { X, Building2 } from "lucide-react";
 
 interface RoleSelectionPopupProps {
   roles: Experience[];
@@ -16,6 +16,29 @@ const formatDate = (dateStr: string | null | undefined) => {
     year: "numeric",
   });
 };
+
+function CompanyAvatar({ logoUrl, companyName }: { logoUrl?: string | null; companyName: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (logoUrl && !imgError) {
+    return (
+      <div className="flex flex-row justify-center items-center w-[48px] h-[48px] rounded-[12px] overflow-hidden flex-none bg-white border border-[#E5E7EB] mt-1">
+        <img
+          src={logoUrl}
+          alt={companyName}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-row justify-center items-center w-[48px] h-[48px] rounded-[12px] overflow-hidden flex-none bg-[#EEF2FF] mt-1">
+      <Building2 className="w-6 h-6 text-[#6366F1]" strokeWidth={1.5} />
+    </div>
+  );
+}
 
 export function RoleSelectionPopup({ roles, onSelect, onClose, logoUrl }: RoleSelectionPopupProps) {
   return (
@@ -49,17 +72,7 @@ export function RoleSelectionPopup({ roles, onSelect, onClose, logoUrl }: RoleSe
               className="flex items-start gap-2 px-4 py-3 w-full min-h-[64px] h-auto rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors border border-transparent"
             >
               {/* Logo Section */}
-              <div className="flex flex-row justify-center items-center w-[48px] h-[48px] rounded-[12px] overflow-hidden flex-none bg-card border border-border mt-1">
-                <img
-                  src={logoUrl || "/assets/company-placeholder.png"}
-                  alt={role.company_name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
-                  }}
-                />
-              </div>
+              <CompanyAvatar logoUrl={logoUrl} companyName={role.company_name} />
 
               {/* Text Info */}
               <div className="flex flex-row justify-between items-start flex-1 ml-2 min-w-0">

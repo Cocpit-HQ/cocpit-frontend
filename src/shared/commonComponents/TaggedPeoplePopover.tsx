@@ -72,20 +72,25 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
                   className="self-stretch h-12 flex justify-between items-center gap-4 px-2 rounded-xl hover:bg-slate-50 dark:hover:bg-muted transition-colors w-full cursor-pointer group"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const slug = tag.account_name || tag.id || tag.user_id;
+                    const isCompany = tag.type === 'company' || tag.type === 'COMPANY' || tag.entity_type === 'COMPANY';
+                    const slug = tag.account_name || tag.slug || tag.id || tag.user_id;
                     if (slug) {
-                      router.push(`/profile/${slug}`);
+                      if (isCompany) {
+                        router.push(`/company-profile/${slug}`);
+                      } else {
+                        router.push(`/profile/${slug}`);
+                      }
                       setIsOpen(false);
                     }
                   }}
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-8 h-8 relative overflow-hidden flex-shrink-0">
-                      {tag.avatar_url || tag.avatar ? (
-                        <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover rounded-full" />
+                      {tag.avatar_url || tag.avatar || tag.logo_url ? (
+                        <img src={tag.avatar_url || tag.avatar || tag.logo_url} alt="" className="w-full h-full object-cover rounded-full" />
                       ) : (
                         <div className="w-8 h-8 rounded-full border-[1.5px] border-indigo-500 bg-indigo-50/5 flex items-center justify-center text-indigo-500">
-                          <Icon icon="ph:user-light" className="w-5 h-5" />
+                          <Icon icon={(tag.type === 'company' || tag.type === 'COMPANY') ? "lucide:building-2" : "ph:user-light"} className="w-5 h-5" />
                         </div>
                       )}
                     </div>

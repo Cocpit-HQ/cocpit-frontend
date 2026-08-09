@@ -177,12 +177,12 @@ export const PostHeader = ({
         className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden cursor-pointer group"
       >
         {/* Avatar (Ellipse 10) */}
-        <div className="w-10 h-10 min-w-10 min-h-10 rounded-full overflow-hidden flex-shrink-0 bg-white">
+        <div className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] shrink-0 flex-shrink-0 aspect-square rounded-full overflow-hidden bg-white">
           {hasValidAvatar ? (
             <img
               src={authorAvatar}
               alt={author}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-full aspect-square block"
               onError={() => setImgError(true)}
             />
           ) : (
@@ -273,7 +273,7 @@ export const PostHeader = ({
                             }
                           </span>
                           {hasValidAvatar ? (
-                            <img src={authorAvatar} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                            <img src={authorAvatar} alt={author} className="w-6 h-6 min-w-[24px] min-h-[24px] rounded-full object-cover aspect-square flex-shrink-0" />
                           ) : (
                             <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] font-semibold text-xs flex items-center justify-center font-[family-name:var(--font-poppins)] select-none flex-shrink-0">
                               {initial}

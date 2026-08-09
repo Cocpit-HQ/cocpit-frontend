@@ -113,13 +113,21 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
           }
         );
       } else if (step === 3) {
+        if (verifyEmailMutation.isSuccess) {
+          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+          queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
+          toast.success('Email updated successfully');
+          handleClose();
+          return;
+        }
         verifyEmailMutation.mutate(
           { otp: newEmailCode },
           {
             onSuccess: (data) => {
               queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+              queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
               toast.success(data.message || 'Email updated successfully');
-              setTimeout(() => handleClose(), 1000);
+              handleClose();
             },
             onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify new email'))
           }
@@ -137,13 +145,19 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
           }
         );
       } else if (step === 2) {
+        if (verifyRecoveryEmailMutation.isSuccess) {
+          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+          toast.success('Recovery email updated successfully');
+          handleClose();
+          return;
+        }
         verifyRecoveryEmailMutation.mutate(
           { otp: newEmailCode },
           {
             onSuccess: (data) => {
               queryClient.invalidateQueries({ queryKey: ['userAccount'] });
               toast.success(data.message || 'Recovery email updated successfully');
-              setTimeout(() => handleClose(), 1000);
+              handleClose();
             },
             onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify recovery email'))
           }
@@ -329,10 +343,8 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                     verifyEmailMutation.mutate(
                       { otp: val },
                       {
-                        onSuccess: (data) => {
-                          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-                          toast.success(data.message || 'Email updated successfully');
-                          setTimeout(() => handleClose(), 1000);
+                        onSuccess: () => {
+                          toast.success('Code verified');
                         },
                         onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify new email'))
                       }
@@ -341,10 +353,8 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                     verifyRecoveryEmailMutation.mutate(
                       { otp: val },
                       {
-                        onSuccess: (data) => {
-                          queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-                          toast.success(data.message || 'Recovery email updated successfully');
-                          setTimeout(() => handleClose(), 1000);
+                        onSuccess: () => {
+                          toast.success('Code verified');
                         },
                         onError: (err: any) => setErrorMsg(getErrorMessage(err, 'Failed to verify recovery email'))
                       }
@@ -366,6 +376,9 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
               </div>
             )}
           </div>
+          {isNewEmailSuccess && !errorMsg && (
+            <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully.</p>
+          )}
           <div className="w-full text-right mt-1">
             <button 
               onClick={handleResend}
@@ -384,13 +397,13 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
 
   const getIsDisabled = () => {
     if (isPrimary) {
-      if (step === 1) return currentEmailCode.length !== 6 || verifyCurrentEmailConfirm.isPending;
+      if (step === 1) return currentEmailCode.length !== 6 || verifyCurrentEmailConfirm.isPending || !verifyCurrentEmailConfirm.isSuccess;
       if (step === 2) return !newEmail || !validateEmail(newEmail) || submitNewEmail.isPending;
-      if (step === 3) return newEmailCode.length !== 6 || verifyEmailMutation.isPending;
+      if (step === 3) return newEmailCode.length !== 6 || verifyEmailMutation.isPending || !verifyEmailMutation.isSuccess;
     }
     if (isRecovery) {
       if (step === 1) return !newEmail || !validateEmail(newEmail) || (newEmail.trim().toLowerCase() === currentEmail.trim().toLowerCase()) || submitRecoveryEmail.isPending;
-      if (step === 2) return newEmailCode.length !== 6 || verifyRecoveryEmailMutation.isPending;
+      if (step === 2) return newEmailCode.length !== 6 || verifyRecoveryEmailMutation.isPending || !verifyRecoveryEmailMutation.isSuccess;
     }
     return false;
   };

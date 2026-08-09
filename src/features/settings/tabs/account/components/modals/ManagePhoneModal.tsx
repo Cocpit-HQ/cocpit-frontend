@@ -82,17 +82,17 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
       );
     } else if (step === 2) {
       if (confirmPhoneMutation.isSuccess) {
+        queryClient.invalidateQueries({ queryKey: ['userAccount'] });
+        queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
+        toast.success('Phone number updated successfully');
         handleClose();
         return;
       }
       confirmPhoneMutation.mutate(
         { otp: code },
         {
-          onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-            queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
-            toast.success(data.message || 'Phone number updated successfully');
-            handleClose();
+          onSuccess: () => {
+            toast.success('Code verified');
           },
           onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
         }
@@ -189,10 +189,8 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
                   confirmPhoneMutation.mutate(
                     { otp: val },
                     {
-                      onSuccess: (data) => {
-                        queryClient.invalidateQueries({ queryKey: ['userAccount'] });
-                        queryClient.invalidateQueries({ queryKey: ['companyAccountSettings'] });
-                        toast.success(data.message || 'Phone number verified successfully');
+                      onSuccess: () => {
+                        toast.success('Code verified');
                       },
                       onError: (err: any) => setErrorMsg(err?.response?.data?.message || 'Invalid code')
                     }
@@ -213,6 +211,9 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
               </div>
             )}
           </div>
+          {confirmPhoneMutation.isSuccess && !errorMsg && (
+            <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully.</p>
+          )}
           <div className="w-full text-right mt-1">
             <button 
               onClick={handleResend}
@@ -232,7 +233,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
   const getIsDisabled = () => {
     if (isDelete) return deletePhoneMutation.isPending;
     if (step === 1) return !phone || setPhoneMutation.isPending;
-    if (step === 2) return !isValidCode || confirmPhoneMutation.isPending;
+    if (step === 2) return !isValidCode || confirmPhoneMutation.isPending || !confirmPhoneMutation.isSuccess;
     return false;
   };
 

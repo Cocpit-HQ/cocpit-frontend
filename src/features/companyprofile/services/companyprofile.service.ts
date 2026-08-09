@@ -136,9 +136,9 @@ export const companyProfileService = {
 
   async getOrganizationFollowing(orgId: string, params?: { search?: string }): Promise<any> {
     const res = await api.get(`/organizations/${orgId}/following`, { params });
-    const rawList = res.data?.data || res.data || [];
-    // Normalize both user and company items into a consistent shape
-    return rawList.map((item: any) => {
+    const isRestricted = !!(res.data?.is_restricted || res.data?.restricted);
+    const rawList = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+    const items = rawList.map((item: any) => {
       const isCompany = item.type === 'company' || item.entity_type === 'COMPANY' || item.entity_type === 'INSTITUTION' || !!item.org_id;
       return {
         ...item,
@@ -149,13 +149,14 @@ export const companyProfileService = {
         isFollowedBack: item.is_followed_back || false,
       };
     });
+    return Object.assign(items, { is_restricted: isRestricted });
   },
 
   async getOrganizationFollowers(orgId: string, params?: { search?: string }): Promise<any> {
     const res = await api.get(`/organizations/${orgId}/followers`, { params });
+    const isRestricted = !!(res.data?.is_restricted || res.data?.restricted);
     const rawList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-    // Normalize both user and company items into a consistent shape
-    return rawList.map((item: any) => {
+    const items = rawList.map((item: any) => {
       const isCompany = item.type === 'company' || item.entity_type === 'COMPANY' || item.entity_type === 'INSTITUTION' || !!item.org_id;
       return {
         ...item,
@@ -166,6 +167,7 @@ export const companyProfileService = {
         isFollowedBack: item.is_followed_back || false,
       };
     });
+    return Object.assign(items, { is_restricted: isRestricted });
   },
 
   async removeCompanyFollower(orgId: string, followerId: string): Promise<any> {

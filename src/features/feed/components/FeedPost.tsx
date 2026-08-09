@@ -361,7 +361,7 @@ export const FeedPost = (props: FeedPostProps) => {
     <div
       ref={feedCardRef}
       onClick={handleCardClick}
-      className={`feed-card-shell flex w-full max-w-[560px] max-md:!max-w-full flex-col gap-[8px] overflow-hidden h-full ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      className={`feed-card-shell rounded-tl-none flex w-full max-w-[560px] max-md:!max-w-full flex-col gap-[8px] overflow-hidden h-full ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
       style={videoSrc && !props.isFullContent ? { borderRadius: 0 } : undefined}
     >
       {isRepostWithoutThoughts ? (

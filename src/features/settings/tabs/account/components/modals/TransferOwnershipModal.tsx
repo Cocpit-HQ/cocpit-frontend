@@ -152,10 +152,13 @@ export function TransferOwnershipModal({
         <div className="flex flex-col items-center w-[360px] mt-2 h-full">
           
           {/* Header */}
-          <div className="flex flex-col items-center gap-2 mb-4 w-[328px]">
-            <h2 className="text-[18px] font-medium text-black leading-[26px] text-center m-0">Transfer company ownership</h2>
-            <p className="text-[12px] font-normal text-[#6B7280] leading-[16px] text-center m-0">
-              Select an active member as the new owner for {companyName}
+          <div className="flex flex-col items-center gap-1 mb-4 w-[328px] text-center">
+            <h2 className="text-black text-lg font-medium font-['Poppins'] leading-6 text-center m-0">Transfer company ownership</h2>
+            <p className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-center m-0">
+              Select a new owner for {companyName}.
+            </p>
+            <p className="text-gray-400 text-[11px] font-normal font-['Poppins'] leading-4 text-center m-0">
+              Note: Only team members can receive ownership
             </p>
           </div>
 
@@ -163,12 +166,12 @@ export function TransferOwnershipModal({
           <div className="relative w-full h-[40px] mb-4">
             <input
               type="text"
-              placeholder="Search active members"
+              placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-full rounded-[24px] border border-[#6B7280] pl-4 pr-10 text-[14px] text-[#111827] font-poppins focus:outline-none focus:border-[#6366F1]"
+              className="w-full h-full rounded-[24px] border border-[#9CA3AF] pl-4 pr-10 text-[14px] text-[#111827] font-poppins focus:outline-none focus:border-[#1A73E8]"
             />
-            <Search className="absolute right-4 top-[10px] w-[18px] h-[18px] text-[#6B7280]" />
+            <Search className="absolute right-4 top-[11px] w-[18px] h-[18px] text-[#9CA3AF]" />
           </div>
 
           {/* Error Message banner */}
@@ -209,7 +212,7 @@ export function TransferOwnershipModal({
                         {user.avatar ? (
                           <Image src={user.avatar} alt={user.full_name} fill className="object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-semibold text-xs">
+                          <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-semibold text-xs">
                             {user.full_name?.charAt(0) || 'U'}
                           </div>
                         )}
@@ -221,10 +224,10 @@ export function TransferOwnershipModal({
                     </div>
                     <div className="flex items-center justify-center p-1 cursor-pointer">
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        selectedUserId === user.user_id ? 'border-[#6366F1]' : 'border-[#64748B]'
+                        selectedUserId === user.user_id ? 'border-[#1A73E8]' : 'border-[#9CA3AF]'
                       }`}>
                         {selectedUserId === user.user_id && (
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#6366F1]" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#1A73E8]" />
                         )}
                       </div>
                     </div>
@@ -233,7 +236,7 @@ export function TransferOwnershipModal({
 
                 {/* Loading indicator for pagination */}
                 {loadingMore && (
-                  <div className="flex items-center justify-center py-2 text-xs text-indigo-600">
+                  <div className="flex items-center justify-center py-2 text-xs text-blue-600">
                     <Loader2 className="w-4 h-4 animate-spin mr-1" /> Loading more...
                   </div>
                 )}
@@ -242,26 +245,24 @@ export function TransferOwnershipModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-row w-full gap-4 mt-auto pt-2">
+          <div className="inline-flex justify-center items-center gap-4 w-full mt-auto pt-2 mb-2">
             <button 
               onClick={() => onBack ? onBack() : onClose()} 
               disabled={submitting}
-              className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-[#6366F1] bg-white transition-colors hover:bg-indigo-50"
+              className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-blue-600 flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-50 transition-colors"
             >
-              <span className="text-[14px] font-normal text-[#6366F1] leading-[20px] text-center">Back</span>
+              <span className="text-center text-blue-600 text-sm font-normal leading-5">Cancel</span>
             </button>
             
             <button 
               onClick={handleTransfer}
               disabled={!selectedUserId || submitting}
-              className={`flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-white transition-colors ${
-                selectedUserId && !submitting ? 'bg-[#6366F1] hover:opacity-90' : 'bg-[#6366F1]/50 cursor-not-allowed'
-              }`}
+              className="w-36 h-10 px-4 py-2 bg-[#1A73E8] rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {submitting ? (
                 <Loader2 className="w-4 h-4 text-white animate-spin mr-1" />
               ) : null}
-              <span className="text-[14px] font-normal text-white leading-[20px] text-center">
+              <span className="text-center text-white text-sm font-normal leading-5">
                 {submitting ? 'Transferring...' : 'Transfer'}
               </span>
             </button>

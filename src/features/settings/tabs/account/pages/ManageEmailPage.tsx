@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useAccountSettings, useDeleteRecoveryEmail } from '../../../hooks/useAccountSettings';
+import { useCompanyAccountSettings } from '../../../hooks/useCompanyAccountSettings';
 
 export function ManageEmailPage() {
   const pathname = usePathname() || '/settings/account-email';
@@ -21,11 +22,12 @@ export function ManageEmailPage() {
   
   const queryClient = useQueryClient();
   const { data: accountData } = useAccountSettings();
+  const { data: companyAccountData } = useCompanyAccountSettings();
   const deleteRecoveryEmailMutation = useDeleteRecoveryEmail();
   const { isCompany } = useActiveProfile();
   const isOrg = isCompany;
 
-  const userEmail = accountData?.primaryEmail || "";
+  const userEmail = isOrg ? (companyAccountData?.email || "") : (accountData?.primaryEmail || "");
   const recoveryEmail = accountData?.recoveryEmail || "";
   const hasRecovery = !!accountData?.recoveryEmail && accountData.recoveryEmail.trim() !== "";
 

@@ -136,9 +136,9 @@ export function CompanyAccountSettingsPage() {
       <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full">
         <div className="flex flex-row justify-between items-center w-full">
           <div className="flex flex-col justify-center items-start max-w-[435px]">
-            <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Deactivate {entityLabel.toLowerCase()} account</h3>
+            <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Deactivate {entityLabel === 'INSTITUTION' ? 'institution page' : 'business page'}</h3>
             <p className="text-[14px] text-[#6B7280] dark:text-company-secondary leading-[20px]">
-              Temporarily hide your {entityLabel.toLowerCase()} account. You can reactivate it at any time.
+              Temporarily hide your {entityLabel === 'INSTITUTION' ? 'institution page' : 'business page'}. You can reactivate it at any time.
             </p>
           </div>
           <div className="group relative flex items-center">
@@ -171,7 +171,7 @@ export function CompanyAccountSettingsPage() {
           <div className="flex flex-col justify-center items-start max-w-[435px]">
             <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Transfer ownership</h3>
             <p className="text-[14px] text-[#6B7280] dark:text-company-secondary leading-[20px]">
-              Transfer ownership of this {entityLabel.toLowerCase()} page to another administrator.
+              Transfer ownership of this {entityLabel === 'INSTITUTION' ? 'institution page' : 'business page'} to another administrator.
             </p>
           </div>
           <div className="group relative flex items-center">
@@ -202,9 +202,9 @@ export function CompanyAccountSettingsPage() {
       <div className="flex flex-col justify-center items-center p-6 gap-2.5 w-full">
         <div className="flex flex-row justify-between items-center w-full">
           <div className="flex flex-col justify-center items-start max-w-[435px]">
-            <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Delete {entityLabel.toLowerCase()} account</h3>
+            <h3 className="text-[16px] text-black dark:text-company-text leading-[24px]">Delete {entityLabel === 'INSTITUTION' ? 'institution page' : 'business page'}</h3>
             <p className="text-[14px] text-[#6B7280] dark:text-company-secondary leading-[20px]">
-              Permanently delete your {entityLabel.toLowerCase()} page and all associated data.
+              Permanently delete your {entityLabel === 'INSTITUTION' ? 'institution page' : 'business page'} and all associated data.
             </p>
           </div>
           <div className="group relative flex items-center">

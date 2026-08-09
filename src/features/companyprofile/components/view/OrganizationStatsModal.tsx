@@ -19,6 +19,8 @@ interface OrganizationStatsModalProps {
     initialTab?: "followers" | "following" | "subscribers";
     orgId: string;
     isOwnProfile: boolean;
+    showFollowersList?: boolean;
+    showFollowingList?: boolean;
 }
 
 export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
@@ -27,6 +29,8 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
     initialTab = "followers",
     orgId,
     isOwnProfile,
+    showFollowersList = true,
+    showFollowingList = true,
 }) => {
     const [activeTab, setActiveTab] = useState(initialTab);
     const [search, setSearch] = useState("");
@@ -170,6 +174,23 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
     const isPending = unfollowMutation.isPending || removeFollowerMutation.isPending || removeSubscriberMutation.isPending;
 
     const renderList = (data: any[], isLoading: boolean, emptyMessage: string, type: "followers" | "following" | "subscribers") => {
+        const isRestricted = !isOwnProfile && (
+            (type === "followers" && (showFollowersList === false || (data as any)?.is_restricted)) ||
+            (type === "following" && (showFollowingList === false || (data as any)?.is_restricted))
+        );
+
+        if (isRestricted) {
+            return (
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                    <p className="text-[14px] text-zinc-500 font-normal leading-[20px]">
+                        {type === "followers"
+                            ? "The business page owner has restricted access to their followers."
+                            : "The business page owner has restricted access to their following."}
+                    </p>
+                </div>
+            );
+        }
+
         if (isLoading) {
             return (
                 <div className="space-y-4 mt-4">

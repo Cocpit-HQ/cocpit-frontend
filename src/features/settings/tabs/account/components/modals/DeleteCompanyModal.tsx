@@ -34,7 +34,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
 
   if (!isOpen || !activeProfile) return null;
 
-  const entityLabel = activeProfile.entityType === 'INSTITUTION' ? 'institution' : 'company';
+  const entityLabel = activeProfile.entityType === 'INSTITUTION' ? 'institution' : 'business';
 
   const handleClose = () => {
     onClose();
@@ -79,7 +79,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
     try {
       await companyService.verifyAndDeleteCompany(activeProfile.id, code);
       setIsSuccess(true);
-      toast.success(`Your ${entityLabel} has been scheduled for deletion`);
+      toast.success(`Your ${entityLabel} page has been scheduled for deletion`);
       setTimeout(() => {
         handleClose();
         switchProfile("USER", "");
@@ -111,7 +111,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
-      <div className="relative flex flex-col items-center bg-white rounded-[24px] p-6 w-[450px] max-w-full shadow-lg">
+      <div className="relative flex flex-col items-center bg-white rounded-3xl p-4 w-[450px] max-w-full shadow-lg">
         
         {/* Close Button */}
         <button 
@@ -124,38 +124,38 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
         {/* STEP 1: Confirmation & Request OTP */}
         {step === 1 && (
           <div className="flex flex-col items-center gap-4 w-full mt-2">
-            <div className="flex flex-col items-center gap-2 text-center w-full">
-              <h2 className="text-[18px] font-medium text-black leading-snug">
-                Delete your Cocpit {entityLabel}
+            <div className="flex flex-col items-center gap-2 text-center w-full px-2">
+              <h2 className="text-black text-lg font-medium font-['Poppins'] leading-6 text-center m-0">
+                Delete your {entityLabel} page?
               </h2>
-              <p className="text-[14px] font-normal text-[#6B7280] leading-[20px] px-2">
-                Your {entityLabel} page will be scheduled for deletion (40-day recovery window). All associated data will be removed. A verification code will be sent to the registered email address.
+              <p className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5 text-center m-0 px-2">
+                Your account will be scheduled for deletion. You can reactivate it within 40 days from the “Organization” tab under your account Settings. After 40 days, your account and all associated data will be permanently deleted
               </p>
             </div>
 
             {errorMsg && (
-              <p className="text-[13px] text-[#FF6B6B] text-center w-full mt-1">{errorMsg}</p>
+              <p className="text-sm text-red-500 text-center w-full mt-1">{errorMsg}</p>
             )}
 
-            <div className="flex flex-row justify-between items-center gap-4 w-full h-[40px] mt-4">
+            <div className="inline-flex justify-center items-center gap-4 w-full mt-4 mb-2">
               <button 
                 onClick={handleClose} 
-                className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-normal transition-colors hover:bg-indigo-50"
+                className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-blue-600 flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-50 transition-colors"
               >
-                Cancel
+                <span className="text-center text-blue-600 text-sm font-normal leading-5">Cancel</span>
               </button>
               
               <button 
                 onClick={handleSendOTP}
                 disabled={isLoading}
-                className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] bg-[#FF6B6B] text-white text-[14px] font-normal transition-colors hover:opacity-90 disabled:opacity-50"
+                className="w-36 h-10 px-4 py-2 bg-red-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50"
               >
                 {isLoading ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 text-white text-sm font-normal">
                     <Loader2 className="w-4 h-4 animate-spin" /> Sending...
                   </span>
                 ) : (
-                  "Send Code"
+                  <span className="text-center text-white text-sm font-normal leading-5">Send Code</span>
                 )}
               </button>
             </div>
@@ -233,25 +233,25 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
               <p className="text-[13px] text-[#FF6B6B] text-center w-full mt-1">{errorMsg}</p>
             )}
 
-            <div className="flex flex-row justify-between items-center gap-4 w-full h-[40px] mt-2">
+            <div className="inline-flex justify-center items-center gap-4 w-full mt-4 mb-2">
               <button 
                 onClick={handleClose} 
-                className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-normal transition-colors hover:bg-indigo-50"
+                className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-blue-600 flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-50 transition-colors"
               >
-                Cancel
+                <span className="text-center text-blue-600 text-sm font-normal leading-5">Cancel</span>
               </button>
 
               <button 
                 onClick={() => handleVerifyAndDelete()}
                 disabled={isLoading || otpCode.length !== 6}
-                className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] bg-[#FF6B6B] text-white text-[14px] font-normal transition-colors hover:opacity-90 disabled:opacity-50"
+                className="w-36 h-10 px-4 py-2 bg-red-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50"
               >
                 {isLoading ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 text-white text-sm font-normal">
                     <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
                   </span>
                 ) : (
-                  "Delete"
+                  <span className="text-center text-white text-sm font-normal leading-5">Delete</span>
                 )}
               </button>
             </div>

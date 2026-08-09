@@ -20,7 +20,7 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
 
   if (!isOpen || !activeProfile) return null;
 
-  const entityLabel = activeProfile.entityType === 'INSTITUTION' ? 'institution' : 'company';
+  const entityLabel = activeProfile.entityType === 'INSTITUTION' ? 'institution' : 'business';
   const isDeactivated = accountData?.isDeactivated;
 
   const handleAction = async () => {
@@ -49,7 +49,7 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
-      <div className="relative flex flex-col items-center bg-white rounded-[24px] p-4 w-[450px] max-w-full shadow-lg h-auto pb-2">
+      <div className="relative flex flex-col items-center bg-white rounded-3xl p-4 w-[450px] max-w-full shadow-lg h-auto">
         
         {/* Close Button */}
         <button 
@@ -60,36 +60,42 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
         </button>
 
         {/* Title & Description */}
-        <div className="flex flex-col items-center gap-2 mb-4 w-[418px] mt-2">
-          <h2 className="text-[18px] font-medium text-black leading-[26px] text-center m-0">
-            {isDeactivated ? 'Reactivate' : 'Deactivate'} {entityLabel} account
+        <div className="flex flex-col items-center gap-2 mb-4 w-full px-2 mt-2">
+          <h2 className="text-black text-lg font-medium font-['Poppins'] leading-6 text-center m-0">
+            {isDeactivated ? 'Reactivate' : 'Deactivate'} {entityLabel} page?
           </h2>
-          <p className="text-[14px] font-normal text-[#6B7280] leading-[20px] text-center m-0 px-2">
+          <p className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5 text-center m-0 px-2">
             {isDeactivated 
-              ? `Your ${entityLabel} account will become visible again to everyone.` 
-              : `Your ${entityLabel} account will be hidden from cocpit. You can reactivate it at any time.`}
+              ? `Your ${entityLabel} page will become visible again to everyone.` 
+              : `Your account will be deactivated. You can reactivate it anytime from the “Organization” tab under your account Settings. Your profile, followers, posts, and data will be retained and restored when you reactivate your account`}
           </p>
         </div>
 
-        {errorMsg && <p className="text-[14px] text-[#FF6B6B] mb-2">{errorMsg}</p>}
+        {errorMsg && <p className="text-sm text-red-500 mb-2">{errorMsg}</p>}
 
         {/* Action Buttons */}
-        <div className="flex flex-row justify-center items-center w-[418px] h-[40px] gap-4 mt-4 mb-4">
+        <div className="inline-flex justify-center items-center gap-4 w-full mt-4 mb-2">
           <button 
             onClick={onClose} 
-            className="flex items-center justify-center w-[140px] h-[40px] rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-normal leading-[20px] transition-colors hover:bg-indigo-50"
+            className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-blue-600 flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-50 transition-colors"
           >
-            Cancel
+            <span className="text-center text-blue-600 text-sm font-normal leading-5">Cancel</span>
           </button>
           
           <button 
             onClick={handleAction} 
             disabled={isLoading}  
-            className={`flex items-center justify-center w-[140px] h-[40px] rounded-[24px] text-[14px] font-normal leading-[20px] transition-colors ${
-              isLoading ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : (isDeactivated ? 'bg-[#1A73E8] text-white hover:opacity-90' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white')
+            className={`w-36 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 transition-colors ${
+              isLoading 
+                ? 'bg-red-300 text-white cursor-not-allowed outline-transparent' 
+                : (isDeactivated 
+                    ? 'bg-blue-600 text-white outline-white hover:bg-blue-700 cursor-pointer' 
+                    : 'bg-red-500 text-white outline-white hover:bg-red-600 cursor-pointer')
             }`}
           >
-            {isLoading ? (isDeactivated ? "Reactivating..." : "Deactivating...") : (isDeactivated ? "Reactivate" : "Deactivate")}
+            <span className="text-center text-white text-sm font-normal leading-5">
+              {isLoading ? (isDeactivated ? "Reactivating..." : "Deactivating...") : (isDeactivated ? "Reactivate" : "Deactivate")}
+            </span>
           </button>
         </div>
         
