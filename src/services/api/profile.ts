@@ -354,3 +354,20 @@ export const deleteProject = async (id: string): Promise<{ message: string; proj
   const response = await api.delete(`/profile/projects/${id}`);
   return response.data;
 };
+
+export const downloadProfileResumePdf = async (userId: string): Promise<{ blob: Blob; filename: string }> => {
+  const response = await api.get(`/profile/${userId}/download-resume`, {
+    responseType: 'blob'
+  });
+  
+  // Extract filename from Content-Disposition header if available
+  const contentDisposition = response.headers['content-disposition'];
+  let filename = 'Resume.pdf';
+  if (contentDisposition) {
+    const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+    if (filenameMatch && filenameMatch.length === 2)
+      filename = filenameMatch[1];
+  }
+
+  return { blob: response.data, filename };
+};

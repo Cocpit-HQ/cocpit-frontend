@@ -1400,6 +1400,7 @@ export default function ProfilePage() {
               coverImage={coverImage}
               setCoverImage={setCoverImage}
               profileStats={profileStats}
+              profileScore={profileScoreData?.score || 0}
               latestExperience={latestExperience}
               latestEducation={latestEducation}
               onAvatarClick={() => {
