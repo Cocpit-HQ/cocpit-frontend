@@ -8,6 +8,7 @@ import { useJobStore } from '@/store/job.store';
 import { CURRENCIES } from '../../utils/currency.utils';
 import { toast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import LocationAutocomplete from '@/components/ui/LocationAutocomplete';
 
 interface StepJobDetailsProps {
   jobId?: string | null;
@@ -591,17 +592,18 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </h3>
             <div className="flex flex-col gap-1.5">
               <label className="text-black dark:text-[#9CA3AF] text-sm font-normal font-['Poppins']">Location</label>
-              <div className={`w-full flex items-center justify-between bg-white border rounded-2xl px-4 py-3 shadow-sm ${
+              <div className={`w-full flex items-center justify-between bg-white border rounded-2xl px-4 py-1 shadow-sm ${
                 isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
               }`}>
-                <input
-                  type="text"
+                <LocationAutocomplete
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Mumbai, India"
-                  className="flex-1 bg-transparent text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] focus:outline-none"
+                  onSelect={(loc) => {
+                    if (typeof loc === 'string') setLocation(loc);
+                    else if (loc && 'name' in loc) setLocation(loc.name);
+                    else if (loc && 'formattedAddress' in loc) setLocation(loc.formattedAddress);
+                    else setLocation('');
+                  }}
                 />
-                <Icon icon="lucide:chevron-down" className="w-4 h-4 text-gray-400 flex-shrink-0" />
               </div>
               <button
                 type="button"
@@ -901,13 +903,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins']">Location</label>
-                <input
-                  type="text"
+                <LocationAutocomplete
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className={`w-full bg-white border rounded-2xl px-4 py-3 shadow-sm text-black text-sm font-normal font-['Poppins'] focus:outline-none ${
-                    isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340] dark:text-[#F9FAFB]'
-                  }`}
+                  onSelect={(loc) => {
+                    if (typeof loc === 'string') setLocation(loc);
+                    else if (loc && 'name' in loc) setLocation(loc.name);
+                    else if (loc && 'formattedAddress' in loc) setLocation(loc.formattedAddress);
+                    else setLocation('');
+                  }}
                 />
               </div>
 
@@ -1158,15 +1161,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           {/* Location */}
           <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Location</label>
-            <input
-              type="text"
+            <LocationAutocomplete
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 transition-colors shadow-sm ${
-                isCompanyMode 
-                  ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
-                  : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-              }`}
+              onSelect={(loc) => {
+                if (typeof loc === 'string') setLocation(loc);
+                else if (loc && 'name' in loc) setLocation(loc.name);
+                else if (loc && 'formattedAddress' in loc) setLocation(loc.formattedAddress);
+                else setLocation('');
+              }}
             />
           </div>
         </div>

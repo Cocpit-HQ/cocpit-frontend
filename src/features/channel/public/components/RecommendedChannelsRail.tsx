@@ -17,18 +17,16 @@ export default function RecommendedChannelsRail() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[16px]">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="w-full flex flex-col bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] overflow-hidden">
-              <Skeleton className="w-full h-[154px] rounded-none" />
-              <div className="flex flex-col p-4 gap-3">
-                <div className="flex items-center gap-[10px]">
-                  <Skeleton className="w-[48px] h-[48px] rounded-[12px] shrink-0" />
-                  <div className="flex flex-col gap-1.5 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
+            <div key={i} className="w-full flex flex-col items-center p-[16px] gap-[16px] bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] overflow-hidden" style={{ backdropFilter: 'blur(2px)' }}>
+              <div className="flex flex-row items-start gap-[10px] w-full">
+                <Skeleton className="w-[64px] h-[64px] rounded-[12px] shrink-0" />
+                <div className="flex flex-col justify-center gap-1.5 flex-1 h-[64px]">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/3" />
                 </div>
-                <Skeleton className="h-[40px] w-[113px] rounded-[24px] mt-1" />
               </div>
+              <Skeleton className="w-full h-[40px] rounded-[24px]" />
             </div>
           ))}
         </div>

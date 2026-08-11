@@ -700,7 +700,7 @@ const ArticleFlow = ({
         }
         
         onContentChange(newContent);
-        toast.success("Image updated locally");
+        toast.success("Image updated successfully");
       } catch (err) {
         console.error("Failed to update image locally", err);
       } finally {

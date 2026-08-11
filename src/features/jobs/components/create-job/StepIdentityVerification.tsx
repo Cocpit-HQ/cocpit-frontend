@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { VerifyIdentityModal } from '@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal';
 
 interface StepIdentityVerificationProps {
   onBack: () => void;
@@ -20,11 +21,13 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
   const isCompanyMode = activeProfile?.type === 'COMPANY';
   const router = useRouter();
 
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+
   const handleVerifyClick = () => {
     if (isCompanyMode) {
       router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`);
     } else {
-      router.push('/settings/privacy');
+      setIsVerifyModalOpen(true);
     }
   };
 
@@ -131,6 +134,11 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
           </p>
         </div>
       </div>
+
+      <VerifyIdentityModal 
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+      />
     </div>
   );
 };

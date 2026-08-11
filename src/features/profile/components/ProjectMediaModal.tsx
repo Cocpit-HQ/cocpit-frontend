@@ -168,12 +168,12 @@ export function ProjectMediaModal({
               {fileUrl ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full sm:w-[280px] aspect-square mx-auto rounded-[16px] overflow-hidden border border-border relative group cursor-pointer bg-secondary flex items-center justify-center shadow-sm hover:opacity-95 transition-all"
+                  className="w-full sm:w-[280px] max-h-[350px] mx-auto rounded-[16px] overflow-hidden border border-border relative group cursor-pointer bg-secondary flex items-center justify-center shadow-sm hover:opacity-95 transition-all"
                 >
                   <img
                     src={fileUrl}
                     alt="Preview"
-                    className="w-full h-full object-cover"
+                    className="w-full max-h-[350px] object-contain block"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium text-sm">
                     Click to replace

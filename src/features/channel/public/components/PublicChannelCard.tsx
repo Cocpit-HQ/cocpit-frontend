@@ -20,6 +20,14 @@ const formatShortTime = (dateString?: string): string => {
   }
 };
 
+const formatSubscribers = (count?: number) => {
+  if (!count) return '0';
+  if (count >= 1000) {
+    return Math.floor(count / 1000) + 'k';
+  }
+  return count.toString();
+};
+
 interface PublicChannelCardProps {
   channel: PublicChannelSummary;
   variant?: 'grid' | 'row' | 'search-result';
@@ -35,17 +43,21 @@ export default function PublicChannelCard({
   onClick,
   onToggleSubscribe,
 }: PublicChannelCardProps) {
+  const subscribeButtonClass = channel.isSubscribed
+    ? `h-[40px] px-4 py-2 rounded-[24px] bg-transparent border border-[#6366F1] dark:border-[#818CF8] text-[#6366F1] dark:text-[#818CF8] hover:bg-[#6366F1]/10 font-normal text-[16px] leading-[24px] ${
+        variant === 'grid' ? 'w-full' : 'w-[142px]'
+      }`
+    : `h-[40px] px-4 py-2 rounded-[24px] bg-[#6366F1] dark:bg-[#818CF8] text-white hover:opacity-90 font-medium text-[16px] leading-[24px] ${
+        variant === 'grid' ? 'w-full' : 'w-[113px]'
+      }`;
+
   const subscribeButton = !channel.isOwner ? (
     <button
       onClick={(e) => {
         e.stopPropagation();
         onToggleSubscribe?.();
       }}
-      className={`${
-        channel.isSubscribed
-          ? 'w-[142px] h-[40px] px-4 py-2 rounded-[24px] bg-transparent border border-[#6366F1] dark:border-[#818CF8] text-[#6366F1] dark:text-[#818CF8] hover:bg-[#6366F1]/10 font-normal text-[16px] leading-[24px]'
-          : 'w-[113px] h-[40px] px-4 py-2 rounded-[24px] bg-[#6366F1] dark:bg-[#818CF8] text-white hover:opacity-90 font-medium text-[16px] leading-[24px]'
-      } font-['Poppins'] transition-all active:scale-95 flex items-center justify-center shrink-0`}
+      className={`${subscribeButtonClass} font-['Poppins'] transition-all active:scale-95 flex items-center justify-center shrink-0`}
     >
       {channel.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
     </button>
@@ -104,63 +116,55 @@ export default function PublicChannelCard({
     return (
       <div
         onClick={onClick}
-        className={`w-full flex items-center justify-between p-4 rounded-[12px] border border-[#EEF2FF] dark:border-[#1C2340] bg-white dark:bg-[#121B2B] hover:shadow-sm transition-all ${onClick ? 'cursor-pointer' : ''}`}
+        className={`w-full flex flex-row items-center p-[16px] gap-[8px] rounded-[12px] border border-[#EEF2FF] dark:border-[#1C2340] bg-white dark:bg-[#121B2B] hover:shadow-sm transition-all ${onClick ? 'cursor-pointer' : ''}`}
       >
-        <div className="flex items-center gap-[10px] flex-1 min-w-0 pr-4">
-          <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] flex-shrink-0 border border-gray-100 dark:border-[#2A2D35]">
-            <img src={channel.logoUrl || '/assets/pngegg.png'} alt={channel.companyName || channel.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex flex-col justify-center flex-1 min-w-0">
-            <h4 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold leading-[24px] font-['Poppins'] truncate w-full">
+        <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] flex-shrink-0 border border-gray-100 dark:border-[#2A2D35]">
+          <img src={channel.logoUrl || '/assets/pngegg.png'} alt={channel.companyName || channel.name} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex flex-col items-start flex-1 min-w-0 h-[40px]">
+          <div className="flex flex-row items-center gap-[8px] h-[24px] w-full">
+            <h4 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold leading-[24px] font-['Poppins'] truncate">
               {channel.name}
             </h4>
-            <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal leading-[16px] font-['Poppins'] mt-0.5 truncate w-full">
-              {channel.latestArticle ? (
-                <>
-                  New post: "{channel.latestArticle.title}" • {formatShortTime(channel.latestArticle.createdAt)}
-                </>
-              ) : (
-                channel.companyName || 'Technews'
-              )}
+            <div className="w-[6px] h-[6px] bg-black dark:bg-white rounded-full flex-shrink-0"></div>
+            <p className="text-black dark:text-[#FFFFFF] text-[12px] font-semibold leading-[24px] font-['Poppins'] whitespace-nowrap">
+              {formatSubscribers(channel.subscriberCount)} Subscriber
             </p>
           </div>
+          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal leading-[16px] font-['Poppins'] truncate w-full h-[16px]">
+            {channel.companyName || 'Technews'}
+          </p>
         </div>
         {subscribeButton}
       </div>
     );
   }
 
+
   return (
     <div
       onClick={onClick}
-      className={`w-full flex flex-col bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] hover:shadow-md transition-shadow overflow-hidden ${onClick ? 'cursor-pointer' : ''}`}
+      className={`w-full h-[130px] flex flex-col items-center p-[16px] gap-[16px] bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
+      style={{ backdropFilter: 'blur(2px)' }}
     >
-      <div className="relative w-full h-[154px] bg-gray-100 dark:bg-[#1C2333]">
-        {channel.bannerUrl ? (
-          <img src={channel.bannerUrl} alt={channel.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Icon icon="lucide:image" className="w-8 h-8 text-[#5A52FF] opacity-20" />
-          </div>
-        )}
+      <div className="flex flex-row items-start gap-[10px] w-full shrink-0">
+        <div className="w-[64px] h-[64px] rounded-[12px] overflow-hidden shrink-0 bg-gray-100 dark:bg-[#1C2333] border border-gray-100 dark:border-[#2A2D35]">
+          <img src={channel.logoUrl || '/assets/pngegg.png'} alt={channel.companyName || channel.name} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex flex-col items-start flex-1 min-w-0 h-[64px]">
+          <h4 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold leading-[24px] font-['Poppins'] truncate w-full h-[24px]">
+            {channel.name}
+          </h4>
+          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal leading-[16px] font-['Poppins'] truncate w-full h-[16px]">
+            {channel.companyName || 'Technews'}
+          </p>
+          <p className="text-black dark:text-[#FFFFFF] text-[12px] font-semibold leading-[24px] font-['Poppins'] truncate w-full h-[24px]">
+            {formatSubscribers(channel.subscriberCount)} Subscriber
+          </p>
+        </div>
       </div>
-      <div className="flex flex-col p-[16px] gap-[10px]">
-        <div className="flex items-start gap-[10px] w-full">
-          <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden shrink-0 bg-gray-100 dark:bg-[#1C2333] border border-gray-100 dark:border-[#2A2D35]">
-            <img src={channel.logoUrl || '/assets/pngegg.png'} alt={channel.companyName || channel.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex flex-col justify-center flex-1 min-w-0">
-            <h4 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold leading-[24px] font-['Poppins'] truncate w-full">
-              {channel.name}
-            </h4>
-            <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal leading-[16px] font-['Poppins'] truncate w-full">
-              {channel.companyName || 'Technews'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center mt-1">
-          {subscribeButton}
-        </div>
+      <div className="flex w-full shrink-0 z-10">
+        {subscribeButton}
       </div>
     </div>
   );

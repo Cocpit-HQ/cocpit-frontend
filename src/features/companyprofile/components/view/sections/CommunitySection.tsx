@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { CompanyProfileData } from "../../../types/company-profile.types";
 import { companyProfileService } from "../../../services/companyprofile.service";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface CommunitySectionProps {
   data: CompanyProfileData;
@@ -14,6 +15,7 @@ interface CommunitySectionProps {
 export default function CommunitySection({ data }: CommunitySectionProps) {
   const queryClient = useQueryClient();
   const params = useParams();
+  const { isCompany } = useActiveProfile();
   const slug = params.slug as string || "nexsus-global-systems";
   const community = data.community;
 
@@ -59,7 +61,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
     }
   });
 
-  if (!community) return null;
+  if (!community || isCompany) return null;
 
   return (
     <div
@@ -216,7 +218,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           </div>
 
           {/* Frame 2608519: Subscribe Button */}
-          {!community.isOwner && (
+          {!community.isOwner && !isCompany && (
             <button
               onClick={() => subscribeMutation.mutate()}
               disabled={subscribeMutation.isPending || !community.communityId}

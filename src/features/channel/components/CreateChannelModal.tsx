@@ -43,7 +43,8 @@ export default function CreateChannelModal({
     }
   }, [isOpen, initialValues]);
 
-  const isValid = name.trim().length > 0 && bannerUrl.trim().length > 0 && description.trim().length > 0;
+  const isDescriptionValid = description.trim().length >= 20 && description.trim().length <= 100;
+  const isValid = name.trim().length > 0 && bannerUrl.trim().length > 0 && isDescriptionValid;
   const title = mode === 'create' ? 'Create channel' : 'Edit channel';
   const submitLabel = mode === 'create' ? 'Create channel' : 'Save';
 
@@ -118,13 +119,19 @@ export default function CreateChannelModal({
               <label className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-[#000000] dark:text-[#FFFFFF]">
                 Channel description
               </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                placeholder="Describe what this channel is about"
-                className="w-full max-w-[600px] h-[120px] p-[16px] rounded-[12px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-[#FFFFFF] dark:bg-[#0F1115] text-[16px] leading-[26px] font-normal font-['Poppins'] text-[#000000] dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3] resize-none overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-              />
+              <div className="relative w-full max-w-[600px] h-[120px] rounded-[12px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-[#FFFFFF] dark:bg-[#0F1115] focus-within:border-[#1A73E8] transition-colors overflow-hidden">
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={100}
+                  rows={4}
+                  placeholder="Describe what this channel is about"
+                  className="w-full h-full p-[16px] pb-[32px] bg-transparent text-[16px] leading-[26px] font-normal font-['Poppins'] text-[#000000] dark:text-[#FFFFFF] outline-none placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3] resize-none overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                />
+                <span className={`absolute bottom-3 right-4 text-[12px] font-['Poppins'] ${description.length < 20 ? 'text-red-500' : 'text-[#6B7280] dark:text-[#A1A8B3]'}`}>
+                  {description.length} / 100
+                </span>
+              </div>
             </div>
 
             {/* Modal Footer Actions */}

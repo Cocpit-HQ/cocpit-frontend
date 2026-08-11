@@ -99,15 +99,6 @@ export const companyProfileService = {
     return res.data;
   },
 
-  async subscribeOrganization(orgId: string): Promise<any> {
-    const res = await api.post(`/organizations/${orgId}/subscribe`);
-    return res.data;
-  },
-
-  async unsubscribeOrganization(orgId: string): Promise<any> {
-    const res = await api.delete(`/organizations/${orgId}/unsubscribe`);
-    return res.data;
-  },
 
   async subscribeCommunity(communityId: string): Promise<any> {
     const res = await api.post(`/communities/${communityId}/subscribe`);

@@ -78,8 +78,14 @@ export default function SignUpForm() {
     const session = await getSession();
     toast({ title: "Sign in successful", description: "Redirecting..." });
 
+    // Fallback to window.location if session is not yet available to let middleware handle routing
+    if (!session || !session.user) {
+      window.location.href = "/feed";
+      return;
+    }
+
     // @ts-ignore
-    if (session?.user?.onboarding_complete === false) {
+    if (!session.user.onboarding_complete) {
       router.push("/onboarding");
     } else {
       router.push("/feed");
