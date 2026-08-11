@@ -890,6 +890,7 @@ export default function MessagingPage() {
             : null
         );
       }
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
     const handlePreferenceUpdated = (payload: {

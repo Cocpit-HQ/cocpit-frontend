@@ -2,10 +2,10 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-
+import { UnavailableContentCard } from "./components/ui/UnavailableContentCard";
 
 interface ProfilePreviewCardProps {
-    profile: {
+    profile?: {
         name: string;
         avatar: string | null;
         headline?: string;
@@ -13,13 +13,18 @@ interface ProfilePreviewCardProps {
         industry?: string;
         username?: string;
         slug?: string;
-    };
+    } | null;
     profileId: string;
     profileType: "user" | "company";
+    isUnavailable?: boolean;
 }
 
-export function ProfilePreviewCard({ profile, profileId, profileType }: ProfilePreviewCardProps) {
+export function ProfilePreviewCard({ profile, profileId, profileType, isUnavailable }: ProfilePreviewCardProps) {
     const router = useRouter();
+
+    if (isUnavailable || !profile || profile.name === 'Deactivated User' || profile.name === 'Deleted Page') {
+        return <UnavailableContentCard />;
+    }
 
     const profileUrl = profileType === "user"
         ? `/profile/${profile.username || profileId}`

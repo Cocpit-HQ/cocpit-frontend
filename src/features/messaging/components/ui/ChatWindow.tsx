@@ -689,10 +689,18 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       const previousMessages = queryClient.getQueryData(['messages', chat.id]);
 
       // Optimistic update
-      const tempMedia = files.map(file => ({
-        url: URL.createObjectURL(file),
-        type: file.type.startsWith('video/') ? 'video' : (file.type === 'application/pdf' ? 'document' : 'image') as 'image' | 'video' | 'document'
-      }));
+      const tempMedia = files.map(file => {
+        const isDoc = file.type === 'application/pdf' || 
+                      file.type.includes('word') || 
+                      file.type.includes('officedocument') || 
+                      /\.(doc|docx|pdf|txt|rtf)$/i.test(file.name);
+        const type = file.type.startsWith('video/') ? 'video' : (isDoc ? 'document' : 'image');
+        return {
+          url: URL.createObjectURL(file),
+          type: type as 'image' | 'video' | 'document',
+          name: file.name
+        };
+      });
 
       const newMessage: Message = {
         id: 'temp-' + Date.now(),

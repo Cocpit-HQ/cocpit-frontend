@@ -25,6 +25,8 @@ import { ReactionListPopup } from "../ReactionListPopup"
 import { createPortal } from "react-dom"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 
+import UnavailableContentCard from "./UnavailableContentCard"
+
 const CustomReplyIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className={className}>
     <path d="M0 0h32v32H0z" fill="none" />
@@ -299,6 +301,10 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
     }
   }, [message.sharedPost, extractedPostId])
 
+  if ((message as any).is_unavailable || (message as any).isUnavailable) {
+    return <UnavailableContentCard />;
+  }
+
   const postToRender = message.sharedPost || loadedPost
 
   if (!postToRender) {
@@ -320,7 +326,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
         </div>
       )
     }
-    return null
+    return <UnavailableContentCard />;
   }
 
   return (
@@ -344,9 +350,11 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
           <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black truncate block">
             {postToRender.author || postToRender.content}
           </span>
-          <span className="font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate block">
-            {postToRender.subtext || "Hybrid • Pune"}
-          </span>
+          {Boolean(postToRender.subtext || postToRender.location) && (
+            <span className="font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate block">
+              {postToRender.subtext || postToRender.location || ""}
+            </span>
+          )}
         </div>
       </div>
 

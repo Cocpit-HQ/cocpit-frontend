@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 import Avatar from "@/components/shared/Avatar"
 import ConversationListSkeleton from "../skeletons/ConversationListSkeleton"
+import { ChatFilterDropdown, ChatFilterOption } from "./ChatFilterDropdown"
 
 // Reusable exact tag component
 const TagChip = ({ active, label, hasIndicator, onClick, disabled }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void, disabled?: boolean }) => (
@@ -71,6 +72,7 @@ export function ChatList({
   chatFilter = 'All',
 }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedFilter, setSelectedFilter] = useState<ChatFilterOption>(chatFilter || 'All')
   const { socket, isUserOnline, typingConversations } = useSocket();
   const { activeProfile } = useActiveProfile();
   const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
@@ -186,8 +188,8 @@ export function ChatList({
         if (activeTab === 'requests' && !chat.is_requesting) return false;
       }
 
-      // Filter by Quick Chat dropdown (All | Groups)
-      if (chatFilter === 'Groups') {
+      // Filter by dropdown (All | Groups)
+      if (selectedFilter === 'Groups') {
         const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
         if (!isGroupChat) return false;
       }
@@ -202,7 +204,7 @@ export function ChatList({
       if (b.unread > 0 && a.unread === 0) return 1;
       return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
     });
-  }, [chatsWithStatus, activeTab, searchTerm, isCompany, chatFilter]);
+  }, [chatsWithStatus, activeTab, searchTerm, isCompany, selectedFilter]);
 
   // Virtualizer setup
   const rowVirtualizer = useVirtualizer({
@@ -239,16 +241,19 @@ export function ChatList({
               </p>
             </div>
           </div>
-          {/* Plus Button (Frame 2608532) - Hidden for Company profile */}
-          {!isCompany && (
-            <button
-              onClick={onCreateGroup}
-              className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
-            >
-              <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
-            </button>
-          )}
-        </div>
+            {/* Right Controls — Filter & Plus Button */}
+            <div className="flex flex-row items-center gap-[8px]">
+              <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
+              {!isCompany && (
+                <button
+                  onClick={onCreateGroup}
+                  className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
+                >
+                  <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Search Bar (Frame 2608500) */}

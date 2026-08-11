@@ -71,6 +71,15 @@ export default function MediaPreviewModal({
         setIsZoomed(!isZoomed);
     };
 
+    const isWordDoc = fileName.toLowerCase().endsWith('.doc') || fileName.toLowerCase().endsWith('.docx');
+
+    const openInNewTab = () => {
+        const targetUrl = isWordDoc 
+            ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(mediaUrl)}`
+            : mediaUrl;
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
+    };
+
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col animate-in fade-in duration-200">
             {/* Header */}
@@ -90,6 +99,9 @@ export default function MediaPreviewModal({
                             {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
                         </Button>
                     )}
+                    <Button variant="ghost" onClick={openInNewTab} className="text-white hover:bg-white/10 text-xs px-3 py-1 rounded-full border border-white/20">
+                        Open in New Tab
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={handleDownload} className="rounded-full hover:bg-white/10 text-white" title="Download">
                         <Download className="w-5 h-5" />
                     </Button>
@@ -135,11 +147,10 @@ export default function MediaPreviewModal({
                 {mediaType === "document" && (
                     <div className="w-full h-full max-w-5xl pt-16 pb-4 md:py-0" onClick={(e) => e.stopPropagation()}>
                         <iframe
-                            src={mediaUrl}
+                            src={isWordDoc ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(mediaUrl)}` : mediaUrl}
                             className="w-full h-full rounded-lg bg-white shadow-2xl border-none"
                             title="Document Preview"
                         />
-                        {/* Fallback overlay in case iframe fails (rare for standard PDFs) */}
                     </div>
                 )}
             </div>
