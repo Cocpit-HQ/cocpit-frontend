@@ -96,10 +96,11 @@ export default function CreateChannelModal({
               ) : (
                 <div
                   onClick={() => setIsBannerModalOpen(true)}
-                  className="w-full max-w-[600px] h-[100px] sm:h-[113px] rounded-[12px] border-2 border-dashed border-[#E0E0E7] dark:border-[#2A2D35] flex flex-col items-center justify-center cursor-pointer hover:border-[#1A73E8] transition-colors bg-[#FFFFFF] dark:bg-[#0F1115] flex-shrink-0"
+                  className="w-full max-w-[600px] min-h-[113px] py-4 rounded-[12px] border border-[#E0E0E7] dark:border-[#2A2D35] flex flex-col items-center justify-center cursor-pointer hover:border-[#1A73E8] transition-colors bg-[#FFFFFF] dark:bg-[#0F1115] flex-shrink-0 gap-1 text-center px-4"
                 >
-                  <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280] dark:text-[#A1A8B3] mb-1" />
-                  <span className="text-sm font-['Poppins'] text-[#6B7280] dark:text-[#A1A8B3]">Click to choose a banner (6:1 aspect ratio)</span>
+                  <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280] dark:text-[#A1A8B3]" />
+                  <span className="text-[16px] font-['Poppins'] font-medium text-[#000000] dark:text-[#FFFFFF]">Click to upload or drag and drop</span>
+                  <span className="text-[10px] font-['Poppins'] text-[#6B7280] dark:text-[#A1A8B3]">Use a 16:3 banner. Minimum size: 960 &times; 180 px. Recommended size: 1920 &times; 360 px for optimal quality.</span>
                 </div>
               )}
 

@@ -76,7 +76,7 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
                     const slug = tag.account_name || tag.slug || tag.id || tag.user_id;
                     if (slug) {
                       if (isCompany) {
-                        router.push(`/company-profile/${slug}`);
+                        router.push(`/organization/${slug}`);
                       } else {
                         router.push(`/profile/${slug}`);
                       }
