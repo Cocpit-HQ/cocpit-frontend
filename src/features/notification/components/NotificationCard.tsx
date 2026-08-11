@@ -182,8 +182,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                 </span>
                 {!notification.is_read && (
                     <div className={cn(
-                        "w-[6px] h-[6px] rounded-full mt-1.5",
-                        isCompany ? "bg-[#1A73E8]" : "bg-[#6366F1]"
+                        "w-2 h-2 rounded-full mt-1.5 ring-4 flex-shrink-0 mx-1",
+                        isCompany ? "bg-[#1A73E8] ring-[#1A73E8]/30" : "bg-[#6366F1] ring-[#6366F1]/30"
                     )} />
                 )}
                 <DropdownMenu>

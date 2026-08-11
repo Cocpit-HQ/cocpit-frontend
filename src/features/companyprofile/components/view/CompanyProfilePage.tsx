@@ -147,7 +147,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     slug: slug,
     logoUrl: company.logo_url,
     coverUrl: company.cover_url,
-    isVerified: company.verification_status === 'DOMAIN_VERIFIED',
+    isVerified: company.verification_status === 'VERIFIED' || company.verification_status === 'DOMAIN_VERIFIED',
     tagline: company.headline || company.slogan || "",
     industry: (isEdu ? company.institution_type : company.industry) || (isEdu ? "Higher Education" : ""),
     location: company.location || [company.city, company.country].filter(Boolean).join(", ") || "",

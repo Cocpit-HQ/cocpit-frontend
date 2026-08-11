@@ -41,11 +41,18 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
 
   if (!isCompanyPost) {
     if (!currentUserId) return 'outsider';
+
+    // If the active profile is a COMPANY, they are an outsider to personal user posts.
+    if (activeProfile?.type === 'COMPANY') {
+      return 'outsider';
+    }
+
     return String(createdByUserId) === String(currentUserId) ? 'owner' : 'outsider';
   }
 
-  // If the user is currently acting as a DIFFERENT company, they are an outsider to THIS company's post.
-  if (activeProfile?.type === 'COMPANY' && String(activeProfile.id) !== String(companyId)) {
+  // If activeProfile is provided, enforce that the user must be acting as this exact company.
+  // If they are acting as a USER, or as a DIFFERENT company, treat them as a normal user (outsider).
+  if (activeProfile && (activeProfile.type !== 'COMPANY' || String(activeProfile.id) !== String(companyId))) {
     return 'outsider';
   }
 

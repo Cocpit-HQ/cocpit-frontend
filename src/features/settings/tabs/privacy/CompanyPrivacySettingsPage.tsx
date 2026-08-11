@@ -6,10 +6,12 @@ import { useCompanyPrivacySettings } from '../../hooks/useCompanyPrivacySettings
 import { PrivacySettings } from '@/services/api/settings';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { VerifyIdentityModal } from '../privacy/components/modals/VerifyIdentityModal';
+import { useRouter } from 'next/navigation';
 
 export function CompanyPrivacySettingsPage() {
   const { settings: privacy, isLoading, updateSettings } = useCompanyPrivacySettings();
   const { activeProfile } = useActiveProfile();
+  const router = useRouter();
   const [isVerifyModalOpen, setIsVerifyModalOpen] = React.useState(false);
 
   const showEmail = privacy?.showEmail ?? false;
@@ -148,7 +150,7 @@ export function CompanyPrivacySettingsPage() {
                     </div>
                   ) : (
                     <button 
-                      onClick={() => setIsVerifyModalOpen(true)}
+                      onClick={() => router.push(`/organization/${activeProfile?.slug}/edit?tab=verification`)}
                       className="flex items-center justify-center w-[140px] h-[40px] bg-white border border-[#818CF8] text-[#818CF8] rounded-[24px] text-[14px] font-medium hover:bg-[#818CF8]/5 transition-colors"
                     >
                       Verify

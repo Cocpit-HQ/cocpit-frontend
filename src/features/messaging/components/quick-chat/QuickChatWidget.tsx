@@ -211,7 +211,7 @@ export function QuickChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0' : 'right-0'} w-[calc(100vw-32px)] sm:w-[340px] ${selectedChat ? 'h-[65vh] max-h-[480px] sm:h-[480px]' : 'h-[335px]'} bg-white border border-[#EEF2FF] shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-[12px] flex flex-col overflow-hidden transition-all duration-300`}
+            className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0' : 'right-0'} w-[calc(100vw-32px)] sm:w-[340px] ${selectedChat ? 'h-[65vh] max-h-[480px] sm:h-[480px]' : 'h-auto min-h-[250px] max-h-[584px]'} bg-white border border-[#EEF2FF] shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-[12px] flex flex-col overflow-hidden transition-all duration-300`}
             style={{ transformOrigin: 'bottom' }}
           >
           {/* Main Content Area */}
@@ -331,7 +331,10 @@ export function QuickChatWidget() {
       >
         <div className="relative flex items-center justify-center w-[50px] h-[50px] shrink-0">
           <Icon icon="proicons:chat" className="w-[28px] h-[28px]" />
-          {chats.some(c => c.unread > 0) && (
+          {chats.some(chat => 
+            chat.unread > 0 || 
+            (chat.is_requesting && !chat.is_read && (chat.isGroup || (chat as any).is_group || chat.request_source === 'group_invitation'))
+          ) && (
             <div className="absolute top-[8px] right-[8px] w-1.5 h-1.5 bg-[#6366F1] rounded-full"></div>
           )}
         </div>

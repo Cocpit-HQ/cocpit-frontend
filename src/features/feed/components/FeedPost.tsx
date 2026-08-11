@@ -666,7 +666,7 @@ export const FeedPost = (props: FeedPostProps) => {
               onNotInterested={handleNotInterested}
               location={location}
               tags={tags}
-              authorRole={props.authorHeadline || undefined}
+              authorRole={props.authorHeadline ?? undefined}
             />
           </div>
 

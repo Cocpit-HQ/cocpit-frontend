@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBlockedUsers, unblockUser as unblockUserRequest } from "@/features/settings/api/blocked";
 import { toast } from "sonner";
+import { formatDistanceToNowStrict, differenceInHours } from "date-fns";
 
 export interface BlockedUser {
   id: number | string;
@@ -11,11 +12,24 @@ export interface BlockedUser {
 
 export const BLOCKED_USERS_QUERY_KEY = ["blockedUsers"];
 
+const formatBlockTime = (dateString?: string) => {
+  if (!dateString) return "Blocked recently";
+  try {
+    const date = new Date(dateString);
+    if (differenceInHours(new Date(), date) < 1) {
+      return "Blocked just now";
+    }
+    return `Blocked ${formatDistanceToNowStrict(date, { addSuffix: true })}`;
+  } catch (e) {
+    return "Blocked recently";
+  }
+};
+
 // Backend returns loosely-typed rows; normalize once here instead of in the page.
 const mapBlockedUser = (u: any): BlockedUser => ({
   id: u.id || u.user_id,
   name: u.name || u.full_name || u.username || "Unknown User",
-  date: u.date || (u.created_at ? `Blocked ${new Date(u.created_at).toLocaleDateString()}` : "Blocked recently"),
+  date: u.date || (u.created_at ? formatBlockTime(u.created_at) : "Blocked recently"),
   avatar: u.avatar || u.avatar_url || "",
 });
 

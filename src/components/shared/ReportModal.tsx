@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Loader2, Check, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,7 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
         setIsFetchingReasons(true);
         try {
           const data = await getReportReasons();
-          setReasons(data);
+          setReasons(data.filter(r => r.code !== 'OTHER' && r.label?.toLowerCase() !== 'other'));
         } catch (error) {
           console.error('Failed to fetch report reasons', error);
           toast.error('Failed to load report reasons');
@@ -85,14 +85,11 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md bg-[#1e2330] border-none text-white sm:rounded-[24px] p-6">
-        <DialogHeader className="space-y-3 pb-2">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-6 h-6 text-[#ff8a7a]" />
-            <DialogTitle className="text-xl font-semibold text-white">Report {getTargetLabel()}</DialogTitle>
-          </div>
-          <DialogDescription className="text-gray-400 text-sm leading-tight text-left">
-            Help us understand what&apos;s happening. Your report is anonymous.
+      <DialogContent className="max-w-[400px] bg-white border-none text-black sm:rounded-[24px] p-4">
+        <DialogHeader className="space-y-2 pb-2">
+          <DialogTitle className="text-[18px] leading-[26px] font-medium text-black text-center font-poppins">Report</DialogTitle>
+          <DialogDescription className="text-[#6B7280] text-[12px] leading-[16px] text-center font-poppins">
+            Help us understand whats happening. Your report is anonymous.
           </DialogDescription>
         </DialogHeader>
 
@@ -107,37 +104,41 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
                 key={reason.id}
                 onClick={() => setSelectedReasonId(reason.id)}
                 className={cn(
-                  "w-full text-left px-4 py-4 rounded-xl transition-all duration-200 border border-transparent",
-                  "hover:bg-white/5",
+                  "w-full text-left py-3 rounded-xl transition-all duration-200",
                   selectedReasonId === reason.id 
-                    ? "bg-primary/10 border-primary text-white" 
-                    : "text-gray-300"
+                    ? "text-black" 
+                    : "text-black hover:bg-gray-50"
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{reason.label}</span>
+                  <span className="text-[16px] leading-[24px] font-normal text-black font-poppins">{reason.label}</span>
                   {selectedReasonId === reason.id && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <div className="w-[18px] h-[18px] rounded-[2px] bg-[#6366F1] flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                    </div>
                   )}
                 </div>
               </button>
             ))
           )}
+
+
+
         </div>
 
         <div className="pt-4">
           <Button
             onClick={handleSubmit}
             disabled={isLoading || !selectedReasonId || isFetchingReasons}
-            className="w-full h-12 bg-[#5c7cff] hover:bg-[#4a6fff] text-white rounded-[14px] text-base font-semibold transition-all"
+            className="w-full h-10 bg-[#6366F1] hover:bg-[#4e5bd6] text-white rounded-[24px] text-[14px] leading-[20px] font-normal font-poppins transition-all"
           >
             {isLoading ? (
-              <>
+              <div className="flex items-center justify-center">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Submitting...
-              </>
+              </div>
             ) : (
-              'Submit Report'
+              'Submit report'
             )}
           </Button>
         </div>

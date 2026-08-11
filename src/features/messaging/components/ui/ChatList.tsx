@@ -270,6 +270,35 @@ export function ChatList({
           </div>
         </div>
 
+        {isQuickChat && (
+          <div className="relative w-full h-[36px] border-b border-[#EEF2FF] mt-2 mb-1">
+            <button 
+              onClick={() => setActiveTab('chat')}
+              className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${activeTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+            >
+              <span className="font-['Poppins'] text-[14px] leading-[20px]">Chat</span>
+              {hasUnreadChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
+            </button>
+            {!isCompany ? (
+              <button 
+                onClick={() => setActiveTab('requests')}
+                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${activeTab === 'requests' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+              >
+                <span className="font-['Poppins'] text-[14px] leading-[20px]">Requests</span>
+                {hasUnreadRequests && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
+              </button>
+            ) : (
+              <button 
+                onClick={() => setActiveTab('jobs')}
+                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${activeTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+              >
+                <span className="font-['Poppins'] text-[14px] leading-[20px]">Jobs</span>
+                {hasUnreadJobChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Tags Row (Frame 2608634) */}
         {!isQuickChat && (
           <>
