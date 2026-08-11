@@ -338,6 +338,7 @@ export function useProfileMutation() {
                 degree: payload.degree || "",
                 website: payload.website || "",
                 visible_role_ids: payload.visible_role_ids,
+                industry: payload.industry,
             });
             await updateIdentity({
                 open_to: Array.isArray(payload.open_to) ? payload.open_to[0] : payload.open_to,
