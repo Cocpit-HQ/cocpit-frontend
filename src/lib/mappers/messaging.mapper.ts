@@ -147,5 +147,6 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     active_member_count: backendMessage.active_member_count,
     delivered_count: backendMessage.delivered_count,
     seen_count: backendMessage.seen_count,
+    is_unavailable: (backendMessage as any).is_unavailable === true,
   };
 };

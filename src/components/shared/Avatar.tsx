@@ -12,6 +12,7 @@ interface AvatarProps {
     online?: boolean
     className?: string
     isCompany?: boolean
+    isUnknown?: boolean
 }
 
 export const getAvatarGradient = (avatar: string) => {
@@ -25,7 +26,8 @@ export default function Avatar({
     size = 'md',
     online,
     className = "",
-    isCompany = false
+    isCompany = false,
+    isUnknown = false
 }: AvatarProps) {
     const [error, setError] = useState(false)
 
@@ -57,9 +59,11 @@ export default function Avatar({
     const initial = (name || 'U').charAt(0).toUpperCase();
 
     const gradientKey = (url && url.startsWith('gradient-')) ? url : fallbackGradient;
-    const backgroundClass = (url && url.startsWith('gradient-')) 
-        ? `bg-gradient-to-br ${getAvatarGradient(gradientKey)} text-white` 
-        : "bg-[#EEF2FF] text-[#6366F1]";
+    const backgroundClass = isUnknown
+        ? "bg-[var(--muted)]/60 text-[var(--muted-foreground)]"
+        : (url && url.startsWith('gradient-')) 
+            ? `bg-gradient-to-br ${getAvatarGradient(gradientKey)} text-white` 
+            : "bg-[#EEF2FF] text-[#6366F1]";
 
     const roundedClass = isCompany ? companyRoundedClasses[size] : "rounded-full";
 
@@ -67,7 +71,9 @@ export default function Avatar({
         <div className={`relative shrink-0 ${className}`}>
             <div className={`relative ${sizeClasses[size]} ${roundedClass} overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
                 {!isUrl && (
-                    isCompany ? (
+                    isUnknown ? (
+                        <Icon icon="lucide:user-x" className="w-1/2 h-1/2 text-[var(--muted-foreground)]" style={{ strokeWidth: '1.5px' }} />
+                    ) : isCompany ? (
                         <Icon icon="lucide:building-2" className="w-1/2 h-1/2 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
                     ) : (
                         <span>{initial}</span>

@@ -189,4 +189,5 @@ export interface Message {
   active_member_count?: number;
   delivered_count?: number;
   seen_count?: number;
+  is_unavailable?: boolean;
 }

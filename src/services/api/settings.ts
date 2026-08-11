@@ -134,8 +134,18 @@ export const logoutOtherSessions = async (): Promise<{ success: boolean }> => {
 
 // --- Organization Specific Critical Actions ---
 
-export const deactivateOrganization = async (orgId: string): Promise<{ success: boolean }> => {
-  const response = await api.patch(`/organizations/${orgId}/deactivate`);
+export const sendDeactivateOrgOTP = async (orgId: string): Promise<{ success: boolean; email_masked?: string; cooldown_seconds?: number }> => {
+  const response = await api.post(`/organizations/${orgId}/deactivate/send-otp`);
+  return response.data;
+};
+
+export const validateDeactivateOrgOTP = async (orgId: string, otp: string): Promise<{ success: boolean }> => {
+  const response = await api.post(`/organizations/${orgId}/deactivate/validate-otp`, { otp });
+  return response.data;
+};
+
+export const deactivateOrganization = async (orgId: string, otp?: string): Promise<{ success: boolean }> => {
+  const response = await api.patch(`/organizations/${orgId}/deactivate`, { otp });
   return response.data;
 };
 

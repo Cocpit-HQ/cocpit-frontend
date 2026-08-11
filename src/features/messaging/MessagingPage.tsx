@@ -165,6 +165,7 @@ export default function MessagingPage() {
     },
     staleTime: 0,
     refetchOnWindowFocus: false,
+    refetchInterval: 5000,
   });
 
   // Filter out deleted chats and deduplicate by id (conversation_id).

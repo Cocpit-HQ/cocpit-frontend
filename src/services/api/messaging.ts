@@ -24,7 +24,7 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
     if (replyMessageId) formData.append("replyMessageId", replyMessageId);
     if (entity_type) formData.append("entity_type", entity_type);
     if (entity_id) formData.append("entity_id", entity_id);
-    void authorCompanyId;
+    if (authorCompanyId) formData.append("authorCompanyId", authorCompanyId);
 
     files.forEach((file) => {
       formData.append("images", file);

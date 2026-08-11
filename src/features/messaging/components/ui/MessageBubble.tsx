@@ -254,6 +254,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
   const router = useRouter()
   const [loadedPost, setLoadedPost] = useState<any | null>(null)
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
 
   const rawText = message.text || message.text_content || ""
   const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/post\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i
@@ -273,6 +274,10 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
         const { getPostById } = await import("@/services/api/posts")
         const backendPost = await getPostById(extractedPostId)
         if (isMounted) {
+          if ((backendPost as any).is_active === false || (backendPost as any).is_removed) {
+            setFetchError(true);
+            return;
+          }
           const media = backendPost.media?.map(m => ({
             url: m.url,
             type: m.media_type as 'image' | 'video'
@@ -287,7 +292,9 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
           })
         }
       } catch (err: any) {
-        console.error("Error fetching shared post in SharedPostCard:", err.response?.data || err)
+        if (isMounted) {
+          setFetchError(true);
+        }
       } finally {
         if (isMounted) {
           setLoading(false)
@@ -301,7 +308,25 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
     }
   }, [message.sharedPost, extractedPostId])
 
-  if ((message as any).is_unavailable || (message as any).isUnavailable) {
+  const hasSharedPost = Boolean(message.sharedPost || (message as any).sharedPostId || (message as any).shared_post_id || extractedPostId);
+
+  if (!hasSharedPost) {
+    return null;
+  }
+
+  const isPostUnavailable = Boolean(
+    fetchError ||
+    (message as any).is_unavailable || 
+    (message as any).isUnavailable || 
+    (message as any).is_blocked || 
+    message.senderName === 'Unknown Page' || 
+    message.senderName === 'Unknown user' ||
+    message.sharedPost?.author === 'Unknown Page' ||
+    message.sharedPost?.author === 'Unknown user' ||
+    message.sharedPost?.author === 'Unknown Author'
+  );
+
+  if (isPostUnavailable) {
     return <UnavailableContentCard />;
   }
 
@@ -768,12 +793,19 @@ const MessageText = ({
   const router = useRouter()
   if (isMediaOnly) return null
 
-  // If the message text contains only a post URL or profile share URL, hide it
+  // If the message text contains only a post/org/profile/job/offer URL or entity link, hide it
   const rawText = message.text || message.text_content || "";
   const trimmedText = rawText.trim();
+  const entityUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/(?:post|profile|organization|job|offer|channel|article)\/[^\s]+$/i;
   const postUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/post\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/?$/i;
   const profileUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/(?:profile|organization|messaging)\b.*$/i;
-  if (postUrlRegex.test(trimmedText) || (message.sharedProfileId && (profileUrlRegex.test(trimmedText) || trimmedText === "Shared a profile" || !trimmedText))) {
+
+  if (
+    message.is_unavailable ||
+    entityUrlRegex.test(trimmedText) ||
+    postUrlRegex.test(trimmedText) || 
+    (message.sharedProfileId && (profileUrlRegex.test(trimmedText) || trimmedText === "Shared a profile" || !trimmedText))
+  ) {
     return null;
   }
 
@@ -1077,6 +1109,11 @@ function MessageBubble(props: MessageBubbleProps) {
 
   // Helper for dynamic classes
   const getBubbleClasses = () => {
+    if (message.is_unavailable) {
+      return isMe
+        ? "bg-[var(--primary)] rounded-[12px_12px_0px_12px] shadow-sm"
+        : "bg-[var(--primary-tint)] text-[var(--foreground)] rounded-[12px_12px_12px_0px] shadow-sm"
+    }
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) {
       return "italic text-sm shadow-none rounded-[12px] bg-muted/60 text-muted-foreground border border-dashed border-border"
     }
@@ -1106,13 +1143,15 @@ function MessageBubble(props: MessageBubbleProps) {
 
   const paddingClasses = isEditing
     ? "px-[16px] py-[16px]"
-    : (message.is_deleted_for_everyone || message.is_deleted_for_me)
-      ? "px-[16px] py-[10px]"
-      : ((message.media && message.media.length > 0) || isProfileOnly || isPostOnly)
-        ? "p-0 overflow-hidden"
-        : (message.repliedMessage && message.repliedMessage.senderName)
-          ? "px-[8px] pt-[8px] pb-[16px]"
-          : "px-[16px] py-[16px]"
+    : message.is_unavailable
+      ? "px-[16px] py-[12px]"
+      : (message.is_deleted_for_everyone || message.is_deleted_for_me)
+        ? "px-[16px] py-[10px]"
+        : ((message.media && message.media.length > 0) || isProfileOnly || isPostOnly)
+          ? "p-0 overflow-hidden"
+          : (message.repliedMessage && message.repliedMessage.senderName)
+            ? "px-[8px] pt-[8px] pb-[16px]"
+            : "px-[16px] py-[16px]"
 
   // Long press mobile detection
   const [showMobileActions, setShowMobileActions] = useState(false)
@@ -1348,6 +1387,8 @@ function MessageBubble(props: MessageBubbleProps) {
                     onSaveEdit={onSaveEdit}
                     onCancelEdit={onCancelEdit}
                   />
+                ) : message.is_unavailable ? (
+                  <UnavailableContentCard isMe={isMe} />
                 ) : (
                   <>
                     {message.repliedMessage && message.repliedMessage.senderName && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
@@ -1471,9 +1512,22 @@ function MessageBubble(props: MessageBubbleProps) {
                     }
                   }}
                 >
-                  {resolvedShowAvatar ? (
-                    <Avatar url={message.senderAvatar} name={message.senderName || "Unknown"} size="xs" />
-                  ) : (
+                  {resolvedShowAvatar ? (() => {
+                    const isUnknownSender = 
+                      message.senderName === 'Unknown Page' || 
+                      message.senderName === 'Unknown user' || 
+                      message.senderName === 'Deleted User' ||
+                      message.isBlocked ||
+                      !message.senderAvatar;
+                    return (
+                      <Avatar 
+                        url={isUnknownSender ? undefined : message.senderAvatar} 
+                        name={message.senderName || "Unknown"} 
+                        size="xs"
+                        isUnknown={isUnknownSender}
+                      />
+                    );
+                  })() : (
                     <div className="w-[24px] h-[24px]" />
                   )}
                 </div>

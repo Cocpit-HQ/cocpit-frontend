@@ -140,6 +140,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
   const { activeProfile } = useActiveProfile();
+  const isCompanyProfile = activeProfile?.type === 'COMPANY';
+  const isOrgChat = isCompanyProfile || initialChat.otherUserType === 'COMPANY';
   const targetUserId = initialChat.otherUserId || (initialChat as any).other_user_id;
   const { canManageBlock, canBlockTarget } = useOrgBlockPermissions(targetUserId);
   const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
@@ -340,6 +342,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     },
     initialPageParam: null as string | null,
     enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id && !isGroupInvitation,
+    refetchInterval: 5000,
   });
 
   // Flatten and reverse pages to show oldest to newest
@@ -1164,23 +1167,25 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                 ) : (
                   <>
                     <Link
-                      href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
-                      className="w-[40px] h-[40px] flex-none mr-[8px] hover:opacity-80 transition-opacity"
+                      href={isBlockedByOther ? "#" : (chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`)}
+                      className={cn("w-[40px] h-[40px] flex-none mr-[8px] transition-opacity", isBlockedByOther ? "pointer-events-none" : "hover:opacity-80")}
+                      onClick={(e) => { if (isBlockedByOther) e.preventDefault(); }}
                     >
-                      <Avatar url={chat.avatar} name={chat.name} size="md" />
+                      <Avatar url={isBlockedByOther ? undefined : chat.avatar} name={isBlockedByOther ? (chat.otherUserType === 'COMPANY' ? 'Unknown Page' : 'Unknown user') : chat.name} size="md" />
                     </Link>
                     <div className="flex flex-col items-start p-0 min-w-0">
                       <Link
-                        href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
-                        className="hover:opacity-80 transition-opacity w-full"
+                        href={isBlockedByOther ? "#" : (chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`)}
+                        className={cn("w-full transition-opacity", isBlockedByOther ? "pointer-events-none" : "hover:opacity-80")}
+                        onClick={(e) => { if (isBlockedByOther) e.preventDefault(); }}
                       >
                         <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[var(--foreground)] w-full">
-                          <span className="truncate">{chat.name}</span>
+                          <span className="truncate">{isBlockedByOther ? (chat.otherUserType === 'COMPANY' ? 'Unknown Page' : 'Unknown user') : chat.name}</span>
                         </h2>
                       </Link>
                       <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[var(--muted-foreground)] w-full">
-                        <span className="truncate">{chat.otherUserType === 'COMPANY' ? (chat.orgHeadline || chat.role || "") : (chat.role || "")}</span>
-                        {(typingDisplayString || chat.online) && (
+                        <span className="truncate">{isBlockedByOther ? 'User unavailable' : (chat.otherUserType === 'COMPANY' ? (chat.orgHeadline || chat.role || "") : (chat.role || ""))}</span>
+                        {!isBlockedByOther && (typingDisplayString || chat.online) && (
                           <>
                             <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
                             <span className="text-[#22C55E]">
@@ -1389,7 +1394,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         </div>
       ) : (
         <div className="flex flex-col w-full">
-          {chat.is_requesting && !isBlockedByOther && (
+          {!isOrgChat && chat.is_requesting && !isBlockedByOther && (
             <div className="flex flex-row justify-end items-center gap-[16px] mt-[10px] px-4 md:px-6 mb-2">
               <button
                 onClick={handleDeclineRequest}
@@ -1414,7 +1419,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
               onSendMessage={handleSendMessage}
               onTyping={handleTypingInput}
               searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
-              disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || isJobChatDisabled || isGeneralChatDisabled || isDeactivatedAccount}
+              disabled={(!isOrgChat && chat.is_requesting) || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || isJobChatDisabled || isGeneralChatDisabled || isDeactivatedAccount}
               disabledMessage={isDeactivatedAccount ? "This user has gone offline - for a while." : (isBlockedByOther ? "User not found" : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined)))}
               pendingEntityContext={pendingEntityContext}
               onDismissEntityContext={() => setPendingEntityContext(null)}
