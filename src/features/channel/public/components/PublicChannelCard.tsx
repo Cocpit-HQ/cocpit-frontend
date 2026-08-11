@@ -116,26 +116,31 @@ export default function PublicChannelCard({
     return (
       <div
         onClick={onClick}
-        className={`w-full flex flex-row items-center p-[16px] gap-[8px] rounded-[12px] border border-[#EEF2FF] dark:border-[#1C2340] bg-white dark:bg-[#121B2B] hover:shadow-sm transition-all ${onClick ? 'cursor-pointer' : ''}`}
+        className={`w-full flex flex-row items-center p-0 md:p-[16px] gap-[10px] md:gap-[8px] rounded-none md:rounded-[12px] border-none md:border md:border-[#EEF2FF] md:dark:border-[#1C2340] bg-transparent md:bg-white md:dark:bg-[#121B2B] hover:shadow-none md:hover:shadow-sm transition-all ${onClick ? 'cursor-pointer' : ''}`}
       >
-        <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] flex-shrink-0 border border-gray-100 dark:border-[#2A2D35]">
+        <div className="w-[64px] md:w-[48px] h-[64px] md:h-[48px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] flex-shrink-0 border border-gray-100 dark:border-[#2A2D35]">
           <img src={channel.logoUrl || '/assets/pngegg.png'} alt={channel.companyName || channel.name} className="w-full h-full object-cover" />
         </div>
-        <div className="flex flex-col items-start flex-1 min-w-0 h-[40px]">
+        <div className="flex flex-col items-start justify-center md:justify-start flex-1 min-w-0 h-[64px] md:h-[40px]">
           <div className="flex flex-row items-center gap-[8px] h-[24px] w-full">
             <h4 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold leading-[24px] font-['Poppins'] truncate">
               {channel.name}
             </h4>
-            <div className="w-[6px] h-[6px] bg-black dark:bg-white rounded-full flex-shrink-0"></div>
-            <p className="text-black dark:text-[#FFFFFF] text-[12px] font-semibold leading-[24px] font-['Poppins'] whitespace-nowrap">
+            <div className="hidden md:block w-[6px] h-[6px] bg-black dark:bg-white rounded-full flex-shrink-0"></div>
+            <p className="hidden md:block text-black dark:text-[#FFFFFF] text-[12px] font-semibold leading-[24px] font-['Poppins'] whitespace-nowrap">
               {formatSubscribers(channel.subscriberCount)} Subscriber
             </p>
           </div>
           <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal leading-[16px] font-['Poppins'] truncate w-full h-[16px]">
             {channel.companyName || 'Technews'}
           </p>
+          <p className="md:hidden text-black dark:text-[#FFFFFF] text-[12px] font-semibold leading-[24px] font-['Poppins'] whitespace-nowrap w-full h-[24px]">
+            {formatSubscribers(channel.subscriberCount)} Subscriber
+          </p>
         </div>
-        {subscribeButton}
+        <div className="hidden md:flex">
+          {subscribeButton}
+        </div>
       </div>
     );
   }
@@ -144,7 +149,7 @@ export default function PublicChannelCard({
   return (
     <div
       onClick={onClick}
-      className={`w-full h-[130px] flex flex-col items-center p-[16px] gap-[16px] bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
+      className={`w-[300px] shrink-0 md:w-full h-[152px] md:h-[130px] flex flex-col items-center p-[16px] gap-[16px] bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
       style={{ backdropFilter: 'blur(2px)' }}
     >
       <div className="flex flex-row items-start gap-[10px] w-full shrink-0">

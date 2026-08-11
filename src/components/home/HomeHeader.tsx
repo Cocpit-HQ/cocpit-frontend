@@ -11,6 +11,7 @@ import { SearchedUser } from '@/types/user';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { ChannelSearchBar } from '../../features/channel/public/components/ChannelSearchBar';
 import { Hash, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -132,105 +133,9 @@ export const HomeHeader = () => {
     const [jobLocationQuery, setJobLocationQuery] = useState('');
 
     // Channel search state
-    const [channelSearchQuery, setChannelSearchQuery] = useState('');
     const [channelFilter, setChannelFilter] = useState<'All' | 'Channels' | 'Articles'>('All');
     const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
-
-    // ── Suggestion autocomplete state ───────────────────────────────────────
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [highlightedIndex, setHighlightedIndex] = useState(-1);
-    const [suggestions, setSuggestions] = useState<{ text: string; kind: 'channel' | 'article'; url: string }[]>([]);
-    const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-    const suggestionRef = useRef<HTMLDivElement>(null);
-    const debouncedSuggestionQuery = useDebounce(channelSearchQuery, 250);
-
-    // Fetch suggestions whenever debounced query changes
-    useEffect(() => {
-        if (!isChannelPage || debouncedSuggestionQuery.trim().length < 1) {
-            setSuggestions([]);
-            return;
-        }
-        setSuggestionsLoading(true);
-        Promise.all([
-            channelService.searchChannels(debouncedSuggestionQuery).catch(() => []),
-            channelService.searchArticles(debouncedSuggestionQuery, 1, 5).catch(() => []),
-        ]).then(([channels, articles]) => {
-            const channelSuggestions = channels.slice(0, 4).map((c) => ({
-                text: c.name,
-                kind: 'channel' as const,
-                url: `/channels/${c.id}`
-            }));
-            const articleSuggestions = articles.slice(0, 4).map((a) => ({
-                text: a.title,
-                kind: 'article' as const,
-                url: `/channels/${a.channelId}/article/${a.id}`
-            }));
-            // Interleave: channel, article, channel, article...
-            const merged: { text: string; kind: 'channel' | 'article'; url: string }[] = [];
-            const maxLen = Math.max(channelSuggestions.length, articleSuggestions.length);
-            for (let i = 0; i < maxLen && merged.length < 6; i++) {
-                if (channelSuggestions[i]) merged.push(channelSuggestions[i]);
-                if (articleSuggestions[i] && merged.length < 6) merged.push(articleSuggestions[i]);
-            }
-            setSuggestions(merged);
-            setHighlightedIndex(-1);
-        }).finally(() => setSuggestionsLoading(false));
-    }, [debouncedSuggestionQuery, isChannelPage]);
-
-    // Close suggestion dropdown when clicking outside
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (suggestionRef.current && !suggestionRef.current.contains(e.target as Node)) {
-                setShowSuggestions(false);
-                setHighlightedIndex(-1);
-            }
-            if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
-                setFilterDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
-
-    const selectSuggestion = useCallback((item: {text: string; url?: string}) => {
-        setChannelSearchQuery(item.text);
-        setShowSuggestions(false);
-        setHighlightedIndex(-1);
-        if (item.url) {
-            router.push(item.url);
-        } else {
-            navigateChannelSearch(item.text, channelFilter);
-        }
-    }, [channelFilter, router]);
-
-    const handleChannelSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!showSuggestions || suggestions.length === 0) {
-            if (e.key === 'Enter' && channelSearchQuery.trim()) {
-                navigateChannelSearch(channelSearchQuery, channelFilter);
-                setShowSuggestions(false);
-            }
-            return;
-        }
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setHighlightedIndex((i) => Math.max(i - 1, -1));
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (highlightedIndex >= 0) {
-                selectSuggestion(suggestions[highlightedIndex]);
-            } else if (channelSearchQuery.trim()) {
-                navigateChannelSearch(channelSearchQuery, channelFilter);
-                setShowSuggestions(false);
-            }
-        } else if (e.key === 'Escape') {
-            setShowSuggestions(false);
-            setHighlightedIndex(-1);
-        }
-    };
 
     // Read URL params on the jobs page or channel search page to pre-fill the inputs
     const urlSearchParams = useSearchParams();
@@ -242,9 +147,7 @@ export const HomeHeader = () => {
             setJobLocationQuery(urlLocation);
         }
         if (isChannelSearchPage && urlSearchParams) {
-            const urlSearch = urlSearchParams.get('q') || '';
             const urlFilter = urlSearchParams.get('filter') as 'All' | 'Channels' | 'Articles' | null;
-            setChannelSearchQuery(urlSearch);
             if (urlFilter && ['All', 'Channels', 'Articles'].includes(urlFilter)) {
                 setChannelFilter(urlFilter);
             }
@@ -428,11 +331,11 @@ export const HomeHeader = () => {
     return (
         <header
             className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-0 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
-                } md:translate-y-0`}
+                } md:translate-y-0 ${isChannelSearchPage ? 'hidden md:block' : ''}`}
         >
             <div className="mx-auto flex min-h-12 min-w-0 max-w-[1128px] items-center px-0 md:min-h-[72px] md:px-4 xl:px-0">
-                {isChannelPage ? (
-                    <div className="w-full max-w-[960px] mx-auto flex items-center justify-between h-full px-4 xl:px-0">
+                {isChannelPage && (
+                    <div className="hidden md:flex w-full max-w-[960px] mx-auto items-center justify-between h-full px-4 xl:px-0">
                         <div className="flex items-center gap-[16px]">
                             <button 
                                 onClick={() => router.back()}
@@ -455,109 +358,15 @@ export const HomeHeader = () => {
                         {!isChannelDetailPage && (
                             <div className="flex items-center gap-[16px]">
                                 {/* Search pill with autocomplete */}
-                                <div className="relative w-[240px] sm:w-[320px] md:w-[380px]" ref={suggestionRef}>
-                                    <input
-                                        type="text"
+                                <div className="relative w-[240px] sm:w-[320px] md:w-[380px]">
+                                    <ChannelSearchBar
+                                        filterParam={channelFilter}
                                         placeholder="Search"
-                                        value={channelSearchQuery}
-                                        onChange={(e) => {
-                                            setChannelSearchQuery(e.target.value);
-                                            setShowSuggestions(true);
-                                        }}
-                                        onFocus={() => {
-                                            if (channelSearchQuery.trim().length >= 1) setShowSuggestions(true);
-                                        }}
-                                        onKeyDown={handleChannelSearchKeyDown}
-                                        className="w-full h-[40px] pl-[16px] pr-[44px] py-[8px] rounded-[24px] border border-[#6B7280] dark:border-[#A1A8B3] bg-transparent text-[16px] font-normal leading-[24px] text-black dark:text-white placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3] focus:outline-none focus:border-[#6366F1] dark:focus:border-[#818CF8] font-['Poppins'] transition-colors"
-                                        autoComplete="off"
+                                        containerClassName="relative flex flex-row items-center w-full"
+                                        inputClassName="w-full h-[40px] pl-[16px] pr-[44px] py-[8px] rounded-[24px] border border-[#6B7280] dark:border-[#A1A8B3] bg-transparent text-[16px] font-normal leading-[24px] text-black dark:text-white placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3] focus:outline-none focus:border-[#6366F1] dark:focus:border-[#818CF8] font-['Poppins'] transition-colors"
+                                        iconClassName="absolute right-[16px] top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-[#6B7280] dark:text-[#A1A8B3] hover:opacity-80 transition-opacity"
+                                        initialQuery={urlSearchParams?.get('q') || ''}
                                     />
-                                    <Icon
-                                        icon="lucide:search"
-                                        className="absolute right-[16px] top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-[#6B7280] dark:text-[#A1A8B3] cursor-pointer hover:opacity-80 transition-opacity"
-                                        onClick={() => {
-                                            if (channelSearchQuery.trim()) {
-                                                navigateChannelSearch(channelSearchQuery, channelFilter);
-                                                setShowSuggestions(false);
-                                            }
-                                        }}
-                                    />
-
-                                    {/* ── Autocomplete suggestion dropdown ── */}
-                                    {showSuggestions && channelSearchQuery.trim().length >= 1 && (
-                                        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[60] bg-white dark:bg-[#1C2333] border border-[#E5E7EB] dark:border-[#2A2D35] rounded-[16px] shadow-xl overflow-hidden">
-                                            {/* Current query row */}
-                                            <button
-                                                onMouseDown={(e) => { e.preventDefault(); navigateChannelSearch(channelSearchQuery, channelFilter); setShowSuggestions(false); }}
-                                                className={`w-full flex items-center gap-[12px] px-[16px] py-[10px] hover:bg-[#F9FAFB] dark:hover:bg-[#232D3F] transition-colors ${
-                                                    highlightedIndex === -1 ? 'bg-[#F9FAFB] dark:bg-[#232D3F]' : ''
-                                                }`}
-                                            >
-                                                <div className="w-[32px] h-[32px] rounded-full bg-[#EEF2FF] dark:bg-[#1e1b4b] flex items-center justify-center shrink-0">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                                                    </svg>
-                                                </div>
-                                                <span className="text-black dark:text-white text-[14px] font-medium font-['Poppins'] flex-1 text-left truncate">
-                                                    {channelSearchQuery}
-                                                </span>
-                                                <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[11px] font-['Poppins'] shrink-0">Search</span>
-                                            </button>
-
-                                            {/* Suggestions */}
-                                            {suggestionsLoading ? (
-                                                <div className="px-[16px] py-[12px] flex gap-2 items-center">
-                                                    <div className="w-4 h-4 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
-                                                    <span className="text-[#6B7280] text-[13px] font-['Poppins']">Loading...</span>
-                                                </div>
-                                            ) : (
-                                                suggestions.map((s, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
-                                                        onMouseEnter={() => setHighlightedIndex(idx)}
-                                                        className={`w-full flex items-center gap-[12px] px-[16px] py-[10px] transition-colors ${
-                                                            highlightedIndex === idx
-                                                                ? 'bg-[#F3F4F6] dark:bg-[#232D3F]'
-                                                                : 'hover:bg-[#F9FAFB] dark:hover:bg-[#1e2436]'
-                                                        }`}
-                                                    >
-                                                        {/* Icon */}
-                                                        <div className="w-[32px] h-[32px] rounded-full bg-[#F3F4F6] dark:bg-[#2A2D35] flex items-center justify-center shrink-0">
-                                                            {s.kind === 'channel' ? (
-                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                                                                </svg>
-                                                            ) : (
-                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
-                                                                </svg>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Text */}
-                                                        <span className="text-black dark:text-white text-[14px] font-normal font-['Poppins'] flex-1 text-left truncate">
-                                                            {s.text}
-                                                        </span>
-
-                                                        {/* Type badge */}
-                                                        <span className={`text-[10px] font-semibold font-['Poppins'] px-[8px] py-[2px] rounded-full shrink-0 ${
-                                                            s.kind === 'channel'
-                                                                ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b] text-[#6366F1] dark:text-[#818CF8]'
-                                                                : 'bg-[#F0FDF4] dark:bg-[#052e16] text-[#16A34A] dark:text-[#4ade80]'
-                                                        }`}>
-                                                            {s.kind === 'channel' ? 'Channel' : 'Article'}
-                                                        </span>
-                                                    </button>
-                                                ))
-                                            )}
-
-                                            {!suggestionsLoading && suggestions.length === 0 && (
-                                                <div className="px-[16px] py-[10px] text-[13px] text-[#6B7280] dark:text-[#A1A8B3] font-['Poppins']">
-                                                    No suggestions found
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Filter icon + dropdown — only on search page */}
@@ -583,7 +392,7 @@ export const HomeHeader = () => {
                                                         onClick={() => {
                                                             setChannelFilter(f);
                                                             setFilterDropdownOpen(false);
-                                                            navigateChannelSearch(channelSearchQuery, f);
+                                                            navigateChannelSearch(urlSearchParams?.get('q') || '', f);
                                                         }}
                                                         className={`w-full text-left px-[20px] py-[12px] font-['Poppins'] text-[15px] leading-[22px] transition-colors ${
                                                             channelFilter === f
@@ -601,7 +410,9 @@ export const HomeHeader = () => {
                             </div>
                         )}
                     </div>
-                ) : (
+                )}
+                
+                {!isChannelPage && (
                     <>
                         {/* --- Desktop Header (Visible from md screens up) --- */}
                         <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-auto max-w-[998px] h-full gap-4">
@@ -1152,12 +963,26 @@ export const HomeHeader = () => {
                         </div>
                     </div>
                 </div>
+                </>
+                )}
 
                 {/* --- Mobile Header (Hidden from md screens up) --- */}
-                <div className={`relative w-full items-center gap-2 md:hidden ${isCreateJobActive ? 'hidden' : 'flex'}`}>
+                <div className={`relative w-full items-center gap-2 md:hidden ${isCreateJobActive || isChannelSearchPage ? 'hidden' : 'flex'}`}>
                     {/* Mobile Search Bar */}
-                    <div className="flex-1 flex items-center gap-3 relative">
-                        <input
+                    {isChannelPage ? (
+                        <div className="flex-1 flex items-center gap-3 relative">
+                            <ChannelSearchBar
+                                filterParam={channelFilter}
+                                placeholder="Search"
+                                containerClassName="w-full relative flex flex-row items-center"
+                                inputClassName="w-full pl-4 pr-10 py-2.5 bg-transparent border border-border focus:border-primary rounded-full text-sm transition-all outline-none text-foreground"
+                                iconClassName="w-4 h-4 text-primary absolute right-3 cursor-pointer"
+                                initialQuery={urlSearchParams?.get('q') || ''}
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex items-center gap-3 relative">
+                            <input
                             type="text"
                             placeholder={pathname === '/jobs' || pathname.startsWith('/jobs/') ? "Search jobs" : "Search"}
                             value={searchQuery}
@@ -1366,6 +1191,7 @@ export const HomeHeader = () => {
                             </div>
                         )}
                     </div>
+                    )}
 
                     {/* Mobile Icons */}
                     {!isSearchFocused && (
@@ -1400,8 +1226,6 @@ export const HomeHeader = () => {
                         </div>
                     )}
                 </div>
-                </>
-                )}
             </div>
         </header>
     );

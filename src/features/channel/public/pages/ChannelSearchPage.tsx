@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as channelService from '../../services/channel.service';
 import type { SearchedArticle } from '../../services/channel.service';
 import type { Channel } from '../../types/channel.types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChannelSearchBar } from '../components/ChannelSearchBar';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type FilterType = 'All' | 'Channels' | 'Articles';
@@ -52,10 +53,10 @@ function ArticleCard({ article, onClick }: { article: SearchedArticle; onClick: 
   return (
     <div
       onClick={onClick}
-      className="w-full flex flex-row items-start gap-[16px] cursor-pointer group"
+      className="w-full flex flex-col md:flex-row items-start gap-[10px] md:gap-[16px] group cursor-pointer p-0 md:p-[16px] border border-transparent hover:border-transparent md:hover:border-[#EEF2FF] dark:md:hover:border-[#1C2340] rounded-[16px] hover:bg-transparent md:hover:bg-[#F9FAFB] dark:md:hover:bg-[#121B2B] transition-all"
     >
-      {/* Thumbnail */}
-      <div className="w-[140px] sm:w-[177px] h-[88.5px] rounded-[24px] overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-800">
+      {/* Image */}
+      <div className="w-full md:w-[177px] aspect-[2/1] md:aspect-auto md:h-[88.5px] rounded-[12px] overflow-hidden shrink-0 bg-gray-100 dark:bg-[#1C2333] border border-gray-100 dark:border-[#2A2D35]">
         {article.coverImage ? (
           <img
             src={article.coverImage}
@@ -73,11 +74,11 @@ function ArticleCard({ article, onClick }: { article: SearchedArticle; onClick: 
       </div>
 
       {/* Text */}
-      <div className="flex flex-col gap-[8px] flex-1 min-w-0 py-1">
-        <h5 className="text-black dark:text-white text-[16px] sm:text-[18px] font-medium leading-[24px] sm:leading-[26px] font-['Poppins'] line-clamp-1 group-hover:text-[#6366F1] dark:group-hover:text-[#818CF8] transition-colors">
+      <div className="flex flex-col gap-[4px] md:gap-[8px] w-full flex-1 min-w-0 md:py-1">
+        <h5 className="text-black dark:text-white text-[14px] md:text-[18px] font-semibold md:font-medium leading-[20px] md:leading-[26px] font-['Poppins'] line-clamp-1 group-hover:text-[#6366F1] dark:group-hover:text-[#818CF8] transition-colors">
           {article.title || 'Untitled Article'}
         </h5>
-        <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[14px] sm:text-[16px] font-normal leading-[22px] sm:leading-[24px] font-['Poppins'] line-clamp-2">
+        <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] md:text-[16px] font-normal leading-[16px] md:leading-[24px] font-['Poppins'] line-clamp-2 md:line-clamp-2">
           {article.excerpt || 'No preview available.'}
         </p>
       </div>
@@ -96,11 +97,11 @@ function ChannelCard({
   onClickChannel: () => void;
 }) {
   return (
-    <div className="w-full flex items-center gap-[16px] p-[16px] bg-white dark:bg-[#121B2B] border border-[#EEF2FF] dark:border-[#1C2340] rounded-[12px] hover:shadow-sm transition-shadow">
+    <div className="w-full flex items-center gap-[10px] md:gap-[16px] p-0 md:p-[16px] bg-transparent md:bg-white dark:md:bg-[#121B2B] border-none md:border md:border-[#EEF2FF] dark:md:border-[#1C2340] rounded-[12px] hover:shadow-none md:hover:shadow-sm transition-shadow">
       {/* Logo */}
       <div
         onClick={onClickChannel}
-        className="w-[80px] h-[80px] rounded-[12px] overflow-hidden shrink-0 bg-gray-100 dark:bg-[#1C2333] border border-gray-100 dark:border-[#2A2D35] cursor-pointer"
+        className="w-[64px] md:w-[80px] h-[64px] md:h-[80px] rounded-[12px] overflow-hidden shrink-0 bg-gray-100 dark:bg-[#1C2333] border border-gray-100 dark:border-[#2A2D35] cursor-pointer"
       >
         {channel.logoUrl ? (
           <img src={channel.logoUrl} alt={channel.name} className="w-full h-full object-cover" />
@@ -114,15 +115,15 @@ function ChannelCard({
       </div>
 
       {/* Info */}
-      <div onClick={onClickChannel} className="flex flex-col gap-[4px] flex-1 min-w-0 cursor-pointer">
+      <div onClick={onClickChannel} className="flex flex-col gap-[0px] md:gap-[4px] flex-1 min-w-0 cursor-pointer">
         <h4 className="text-black dark:text-white text-[16px] font-semibold leading-[24px] font-['Poppins'] truncate">
           {channel.name}
         </h4>
         <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-normal leading-[16px] font-['Poppins'] truncate">
           {channel.companyName || 'Channel'}
         </p>
-        <p className="text-black dark:text-white text-[12px] font-medium leading-[16px] font-['Poppins']">
-          {formatCount(channel.subscriberCount || 0)} subscribers
+        <p className="text-black dark:text-white text-[12px] font-semibold md:font-medium leading-[24px] md:leading-[16px] font-['Poppins']">
+          {formatCount(channel.subscriberCount || 0)} Subscriber
         </p>
       </div>
 
@@ -133,7 +134,7 @@ function ChannelCard({
             e.stopPropagation();
             onToggleSubscribe();
           }}
-          className={`shrink-0 w-[142px] h-[40px] rounded-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] transition-all active:scale-95 flex items-center justify-center ${
+          className={`hidden md:flex shrink-0 w-[142px] h-[40px] rounded-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] transition-all active:scale-95 items-center justify-center ${
             channel.isSubscribed
               ? 'bg-transparent border border-[#6366F1] dark:border-[#818CF8] text-[#6366F1] dark:text-[#818CF8] hover:bg-[#6366F1]/10'
               : 'bg-[#6366F1] dark:bg-[#818CF8] text-white hover:opacity-90'
@@ -149,12 +150,12 @@ function ChannelCard({
 // ── Skeleton loaders ───────────────────────────────────────────────────────────
 function ArticleSkeleton() {
   return (
-    <div className="w-full flex flex-row items-start gap-[16px]">
-      <Skeleton className="w-[140px] sm:w-[177px] h-[88.5px] rounded-[24px] shrink-0" />
-      <div className="flex flex-col gap-[8px] flex-1 min-w-0 py-1">
-        <Skeleton className="h-[20px] w-3/4" />
-        <Skeleton className="h-[16px] w-full" />
-        <Skeleton className="h-[16px] w-5/6" />
+    <div className="w-full flex flex-col md:flex-row items-start gap-[10px] md:gap-[16px] p-0 md:p-[16px]">
+      <Skeleton className="w-full md:w-[177px] aspect-[2/1] md:aspect-auto md:h-[88.5px] rounded-[12px] shrink-0" />
+      <div className="flex flex-col gap-[4px] md:gap-[8px] w-full flex-1 min-w-0 md:py-1">
+        <Skeleton className="h-[20px] md:h-[26px] w-3/4" />
+        <Skeleton className="h-[16px] md:h-[24px] w-full mt-1" />
+        <Skeleton className="h-[16px] md:h-[24px] w-5/6 hidden md:block" />
       </div>
     </div>
   );
@@ -162,14 +163,14 @@ function ArticleSkeleton() {
 
 function ChannelSkeleton() {
   return (
-    <div className="w-full flex items-center gap-[16px] p-[16px] border border-[#EEF2FF] dark:border-[#1C2340] rounded-[12px]">
-      <Skeleton className="w-[80px] h-[80px] rounded-[12px] shrink-0" />
-      <div className="flex flex-col gap-[6px] flex-1">
-        <Skeleton className="h-[16px] w-2/5" />
-        <Skeleton className="h-[12px] w-1/4" />
-        <Skeleton className="h-[12px] w-1/3" />
+    <div className="w-full flex items-center gap-[10px] md:gap-[16px] p-0 md:p-[16px] border-none md:border md:border-[#EEF2FF] dark:md:border-[#1C2340] rounded-[12px]">
+      <Skeleton className="w-[64px] md:w-[80px] h-[64px] md:h-[80px] rounded-[12px] shrink-0" />
+      <div className="flex flex-col gap-[2px] md:gap-[6px] flex-1">
+        <Skeleton className="h-[16px] md:h-[24px] w-2/5" />
+        <Skeleton className="h-[12px] md:h-[16px] w-1/4 mt-1" />
+        <Skeleton className="h-[12px] md:h-[16px] w-1/3" />
       </div>
-      <Skeleton className="w-[142px] h-[40px] rounded-[24px] shrink-0" />
+      <Skeleton className="hidden md:block w-[142px] h-[40px] rounded-[24px] shrink-0" />
     </div>
   );
 }
@@ -179,9 +180,10 @@ export default function ChannelSearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-
   const query = searchParams?.get('q') || '';
   const filterParam = (searchParams?.get('filter') || 'All') as FilterType;
+
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const showChannels = filterParam === 'All' || filterParam === 'Channels';
   const showArticles = filterParam === 'All' || filterParam === 'Articles';
@@ -234,6 +236,40 @@ export default function ChannelSearchPage() {
   return (
     <div className="w-full min-h-screen bg-white dark:bg-[#0F1115] pb-16">
       <div className="w-full max-w-[960px] mx-auto pt-4 md:pt-6 px-4 xl:px-0 flex flex-col gap-[24px]">
+
+        {/* ── Custom Mobile Header ── */}
+        <div className="md:hidden flex flex-col gap-[24px]">
+          {/* Top Bar */}
+          <div className="flex flex-row items-center gap-[8px]">
+            <button
+              onClick={() => router.back()}
+              className="w-[48px] h-[48px] rounded-[100px] border border-[#DADADA] dark:border-[#2E3445] backdrop-blur-[12px] flex items-center justify-center shrink-0"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#6B7280] dark:text-[#A1A8B3]">
+                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <div className="flex flex-col">
+              <span className="text-black dark:text-white text-[16px] font-medium font-['Poppins'] leading-[24px]">
+                Search
+              </span>
+              <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-normal font-['Poppins'] leading-[16px]">
+                Find the channel, article you want
+              </span>
+            </div>
+          </div>
+
+          {/* Search Bar Row */}
+          <div className="flex flex-row items-center gap-[16px] w-full">
+            <ChannelSearchBar 
+              initialQuery={query}
+              filterParam={filterParam}
+              placeholder="Tech"
+              showFilterIcon={true}
+              onFilterClick={() => setIsMobileFilterOpen(true)}
+            />
+          </div>
+        </div>
 
         {/* Active filter badge */}
         {filterParam !== 'All' && (
@@ -311,6 +347,40 @@ export default function ChannelSearchPage() {
           )}
         </div>
       </div>
+
+      {/* Mobile Filter Modal */}
+      {isMobileFilterOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-[100] bg-black/40 md:hidden"
+            onClick={() => setIsMobileFilterOpen(false)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 z-[101] bg-white dark:bg-[#0F1115] border-t border-[#EEF2FF] dark:border-[#1C2340] rounded-t-[24px] p-2 pb-10 flex flex-col items-center gap-2 md:hidden animate-in slide-in-from-bottom-full duration-300">
+            {/* Handle for bottom sheet */}
+            <div className="w-10 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full my-2 mb-4" />
+            
+            {(['All', 'Channels', 'Articles'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (query) params.set('q', query);
+                  if (filter !== 'All') params.set('filter', filter);
+                  router.push(`/channels/search?${params.toString()}`);
+                  setIsMobileFilterOpen(false);
+                }}
+                className={`w-full max-w-[359px] h-[40px] flex items-center  rounded-[24px] bg-white dark:bg-[#121B2B] ${
+                  filterParam === filter
+                    ? 'text-[#6366F1] dark:text-[#818CF8]'
+                    : 'text-black dark:text-white'
+                } font-['Poppins'] font-normal text-[14px] leading-[20px] transition-colors`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

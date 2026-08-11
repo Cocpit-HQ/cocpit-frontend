@@ -52,54 +52,54 @@ export default function ChannelArticleCard({ article, onClick, onEdit, onDelete 
     <>
       <div
         onClick={onClick}
-        className={`w-full flex items-center gap-6 py-2 ${onClick ? 'cursor-pointer' : ''}`}
+        className={`w-full flex items-start md:items-center gap-4 md:gap-6 py-0 md:py-2 ${onClick ? 'cursor-pointer' : ''}`}
       >
-        <div className="relative w-[180px] h-[100px] flex-shrink-0 rounded-[16px] overflow-hidden bg-gray-100 dark:bg-[#121B2B]">
+        <div className="relative w-[100px] md:w-[180px] h-[50px] md:h-[100px] flex-shrink-0 rounded-[12px] md:rounded-[16px] overflow-hidden bg-gray-100 dark:bg-[#121B2B]">
           {article.coverImage && (
             <img src={article.coverImage} alt={article.title} className="w-full h-full object-cover" />
           )}
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center py-2">
-          <div className="flex items-center gap-2.5 mb-0.5">
+        <div className="flex-1 min-w-0 flex flex-col gap-[4px] justify-start md:justify-center py-0 md:py-2">
+          <div className="flex items-center gap-[4px] md:gap-2.5 mb-0 md:mb-0.5">
             {article.status === 'draft' && (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold font-['Poppins'] uppercase bg-slate-100 dark:bg-[#2A2D35] text-slate-500 dark:text-[#A1A8B3]">
+              <span className="px-2 py-0.5 rounded-full text-[10px] md:text-[11px] font-bold font-['Poppins'] uppercase bg-slate-100 dark:bg-[#2A2D35] text-slate-500 dark:text-[#A1A8B3]">
                 Draft
               </span>
             )}
-            <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-medium font-['Poppins']">
+            <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[10px] md:text-[12px] font-normal md:font-medium font-['Poppins'] leading-[16px] md:leading-normal">
               {formatDate(article.publishedAt || article.updatedAt)}
             </span>
             {(isEdited || (article.status === 'draft' && article.updatedAt)) && (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium font-['Poppins'] bg-[#E5E7EB] dark:bg-[#2A2D35] text-[#6B7280] dark:text-[#D1D5DB]">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] md:text-[11px] font-medium font-['Poppins'] leading-[16px] md:leading-normal bg-[#E5E7EB] dark:bg-[#2A2D35] text-[#6B7280] dark:text-[#D1D5DB]">
                 Edited {timeAgo(article.updatedAt || article.publishedAt)}
               </span>
             )}
           </div>
-          <h4 className="text-black dark:text-[#FFFFFF] text-[15px] font-bold font-['Poppins'] truncate">
+          <h4 className="text-black dark:text-[#FFFFFF] text-[14px] md:text-[15px] font-medium md:font-bold font-['Poppins'] leading-[16px] md:leading-normal line-clamp-2 md:truncate">
             {article.title}
           </h4>
-          <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[13px] font-['Poppins'] truncate mt-0.5">
+          <p className="hidden md:block text-[#6B7280] dark:text-[#9CA3AF] text-[13px] font-['Poppins'] truncate mt-0.5">
             {getDisplayExcerpt(article)}
           </p>
         </div>
 
         <div
-          className="flex items-center gap-4 flex-shrink-0 ml-4 h-full"
+          className="flex items-end md:items-center gap-4 flex-shrink-0 ml-0 md:ml-4 h-[50px] md:h-full pb-1 md:pb-0"
           onClick={(e) => e.stopPropagation()}
         >
           {showOwnerActions && (
             <>
               <button
                 onClick={onEdit}
-                className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] dark:hover:text-[#4D9CFF] transition-colors"
+                className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] dark:hover:text-[#4D9CFF] transition-colors p-2 -m-2 md:p-0 md:m-0"
                 title="Edit"
               >
                 <Icon icon="fluent:edit-24-regular" className="w-[24px] h-[24px]" />
               </button>
               <button
                 onClick={onDelete}
-                className="text-black dark:text-[#FFFFFF] hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                className="text-black dark:text-[#FFFFFF] hover:text-red-500 dark:hover:text-red-400 transition-colors p-2 -m-2 md:p-0 md:m-0"
                 title="Delete"
               >
                 <Icon icon="fluent:delete-24-regular" className="w-[24px] h-[24px]" />
@@ -108,7 +108,7 @@ export default function ChannelArticleCard({ article, onClick, onEdit, onDelete 
           )}
           <button
             onClick={() => setIsShareModalOpen(true)}
-            className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] dark:hover:text-[#4D9CFF] transition-colors"
+            className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] dark:hover:text-[#4D9CFF] transition-colors p-2 -m-2 md:p-0 md:m-0"
             title="Share"
           >
             <Icon icon="fluent:share-24-regular" className="w-[24px] h-[24px]" />

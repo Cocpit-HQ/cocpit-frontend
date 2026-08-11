@@ -18,9 +18,9 @@ export default function MySubscriptionsList() {
         </div>
         <div className="w-full flex flex-col gap-4">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="w-full flex items-center justify-between p-4 rounded-[12px] border border-[#EEF2FF] dark:border-[#1C2340] bg-white dark:bg-[#121B2B]">
-              <div className="flex items-center gap-[10px] w-full">
-                <Skeleton className="w-[48px] h-[48px] rounded-[12px] shrink-0" />
+            <div key={i} className="w-full flex items-center justify-between p-0 md:p-4 rounded-none md:rounded-[12px] border-none md:border md:border-[#EEF2FF] dark:border-[#1C2340] bg-transparent md:bg-white md:dark:bg-[#121B2B]">
+              <div className="flex items-center gap-[10px] md:gap-[8px] w-full">
+                <Skeleton className="w-[64px] md:w-[48px] h-[64px] md:h-[48px] rounded-[12px] shrink-0" />
                 <div className="flex flex-col gap-2 w-1/3">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-3 w-3/4" />

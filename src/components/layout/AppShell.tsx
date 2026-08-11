@@ -28,6 +28,10 @@ export function AppShell({
   const searchParams = useSearchParams();
   const isCreateJobActive = searchParams?.get('view') === 'create-job';
 
+  // Automatically hide bottom nav on article pages
+  const isArticlePage = pathname?.includes('/article/');
+  const shouldHideBottomNav = hideBottomNav || isArticlePage;
+
   return (
     <div className="relative flex min-h-screen bg-background text-foreground">
       {/* Desktop sidebar */}
@@ -36,13 +40,15 @@ export function AppShell({
       </div>
 
       {/* Main content */}
-      <main className={`min-w-0 flex-1 w-full md:ml-[232px] ${hideBottomNav ? "" : "pb-16"} md:pb-0`}>
-        <HomeHeader />
+      <main className={`min-w-0 flex-1 w-full md:ml-[232px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0`}>
+        <div className={pathname?.startsWith('/channels/') ? "hidden md:block" : ""}>
+          <HomeHeader />
+        </div>
         {children}
       </main>
 
       {/* Mobile bottom navigation */}
-      {!hideBottomNav && (
+      {!shouldHideBottomNav && (
         <>
           {!pathname?.startsWith('/organization/') && !pathname?.includes('/jobs/') && !isCreateJobActive && (
             <TooltipProvider delayDuration={0}>

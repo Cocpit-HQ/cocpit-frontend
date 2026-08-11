@@ -13,6 +13,7 @@ interface PublicChannelThoughtsPanelProps {
   isSubscribed: boolean;
   isOwner?: boolean;
   channelOrgId?: string;
+  isMobileModal?: boolean;
 }
 
 const timeAgo = (iso: string) => {
@@ -26,7 +27,7 @@ const timeAgo = (iso: string) => {
   return `${days}d ago`;
 };
 
-export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, isOwner, channelOrgId }: PublicChannelThoughtsPanelProps) {
+export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, isOwner, channelOrgId, isMobileModal }: PublicChannelThoughtsPanelProps) {
   const { activeProfile } = useActiveProfile();
   const { thoughts, addThought, deleteThought, error } = usePublicChannelThoughts(articleId, isSubscribed);
   const [draft, setDraft] = useState('');
@@ -77,11 +78,13 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
 
   return (
     <div className="w-full h-full flex flex-col bg-white dark:bg-[#0F1115]">
-      <div className="px-4 pt-6 pb-4">
-        <h3 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold font-['Poppins'] flex items-center gap-2">
-          Thoughts <span className="text-[#9CA3AF] text-[14px] font-normal">({isSubscriptionError ? 0 : thoughts.length})</span>
-        </h3>
-      </div>
+      {!isMobileModal && (
+        <div className="px-4 pt-6 pb-4">
+          <h3 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold font-['Poppins'] flex items-center gap-2">
+            Thoughts <span className="text-[#9CA3AF] text-[14px] font-normal">({isSubscriptionError ? 0 : thoughts.length})</span>
+          </h3>
+        </div>
+      )}
 
       <div className="px-4 flex flex-col gap-3 pb-6 border-b border-transparent">
         <div className="relative w-full flex flex-col">
@@ -146,13 +149,13 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
         ) : (
           filteredRoots.map((thought) => (
             <div key={thought.id} className="flex flex-col gap-2">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <img
                   src={thought.authorAvatarUrl}
                   alt={thought.authorName}
-                  className="w-[36px] h-[36px] rounded-full object-cover flex-shrink-0"
+                  className="w-[40px] h-[40px] rounded-full object-cover flex-shrink-0 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]"
                 />
-                <div className="min-w-0 flex-1 flex flex-col">
+                <div className="min-w-0 flex-1 flex flex-col pt-0.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[#000000] dark:text-[#FFFFFF] text-[14px] font-medium leading-[20px] font-['Poppins']">
                       {thought.authorName}
@@ -164,10 +167,10 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                   <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[14px] font-normal font-['Poppins'] mt-1 leading-[21px]">
                     {thought.text}
                   </p>
-                  <div className="flex items-center justify-between w-full mt-3">
+                  <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={() => setReplyingTo({ id: thought.id, name: thought.authorName })}
-                      className="flex items-center gap-1.5 text-[13px] text-[#3B82F6] hover:opacity-80 font-medium font-['Poppins']"
+                      className="flex items-center gap-1.5 px-[6px] py-[6px] rounded-[8px] text-[12px] text-[#6366F1] hover:bg-[#6366F1]/10 font-normal font-['Poppins'] transition-colors"
                     >
                       <Icon icon="ion:arrow-undo-outline" className="w-4 h-4" />
                       Reply
@@ -175,7 +178,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                     {((isOwner && activeProfile?.id === channelOrgId) || thought.authorId === activeProfile?.id) ? (
                       <button
                         onClick={() => deleteThought(thought.id)}
-                        className="flex items-center gap-1.5 text-[13px] text-[#EF4444] hover:opacity-80 font-medium font-['Poppins']"
+                        className="flex items-center gap-1.5 px-[6px] py-[6px] rounded-[8px] text-[12px] text-[#EF4444] hover:bg-[#EF4444]/10 font-normal font-['Poppins'] transition-colors"
                       >
                         <Icon icon="fluent:delete-16-regular" className="w-4 h-4" />
                         Delete
@@ -183,7 +186,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
                     ) : (
                       <button
                         onClick={() => { setReportTargetId(thought.id); setIsReportModalOpen(true); }}
-                        className="flex items-center gap-1.5 text-[13px] text-[#6B7280] dark:text-[#A1A8B3] hover:opacity-80 font-medium font-['Poppins']"
+                        className="flex items-center gap-1.5 px-[6px] py-[6px] rounded-[8px] text-[12px] text-[#000000] dark:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 font-normal font-['Poppins'] transition-colors"
                       >
                         <Icon icon="fluent:info-16-regular" className="w-4 h-4" />
                         Report
@@ -194,48 +197,48 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
               </div>
 
               {replyMap.has(thought.id) && (
-                <div className="ml-10 mt-1 pl-3 border-l-2 border-gray-100 dark:border-[#2A2D35] flex flex-col gap-4">
+                <div className="ml-10 mt-1 pl-4 border-l border-[#EFF4FF] dark:border-[#2A2D35] flex flex-col gap-6">
                   {replyMap.get(thought.id)!.map((reply) => (
                     <div key={reply.id} className="flex items-start gap-3">
                       <img
                         src={reply.authorAvatarUrl}
                         alt={reply.authorName}
-                        className="w-[28px] h-[28px] rounded-full object-cover flex-shrink-0"
+                        className="w-[40px] h-[40px] rounded-full object-cover flex-shrink-0 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]"
                       />
-                      <div className="min-w-0 flex-1 flex flex-col">
+                      <div className="min-w-0 flex-1 flex flex-col pt-0.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-[#000000] dark:text-[#FFFFFF] text-[13px] font-medium leading-[18px] font-['Poppins']">
+                          <span className="text-[#000000] dark:text-[#FFFFFF] text-[14px] font-bold leading-[20px] font-['Inter']">
                             {reply.authorName}
                           </span>
-                          <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[11px] font-normal leading-[16px] font-['Poppins']">
+                          <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-normal leading-[24px] font-['Poppins']">
                             {timeAgo(reply.createdAt)}
                           </span>
                         </div>
-                        <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[13px] font-normal font-['Poppins'] mt-0.5 leading-[19px]">
+                        <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[14px] font-normal font-['Poppins'] mt-1 leading-[23px]">
                           {reply.text}
                         </p>
-                        <div className="flex items-center justify-between w-full mt-2">
+                        <div className="flex items-center gap-2 mt-2">
                           <button
                             onClick={() => setReplyingTo({ id: thought.id, name: reply.authorName })}
-                            className="flex items-center gap-1 text-[12px] text-[#3B82F6] hover:opacity-80 font-medium font-['Poppins']"
+                            className="flex items-center gap-1.5 px-[6px] py-[6px] rounded-[8px] text-[12px] text-[#6366F1] hover:bg-[#6366F1]/10 font-normal font-['Poppins'] transition-colors"
                           >
-                            <Icon icon="ion:arrow-undo-outline" className="w-3.5 h-3.5" />
+                            <Icon icon="ion:arrow-undo-outline" className="w-4 h-4" />
                             Reply
                           </button>
                           {((isOwner && activeProfile?.id === channelOrgId) || reply.authorId === activeProfile?.id) ? (
                             <button
                               onClick={() => deleteThought(reply.id)}
-                              className="flex items-center gap-1 text-[12px] text-[#EF4444] hover:opacity-80 font-medium font-['Poppins']"
+                              className="flex items-center gap-1.5 px-[6px] py-[6px] rounded-[8px] text-[12px] text-[#EF4444] hover:bg-[#EF4444]/10 font-normal font-['Poppins'] transition-colors"
                             >
-                              <Icon icon="fluent:delete-16-regular" className="w-3.5 h-3.5" />
+                              <Icon icon="fluent:delete-16-regular" className="w-4 h-4" />
                               Delete
                             </button>
                           ) : (
                             <button
                               onClick={() => { setReportTargetId(reply.id); setIsReportModalOpen(true); }}
-                              className="flex items-center gap-1 text-[12px] text-[#6B7280] dark:text-[#A1A8B3] hover:opacity-80 font-medium font-['Poppins']"
+                              className="flex items-center gap-1.5 px-[6px] py-[6px] rounded-[8px] text-[12px] text-[#000000] dark:text-[#FFFFFF] hover:bg-black/5 dark:hover:bg-white/5 font-normal font-['Poppins'] transition-colors"
                             >
-                              <Icon icon="fluent:info-16-regular" className="w-3.5 h-3.5" />
+                              <Icon icon="fluent:info-16-regular" className="w-4 h-4" />
                               Report
                             </button>
                           )}
