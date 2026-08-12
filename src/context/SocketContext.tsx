@@ -379,19 +379,25 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleTyping = (payload: TypingPayload) => {
-      if (payload.conversationId && payload.senderId !== session?.user?.id) {
+      if (
+        payload.conversationId &&
+        String(payload.senderId) !== String(session?.user?.id) &&
+        String(payload.senderId) !== String(activeProfileRef.current?.id)
+      ) {
+        const convId = String(payload.conversationId);
         setTypingConversations(prev => ({
           ...prev,
-          [payload.conversationId]: payload.username || "Someone"
+          [convId]: payload.username || "Someone"
         }));
       }
     };
 
     const handleStopTyping = (payload: TypingPayload) => {
       if (payload.conversationId) {
+        const convId = String(payload.conversationId);
         setTypingConversations(prev => {
           const next = { ...prev };
-          delete next[payload.conversationId];
+          delete next[convId];
           return next;
         });
       }

@@ -2,40 +2,41 @@ import { BackendChat, BackendMessage, ChatThread, Message } from "@/types/messag
 import { UserStatusPayload } from "@/types/socket"; // We might need this later if we map status
 
 // Helper to format time (simplified)
-export const formatTime = (isoString: string): string => {
+export const formatTime = (isoString?: string): string => {
+  if (!isoString) return '';
   const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 export const formatTimeAgo = (isoString: string): string => {
   if (!isoString) return '';
   const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString;
+
   const now = new Date();
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
-  // Check if it's today
-  const isToday = date.getDate() === now.getDate() &&
-                  date.getMonth() === now.getMonth() &&
-                  date.getFullYear() === now.getFullYear();
-
-  if (isToday) {
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  if (diffMinutes < 60) {
+    return "Just now";
   }
 
-  // Calculate difference in days (ignoring time of day)
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  }
+
   const dateAtMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const nowAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffDays = Math.floor((nowAtMidnight.getTime() - dateAtMidnight.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays >= 1 && diffDays <= 7) {
-    return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
-  }
-  
-  if (diffDays > 7) {
-    const diffWeeks = Math.floor(diffDays / 7);
-    return `${diffWeeks} week${diffWeeks > 1 ? 's' : ''}`;
+  if (diffDays <= 7) {
+    return `${Math.max(1, diffDays)} day${diffDays > 1 ? 's' : ''}`;
   }
 
-  return date.toLocaleDateString('en-GB');
+  const diffWeeks = Math.floor(diffDays / 7);
+  return `${Math.max(1, diffWeeks)} week${diffWeeks > 1 ? 's' : ''}`;
 };
 
 export const isPostUrl = (text?: string): boolean => {
@@ -60,6 +61,18 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
   if (!backendChat.other_user_id && !backendChat.is_group) {
     console.warn(`Conversation ${backendChat.conversation_id} is missing 'other_user_id'. This conversation might not support direct messaging.`);
   }
+  const unreadRaw = typeof backendChat.unread_count === 'number'
+    ? backendChat.unread_count
+    : (typeof (backendChat as any).unread === 'number' ? (backendChat as any).unread : undefined);
+
+  const isUnreadFlag = backendChat.is_read === false || (backendChat as any).isRead === false;
+
+  const calculatedUnread = unreadRaw !== undefined 
+    ? unreadRaw 
+    : (isUnreadFlag ? 1 : 0);
+
+  const finalUnread = isUnreadFlag ? Math.max(1, calculatedUnread) : calculatedUnread;
+
   return {
     id: backendChat.conversation_id,
     name: backendChat.other_user_name || "Deleted User",
@@ -75,7 +88,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
       : (backendChat.timeAgo || ""),
-    unread: backendChat.unread_count,
+    unread: finalUnread,
     avatar: backendChat.other_user_avatar || "gradient-1", // Use the URL if present, or fallback to a gradient default
     online: false, // Default to false, updated via socket
     pinnedContext: undefined,
@@ -90,7 +103,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     is_requesting: backendChat.is_requesting || false,
     invitation_id: backendChat.invitation_id,
     request_source: backendChat.request_source,
-    is_read: backendChat.is_read || false,
+    is_read: backendChat.is_read ?? true,
     is_muted: backendChat.is_muted || false,
     muted_until: backendChat.muted_until || null,
     isJobChat: backendChat.is_job_chat || false,

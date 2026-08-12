@@ -58,6 +58,7 @@ interface MessageBubbleProps {
   conversationId?: string
   otherUserType?: "COMPANY" | "USER"
   otherUserSlug?: string
+  chatAvatar?: string
 }
 
 // --- Hooks ---
@@ -1082,6 +1083,7 @@ function MessageBubble(props: MessageBubbleProps) {
     conversationId,
     otherUserType,
     otherUserSlug,
+    chatAvatar,
   } = props
 
   const isMe = message.sender === "me"
@@ -1400,32 +1402,36 @@ function MessageBubble(props: MessageBubbleProps) {
                         onClick={() => onReplyClick?.(message.repliedMessage!.messageId)}
                       />
                     )}
-                    <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
-                    {message.sharedProfileId && message.sharedProfileType && (
-                      <div className="mt-1 mb-2">
-                        <ProfilePreviewCard
-                          profile={message.sharedProfile || { name: "Profile", avatar: null }}
-                          profileId={message.sharedProfileId}
-                          profileType={message.sharedProfileType}
-                        />
-                      </div>
-                    )}
-                    {/* Universal Entity Preview — for new share messages */}
-                    {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && message.entityType !== 'job' && message.entityType !== 'offer' && (
-                      <div className="mt-1 mb-2">
-                        <EntityPreviewCard
-                          entityType={message.entityType}
-                          entityId={message.entityId}
-                          onLoad={onMediaLoad}
-                        />
-                      </div>
-                    )}
-                    {(message.entityType === 'job' || message.entityType === 'offer') && message.entityId && (
-                      <JobApplicationContextCard
-                        entityType={message.entityType as 'job' | 'offer'}
-                        entityId={message.entityId}
-                        conversationId={conversationId}
-                      />
+                    {!message.is_deleted_for_everyone && !message.is_deleted_for_me && (
+                      <>
+                        <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
+                        {message.sharedProfileId && message.sharedProfileType && (
+                          <div className="mt-1 mb-2">
+                            <ProfilePreviewCard
+                              profile={message.sharedProfile || { name: "Profile", avatar: null }}
+                              profileId={message.sharedProfileId}
+                              profileType={message.sharedProfileType}
+                            />
+                          </div>
+                        )}
+                        {/* Universal Entity Preview — for new share messages */}
+                        {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && message.entityType !== 'job' && message.entityType !== 'offer' && (
+                          <div className="mt-1 mb-2">
+                            <EntityPreviewCard
+                              entityType={message.entityType}
+                              entityId={message.entityId}
+                              onLoad={onMediaLoad}
+                            />
+                          </div>
+                        )}
+                        {(message.entityType === 'job' || message.entityType === 'offer') && message.entityId && (
+                          <JobApplicationContextCard
+                            entityType={message.entityType as 'job' | 'offer'}
+                            entityId={message.entityId}
+                            conversationId={conversationId}
+                          />
+                        )}
+                      </>
                     )}
                     <MessageMedia
                       message={message}
@@ -1513,17 +1519,29 @@ function MessageBubble(props: MessageBubbleProps) {
                   }}
                 >
                   {resolvedShowAvatar ? (() => {
-                    const isUnknownSender = 
-                      message.senderName === 'Unknown Page' || 
-                      message.senderName === 'Unknown user' || 
-                      message.senderName === 'Deleted User' ||
-                      message.isBlocked ||
-                      !message.senderAvatar;
+                    const normalizedUserType = (otherUserType || (message as any).sender_type || "").toUpperCase();
+                    const isOrgConv = 
+                      otherUserType === 'COMPANY' ||
+                      normalizedUserType === 'COMPANY' || 
+                      normalizedUserType === 'ORGANIZATION' || 
+                      isCompanyProfile || 
+                      Boolean(chatAvatar && !chatAvatar.startsWith('gradient-'));
+
+                    const effectiveAvatar = isMe
+                      ? (message.senderAvatar || (activeProfile as any)?.avatar || (activeProfile as any)?.avatar_url)
+                      : (message.senderAvatar || chatAvatar);
+
+                    const isUnknownSender = Boolean(
+                      (message.senderName && (message.senderName === 'Unknown Page' || message.senderName === 'Unknown user')) ||
+                      (message.isBlocked && !effectiveAvatar)
+                    );
+
                     return (
                       <Avatar 
-                        url={isUnknownSender ? undefined : message.senderAvatar} 
+                        url={isUnknownSender ? undefined : effectiveAvatar} 
                         name={message.senderName || "Unknown"} 
                         size="xs"
+                        isCompany={isOrgConv}
                         isUnknown={isUnknownSender}
                       />
                     );

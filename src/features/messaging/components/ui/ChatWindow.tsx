@@ -19,7 +19,7 @@ import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox"
 import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup, unmuteGroup, updateJobChatStatus } from "@/services/api/messaging"
 import { sendMessage as sendGroupMessage, getGroupDetails, leaveGroup, respondInvitation } from "@/services/api/group-chat"
 import { GroupMember } from "@/types/group-chat"
-import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
+import { mapBackendMessageToMessage, formatTimeAgo } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
 import { useSocial } from "@/context/SocialContext"
 import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service"
@@ -738,6 +738,23 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         };
       });
 
+      // Optimistically update conversation thread in list
+      const nowIso = new Date().toISOString();
+      const convQueryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
+      queryClient.setQueryData(convQueryKey, (oldChats: ChatThread[] | undefined) => {
+        if (!oldChats) return [];
+        return oldChats.map(c =>
+          String(c.id) === String(chat.id)
+            ? {
+                ...c,
+                lastMessage: text || (pendingSharedPost ? "Shared a post" : "Attachment"),
+                time: formatTimeAgo(nowIso),
+                lastMessageAt: nowIso,
+              }
+            : c
+        );
+      });
+
       return { previousMessages, tempId: newMessage.id };
     },
     onError: (err: any, newTodo, context) => {
@@ -1167,24 +1184,31 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                 ) : (
                   <>
                     <Link
-                      href={isBlockedByOther ? "#" : (chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`)}
-                      className={cn("w-[40px] h-[40px] flex-none mr-[8px] transition-opacity", isBlockedByOther ? "pointer-events-none" : "hover:opacity-80")}
-                      onClick={(e) => { if (isBlockedByOther) e.preventDefault(); }}
+                      href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+                      className="w-[40px] h-[40px] flex-none mr-[8px] transition-opacity hover:opacity-80"
                     >
-                      <Avatar url={isBlockedByOther ? undefined : chat.avatar} name={isBlockedByOther ? (chat.otherUserType === 'COMPANY' ? 'Unknown Page' : 'Unknown user') : chat.name} size="md" />
+                      <Avatar 
+                        url={chat.avatar} 
+                        name={chat.name || (chat.otherUserType === 'COMPANY' ? 'Unknown Page' : 'Unknown user')} 
+                        size="md" 
+                        isCompany={chat.otherUserType === 'COMPANY'}
+                      />
                     </Link>
                     <div className="flex flex-col items-start p-0 min-w-0">
                       <Link
-                        href={isBlockedByOther ? "#" : (chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`)}
-                        className={cn("w-full transition-opacity", isBlockedByOther ? "pointer-events-none" : "hover:opacity-80")}
-                        onClick={(e) => { if (isBlockedByOther) e.preventDefault(); }}
+                        href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+                        className="w-full transition-opacity hover:opacity-80"
                       >
                         <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[var(--foreground)] w-full">
-                          <span className="truncate">{isBlockedByOther ? (chat.otherUserType === 'COMPANY' ? 'Unknown Page' : 'Unknown user') : chat.name}</span>
+                          <span className="truncate">{chat.name || (chat.otherUserType === 'COMPANY' ? 'Unknown Page' : 'Unknown user')}</span>
                         </h2>
                       </Link>
                       <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[var(--muted-foreground)] w-full">
-                        <span className="truncate">{isBlockedByOther ? 'User unavailable' : (chat.otherUserType === 'COMPANY' ? (chat.orgHeadline || chat.role || "") : (chat.role || ""))}</span>
+                        <span className="truncate">
+                          {isBlockedByOther 
+                            ? (chat.otherUserType === 'COMPANY' ? 'Page unavailable' : 'User unavailable')
+                            : (chat.otherUserType === 'COMPANY' ? (chat.orgHeadline || chat.role || "Page unavailable") : (chat.role || ""))}
+                        </span>
                         {!isBlockedByOther && (typingDisplayString || chat.online) && (
                           <>
                             <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
@@ -1356,6 +1380,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             conversationId={chat.id.toString()}
             otherUserType={chat.otherUserType}
             otherUserSlug={chat.otherUserSlug || chat.otherUserId}
+            chatAvatar={chat.avatar}
           />
         )
       )}
@@ -1420,7 +1445,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
               onTyping={handleTypingInput}
               searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
               disabled={(!isOrgChat && chat.is_requesting) || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || isJobChatDisabled || isGeneralChatDisabled || isDeactivatedAccount}
-              disabledMessage={isDeactivatedAccount ? "This user has gone offline - for a while." : (isBlockedByOther ? "User not found" : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined)))}
+              disabledMessage={isDeactivatedAccount ? (chat.otherUserType === 'COMPANY' ? "This page is temporarily unavailable." : "This user has gone offline - for a while.") : (isBlockedByOther ? (chat.otherUserType === 'COMPANY' ? "Page unavailable" : "User unavailable") : (isJobChatDisabled ? "Permission required to participate in job chats" : (isGeneralChatDisabled ? "Permission required to participate in general chat" : undefined)))}
               pendingEntityContext={pendingEntityContext}
               onDismissEntityContext={() => setPendingEntityContext(null)}
               placeholder="Message..."

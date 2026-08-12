@@ -5,6 +5,7 @@ import { Loader2, ChevronDown } from "lucide-react";
 import MessageBubble from "../ui/MessageBubble";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { formatTime } from "@/lib/mappers/messaging.mapper";
 
 
 interface GroupMessageListProps {
@@ -256,23 +257,24 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                             return Math.abs(new Date(date1).getTime() - new Date(date2).getTime()) > 60000;
                         };
 
-                        const isTimeBreakWithPrev = prev && !(prev as any).isSkeleton
-                            ? isMoreThanOneMinute(msg.created_at, prev.created_at)
-                            : false;
-                        const isTimeBreakWithNext = next && !(next as any).isSkeleton
-                            ? isMoreThanOneMinute(msg.created_at, next.created_at)
-                            : false;
+                        const nextMsgDateStr = next && !(next as any).isSkeleton && next.created_at
+                            ? formatDateDivider(next.created_at)
+                            : null;
+                        const isDateBreakWithNext = currentMsgDateStr && nextMsgDateStr && currentMsgDateStr !== nextMsgDateStr;
 
-                        const isFirstInGroup = virtualRow.index === 0 || isPreviousSystem || (prev as any)?.isSkeleton || previousSenderId !== senderId || isTimeBreakWithPrev || !!showDateDivider || !!isFirstUnread;
+                        const isFirstInGroup = virtualRow.index === 0 || isPreviousSystem || (prev as any)?.isSkeleton || previousSenderId !== senderId || !!showDateDivider || !!isFirstUnread;
                         const nextSenderId = next && !(next as any).isSkeleton
                             ? (next.senderId || ((next.sender === 'me') ? currentUserId : `unknown-${virtualRow.index + 1}`))
                             : null;
-                        const isLastInGroup = !next || (next as any).isSkeleton || next.type === 'system' || nextSenderId !== senderId || isTimeBreakWithNext;
+                        const isLastInGroup = !next || (next as any).isSkeleton || next.type === 'system' || nextSenderId !== senderId || isDateBreakWithNext;
 
                         // Group-specific: show sender name for others' first messages
                         const showSenderName = !isMe && isFirstInGroup;
 
                         const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
+                        const msgTimeDisplay = formatTime(msg.created_at || msg.time);
+                        const nextTimeDisplay = next && !(next as any).isSkeleton ? formatTime(next.created_at || next.time) : null;
+                        const isTimeChangedWithNext = msgTimeDisplay !== nextTimeDisplay;
 
                         return (
                             <div
@@ -321,7 +323,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                                         onAction={onAction}
                                         showSenderName={showSenderName}
                                         showAvatar={groupedMsg.isLastInGroup}
-                                        showTime={groupedMsg.isLastInGroup || msg.time !== next?.time}
+                                        showTime={groupedMsg.isLastInGroup || isTimeChangedWithNext}
                                         isGroup={true}
                                         onMediaClick={onMediaClick}
                                         onMediaLoad={handleMediaLoad}

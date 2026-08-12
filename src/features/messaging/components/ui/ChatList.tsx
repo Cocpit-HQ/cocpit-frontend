@@ -75,6 +75,7 @@ export function ChatList({
   const [selectedFilter, setSelectedFilter] = useState<ChatFilterOption>(chatFilter || 'All')
   const { socket, isUserOnline, typingConversations } = useSocket();
   const { activeProfile } = useActiveProfile();
+  const isUserActor = !activeProfile || activeProfile.type === "USER";
   const companyPermissions = useCompanyPermissions({ viewer_role_data: activeProfile?.viewer_role_data });
   const canChat = !isCompany || companyPermissions.canChat;
   const canJobsChat = !isCompany || companyPermissions.canJobsChat;
@@ -104,6 +105,8 @@ export function ChatList({
     }
   };
 
+  const [localTypingMap, setLocalTypingMap] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (!socket) return;
     const handleInvite = () => {
@@ -115,17 +118,39 @@ export function ChatList({
     const handleConversationUpdated = (data?: { conversationId?: string; isJobChat?: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
+    const handleTyping = (payload: { conversationId?: string; senderId?: string }) => {
+      if (payload?.conversationId && String(payload.senderId) !== String(session?.user?.id)) {
+        const convId = String(payload.conversationId);
+        setLocalTypingMap((prev) => ({ ...prev, [convId]: true }));
+      }
+    };
+    const handleStopTyping = (payload: { conversationId?: string }) => {
+      if (payload?.conversationId) {
+        const convId = String(payload.conversationId);
+        setLocalTypingMap((prev) => {
+          const next = { ...prev };
+          delete next[convId];
+          return next;
+        });
+      }
+    };
+
     socket.on('group_invite', handleInvite);
     socket.on('invitation_update', handleInvitationUpdate);
     socket.on('conversation_updated', handleConversationUpdated);
     socket.on('conversation_job_status_changed', handleConversationUpdated);
+    socket.on('isTyping', handleTyping);
+    socket.on('stoppedTyping', handleStopTyping);
+
     return () => {
       socket.off('group_invite', handleInvite);
       socket.off('invitation_update', handleInvitationUpdate);
       socket.off('conversation_updated', handleConversationUpdated);
       socket.off('conversation_job_status_changed', handleConversationUpdated);
+      socket.off('isTyping', handleTyping);
+      socket.off('stoppedTyping', handleStopTyping);
     };
-  }, [socket, queryClient]);
+  }, [socket, queryClient, session?.user?.id]);
 
   const [localActiveTab, setLocalActiveTab] = useState<'chat' | 'jobs' | 'requests'>('chat');
   const activeTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
@@ -188,8 +213,8 @@ export function ChatList({
         if (activeTab === 'requests' && !chat.is_requesting) return false;
       }
 
-      // Filter by dropdown (All | Groups)
-      if (selectedFilter === 'Groups') {
+      // Filter by dropdown (All | Groups) - only for user actors
+      if (isUserActor && selectedFilter === 'Groups') {
         const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
         if (!isGroupChat) return false;
       }
@@ -198,13 +223,15 @@ export function ChatList({
       return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    // Sort by latest message timestamp (most recent first)
-    return list.sort((a, b) => {
-      if (a.unread > 0 && b.unread === 0) return -1;
-      if (b.unread > 0 && a.unread === 0) return 1;
-      return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
+    // Sort strictly by latest message timestamp (most recent first)
+    return [...list].sort((a, b) => {
+      const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+      const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+      const validTimeA = isNaN(timeA) ? 0 : timeA;
+      const validTimeB = isNaN(timeB) ? 0 : timeB;
+      return validTimeB - validTimeA;
     });
-  }, [chatsWithStatus, activeTab, searchTerm, isCompany, selectedFilter]);
+  }, [chatsWithStatus, activeTab, searchTerm, isCompany, isUserActor, selectedFilter]);
 
   // Virtualizer setup
   const rowVirtualizer = useVirtualizer({
@@ -241,18 +268,18 @@ export function ChatList({
               </p>
             </div>
           </div>
-            {/* Right Controls — Filter & Plus Button */}
-            <div className="flex flex-row items-center gap-[8px]">
-              <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
-              {!isCompany && (
+            {/* Right Controls — Filter & Plus Button (Shown only for User profile context) */}
+            {isUserActor && (
+              <div className="flex flex-row items-center gap-[8px]">
+                <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
                 <button
                   onClick={onCreateGroup}
                   className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
                 >
                   <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -392,7 +419,7 @@ export function ChatList({
                     isSelected={selectedChatId === chat.id}
                     isMobile={isMobile}
                     isGroupInvitationRead={chat.is_read}
-                    isTyping={!!typingConversations?.[chat.id]}
+                    isTyping={Boolean(chat?.id && (typingConversations?.[String(chat.id)] || localTypingMap?.[String(chat.id)]))}
                     isQuickChat={isQuickChat}
                     isFirst={virtualRow.index === 0}
                   />

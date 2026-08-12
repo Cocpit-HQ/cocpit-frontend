@@ -59,11 +59,11 @@ export default function Avatar({
     const initial = (name || 'U').charAt(0).toUpperCase();
 
     const gradientKey = (url && url.startsWith('gradient-')) ? url : fallbackGradient;
-    const backgroundClass = isUnknown
-        ? "bg-[var(--muted)]/60 text-[var(--muted-foreground)]"
+    const backgroundClass = (isUnknown || (isCompany && !isUrl))
+        ? "bg-[#F3F4F6] text-[#6B7280]"
         : (url && url.startsWith('gradient-')) 
             ? `bg-gradient-to-br ${getAvatarGradient(gradientKey)} text-white` 
-            : "bg-[#EEF2FF] text-[#6366F1]";
+            : "bg-[#F3F4F6] text-[#6B7280]";
 
     const roundedClass = isCompany ? companyRoundedClasses[size] : "rounded-full";
 
@@ -71,10 +71,10 @@ export default function Avatar({
         <div className={`relative shrink-0 ${className}`}>
             <div className={`relative ${sizeClasses[size]} ${roundedClass} overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center font-['Poppins'] select-none`}>
                 {!isUrl && (
-                    isUnknown ? (
-                        <Icon icon="lucide:user-x" className="w-1/2 h-1/2 text-[var(--muted-foreground)]" style={{ strokeWidth: '1.5px' }} />
-                    ) : isCompany ? (
-                        <Icon icon="lucide:building-2" className="w-1/2 h-1/2 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                    isCompany ? (
+                        <Icon icon="lucide:building-2" className="w-1/2 h-1/2 text-[#6B7280]" style={{ strokeWidth: '1.5px' }} />
+                    ) : isUnknown ? (
+                        <Icon icon="iconamoon:profile-circle-light" className="w-1/2 h-1/2 text-[#6B7280]" />
                     ) : (
                         <span>{initial}</span>
                     )

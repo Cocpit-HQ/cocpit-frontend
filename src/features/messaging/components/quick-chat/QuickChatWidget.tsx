@@ -29,6 +29,7 @@ export function QuickChatWidget() {
   const [leftOffset, setLeftOffset] = useState<string | null>(null);
   const [panelAlign, setPanelAlign] = useState<'left' | 'right'>('left');
   const { activeProfile } = useActiveProfile();
+  const isUserActor = !activeProfile || activeProfile.type === "USER";
   const router = useRouter();
   const { socket } = useSocket();
   const [stripNotification, setStripNotification] = useState({ show: false, text: '' });
@@ -277,13 +278,15 @@ export function QuickChatWidget() {
                     <h3 className="font-medium text-[16px] text-[#0B1C30] select-none">Messaging</h3>
                   </div>
                   <div className="flex justify-end items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
-                    <ChatFilterDropdown value={chatFilter} onChange={setChatFilter} />
+                    {isUserActor && <ChatFilterDropdown value={chatFilter} onChange={setChatFilter} />}
                     <button onClick={() => { setIsOpen(false); router.push("/messaging"); }} className="text-[#000000] w-6 h-6 flex items-center justify-center" title="Expand to full view">
                       <SquareArrowOutUpRight className="w-5 h-5" strokeWidth={1.5} />
                     </button>
-                    <button onClick={() => setIsNewChatOpen(true)} className="text-[#000000] w-6 h-6 flex items-center justify-center">
-                      <Plus className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
+                    {isUserActor && (
+                      <button onClick={() => setIsNewChatOpen(true)} className="text-[#000000] w-6 h-6 flex items-center justify-center">
+                        <Plus className="w-5 h-5" strokeWidth={1.5} />
+                      </button>
+                    )}
                     <button onClick={() => setIsOpen(false)} className="text-[#000000] w-6 h-6 flex items-center justify-center">
                       <X className="w-5 h-5" strokeWidth={1.5} />
                     </button>

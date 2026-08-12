@@ -561,9 +561,12 @@ export default function MessagingPage() {
                 lastMessageAt: message.created_at || new Date().toISOString(),
                 unread:
                   c.id === selectedChat?.id ||
-                    (selectedChat?.isGroup && selectedChat.id === c.id)
+                    (selectedChat?.isGroup && selectedChat.id === c.id) ||
+                    (message.sender_id && String(message.sender_id) === String(activeProfile?.id)) ||
+                    (message.sender === 'me')
                     ? 0
-                    : c.unread + 1,
+                    : Math.max(1, (c.unread || 0) + 1),
+                is_read: c.id === selectedChat?.id || message.sender === 'me',
               };
             }
             return c;
@@ -649,18 +652,22 @@ export default function MessagingPage() {
             const existing = oldData[matchedIndex];
             const lastMsgText = payload.last_message_text || payload.lastMessage || payload.last_message;
             const lastMsgAt = payload.last_message_at || payload.updatedAt || payload.updated_at || existing.lastMessageAt;
+            const isMeSending = (payload.sender_id && String(payload.sender_id) === String(activeProfile?.id)) ||
+              (payload.senderId && String(payload.senderId) === String(activeProfile?.id));
+
             const unreadCount = typeof payload.unread_count === 'number'
               ? payload.unread_count
               : (typeof payload.unread === 'number'
                 ? payload.unread
-                : existing.unread);
+                : (isMeSending ? 0 : Math.max(1, (existing.unread || 0) + 1)));
 
             targetThread = {
               ...existing,
               lastMessage: lastMsgText !== undefined ? (isPostUrl(lastMsgText) ? "Shared a post" : (isJobUrl(lastMsgText) ? "Shared a job" : lastMsgText)) : existing.lastMessage,
               time: lastMsgAt ? formatTimeAgo(lastMsgAt) : existing.time,
               lastMessageAt: lastMsgAt || existing.lastMessageAt,
-              unread: String(conversationId) === String(selectedChat?.id) ? 0 : unreadCount,
+              is_read: String(conversationId) === String(selectedChat?.id) || isMeSending,
+              unread: String(conversationId) === String(selectedChat?.id) || isMeSending ? 0 : unreadCount,
             };
 
             // Also update details if full other_user_name etc are provided

@@ -4,6 +4,7 @@ import MessageBubble from "./MessageBubble"
 import { Loader2, ChevronDown } from "lucide-react"
 import { useVirtualizer } from '@tanstack/react-virtual';
 import MessageSkeleton from "../skeletons/MessageSkeleton"
+import { formatTime } from "@/lib/mappers/messaging.mapper"
 
 interface MessageListProps {
   messages: Message[]
@@ -26,9 +27,10 @@ interface MessageListProps {
   conversationId?: string
   otherUserType?: "COMPANY" | "USER"
   otherUserSlug?: string
+  chatAvatar?: string
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId, otherUserType, otherUserSlug, chatAvatar }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -279,100 +281,104 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
               );
             };
 
-              const isTimeBreakWithPrev = prev && !(prev as any).isSkeleton
-                ? isMoreThanOneMinute(msg.created_at, prev.created_at)
-                : false;
-              const isTimeBreakWithNext = next && !(next as any).isSkeleton
-                ? isMoreThanOneMinute(msg.created_at, next.created_at)
-                : false;
-
-              // Simple grouping logic based on sender, senderMemberName/senderId, AND time difference
-              const isSameSenderMember = prev && !(prev as any).isSkeleton && 
-                prev.sender === msg.sender && 
-                ((prev.senderMemberName && msg.senderMemberName) ? (prev.senderMemberName === msg.senderMemberName) : (prev.senderId === msg.senderId));
-              const isFirstInGroup =
-                !prev || (prev as any).isSkeleton || !isSameSenderMember || isTimeBreakWithPrev;
-              const isSameNextMember = next && !(next as any).isSkeleton && 
-                next.sender === msg.sender && 
-                ((next.senderMemberName && msg.senderMemberName) ? (next.senderMemberName === msg.senderMemberName) : (next.senderId === msg.senderId));
-              const isLastInGroup =
-                !next || (next as any).isSkeleton || !isSameNextMember || isTimeBreakWithNext;
-
               const currentMsgDateStr = msg.created_at
                 ? formatDateDivider(msg.created_at)
                 : null;
               const prevMsgDateStr = prev && !(prev as any).isSkeleton && prev.created_at
                 ? formatDateDivider(prev.created_at)
                 : null;
+              const nextMsgDateStr = next && !(next as any).isSkeleton && next.created_at
+                ? formatDateDivider(next.created_at)
+                : null;
+
               const showDateDivider =
                 currentMsgDateStr && currentMsgDateStr !== prevMsgDateStr;
+              const isDateBreakWithNext =
+                currentMsgDateStr && nextMsgDateStr && currentMsgDateStr !== nextMsgDateStr;
+
+              // Grouping logic: continuous messages from the same sender remain in one sequence
+              const isSameSenderMember = prev && !(prev as any).isSkeleton && 
+                prev.sender === msg.sender && 
+                ((prev.senderMemberName && msg.senderMemberName) ? (prev.senderMemberName === msg.senderMemberName) : (prev.senderId === msg.senderId));
+              const isFirstInGroup =
+                !prev || (prev as any).isSkeleton || !isSameSenderMember || showDateDivider;
+
+              const isSameNextMember = next && !(next as any).isSkeleton && 
+                next.sender === msg.sender && 
+                ((next.senderMemberName && msg.senderMemberName) ? (next.senderMemberName === msg.senderMemberName) : (next.senderId === msg.senderId));
+              const isLastInGroup =
+                !next || (next as any).isSkeleton || !isSameNextMember || isDateBreakWithNext;
 
               const isFirstUnread =
                 initialUnread > 0 &&
                 virtualRow.index === displayMessages.length - initialUnread;
 
-            const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
+              const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
+              const msgTimeDisplay = formatTime(msg.created_at || msg.time);
+              const nextTimeDisplay = next && !(next as any).isSkeleton ? formatTime(next.created_at || next.time) : null;
+              const isTimeChangedWithNext = msgTimeDisplay !== nextTimeDisplay;
 
-          return (
-            <div
-              key={msg.id}
-              ref={rowVirtualizer.measureElement}
-              data-index={virtualRow.index}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              {showDateDivider && !isFirstUnread && (
-                <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                  <div className="h-[1px] bg-border flex-1" />
-                  <span className="text-[11px] font-['Poppins'] text-muted-foreground mx-4 lowercase first-letter:uppercase shrink-0">
-                    {currentMsgDateStr}
-                  </span>
-                  <div className="h-[1px] bg-border flex-1" />
+              return (
+                <div
+                  key={msg.id}
+                  ref={rowVirtualizer.measureElement}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  {showDateDivider && !isFirstUnread && (
+                    <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
+                      <div className="h-[1px] bg-border flex-1" />
+                      <span className="text-[11px] font-['Poppins'] text-muted-foreground mx-4 lowercase first-letter:uppercase shrink-0">
+                        {currentMsgDateStr}
+                      </span>
+                      <div className="h-[1px] bg-border flex-1" />
+                    </div>
+                  )}
+                  {isFirstUnread && (
+                    <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
+                      <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
+                      <span className="text-[11px] font-bold text-[var(--primary)] mx-4 shrink-0 bg-[var(--primary)]/10 px-3 py-1 rounded-full">
+                        {initialUnread} Unread message{initialUnread !== 1 ? 's' : ''}
+                      </span>
+                      <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
+                    </div>
+                  )}
+                  <MessageBubble
+                    message={groupedMsg}
+                    onAction={onAction}
+                    isSelected={selectedMessageId === msg.id}
+                    isEditing={editingMessageId === msg.id}
+                    onSaveEdit={(text) => onSaveEdit?.(msg.id, text)}
+                    onCancelEdit={onCancelEdit}
+                    showAvatar={groupedMsg.isLastInGroup} // Show avatar on LAST message in group only
+                    showTime={groupedMsg.isLastInGroup || isTimeChangedWithNext} // Show time when minute changes or last in group
+                    onMessageClick={onMessageClick}
+                    onMediaClick={onMediaClick}
+                    isOpponentOnline={isOpponentOnline}
+                    isGroup={isGroup}
+                    onReply={onReply}
+                    onReplyClick={handleReplyClick}
+                    isHighlighted={highlightedMessageId === msg.id}
+                    onReaction={onReaction}
+                    currentUserId={currentUserId}
+                    conversationId={conversationId}
+                    otherUserType={otherUserType}
+                    otherUserSlug={otherUserSlug}
+                    chatAvatar={chatAvatar}
+                    onMediaLoad={() => {
+                      if (shouldScrollToBottomRef.current && scrollRef.current) {
+                        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+                      }
+                    }}
+                  />
                 </div>
-              )}
-              {isFirstUnread && (
-                <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                  <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
-                  <span className="text-[11px] font-bold text-[var(--primary)] mx-4 shrink-0 bg-[var(--primary)]/10 px-3 py-1 rounded-full">
-                    {initialUnread} Unread message{initialUnread !== 1 ? 's' : ''}
-                  </span>
-                  <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
-                </div>
-              )}
-              <MessageBubble
-                message={groupedMsg}
-                onAction={onAction}
-                isSelected={selectedMessageId === msg.id}
-                isEditing={editingMessageId === msg.id}
-                onSaveEdit={(text) => onSaveEdit?.(msg.id, text)}
-                onCancelEdit={onCancelEdit}
-                showAvatar={groupedMsg.isLastInGroup} // Show avatar on LAST message in group only
-                showTime={groupedMsg.isLastInGroup || msg.time !== next?.time} // Show time when time changes or last in group
-                onMessageClick={onMessageClick}
-                onMediaClick={onMediaClick}
-                isOpponentOnline={isOpponentOnline}
-                isGroup={isGroup}
-                onReply={onReply}
-                onReplyClick={handleReplyClick}
-                isHighlighted={highlightedMessageId === msg.id}
-                onReaction={onReaction}
-                currentUserId={currentUserId}
-                conversationId={conversationId}
-                otherUserType={otherUserType}
-                otherUserSlug={otherUserSlug}
-                onMediaLoad={() => {
-                  if (shouldScrollToBottomRef.current && scrollRef.current) {
-                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-                  }
-                }}
-              />
-            </div>
-          );
+              );
         })}
       </div>
       </div>
