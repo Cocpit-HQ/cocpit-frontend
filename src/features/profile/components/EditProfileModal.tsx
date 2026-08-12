@@ -341,9 +341,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   value={formData.account_name}
                   onChange={(e) => {
                     let val = e.target.value;
-                    val = val.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+                    val = val.replace(/\s/g, '_').replace(/[^a-z0-9_.]/g, '').toLowerCase();
                     setFormData(prev => ({ ...prev, account_name: val }));
                   }}
+                  maxLength={20}
                   className={cn(inputStyles, isUsernameAvailable === false && "border-destructive focus:border-destructive", isUsernameAvailable === true && formData.account_name !== initialFormData?.account_name && "border-green-500 focus:border-green-500")}
                   placeholder="Username"
                 />

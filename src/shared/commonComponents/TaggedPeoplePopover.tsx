@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { removeActivity } from "@/features/settings/api/activity";
 import toast from "react-hot-toast";
+import api from "@/lib/axios";
 
 interface TaggedPeoplePopoverProps {
   tags: any[];
@@ -28,13 +29,14 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
 
   const handleRemoveTag = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!postId || !currentUser?.id) return;
+    const activeActorId = api.defaults.headers.common["x-actor-id"] || currentUser?.id;
+    if (!postId || !activeActorId) return;
     
     try {
       setIsRemoving(true);
       await removeActivity("tag", postId);
       toast.success("You have removed yourself from this post's tags");
-      const updatedTags = localTags.filter(t => (t.id || t.user_id) !== currentUser.id);
+      const updatedTags = localTags.filter(t => (t.id || t.user_id) !== activeActorId);
       setLocalTags(updatedTags);
       if (updatedTags.length === 0) {
         setIsOpen(false);
@@ -64,27 +66,30 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
         <div className="flex-1 overflow-y-auto mt-4 pr-1 [scrollbar-width:thin] [-ms-overflow-style:none] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
           <div className="flex flex-col gap-2">
             {localTags.map((tag: any, idx: number) => {
-              const isCurrentUser = currentUser && (tag.id === currentUser.id || tag.user_id === currentUser.id);
+              const activeActorId = api.defaults.headers.common["x-actor-id"] || currentUser?.id;
+              const isCurrentActor = activeActorId && (tag.id === activeActorId || tag.user_id === activeActorId);
               
               return (
                 <div 
                   key={idx} 
-                  className="self-stretch h-12 flex justify-between items-center gap-4 px-2 rounded-xl hover:bg-slate-50 dark:hover:bg-muted transition-colors w-full cursor-pointer group"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const isCompany = tag.type === 'company' || tag.type === 'COMPANY' || tag.entity_type === 'COMPANY';
-                    const slug = tag.account_name || tag.slug || tag.id || tag.user_id;
-                    if (slug) {
-                      if (isCompany) {
-                        router.push(`/organization/${slug}`);
-                      } else {
-                        router.push(`/profile/${slug}`);
-                      }
-                      setIsOpen(false);
-                    }
-                  }}
+                  className="self-stretch h-12 flex justify-between items-center gap-4 px-2 rounded-xl transition-colors w-full"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div 
+                    className="flex items-center gap-4 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const isCompany = tag.type === 'company' || tag.type === 'COMPANY' || tag.entity_type === 'COMPANY';
+                      const slug = tag.account_name || tag.slug || tag.id || tag.user_id;
+                      if (slug) {
+                        if (isCompany) {
+                          router.push(`/organization/${slug}`);
+                        } else {
+                          router.push(`/profile/${slug}`);
+                        }
+                        setIsOpen(false);
+                      }
+                    }}
+                  >
                     <div className="w-8 h-8 relative overflow-hidden flex-shrink-0">
                       {tag.avatar_url || tag.avatar || tag.logo_url ? (
                         <img src={tag.avatar_url || tag.avatar || tag.logo_url} alt="" className="w-full h-full object-cover rounded-full" />
@@ -95,13 +100,13 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
                       )}
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
-                      <div className="text-left text-slate-800 dark:text-foreground text-base font-normal font-['Poppins'] leading-6 truncate w-full">
+                      <div className="text-left text-slate-800 dark:text-foreground text-base font-normal font-['Poppins'] leading-6 truncate w-full hover:underline">
                         {tag.full_name || tag.name}
                       </div>
                     </div>
                   </div>
                   
-                  {isCurrentUser && (
+                  {isCurrentActor && (
                     <button 
                       onClick={handleRemoveTag}
                       disabled={isRemoving}
