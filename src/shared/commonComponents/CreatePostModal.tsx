@@ -20,8 +20,10 @@ import { AchievementPhotoPickerDialog } from '@/features/create-post/components/
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import { useUIStore } from '@/store/ui.store';
 import { UserMention } from '@/services/api/users';
+import { MentionTextarea } from '@/components/ui/MentionTextarea';
 import { TagPeopleSelector } from '@/shared/commonComponents/TagPeopleSelector';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
+import { formatMentionsForBackend } from "@/lib/mentions";
 import { EmojiPickerPortal, EmojiPickerPosition } from '@/shared/commonComponents/EmojiPickerPortal';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { useRouter } from 'next/navigation';
@@ -213,6 +215,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(true);
   const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
+  const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isCompactView, setIsCompactView] = useState(true);
   const [emojiPickerPos, setEmojiPickerPos] = useState<EmojiPickerPosition | null>(null);
@@ -492,6 +495,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         finalContent = sanitizeContent(state.description);
       }
 
+      // Convert clean full names back to structured mentions for the backend
+      finalContent = formatMentionsForBackend(finalContent, inlineMentions);
+
       const payload: any = {
         title: state.postType === 'poll' ? poll.pollQuestion : (state.postType === 'article' ? state.articleTitle.trim() : (state.articleData ? state.articleData.title : '')),
         content: finalContent,
@@ -524,7 +530,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         console.error("Custom posting callback failed", err);
       }
     } else {
-      await actions.handlePost(taggedUsers.map(u => u.id));
+      await actions.handlePost(taggedUsers.map(u => u.id), undefined, inlineMentions);
     }
   };
 
@@ -1381,13 +1387,15 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                       {/* Unified Content Textarea (Part of scroll unit) */}
                       {(state.postType !== 'poll' && (state.postType !== 'article' || !!state.articleData)) && (
-                        <div className="flex flex-col w-full pr-3">
-                          <textarea
+                        <div className="flex flex-col w-full pr-3 relative">
+                          <MentionTextarea
+                            // @ts-ignore
                             ref={composerTextareaRef}
                             className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
                             placeholder={state.postType === 'article' ? "Say something about your article..." : composerPlaceholder}
                             value={state.description}
-                            onChange={(e) => state.setDescription(e.target.value)}
+                            onChange={(e: any) => state.setDescription(e.target.value)}
+                            onMentionsChange={setInlineMentions}
                             style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '80px' }}
                           />
                         </div>

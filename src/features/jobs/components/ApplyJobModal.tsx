@@ -121,7 +121,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[480px] [&>button]:hidden outline-none z-[101]">
-        <div className="relative bg-white dark:bg-[#0B0F19] rounded-[28px] p-6 w-full shadow-[0px_8px_32px_rgba(0,0,0,0.08)] flex flex-col items-center outline-none border border-indigo-50/50 dark:border-[#2E3445]/50">
+        <div className="relative min-w-0 bg-white dark:bg-[#0B0F19] rounded-[28px] p-6 w-full shadow-[0px_8px_32px_rgba(0,0,0,0.08)] flex flex-col items-center outline-none border border-indigo-50/50 dark:border-[#2E3445]/50">
           
           {/* Top Close Row */}
           <div className="flex justify-end w-full mb-2">
@@ -136,7 +136,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
           {step === 1 ? (
             /* SCREEN 1: SELECT OR UPLOAD RESUME */
-            <div className="w-full flex flex-col items-center">
+            <div className="w-full min-w-0 flex flex-col items-center">
               
               {/* Title Section */}
               <div className="text-center mb-6">
@@ -178,7 +178,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               </div>
 
               {/* Recent Resume Section */}
-              <div className="w-full flex flex-col gap-3 mb-8">
+              <div className="w-full min-w-0 flex flex-col gap-3 mb-8">
                 <h4 className="font-['Poppins'] font-normal text-[12px] text-[#000000] dark:text-[#F9FAFB] text-left">
                   Recent resume
                 </h4>
@@ -186,13 +186,13 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 {/* Custom uploaded item if present */}
                 {uploadedFile && (
                   <div 
-                    className="p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]"
+                    className="w-full min-w-0 p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]"
                   >
                     <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                       <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                      <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate block w-full">
                         {uploadedFile.name}
                       </span>
                       <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
@@ -221,7 +221,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                     <div 
                       key={resume.id}
                       onClick={() => handleResumeSelect(resume.id)}
-                      className={`p-3 bg-white dark:bg-[#0B0F19] rounded-xl flex justify-start items-center gap-4 self-stretch border cursor-pointer transition-all ${
+                      className={`w-full min-w-0 p-3 bg-white dark:bg-[#0B0F19] rounded-xl flex justify-start items-center gap-4 self-stretch border cursor-pointer transition-all ${
                         isSelected 
                           ? 'border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]' 
                           : 'border-[#EEF2FF] dark:border-[#2E3445] hover:border-indigo-100 dark:hover:border-[#818CF8]'
@@ -230,8 +230,8 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                       <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                         <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
                       </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-center">
-                        <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                        <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate block w-full">
                           {resume.name}
                         </span>
                         <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
@@ -267,7 +267,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
             </div>
           ) : (
             /* SCREEN 2: SHARE WHAT MAKES YOUR APPLICATION STAND OUT */
-            <div className="w-full flex flex-col items-center">
+            <div className="w-full min-w-0 flex flex-col items-center">
               
               {/* Title Section */}
               <div className="text-center mb-6">
@@ -280,12 +280,12 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               </div>
 
               {/* Selected Resume Row */}
-              <div className="w-full p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)] mb-6">
+              <div className="w-full min-w-0 p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)] mb-6">
                 <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                   <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate">
+                <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                  <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate block w-full">
                     {selectedResumeName}
                   </span>
                   <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">

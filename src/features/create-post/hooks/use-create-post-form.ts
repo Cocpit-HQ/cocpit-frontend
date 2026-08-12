@@ -12,6 +12,8 @@ import { sanitizeContent } from '@/lib/contentSanitizer';
 import { Post, PostVisibility } from '@/types/entities';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 import { useUIStore } from '@/store/ui.store';
+
+import { formatMentionsForBackend } from "@/lib/mentions";
 import { uploadMedia } from '@/services/api/upload';
 import { useQueryClient } from '@tanstack/react-query';
 const USER_CATEGORIES: CategoryType[] = ['Professional', 'Achievement'];
@@ -250,7 +252,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   }, [isOpen, editPostId, sharedPostId]);
 
-  const handlePost = async (inlineFilesOrTagUserIds?: File[] | string[], tagUserIds?: string[]) => {
+  const handlePost = async (inlineFilesOrTagUserIds?: File[] | string[], tagUserIds?: string[], inlineMentions: any[] = []) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -312,6 +314,9 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       } else {
         finalContent = sanitizeContent(description);
       }
+
+      // Convert clean full names back to structured mentions for the backend
+      finalContent = formatMentionsForBackend(finalContent, inlineMentions);
 
       const allowedCategories = getAllowedCategories();
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();

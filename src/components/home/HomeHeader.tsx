@@ -567,7 +567,7 @@ export const HomeHeader = () => {
                                                             <div className="flex items-center gap-2">
                                                                 <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
                                                                 {user.type === 'COMPANY' && (
-                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Company</span>
+                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">{user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1).toLowerCase() : 'Company'}</span>
                                                                 )}
                                                             </div>
                                                             {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
@@ -1080,7 +1080,7 @@ export const HomeHeader = () => {
                                                         <div className="flex items-center gap-2">
                                                             <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
                                                             {user.type === 'COMPANY' && (
-                                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Co</span>
+                                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">{user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1).toLowerCase() : 'Company'}</span>
                                                             )}
                                                         </div>
                                                         {(user.headline || (user.type === 'COMPANY' && user.industry)) && (

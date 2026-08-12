@@ -426,7 +426,7 @@ export default function ChannelBannerEditorModal({
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex justify-end items-center gap-[16px] mt-8">
+          <div className="flex justify-center items-center gap-[16px] mt-8">
             <button
               type="button"
               onClick={() => {

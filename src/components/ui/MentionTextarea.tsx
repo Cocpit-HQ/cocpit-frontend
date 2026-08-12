@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, forwardRef, useImperativeHandle, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { UserMention } from '@/services/api/users';
 import { cn } from '@/lib/utils';
 import { HashtagSuggestion } from '@/services/api/hashtags';
@@ -11,23 +12,25 @@ interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
     value: string;
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     onMentionSelect?: (user: UserMention) => void;
+    onMentionsChange?: (mentions: UserMention[]) => void;
     searchUsersFn?: (query: string) => Promise<UserMention[]>;
-    innerRef?: React.RefObject<HTMLTextAreaElement | null>;
     placeholder?: string;
     className?: string;
 }
 
-export const MentionTextarea = ({ 
+export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaProps>(({ 
     value, 
     onChange, 
     onMentionSelect, 
+    onMentionsChange,
     searchUsersFn, 
-    innerRef, 
     className, 
     ...props 
-}: MentionTextareaProps) => {
-    const defaultRef = useRef<HTMLTextAreaElement>(null);
-    const textareaRef = innerRef || defaultRef;
+}, ref) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement);
+    const [mentionedNames, setMentionedNames] = useState<string[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<UserMention[]>([]);
     
     const {
         query, setQuery,
@@ -86,11 +89,14 @@ export const MentionTextarea = ({
         const text = e.target.value;
         const textBeforeCursor = text.substring(0, cursor);
 
-        const mentionMatch = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
-        const hashtagMatch = textBeforeCursor.match(/#([a-zA-Z0-9_]*)$/);
+        const mentionMatch = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+        const hashtagMatch = textBeforeCursor.match(/(?:^|\s)#([a-zA-Z0-9_]*)$/);
+
+        console.log("MentionTextarea handleInput", { textBeforeCursor, mentionMatch, hashtagMatch });
 
         if (mentionMatch || hashtagMatch) {
             const coords = getCaretCoordinates(e.target, cursor);
+            console.log("Mention coordinates", coords);
             setSuggestionPosition(coords);
             setQuery(mentionMatch ? mentionMatch[1] : hashtagMatch![1]);
             setMode(mentionMatch ? 'mention' : 'hashtag');
@@ -125,12 +131,19 @@ export const MentionTextarea = ({
         const textBefore = value.substring(0, cursor);
         const textAfter = value.substring(cursor);
         
-        const match = textBefore.match(/@([a-zA-Z0-9._ ]*)$/);
+        const match = textBefore.match(/(?:^|\s)@([a-zA-Z0-9._ ]*)$/);
         if (match) {
-            const baseLeft = textBefore.substring(0, match.index);
-            const content = format === 'full' ? user.full_name : user.account_name;
-            const injected = `@${user.account_name} `;
+            const baseLeft = textBefore.substring(0, match.index! + match[0].indexOf('@'));
+            const content = format === 'full' ? user.full_name : user.full_name; // Force full name
+            const injected = `\u200B${content} `;
             const newValue = baseLeft + injected + textAfter;
+
+            // Track the full name so the highlighter knows to match it with spaces
+            setMentionedNames(prev => Array.from(new Set([...prev, content])));
+            
+            const nextUsers = [...selectedUsers, user];
+            setSelectedUsers(nextUsers);
+            if (onMentionsChange) onMentionsChange(nextUsers);
 
             const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
             onChange(event);
@@ -159,9 +172,9 @@ export const MentionTextarea = ({
         const textBefore = value.substring(0, cursor);
         const textAfter = value.substring(cursor);
         
-        const match = textBefore.match(/#([a-zA-Z0-9_]*)$/);
+        const match = textBefore.match(/(?:^|\s)#([a-zA-Z0-9_]*)$/);
         if (match) {
-            const baseLeft = textBefore.substring(0, match.index);
+            const baseLeft = textBefore.substring(0, match.index! + match[0].indexOf('#'));
             const injected = `#${tag.tag} `;
             const newValue = baseLeft + injected + textAfter;
 
@@ -199,13 +212,19 @@ export const MentionTextarea = ({
 
     const renderHighlightedText = (text: string) => {
         if (!text) return null;
-        const parts = text.split(/(@[a-zA-Z0-9_.]+)/g);
+        
+        // Escape names for regex
+        const escapedNames = mentionedNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        const nameRegexPart = escapedNames.length > 0 ? `\u200B(?:${escapedNames.join('|')})|` : '';
+        const regex = new RegExp(`(${nameRegexPart}@[a-zA-Z0-9_.]+)`, 'g');
+
+        const parts = text.split(regex);
         return (
             <>
                 {parts.map((part, i) => {
-                    if (part.startsWith('@')) {
+                    if (part.startsWith('@') || part.startsWith('\u200B')) {
                         return (
-                            <span key={i} style={{ color: '#6366F1' }} className="font-semibold">
+                            <span key={i} style={{ color: '#6366F1' }}>
                                 {part}
                             </span>
                         );
@@ -234,65 +253,94 @@ export const MentionTextarea = ({
     }, [value]);
 
     return (
-        <div className="flex flex-col w-full">
-            {showSuggestions && mode === 'mention' && (
-                <CocpitMentionListCard
-                    users={users}
-                    activeIndex={activeIndex}
-                    query={query}
-                    isLoading={isLoading}
-                    onSelect={(user) => selectUser(user as UserMention, 'account')}
-                    onHoverIndex={setActiveIndex}
-                    onDismiss={() => setShowSuggestions(false)}
-                    showNoResults={!isLoading && showSuggestions && users.length === 0 && !!query}
-                />
+        <div className="flex flex-col w-full relative">
+            {showSuggestions && mode === 'mention' && typeof document !== 'undefined' && createPortal(
+                <div 
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    className="fixed z-[99999] pointer-events-auto shadow-2xl rounded-xl w-[280px] max-h-[260px] overflow-x-hidden overflow-y-auto custom-scrollbar bg-[var(--popover,#FFFFFF)] border border-[var(--border,#EEF2FF)]"
+                    style={{
+                        top: suggestionPosition.top 
+                            ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
+                            : '40px',
+                        left: suggestionPosition.left 
+                            ? `${(textareaRef.current?.getBoundingClientRect().left || 0) + suggestionPosition.left}px` 
+                            : '10px',
+                    }}
+                >
+                    <CocpitMentionListCard
+                        users={users}
+                        activeIndex={activeIndex}
+                        query={query}
+                        isLoading={isLoading}
+                        onSelect={(user) => selectUser(user as UserMention, 'account')}
+                        onHoverIndex={setActiveIndex}
+                        onDismiss={() => setShowSuggestions(false)}
+                        showNoResults={!isLoading && showSuggestions && users.length === 0 && !!query}
+                    />
+                </div>,
+                document.body
             )}
 
-            {showSuggestions && mode === 'hashtag' && (
+            {showSuggestions && mode === 'hashtag' && typeof document !== 'undefined' && createPortal(
                 <div
-                    className="animate-in fade-in-0 zoom-in-95"
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    ref={(el) => {
+                        if (el) {
+                            const activeItem = el.children[activeIndex + 1] as HTMLElement; // +1 because first child is "Suggestions" title
+                            if (activeItem) {
+                                activeItem.scrollIntoView({ block: 'nearest' });
+                            }
+                        }
+                    }}
+                    className="fixed z-[99999] pointer-events-auto animate-in fade-in-0 zoom-in-95 shadow-2xl"
                     style={{
+                        top: suggestionPosition.top 
+                            ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
+                            : '40px',
+                        left: suggestionPosition.left 
+                            ? `${(textareaRef.current?.getBoundingClientRect().left || 0) + suggestionPosition.left}px` 
+                            : '10px',
                         boxSizing: 'border-box',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'flex-start',
                         padding: '16px',
                         gap: '8px',
-                        width: '100%',
+                        width: '280px',
                         background: '#FFFFFF',
                         border: '1px solid #EEF2FF',
                         borderRadius: '12px',
                         maxHeight: '232px',
+                        overflowX: 'hidden',
                         overflowY: 'auto',
                         scrollbarWidth: 'thin',
                         marginBottom: '8px',
                     }}
                 >
-                    {hashtags.map((h, index) => (
-                        <button
-                            key={h.tag}
-                            onClick={() => selectHashtag(h)}
+                    <div className="text-sm font-semibold text-gray-500 mb-2 shrink-0">Suggestions</div>
+                    {hashtags.map((hashtag, index) => (
+                        <div
+                            key={hashtag.tag}
                             onMouseEnter={() => setActiveIndex(index)}
+                            onClick={() => selectHashtag(hashtag)}
                             className={cn(
-                                "w-full flex items-center justify-between px-3 py-2 text-sm rounded-sm transition-colors text-left",
-                                index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/80"
+                                "flex flex-row justify-between items-center px-3 py-2 w-full rounded-lg cursor-pointer transition-colors duration-150",
+                                index === activeIndex ? "bg-indigo-100" : "hover:bg-gray-100"
                             )}
                         >
-                            <span className="font-medium text-primary">#{h.tag}</span>
-                            <span className="text-xs text-muted-foreground">{h.usage_count} posts</span>
-                        </button>
-                    ))}
-                    {isLoading && (
-                        <div className="px-3 py-3 text-xs text-muted-foreground animate-pulse text-center w-full">
-                            Searching...
+                            <span className="font-medium text-gray-900">#{hashtag.tag}</span>
+                            <span className="text-xs text-gray-500">{hashtag.usage_count} posts</span>
                         </div>
-                    )}
+                    ))}
                     {!isLoading && hashtags.length === 0 && query && (
                         <div className="px-3 py-3 text-xs text-muted-foreground italic text-center w-full">
                             No results found
                         </div>
                     )}
-                </div>
+                </div>,
+                document.body
             )}
 
             <div className="relative w-full">
@@ -330,4 +378,4 @@ export const MentionTextarea = ({
             </div>
         </div>
     );
-};
+});

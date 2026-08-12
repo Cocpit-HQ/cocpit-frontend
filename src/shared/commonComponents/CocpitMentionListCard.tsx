@@ -47,7 +47,8 @@ export interface CocpitMentionListCardProps {
  * Returns plain string when there is nothing to highlight.
  */
 function highlightMatch(text: string, queryText: string): React.ReactNode {
-    if (!queryText.trim()) return text;
+    if (!text) return text;
+    if (!queryText?.trim()) return text;
     try {
         const parts = text.split(new RegExp(`(${queryText})`, "gi"));
         return (
@@ -102,8 +103,18 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
     onDismiss,
     showNoResults = false,
 }) => {
+    const listRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (!listRef.current) return;
+        const activeItem = listRef.current.children[activeIndex] as HTMLElement;
+        if (activeItem) {
+            activeItem.scrollIntoView({ block: 'nearest' });
+        }
+    }, [activeIndex]);
+
     return (
-        <div className="box-border flex flex-col items-start p-4 gap-4 w-full bg-[var(--popover,#FFFFFF)] border border-[var(--border,#EEF2FF)] rounded-xl max-h-[232px] overflow-y-auto mb-2 custom-scrollbar animate-in fade-in-0 zoom-in-95">
+        <div ref={listRef} className="box-border flex flex-col items-start p-2 gap-1 w-full animate-in fade-in-0 zoom-in-95">
             {/* ── User rows ── */}
             {users.map((user, index) => (
                 <div
@@ -111,34 +122,40 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                     onMouseEnter={() => onHoverIndex(index)}
                     onClick={() => onSelect(user)}
                     className={cn(
-                        "flex flex-row items-center px-4 py-2 gap-2 h-14 rounded-xl shrink-0 self-stretch cursor-pointer transition-colors duration-150 w-full box-border",
+                        "flex flex-row items-center px-3 py-2 gap-3 h-14 rounded-lg cursor-pointer transition-colors duration-150 w-full box-border",
                         index === activeIndex
                             ? "bg-[var(--edit-btn-hover,#C7D2FE)]"
-                            : "bg-[var(--muted,#EEF2FF)]"
+                            : "hover:bg-[var(--muted,#EEF2FF)] bg-transparent"
                     )}
                 >
                     {/* Avatar */}
-                    <img
-                        src={user.avatar_url || ""}
-                        alt={user.full_name || "User"}
-                        onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                        }}
-                        className="w-6 h-6 rounded-full object-cover bg-[#D9D9D9] shrink-0 grow-0 mr-2 ml-4"
-                    />
+                    <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-[#D9D9D9] text-[12px] font-semibold text-gray-500">
+                        {/* Fallback Letter */}
+                        <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
+                        
+                        {/* Image overlay */}
+                        {user.avatar_url && (
+                            <img
+                                src={user.avatar_url}
+                                alt={user.full_name || "User"}
+                                onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                                }}
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                        )}
+                    </div>
 
                     {/* Text column */}
-                    <div className="flex flex-col justify-center items-start p-0 h-10 shrink-0 grow-0">
+                    <div className="flex flex-col justify-center items-start p-0 min-w-0 overflow-hidden flex-1">
                         {/* Full name */}
-                        <span className="font-poppins font-medium text-base leading-6 text-[var(--foreground,#000000)] shrink-0 grow-0 whitespace-nowrap">
+                        <span className="font-poppins font-medium text-[14px] leading-5 text-[var(--foreground,#000000)] truncate w-full">
                             {highlightMatch(user.full_name, query)}
                         </span>
 
-                        {/* Headline or @account_name */}
-                        <span className="font-poppins font-normal text-xs leading-4 text-[var(--muted-foreground,#6B7280)] shrink-0 grow-0 whitespace-nowrap">
-                            {user.headline
-                                ? user.headline
-                                : `@${highlightMatch(user.account_name, query)}`}
+                        {/* @account_name */}
+                        <span className="font-poppins font-normal text-[12px] leading-4 text-[var(--muted-foreground,#6B7280)] truncate w-full">
+                            @{highlightMatch(user.account_name, query)}
                         </span>
                     </div>
                 </div>

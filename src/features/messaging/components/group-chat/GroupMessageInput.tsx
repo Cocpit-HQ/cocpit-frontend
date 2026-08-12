@@ -162,7 +162,7 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
 
                 <div className="flex-1 relative rounded-2xl bg-muted">
                     <MentionTextarea
-                        innerRef={textareaRef}
+                        ref={textareaRef}
                         value={text}
                         searchUsersFn={searchUsers}
                         onChange={(e) => {

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from '@/components/ui/MentionTextarea';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { updatePost, syncPostTags } from "@/services/api/posts";
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper";
 import { CocpitSelectedUserChips } from "@/shared/commonComponents/CocpitSelectedUserChips";
 import { POPULAR_LOCATIONS } from "@/data/staticLocations";
+import { parseMentionsForFrontend, formatMentionsForBackend } from "@/lib/mentions";
 
 const DEFAULT_LOCATIONS: LocationSuggestion[] = POPULAR_LOCATIONS.map((loc, i) => ({
     id: -(i + 1),
@@ -71,6 +73,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
     // Tagging State
     const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
+    const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
     const [userSearchResults, setUserSearchResults] = useState<UserMention[]>([]);
     const [userSearchQuery, setUserSearchQuery] = useState("");
 
@@ -81,7 +84,9 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
     useEffect(() => {
         if (isOpen && post) {
-            setContent(post.content || "");
+            const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(post.content || "");
+            setContent(parsedContent);
+            setInlineMentions(parsedMentions);
             setLocalImages(post.images || (post.imageSrc ? [post.imageSrc] : []));
             setTaggedUsers((post.tags || []).map(t => ({
                 id: t.id || t.user_id,
@@ -148,8 +153,10 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             const postId = post.id || (post as any).post_id;
 
             // 1. Update Post Content & Location & Media
+            const finalContent = formatMentionsForBackend(content, inlineMentions);
+            
             const res = await updatePost(postId, {
-                content,
+                content: finalContent,
                 location: selectedLocation?.name || null,
                 media_urls: localImages,
                 title: post?.post_type === 'poll' ? (post.title ?? undefined) : undefined
@@ -207,9 +214,10 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 <span className="font-bold text-base text-foreground">{post.author}</span>
             </div>
 
-            <Textarea
+            <MentionTextarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
+                onMentionsChange={setInlineMentions}
                 placeholder="What's on your mind?"
                 className="min-h-[100px] border-none focus-visible:ring-0 text-[12px] leading-[16px] font-normal text-foreground resize-none p-3 mb-4 placeholder:text-muted-foreground font-[family-name:var(--font-poppins)] bg-card rounded-xl"
             />

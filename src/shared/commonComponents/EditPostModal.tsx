@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import VisibilityToggle from '@/features/create-post/components/shared/VisibilityToggle';
 import { PostCarousel } from '@/components/shared/PostCarousel';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
+import { MentionTextarea } from '@/components/ui/MentionTextarea';
+import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
 
 export interface EditPostModalProps {
   isOpen: boolean;
@@ -35,6 +37,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
   const [visibility, setVisibility] = useState<PostVisibility>('public');
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
   const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
+  const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
 
   // Post type & preview metadata
   const [postType, setPostType] = useState<string>('text');
@@ -61,7 +64,10 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
       postApi.getById(editPostId)
         .then((post) => {
           setOriginalPost(post);
-          setDescription(post.content || '');
+          
+          const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(post.content || '');
+          setDescription(parsedContent);
+          setInlineMentions(parsedMentions);
           setVisibility(post.visibility || 'public');
           setSelectedLocation(post.location ? { id: 0, name: post.location, latitude: '', longitude: '' } : null);
           setTaggedUsers(post.tags || []);
@@ -186,8 +192,9 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
     setIsSubmitting(true);
 
     try {
+      const finalContent = formatMentionsForBackend(description.trim(), inlineMentions);
       const updatePayload: any = {
-        content: description.trim(),
+        content: finalContent,
         category: originalPost?.category || 'Professional',
         visibility: visibility,
         location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
@@ -368,13 +375,13 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
 
                   {/* Textarea */}
                   <div className="flex flex-col w-full pr-3">
-                    <textarea
+                    <MentionTextarea
                       ref={textareaRef}
-                      className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
+                      className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap min-h-[80px]"
                       placeholder="What would you like to update?"
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '80px' }}
+                      onChange={(e: any) => setDescription(e.target.value)}
+                      onMentionsChange={setInlineMentions}
                     />
                   </div>
                 </div>

@@ -50,7 +50,7 @@ export default function CreateChannelModal({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Dialog open={isOpen && !isBannerModalOpen} onOpenChange={(open) => !open && !isBannerModalOpen && onClose()}>
         <DialogContent className="w-full max-w-[648px] sm:max-w-[648px] !p-0 rounded-[24px] sm:rounded-[24px] bg-[#FFFFFF] dark:bg-[#121B2B] !border-0 !shadow-2xl overflow-hidden flex flex-col [&>button]:hidden">
           {/* Modal Header */}
           <div className="w-full max-w-[648px] h-[87px] px-[32px] py-[24px] flex flex-row items-center justify-between flex-shrink-0">
@@ -96,11 +96,11 @@ export default function CreateChannelModal({
               ) : (
                 <div
                   onClick={() => setIsBannerModalOpen(true)}
-                  className="w-full max-w-[600px] min-h-[113px] py-4 rounded-[12px] border border-[#E0E0E7] dark:border-[#2A2D35] flex flex-col items-center justify-center cursor-pointer hover:border-[#1A73E8] transition-colors bg-[#FFFFFF] dark:bg-[#0F1115] flex-shrink-0 gap-1 text-center px-4"
+                  className="w-full max-w-[600px] min-h-[113px] py-4 rounded-[12px] border-2 border-dashed border-[#E0E0E7] dark:border-[#2A2D35] flex flex-col items-center justify-center cursor-pointer hover:border-[#1A73E8] hover:bg-[#F9FAFB] dark:hover:bg-[#1A2435] transition-all bg-[#FFFFFF] dark:bg-[#0F1115] flex-shrink-0 gap-1 text-center px-4"
                 >
                   <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280] dark:text-[#A1A8B3]" />
                   <span className="text-[16px] font-['Poppins'] font-medium text-[#000000] dark:text-[#FFFFFF]">Click to upload or drag and drop</span>
-                  <span className="text-[10px] font-['Poppins'] text-[#6B7280] dark:text-[#A1A8B3]">Use a 16:3 banner. Minimum size: 960 &times; 180 px. Recommended size: 1920 &times; 360 px for optimal quality.</span>
+                  <span className="text-[10px] font-['Poppins'] text-[#6B7280] dark:text-[#A1A8B3]">Use a 6:1 banner. Minimum size: 1200 &times; 200 px. Recommended size: 2400 &times; 400 px for optimal quality.</span>
                 </div>
               )}
 
@@ -136,7 +136,7 @@ export default function CreateChannelModal({
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="w-full max-w-[600px] h-[64px] flex flex-row items-center justify-end gap-[16px] pb-[24px] mt-auto flex-shrink-0">
+            <div className="w-full max-w-[600px] h-[64px] flex flex-row items-center justify-center gap-[16px] pb-[24px] mt-auto flex-shrink-0">
               <button
                 type="button"
                 onClick={onClose}

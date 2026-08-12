@@ -22,7 +22,7 @@ import { ProfileAbout } from "@/components/profile/parts/ProfileAbout";
 import { ProfileExperience, FormattedExperience } from "@/components/profile/parts/ProfileExperience";
 import { ProfileEducation, FormattedEducation } from "@/components/profile/parts/ProfileEducation";
 import { ProfileSkills } from "@/components/profile/parts/ProfileSkills";
-import { OffersTab } from "@/components/profile/parts/OffersTab";
+
 
 // Optimized Hooks
 import { useProfile } from "@/components/profile/hooks/use-profile";
@@ -181,8 +181,6 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
             <ProfileExperience experiences={user.experiences as unknown as FormattedExperience[]} />
 
-            {/* Direct Job Offers (own profile only) */}
-            <OffersTab isOwnProfile={isOwnProfile} />
 
             <ProfileSkills
               skills={user.skills}

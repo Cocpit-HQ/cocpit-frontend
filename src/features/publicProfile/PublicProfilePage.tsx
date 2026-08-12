@@ -25,7 +25,7 @@ import { ProfileProjects } from "@/features/profile/commonProfileComponents/Prof
 import { ViewAvatarModal } from "@/features/profile/commonProfileComponents/ViewAvatarModal";
 import { SendOfferDialog } from "@/features/profile/commonProfileComponents/SendOfferDialog";
 import { ProfileSkeleton } from "@/features/profile/commonProfileComponents/ProfileSkeleton";
-import { OffersTab } from "@/features/profile/commonProfileComponents/OffersTab";
+
 
 import {
   AlertDialog,
@@ -604,8 +604,6 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
               }
             }}
           />
-
-          <OffersTab isOwnProfile={isOwnProfile} />
         </div>
       </div>
 

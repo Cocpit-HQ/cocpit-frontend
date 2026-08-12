@@ -276,7 +276,7 @@ export default function UnifiedMessageInput({
                     {/* Input textarea */}
                     <div className="flex-1 relative flex items-center justify-start h-full">
                         <MentionTextarea
-                            innerRef={textareaRef}
+                            ref={textareaRef}
                             value={text}
                             searchUsersFn={searchUsersFn}
                             onChange={(e) => {
