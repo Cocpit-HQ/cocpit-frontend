@@ -1,4 +1,4 @@
-import { TimeRange } from './page'
+export type TimeRange = '7d' | '30d' | '90d' | 'all';
 
 // --- Interfaces ---
 
