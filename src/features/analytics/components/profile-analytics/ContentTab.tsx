@@ -185,7 +185,7 @@ export const ContentTab = ({ data }: { data?: any }) => {
             icon: 'stash:image',
           },
         ].map((post, idx) => (
-          <div key={idx} className="flex flex-row items-center p-[16px] gap-[16px] w-full h-[92px] bg-white border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer">
+          <Link href={`/analytics/post/${idx + 1}`} key={idx} className="flex flex-row items-center p-[16px] gap-[16px] w-full h-[92px] bg-white border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer">
             
             {/* Post thumbnail */}
             <div className="w-[60px] h-[60px] rounded-[12px] overflow-hidden shrink-0 flex items-center justify-center bg-[#EEF2FF]">
@@ -271,7 +271,7 @@ export const ContentTab = ({ data }: { data?: any }) => {
               </div>
 
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

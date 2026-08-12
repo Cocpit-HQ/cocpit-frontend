@@ -779,8 +779,10 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   }, [userId, activeTab, profileData, isProfileLoading])
 
   return (
-    <div className="min-h-screen bg-background flex justify-center py-10 px-4">
-      <div className="flex w-full max-w-none flex-col md:w-[592px] md:max-w-[592px]">
+    <div className="min-h-screen bg-background">
+      <div className="pt-10 pb-10 px-4 md:px-4 xl:px-0 mx-auto max-w-[1128px]">
+        <div className="mx-auto max-w-[998px] w-full flex flex-col items-start">
+          <div className="flex w-full max-w-none flex-col md:w-[592px] md:max-w-[592px]">
         {/* Fixed Header Section (Non-scrollable) */}
         <div className="w-full bg-background z-20 p-4 pb-6 flex flex-col gap-6 border-b border-transparent">
           {/* Navigation Header */}
@@ -801,16 +803,16 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           </div>
 
           {/* Filter Chips */}
-          <div className="flex flex-row gap-4 w-full overflow-x-auto scrollbar-hide py-1">
-            <FilterChip label="Post" active={activeTab === 'Post'} onClick={() => setActiveTab('Post')} />
-            <FilterChip label="Repost" active={activeTab === 'Repost'} onClick={() => setActiveTab('Repost')} />
-            <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} />
-            <FilterChip label="Comments" active={activeTab === 'Comments'} onClick={() => setActiveTab('Comments')} />
-            {isOwner && (
+          {isOwner && (
+            <div className="flex flex-row gap-4 w-full overflow-x-auto scrollbar-hide py-1">
+              <FilterChip label="Post" active={activeTab === 'Post'} onClick={() => setActiveTab('Post')} />
+              <FilterChip label="Repost" active={activeTab === 'Repost'} onClick={() => setActiveTab('Repost')} />
+              <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} />
+              <FilterChip label="Comments" active={activeTab === 'Comments'} onClick={() => setActiveTab('Comments')} />
               <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
-            )}
-            <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} />
-          </div>
+              <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} />
+            </div>
+          )}
         </div>
 
         {/* Scrollable Post Section */}
@@ -882,6 +884,8 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           }}
         />
       )}
+        </div>
+      </div>
     </div>
   )
 }

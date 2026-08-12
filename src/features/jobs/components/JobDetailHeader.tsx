@@ -10,18 +10,20 @@ interface JobDetailHeaderProps {
 export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
   const [imgError, setImgError] = React.useState(false);
 
+  const isJobCompany = Boolean(job.org_id || job.company_id || job.company_type === 'COMPANY' || job.company_type === 'ORGANIZATION');
+
   const renderLogo = () => {
     if (job.company_logo === 'sphere') {
       return (
-        <div className="w-16 h-16 bg-slate-100 rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-indigo-50">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-md" />
+        <div className={`w-16 h-16 bg-slate-100 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-indigo-50`}>
+          <div className={`w-8 h-8 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-md`} />
         </div>
       );
     }
     
     if (job.company_logo && !imgError) {
       return (
-        <div className="w-16 h-16 bg-white rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-indigo-50">
+        <div className={`w-16 h-16 bg-white ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-indigo-50`}>
           <img 
             src={job.company_logo} 
             alt={`${job.company} logo`} 
@@ -33,7 +35,7 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
     }
 
     return (
-      <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex justify-center items-center flex-shrink-0 shadow-sm border border-indigo-50">
+      <div className={`w-16 h-16 bg-indigo-50 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center flex-shrink-0 shadow-sm border border-indigo-50`}>
         <Icon icon="hugeicons:job-search" className="w-7 h-7 text-indigo-500" />
       </div>
     );

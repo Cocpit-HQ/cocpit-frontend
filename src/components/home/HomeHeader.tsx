@@ -430,7 +430,7 @@ export const HomeHeader = () => {
                                     onChange={(e) => setJobTitleQuery(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                            router.push(`/jobs?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                            router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
                                         }
                                     }}
                                     className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
@@ -451,7 +451,7 @@ export const HomeHeader = () => {
                                     onChange={(e) => setJobLocationQuery(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                            router.push(`/jobs?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                            router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
                                         }
                                     }}
                                     className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
@@ -461,7 +461,7 @@ export const HomeHeader = () => {
                             {/* Find jobs button */}
                             <button
                                 onClick={() => {
-                                    router.push(`/jobs?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                    router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
                                 }}
                                 className="px-4 py-2 h-10 rounded-[24px] border border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-[#6366F1] hover:text-white text-[16px] font-medium leading-[24px] font-poppins transition-all duration-200 flex-shrink-0"
                             >

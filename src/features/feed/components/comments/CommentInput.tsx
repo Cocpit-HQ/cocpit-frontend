@@ -255,8 +255,9 @@ export default function CommentInput({
                 {(() => {
                     const avatar = (currentUserAvatar && currentUserAvatar !== '/assets/pngegg.png') ? currentUserAvatar : activeProfile?.avatar_url;
                     const initial = (activeProfile?.name || 'U').charAt(0).toUpperCase();
+                    const isCompany = activeProfile?.type === 'COMPANY';
                     return (
-                        <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm mb-[8px] font-['Poppins'] select-none">
+                        <div className={`relative w-[40px] h-[40px] ${isCompany ? 'rounded-md' : 'rounded-full'} overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm mb-[8px] font-['Poppins'] select-none`}>
                             <span>{initial}</span>
                             {avatar && avatar !== '/assets/pngegg.png' ? (
                                 <img 

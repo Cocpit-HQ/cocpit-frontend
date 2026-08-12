@@ -141,7 +141,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
       {/* Avatar Column */}
       <div className="flex-shrink-0">
         <Link href={authorLink} className="block">
-          <div className={`${avatarSize} rounded-full bg-[#EEF2FF] text-[#6366F1] overflow-hidden ring-1 ring-border/50 flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none`}>
+          <div className={`${avatarSize} ${author?.isCompanyPost ? 'rounded-md' : 'rounded-full'} bg-[#EEF2FF] text-[#6366F1] overflow-hidden ring-1 ring-border/50 flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none`}>
             {author?.avatar && author.avatar !== '/assets/pngegg.png' ? (
               <img 
                 src={author.avatar} 

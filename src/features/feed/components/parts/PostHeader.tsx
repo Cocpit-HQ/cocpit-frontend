@@ -177,12 +177,12 @@ export const PostHeader = ({
         className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden cursor-pointer group"
       >
         {/* Avatar (Ellipse 10) */}
-        <div className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] shrink-0 flex-shrink-0 aspect-square rounded-full overflow-hidden bg-white">
+        <div className={`w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] shrink-0 flex-shrink-0 aspect-square ${isCompanyPost ? 'rounded-md' : 'rounded-full'} overflow-hidden bg-white`}>
           {hasValidAvatar ? (
             <img
               src={authorAvatar}
               alt={author}
-              className="w-full h-full object-cover rounded-full aspect-square block"
+              className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-md' : 'rounded-full'} aspect-square block`}
               onError={() => setImgError(true)}
             />
           ) : (

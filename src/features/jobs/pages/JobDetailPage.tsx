@@ -127,6 +127,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
   const currentStepIndex = steps.indexOf(mappedStatus) !== -1 ? steps.indexOf(mappedStatus) : 0;
 
+  const isJobCompany = Boolean(job.org_id || job.company_id || job.company_type === 'COMPANY' || job.company_type === 'ORGANIZATION');
+
   return (
     <div className={`relative w-full bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} flex justify-center px-4 md:px-0`}>
       <div className={`flex flex-col items-center py-0 gap-6 relative w-full max-w-[998px] bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} pb-8`}>
@@ -192,22 +194,22 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               >
               <div className="flex">
                 {isLoading ? (
-                  <div className="relative w-8 h-8 rounded-full border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50">
-                    <div className="w-4 h-4 rounded-full bg-indigo-200" />
+                  <div className={`relative w-8 h-8 ${isJobCompany ? 'rounded-md' : 'rounded-full'} border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50`}>
+                    <div className={`w-4 h-4 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-indigo-200`} />
                   </div>
                 ) : job.company_logo === 'sphere' ? (
-                  <div className="w-8 h-8 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
+                  <div className={`w-8 h-8 bg-slate-100 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center overflow-hidden flex-shrink-0`}>
+                    <div className={`w-4 h-4 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm`} />
                   </div>
                 ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
                   <img
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    className={`w-8 h-8 ${isJobCompany ? 'rounded-md' : 'rounded-full'} object-cover flex-shrink-0`}
                     src={job.company_logo || job.recruiter_avatar}
                     onError={() => setAvatarError(true)}
                     alt="Company Logo"
                   />
                 ) : (
-                  <div className="w-8 h-8 bg-indigo-50 rounded-full flex justify-center items-center flex-shrink-0">
+                  <div className={`w-8 h-8 bg-indigo-50 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center flex-shrink-0`}>
                     <Icon icon="hugeicons:job-search" className="w-4 h-4 text-indigo-500" />
                   </div>
                 )}
@@ -228,22 +230,22 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 }}
               >
                 {isLoading ? (
-                  <div className="relative w-12 h-12 rounded-full border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50">
-                    <div className="w-6 h-6 rounded-full bg-indigo-200" />
+                  <div className={`relative w-12 h-12 ${isJobCompany ? 'rounded-md' : 'rounded-full'} border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50`}>
+                    <div className={`w-6 h-6 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-indigo-200`} />
                   </div>
                 ) : job.company_logo === 'sphere' ? (
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
+                  <div className={`w-12 h-12 bg-slate-100 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center overflow-hidden flex-shrink-0`}>
+                    <div className={`w-6 h-6 ${isJobCompany ? 'rounded-md' : 'rounded-full'} bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm`} />
                   </div>
                 ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
                   <img
-                    className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
+                    className={`w-12 h-12 ${isJobCompany ? 'rounded-md' : 'rounded-full'} object-cover flex-shrink-0`}
                     src={job.company_logo || job.recruiter_avatar}
                     onError={() => setAvatarError(true)}
                     alt="Company Logo"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-indigo-50 rounded-xl flex justify-center items-center flex-shrink-0">
+                  <div className={`w-12 h-12 bg-indigo-50 ${isJobCompany ? 'rounded-md' : 'rounded-full'} flex justify-center items-center flex-shrink-0`}>
                     <Icon icon="hugeicons:building-03" className="w-6 h-6 text-indigo-500" />
                   </div>
                 )}
