@@ -114,8 +114,8 @@ export function SettingsSidebar() {
       {/* --- DESKTOP SIDEBAR --- */}
       <div className="hidden md:flex flex-col items-start pt-2 pr-0 pb-2 pl-2 gap-4 w-[250px] shrink-0 font-poppins">
         <div className={`flex flex-col justify-center items-start px-2.5 gap-2 w-[242px] pb-4 border-b border-[#EEF2FF] ${isCompany ? 'dark:border-company-border' : 'dark:border-border'}`}>
-          <h2 className={`text-[24px] font-semibold text-black leading-[32px] text-center ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`}>Settings</h2>
-          <p className={`text-[14px] font-normal text-black leading-[20px] text-center w-full truncate ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`} title={subtitle || ''}>{subtitle}</p>
+          <h2 className={`text-[24px] font-semibold text-black leading-[32px] text-left ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`}>Settings</h2>
+          <p className={`text-[14px] font-normal text-black leading-[20px] text-left w-full truncate ${isCompany ? 'dark:text-company-text' : 'dark:text-foreground'}`} title={subtitle || ''}>{subtitle}</p>
         </div>
         
         <nav className="flex flex-col w-full gap-4">

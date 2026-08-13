@@ -91,6 +91,8 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         about: user.about || '',
         email: user.email || null,
         mobile_number: user.mobile_number || null,
+        created_at: user.created_at,
+        is_identity_verified: user.is_identity_verified,
         skills: Array.isArray(data.skills)
             ? data.skills.map((s: any) => typeof s === 'string' ? s : s.name)
             : [],

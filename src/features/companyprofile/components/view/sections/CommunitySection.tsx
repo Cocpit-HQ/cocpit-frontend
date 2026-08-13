@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { CompanyProfileData } from "../../../types/company-profile.types";
 import { companyProfileService } from "../../../services/companyprofile.service";
@@ -15,6 +15,7 @@ interface CommunitySectionProps {
 export default function CommunitySection({ data }: CommunitySectionProps) {
   const queryClient = useQueryClient();
   const params = useParams();
+  const router = useRouter();
   const { isCompany } = useActiveProfile();
   const slug = params.slug as string || "nexsus-global-systems";
   const community = data.community;
@@ -54,6 +55,13 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
     onError: (err, variables, context) => {
       if (context?.previousProfile) {
         queryClient.setQueryData(["companyProfile", slug], context.previousProfile);
+      }
+    },
+    onSuccess: () => {
+      // If the community was NOT subscribed before this mutation, it means they just subscribed.
+      // Redirect them to the channel page.
+      if (community && !community.isSubscribed) {
+        router.push(`/channels/${community.communityId}`);
       }
     },
     onSettled: () => {
@@ -141,7 +149,8 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
             flex: "none",
             flexGrow: 0,
           }}
-          className="max-md:!w-full max-md:!h-[150px]"
+          className="max-md:!w-full max-md:!h-[150px] cursor-pointer"
+          onClick={() => router.push(`/channels/${community.communityId}`)}
         >
           <Image
             src={community.bannerUrl || "/images/companyonboarding/companycoverphotoDefault.png"}
@@ -180,6 +189,8 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               flex: "none",
               flexGrow: 0,
             }}
+            className="cursor-pointer group"
+            onClick={() => router.push(`/channels/${community.communityId}`)}
           >
             <span
               style={{

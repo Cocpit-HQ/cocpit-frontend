@@ -37,18 +37,18 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
   return (
     <div
       onClick={() => onClick?.(job)}
-      className={`w-full p-4 bg-white ${isCompanyMode ? 'dark:bg-[#0F1115] dark:outline-[#2A2D35]' : 'dark:bg-[#0B0F19] dark:outline-[#2E3445]'} rounded-[24px] outline outline-1 outline-offset-[-1px] outline-[#EEF2FF] flex flex-col justify-center items-start gap-3 transition-all duration-200 cursor-pointer mb-6 last:mb-0`}
+      className={`w-full p-4 bg-white ${isCompanyMode ? 'dark:bg-[#0F1115] dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19] dark:border-[#2E3445]'} rounded-[24px] border border-[#EEF2FF] flex flex-col justify-center items-start gap-3 transition-all duration-200 cursor-pointer`}
     >
-      <div className="w-full flex justify-between items-start">
+      <div className="w-full flex justify-between items-start gap-[10px]">
         {/* Left Header */}
-        <div className="flex flex-col items-start gap-1">
-          <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-medium font-['Poppins'] leading-normal`}>
+        <div className="flex flex-col items-start gap-2">
+          <div className={`text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[16px] font-medium font-['Poppins'] leading-6`}>
             {job.title}
           </div>
-          <div className="text-[#6B7280] dark:text-[#9CA3AF] text-[14px] font-normal font-['Poppins'] leading-tight">
+          <div className={`text-[#6B7280] dark:text-[#9CA3AF] text-[14px] font-normal font-['Poppins'] leading-5`}>
             {job.company}
           </div>
-          <div className="text-[#6B7280] dark:text-[#9CA3AF] text-[14px] font-semibold font-['Poppins'] leading-tight">
+          <div className={`text-[#6B7280] dark:text-[#9CA3AF] text-[14px] font-semibold font-['Poppins'] leading-5`}>
             {job.job_type || 'Full time'}
           </div>
         </div>
@@ -80,15 +80,15 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
         )}
       </div>
 
-      <div className="w-full flex justify-between items-center mt-2">
+      <div className="w-full flex justify-between items-center gap-3">
         {/* Experience and Location */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="flex justify-start items-center gap-2">
             <Icon icon="hugeicons:job-search" className={`w-5 h-5 text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`} />
             <div className={`justify-start text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} text-[14px] font-normal font-['Poppins'] leading-5`}>{job.experience || '0-2Yrs'}</div>
           </div>
 
-          <div className={`size-[6px] bg-black ${isCompanyMode ? 'dark:bg-[#FFFFFF]' : 'dark:bg-[#F9FAFB]'} rounded-full`} />
+          <div className={`w-[6px] h-[6px] bg-black ${isCompanyMode ? 'dark:bg-[#FFFFFF]' : 'dark:bg-[#F9FAFB]'} rounded-full`} />
           
           <div className="flex justify-start items-center gap-2">
             <Icon icon="hugeicons:location-05" className={`w-5 h-5 text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`} />
@@ -117,7 +117,7 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
         </div>
       </div>
 
-      <div className="w-full flex justify-between items-end mt-4">
+      <div className="w-full flex justify-between items-center gap-[10px]">
         {/* Posted At */}
         <div className={`justify-start text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal font-['Poppins'] leading-4 ${getPostedDateColor()}`}>
           {job.posted_at}
@@ -130,7 +130,7 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
               e.stopPropagation();
               onApply?.(job.id, e);
             }}
-            className={`box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[24px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} hover:bg-[#6366F1]/90 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90'} text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} transition-all duration-200 active:scale-95 flex-none text-[14px] font-normal font-['Poppins'] leading-5`}
+            className={`box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[24px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#1C2340]' : 'dark:border-[#0B0F19]'} hover:bg-[#6366F1]/90 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90'} text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} transition-all duration-200 active:scale-95 flex-none text-[14px] font-normal font-['Poppins'] leading-5`}
           >
             Apply
           </button>
@@ -145,7 +145,7 @@ export const SearchJobCard: React.FC<SearchJobCardProps> = React.memo(({
           >
             <Icon
               icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-              className={`w-6 h-6 transition-colors ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} hover:text-[#6366F1] ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
+              className={`w-6 h-6 transition-colors ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-[#000000] ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} hover:text-[#6366F1] ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
             />
           </button>
         </div>

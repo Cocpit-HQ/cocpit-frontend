@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Mail, Phone, Link as LinkIcon, Copy, Check, Pencil, X, Loader2 } from 'lucide-react';
+import { Copy, Check, Pencil, X, Loader2, BadgeCheck } from 'lucide-react';
+import dayjs from 'dayjs';
 import { UserData } from '@/types/user';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -105,15 +106,26 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                     </div>
 
                     <div className="text-center mb-8 relative px-4">
-                        <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">Contact info</DialogTitle>
-                        <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Your contact details for professional connections</p>
+                        <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">About this profile</DialogTitle>
+                        <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Key profile and contact details</p>
                     </div>
 
                     <div className="space-y-6 px-4 pb-4">
+                        {/* Joined Cocpit */}
+                        {Boolean(user.created_at) && (
+                            <div className="flex items-start gap-4">
+                                <div className="flex-1 flex flex-col gap-1">
+                                    <p className="text-[16px] font-medium text-foreground">Joined Cocpit</p>
+                                    <span className="text-muted-foreground text-[14px] font-normal">
+                                        {dayjs(user.created_at).format('MMMM YYYY')}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Email */}
                         {Boolean(user.email) && (
                             <div className="flex items-start gap-4">
-                                <Mail className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                                 <div className="flex-1 flex flex-col gap-1">
                                     <p className="text-[16px] font-medium text-foreground">Email</p>
                                     <div className="flex items-center justify-between group h-5">
@@ -136,7 +148,6 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                         {/* Phone */}
                         {Boolean(user.mobile_number) && (
                             <div className="flex items-start gap-4">
-                                <Phone className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                                 <div className="flex-1 flex flex-col gap-1">
                                     <p className="text-[16px] font-medium text-foreground">Phone</p>
                                     <div className="flex items-center justify-between group h-5">
@@ -158,7 +169,6 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
 
                         {/* Profile Link */}
                         <div className="flex items-start gap-4">
-                            <LinkIcon className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                             <div className="flex-1 flex flex-col gap-1">
                                 <div className="flex items-center gap-2 h-6">
                                     <p className="text-[16px] font-medium text-foreground">Profile URL</p>
@@ -230,6 +240,21 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                                         </Button>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Verifications */}
+                        <div className="flex items-start gap-4">
+                            <div className="flex-1 flex flex-col gap-1">
+                                <div className="flex items-center gap-1 h-6">
+                                    <p className="text-[16px] font-medium text-foreground">Verifications</p>
+                                    <BadgeCheck className="w-[18px] h-[18px] text-foreground mt-0.5" strokeWidth={2} />
+                                </div>
+                                <span className="text-muted-foreground text-[14px] font-normal">
+                                    {user.is_identity_verified
+                                        ? "Identity verified"
+                                        : (isOwnProfile ? "You don't have any verifications yet" : "User is unverified")}
+                                </span>
                             </div>
                         </div>
                     </div>

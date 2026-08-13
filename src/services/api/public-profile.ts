@@ -47,6 +47,7 @@ export interface PublicPost {
   tags?: any[];
   sample_liker_username?: string | null;
   author_headline?: string;
+  post_type?: string;
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
@@ -69,6 +70,7 @@ export interface PublicPost {
     is_saved?: boolean;
     liked_users?: { username: string; avatar_url: string | null }[];
     poll?: PublicPostPoll | null;
+    post_type?: string;
   };
 }
 

@@ -87,6 +87,7 @@ export interface PublicUserProfileResponse {
     connection_request_id?: string | null;
     connection_request_sender?: 'me' | 'them' | null;
     created_at: string;
+    is_identity_verified?: boolean;
   };
   experiences: ApiExperience[];
   educations: ApiEducation[];

@@ -84,6 +84,7 @@ export interface ProfilePost {
     is_saved?: boolean;
     liked_users?: { username: string; avatar_url: string | null }[];
     poll?: ProfilePostPoll | null;
+    post_type?: string;
   } | null;
 }
 

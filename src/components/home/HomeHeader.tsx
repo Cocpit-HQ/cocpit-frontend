@@ -331,7 +331,7 @@ export const HomeHeader = () => {
     return (
         <header
             className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-0 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
-                } md:translate-y-0 ${isChannelSearchPage ? 'hidden md:block' : ''}`}
+                } md:translate-y-0 ${pathname?.startsWith('/channels/') ? 'hidden md:block' : ''}`}
         >
             <div className="mx-auto flex min-h-12 min-w-0 max-w-[1128px] items-center px-0 md:min-h-[72px] md:px-4 xl:px-0">
                 {isChannelPage && (

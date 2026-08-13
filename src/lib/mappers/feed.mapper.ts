@@ -202,6 +202,15 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         const parts = spContent.split("<!-- article_divider -->");
         spContent = parts[0];
         spArticleBody = parts[1];
+      } else if (sp.post_type === 'article') {
+        const match = spContent.match(/<(div|p|h[1-6]|ul|ol|img|figure|video|blockquote)/i);
+        if (match && match.index !== undefined && match.index > 0) {
+          spArticleBody = spContent.substring(match.index);
+          spContent = spContent.substring(0, match.index);
+        } else if (match && match.index === 0) {
+          spArticleBody = spContent;
+          spContent = "";
+        }
       }
 
       sharedPost = {
@@ -243,6 +252,15 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     const parts = content.split("<!-- article_divider -->");
     content = parts[0];
     articleBody = parts[1];
+  } else if (backendPost.post_type === 'article') {
+    const match = content.match(/<(div|p|h[1-6]|ul|ol|img|figure|video|blockquote)/i);
+    if (match && match.index !== undefined && match.index > 0) {
+      articleBody = content.substring(match.index);
+      content = content.substring(0, match.index);
+    } else if (match && match.index === 0) {
+      articleBody = content;
+      content = "";
+    }
   }
 
   return {

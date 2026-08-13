@@ -209,6 +209,8 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             currentPoster={state.currentPoster}
             isCompanyPost={state.isCompanyPost}
             onArticleComplete={handleArticleComplete}
+            inlineFiles={state.inlineFiles}
+            setInlineFiles={state.setInlineFiles}
           />
         ) : null;
       default:

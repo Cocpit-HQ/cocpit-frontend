@@ -412,33 +412,35 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
       className={`w-full max-w-[998px] mx-auto bg-white dark:bg-[#0B0F19] pb-16 px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 dark:border-[#2E3445]/50 rounded-3xl ${activeTab === "Explore" ? "" : "pt-6"
         }`}
     >
-      {/* Hero Banner */}
-      {activeTab === "Explore" && jobs.length > 0 && (
-        <div className="hidden md:flex w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] dark:bg-[#1C2340] border border-[#E0E7FF] dark:border-[#252E54] rounded-[24px] flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
-          <div className="w-full flex flex-col items-start flex-none self-stretch">
-            <div className="w-full font-['Poppins'] font-semibold text-2xl md:text-3xl lg:text-[32px] leading-tight md:leading-[40px] flex items-center text-[#6366F1] dark:text-[#818CF8] flex-none self-stretch">
-              Your next career move,
-              <br />
-              made simple.
+      {/* Sticky Header Section */}
+      <div className="sticky top-[72px] z-30 w-[calc(100%+32px)] md:w-full -mx-4 px-4 md:mx-0 md:px-0 bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-md flex flex-col gap-[24px] pt-4 md:pt-6 pb-2">
+        {/* Hero Banner */}
+        {activeTab === "Explore" && jobs.length > 0 && (
+          <div className="hidden md:flex w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] dark:bg-[#1C2340] border border-[#E0E7FF] dark:border-[#252E54] rounded-[24px] flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
+            <div className="w-full flex flex-col items-start flex-none self-stretch">
+              <div className="w-full font-['Poppins'] font-semibold text-2xl md:text-3xl lg:text-[32px] leading-tight md:leading-[40px] flex items-center text-[#6366F1] dark:text-[#818CF8] flex-none self-stretch">
+                Your next career move,
+                <br />
+                made simple.
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Mobile Posted Jobs Card (Expected Look) */}
+        <div className="w-full flex md:hidden bg-white dark:bg-[#0B0F19] rounded-[16px] border border-gray-200 dark:border-[#2E3445] p-4 flex-col gap-1 shadow-sm mt-2 mb-1">
+            <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-[15px] font-['Poppins']">Posted jobs</h4>
+            <p className="text-gray-500 dark:text-[#9CA3AF] text-[13px] font-['Poppins'] mb-2">Manage and track your active job postings</p>
+            <button 
+              onClick={() => handleTabChange("My Listings")} 
+              className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
+            >
+              Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4"/>
+            </button>
         </div>
-      )}
 
-      {/* Mobile Posted Jobs Card (Expected Look) */}
-      <div className="w-full flex md:hidden bg-white dark:bg-[#0B0F19] rounded-[16px] border border-gray-200 dark:border-[#2E3445] p-4 flex-col gap-1 shadow-sm mt-2 mb-1">
-          <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-[15px] font-['Poppins']">Posted jobs</h4>
-          <p className="text-gray-500 dark:text-[#9CA3AF] text-[13px] font-['Poppins'] mb-2">Manage and track your active job postings</p>
-          <button 
-            onClick={() => handleTabChange("My Listings")} 
-            className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
-          >
-            Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4"/>
-          </button>
-      </div>
-
-      {/* Tabs navigation row */}
-      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white dark:bg-[#0B0F19]">
+        {/* Tabs navigation row */}
+        <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex overflow-x-auto no-scrollbar md:flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto pb-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -469,6 +471,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
         </button>
       </div>
+    </div>
 
       {/* AI Recommended Jobs - Only show under Explore tab */}
       {activeTab === "Explore" && (isRecommendationsLoading || recommendedJobs.length > 0) && (

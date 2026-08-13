@@ -101,6 +101,8 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
             setActiveModal('create-post');
           }
         }}
+        inlineFiles={state.inlineFiles}
+        setInlineFiles={state.setInlineFiles}
       />
     </div>
   );

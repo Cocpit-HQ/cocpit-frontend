@@ -68,9 +68,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       if (filters.location) params.location = filters.location;
       
       if (filters.job_type) {
-        // Map "Full time" -> "Full-time"
         let type = filters.job_type;
-        if (type === 'Full time') type = 'Full-time';
         params.employment_type = type;
         params.jobType = type;
       }
@@ -105,12 +103,14 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       }
 
       if (filters.salary_range) {
-        // Multi-select array → send as comma-separated `salaryRanges` param for backend OR logic
+        // Multi-select array or comma-separated string → send as comma-separated `salaryRanges` param
         if (Array.isArray(filters.salary_range)) {
           const activeRanges = filters.salary_range.filter(Boolean);
           if (activeRanges.length > 0) {
             params.salaryRanges = activeRanges.join(',');
           }
+        } else if (typeof filters.salary_range === 'string' && filters.salary_range.includes(',')) {
+          params.salaryRanges = filters.salary_range;
         } else {
           // Legacy single-string fallback: map to numeric min/max
           switch (filters.salary_range) {
@@ -127,6 +127,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
               break;
             case '10L+':
               params.salary_min = 1000000;
+              break;
+            default:
+              params.salaryRanges = filters.salary_range;
               break;
           }
         }
@@ -148,6 +151,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       title: job.title,
       company: job.company_name,
       location: job.location,
+      job_type: job.job_type || 'Full time',
       work_type: job.job_type || 'Full time',
       work_mode: job.work_mode,
       salary_min: job.salary_min,
@@ -213,6 +217,7 @@ export const getRecommendations = async (): Promise<Job[]> => {
       title: job.title,
       company: job.company_name,
       location: job.location,
+      job_type: job.job_type || 'Full time',
       work_type: job.job_type,
       work_mode: job.work_mode,
       salary_min: job.salary_min,
@@ -258,6 +263,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       title: job.title,
       company: job.company_name,
       location: job.location,
+      job_type: job.job_type || 'Full time',
       work_type: job.job_type || 'Full time',
       work_mode: job.work_mode,
       salary_min: job.salary_min,
@@ -480,6 +486,7 @@ export const getMyApplications = async (status: string = 'all', cursor?: string)
       title: job.title,
       company: job.company_name,
       location: job.location,
+      job_type: job.job_type || 'Full time',
       work_type: job.job_type || 'Full time',
       work_mode: job.work_mode,
       salary_min: job.salary_min,
@@ -718,6 +725,7 @@ export const getMyListings = async (
       experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label),
       experience_min: job.experience_min,
       experience_max: job.experience_max,
+      job_type: job.job_type || 'Full time',
       work_type: job.job_type,
       work_mode: job.work_mode,
       salary_min: job.salary_min,

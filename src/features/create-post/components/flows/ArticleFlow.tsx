@@ -70,6 +70,8 @@ interface ArticleFlowProps {
   onPreviewStepChange?: (isPreview: boolean) => void;
   onArticleComplete?: (data: { coverImage: MediaItem | null; title: string; subtitle: string; content: string }) => void;
   skipNextStep?: boolean;
+  inlineFiles?: { id: string; file: File }[];
+  setInlineFiles?: React.Dispatch<React.SetStateAction<{ id: string; file: File }[]>>;
 }
 
 const ArticleFlow = ({
@@ -91,7 +93,9 @@ const ArticleFlow = ({
   isCompanyPost,
   onPreviewStepChange,
   onArticleComplete,
-  skipNextStep
+  skipNextStep,
+  inlineFiles,
+  setInlineFiles
 }: ArticleFlowProps) => {
   const [step, setStep] = useState(1);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -101,7 +105,9 @@ const ArticleFlow = ({
   const [editingLinkNode, setEditingLinkNode] = useState<HTMLElement | null>(null);
   const [isUploadingInline, setIsUploadingInline] = useState(false);
   const [editingImgSrc, setEditingImgSrc] = useState<string | null>(null);
-  const [localFiles, setLocalFiles] = useState<{ id: string; file: File }[]>([]);
+  const [internalLocalFiles, setInternalLocalFiles] = useState<{ id: string; file: File }[]>([]);
+  const localFiles = inlineFiles !== undefined ? inlineFiles : internalLocalFiles;
+  const setLocalFiles = setInlineFiles !== undefined ? setInlineFiles : setInternalLocalFiles;
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   const editorRef = useRef<HTMLDivElement>(null);

@@ -24,6 +24,7 @@ interface UIState {
     coverImage: any;
     description: string;
     articleData: any;
+    localFiles?: { id: string; file: File }[];
   } | null;
   isEditMode: boolean;
   editingPostId: string | null;

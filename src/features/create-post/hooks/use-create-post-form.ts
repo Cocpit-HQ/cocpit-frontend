@@ -59,6 +59,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [notifyEmployees, setNotifyEmployees] = useState(false);
   const [isBroadcast, setIsBroadcast] = useState(false);
   const [postAsCompanyId, setPostAsCompanyId] = useState<string | null>(propCompanyId || (activeProfile?.type === 'COMPANY' ? activeProfile.id : null));
+  const [inlineFiles, setInlineFiles] = useState<{ id: string; file: File }[]>([]);
 
   // Edit Mode state
   const [isLoadingPost, setIsLoadingPost] = useState(false);
@@ -107,6 +108,9 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         }
         setDescription(articleDraft.description);
         setArticleData(articleDraft.articleData);
+        if (articleDraft.localFiles) {
+          setInlineFiles(articleDraft.localFiles);
+        }
         setPostType('article');
       }
     }
@@ -256,12 +260,12 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    let inlineFiles: File[] = [];
+    let inlineFilesParam: File[] = [];
     let activeTagUserIds: string[] | undefined = tagUserIds;
 
     if (inlineFilesOrTagUserIds && inlineFilesOrTagUserIds.length > 0) {
       if (inlineFilesOrTagUserIds[0] instanceof File) {
-        inlineFiles = inlineFilesOrTagUserIds as File[];
+        inlineFilesParam = inlineFilesOrTagUserIds as File[];
       } else {
         activeTagUserIds = inlineFilesOrTagUserIds as string[];
       }
@@ -308,15 +312,22 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       let finalContent = "";
       if (postType === 'article') {
-        finalContent = `${description.trim()}<!-- article_divider -->${articleContent}`;
-      } else if (articleData) {
-        finalContent = `${description.trim()}<!-- article_divider -->${articleData.content}`;
+        finalContent = `${description.trim()}<!-- article_divider -->${articleData ? articleData.content : articleContent}`;
       } else {
         finalContent = sanitizeContent(description);
       }
 
       // Convert clean full names back to structured mentions for the backend
       finalContent = formatMentionsForBackend(finalContent, inlineMentions);
+
+      let actualInlineFiles: File[] = [];
+      if (postType === 'article' || articleData) {
+        const blobUrls = Array.from(finalContent.matchAll(/src="(blob:[^"]+)"/g)).map(m => m[1]);
+        blobUrls.forEach(url => {
+          const match = inlineFiles.find(f => f.id === url);
+          if (match) actualInlineFiles.push(match.file);
+        });
+      }
 
       const allowedCategories = getAllowedCategories();
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
@@ -341,6 +352,13 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         payload.article_subtitle = articleData.subtitle;
       }
 
+      if (postType === 'article') {
+        const coverImage = media.uploadedImages[0];
+        if (coverImage && coverImage.url) {
+          payload.media_urls = [coverImage.url];
+        }
+      }
+
       if (postType === 'poll') {
         if (!poll.isPollValid()) {
           setIsSubmitting(false);
@@ -351,6 +369,10 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       }
 
       const filesToUpload = await media.prepareFilesToUpload(articleData ? 'article' : postType, media.aspectRatio);
+
+      // Combine cover/post files and inline article files
+      let combinedInlineFiles = [...(inlineFilesParam || []), ...actualInlineFiles];
+      const allFilesToUpload = [...filesToUpload, ...combinedInlineFiles];
 
       if (editPostId) {
         try {
@@ -403,7 +425,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             updatePayload.media_urls = media_urls;
           }
 
-          await postApi.update(editPostId, updatePayload, inlineFiles);
+          await postApi.update(editPostId, updatePayload, combinedInlineFiles);
 
           if (onUpdate) {
             // Map the frontend fields for the feed optimistic/immediate update
@@ -431,9 +453,6 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         }
         return;
       }
-
-      // Combine cover/post files and inline article files
-      const allFilesToUpload = [...filesToUpload, ...inlineFiles];
 
       if (isCompanyPost) {
         const { mappedPost } = await postApi.create(payload, allFilesToUpload, activeTagUserIds);
@@ -477,6 +496,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     setIsEditingMedia(false);
     setArticleData(null);
     setAchievementImageId(undefined);
+    setInlineFiles([]);
     if (clearDraft) {
       useUIStore.getState().setArticleDraft(null);
     }
@@ -513,7 +533,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       userCompanies,
       achievementImageId, setAchievementImageId,
       achievementTitle, setAchievementTitle,
-      getDefaultCategory
+      getDefaultCategory,
+      inlineFiles, setInlineFiles
     },
     media,
     poll,

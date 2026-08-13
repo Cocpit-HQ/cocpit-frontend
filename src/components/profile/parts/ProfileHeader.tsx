@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { ReportModal } from "@/components/shared/ReportModal";
 import { Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface ProfileHeaderProps {
     user: User;
@@ -70,6 +71,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { isCompany, activeProfile } = useActiveProfile();
 
 
     // Read connection status directly from the same cache as ConnectionButton
@@ -195,7 +197,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                 </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                {!isOwnProfile && (
+                                {!isOwnProfile && (!isCompany && activeProfile?.type !== 'COMPANY') && (
                                     <ConnectionButton
                                         asMenuItem
                                         userId={user.id}

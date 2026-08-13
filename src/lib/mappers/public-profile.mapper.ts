@@ -5,16 +5,27 @@ import { PublicPost } from "@/services/api/public-profile";
 
 dayjs.extend(relativeTime);
 
-const splitArticleContent = (content?: string | null) => {
-  const rawContent = content || "";
-  if (!rawContent.includes("<!-- article_divider -->")) {
-    return { content: rawContent, articleBody: "" };
+const splitArticleContent = (content?: string | null, postType?: string) => {
+  let rawContent = content || "";
+  let articleBody = "";
+  if (rawContent.includes("<!-- article_divider -->")) {
+    const parts = rawContent.split("<!-- article_divider -->");
+    rawContent = parts[0] || "";
+    articleBody = parts[1] || "";
+  } else if (postType === 'article') {
+    const match = rawContent.match(/<(div|p|h[1-6]|ul|ol|img|figure|video|blockquote)/i);
+    if (match && match.index !== undefined && match.index > 0) {
+      articleBody = rawContent.substring(match.index);
+      rawContent = rawContent.substring(0, match.index);
+    } else if (match && match.index === 0) {
+      articleBody = rawContent;
+      rawContent = "";
+    }
   }
 
-  const parts = rawContent.split("<!-- article_divider -->");
   return {
-    content: parts[0] || "",
-    articleBody: parts[1] || "",
+    content: rawContent,
+    articleBody: articleBody,
   };
 };
 
@@ -68,7 +79,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     }))
   } : undefined;
 
-  const { content, articleBody } = splitArticleContent(publicPost.content);
+  const { content, articleBody } = splitArticleContent(publicPost.content, (publicPost as any).post_type);
 
   // Category mapping
   // Post entity expects specific string literals. We map what we can.
@@ -130,7 +141,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
       }
 
       if (sp.author && sp.post_id) {
-        const { content: sharedContent, articleBody: sharedArticleBody } = splitArticleContent(sp.content);
+        const { content: sharedContent, articleBody: sharedArticleBody } = splitArticleContent(sp.content, (sp as any).post_type);
         return {
           id: sp.post_id,
           authorId: sp.author.user_id,

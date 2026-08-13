@@ -98,6 +98,7 @@ export interface BackendPost {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
     post_id?: string;
+    post_type?: string;
     content?: string;
     created_at?: string;
     author?: {

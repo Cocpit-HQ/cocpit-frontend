@@ -41,9 +41,7 @@ export function AppShell({
 
       {/* Main content */}
       <main className={`min-w-0 flex-1 w-full md:ml-[232px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0`}>
-        <div className={pathname?.startsWith('/channels/') ? "hidden md:block" : ""}>
-          <HomeHeader />
-        </div>
+        <HomeHeader />
         {children}
       </main>
 

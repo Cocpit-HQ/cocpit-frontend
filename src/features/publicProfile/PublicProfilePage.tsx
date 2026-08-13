@@ -73,7 +73,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser, unblockUser, isBlocked } = useSocial();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
   const { canManageBlock, canBlockTarget } = useOrgBlockPermissions(userId);
 
   // Only admins/owners of the acting company may follow on behalf of it
@@ -459,16 +459,18 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   const dropdownActions = !isOwnProfile && (
     <>
-      <ConnectionButton
-        asMenuItem
-        userId={user.id}
-        username={userId}
-        isFollowing={user.is_following || false}
-        isFollowedBy={user.is_followed_by || false}
-        connectionRequestStatus={user.connection_request_status}
-        connectionRequestId={user.connection_request_id}
-        connectionRequestSender={user.connection_request_sender}
-      />
+      {(!isCompany && activeProfile?.type !== 'COMPANY') && (
+        <ConnectionButton
+          asMenuItem
+          userId={user.id}
+          username={userId}
+          isFollowing={user.is_following || false}
+          isFollowedBy={user.is_followed_by || false}
+          connectionRequestStatus={user.connection_request_status}
+          connectionRequestId={user.connection_request_id}
+          connectionRequestSender={user.connection_request_sender}
+        />
+      )}
       <DropdownMenuItem
         onClick={() => setIsShareModalOpen(true)}
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
