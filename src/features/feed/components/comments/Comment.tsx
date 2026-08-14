@@ -130,7 +130,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const isReply = variant === 'reply';
   const avatarSize = "w-8 h-8";
 
-  const authorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`;
+  const baseCommentAuthorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}`;
+  const authorLink = postId ? `${baseCommentAuthorLink}?sourcePostId=${postId}&commentId=${id}` : baseCommentAuthorLink;
 
 
   return (

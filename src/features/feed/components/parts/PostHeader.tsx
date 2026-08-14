@@ -73,8 +73,8 @@ export const PostHeader = ({
   const queryClient = useQueryClient();
 
   const followCompanyMutation = useMutation({
-    mutationFn: (orgId: string) => companyProfileService.followOrganization(orgId),
-    onSuccess: (_, orgId) => {
+    mutationFn: ({ orgId, sourcePostId }: { orgId: string; sourcePostId?: string }) => companyProfileService.followOrganization(orgId, sourcePostId),
+    onSuccess: (_, { orgId }) => {
       // Opt-in sync for SocialContext if we decide to store company IDs there
       syncFollowStatus(orgId, true);
       // Update state instead of invalidating to prevent "Organization not found" flicker
@@ -127,13 +127,13 @@ export const PostHeader = ({
       if (isAuthorFollowing) {
         unfollowCompanyMutation.mutate(authorUserId);
       } else {
-        followCompanyMutation.mutate(authorUserId);
+        followCompanyMutation.mutate({ orgId: authorUserId, sourcePostId: id.toString() });
       }
     } else {
       if (isAuthorFollowing) {
         unfollowUser(authorUserId);
       } else {
-        followUser(authorUserId);
+        followUser(authorUserId, id.toString());
       }
     }
     setShowOptions(false);
@@ -163,7 +163,8 @@ export const PostHeader = ({
     };
   }, [showOptions, setShowOptions]);
 
-  const authorLink = isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`;
+  const baseAuthorLink = isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`;
+  const authorLink = `${baseAuthorLink}?sourcePostId=${id}`;
   const isOverlay = variant === 'overlay';
 
   return (

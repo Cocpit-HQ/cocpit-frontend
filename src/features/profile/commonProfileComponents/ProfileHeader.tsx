@@ -102,6 +102,15 @@ export const ProfileHeader = React.memo(function ProfileHeader({
             const loadingToast = toast.loading("Generating your resume...");
             
             const { downloadProfileResumePdf } = await import("@/services/api/profile");
+            const { recordResumeEvent } = await import("@/services/api/analytics");
+
+            // Record download event
+            try {
+                await recordResumeEvent(user.id, "download");
+            } catch (err) {
+                console.error("Failed to record resume download event", err);
+            }
+            
             const { blob, filename } = await downloadProfileResumePdf(user.id);
             
             const url = window.URL.createObjectURL(blob);

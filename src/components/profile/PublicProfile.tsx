@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban } from "lucide-react";
@@ -41,6 +41,8 @@ interface PublicProfileProps {
 
 export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sourcePostId = searchParams.get('sourcePostId') || undefined;
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading } = useSocial();
   const { activeProfile, userCompanies } = useActiveProfile();
@@ -72,11 +74,11 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   // Record profile view
   React.useEffect(() => {
     if (user && userId && session?.user?.id && userId !== session.user.id) {
-      recordProfileView(userId, 'user').catch(() => {
+      recordProfileView(userId, 'user', sourcePostId).catch(() => {
         // Silently ignore tracking errors to avoid console spam
       });
     }
-  }, [userId, session?.user?.id, user]);
+  }, [userId, session?.user?.id, user, sourcePostId]);
 
   const isOwnProfile = !!(session?.user?.id === userId || (user && session?.user?.id === user.id));
   const isUserFollowing = user ? isFollowing(user.id) : false;
@@ -108,7 +110,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
     if (isUserFollowing) {
       unfollowUser(user.id);
     } else {
-      followUser(user.id);
+      followUser(user.id, sourcePostId);
     }
   };
 

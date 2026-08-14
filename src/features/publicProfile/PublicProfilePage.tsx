@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, MessageCircle, UserPlus, UserCheck, Share2, Link as LinkIcon, Flag } from "lucide-react";
@@ -71,6 +71,8 @@ function groupExperiences(experiences: Experience[]) {
 
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sourcePostId = searchParams.get('sourcePostId') || undefined;
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser, unblockUser, isBlocked } = useSocial();
   const { activeProfile, isCompany } = useActiveProfile();
@@ -93,7 +95,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const [activeFollowTab, setActiveFollowTab] = useState<"followers" | "following" | "connections">("followers");
 
   // TanStack Query Hooks
-  const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
+  const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId, sourcePostId);
   const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
   const { data: previewPosts, isLoading: isPreviewPostsLoading } = useProfilePostsPreview(userId);
 
@@ -323,11 +325,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   // Record profile view
   useEffect(() => {
     if (user && userId && session?.user?.id && userId !== session.user.id) {
-      recordProfileView(userId, 'user').catch(() => {
+      recordProfileView(userId, 'user', sourcePostId).catch(() => {
         // Silently ignore tracking errors to avoid console spam
       });
     }
-  }, [userId, session?.user?.id, user]);
+  }, [userId, session?.user?.id, user, sourcePostId]);
 
   const isOwnProfile = !!(activeProfile?.type === 'USER' && (session?.user?.id === userId || (user && session?.user?.id === user.id)));
   // In company mode, SocialContext's followingIds is NOT seeded from the org's following list,
@@ -356,9 +358,9 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (isUserFollowing) {
       unfollowUser(user.id);
     } else {
-      followUser(user.id);
+      followUser(user.id, sourcePostId);
     }
-  }, [user, isUserFollowing, unfollowUser, followUser]);
+  }, [user, isUserFollowing, unfollowUser, followUser, sourcePostId]);
 
   const handleMessage = useCallback(() => {
     if (!user) return;
@@ -560,6 +562,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           />
 
           <LivingResume
+            userId={user.id}
             experiences={flatExperiences}
             skills={user.skills}
             resumeName={user.resume?.originalName}

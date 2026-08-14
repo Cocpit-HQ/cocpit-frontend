@@ -119,14 +119,14 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
     };
 };
 
-export function useProfile(userId: string) {
+export function useProfile(userId: string, sourcePostId?: string) {
     const { syncFollowStatus } = useSocial();
     const { isCompany } = useActiveProfile();
 
     return useQuery({
         queryKey: ["profile", userId],
         queryFn: async () => {
-            const userData = await getUserById(userId);
+            const userData = await getUserById(userId, sourcePostId);
             // When in company mode, SocialContext is already seeded from the org's following list.
             // Syncing from the API response here would cause a race condition, so we skip it.
             if (!isCompany && userData.user.is_following !== undefined) {

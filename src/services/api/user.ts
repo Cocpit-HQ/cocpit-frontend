@@ -7,8 +7,10 @@ export const searchUsers = async (query: string): Promise<SearchedUser[]> => {
   return response.data;
 };
 
-export const getUserById = async (id: string): Promise<PublicUserProfileResponse> => {
-  const response = await api.get(`/users/${id}`);
+export const getUserById = async (id: string, sourcePostId?: string): Promise<PublicUserProfileResponse> => {
+  const response = await api.get(`/users/${id}`, {
+    params: sourcePostId ? { sourcePostId } : undefined,
+  });
   return response.data;
 };
 

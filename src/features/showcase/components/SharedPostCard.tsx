@@ -50,7 +50,9 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
             } else if (sharedPost.post_id) {
                 router.push(`/post/${sharedPost.post_id}`);
             } else if (sharedPost.author?.user_id) {
-                router.push(`/profile/${(sharedPost.author as any).account_name || sharedPost.author.user_id}`);
+                const authorSlug = (sharedPost.author as any).account_name || sharedPost.author.user_id;
+                const sourceQuery = (sharedPost.post_id || (sharedPost as any).id) ? `?sourcePostId=${sharedPost.post_id || (sharedPost as any).id}` : '';
+                router.push(`/profile/${authorSlug}${sourceQuery}`);
             }
         }
     };

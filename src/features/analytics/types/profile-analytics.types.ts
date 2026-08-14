@@ -1,82 +1,142 @@
-export type AnalyticsDateFilter = 'today' | '7d' | '30d' | 'all';
-
-export interface BaseMetric {
-  value: number;
-  trend?: number; // percentage change, e.g. +10, -5
+// ─────────────────────────────────────────────
+// Shared
+// ─────────────────────────────────────────────
+export interface MetricWithTrend {
+  value: number | string;
+  trend: string; // e.g. "+12%", "-5%", "Stable"
+  isPositive: boolean | null;
 }
 
-export interface OverviewMetrics {
-  overallReach: BaseMetric;
-  profileViews: BaseMetric;
-  engagementRate: BaseMetric;
-  topCountries: { name: string; count: number }[];
-  industryDistribution: { name: string; count: number }[];
+// ─────────────────────────────────────────────
+// Overview Tab — GET /api/users/me/analytics/overview
+// ─────────────────────────────────────────────
+export interface OverviewApiResponse {
+  keyMetrics: {
+    profileViews: MetricWithTrend;
+    searchAppearances: MetricWithTrend;
+    connectionRequests: MetricWithTrend;
+    followerGrowth: MetricWithTrend;
+    opportunityViews: MetricWithTrend;
+    resumeViews: MetricWithTrend;
+    resumeDownloads: MetricWithTrend;
+  };
+  chart: {
+    labels: string[];
+    datasets: { label: string; data: number[] }[];
+    startDate: string;
+    endDate: string;
+    tip: string | null;
+  };
+  profileStrength: {
+    score: number;
+    missingFields: string[];
+    message: string;
+  };
   insights: string[];
 }
 
-export interface PostPerformance {
-  id: string;
-  type: 'article' | 'media' | 'poll' | 'text';
-  previewText: string;
-  views: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  saves: number;
-  engagementRate: number;
-  totalReach: number;
-  directImpact: {
-    profileVisits: number;
-    newFollowers: number;
-    recruiterViews: number;
+// ─────────────────────────────────────────────
+// Audience Tab — GET /api/users/me/analytics/audience
+// ─────────────────────────────────────────────
+export interface AudienceApiResponse {
+  topMetrics: {
+    overallReach: MetricWithTrend;
+    profileViews: MetricWithTrend;
+    engagementRate: MetricWithTrend;
   };
-  geographicDistribution: { name: string; count: number }[];
-  industryDistribution: { name: string; count: number }[];
+  audienceLocation: {
+    countries: { name: string; value: number }[];
+    cities: { name: string; value: number }[];
+  };
+  audienceIndustries: { name: string; value: number }[];
+  insights: string[];
 }
 
-export interface ContentPerformance {
+// ─────────────────────────────────────────────
+// Content Tab — GET /api/users/me/analytics/content
+// ─────────────────────────────────────────────
+export interface ContentTopPost {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  views: string;
+  likes: string;
+  shares: string;
+  imgSrc: string | null;
+  icon: string | null;
+}
+
+export interface ContentApiResponse {
   formatPerformance: {
-    articles: BaseMetric;
-    media: BaseMetric;
-    polls: BaseMetric;
-    text: BaseMetric;
+    articlesViews: { value: string; icon: string };
+    mediaViews: { value: string; icon: string };
+    pollsViews: { value: string; icon: string };
+    textViews: { value: string; icon: string };
   };
-  topPosts: PostPerformance[];
+  topPosts: ContentTopPost[];
 }
 
-export interface AudienceLocation {
-  name: string;
-  count: number;
-}
-
-export interface AudienceInsights {
-  overallReach: BaseMetric;
-  profileViews: BaseMetric;
-  engagementRate: BaseMetric;
-  topCountries: AudienceLocation[];
-  topCities: AudienceLocation[];
-  audienceIndustries: { name: string; percentage: number }[];
+// ─────────────────────────────────────────────
+// Opportunities Tab — GET /api/users/me/analytics/opportunities
+// ─────────────────────────────────────────────
+export interface OpportunitiesApiResponse {
+  topMetrics: {
+    opportunityActivity: {
+      value: string;
+      trend: string;
+      label: string;
+      isPositive?: boolean | null;
+    };
+    repeatVisitors: {
+      percentage: string;
+      count: number;
+      label: string;
+    };
+  };
+  topOrganizations: {
+    name: string;
+    industry: string;
+    visits: string;
+    role: string;
+    icon: string;
+  }[];
+  organizationIndustries: { name: string; value: number }[];
   insights: string[];
 }
 
-export interface TopOrganization {
-  id: string;
-  name: string;
-  visitCount: number;
-  relevantActiveRole?: string;
-}
-
-export interface OpportunityMetrics {
-  opportunityActivity: BaseMetric; // e.g., recruiter views
-  repeatOrganizationVisitors: BaseMetric;
-  topOrganizations: TopOrganization[];
-  organizationIndustries: { name: string; percentage: number }[];
-  insights: string[];
-}
-
-export interface ProfileAnalyticsSnapshot {
-  overview: OverviewMetrics;
-  content: ContentPerformance;
-  audience: AudienceInsights;
-  opportunities: OpportunityMetrics;
+// ─────────────────────────────────────────────
+// Post Analytics — GET /api/posts/:postId/analytics
+// ─────────────────────────────────────────────
+export interface PostAnalyticsApiResponse {
+  post: {
+    postId: string;
+    content: string | null;
+    postType: string;
+    createdAt: string;
+    mediaUrl: string | null;
+    mediaType: string | null;
+  };
+  performance: {
+    impressions: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    saves: number;
+    engagementRate: string;
+  };
+  reachChart: {
+    labels: string[];
+    datasets: { label: string; data: number[] }[];
+  };
+  directImpact: {
+    profileVisits: { value: number; vsAvg: string; isPositive: boolean };
+    newFollowers: { value: number; vsAvg: string; isPositive: boolean };
+    organizationViews: { value: number; vsAvg: string; isPositive: boolean };
+  };
+  audienceDemographics: {
+    countries: { name: string; value: number }[];
+    cities: { name: string; value: number }[];
+    industries: { name: string; value: number }[];
+  };
 }

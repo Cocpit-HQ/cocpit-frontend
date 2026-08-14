@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface SocialContextType {
   followingIds: string[];
-  followUser: (id: string) => void;
+  followUser: (id: string, sourcePostId?: string) => void;
   unfollowUser: (id: string) => void;
   isFollowing: (id: string) => boolean;
   startChat: (userId: string, companyId?: string) => void;
@@ -77,7 +77,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["profileStats"] });
   };
 
-  const followUser = async (id: string) => {
+  const followUser = async (id: string, sourcePostId?: string) => {
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -87,13 +87,16 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     setFollowingIds((prev) => [...prev, id]);
 
     try {
+      const payload = sourcePostId ? { sourcePostId } : undefined;
+      
       if (isCompany && activeProfile?.id) {
         // Company follows a user via the org-specific endpoint
         await api.post(
           `/organizations/${activeProfile.id}/following/users/${id}`,
+          payload
         );
       } else {
-        await api.post(`/users/${id}/follow`);
+        await api.post(`/users/${id}/follow`, payload);
       }
 
       setFollowingLoading((prev) => {

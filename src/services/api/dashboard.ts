@@ -32,8 +32,8 @@ export const getDashboardStats = async (actorId?: string, actorType?: 'user' | '
 /**
  * Record a profile view
  */
-export const recordProfileView = async (profileOwnerId: string, profileType: 'user' | 'organization'): Promise<void> => {
-  await api.post("/dashboard/view", { profileOwnerId, profileType });
+export const recordProfileView = async (profileOwnerId: string, profileType: 'user' | 'organization', sourcePostId?: string): Promise<void> => {
+  await api.post("/dashboard/view", { profileOwnerId, profileType, sourcePostId });
 };
 
 /**

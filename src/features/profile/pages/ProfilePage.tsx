@@ -1486,13 +1486,16 @@ export default function ProfilePage() {
               isOwnProfile={true}
             />
 
-            <LivingResume
-              experiences={flatExperiences}
-              skills={skills.map(s => s.name)}
-              resumeName={profileData?.resume?.originalName}
-              resumeUrl={profileData?.resume?.url}
-              isOwnProfile={true}
-            />
+            <div id="resume-section" className="scroll-mt-32">
+              <LivingResume 
+                userId={user?.id || ""}
+                experiences={flatExperiences}
+                skills={skills.map(s => s.name)}
+                resumeName={profileData?.resume?.originalName}
+                resumeUrl={profileData?.resume?.url}
+                isOwnProfile={true}
+              />
+            </div>
 
             <ProfilePosts
               posts={previewPosts}

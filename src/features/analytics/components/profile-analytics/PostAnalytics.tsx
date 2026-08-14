@@ -1,11 +1,68 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import { getPostAnalytics } from '@/services/api/analytics';
+import { PostAnalyticsApiResponse } from '../../types/profile-analytics.types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker';
+import dayjs from 'dayjs';
+import { AnalyticsErrorState } from './AnalyticsErrorState';
+import { AnalyticsEmptyState } from './AnalyticsEmptyState';
 
-export const PostAnalytics = () => {
+export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }: { postId: string; filter?: string }) => {
   const [locationType, setLocationType] = useState<'Cities' | 'Countries'>('Cities');
+  const [data, setData] = useState<PostAnalyticsApiResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState(initialFilter);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!postId) return;
+      if (filter === 'Custom' && (!dateRange?.from || !dateRange?.to)) return;
+
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await getPostAnalytics(postId, filter, dateRange);
+        setData(result);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load post analytics.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [postId, filter, dateRange]);
+
+  const post = data?.post;
+  const metrics = data?.performance;
+  const directImpact = data?.directImpact;
+  
+  const locationItems = locationType === 'Cities' 
+    ? (data?.audienceDemographics?.cities ?? []) 
+    : (data?.audienceDemographics?.countries ?? []);
+  
+  const industries = data?.audienceDemographics?.industries ?? [];
+  const postTitle = post?.content ? post.content.substring(0, 80) + '...' : 'Post Analytics';
 
   return (
     <div className="flex flex-col w-full">
@@ -20,50 +77,126 @@ export const PostAnalytics = () => {
         </div>
       </div>
 
+      {error && !isLoading && (
+        <AnalyticsErrorState message={error} onRetry={() => setFilter(filter)} />
+      )}
+
+      {!isLoading && !error && data && (!metrics || metrics.impressions === 0) ? (
+        <AnalyticsEmptyState 
+          title="No analytics yet" 
+          message="This post hasn't received any views or engagement in this period."
+        />
+      ) : !error && (
+        <>
       {/* Content performance card */}
       <div className="border border-gray-100 rounded-[20px] p-6 shadow-sm flex flex-col mb-6 bg-white">
         <div className="flex flex-row justify-between items-center w-full mb-6">
           <h3 className="text-[16px] font-semibold text-gray-900 font-['Poppins']">Content performance</h3>
-          <div className="flex items-center gap-1 cursor-pointer">
-            <span className="text-[12px] text-gray-500 font-['Poppins']">Last 30 Days</span>
-            <Icon icon="lucide:chevron-down" className="w-4 h-4 text-gray-500" />
+          
+          <div className="flex items-center gap-4">
+            <div className="relative" ref={dropdownRef}>
+              <div
+                className="flex flex-row items-center gap-[8px] cursor-pointer border border-[#EEF2FF] px-3 py-1.5 rounded-full text-xs text-[#6B7280] bg-white hover:bg-gray-50 transition-colors shadow-sm"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <span className="font-['Poppins'] font-normal">{filter}</span>
+                <Icon icon="lucide:chevron-down" className={`w-[16px] h-[16px] text-[#6B7280] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
+              </div>
+
+              {dropdownOpen && (
+                <div className="absolute top-[36px] right-0 z-50 flex flex-col items-center p-2 w-[135px] bg-white border border-[#EEF2FF] rounded-[16px] shadow-lg">
+                  {['Custom', 'Last 7 days', 'Last 30 days', 'All time'].map((f) => (
+                    <div
+                      key={f}
+                      className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[32px] rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors ${
+                        filter === f ? 'text-[#6366F1] font-medium' : 'text-[#6B7280]'
+                      }`}
+                      onClick={() => { setFilter(f); setDropdownOpen(false); }}
+                    >
+                      <span className="text-[12px] font-['Poppins']">{f}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {filter === 'Custom' && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="flex items-center gap-2 cursor-pointer border border-[#EEF2FF] px-3 py-1.5 rounded-full text-xs text-[#6B7280] bg-white hover:bg-gray-50 transition-colors shadow-sm">
+                    <Icon icon="lucide:calendar" className="w-[16px] h-[16px]" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <span className="font-['Poppins']">
+                          {dayjs(dateRange.from).format('MMM DD, YYYY')} - {dayjs(dateRange.to).format('MMM DD, YYYY')}
+                        </span>
+                      ) : (
+                        <span className="font-['Poppins']">{dayjs(dateRange.from).format('MMM DD, YYYY')}</span>
+                      )
+                    ) : (
+                      <span className="font-['Poppins']">Select Date Range</span>
+                    )}
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
 
         {/* Post preview */}
         <div className="flex flex-row gap-4 mb-8">
-          <div className="w-[80px] h-[80px] bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0 overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#C7D2FE] flex items-center justify-center relative">
-              <Icon icon="lucide:layout-template" className="w-8 h-8 text-[#6366F1] opacity-50" />
-              {/* Mocking the UI lines from the screenshot */}
-              <div className="absolute top-2 left-2 right-2 h-2 bg-white rounded-sm opacity-50" />
-              <div className="absolute top-5 left-2 w-8 h-8 bg-white rounded-sm opacity-50" />
-            </div>
+          <div className="w-[80px] h-[80px] bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0 overflow-hidden relative">
+            {post?.mediaUrl ? (
+              <img src={post.mediaUrl} alt={postTitle} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#C7D2FE] flex items-center justify-center relative">
+                <Icon icon="lucide:layout-template" className="w-8 h-8 text-[#6366F1] opacity-50" />
+                {/* Mocking the UI lines from the screenshot */}
+                <div className="absolute top-2 left-2 right-2 h-2 bg-white rounded-sm opacity-50" />
+                <div className="absolute top-5 left-2 w-8 h-8 bg-white rounded-sm opacity-50" />
+              </div>
+            )}
           </div>
           <div className="flex flex-col flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="bg-[#EEF2FF] text-[#6366F1] text-[10px] font-medium px-2 py-0.5 rounded-[4px] font-['Poppins']">Article</span>
-              <span className="text-[10px] text-gray-400 font-['Poppins']">• Published on oct 15 2026</span>
+              <span className="bg-[#EEF2FF] text-[#6366F1] text-[10px] font-medium px-2 py-0.5 rounded-[4px] font-['Poppins'] capitalize">{post?.postType || 'Article'}</span>
+              <span className="text-[10px] text-gray-400 font-['Poppins']">• Published on {post?.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '...'}</span>
             </div>
-            <p className="text-[14px] font-medium text-gray-900 font-['Poppins'] leading-snug line-clamp-3">
-              Redesigning the SaaS Onboarding Experience We often design for the first interaction. The first click. The first impression...
-            </p>
+            {isLoading ? <Skeleton className="w-full h-[40px]" /> : (
+              <p className="text-[14px] font-medium text-gray-900 font-['Poppins'] leading-snug line-clamp-3">
+                {postTitle}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Metrics row */}
         <div className="flex flex-row justify-between w-full border-t border-gray-50 pt-6">
           {[
-            { label: 'Views', value: '12.4k' },
-            { label: 'Likes', value: '1.2k' },
-            { label: 'Comments', value: '2.1k' },
-            { label: 'Share', value: '342' },
-            { label: 'Save', value: '23' },
-            { label: 'Engagement rate', value: '9%' },
+            { label: 'Views', value: metrics?.impressions?.toLocaleString() ?? '-' },
+            { label: 'Likes', value: metrics?.likes?.toLocaleString() ?? '-' },
+            { label: 'Comments', value: metrics?.comments?.toLocaleString() ?? '-' },
+            { label: 'Share', value: metrics?.shares?.toLocaleString() ?? '-' },
+            { label: 'Save', value: metrics?.saves?.toLocaleString() ?? '-' },
+            { label: 'Engagement rate', value: metrics?.engagementRate ?? '-' },
           ].map((metric, idx) => (
             <div key={idx} className="flex flex-col">
               <span className="text-[10px] text-gray-500 font-['Poppins'] mb-1">{metric.label}</span>
-              <span className="text-[18px] font-bold text-gray-900 font-['Poppins'] leading-none">{metric.value}</span>
+              {isLoading ? (
+                <Skeleton className="w-[40px] h-[20px]" />
+              ) : (
+                <span className="text-[18px] font-bold text-gray-900 font-['Poppins'] leading-none">{metric.value}</span>
+              )}
             </div>
           ))}
         </div>
@@ -76,25 +209,44 @@ export const PostAnalytics = () => {
           <div className="flex justify-between items-start mb-6 z-10">
             <div className="flex flex-col">
               <span className="text-[12px] text-gray-500 font-medium font-['Poppins'] mb-1">Total reach</span>
-              <span className="text-[24px] font-bold text-gray-900 font-['Poppins'] leading-none">32.1k</span>
+              {isLoading ? (
+                <Skeleton className="w-[60px] h-[24px]" />
+              ) : (
+                <span className="text-[24px] font-bold text-gray-900 font-['Poppins'] leading-none">{metrics?.impressions?.toLocaleString() ?? '0'}</span>
+              )}
             </div>
             <div className="flex items-center gap-1 cursor-pointer">
-              <span className="text-[10px] text-gray-400 font-['Poppins']">Last 30 days</span>
+              <span className="text-[10px] text-gray-400 font-['Poppins']">{filter}</span>
             </div>
           </div>
           
           <div className="flex-1 w-full relative min-h-[100px] z-10 mt-4">
-            <svg viewBox="0 0 400 100" className="w-full h-full preserve-aspect-ratio-none absolute -left-6" style={{ width: 'calc(100% + 48px)' }} preserveAspectRatio="none">
-              <path 
-                d="M 0,80 C 50,80 80,90 120,80 C 160,70 180,30 220,30 C 260,30 280,45 320,40 C 360,35 380,20 400,10" 
-                fill="none" 
-                stroke="#818CF8" 
-                strokeWidth="3" 
-                strokeLinecap="round"
-              />
-              <circle cx="0" cy="80" r="4" fill="#818CF8" />
-              <circle cx="400" cy="10" r="4" fill="#818CF8" />
-            </svg>
+            {(() => {
+              const reachData = data?.reachChart?.datasets?.[0]?.data ?? [];
+              const maxReach = Math.max(...reachData, 1);
+              const reachPoints = reachData.length > 1
+                ? reachData.map((v, i) => {
+                    const x = (i / (reachData.length - 1)) * 400;
+                    const y = 90 - ((v / maxReach) * 80);
+                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                  }).join(' ')
+                : '0,90 400,90';
+
+              return (
+                <svg viewBox="0 0 400 100" className="w-full h-full preserve-aspect-ratio-none absolute -left-6" style={{ width: 'calc(100% + 48px)' }} preserveAspectRatio="none">
+                  <polyline
+                    points={reachPoints}
+                    fill="none" stroke="#818CF8" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"
+                  />
+                  {reachData.length > 0 && (
+                    <>
+                      <circle cx="0" cy={90 - ((reachData[0] / maxReach) * 80)} r="4" fill="#818CF8" />
+                      <circle cx="400" cy={90 - ((reachData[reachData.length - 1] / maxReach) * 80)} r="4" fill="#818CF8" />
+                    </>
+                  )}
+                </svg>
+              );
+            })()}
           </div>
         </div>
 
@@ -107,18 +259,26 @@ export const PostAnalytics = () => {
           
           <div className="flex flex-col gap-4">
             {[
-              { label: 'Profile visits', value: '842', trend: '+45% vs avg' },
-              { label: 'New followers', value: '124', trend: '+22% vs avg' },
-              { label: 'Opportunity views', value: '18', trend: '+22% vs avg' },
+              { label: 'Profile visits', value: directImpact?.profileVisits?.value ?? '-', trend: directImpact?.profileVisits?.vsAvg ? `${directImpact.profileVisits.vsAvg} vs avg` : '-' },
+              { label: 'New followers', value: directImpact?.newFollowers?.value ?? '-', trend: directImpact?.newFollowers?.vsAvg ? `${directImpact.newFollowers.vsAvg} vs avg` : '-' },
+              { label: 'Opportunity views', value: directImpact?.organizationViews?.value ?? '-', trend: directImpact?.organizationViews?.vsAvg ? `${directImpact.organizationViews.vsAvg} vs avg` : '-' },
             ].map((item, idx) => (
               <div key={idx} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0 last:pb-0">
                 <div className="flex flex-col">
                   <span className="text-[12px] font-medium text-gray-900 font-['Poppins']">{item.label}</span>
-                  <span className="text-[10px] text-gray-400 font-['Poppins']">Last 30 days</span>
+                  <span className="text-[10px] text-gray-400 font-['Poppins']">{filter}</span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-[14px] font-bold text-gray-900 font-['Poppins']">{item.value}</span>
-                  <span className="text-[10px] text-emerald-500 font-medium font-['Poppins']">{item.trend}</span>
+                  {isLoading ? (
+                    <Skeleton className="w-[30px] h-[14px] mb-1" />
+                  ) : (
+                    <span className="text-[14px] font-bold text-gray-900 font-['Poppins']">{item.value}</span>
+                  )}
+                  {isLoading ? (
+                    <Skeleton className="w-[40px] h-[10px]" />
+                  ) : (
+                    <span className={`text-[10px] font-medium font-['Poppins'] ${item.trend.startsWith('-') ? 'text-red-500' : 'text-emerald-500'}`}>{item.trend}</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -131,15 +291,15 @@ export const PostAnalytics = () => {
         <div className="flex flex-row justify-between items-center w-full mb-8">
           <h3 className="text-[14px] font-semibold text-gray-900 font-['Poppins']">Audience demographics</h3>
           <div className="flex items-center gap-1 cursor-pointer">
-            <span className="text-[10px] text-gray-400 font-['Poppins']">Last 30 Days</span>
+            <span className="text-[10px] text-gray-400 font-['Poppins']">{filter}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-10">
-          {/* Cities */}
+          {/* Cities / Countries */}
           <div className="flex flex-col w-full">
             <div className="flex justify-between items-center mb-6">
-              <span className="text-[12px] font-semibold text-gray-900 font-['Poppins']">Cities</span>
+              <span className="text-[12px] font-semibold text-gray-900 font-['Poppins']">{locationType}</span>
               <div className="flex bg-[#F3F4F6] rounded-full p-1">
                 <button 
                   onClick={() => setLocationType('Cities')}
@@ -156,22 +316,23 @@ export const PostAnalytics = () => {
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              {[
-                { name: 'Mumbai', value: 45 },
-                { name: 'Bengaluru', value: 22 },
-                { name: 'Dubai', value: 18 },
-                { name: 'Delhi', value: 10 },
-              ].map((item, idx) => (
-                <div key={idx} className="flex flex-col w-full">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-medium text-gray-900 font-['Poppins']">{item.name}</span>
-                    <span className="text-[10px] font-bold text-gray-900 font-['Poppins']">{item.value}%</span>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-[20px]" />)
+              ) : locationItems.length > 0 ? (
+                locationItems.slice(0, 4).map((item, idx) => (
+                  <div key={idx} className="flex flex-col w-full">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-medium text-gray-900 font-['Poppins']">{item.name}</span>
+                      <span className="text-[10px] font-bold text-gray-900 font-['Poppins']">{item.value}%</span>
+                    </div>
+                    <div className="w-full h-[4px] bg-[#EEF2FF] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#6366F1] rounded-full" style={{ width: `${Math.min(item.value, 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="w-full h-[4px] bg-[#EEF2FF] rounded-full">
-                    <div className="h-full bg-[#6366F1] rounded-full" style={{ width: `${item.value}%` }} />
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <span className="text-[12px] text-gray-400 font-['Poppins']">No location data available.</span>
+              )}
             </div>
           </div>
 
@@ -179,26 +340,29 @@ export const PostAnalytics = () => {
           <div className="flex flex-col w-full">
             <span className="text-[12px] font-semibold text-gray-900 font-['Poppins'] mb-6 h-6 flex items-center">Audience industry</span>
             <div className="flex flex-col gap-4">
-              {[
-                { name: 'Software development', value: 45 },
-                { name: 'Fintech & banking', value: 22 },
-                { name: 'UX/UI design agencies', value: 18 },
-                { name: 'Others', value: 10 },
-              ].map((item, idx) => (
-                <div key={idx} className="flex flex-col w-full">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-medium text-gray-900 font-['Poppins']">{item.name}</span>
-                    <span className="text-[10px] font-bold text-gray-900 font-['Poppins']">{item.value}%</span>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-[20px]" />)
+              ) : industries.length > 0 ? (
+                industries.slice(0, 4).map((item, idx) => (
+                  <div key={idx} className="flex flex-col w-full">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-medium text-gray-900 font-['Poppins']">{item.name}</span>
+                      <span className="text-[10px] font-bold text-gray-900 font-['Poppins']">{item.value}%</span>
+                    </div>
+                    <div className="w-full h-[4px] bg-[#EEF2FF] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#6366F1] rounded-full" style={{ width: `${Math.min(item.value, 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="w-full h-[4px] bg-[#EEF2FF] rounded-full">
-                    <div className="h-full bg-[#6366F1] rounded-full" style={{ width: `${item.value}%` }} />
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <span className="text-[12px] text-gray-400 font-['Poppins']">No industry data available.</span>
+              )}
             </div>
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };

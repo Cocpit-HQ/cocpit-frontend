@@ -17,6 +17,7 @@ import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useToast } from "@/hooks/use-toast";
 import { createPortal } from 'react-dom';
 import { Icon } from '@iconify/react';
+import { usePostImpression } from '@/hooks/usePostImpression';
 
 // Parts
 import { PostHeader } from './parts/PostHeader';
@@ -244,6 +245,17 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const feedCardRef = useRef<HTMLDivElement>(null);
 
+  // Track impressions when post scrolls into view in the feed.
+  // Only track for the original post ID (not reposts of others) to avoid double-counting.
+  const impressionTargetId = id ? id.toString() : '';
+  const impressionRef = usePostImpression(impressionTargetId);
+
+  // Sync impressionRef and feedCardRef to the same div
+  const setRefs = (el: HTMLDivElement | null) => {
+    (feedCardRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    (impressionRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+  };
+
   useEffect(() => {
     if (!props.sessionId || !feedCardRef.current) return;
 
@@ -359,7 +371,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   return (
     <div
-      ref={feedCardRef}
+      ref={setRefs}
       onClick={handleCardClick}
       className={`feed-card-shell rounded-tl-none flex w-full max-w-[560px] max-md:!max-w-full flex-col gap-[8px] overflow-hidden h-full ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
       style={videoSrc && !props.isFullContent ? { borderRadius: 0 } : undefined}
@@ -371,7 +383,7 @@ export const FeedPost = (props: FeedPostProps) => {
             <div className="flex items-center gap-1.5 text-muted-foreground text-[12px] font-normal font-poppins">
               <Icon icon="lucide:repeat" className="w-4 h-4 text-[#6B7280]" style={{ strokeWidth: '1.5px' }} />
               <Link 
-                href={props.isCompanyPost ? `/organization/${props.authorSlug}` : `/profile/${props.authorSlug || props.authorId}`}
+                href={`${props.isCompanyPost ? `/organization/${props.authorSlug}` : `/profile/${props.authorSlug || props.authorId}`}?sourcePostId=${id}`}
                 className="text-[#6B7280] font-medium hover:underline font-[family-name:var(--font-poppins)] text-[12px] leading-[16px]"
                 onClick={(e) => e.stopPropagation()}
               >

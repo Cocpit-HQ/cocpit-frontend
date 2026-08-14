@@ -55,7 +55,7 @@ export const PostSharedContent = ({
           )}
           {shared_post.author && shared_post.author !== 'Unknown' && (
             <Link 
-              href={shared_post.isCompanyPost ? `/organization/${shared_post.authorSlug}` : `/profile/${shared_post.authorSlug || shared_post.authorId}`} 
+              href={`${shared_post.isCompanyPost ? `/organization/${shared_post.authorSlug}` : `/profile/${shared_post.authorSlug || shared_post.authorId}`}?sourcePostId=${shared_post.id}`} 
               className="text-sm text-primary hover:underline mt-2"
             >
               View {shared_post.author}&apos;s Profile

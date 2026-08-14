@@ -37,10 +37,11 @@ export default function CompanyPage() {
         newParams.set("tab", value);
         router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     };
+    const sourcePostId = searchParams.get('sourcePostId') || undefined;
 
     const { data: company, isLoading, error } = useQuery({
-        queryKey: ["company", slug],
-        queryFn: () => companyService.getCompany(slug),
+        queryKey: ["company", slug, sourcePostId],
+        queryFn: () => companyService.getCompany(slug, sourcePostId),
         retry: false,
     });
 
@@ -49,9 +50,9 @@ export default function CompanyPage() {
     // Record organization profile view
     React.useEffect(() => {
         if (company?.org_id) {
-            recordProfileView(company.org_id, 'organization').catch(console.error);
+            recordProfileView(company.org_id, 'organization', sourcePostId).catch(console.error);
         }
-    }, [company?.org_id]);
+    }, [company?.org_id, sourcePostId]);
 
     if (error) {
         return (

@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess"
 import { ArrowLeft, Loader2 } from "lucide-react"
+import api from "@/lib/axios"
 
 interface PageProps {
     params: Promise<{
@@ -52,6 +53,15 @@ export default function SinglePostPage({ params }: PageProps) {
             fetchPost()
         }
     }, [id])
+
+    // Fire impression when the post finishes loading on the detail page.
+    // Opening a detail page is an explicit view — track it immediately.
+    useEffect(() => {
+        if (!post) return;
+        api.post(`/dashboard/post/${id}/impression`).catch(() => {
+            // silent fail
+        });
+    }, [id, post])
 
     const menuAccess = getPostMenuAccess({
         isCompanyPost: post?.isCompanyPost,

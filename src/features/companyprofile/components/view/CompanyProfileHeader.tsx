@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
@@ -43,6 +43,8 @@ const formatIndustryType = (industry?: string | null) => {
 
 export default function CompanyProfileHeader({ data, isOwnProfile, canManageCompany = false, logoUrl, coverUrl, orgId, onShareClick }: CompanyProfileHeaderProps) {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const sourcePostId = searchParams.get('sourcePostId') || undefined;
   const slug = params.slug as string || "nexsus-global-systems";
   
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
@@ -79,12 +81,12 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
         // Company following/unfollowing another org — use org-level endpoints
         return data.isFollowing
           ? companyProfileService.organizationUnfollowOrganization(activeProfile.id, orgId!)
-          : companyProfileService.organizationFollowOrganization(activeProfile.id, orgId!);
+          : companyProfileService.organizationFollowOrganization(activeProfile.id, orgId!, sourcePostId);
       }
       // Regular user following/unfollowing an org
       return data.isFollowing
         ? companyProfileService.unfollowOrganization(orgId!)
-        : companyProfileService.followOrganization(orgId!);
+        : companyProfileService.followOrganization(orgId!, sourcePostId);
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["companyProfile", slug] });

@@ -89,8 +89,8 @@ export const companyProfileService = {
     const res = await api.get(`/organizations/${orgId}/relationship`);
     return res.data;
   },
-  async followOrganization(orgId: string): Promise<any> {
-    const res = await api.post(`/organizations/${orgId}/follow`);
+  async followOrganization(orgId: string, sourcePostId?: string): Promise<any> {
+    const res = await api.post(`/organizations/${orgId}/follow`, sourcePostId ? { sourcePostId } : undefined);
     return res.data;
   },
 
@@ -176,8 +176,9 @@ export const companyProfileService = {
     return res.data;
   },
 
-  async organizationFollowOrganization(orgId: string, targetOrgId: string): Promise<any> {
-    const res = await api.post(`/organizations/${orgId}/following/organizations/${targetOrgId}`);
+  async organizationFollowOrganization(orgId: string, targetOrgId: string, sourcePostId?: string): Promise<any> {
+    const payload = sourcePostId ? { sourcePostId } : undefined;
+    const res = await api.post(`/organizations/${orgId}/following/organizations/${targetOrgId}`, payload);
     return res.data;
   },
 

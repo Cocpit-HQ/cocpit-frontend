@@ -15,7 +15,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+import { recordResumeEvent } from "@/services/api/analytics";
+
 interface LivingResumeProps {
+  userId: string;
   experiences: Experience[];
   skills: string[];
   resumeName?: string | null;
@@ -24,6 +27,7 @@ interface LivingResumeProps {
 }
 
 export function LivingResume({
+  userId,
   experiences,
   skills,
   resumeName,
@@ -61,8 +65,15 @@ export function LivingResume({
     totalYears = 0; // Empty state fallback
   }
 
-  const handleDownloadOrView = () => {
+  const handleDownloadOrView = async () => {
     if (resumeUrl) {
+      try {
+        // Log the view or download event
+        await recordResumeEvent(userId, isOwnProfile ? 'download' : 'view');
+      } catch (err) {
+        console.error("Failed to record resume event:", err);
+      }
+
       if (isOwnProfile) {
         window.open(resumeUrl, '_blank');
       } else {
@@ -71,6 +82,34 @@ export function LivingResume({
       }
     } else {
       alert("No resume uploaded yet.");
+    }
+  };
+
+  const handleDownloadPublic = async () => {
+    if (resumeUrl) {
+      try {
+        await recordResumeEvent(userId, 'download');
+      } catch (err) {
+        console.error("Failed to record resume event:", err);
+      }
+      
+      try {
+        const response = await fetch(resumeUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = resumeName || 'resume.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Download failed, falling back to new tab:', error);
+        window.open(resumeUrl, '_blank');
+      }
     }
   };
 
@@ -165,17 +204,23 @@ export function LivingResume({
           )}
 
           {resumeUrl && (
-            <button
-              onClick={handleDownloadOrView}
-              className="add-button-chip"
-              title={isOwnProfile ? "Download PDF" : "View Resume"}
-            >
-              {isOwnProfile ? (
+            isOwnProfile ? (
+              <button
+                onClick={handleDownloadOrView}
+                className="add-button-chip"
+                title="Download PDF"
+              >
                 <Download className="w-6 h-6 stroke-[2px]" />
-              ) : (
-                <Eye className="w-6 h-6 stroke-[2px]" />
-              )}
-            </button>
+              </button>
+            ) : (
+              <button
+                onClick={handleDownloadPublic}
+                className="w-[56px] h-[40px] px-[16px] py-[8px] bg-white dark:bg-[#0B0F19] rounded-[24px] outline outline-1 outline-offset-[-1px] outline-indigo-500 dark:outline-[#818CF8] flex justify-center items-center gap-[10px] transition-colors cursor-pointer hover:bg-indigo-50 dark:hover:bg-[#1C2340]"
+                title="Download Resume"
+              >
+                <Icon icon="fluent:arrow-download-24-regular" className="w-6 h-6 text-indigo-500 dark:text-[#818CF8] flex-shrink-0" />
+              </button>
+            )
           )}
         </div>
       </div>

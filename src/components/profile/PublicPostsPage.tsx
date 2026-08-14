@@ -18,6 +18,8 @@ import {
   Eye,
   Globe
 } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { usePostImpression } from "@/hooks/usePostImpression"
 import { getPublicProfilePosts } from "@/services/api/public-profile"
 import { Icon } from "@iconify/react"
 import { getUserPosts } from "@/services/api/profile"
@@ -98,6 +100,9 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
 }) => {
   const { activeProfile, isCompany } = useActiveProfile();
   const { data: session } = useSession();
+
+  const impressionRef = usePostImpression(post.id);
+
   const isOwner = post.authorId === currentUser?.id || post.author === currentUser?.name;
   const router = useRouter();
   const [showComments, setShowComments] = useState(activeTab === 'Comments');
@@ -117,7 +122,10 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
   };
 
   return (
-    <div className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card shadow-sm md:w-[560px] md:max-w-[560px]">
+    <div 
+      ref={impressionRef as React.RefObject<HTMLDivElement>}
+      className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card shadow-sm md:w-[560px] md:max-w-[560px]"
+    >
       {/* Target User Commented Header */}
       {activeTab === 'Comments' && targetProfile && (
         <div className="flex w-full items-center gap-2 px-4 py-3 border-b border-border bg-muted/20">

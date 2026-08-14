@@ -13,7 +13,6 @@ export const usePostImpression = (postId: string, threshold = 0.6) => {
 
     useEffect(() => {
         if (!postId || typeof window === 'undefined' || hasTracked.current) {
-            console.log(`[DEBUG] Hook: Skipping observation for ${postId}. hasTracked: ${hasTracked.current}`);
             return;
         }
 
@@ -23,12 +22,9 @@ export const usePostImpression = (postId: string, threshold = 0.6) => {
                 if (hasTracked.current) return;
                 hasTracked.current = true;
 
-                console.log(`[DEBUG] Hook: Recording impression for post ${postId}`);
                 await api.post(`/dashboard/post/${postId}/impression`);
-                console.log(`[DEBUG] Hook: Successfully recorded impression for post ${postId}`);
             } catch (err) {
                 // Silent fail for impressions
-                console.error(`[ERROR] Hook: Failed to track impression for post ${postId}`, err);
             }
         };
 
