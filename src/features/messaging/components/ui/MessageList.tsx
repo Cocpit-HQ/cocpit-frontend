@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useLayoutEffect, useState, useMemo, forwardRe
 import { Message } from "@/types/messaging"
 import MessageBubble from "./MessageBubble"
 import { Loader2, ChevronDown } from "lucide-react"
-import { useVirtualizer } from '@tanstack/react-virtual';
 import MessageSkeleton from "../skeletons/MessageSkeleton"
 import { formatTime } from "@/lib/mappers/messaging.mapper"
 
@@ -70,9 +69,9 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
   }, [messages, isLoadingMore]);
 
   const handleReplyClick = (messageId: string) => {
-    const index = displayMessages.findIndex(m => m.id === messageId);
-    if (index !== -1) {
-      rowVirtualizer.scrollToIndex(index, { align: 'center' });
+    const el = document.getElementById(`msg-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setHighlightedMessageId(messageId);
       setTimeout(() => setHighlightedMessageId(null), 1000);
     }
@@ -88,26 +87,6 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     }, 2000);
   };
 
-  const rowVirtualizer = useVirtualizer({
-    count: displayMessages.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 60, // approximate height of MessageBubble
-    overscan: 10,
-    getItemKey: (index) => displayMessages[index]?.id || index,
-  });
-
-  // Track message state signature to immediately re-measure virtual rows on deletion/edits
-  const messageStateSignature = React.useMemo(() => {
-    return displayMessages
-      .map((m) => `${m.id}:${m.is_deleted_for_everyone ? '1' : '0'}:${m.is_deleted_for_me ? '1' : '0'}:${m.text?.length || 0}`)
-      .join('|');
-  }, [displayMessages]);
-
-  useEffect(() => {
-    // Immediately force re-measurement of all virtual rows when deletion/edit states change
-    rowVirtualizer.measure();
-  }, [messageStateSignature, rowVirtualizer]);
-
   // Auto-scroll logic
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -121,19 +100,20 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     );
 
     if (initialUnread > 0 && !hasScrolledToUnread && displayMessages.length > 0) {
-      // Scroll to the first unread message
       const firstUnreadIndex = Math.max(0, displayMessages.length - initialUnread);
-      rowVirtualizer.scrollToIndex(firstUnreadIndex, { align: "start" });
+      const el = document.getElementById(`msg-${displayMessages[firstUnreadIndex]?.id}`);
+      if (el) {
+        el.scrollIntoView({ block: "start" });
+      }
       setHasScrolledToUnread(true);
       updateShouldScrollToBottom(false);
     } else if ((shouldScrollToBottomRef.current || isNewMessageSent) && displayMessages.length > 0) {
-      rowVirtualizer.scrollToIndex(displayMessages.length - 1, { align: "end" });
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
       
-      // Fallback: React Virtualizer sometimes underestimates sizes on first render.
-      // A slight delay ensures we truly hit the bottom after layout calculations.
       const timer = setTimeout(() => {
         if (scrollRef.current && (shouldScrollToBottomRef.current || isNewMessageSent)) {
-          rowVirtualizer.scrollToIndex(displayMessages.length - 1, { align: "end" });
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
       }, 150);
@@ -147,7 +127,6 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     displayMessages,
     initialUnread,
     hasScrolledToUnread,
-    rowVirtualizer,
     currentUserId,
   ]);
 
@@ -159,66 +138,58 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     }
   }, [isLoadingMore, scrollRef]);
 
-  // Record scroll height before real messages are prepended (skeletons replaced)
+  // Adjust scroll position after prepending items to keep viewport stable
   useLayoutEffect(() => {
-    if (!isLoadingMore && wasLoadingMoreRef.current && scrollRef.current) {
-      prevScrollHeightRef.current = scrollRef.current.scrollHeight
-      wasLoadingMoreRef.current = false
-    }
-  }, [isLoadingMore, scrollRef]);
-
-  // Perform scroll adjustment when displayMessages changes to retain scroll position
-  useLayoutEffect(() => {
-    if (prevScrollHeightRef.current > 0 && scrollRef.current) {
+    if (wasLoadingMoreRef.current && !isLoadingMore && scrollRef.current) {
       const newScrollHeight = scrollRef.current.scrollHeight
       const diff = newScrollHeight - prevScrollHeightRef.current
       if (diff > 0) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollTop + diff
-        prevScrollHeightRef.current = 0
+        scrollRef.current.scrollTop += diff
       }
+      wasLoadingMoreRef.current = false
     }
-  }, [displayMessages, scrollRef]);
+  }, [isLoadingMore, displayMessages.length, scrollRef]);
 
-  // Scroll to bottom when virtualizer total size changes (e.g. dynamic height changes from media or entity preview loading)
-  const totalSize = rowVirtualizer.getTotalSize();
-  useEffect(() => {
-    if (shouldScrollToBottomRef.current && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget
+    const currentScrollTop = target.scrollTop
+
+    // 1. Detect scrolling UP vs DOWN
+    const isScrollingUp = currentScrollTop < lastScrollTopRef.current
+    lastScrollTopRef.current = currentScrollTop
+
+    // 2. Infinite scroll trigger at TOP
+    if (currentScrollTop < 50 && hasMore && !isLoadingMore) {
+      onLoadMore?.()
     }
-  }, [totalSize]);
 
-  // Check if we should auto-scroll for next update
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    
-    const isScrollingUp = scrollTop < lastScrollTopRef.current;
-    lastScrollTopRef.current = scrollTop;
+    // 3. User intentionality check for bottom stickiness
+    const isNearBottom = target.scrollHeight - currentScrollTop - target.clientHeight < 100
 
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 15;
-
-    if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
-      updateShouldScrollToBottom(false)
-      prevScrollHeightRef.current = scrollHeight
-      onLoadMore()
+    if (isNearBottom) {
+      updateShouldScrollToBottom(true)
+      setShowScrollButton(false)
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
     } else {
       if (isScrollingUp) {
         updateShouldScrollToBottom(false)
-      } else {
-        updateShouldScrollToBottom(isAtBottom)
-      }
-
-      if (!isAtBottom) {
-        setShowScrollButton(true);
-        if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+        setShowScrollButton(true)
+        if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
         scrollTimerRef.current = setTimeout(() => {
-          setShowScrollButton(false);
-        }, 2000);
-      } else {
-        setShowScrollButton(false);
+          setShowScrollButton(false)
+        }, 3000)
       }
     }
   }
+
+  const isMoreThanOneMinute = (date1?: string, date2?: string) => {
+    if (!date1 || !date2) return true;
+    return (
+      Math.abs(
+        new Date(date1).getTime() - new Date(date2).getTime(),
+      ) > 60000
+    );
+  };
 
   const formatDateDivider = (dateString?: string) => {
     if (!dateString) return null;
@@ -249,25 +220,21 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
       const isMe = m.sender === 'me' || (m.senderId && currentUserId && String(m.senderId) === String(currentUserId));
       if (isMe) {
         lastSentId = m.id;
-        const isRead = isGroup
-          ? ((m.active_member_count !== undefined && m.seen_count !== undefined && m.active_member_count > 0 && m.seen_count >= m.active_member_count) || m.status === 'read' || Boolean(m.read_at))
-          : (Boolean(m.read_at) || m.status === 'read' || (m.seen_count !== undefined && m.seen_count > 0));
-
-        if (isRead) {
+        if (m.read_at) {
           lastReadId = m.id;
         }
       }
     }
 
     return { lastReadMessageId: lastReadId, lastSentMessageId: lastSentId };
-  }, [displayMessages, currentUserId, isGroup]);
+  }, [displayMessages, currentUserId]);
 
   return (
-    <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+    <div className="flex flex-col flex-1 h-full min-h-0 relative">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 scrollbar-hide relative bg-background"
+        className="flex-1 overflow-y-auto px-4 py-3 scrollbar-hide relative bg-background"
       >
       {hasMore && (
         <div className="flex justify-center py-2">
@@ -275,31 +242,17 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
         </div>
       )}
 
-          <div
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const msg = displayMessages[virtualRow.index];
-              const prev = displayMessages[virtualRow.index - 1];
-              const next = displayMessages[virtualRow.index + 1];
+          <div className="flex flex-col w-full min-h-full justify-end">
+            {displayMessages.map((msg, index) => {
+              const prev = displayMessages[index - 1];
+              const next = displayMessages[index + 1];
 
               if ((msg as any)?.isSkeleton) {
                 return (
                   <div
                     key={msg.id}
-                    ref={rowVirtualizer.measureElement}
-                    data-index={virtualRow.index}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
+                    id={`msg-${msg.id}`}
+                    className="w-full"
                   >
                     <MessageSkeleton
                       sender={(msg as any).sender}
@@ -308,15 +261,6 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                   </div>
                 );
               }
-
-            const isMoreThanOneMinute = (date1?: string, date2?: string) => {
-              if (!date1 || !date2) return true;
-              return (
-                Math.abs(
-                  new Date(date1).getTime() - new Date(date2).getTime(),
-                ) > 60000
-              );
-            };
 
               const currentMsgDateStr = msg.created_at
                 ? formatDateDivider(msg.created_at)
@@ -348,7 +292,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
 
               const isFirstUnread =
                 initialUnread > 0 &&
-                virtualRow.index === displayMessages.length - initialUnread;
+                index === displayMessages.length - initialUnread;
 
               const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
               const msgTimeDisplay = formatTime(msg.created_at || msg.time);
@@ -367,15 +311,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
               return (
                 <div
                   key={msg.id}
-                  ref={rowVirtualizer.measureElement}
-                  data-index={virtualRow.index}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
+                  id={`msg-${msg.id}`}
+                  className="w-full"
                 >
                   {showDateDivider && !isFirstUnread && (
                     <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
@@ -424,15 +361,17 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                   />
                 </div>
               );
-        })}
-      </div>
+            })}
+          </div>
       </div>
 
       {showScrollButton && !shouldScrollToBottom && (
         <button
           className="absolute bottom-4 right-4 md:right-8 bg-white border border-border shadow-lg text-primary p-2 rounded-full z-50 hover:bg-muted transition-all"
           onClick={() => {
-            rowVirtualizer.scrollToIndex(displayMessages.length - 1, { align: 'end' });
+            if (scrollRef.current) {
+              scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+            }
           }}
           onMouseEnter={handleScrollButtonMouseEnter}
           onMouseLeave={handleScrollButtonMouseLeave}

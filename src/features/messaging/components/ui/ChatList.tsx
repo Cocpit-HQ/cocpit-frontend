@@ -189,7 +189,7 @@ export function ChatList({
     if (chat.is_requesting === true) {
       const isGroupInv = chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation';
       const isGroupInvUnread = isGroupInv && !chat.is_read;
-      return isGroupInvUnread || chat.unread > 0;
+      return isGroupInvUnread || (typeof chat.unread === 'number' && chat.unread > 0) || chat.is_read === false;
     }
     return false;
   });

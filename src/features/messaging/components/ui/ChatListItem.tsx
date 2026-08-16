@@ -26,10 +26,13 @@ interface ChatListItemProps {
 
 export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead, isTyping, isQuickChat, isFirst }: ChatListItemProps) {
   const { activeConversationId } = useSocket();
-  const isGroupInvitation = !!chat.is_requesting && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
-  const displayUnread = isGroupInvitation 
-    ? ((isGroupInvitationRead || isSelected) ? 0 : 1) 
-    : (isSelected ? 0 : (chat.unread || (chat.is_read === false ? 1 : 0)));
+  const isRequest = !!chat.is_requesting;
+  const isGroupInvitation = isRequest && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
+  const displayUnread = isSelected 
+    ? 0 
+    : (isGroupInvitation 
+        ? (isGroupInvitationRead ? 0 : 1)
+        : (chat.unread > 0 ? chat.unread : (chat.is_read === false ? 1 : 0)));
 
   const isCompanyType = chat.otherUserType === 'COMPANY';
   const entityFallbackName = isCompanyType ? 'Unknown Page' : 'Unknown User';
