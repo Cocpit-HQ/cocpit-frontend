@@ -16,7 +16,15 @@ interface UnifiedMessageInputProps {
     placeholder?: string
     isLoading?: boolean
     searchUsersFn?: (query: string) => Promise<UserMention[]>
-    replyingTo?: { messageId: string; senderName: string; content: string } | null;
+    replyingTo?: {
+        messageId: string;
+        senderName: string;
+        content: string;
+        isMe?: boolean;
+        mediaType?: 'image' | 'video' | 'document' | string | null;
+        mediaName?: string | null;
+        mediaUrl?: string | null;
+    } | null;
     onCancelReply?: () => void;
     pendingSharedPost?: any | null;
     onCancelPendingSharedPost?: () => void;
@@ -262,10 +270,10 @@ export default function UnifiedMessageInput({
                     </div>
                 )}
 
-                <div className={isQuickChat ? "flex flex-row justify-between items-center w-full box-border px-[16px] py-[4px] gap-[8px] min-h-[44px] bg-[#FFFFFF] border border-[#6B7280] focus-within:border-[var(--primary)] focus-within:ring-1 focus-within:ring-[var(--primary)]/20 transition-all rounded-[24px]" : "flex items-end gap-1.5 w-full"}>
+                <div className={isQuickChat ? "flex flex-row justify-between items-center w-full box-border px-[16px] py-[4px] gap-[8px] min-h-[44px] bg-[#FFFFFF] border border-[#6B7280] focus-within:border-[var(--primary)] focus-within:ring-1 focus-within:ring-[var(--primary)]/20 transition-all rounded-[24px]" : "flex items-center gap-1.5 w-full"}>
                     {/* Attachment button */}
                     <button
-                        className={`mb-0.5 flex items-center justify-center rounded-full transition-colors shrink-0 disabled:opacity-40 ${isQuickChat ? 'w-[20px] h-[20px] text-black hover:opacity-70' : 'w-9 h-9 text-muted-foreground hover:bg-muted ml-1'}`}
+                        className={`flex items-center justify-center rounded-full transition-colors shrink-0 self-center disabled:opacity-40 ${isQuickChat ? 'w-[20px] h-[20px] text-black hover:opacity-70' : 'w-9 h-9 text-muted-foreground hover:bg-muted ml-1'}`}
                         disabled={isDisabled}
                         onClick={() => fileInputRef.current?.click()}
                         aria-label="Attach file"
@@ -274,7 +282,7 @@ export default function UnifiedMessageInput({
                     </button>
 
                     {/* Input textarea */}
-                    <div className="flex-1 relative flex items-center justify-start h-full">
+                    <div className="flex-1 relative flex items-center justify-start h-full self-center">
                         <MentionTextarea
                             ref={textareaRef}
                             value={text}
@@ -294,8 +302,8 @@ export default function UnifiedMessageInput({
                             onKeyDown={handleKeyDown}
                             placeholder={disabledMessage || (isQuickChat ? "Write a message..." : (placeholder || (isDisabled ? "Loading..." : "Message...")))}
                             rows={1}
-                            className={`w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide overflow-hidden ${isQuickChat ? "text-[12px] leading-[18px] font-['Poppins'] text-[#6B7280] placeholder:text-[#6B7280] p-0 my-auto" : "px-2 py-2.5 max-h-32 text-[15px] text-foreground placeholder:text-muted-foreground/60"}`}
-                            style={{ minHeight: isQuickChat ? "18px" : "40px" }}
+                            className={`w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide overflow-hidden ${isQuickChat ? "text-[12px] leading-[18px] font-['Poppins'] text-[#6B7280] placeholder:text-[#6B7280] p-0 my-auto" : "px-2 py-2 max-h-32 text-[15px] leading-[20px] text-foreground placeholder:text-muted-foreground/60 flex items-center"}`}
+                            style={{ minHeight: isQuickChat ? "18px" : "36px" }}
                             disabled={isDisabled}
                         />
                     </div>
@@ -310,7 +318,7 @@ export default function UnifiedMessageInput({
                     />
 
                     {/* Right side controls */}
-                    <div className={`flex items-center shrink-0 ${isQuickChat ? "gap-[16px] mb-0" : "gap-[16px] mb-0.5 mr-1"}`}>
+                    <div className={`flex items-center self-center shrink-0 ${isQuickChat ? "gap-[16px] mb-0" : "gap-[16px] mr-1"}`}>
                         <button
                             ref={emojiButtonRef}
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}

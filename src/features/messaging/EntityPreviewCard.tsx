@@ -23,6 +23,8 @@ const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
     job: <Briefcase className="w-3 h-3" />,
     event: <Calendar className="w-3 h-3" />,
     offer: <Briefcase className="w-3 h-3" />,
+    channel: <Building2 className="w-3 h-3" />,
+    community: <Building2 className="w-3 h-3" />,
 };
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -32,6 +34,8 @@ const ENTITY_LABELS: Record<EntityType, string> = {
     job: "Job Posting",
     event: "Event",
     offer: "Job Offer",
+    channel: "Channel",
+    community: "Channel",
 };
 
 // ─── Component ──────────────────────────────────────────────
@@ -113,7 +117,7 @@ export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPrevie
 
     return (
         <div
-            className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] cursor-pointer hover:bg-background/80 transition-all shadow-sm group"
+            className="mt-1 mb-2 rounded-xl bg-chat-shared-card-bg border border-gray-100 dark:border-zinc-700 overflow-hidden max-w-[280px] cursor-pointer hover:opacity-95 transition-all shadow-sm group"
             onClick={(e) => { e.stopPropagation(); router.push(preview.url); }}
             role="button"
             tabIndex={0}

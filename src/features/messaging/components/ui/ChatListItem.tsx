@@ -32,12 +32,25 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
     : (isSelected ? 0 : (chat.unread || (chat.is_read === false ? 1 : 0)));
 
   const isCompanyType = chat.otherUserType === 'COMPANY';
-  const entityFallbackName = isCompanyType ? 'Unknown Page' : 'Unknown user';
+  const entityFallbackName = isCompanyType ? 'Unknown Page' : 'Unknown User';
   const entityUnavailableText = isCompanyType ? 'Page unavailable' : 'User unavailable';
 
   const displayName = chat.isGroup ? chat.name : (chat.name || entityFallbackName);
   const rawSubtitle = isCompanyType ? (chat.orgHeadline || chat.role || "") : (chat.role || "");
-  const displaySubtitle = chat.isBlockedByOther || rawSubtitle === 'User unavailable'
+  const isUnknownEntity = Boolean(
+    chat.isBlockedByOther ||
+    chat.isDeactivated ||
+    chat.isDeleted ||
+    chat.name === "Unknown Page" ||
+    chat.name === "Unknown user" ||
+    chat.name === "Unknown User" ||
+    chat.name === "Deleted Page" ||
+    chat.name === "Deleted User" ||
+    chat.orgHeadline === "This page has been deactivated" ||
+    chat.orgHeadline === "User unavailable"
+  );
+
+  const displaySubtitle = (isUnknownEntity || chat.isBlockedByOther || chat.isDeleted || chat.isDeactivated || rawSubtitle === 'User unavailable' || rawSubtitle === 'Page unavailable')
     ? entityUnavailableText
     : rawSubtitle;
 
@@ -47,7 +60,7 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
         isQuickChat
           ? `py-[16px] ${!isFirst ? 'border-t border-solid border-[#EEF2FF]' : ''} rounded-none mb-0`
           : 'mb-[16px] rounded-[24px]'
-      } ${!isMobile && isSelected ? 'bg-[#EEF2FF]' : 'bg-[#FFFFFF]'}`}
+      } ${!isMobile && isSelected ? 'bg-chat-active-item-bg' : 'bg-[#FFFFFF]'}`}
     >
       <div className={`flex flex-col w-full relative ${isQuickChat ? 'py-0' : 'py-[8px]'}`}>
         {/* GROUP 1: Header Row */}
@@ -75,8 +88,9 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
                   name={displayName}
                   size="md"
                   online={chat.online}
-                  isCompany={isCompanyType}
                   fallbackGradient="gradient-1"
+                  isCompany={isCompanyType}
+                  isUnknown={isUnknownEntity}
                   className="w-full h-full"
                 />
               </Link>

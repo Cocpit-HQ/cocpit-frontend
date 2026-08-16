@@ -12,7 +12,7 @@ import { useQueryClient, useQuery, useMutation, useInfiniteQuery, InfiniteData }
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
 import { editMessage, deleteMessage, addOrUpdateReaction, clearReaction } from "@/services/api/messaging";
 import { Message } from "@/types/messaging";
-import { formatTimeAgo, isPostUrl, isJobUrl } from "@/lib/mappers/messaging.mapper";
+import { formatTimeAgo, isPostUrl, isJobUrl, mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { TypingPayload } from "@/types/socket";
 import MessageInfoModal from "../../MessageInfoModal";
@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ChatSkeleton from "../ui/ChatSkeleton";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSocial } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
 
 interface GroupChatProps {
@@ -41,12 +42,21 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const queryClient = useQueryClient();
     const { socket, setActiveConversationId } = useSocket();
+    const { isBlocked } = useSocial();
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isMessageSelected, setIsMessageSelected] = useState(false);
     const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
-    const [replyingTo, setReplyingTo] = useState<{ messageId: string, senderName: string, content: string } | null>(null);
+    const [replyingTo, setReplyingTo] = useState<{
+        messageId: string;
+        senderName: string;
+        content: string;
+        isMe?: boolean;
+        mediaType?: 'image' | 'video' | 'document' | string | null;
+        mediaName?: string | null;
+        mediaUrl?: string | null;
+    } | null>(null);
     const [leaveAction, setLeaveAction] = useState<'left' | 'removed' | null>(null);
 
     const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
@@ -87,6 +97,10 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     const handleDeleteForEveryone = React.useCallback(async (targetMsg: Message) => {
         const msgId = targetMsg.id;
 
+        // Immediately clear selection
+        setSelectedMessage(null);
+        setIsMessageSelected(false);
+
         // Optimistic Update
         queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
             if (!old) return undefined;
@@ -94,7 +108,21 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 ...old,
                 pages: old.pages.map(page => page.map(m => {
                     if (m.id === msgId) {
-                        return { ...m, text: "This message was deleted for everyone.", is_deleted_for_everyone: true };
+                        return {
+                            ...m,
+                            text: "This message was deleted for everyone.",
+                            text_content: "This message was deleted for everyone.",
+                            sharedPost: null,
+                            sharedProfile: null,
+                            sharedProfileId: undefined,
+                            sharedPostId: undefined,
+                            entityType: undefined,
+                            entityId: undefined,
+                            media: [],
+                            reactions: [],
+                            is_deleted: true,
+                            is_deleted_for_everyone: true
+                        };
                     }
                     return m;
                 }))
@@ -189,7 +217,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             const { getMessages } = await import("@/services/api/messaging");
             const { mapBackendMessageToMessage } = await import("@/lib/mappers/messaging.mapper");
             const backendMessages = await getMessages(groupId, 50, pageParam);
-            return backendMessages.map(m => mapBackendMessageToMessage(m, currentUser.id || currentUser.user_id));
+            return backendMessages.map(m => mapBackendMessageToMessage(m, currentUser.id || currentUser.user_id, activeProfile?.type === "COMPANY" ? activeProfile.id : undefined));
         },
         getNextPageParam: (lastPage) => {
             if (lastPage.length < 50) return undefined;
@@ -223,13 +251,21 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         // Explicitly join group room
         socket.emit('joinGroup', { groupId: groupId });
 
-        const handleNewMessage = async (message: any) => {
+        const handleNewMessage = (message: any) => {
             // Filter
             if (message.conversation_id !== groupId && message.group_id !== groupId) return;
 
-            const { mapBackendMessageToMessage } = await import("@/lib/mappers/messaging.mapper");
-            const uiMessage = mapBackendMessageToMessage(message, currentUser.id || currentUser.user_id);
             const isMe = message.sender_id === (currentUser.id || currentUser.user_id);
+            const senderMember = activeGroup?.members?.find((m: any) => m.user_id === message.sender_id);
+            const isSenderBlocked = message.sender_id && !isMe && (
+                senderMember?.is_blocked_by_other ||
+                message.is_unavailable
+            );
+
+            const uiMessage = mapBackendMessageToMessage(message, currentUser.id || currentUser.user_id, activeProfile?.type === "COMPANY" ? activeProfile.id : undefined);
+            if (isSenderBlocked) {
+                uiMessage.is_unavailable = true;
+            }
 
             // Clear typing indicator for the sender
             setTypingMap(prev => {
@@ -725,11 +761,29 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                             onAction={handleMessageAction}
                             onMediaClick={handleMediaClick}
                             unreadCount={unreadCount}
-                            onReply={(msg) => setReplyingTo({
-                                messageId: msg.id,
-                                senderName: msg.senderName || "Unknown",
-                                content: msg.text || msg.text_content || ""
-                            })}
+                            onReply={(msg) => {
+                                const myId = currentUser?.id || currentUser?.user_id || activeProfile?.id;
+                                const isSelf = msg.sender === "me" || Boolean(myId && msg.senderId === myId);
+                                const firstMedia = msg.media?.[0];
+                                let detectedMediaType = firstMedia?.type || msg.messageType;
+                                const textContent = msg.text || msg.text_content || "";
+                                if (!detectedMediaType && textContent) {
+                                    const textLower = textContent.toLowerCase();
+                                    if (textLower.endsWith('.pdf')) detectedMediaType = 'document';
+                                    else if (textLower.endsWith('.doc') || textLower.endsWith('.docx')) detectedMediaType = 'document';
+                                    else if (textLower.endsWith('.mp4') || textLower.endsWith('.mov') || textLower.endsWith('.webm')) detectedMediaType = 'video';
+                                    else if (textLower.endsWith('.jpg') || textLower.endsWith('.jpeg') || textLower.endsWith('.png') || textLower.endsWith('.webp')) detectedMediaType = 'image';
+                                }
+                                setReplyingTo({
+                                    messageId: msg.id,
+                                    senderName: msg.senderName || "Unknown",
+                                    content: textContent || firstMedia?.name || (detectedMediaType === 'video' ? 'Video' : detectedMediaType === 'image' ? 'Photo' : detectedMediaType === 'document' ? 'Document' : ''),
+                                    isMe: isSelf,
+                                    mediaType: detectedMediaType,
+                                    mediaName: firstMedia?.name,
+                                    mediaUrl: firstMedia?.url,
+                                });
+                            }}
                             onReaction={handleGroupReactionSelect}
                         />
                     </div>

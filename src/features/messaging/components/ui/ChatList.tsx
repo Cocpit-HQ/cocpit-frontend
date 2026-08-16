@@ -248,38 +248,46 @@ export function ChatList({
         {!isQuickChat && (
           <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[42px] self-stretch">
             {/* Left Group — Avatar + Text */}
-            <div className="flex flex-row items-center p-0 gap-[8px]">
-            <div className="w-[32px] h-[32px] flex-none">
-              <Avatar
-                url={(activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image}
-                name={activeProfile?.name || session?.user?.name || "User"}
-                size="sm"
-              />
-            </div>
-            <div className="flex flex-col items-start p-0">
-
-              <h2 className="font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#000000] flex-none order-0 whitespace-nowrap">
-                {activeProfile?.name || session?.user?.name || "Cocpit"}
-              </h2>
-              <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 whitespace-nowrap">
-                @{activeProfile?.type === 'COMPANY' 
-                    ? ((activeProfile as any)?.slug || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")
-                    : ((activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")}
-              </p>
-            </div>
-          </div>
-            {/* Right Controls — Filter & Plus Button (Shown only for User profile context) */}
-            {isUserActor && (
-              <div className="flex flex-row items-center gap-[8px]">
-                <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
-                <button
-                  onClick={onCreateGroup}
-                  className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
-                >
-                  <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
-                </button>
+            <div className="flex flex-row items-center p-0 gap-[8px] min-w-0 flex-1">
+              <div className="w-[40px] h-[40px] flex-none">
+                <Avatar
+                  url={(activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image}
+                  name={activeProfile?.name || session?.user?.name || "User"}
+                  size="md"
+                  isCompany={activeProfile?.type === 'COMPANY'}
+                />
               </div>
-            )}
+              <div className="flex flex-col items-start p-0 min-w-0 flex-1 overflow-hidden">
+                <h2 
+                  title={activeProfile?.name || session?.user?.name || "Cocpit"}
+                  className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] truncate w-full block"
+                >
+                  {activeProfile?.name || session?.user?.name || "Cocpit"}
+                </h2>
+                <p 
+                  title={`@${activeProfile?.type === 'COMPANY' 
+                    ? ((activeProfile as any)?.slug || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")
+                    : ((activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")}`}
+                  className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate w-full block"
+                >
+                  @{activeProfile?.type === 'COMPANY' 
+                      ? ((activeProfile as any)?.slug || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")
+                      : ((activeProfile as any)?.slug || (activeProfile as any)?.account_name || (session?.user as any)?.username || activeProfile?.name?.toLowerCase().replace(/\s+/g, "") || "cocpit")}
+                </p>
+              </div>
+            </div>
+            {/* Right Controls — Filter (User only) & Plus Button */}
+            <div className="flex flex-row items-center gap-[8px] shrink-0">
+              {isUserActor && (
+                <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
+              )}
+              <button
+                onClick={onCreateGroup}
+                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
+              >
+                <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
         )}
 

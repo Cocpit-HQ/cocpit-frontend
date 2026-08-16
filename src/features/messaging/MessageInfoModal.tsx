@@ -14,7 +14,7 @@ interface MessageInfoModalProps {
     readAt?: string | null
     receiver?: {
         name: string
-        avatar: string | null
+        avatar?: string | null
     }
 }
 

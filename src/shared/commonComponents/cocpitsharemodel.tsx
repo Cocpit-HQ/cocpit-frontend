@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
+import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
 
 export interface ShareUser {
   id: string;
@@ -164,24 +165,36 @@ export default function CocpitShareModel({
       const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
 
       await Promise.all(
-        selectedUsers.map((targetUserId) =>
-          sendMessage(
-            targetUserId,
-            shareUrl,
-            postId,
-            undefined,
-            effectiveCompanyId,
-            undefined,
-            profileId
-          )
-        )
+        selectedUsers.map((targetUserId) => {
+          const target = users.find((u) => u.id === targetUserId);
+          if (target && target.type === "GROUP") {
+            return sendGroupMessage(
+              targetUserId,
+              shareUrl,
+              "text",
+              undefined,
+              undefined,
+              postId || undefined,
+              profileId || undefined
+            );
+          } else {
+            return sendMessage(
+              targetUserId,
+              shareUrl,
+              postId,
+              undefined,
+              effectiveCompanyId,
+              undefined,
+              profileId
+            );
+          }
+        })
       );
 
       toast.success(selectedUsers.length > 1 ? "Messages sent" : "Message sent");
 
-      // Invalidate queries so that the messaging state is updated instantly
+      // Only invalidate conversations (sidebar) — the socket event updates the message list in real time
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["messages"] });
 
       onShare?.(selectedUsers);
       handleClose();
@@ -336,6 +349,11 @@ export default function CocpitShareModel({
                               Company
                             </span>
                           )}
+                          {u.type === 'GROUP' && (
+                            <span className="text-[9px] bg-emerald-50 text-emerald-700 font-medium px-1.5 py-0.2 rounded-full">
+                              Group
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -399,6 +417,11 @@ export default function CocpitShareModel({
                                 {u.type === 'COMPANY' && (
                                   <span className="text-[10px] bg-[var(--primary-tint)] text-[var(--primary)] font-medium px-1.5 py-0.5 rounded-full">
                                     Company
+                                  </span>
+                                )}
+                                {u.type === 'GROUP' && (
+                                  <span className="text-[10px] bg-emerald-50 text-emerald-700 font-medium px-1.5 py-0.5 rounded-full">
+                                    Group
                                   </span>
                                 )}
                               </div>

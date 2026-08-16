@@ -9,7 +9,7 @@ import api from "@/lib/axios";
 
 // ─── Types ──────────────────────────────────────────────────
 
-export type EntityType = "post" | "profile" | "company" | "job" | "event" | "offer";
+export type EntityType = "post" | "profile" | "company" | "job" | "event" | "offer" | "channel" | "community";
 export type ShareMethod = "message" | "notification" | "copy_link";
 
 export interface UniversalSharePayload {
@@ -89,6 +89,8 @@ export const generateEntityUrl = (entityType: EntityType, entityId: string): str
         job: `/jobs/${entityId}`,
         event: `/events/${entityId}`,
         offer: `/offer/${entityId}`,
+        channel: `/channels/${entityId}`,
+        community: `/channels/${entityId}`,
     };
     return patterns[entityType] || `/${entityType}/${entityId}`;
 };

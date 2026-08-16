@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useLayoutEffect, useState, forwardRef } from "react";
+import React, { useEffect, useRef, useLayoutEffect, useState, useMemo, forwardRef } from "react";
 import { Message } from "@/types/messaging";
 import SystemMessage from "./SystemMessage";
 import { Loader2, ChevronDown } from "lucide-react";
@@ -45,6 +45,21 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     const [initialUnread] = useState(unreadCount);
     const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
 
+    const firstUnreadMessageId = useMemo(() => {
+        if (initialUnread <= 0 || messages.length === 0) return null;
+        const unreadIdx = messages.length - initialUnread;
+        if (unreadIdx >= 0 && unreadIdx < messages.length) {
+            for (let i = unreadIdx; i < messages.length; i++) {
+                const m = messages[i];
+                const isMsgMe = m.sender === 'me' || (m.senderId && currentUserId && String(m.senderId) === String(currentUserId));
+                if (!isMsgMe && m.type !== 'system') {
+                    return m.id;
+                }
+            }
+        }
+        return null;
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,7 +84,20 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
         getScrollElement: () => scrollRef.current,
         estimateSize: () => 60,
         overscan: 10,
+        getItemKey: (index) => displayMessages[index]?.id || index,
     });
+
+    // Track message state signature to immediately re-measure virtual rows on deletion/edits
+    const messageStateSignature = React.useMemo(() => {
+        return displayMessages
+            .map((m) => `${m.id}:${m.is_deleted_for_everyone ? '1' : '0'}:${m.is_deleted_for_me ? '1' : '0'}:${m.text?.length || 0}`)
+            .join('|');
+    }, [displayMessages]);
+
+    useEffect(() => {
+        // Immediately force re-measurement of all virtual rows when deletion/edit states change
+        rowVirtualizer.measure();
+    }, [messageStateSignature, rowVirtualizer]);
 
     const handleReplyClick = (messageId: string) => {
         const index = displayMessages.findIndex(m => m.id === messageId);
@@ -187,6 +215,28 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
         });
     };
 
+    const { lastReadMessageId, lastSentMessageId } = useMemo(() => {
+        let lastReadId: string | null = null;
+        let lastSentId: string | null = null;
+
+        for (let i = 0; i < displayMessages.length; i++) {
+            const m = displayMessages[i];
+            if ((m as any)?.isSkeleton || m.type === 'system') continue;
+
+            const senderId = m.senderId;
+            const isMe = m.sender === 'me' || (senderId && currentUserId && String(senderId) === String(currentUserId));
+            if (isMe) {
+                lastSentId = m.id;
+                const isRead = (m.active_member_count !== undefined && m.seen_count !== undefined && m.active_member_count > 0 && m.seen_count >= m.active_member_count) || m.status === 'read' || Boolean(m.read_at);
+                if (isRead) {
+                    lastReadId = m.id;
+                }
+            }
+        }
+
+        return { lastReadMessageId: lastReadId, lastSentMessageId: lastSentId };
+    }, [displayMessages, currentUserId]);
+
     return (
         <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
             <div
@@ -241,7 +291,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                         const prevMsgDateStr = prev && !(prev as any).isSkeleton && prev.created_at ? formatDateDivider(prev.created_at) : null;
                         const showDateDivider = currentMsgDateStr && currentMsgDateStr !== prevMsgDateStr;
 
-                        const isFirstUnread = initialUnread > 0 && virtualRow.index === displayMessages.length - initialUnread;
+                        const isFirstUnread = Boolean(firstUnreadMessageId && msg.id === firstUnreadMessageId);
 
                         // Group-specific: sender-based grouping
                         const senderId = msg.senderId;
@@ -276,6 +326,14 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                         const nextTimeDisplay = next && !(next as any).isSkeleton ? formatTime(next.created_at || next.time) : null;
                         const isTimeChangedWithNext = msgTimeDisplay !== nextTimeDisplay;
 
+                        const statusLabel: 'Seen' | 'Delivered' | null = isMe
+                            ? (msg.id === lastReadMessageId
+                                ? 'Seen'
+                                : (msg.id === lastSentMessageId && msg.id !== lastReadMessageId)
+                                ? 'Delivered'
+                                : null)
+                            : null;
+
                         return (
                             <div
                                 key={msg.id}
@@ -292,11 +350,9 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                                 {/* Date divider */}
                                 {showDateDivider && !isFirstUnread && (
                                     <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                                        <div className="h-[1px] bg-border flex-1" />
-                                        <span className="text-[11px] font-['Poppins'] text-muted-foreground mx-4 lowercase first-letter:uppercase shrink-0">
+                                        <span className="text-[11px] font-['Poppins'] text-muted-foreground lowercase first-letter:uppercase shrink-0">
                                             {currentMsgDateStr}
                                         </span>
-                                        <div className="h-[1px] bg-border flex-1" />
                                     </div>
                                 )}
                                 {/* Unread divider */}
@@ -324,6 +380,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                                         showSenderName={showSenderName}
                                         showAvatar={groupedMsg.isLastInGroup}
                                         showTime={groupedMsg.isLastInGroup || isTimeChangedWithNext}
+                                        statusLabel={statusLabel}
                                         isGroup={true}
                                         onMediaClick={onMediaClick}
                                         onMediaLoad={handleMediaLoad}

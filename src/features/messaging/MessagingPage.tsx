@@ -176,7 +176,7 @@ export default function MessagingPage() {
     const all = rawChatsQuery.data || [];
     const seen = new Map<string, (typeof all)[number]>();
     for (const c of all) {
-      if (!c.isDeleted && !seen.has(c.id)) {
+      if (!seen.has(c.id)) {
         seen.set(c.id, c);
       }
     }

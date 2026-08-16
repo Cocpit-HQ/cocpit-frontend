@@ -59,7 +59,7 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
     const { user } = useAuth();
 
     // Derived state for admin check (safely)
-    const isAdmin = activeGroup && user && (activeGroup.admin_id === user.id || activeGroup.members?.find(m => m.user_id === user.id)?.role === 'admin');
+    const isAdmin = Boolean(activeGroup && user && activeGroup.members?.find(m => m.user_id === (user.id || (user as any).user_id))?.role === 'admin');
 
     const { data: sentInvitations = [] } = useQuery<GroupInvitation[]>({
         queryKey: ['group-invitations', groupId],

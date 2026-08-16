@@ -25,6 +25,14 @@ export interface GroupMember {
     isPending?: boolean;
     status?: 'accepted' | 'pending';
     invitation_id?: string;
+    is_blocked?: boolean;
+    is_blocked_by_me?: boolean;
+    is_blocked_by_other?: boolean;
+    is_deactivated?: boolean;
+    is_deleted?: boolean;
+    is_unavailable?: boolean;
+    org_name?: string;
+    org_logo?: string;
 }
 
 export interface Invitation {

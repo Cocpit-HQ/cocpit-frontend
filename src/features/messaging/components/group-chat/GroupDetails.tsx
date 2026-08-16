@@ -120,7 +120,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
     if (!activeGroup) return null;
 
-    const isAdmin = (activeGroup.admin_id === currentUserId || activeGroup.members.find(m => m.user_id === currentUserId)?.role === 'admin') && !isInactive;
+    const currentMember = activeGroup.members?.find(m => m.user_id === currentUserId);
+    const isAdmin = Boolean(currentMember?.role === 'admin' && !isInactive);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -307,43 +308,55 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 <div className="flex flex-col  overflow-y-auto  max-h-[400px] pr-[2px]"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
-                    {visibleMembers.map((member) => (
+                    {visibleMembers.map((member) => {
+                        const isSelf = member.user_id === currentUserId;
+                        const isBlockedByOther = !isSelf && Boolean(member.is_blocked_by_other);
+                        const isDeactivatedOrDeleted = member.is_deactivated || member.is_deleted;
+                        const isUnknown = isBlockedByOther || isDeactivatedOrDeleted;
+                        const displayName = isSelf ? "You" : (isUnknown ? (member.org_name ? "Unknown Page" : "Unknown User") : member.full_name);
+                        const displayHeadline = isUnknown ? "User unavailable" : (member.headline || "Member");
+                        const isCompany = Boolean(member.org_name);
+
+                        return (
                         <div 
                             key={member.user_id} 
                             className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
                         >
                             {/* Left: Avatar */}
                             <div
-                                className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch cursor-pointer"
+                                className={cn("w-[32px] h-[32px] shrink-0 self-stretch flex items-center justify-center", !isUnknown && "cursor-pointer")}
                                 onClick={() => {
+                                    if (isUnknown) return;
                                     const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
                                     router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
                                 }}
                             >
-                                {member.avatar_url ? (
-                                    <Image src={member.avatar_url} alt={member.full_name} width={32} height={32} className="object-cover w-full h-full" />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full w-full bg-primary/10 text-primary text-[10px] font-bold">
-                                        {member.full_name.substring(0, 2).toUpperCase()}
-                                    </div>
-                                )}
+                                <SharedAvatar 
+                                    url={isUnknown ? undefined : member.avatar_url} 
+                                    name={displayName} 
+                                    size="sm" 
+                                    isCompany={isCompany}
+                                    isUnknown={isUnknown}
+                                    className="w-8 h-8"
+                                />
                             </div>
 
                             {/* Middle: Name + Headline + Admin badge */}
                             <div
-                                className="flex flex-col flex-1 ml-[8px] cursor-pointer"
+                                className={cn("flex flex-col flex-1 ml-[8px]", !isUnknown && "cursor-pointer")}
                                 onClick={() => {
+                                    if (isUnknown) return;
                                     const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
                                     router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
                                 }}
                             >
-                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2 hover:underline">
-                                    <span>{member.user_id === currentUserId ? "You" : member.full_name}</span>
+                                <span className={cn("font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2", !isUnknown && "hover:underline")}>
+                                    <span>{displayName}</span>
                                 </span>
                                 <div className="flex flex-row items-center">
-                                    {member.headline != '' && (
+                                    {displayHeadline && (
                                         <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] flex items-center mr-[8px]">
-                                            {member.headline || "Member"}
+                                            {displayHeadline}
                                         </span>
                                     )}
                                     {member.role === 'admin' && (
@@ -432,7 +445,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                 </DropdownMenu>
                             )}
                         </div>
-                    ))}
+                        );
+                    })}
                     
                     {/* Pending Invitations Section (Admin Only) */}
                     {isAdmin && sentInvitations && sentInvitations.length > 0 && (
@@ -570,83 +584,80 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     </p>
                 </div>
 
-                <div className="flex flex-col gap-[8px] pb-[8px]">
+                <div className="flex flex-col gap-[16px] mt-[16px] px-6 md:px-0">
                     {/* Group Name */}
-                    <div className="flex flex-col items-start gap-[8px] w-full h-auto min-h-[76px]">
-                        <Label htmlFor="group-name" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[89px] h-[20px]">
+                    <div className="flex flex-col items-start gap-[8px] w-full">
+                        <Label htmlFor="group-name" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">
                             Group name
                         </Label>
                         <Input
                             id="group-name"
                             value={editData.name}
                             onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] backdrop-blur-sm rounded-[16px] focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all self-stretch"
+                            className="flex flex-row items-center px-[16px] py-[12px] w-full h-[48px] bg-white dark:bg-zinc-900 border border-[#E5E7EB] dark:border-zinc-700 text-[var(--foreground)] rounded-[12px] focus-visible:ring-1 focus-visible:ring-[var(--primary)] focus-visible:border-[var(--primary)] transition-all placeholder:text-[var(--muted-foreground)]"
                             placeholder="Enter group name"
                         />
                         {formErrors.name && (
-                            <p className="text-[var(--destructive)] text-[12px] font-['Poppins'] font-normal mt-[4px]">
+                            <p className="text-[var(--destructive)] text-[12px] font-['Poppins'] font-normal mt-[2px]">
                                 {formErrors.name}
                             </p>
                         )}
                     </div>
 
                     {/* Group Headline */}
-                    <div className="flex flex-col items-start gap-[8px] w-full h-auto min-h-[76px]">
-                        <Label htmlFor="group-headline" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[109px] h-[20px]">
+                    <div className="flex flex-col items-start gap-[8px] w-full">
+                        <Label htmlFor="group-headline" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">
                             Group headline
                         </Label>
                         <Input
                             id="group-headline"
                             value={editData.headline}
                             onChange={(e) => setEditData({ ...editData, headline: e.target.value })}
-                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] backdrop-blur-sm rounded-[16px] focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all self-stretch"
+                            className="flex flex-row items-center px-[16px] py-[12px] w-full h-[48px] bg-white dark:bg-zinc-900 border border-[#E5E7EB] dark:border-zinc-700 text-[var(--foreground)] rounded-[12px] focus-visible:ring-1 focus-visible:ring-[var(--primary)] focus-visible:border-[var(--primary)] transition-all placeholder:text-[var(--muted-foreground)]"
                             placeholder="Enter group headline"
                         />
-                        <div className="w-full flex flex-row justify-between items-start">
-                            <div className="flex-1">
-                                {formErrors.headline && (
-                                    <p className="text-[var(--destructive)] text-[10px] ml-1 font-['Poppins'] font-normal ">
-                                        {formErrors.headline}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                        {formErrors.headline && (
+                            <p className="text-[var(--destructive)] text-[12px] font-['Poppins'] font-normal mt-[2px]">
+                                {formErrors.headline}
+                            </p>
+                        )}
                     </div>
 
                     {/* Group Description */}
-                    <div className="flex flex-col items-start gap-[8px] w-full h-[76px]">
-                        <Label htmlFor="group-description" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[126px] h-[20px]">
+                    <div className="flex flex-col items-start gap-[8px] w-full">
+                        <Label htmlFor="group-description" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">
                             Group description
                         </Label>
                         <Input
                             id="group-description"
                             value={editData.description}
                             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] backdrop-blur-sm rounded-[16px] focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all self-stretch"
-                            placeholder="Enter group description..."
+                            className="flex flex-row items-center px-[16px] py-[12px] w-full h-[48px] bg-white dark:bg-zinc-900 border border-[#E5E7EB] dark:border-zinc-700 text-[var(--foreground)] rounded-[12px] focus-visible:ring-1 focus-visible:ring-[var(--primary)] focus-visible:border-[var(--primary)] transition-all placeholder:text-[var(--muted-foreground)]"
+                            placeholder="Describe your group"
                         />
                     </div>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-[10px] mt-[8px]">
+
+                <div className="flex flex-row items-center justify-center gap-[12px] mt-[24px]">
                     <button
                         onClick={() => setShowDiscardConfirm(true)}
-                        className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[var(--card)] border border-[var(--primary-tint-foreground)] rounded-[24px] hover:bg-[var(--primary-tint)] transition-colors"
+                        className="flex flex-row justify-center items-center px-[24px] py-[10px] w-[146px] h-[40px] bg-transparent border border-[var(--primary)] rounded-full hover:bg-[var(--primary)]/10 transition-colors"
                     >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[var(--primary-tint-foreground)] w-[54px] h-[20px]">
+                        <span className="font-['Poppins'] font-medium text-[14px] leading-[20px] text-center text-[var(--primary)]">
                             Discard
                         </span>
                     </button>
 
                     <button
                         onClick={handleSave}
-                        disabled={!hasChanges || !editData.name?.trim()}
+                        disabled={!hasChanges || !editData.name?.trim() || isSaving}
                         className={
-                            hasChanges && editData.name?.trim()
-                                ? "box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[var(--primary)] border border-[var(--primary-foreground)] rounded-[24px] cursor-pointer font-['Poppins'] font-medium text-[14px] text-[var(--primary-foreground)]"
-                                : "box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[var(--border)] border border-[var(--primary-foreground)]/30 rounded-[24px] cursor-not-allowed font-['Poppins'] font-medium text-[14px] text-[var(--muted-foreground)]"
+                            hasChanges && editData.name?.trim() && !isSaving
+                                ? "flex flex-row justify-center items-center px-[24px] py-[10px] w-[146px] h-[40px] bg-[var(--primary)] rounded-full cursor-pointer hover:opacity-90 transition-all font-['Poppins'] font-medium text-[14px] text-white shadow-sm"
+                                : "flex flex-row justify-center items-center px-[24px] py-[10px] w-[146px] h-[40px] bg-[#E9ECEF] dark:bg-zinc-800 rounded-full cursor-not-allowed font-['Poppins'] font-medium text-[14px] text-[#ADB5BD] dark:text-zinc-500"
                         }
                     >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white w-[35px] h-[20px]">
+                        <span className="font-['Poppins'] font-medium text-[14px] leading-[20px] text-center">
                             Save
                         </span>
                     </button>

@@ -59,6 +59,10 @@
   --color-primary-tint: var(--primary-tint);
   --color-primary-tint-foreground: var(--primary-tint-foreground);
 
+  --color-chat-bubble-received-bg: var(--chat-bubble-received-bg);
+  --color-chat-shared-card-bg: var(--chat-shared-card-bg);
+  --color-chat-active-item-bg: var(--chat-active-item-bg);
+
   --radius-card: 24px;
   --radius-feed-card: 24px;
 
@@ -156,6 +160,10 @@
     --primary-tint-foreground: #6366F1;
     --pill-text-refined: #6366F1;
 
+    --chat-bubble-received-bg: #EEF2FF;
+    --chat-shared-card-bg: #F3F5F7;
+    --chat-active-item-bg: #F9FAFF;
+
     --card-shadow-inner: 0px 0px 4px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
 
@@ -232,6 +240,10 @@
     --primary-tint: #242b3d;
     --primary-tint-foreground: #818CF8;
     --subtle: #2A3150;
+
+    --chat-bubble-received-bg: #242b3d;
+    --chat-shared-card-bg: #1e2530;
+    --chat-active-item-bg: #242b3d;
   }
 
 
@@ -286,6 +298,10 @@
     --profile-active-border: #EEF2FF;
     --profile-text: #000000;
     --subtle: #EEF2FF;
+
+    --chat-bubble-received-bg: #EEF2FF;
+    --chat-shared-card-bg: #F3F5F7;
+    --chat-active-item-bg: #F9FAFF;
 
     /* Company Theme Variables (Light) */
     --company-bg: #FFFFFF;
@@ -397,6 +413,10 @@
     --profile-active-border: #1C2840;
     --profile-text: #ffffff;
     --subtle: #2A3150;
+
+    --chat-bubble-received-bg: #1A2236;
+    --chat-shared-card-bg: #171d2b;
+    --chat-active-item-bg: #1A2236;
 
     /* Company Theme Variables (Dark) */
     --company-bg: #0F1115;

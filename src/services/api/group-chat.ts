@@ -46,12 +46,28 @@ export const deleteGroup = async (groupId: string) => {
     return response.data;
 };
 
-export const sendMessage = async (groupId: string, content: string, type: 'text' | 'image' | 'system' = 'text', files?: File[], replyMessageId?: string) => {
+export const sendMessage = async (
+    groupId: string,
+    content: string,
+    type: 'text' | 'image' | 'system' = 'text',
+    files?: File[],
+    replyMessageId?: string,
+    shared_post_id?: string,
+    shared_profile_id?: string,
+    shared_profile_type?: string,
+    entity_type?: string,
+    entity_id?: string
+) => {
     if (files && files.length > 0) {
         const formData = new FormData();
         formData.append("content", content || "");
         formData.append("type", type);
         if (replyMessageId) formData.append("replyMessageId", replyMessageId);
+        if (shared_post_id) formData.append("shared_post_id", shared_post_id);
+        if (shared_profile_id) formData.append("shared_profile_id", shared_profile_id);
+        if (shared_profile_type) formData.append("shared_profile_type", shared_profile_type);
+        if (entity_type) formData.append("entity_type", entity_type);
+        if (entity_id) formData.append("entity_id", entity_id);
 
         files.forEach((file) => {
             formData.append("images", file);
@@ -64,6 +80,12 @@ export const sendMessage = async (groupId: string, content: string, type: 'text'
     } else {
         const payload: any = { content, type };
         if (replyMessageId) payload.replyMessageId = replyMessageId;
+        if (shared_post_id) payload.shared_post_id = shared_post_id;
+        if (shared_profile_id) payload.shared_profile_id = shared_profile_id;
+        if (shared_profile_type) payload.shared_profile_type = shared_profile_type;
+        if (entity_type) payload.entity_type = entity_type;
+        if (entity_id) payload.entity_id = entity_id;
+
         const response = await api.post(`/groups/${groupId}/messages`, payload);
         return response.data;
     }

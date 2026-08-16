@@ -44,8 +44,8 @@ interface UniversalShareModalProps {
 
 type ShareMode = "options" | "message" | "notification" | "success"
 
-const getAvatarGradient = (avatar: string) => {
-    return (avatarGradients as any)[avatar] || "from-gray-400 to-gray-500";
+const getAvatarGradient = (avatar?: string) => {
+    return (avatar && (avatarGradients as any)[avatar]) || "from-gray-400 to-gray-500";
 }
 
 export function UniversalShareModal({
