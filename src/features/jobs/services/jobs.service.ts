@@ -425,8 +425,10 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     };
 
     return formattedJob;
-  } catch (error) {
-    console.error("Failed to fetch job details:", error);
+  } catch (error: any) {
+    if (error.response?.status !== 404) {
+      console.error("Failed to fetch job details:", error);
+    }
     return null;
   }
 };
