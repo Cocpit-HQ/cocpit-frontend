@@ -4,9 +4,7 @@ import SystemMessage from "./SystemMessage";
 import { Loader2, ChevronDown } from "lucide-react";
 import MessageBubble from "../ui/MessageBubble";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { formatTime } from "@/lib/mappers/messaging.mapper";
-
 
 interface GroupMessageListProps {
     messages: Message[];
@@ -26,7 +24,23 @@ interface GroupMessageListProps {
     onReaction?: (message: Message, emoji: string) => void;
 }
 
-const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ messages, currentUserId, onLoadMore, hasMore, isLoadingMore, onMessageClick, selectedMessageId, editingMessageId, onSaveEdit, onCancelEdit, onAction, onMediaClick, unreadCount = 0, onReply, onReaction }, ref) => {
+const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({
+    messages,
+    currentUserId,
+    onLoadMore,
+    hasMore,
+    isLoadingMore,
+    onMessageClick,
+    selectedMessageId,
+    editingMessageId,
+    onSaveEdit,
+    onCancelEdit,
+    onAction,
+    onMediaClick,
+    unreadCount = 0,
+    onReply,
+    onReaction
+}, ref) => {
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -42,6 +56,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     const wasLoadingMoreRef = useRef<boolean>(false);
     const lastMessageIdRef = useRef<string | null>(null);
 
+    // Freeze the initial unread count so it doesn't disappear when marked as read
     const [initialUnread] = useState(unreadCount);
     const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
 
@@ -65,7 +80,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Skeletons list for pagination loading (older messages)
-    const displayMessages = React.useMemo(() => {
+    const displayMessages = useMemo(() => {
         if (isLoadingMore) {
             const skeletons = Array.from({ length: 50 }, (_, i) => ({
                 id: `skeleton-${i}`,
@@ -78,31 +93,10 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
         return messages;
     }, [messages, isLoadingMore]);
 
-    // Virtualizer — same as MessageList
-    const rowVirtualizer = useVirtualizer({
-        count: displayMessages.length,
-        getScrollElement: () => scrollRef.current,
-        estimateSize: () => 60,
-        overscan: 10,
-        getItemKey: (index) => displayMessages[index]?.id || index,
-    });
-
-    // Track message state signature to immediately re-measure virtual rows on deletion/edits
-    const messageStateSignature = React.useMemo(() => {
-        return displayMessages
-            .map((m) => `${m.id}:${m.is_deleted_for_everyone ? '1' : '0'}:${m.is_deleted_for_me ? '1' : '0'}:${m.text?.length || 0}`)
-            .join('|');
-    }, [displayMessages]);
-
-    useEffect(() => {
-        // Immediately force re-measurement of all virtual rows when deletion/edit states change
-        rowVirtualizer.measure();
-    }, [messageStateSignature, rowVirtualizer]);
-
     const handleReplyClick = (messageId: string) => {
-        const index = displayMessages.findIndex(m => m.id === messageId);
-        if (index !== -1) {
-            rowVirtualizer.scrollToIndex(index, { align: 'center' });
+        const el = document.getElementById(`msg-${messageId}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setHighlightedMessageId(messageId);
             setTimeout(() => setHighlightedMessageId(null), 1000);
         }
@@ -118,7 +112,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
         }, 2000);
     };
 
-    // Auto-scroll logic — same as MessageList
+    // Auto-scroll logic
     useEffect(() => {
         if (!scrollRef.current) return;
 
@@ -131,15 +125,20 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
         );
 
         if (initialUnread > 0 && !hasScrolledToUnread && displayMessages.length > 0) {
-            const firstUnreadIndex = Math.max(0, displayMessages.length - initialUnread);
-            rowVirtualizer.scrollToIndex(firstUnreadIndex, { align: "start" });
+            const targetId = firstUnreadMessageId || displayMessages[Math.max(0, displayMessages.length - initialUnread)]?.id;
+            const el = targetId ? document.getElementById(`msg-${targetId}`) : null;
+            if (el) {
+                el.scrollIntoView({ block: "start" });
+            }
             setHasScrolledToUnread(true);
             updateShouldScrollToBottom(false);
         } else if ((shouldScrollToBottomRef.current || isNewMessageSent) && displayMessages.length > 0) {
-            rowVirtualizer.scrollToIndex(displayMessages.length - 1, { align: "end" });
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+
             const timer = setTimeout(() => {
                 if (scrollRef.current && (shouldScrollToBottomRef.current || isNewMessageSent)) {
-                    rowVirtualizer.scrollToIndex(displayMessages.length - 1, { align: "end" });
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                 }
             }, 150);
@@ -149,52 +148,63 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
         if (lastMessage) {
             lastMessageIdRef.current = lastMessage.id;
         }
-    }, [displayMessages, initialUnread, hasScrolledToUnread, rowVirtualizer, currentUserId]);
+    }, [
+        displayMessages,
+        initialUnread,
+        hasScrolledToUnread,
+        currentUserId,
+        firstUnreadMessageId,
+    ]);
 
-    // Scroll to bottom when virtualizer total size changes (media/entity loading)
-    const totalSize = rowVirtualizer.getTotalSize();
-    useEffect(() => {
-        if (shouldScrollToBottomRef.current && scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    // Record scroll height before skeletons are prepended
+    useLayoutEffect(() => {
+        if (isLoadingMore && !wasLoadingMoreRef.current && scrollRef.current) {
+            prevScrollHeightRef.current = scrollRef.current.scrollHeight;
+            wasLoadingMoreRef.current = true;
         }
-    }, [totalSize]);
+    }, [isLoadingMore, scrollRef]);
 
-    // Check if we should auto-scroll for next update
-    const handleScroll = () => {
-        if (!scrollRef.current) return;
-        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    // Adjust scroll position after prepending items to keep viewport stable
+    useLayoutEffect(() => {
+        if (wasLoadingMoreRef.current && !isLoadingMore && scrollRef.current) {
+            const newScrollHeight = scrollRef.current.scrollHeight;
+            const diff = newScrollHeight - prevScrollHeightRef.current;
+            if (diff > 0) {
+                scrollRef.current.scrollTop += diff;
+            }
+            wasLoadingMoreRef.current = false;
+        }
+    }, [isLoadingMore, displayMessages.length, scrollRef]);
 
-        const isScrollingUp = scrollTop < lastScrollTopRef.current;
-        lastScrollTopRef.current = scrollTop;
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const target = e.currentTarget;
+        const currentScrollTop = target.scrollTop;
 
-        const isAtBottom = scrollHeight - scrollTop - clientHeight < 15;
+        // 1. Detect scrolling UP vs DOWN
+        const isScrollingUp = currentScrollTop < lastScrollTopRef.current;
+        lastScrollTopRef.current = currentScrollTop;
 
-        if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
-            updateShouldScrollToBottom(false);
-            prevScrollHeightRef.current = scrollHeight;
-            onLoadMore();
+        // 2. Infinite scroll trigger at TOP
+        if (currentScrollTop < 50 && hasMore && !isLoadingMore) {
+            onLoadMore?.();
+        }
+
+        // 3. User intentionality check for bottom stickiness
+        const isNearBottom = target.scrollHeight - currentScrollTop - target.clientHeight < 100;
+
+        if (isNearBottom) {
+            updateShouldScrollToBottom(true);
+            setShowScrollButton(false);
+            if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
         } else {
             if (isScrollingUp) {
                 updateShouldScrollToBottom(false);
-            } else {
-                updateShouldScrollToBottom(isAtBottom);
-            }
-
-            if (!isAtBottom) {
                 setShowScrollButton(true);
                 if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
                 scrollTimerRef.current = setTimeout(() => {
                     setShowScrollButton(false);
-                }, 2000);
-            } else {
-                setShowScrollButton(false);
+                }, 3000);
             }
-        }
-    };
-
-    const handleMediaLoad = () => {
-        if (shouldScrollToBottomRef.current && scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     };
 
@@ -238,7 +248,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     }, [displayMessages, currentUserId]);
 
     return (
-        <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+        <div className="flex flex-col flex-1 h-full min-h-0 relative">
             <div
                 ref={scrollRef}
                 onScroll={handleScroll}
@@ -250,33 +260,18 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                     </div>
                 )}
 
-                {/* Virtualizer container — same structure as MessageList */}
-                <div
-                    style={{
-                        height: `${rowVirtualizer.getTotalSize()}px`,
-                        width: "100%",
-                        position: "relative",
-                    }}
-                >
-                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                        const msg = displayMessages[virtualRow.index];
-                        const prev = displayMessages[virtualRow.index - 1];
-                        const next = displayMessages[virtualRow.index + 1];
+                <div className="flex flex-col w-full min-h-full justify-end">
+                    {displayMessages.map((msg, index) => {
+                        const prev = displayMessages[index - 1];
+                        const next = displayMessages[index + 1];
 
                         // Skeleton row
                         if ((msg as any)?.isSkeleton) {
                             return (
                                 <div
                                     key={msg.id}
-                                    ref={rowVirtualizer.measureElement}
-                                    data-index={virtualRow.index}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        transform: `translateY(${virtualRow.start}px)`,
-                                    }}
+                                    id={`msg-${msg.id}`}
+                                    className="w-full"
                                 >
                                     <MessageSkeleton
                                         sender={(msg as any).sender}
@@ -289,7 +284,10 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                         // Date + unread dividers
                         const currentMsgDateStr = msg.created_at ? formatDateDivider(msg.created_at) : null;
                         const prevMsgDateStr = prev && !(prev as any).isSkeleton && prev.created_at ? formatDateDivider(prev.created_at) : null;
+                        const nextMsgDateStr = next && !(next as any).isSkeleton && next.created_at ? formatDateDivider(next.created_at) : null;
+
                         const showDateDivider = currentMsgDateStr && currentMsgDateStr !== prevMsgDateStr;
+                        const isDateBreakWithNext = currentMsgDateStr && nextMsgDateStr && currentMsgDateStr !== nextMsgDateStr;
 
                         const isFirstUnread = Boolean(firstUnreadMessageId && msg.id === firstUnreadMessageId);
 
@@ -299,22 +297,12 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
 
                         const isPreviousSystem = prev?.type === 'system';
                         const previousSenderId = prev && !(prev as any).isSkeleton
-                            ? (prev.senderId || ((prev.sender === 'me') ? currentUserId : `unknown-${virtualRow.index - 1}`))
+                            ? (prev.senderId || ((prev.sender === 'me') ? currentUserId : `unknown-${index - 1}`))
                             : null;
 
-                        const isMoreThanOneMinute = (date1?: string, date2?: string) => {
-                            if (!date1 || !date2) return true;
-                            return Math.abs(new Date(date1).getTime() - new Date(date2).getTime()) > 60000;
-                        };
-
-                        const nextMsgDateStr = next && !(next as any).isSkeleton && next.created_at
-                            ? formatDateDivider(next.created_at)
-                            : null;
-                        const isDateBreakWithNext = currentMsgDateStr && nextMsgDateStr && currentMsgDateStr !== nextMsgDateStr;
-
-                        const isFirstInGroup = virtualRow.index === 0 || isPreviousSystem || (prev as any)?.isSkeleton || previousSenderId !== senderId || !!showDateDivider || !!isFirstUnread;
+                        const isFirstInGroup = index === 0 || isPreviousSystem || (prev as any)?.isSkeleton || previousSenderId !== senderId || !!showDateDivider || !!isFirstUnread;
                         const nextSenderId = next && !(next as any).isSkeleton
-                            ? (next.senderId || ((next.sender === 'me') ? currentUserId : `unknown-${virtualRow.index + 1}`))
+                            ? (next.senderId || ((next.sender === 'me') ? currentUserId : `unknown-${index + 1}`))
                             : null;
                         const isLastInGroup = !next || (next as any).isSkeleton || next.type === 'system' || nextSenderId !== senderId || isDateBreakWithNext;
 
@@ -337,15 +325,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                         return (
                             <div
                                 key={msg.id}
-                                ref={rowVirtualizer.measureElement}
-                                data-index={virtualRow.index}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    transform: `translateY(${virtualRow.start}px)`,
-                                }}
+                                id={`msg-${msg.id}`}
+                                className="w-full"
                             >
                                 {/* Date divider */}
                                 {showDateDivider && !isFirstUnread && (
@@ -383,7 +364,11 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                                         statusLabel={statusLabel}
                                         isGroup={true}
                                         onMediaClick={onMediaClick}
-                                        onMediaLoad={handleMediaLoad}
+                                        onMediaLoad={() => {
+                                            if (shouldScrollToBottomRef.current && scrollRef.current) {
+                                                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                                            }
+                                        }}
                                         onReply={onReply}
                                         onReplyClick={handleReplyClick}
                                         isHighlighted={highlightedMessageId === msg.id}
@@ -401,7 +386,9 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                 <button
                     className="absolute bottom-4 right-4 md:right-8 bg-white border border-border shadow-lg text-primary p-2 rounded-full z-50 hover:bg-muted transition-all"
                     onClick={() => {
-                        rowVirtualizer.scrollToIndex(displayMessages.length - 1, { align: 'end' });
+                        if (scrollRef.current) {
+                            scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+                        }
                     }}
                     onMouseEnter={handleScrollButtonMouseEnter}
                     onMouseLeave={handleScrollButtonMouseLeave}
