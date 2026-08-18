@@ -148,10 +148,10 @@ export default function GroupHeader({
                         )}
 
                         <div
-                            className="flex items-center gap-3 cursor-pointer group transition-all min-w-0"
-                            onClick={onOpenDetails}
-                            role="button"
-                            tabIndex={0}
+                            className={`flex items-center gap-3 transition-all min-w-0 ${!isInactive ? "cursor-pointer group" : "cursor-default"}`}
+                            onClick={!isInactive ? onOpenDetails : undefined}
+                            role={!isInactive ? "button" : undefined}
+                            tabIndex={!isInactive ? 0 : undefined}
                         >
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted shrink-0">
                                 {activeGroup.group_avatar && (activeGroup.group_avatar.startsWith('http') || activeGroup.group_avatar.startsWith('/')) ? (

@@ -510,6 +510,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 </div>
 
                 {/* 7. LEAVE GROUP & DELETE GROUP BUTTONS */}
+                {!isInactive && (
                 <div className="mt-[24px]">
                     <div className="w-full flex items-center justify-between py-[10px]">
                         <button
@@ -538,6 +539,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         )}
                     </div>
                 </div>
+                )}
             </div>
         </div>
     );

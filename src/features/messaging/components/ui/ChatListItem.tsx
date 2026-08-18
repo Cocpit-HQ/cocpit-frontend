@@ -106,9 +106,14 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
               <h3 className={`h-[24px] font-['Poppins'] text-[16px] leading-[24px] flex items-center min-w-0 pr-2 ${displayUnread > 0 ? 'font-semibold text-[#111827]' : 'font-medium text-[#000000]'}`}>
                 <span className="truncate">{displayName}</span>
               </h3>
-              <span className={`font-['Poppins'] text-[12px] leading-[16px] shrink-0 ${displayUnread > 0 ? 'font-semibold text-[#6366F1]' : 'font-normal text-[#6B7280]'}`}>
-                {formatTimeAgo(chat.lastMessageAt || chat.time)}
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {chat.is_muted && (
+                  <BellOff className="w-[14px] h-[14px] text-[#6B7280]" />
+                )}
+                <span className={`font-['Poppins'] text-[12px] leading-[16px] ${displayUnread > 0 ? 'font-semibold text-[#6366F1]' : 'font-normal text-[#6B7280]'}`}>
+                  {formatTimeAgo(chat.lastMessageAt || chat.time)}
+                </span>
+              </div>
             </div>
             {!isQuickChat && (
               <p className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full min-w-0">
@@ -116,12 +121,6 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
               </p>
             )}
           </div>
-
-          {chat.is_muted && (
-            <span className="absolute top-[22px] right-0 flex items-center justify-center">
-              <BellOff className="w-[12px] h-[12px] text-[#6B7280]" />
-            </span>
-          )}
         </div>
 
         {/* GROUP 2: Last Message */}

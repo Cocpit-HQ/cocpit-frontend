@@ -190,14 +190,37 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Handle incoming events
     const refreshMessagingCaches = (conversationId?: string | null) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-
       if (conversationId) {
-        queryClient.invalidateQueries({
-          queryKey: ['messages', conversationId],
-          refetchType: 'none',
-        });
+        queryClient.setQueryData(
+          ["conversations", activeProfileRef.current?.type ?? "USER", activeProfileRef.current?.id ?? "me", "all"],
+          (oldData: any[]) => {
+            if (!oldData) return oldData;
+            let found = false;
+            const newData = oldData.map(c => {
+              if (String(c.id) === String(conversationId)) {
+                found = true;
+                return { ...c, unread: (c.unread || 0) + 1 };
+              }
+              return c;
+            });
+            if (!found) {
+              newData.unshift({ id: conversationId, unread: 1 });
+            }
+            return newData;
+          }
+        );
       }
+
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+        if (conversationId) {
+          queryClient.invalidateQueries({
+            queryKey: ['messages', conversationId],
+            refetchType: 'none',
+          });
+        }
+      }, 500);
     };
 
     const handleNotification = (payload: NotificationPayload) => {

@@ -562,11 +562,11 @@ export default function MessagingPage() {
                 unread:
                   c.id === selectedChat?.id ||
                     (selectedChat?.isGroup && selectedChat.id === c.id) ||
-                    (message.sender_id && String(message.sender_id) === String(activeProfile?.id)) ||
+                    (message.author_org_id ? (activeProfile?.type !== 'USER' && String(message.author_org_id) === String(activeProfile?.id)) : (activeProfile?.type === 'USER' && ((message.sender_id && String(message.sender_id) === String(activeProfile?.id)) || (message.senderId && String(message.senderId) === String(activeProfile?.id))))) ||
                     (message.sender === 'me')
                     ? 0
                     : Math.max(1, (c.unread || 0) + 1),
-                is_read: c.id === selectedChat?.id || message.sender === 'me',
+                is_read: c.id === selectedChat?.id || message.sender === 'me' || (message.author_org_id ? (activeProfile?.type !== 'USER' && String(message.author_org_id) === String(activeProfile?.id)) : (activeProfile?.type === 'USER' && ((message.sender_id && String(message.sender_id) === String(activeProfile?.id)) || (message.senderId && String(message.senderId) === String(activeProfile?.id))))),
               };
             }
             return c;
@@ -652,8 +652,7 @@ export default function MessagingPage() {
             const existing = oldData[matchedIndex];
             const lastMsgText = payload.last_message_text || payload.lastMessage || payload.last_message;
             const lastMsgAt = payload.last_message_at || payload.updatedAt || payload.updated_at || existing.lastMessageAt;
-            const isMeSending = (payload.sender_id && String(payload.sender_id) === String(activeProfile?.id)) ||
-              (payload.senderId && String(payload.senderId) === String(activeProfile?.id));
+            const isMeSending = (payload.author_company_id ? (activeProfile?.type !== 'USER' && String(payload.author_company_id) === String(activeProfile?.id)) : (activeProfile?.type === 'USER' && ((payload.sender_id && String(payload.sender_id) === String(activeProfile?.id)) || (payload.senderId && String(payload.senderId) === String(activeProfile?.id)))));
 
             const unreadCount = typeof payload.unread_count === 'number'
               ? payload.unread_count

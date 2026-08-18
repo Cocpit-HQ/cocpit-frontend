@@ -1221,7 +1221,22 @@ export const HomeHeader = () => {
                                 href="/messaging"
                                 className={`p-2 rounded-full transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
                             >
-                                <Icon icon="proicons:chat" className="w-6 h-6 text-black dark:text-white" />
+                                <div className="relative">
+                                    <Icon icon="proicons:chat" className="w-6 h-6 text-black dark:text-white" />
+                                    {hasUnreadMessages && (
+                                        <span 
+                                            style={{
+                                                position: 'absolute',
+                                                width: '6px',
+                                                height: '6px',
+                                                right: '0px',
+                                                top: '-2px',
+                                                backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
+                                                borderRadius: '50%'
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             </Link>
                         </div>
                     )}
