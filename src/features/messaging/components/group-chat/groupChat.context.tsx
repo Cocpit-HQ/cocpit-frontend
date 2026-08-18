@@ -43,6 +43,7 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         queryKey: ['group-details', groupId],
         queryFn: () => groupId ? getGroupDetails(groupId) : null,
         enabled: !!groupId,
+        staleTime: 0,
         retry: false // Avoid background retries on 403s
     });
 

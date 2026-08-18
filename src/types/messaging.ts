@@ -104,6 +104,8 @@ export interface BackendMessage {
   active_member_count?: number;
   delivered_count?: number;
   seen_count?: number;
+  is_edited?: boolean;
+  isEdited?: boolean;
 }
 
 // Frontend entity types

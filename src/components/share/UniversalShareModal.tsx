@@ -543,7 +543,7 @@ export function UniversalShareModal({
                         {mode === 'options' && (
                             <button
                                 onClick={() => onClose()}
-                                className="absolute top-6 right-6 p-1 text-[#F87171] rounded-full transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                                className="absolute top-6 right-6 p-1 text-[#F87171] rounded-full transition-colors z-10 focus:outline-none focus-visible:outline-none"
                             >
                                 <X className="w-5 h-5" strokeWidth={1.5} />
                             </button>
@@ -562,7 +562,7 @@ export function UniversalShareModal({
                     {mode === 'options' && (
                         <button
                             onClick={() => onClose()}
-                            className="absolute top-6 right-6 p-1 text-[#F87171] rounded-full transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                            className="absolute top-6 right-6 p-1 text-[#F87171] rounded-full transition-colors z-10 focus:outline-none focus-visible:outline-none"
                         >
                             <X className="w-5 h-5" strokeWidth={1.5} />
                         </button>

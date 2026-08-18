@@ -145,21 +145,51 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
   };
 };
 
-export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string, currentCompanyId?: string): Message => {
-  const messageOrgId = backendMessage.author_company_id || (backendMessage as any).author_org_id;
-  const isMe = (currentCompanyId && messageOrgId && String(messageOrgId) === String(currentCompanyId)) ||
-    (!currentCompanyId && currentUserId && String(backendMessage.sender_id) === String(currentUserId));
-  const isDeletedUser = backendMessage.sender_id === null;
+export const getNormalizedMediaType = (
+  mediaType?: string,
+  filename?: string | null,
+  url?: string
+): 'image' | 'video' | 'document' => {
+  const mt = (mediaType || '').toLowerCase();
+  const nameOrUrl = (filename || url || '').toLowerCase();
+
+  if (
+    mt === 'document' ||
+    mt === 'file' ||
+    mt.startsWith('application/') ||
+    /\.(doc|docx|pdf|xls|xlsx|ppt|pptx|txt|csv|zip|rar)$/i.test(nameOrUrl)
+  ) {
+    return 'document';
+  }
+  if (
+    mt === 'video' ||
+    mt.startsWith('video/') ||
+    /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(nameOrUrl)
+  ) {
+    return 'video';
+  }
+  return 'image';
+};
+
+export const mapBackendMessageToMessage = (
+  backendMessage: BackendMessage,
+  currentUserId?: string,
+  companyId?: string
+): Message => {
+  const isMe = currentUserId
+    ? backendMessage.sender_id === currentUserId ||
+      (companyId && backendMessage.sender_id === companyId)
+    : false;
 
   return {
     id: backendMessage.message_id,
     senderId: backendMessage.sender_id,
     sender: isMe ? "me" : "other",
-    senderName: isDeletedUser ? "Unknown User" : (backendMessage.sender_name === "Deleted User" ? "Unknown User" : (backendMessage.sender_name || "Unknown")),
+    senderName: backendMessage.sender_name || "Unknown",
     senderMemberName: backendMessage.sender_member_name || undefined,
     orgHeadline: backendMessage.org_headline || "",
     senderAvatar: backendMessage.sender_avatar,
-    text: backendMessage.text_content,
+    text: backendMessage.text_content || "",
     time: formatTime(backendMessage.created_at),
     messageType: backendMessage.message_type,
     type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system' || (backendMessage as any).is_system || backendMessage.action_type) ? 'system' : 'text',
@@ -188,14 +218,18 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     is_deleted_for_everyone: backendMessage.is_deleted_for_everyone || false,
     is_deleted_for_me: backendMessage.is_deleted_for_me || false,
     status: backendMessage.read_at ? 'read' : 'sent',
-    media: backendMessage.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' | 'document', name: m.filename })),
-    sharedProfile: backendMessage.shared_profile || null,
-    sharedProfileId: backendMessage.shared_profile_id || undefined,
-    sharedProfileType: backendMessage.shared_profile_type || undefined,
-    sharedPostId: backendMessage.shared_post_id || undefined,
-    shared_post_id: backendMessage.shared_post_id || undefined,
-    entityType: backendMessage.entity_type || undefined,
-    entityId: backendMessage.entity_id || undefined,
+    media: backendMessage.is_deleted_for_everyone ? [] : backendMessage.media?.map(m => ({
+      url: m.url,
+      type: getNormalizedMediaType(m.media_type, m.filename, m.url),
+      name: m.filename
+    })),
+    sharedProfile: backendMessage.is_deleted_for_everyone ? null : (backendMessage.shared_profile || null),
+    sharedProfileId: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.shared_profile_id || undefined),
+    sharedProfileType: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.shared_profile_type || undefined),
+    sharedPostId: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.shared_post_id || undefined),
+    shared_post_id: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.shared_post_id || undefined),
+    entityType: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.entity_type || undefined),
+    entityId: backendMessage.is_deleted_for_everyone ? undefined : (backendMessage.entity_id || undefined),
     replied_msg_id: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || backendMessage.replyMessageId || null,
     repliedMessage: (backendMessage.reply_message || backendMessage.replied_msg_id || backendMessage.replyMessageId) ? {
       messageId: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || backendMessage.replyMessageId!,
@@ -212,5 +246,6 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     delivered_count: backendMessage.delivered_count,
     seen_count: backendMessage.seen_count,
     is_unavailable: (backendMessage as any).is_unavailable === true,
+    is_edited: backendMessage.is_edited === true || (backendMessage as any).isEdited === true,
   };
 };

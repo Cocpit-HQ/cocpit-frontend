@@ -296,6 +296,12 @@ export function useAvatarMutations() {
             void update({ image: response.avatarUrl });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
+            queryClient.invalidateQueries({ queryKey: ["profile"] });
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+            queryClient.invalidateQueries({ queryKey: ["messages"] });
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("cocpit:refresh-actor-context"));
+            }
         }
     });
 
@@ -312,6 +318,12 @@ export function useAvatarMutations() {
             void update({ image: null });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: [...PROFILE_SCORE_QUERY_KEY] });
+            queryClient.invalidateQueries({ queryKey: ["profile"] });
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+            queryClient.invalidateQueries({ queryKey: ["messages"] });
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("cocpit:refresh-actor-context"));
+            }
         }
     });
 

@@ -184,8 +184,25 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         mutationFn: async ({ messageId, text }: { messageId: string, text: string }) => {
             return editMessage(messageId, text);
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             setEditingMessageId(null);
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return undefined;
+                return {
+                    ...old,
+                    pages: old.pages.map(page => page.map(m => {
+                        if (m.id === variables.messageId) {
+                            return {
+                                ...m,
+                                text: variables.text,
+                                text_content: variables.text,
+                                is_edited: true,
+                            };
+                        }
+                        return m;
+                    }))
+                };
+            });
         },
         onError: (error) => {
             console.error("Failed to edit message:", error);
@@ -225,6 +242,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         },
         initialPageParam: null as string | null,
         enabled: !!groupId,
+        staleTime: 0,
     });
 
     const fetchedMessages = React.useMemo(() => {
@@ -259,6 +277,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             const senderMember = activeGroup?.members?.find((m: any) => m.user_id === message.sender_id);
             const isSenderBlocked = message.sender_id && !isMe && (
                 senderMember?.is_blocked_by_other ||
+                isBlocked(message.sender_id) ||
                 message.is_unavailable
             );
 
@@ -356,43 +375,51 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             }
         };
 
-        const handleMessageDeletedForMe = (payload: { messageId: string }) => {
+        const handleMessageDeleted = (payload: { messageId: string; conversationId: string; deleteType?: string }) => {
+            if (payload.conversationId !== groupId) return;
+            const isDeleteForMe = payload.deleteType === 'me';
+
             queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
                 if (!old) return undefined;
                 return {
                     ...old,
                     pages: old.pages.map(page => page.map(m => {
                         if (m.id === payload.messageId) {
+                            if (isDeleteForMe) {
+                                return {
+                                    ...m,
+                                    text: "This message was deleted for you.",
+                                    text_content: "This message was deleted for you.",
+                                    sharedPost: null,
+                                    sharedProfile: null,
+                                    media: [],
+                                    reactions: [],
+                                    is_deleted: true,
+                                    is_deleted_for_me: true
+                                };
+                            }
                             return {
                                 ...m,
-                                text: "This message was deleted for you.",
-                                is_deleted_for_me: true
+                                text: "This message was deleted for everyone.",
+                                text_content: "This message was deleted for everyone.",
+                                sharedPost: null,
+                                sharedProfile: null,
+                                sharedProfileId: undefined,
+                                sharedPostId: undefined,
+                                shared_post_id: undefined,
+                                entityType: undefined,
+                                entityId: undefined,
+                                media: [],
+                                reactions: [],
+                                is_deleted: true,
+                                is_deleted_for_everyone: true
                             };
                         }
                         return m;
                     }))
                 };
             });
-            // Also update conversation list logic here if needed, but invalidation is safer
-            queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
-        };
-
-        const handleMessageDeletedForEveryone = (payload: { messageId: string, conversationId: string }) => {
-            if (payload.conversationId !== groupId) return;
-
-            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
-                if (!old) return undefined;
-                return {
-                    ...old,
-                    pages: old.pages.map(page => page.map(m => {
-                        if (m.id === payload.messageId) {
-                            return { ...m, text: "This message was deleted for everyone.", is_deleted_for_everyone: true };
-                        }
-                        return m;
-                    }))
-                };
-            });
-            queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
         };
 
         const handleMemberLeft = (payload: any) => {
@@ -408,13 +435,55 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             }
         };
 
+        const handleBlockOrDeactivate = () => {
+            queryClient.resetQueries({ queryKey: ['messages', groupId], exact: false });
+            queryClient.resetQueries({ queryKey: ['groupDetails', groupId], exact: false });
+            queryClient.resetQueries({ queryKey: ['group-details', groupId], exact: false });
+            queryClient.refetchQueries({ queryKey: ['messages', groupId], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['groupDetails', groupId], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['group-details', groupId], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
+        };
+
+        const handleMessageEdited = (payload: { messageId: string; conversationId: string; text_content: string }) => {
+            if (payload.conversationId !== groupId) return;
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return undefined;
+                return {
+                    ...old,
+                    pages: old.pages.map(page => page.map(m => {
+                        if (m.id === payload.messageId) {
+                            return {
+                                ...m,
+                                text: payload.text_content,
+                                text_content: payload.text_content,
+                                is_edited: true,
+                            };
+                        }
+                        return m;
+                    }))
+                };
+            });
+        };
+
         socket.on('new_message', handleNewMessage);
         socket.on('isTyping', handleTyping);
         socket.on('stoppedTyping', handleStopTyping);
-        socket.on('message_deleted_for_me', handleMessageDeletedForMe);
-        socket.on('message_deleted_for_everyone', handleMessageDeletedForEveryone);
+        socket.on('message_deleted', handleMessageDeleted);
+        socket.on('message_deleted_for_me', handleMessageDeleted);
+        socket.on('message_deleted_for_everyone', handleMessageDeleted);
+        socket.on('message_edited', handleMessageEdited);
         socket.on('memberLeft', handleMemberLeft);
         socket.on('removed_from_group', handleRemovedFromGroup);
+        socket.on('user_blocked', handleBlockOrDeactivate);
+        socket.on('block_confirmed', handleBlockOrDeactivate);
+        socket.on('relationshipUpdated', handleBlockOrDeactivate);
+        socket.on('user_unblocked', handleBlockOrDeactivate);
+        socket.on('unblock_confirmed', handleBlockOrDeactivate);
+        socket.on('user_deactivated', handleBlockOrDeactivate);
+        socket.on('USER_DEACTIVATED', handleBlockOrDeactivate);
+        socket.on('user_reactivated', handleBlockOrDeactivate);
+        socket.on('USER_REACTIVATED', handleBlockOrDeactivate);
         socket.on('message_reaction_updated', (payload: { messageId: string; conversationId: string; reaction: { user_id: string; emoji: string; full_name: string; avatar: string | null; updated_at: string } | null; userId?: string }) => {
             if (payload.conversationId !== groupId) return;
             queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
@@ -440,10 +509,21 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             socket.off('new_message', handleNewMessage);
             socket.off('isTyping', handleTyping);
             socket.off('stoppedTyping', handleStopTyping);
-            socket.off('message_deleted_for_me', handleMessageDeletedForMe);
-            socket.off('message_deleted_for_everyone', handleMessageDeletedForEveryone);
+            socket.off('message_deleted', handleMessageDeleted);
+            socket.off('message_deleted_for_me', handleMessageDeleted);
+            socket.off('message_deleted_for_everyone', handleMessageDeleted);
+            socket.off('message_edited', handleMessageEdited);
             socket.off('memberLeft', handleMemberLeft);
             socket.off('removed_from_group', handleRemovedFromGroup);
+            socket.off('user_blocked', handleBlockOrDeactivate);
+            socket.off('block_confirmed', handleBlockOrDeactivate);
+            socket.off('relationshipUpdated', handleBlockOrDeactivate);
+            socket.off('user_unblocked', handleBlockOrDeactivate);
+            socket.off('unblock_confirmed', handleBlockOrDeactivate);
+            socket.off('user_deactivated', handleBlockOrDeactivate);
+            socket.off('USER_DEACTIVATED', handleBlockOrDeactivate);
+            socket.off('user_reactivated', handleBlockOrDeactivate);
+            socket.off('USER_REACTIVATED', handleBlockOrDeactivate);
             socket.off('message_reaction_updated');
             setActiveConversationId(null);
         };

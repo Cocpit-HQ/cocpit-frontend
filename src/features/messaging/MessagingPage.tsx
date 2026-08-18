@@ -928,6 +928,20 @@ export default function MessagingPage() {
       );
     };
 
+    const handleAccountStateChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      queryClient.invalidateQueries({ queryKey: ["sharedPost"] });
+      queryClient.invalidateQueries({ queryKey: ["profilePreview"] });
+      queryClient.invalidateQueries({ queryKey: ["jobContext"] });
+      queryClient.invalidateQueries({ queryKey: ["entityPreview"] });
+      queryClient.refetchQueries({ queryKey: ["sharedPost"] });
+      queryClient.refetchQueries({ queryKey: ["profilePreview"] });
+      queryClient.refetchQueries({ queryKey: ["entityPreview"] });
+      queryClient.refetchQueries({ queryKey: ["jobContext"] });
+      queryClient.refetchQueries({ queryKey: ["messages"] });
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("notification", handleNotification);
     socket.on("group_updated", handleGroupUpdate);
@@ -942,6 +956,12 @@ export default function MessagingPage() {
     socket.on("user_unblocked", handleUnblock);
     socket.on("unblock_confirmed", handleUnblock);
     socket.on("conversation_preference_updated", handlePreferenceUpdated);
+    socket.on("user_deactivated", handleAccountStateChanged);
+    socket.on("USER_DEACTIVATED", handleAccountStateChanged);
+    socket.on("user_reactivated", handleAccountStateChanged);
+    socket.on("USER_REACTIVATED", handleAccountStateChanged);
+    socket.on("ORGANIZATION_DEACTIVATED", handleAccountStateChanged);
+    socket.on("ORGANIZATION_REACTIVATED", handleAccountStateChanged);
 
     return () => {
       socket.off("new_message", handleNewMessage);
@@ -958,6 +978,12 @@ export default function MessagingPage() {
       socket.off("user_unblocked", handleUnblock);
       socket.off("unblock_confirmed", handleUnblock);
       socket.off("conversation_preference_updated", handlePreferenceUpdated);
+      socket.off("user_deactivated", handleAccountStateChanged);
+      socket.off("USER_DEACTIVATED", handleAccountStateChanged);
+      socket.off("user_reactivated", handleAccountStateChanged);
+      socket.off("USER_REACTIVATED", handleAccountStateChanged);
+      socket.off("ORGANIZATION_DEACTIVATED", handleAccountStateChanged);
+      socket.off("ORGANIZATION_REACTIVATED", handleAccountStateChanged);
     };
   }, [
     socket,

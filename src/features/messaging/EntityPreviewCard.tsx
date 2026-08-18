@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, Briefcase, Calendar, User, Building2, FileText, Loader2, AlertCircle } from "lucide-react";
 import { fetchEntityPreview, EntityPreview, EntityType } from "@/services/api/shareService";
+import { useQuery } from "@tanstack/react-query";
+import { UnavailableContentCard } from "./components/ui/UnavailableContentCard";
+import { useSocial } from "@/context/SocialContext";
 
 // ─── Props ──────────────────────────────────────────────────
 
@@ -11,10 +14,10 @@ interface EntityPreviewCardProps {
     entityType: EntityType;
     entityId: string;
     onLoad?: () => void;
+    isMe?: boolean;
 }
 
 // ─── Icon Map ───────────────────────────────────────────────
-
 
 const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
     post: <FileText className="w-3 h-3" />,
@@ -40,44 +43,34 @@ const ENTITY_LABELS: Record<EntityType, string> = {
 
 // ─── Component ──────────────────────────────────────────────
 
-export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPreviewCardProps) {
+export function EntityPreviewCard({ entityType, entityId, onLoad, isMe = false }: EntityPreviewCardProps) {
     const router = useRouter();
-    const [preview, setPreview] = useState<EntityPreview | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const { isBlocked } = useSocial();
 
-    useEffect(() => {
-        let cancelled = false;
-
-        const loadPreview = async () => {
-            try {
-                setLoading(true);
-                setErrorMessage(null);
-                const data = await fetchEntityPreview(entityType, entityId);
-                if (!cancelled) setPreview(data);
-            } catch (err: any) {
-                if (!cancelled) {
-                    // Extract the message from the API error response if available
-                    const apiMessage =
-                        err?.response?.data?.message ||
-                        err?.message ||
-                        null;
-                    setErrorMessage(apiMessage);
-                }
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        };
-
-        loadPreview();
-        return () => { cancelled = true; };
-    }, [entityType, entityId]);
+    const {
+        data: preview,
+        isLoading: loading,
+        error: fetchError,
+    } = useQuery({
+        queryKey: ["entityPreview", entityType, entityId],
+        queryFn: async () => {
+            if (!entityId) return null;
+            return fetchEntityPreview(entityType, entityId);
+        },
+        enabled: Boolean(entityId) && !isBlocked(entityId),
+        staleTime: 0,
+        retry: false,
+    });
 
     useEffect(() => {
         if (!loading) {
             onLoad?.();
         }
     }, [loading, onLoad]);
+
+    if (isBlocked(entityId)) {
+        return <UnavailableContentCard isMe={isMe} />;
+    }
 
     if (loading) {
         return (
@@ -104,15 +97,8 @@ export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPrevie
         );
     }
 
-    if (errorMessage || !preview) {
-        return (
-            <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 p-3 max-w-[280px] flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />
-                <p className="text-xs text-muted-foreground italic">
-                    {errorMessage ?? "Preview unavailable"}
-                </p>
-            </div>
-        );
+    if (fetchError || !preview || isBlocked(preview.entityId)) {
+        return <UnavailableContentCard isMe={isMe} />;
     }
 
     return (

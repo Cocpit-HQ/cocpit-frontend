@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { UnavailableContentCard } from "./components/ui/UnavailableContentCard";
+import { useSocial } from "@/context/SocialContext";
 import Avatar from "@/components/shared/Avatar";
 
 interface ProfilePreviewCardProps {
@@ -14,17 +15,22 @@ interface ProfilePreviewCardProps {
         industry?: string;
         username?: string;
         slug?: string;
+        id?: string;
     } | null;
     profileId: string;
     profileType: "user" | "company";
     isUnavailable?: boolean;
+    isMe?: boolean;
 }
 
-export function ProfilePreviewCard({ profile, profileId, profileType, isUnavailable }: ProfilePreviewCardProps) {
+export function ProfilePreviewCard({ profile, profileId, profileType, isUnavailable, isMe = false }: ProfilePreviewCardProps) {
     const router = useRouter();
+    const { isBlocked } = useSocial();
 
-    if (isUnavailable || !profile || profile.name === 'Deactivated User' || profile.name === 'Deleted Page') {
-        return <UnavailableContentCard />;
+    const isTargetBlocked = isBlocked(profileId) || (profile?.id && isBlocked(profile.id));
+
+    if (isUnavailable || isTargetBlocked || !profile || profile.name === 'Deactivated User' || profile.name === 'Deleted Page') {
+        return <UnavailableContentCard isMe={isMe} />;
     }
 
     const profileUrl = profileType === "user"

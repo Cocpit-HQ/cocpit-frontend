@@ -260,6 +260,9 @@ export default function CocpitShareModel({
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
           <DialogPrimitive.Content
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+            }}
             onPointerDownOutside={(e) => {
               if (isSending) {
                 e.preventDefault();
@@ -283,7 +286,7 @@ export default function CocpitShareModel({
                 type="button"
                 onClick={handleClose}
                 disabled={isSending}
-                className="absolute -top-1 -right-1 h-8 w-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
+                className="absolute -top-1 -right-1 h-8 w-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:outline-none"
                 aria-label="Close"
               >
                 <X className="h-5 w-5 text-[var(--destructive)]" strokeWidth={1} />

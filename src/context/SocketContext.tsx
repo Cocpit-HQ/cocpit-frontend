@@ -593,6 +593,26 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    const handleAccountStateChanged = (payload: any) => {
+      console.log("[Socket] account state changed event received:", payload);
+      queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
+      queryClient.resetQueries({ queryKey: ['profilePreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['entityPreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['jobContext'], exact: false });
+      queryClient.resetQueries({ queryKey: ['messages'], exact: false });
+      queryClient.resetQueries({ queryKey: ['conversations'], exact: false });
+      queryClient.resetQueries({ queryKey: ['group-details'], exact: false });
+      queryClient.resetQueries({ queryKey: ['groupDetails'], exact: false });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['group-details'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['groupDetails'], type: 'all' });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -612,6 +632,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     newSocket.on('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
+    newSocket.on('user_deactivated', handleAccountStateChanged);
+    newSocket.on('USER_DEACTIVATED', handleAccountStateChanged);
+    newSocket.on('user_reactivated', handleAccountStateChanged);
+    newSocket.on('USER_REACTIVATED', handleAccountStateChanged);
+    newSocket.on('account_deactivated', handleAccountStateChanged);
+    newSocket.on('ACCOUNT_DEACTIVATED', handleAccountStateChanged);
     newSocket.on('saved_folders_updated', handleSavedUpdated);
     newSocket.on('saved_posts_updated', handleSavedUpdated);
     newSocket.on('activity_updated', handleActivityUpdated);
@@ -647,9 +673,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
       newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
       newSocket.off('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
+      newSocket.off('user_deactivated', handleAccountStateChanged);
+      newSocket.off('USER_DEACTIVATED', handleAccountStateChanged);
+      newSocket.off('user_reactivated', handleAccountStateChanged);
+      newSocket.off('USER_REACTIVATED', handleAccountStateChanged);
+      newSocket.off('account_deactivated', handleAccountStateChanged);
+      newSocket.off('ACCOUNT_DEACTIVATED', handleAccountStateChanged);
       newSocket.off('member_sync', handleMemberSync);
       newSocket.off('saved_folders_updated', handleSavedUpdated);
       newSocket.off('saved_posts_updated', handleSavedUpdated);
+      newSocket.off('activity_updated', handleActivityUpdated);
       newSocket.disconnect();
       setTypingConversations({});
     };

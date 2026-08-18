@@ -268,6 +268,9 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
     queryClient.invalidateQueries({ queryKey: ["feed"] });
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["profilePreview"] });
+    queryClient.invalidateQueries({ queryKey: ["sharedPost"] });
+    queryClient.invalidateQueries({ queryKey: ["jobContext"] });
   };
 
   const blockUser = async (id: string) => {
@@ -323,6 +326,10 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         queryClient.invalidateQueries({ queryKey: ["profile"] });
         queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
         queryClient.invalidateQueries({ queryKey: ["feed"] });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        queryClient.invalidateQueries({ queryKey: ["profilePreview"] });
+        queryClient.invalidateQueries({ queryKey: ["sharedPost"] });
+        queryClient.invalidateQueries({ queryKey: ["jobContext"] });
       }
     };
 
@@ -349,6 +356,10 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
             queryClient.invalidateQueries({ queryKey: ["profile"] });
             queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
             queryClient.invalidateQueries({ queryKey: ["feed"] });
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+            queryClient.invalidateQueries({ queryKey: ["profilePreview"] });
+            queryClient.invalidateQueries({ queryKey: ["sharedPost"] });
+            queryClient.invalidateQueries({ queryKey: ["jobContext"] });
           }
         } catch (_) {}
       }

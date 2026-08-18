@@ -73,7 +73,7 @@ export function ProfileSwitcher({
           >
             <Avatar className="h-6 w-6">
               <AvatarImage
-                src={activeProfile.avatar_url || user.image || ""}
+                src={activeProfile.avatar_url || user.image || undefined}
                 alt={activeProfile.name}
                 className="object-cover"
               />
@@ -97,7 +97,7 @@ export function ProfileSwitcher({
             <div className="flex items-center gap-2">
               <Avatar className="h-10 w-10 border border-profile-active-border">
                 <AvatarImage
-                  src={user.image || ""}
+                  src={user.image || undefined}
                   alt={user.name || ""}
                   className="object-cover"
                 />
@@ -160,7 +160,7 @@ export function ProfileSwitcher({
             >
               <Avatar className="h-9 w-9">
                 <AvatarImage
-                  src={user.image || ""}
+                  src={user.image || undefined}
                   alt={user.name || ""}
                   className="object-cover"
                 />

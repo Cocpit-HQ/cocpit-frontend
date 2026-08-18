@@ -310,7 +310,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
                     {visibleMembers.map((member) => {
                         const isSelf = member.user_id === currentUserId;
-                        const isBlockedByOther = !isSelf && Boolean(member.is_blocked_by_other);
+                        const isBlockedByOther = !isSelf && (Boolean(member.is_blocked_by_other) || isBlocked(member.user_id));
                         const isDeactivatedOrDeleted = member.is_deactivated || member.is_deleted;
                         const isUnknown = isBlockedByOther || isDeactivatedOrDeleted;
                         const displayName = isSelf ? "You" : (isUnknown ? (member.org_name ? "Unknown Page" : "Unknown User") : member.full_name);

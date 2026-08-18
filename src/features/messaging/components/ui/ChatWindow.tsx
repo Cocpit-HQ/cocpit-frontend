@@ -533,7 +533,7 @@ export default function ChatWindow({
         chat.id !== "new" &&
         !!session?.user?.id &&
         !isGroupInvitation,
-      refetchInterval: 5000,
+      staleTime: 0,
     });
 
   // Flatten and reverse pages to show oldest to newest
@@ -980,6 +980,8 @@ export default function ChatWindow({
     socket.on("stoppedTyping", handleStopTyping);
     socket.on("messages_seen", handleMessagesSeen);
     socket.on("message_deleted", handleMessageDeleted);
+    socket.on("message_deleted_for_everyone", handleMessageDeleted);
+    socket.on("message_deleted_for_me", handleMessageDeleted);
     socket.on("message_edited", handleMessageEdited);
     socket.on("message_reaction_updated", handleReactionUpdated);
     socket.on("conversation_preference_updated", handlePreferenceUpdated);
@@ -990,6 +992,8 @@ export default function ChatWindow({
       socket.off("stoppedTyping", handleStopTyping);
       socket.off("messages_seen", handleMessagesSeen);
       socket.off("message_deleted", handleMessageDeleted);
+      socket.off("message_deleted_for_everyone", handleMessageDeleted);
+      socket.off("message_deleted_for_me", handleMessageDeleted);
       socket.off("message_edited", handleMessageEdited);
       socket.off("message_reaction_updated", handleReactionUpdated);
       socket.off("conversation_preference_updated", handlePreferenceUpdated);

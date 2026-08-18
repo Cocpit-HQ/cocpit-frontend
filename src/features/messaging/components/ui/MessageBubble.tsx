@@ -34,6 +34,8 @@ import { useTheme } from "next-themes";
 import { ReactionListPopup } from "../ReactionListPopup";
 import { createPortal } from "react-dom";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSocial } from "@/context/SocialContext";
+import { useSession } from "next-auth/react";
 
 import UnavailableContentCard from "./UnavailableContentCard";
 
@@ -189,6 +191,19 @@ const safeGetJobById = async (
 ): Promise<Job | { notFound: boolean; message: string }> => {
   try {
     const job = await getJobById(id);
+    const raw = job as any;
+    if (
+      !job ||
+      raw.is_active === false ||
+      raw.is_deactivated === true ||
+      raw.is_deleted === true ||
+      raw.recruiter_name === "Unknown User" ||
+      raw.recruiter_name === "Unknown user" ||
+      raw.recruiter_name === "Deactivated User" ||
+      raw.recruiter_deactivated === true
+    ) {
+      return { notFound: true, message: "Job not found" };
+    }
     return job;
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || "Job not found";
@@ -200,12 +215,17 @@ function JobApplicationContextCard({
   entityType,
   entityId,
   conversationId,
+  isMe = false,
+  message,
 }: {
   entityType: "job" | "offer";
   entityId: string;
   conversationId?: string;
+  isMe?: boolean;
+  message?: Message;
 }) {
   const router = useRouter();
+  const { isBlocked } = useSocial();
   const {
     data: job,
     isLoading: loading,
@@ -213,18 +233,28 @@ function JobApplicationContextCard({
   } = useQuery({
     queryKey: ["jobContext", entityType, entityId],
     queryFn: async () => {
-      if (entityType === "job") {
-        return safeGetJobById(entityId);
-      } else if (entityType === "offer") {
+      const jobData = await safeGetJobById(entityId);
+      if (jobData && !("notFound" in jobData)) {
+        return jobData;
+      }
+      if (entityType === "offer") {
         const { getOfferDetail } = await import("@/services/api/offers");
-        const data = await getOfferDetail(entityId);
-        if (data && data.job_id) {
+        const data = await getOfferDetail(entityId).catch(() => null);
+        if (
+          data &&
+          data.job_id &&
+          data.sent_by_name !== "Unknown User" &&
+          data.sent_by_name !== "Unknown user" &&
+          data.sent_by_name !== "Deactivated User" &&
+          !(data as any).is_deactivated
+        ) {
           return safeGetJobById(data.job_id);
         }
       }
-      return null;
+      return { notFound: true, message: "Job or offer unavailable" };
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 0,
+    gcTime: 0,
     retry: false,
   });
 
@@ -250,40 +280,38 @@ function JobApplicationContextCard({
     );
   }
 
-  const isNotFound = job && typeof job === "object" && "notFound" in job;
+  const rawJob = job as any;
+  const isSenderDeactivated = Boolean(
+    message &&
+      (message.senderName === "Unknown User" ||
+        message.senderName === "Unknown user" ||
+        message.senderName === "Deactivated User" ||
+        (message as any).sender_name === "Unknown User" ||
+        (message as any).sender_name === "Deactivated User" ||
+        message.is_unavailable === true)
+  );
 
-  if (error || !job || isNotFound) {
-    const errMsg = isNotFound
-      ? (job as any).message
-      : (error as any)?.response?.data?.message ||
-        (error as any)?.message ||
-        "Job not found";
-    return (
-      <div
-        className={cn(
-          wrapperClass,
-          "bg-[#EEF2FF] dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900/50 gap-[10px]",
-        )}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-[20px] h-[20px] text-indigo-400 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z"
-          />
-        </svg>
-        <p className="text-xs text-indigo-500 dark:text-indigo-400 font-['Poppins'] font-normal italic truncate">
-          {errMsg}
-        </p>
-      </div>
-    );
+  const isNotFound =
+    !job ||
+    (typeof job === "object" && "notFound" in job) ||
+    !rawJob.title ||
+    rawJob.is_active === false ||
+    rawJob.recruiter_name === "Deactivated User" ||
+    rawJob.recruiter_name === "Unknown User" ||
+    rawJob.recruiter_name === "Unknown user" ||
+    rawJob.is_deactivated === true ||
+    isSenderDeactivated;
+  const isJobBlocked = Boolean(
+    rawJob &&
+      ((rawJob.companyId && isBlocked(rawJob.companyId)) ||
+        (rawJob.posterId && isBlocked(rawJob.posterId)) ||
+        (rawJob.company_id && isBlocked(rawJob.company_id)) ||
+        (rawJob.poster_id && isBlocked(rawJob.poster_id)) ||
+        (rawJob.recruiter_id && isBlocked(rawJob.recruiter_id)))
+  );
+
+  if (error || isNotFound || isJobBlocked) {
+    return <UnavailableContentCard isMe={isMe} />;
   }
 
   const jobId = (job as any).jobId || job.id;
@@ -342,13 +370,28 @@ function JobApplicationContextCard({
   );
 }
 
-function FallbackProfileCard({
+function SharedProfileCard({
   profileId,
   profileType,
+  initialProfile,
+  isMe = false,
 }: {
   profileId: string;
   profileType: "user" | "company";
+  initialProfile?: any;
+  isMe?: boolean;
 }) {
+  const { isBlocked } = useSocial();
+
+  const isLocalBlocked =
+    isBlocked(profileId) ||
+    (initialProfile?.id && isBlocked(initialProfile.id)) ||
+    (initialProfile?.user_id && isBlocked(initialProfile.user_id));
+
+  if (isLocalBlocked) {
+    return <UnavailableContentCard isMe={isMe} />;
+  }
+
   const { data: preview, isLoading, error } = useQuery({
     queryKey: ["profilePreview", profileType, profileId],
     queryFn: async () => {
@@ -373,23 +416,31 @@ function FallbackProfileCard({
     );
   }
 
-  if (error || !preview) {
-    return <UnavailableContentCard />;
+  if (
+    error ||
+    !preview ||
+    preview.title === "Deactivated User" ||
+    preview.title === "Deleted Page" ||
+    isBlocked(preview.entityId)
+  ) {
+    return <UnavailableContentCard isMe={isMe} />;
   }
 
   const profileData = {
-    name: preview.title,
-    avatar: preview.image,
-    headline: preview.subtitle,
-    username: profileType === "user" ? profileId : undefined,
-    slug: profileType === "company" ? profileId : undefined,
+    name: preview.title || initialProfile?.name,
+    avatar: preview.image || initialProfile?.avatar,
+    headline: preview.subtitle || initialProfile?.headline,
+    username: profileType === "user" ? (preview.entityId || profileId) : undefined,
+    slug: profileType === "company" ? (preview.entityId || profileId) : undefined,
+    id: preview.entityId || profileId,
   };
 
   return (
     <ProfilePreviewCard
       profile={profileData}
-      profileId={preview.entityId}
+      profileId={preview.entityId || profileId}
       profileType={profileType}
+      isMe={isMe}
     />
   );
 }
@@ -398,14 +449,14 @@ function FallbackProfileCard({
 const SharedPostCard = ({
   message,
   onMediaLoad,
+  isMe = false,
 }: {
   message: Message;
   onMediaLoad?: () => void;
+  isMe?: boolean;
 }) => {
   const router = useRouter();
-  const [loadedPost, setLoadedPost] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState(false);
+  const { isBlocked } = useSocial();
   const [imgError, setImgError] = useState(false);
 
   const rawText = message.text || message.text_content || "";
@@ -414,66 +465,63 @@ const SharedPostCard = ({
   const match = rawText.match(postUrlRegex);
   const extractedPostId = match ? match[1] : null;
 
+  const initialPost = message.sharedPost || (message as any).shared_post;
+
   const effectivePostId =
     extractedPostId ||
     message.sharedPostId ||
     (message as any).shared_post_id ||
-    ((message.entityType === 'post' || message.entityType === 'article') ? message.entityId : null);
+    ((message.entityType === 'post' || message.entityType === 'article') ? message.entityId : null) ||
+    initialPost?.id ||
+    initialPost?.post_id ||
+    initialPost?._id;
 
-  useEffect(() => {
-    if (message.sharedPost || !effectivePostId) {
-      setLoadedPost(null);
-      return;
-    }
+  const initialAuthorId =
+    initialPost?.author_id ||
+    initialPost?.authorId ||
+    (typeof initialPost?.author === "object" ? initialPost.author?.id : null);
 
-    let isMounted = true;
-    const fetchPost = async () => {
-      setLoading(true);
-      try {
-        const { getPostById } = await import("@/services/api/posts");
-        const backendPost = await getPostById(effectivePostId);
-        if (isMounted) {
-          if (
-            (backendPost as any).is_active === false ||
-            (backendPost as any).is_removed
-          ) {
-            setFetchError(true);
-            return;
-          }
-          const media =
-            backendPost.media?.map((m) => ({
-              url: m.url,
-              type: m.media_type as "image" | "video",
-            })) || [];
-
-          setLoadedPost({
-            id: backendPost.post_id,
-            content: backendPost.content || "",
-            author: backendPost.author_name || "Unknown",
-            authorAvatar: backendPost.author_avatar || null,
-            media: media,
-          });
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          setFetchError(true);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  const {
+    data: fetchedPost,
+    isLoading: loading,
+    error: fetchError,
+  } = useQuery({
+    queryKey: ["sharedPost", effectivePostId],
+    queryFn: async () => {
+      if (!effectivePostId) return null;
+      const { getPostById } = await import("@/services/api/posts");
+      const backendPost = await getPostById(effectivePostId);
+      if (
+        !backendPost ||
+        (backendPost as any).is_active === false ||
+        (backendPost as any).is_removed
+      ) {
+        throw new Error("Post is inactive or removed");
       }
-    };
+      const media =
+        backendPost.media?.map((m) => ({
+          url: m.url,
+          type: m.media_type as "image" | "video",
+        })) || [];
 
-    fetchPost();
-    return () => {
-      isMounted = false;
-    };
-  }, [message.sharedPost, effectivePostId]);
+      return {
+        id: backendPost.post_id,
+        content: backendPost.content || "",
+        author: backendPost.author_name || "Unknown",
+        authorId: backendPost.author_id,
+        authorAvatar: backendPost.author_avatar || null,
+        media: media,
+      };
+    },
+    enabled: Boolean(effectivePostId),
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
 
   useEffect(() => {
     setImgError(false);
-  }, [message.sharedPost, loadedPost]);
+  }, [message.sharedPost, fetchedPost]);
 
   const hasSharedPost = Boolean(
     message.sharedPost ||
@@ -488,41 +536,60 @@ const SharedPostCard = ({
     return null;
   }
 
+  const isLocalBlocked =
+    (initialAuthorId && isBlocked(initialAuthorId)) ||
+    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId)) ||
+    (message as any).is_unavailable ||
+    (message as any).isUnavailable;
+
+  if (isLocalBlocked) {
+    return <UnavailableContentCard isMe={isMe} />;
+  }
+
+  if (loading) {
+    return (
+      <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] w-full animate-pulse">
+        <div className="p-3 border-b border-white/10 flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-full bg-muted shrink-0" />
+          <div className="flex flex-col gap-1 flex-1">
+            <div className="h-2.5 bg-muted rounded w-2/3" />
+            <div className="h-2 bg-muted rounded w-1/3" />
+          </div>
+        </div>
+        <div className="w-full aspect-[4/3] bg-muted relative" />
+        <div className="p-3 space-y-1">
+          <div className="h-2 bg-muted rounded w-full" />
+          <div className="h-2 bg-muted rounded w-5/6" />
+        </div>
+      </div>
+    );
+  }
+
   const isPostUnavailable = Boolean(
     fetchError ||
-    (message as any).is_unavailable ||
-    (message as any).isUnavailable ||
-    (message.sharedPost || (message as any).shared_post)?.author === "Unknown Page" ||
-    (message.sharedPost || (message as any).shared_post)?.author === "Unknown user" ||
-    (message.sharedPost || (message as any).shared_post)?.author === "Unknown Author",
+    initialPost?.author === "Unknown Page" ||
+    initialPost?.author === "Unknown user" ||
+    initialPost?.author === "Unknown User" ||
+    initialPost?.author === "Unknown Author" ||
+    initialPost?.author === "Deactivated User" ||
+    (initialPost as any)?.author_name === "Unknown User" ||
+    (initialPost as any)?.author_name === "Deactivated User" ||
+    fetchedPost?.author === "Unknown Page" ||
+    fetchedPost?.author === "Unknown user" ||
+    fetchedPost?.author === "Unknown User" ||
+    fetchedPost?.author === "Deactivated User" ||
+    (fetchedPost as any)?.author_name === "Unknown User" ||
+    (fetchedPost as any)?.author_name === "Deactivated User",
   );
 
   if (isPostUnavailable) {
-    return <UnavailableContentCard />;
+    return <UnavailableContentCard isMe={isMe} />;
   }
 
-  const postToRender = message.sharedPost || (message as any).shared_post || loadedPost;
+  const postToRender = fetchedPost || (!effectivePostId ? initialPost : null);
 
   if (!postToRender) {
-    if (loading) {
-      return (
-        <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] w-full animate-pulse">
-          <div className="p-3 border-b border-white/10 flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full bg-muted shrink-0" />
-            <div className="flex flex-col gap-1 flex-1">
-              <div className="h-2.5 bg-muted rounded w-2/3" />
-              <div className="h-2 bg-muted rounded w-1/3" />
-            </div>
-          </div>
-          <div className="w-full aspect-[4/3] bg-muted relative" />
-          <div className="p-3 space-y-1">
-            <div className="h-2 bg-muted rounded w-full" />
-            <div className="h-2 bg-muted rounded w-5/6" />
-          </div>
-        </div>
-      );
-    }
-    return <UnavailableContentCard />;
+    return <UnavailableContentCard isMe={isMe} />;
   }
 
   // Safe property extraction
@@ -823,11 +890,13 @@ const ImageMediaItem = ({
     name?: string,
   ) => void;
 }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
   const [aspectClass, setAspectClass] = useState<string>(
     mediaLength === 1 ? "aspect-[4/3]" : "aspect-square",
   );
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    setIsLoaded(true);
     if (mediaLength === 1) {
       const { naturalWidth, naturalHeight } = e.currentTarget;
       const ratio = naturalWidth / naturalHeight;
@@ -851,10 +920,18 @@ const ImageMediaItem = ({
         isLastOdd && mediaLength > 1 ? "col-span-2 aspect-[2/1]" : aspectClass,
       )}
     >
+      {!isLoaded && (
+        <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-800 animate-pulse rounded-[12px] z-10 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 opacity-60" />
+        </div>
+      )}
       <img
         src={item.url}
         alt="Attached image"
-        className="w-full h-full object-cover cursor-pointer"
+        className={cn(
+          "w-full h-full object-cover cursor-pointer transition-opacity duration-200",
+          isLoaded ? "opacity-100" : "opacity-0",
+        )}
         loading="lazy"
         onLoad={handleImageLoad}
         onClick={(e) => {
@@ -874,7 +951,7 @@ const VideoMediaItem = ({
   onMediaLoad,
   onMediaClick,
 }: {
-  item: { url: string; type: string };
+  item: { url: string; type: string; name?: string | null };
   index: number;
   isLastOdd: boolean;
   mediaLength: number;
@@ -936,6 +1013,19 @@ const VideoMediaItem = ({
   );
 };
 
+const isDocumentType = (item: { url: string; type: string; name?: string | null }) => {
+  if (item.type === "document" || item.type === "file") return true;
+  if (item.type && item.type.startsWith("application/")) return true;
+  const nameOrUrl = (item.name || item.url || "").toLowerCase();
+  return /\.(doc|docx|pdf|xls|xlsx|ppt|pptx|txt|csv|zip|rar)$/i.test(nameOrUrl);
+};
+
+const isVideoType = (item: { url: string; type: string; name?: string | null }) => {
+  if (item.type === "video" || (item.type && item.type.startsWith("video/"))) return true;
+  const nameOrUrl = (item.name || item.url || "").toLowerCase();
+  return /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(nameOrUrl);
+};
+
 const MessageMedia = ({
   message,
   isMediaOnly,
@@ -976,7 +1066,7 @@ const MessageMedia = ({
           message.media!.length % 2 !== 0 &&
           index === message.media!.length - 1;
 
-        if (item.type === "video") {
+        if (isVideoType(item)) {
           return (
             <VideoMediaItem
               key={index}
@@ -990,16 +1080,16 @@ const MessageMedia = ({
           );
         }
 
-        if (item.type === "document") {
-          const displayName = item.name || `Document-${index + 1}`;
-          const fileExt = item.name?.includes(".")
-            ? item.name.split(".").pop()!.toLowerCase()
+        if (isDocumentType(item)) {
+          const displayName = item.name || (item as any).filename || `Document-${index + 1}`;
+          const fileExt = displayName.includes(".")
+            ? displayName.split(".").pop()!.toLowerCase()
             : "";
           const isWordDoc = fileExt === "doc" || fileExt === "docx";
           const docIcon = isWordDoc
             ? "selfhst:google-docs"
             : "material-icon-theme:pdf";
-          const extLabel = fileExt ? fileExt.toUpperCase() : "PDF";
+          const extLabel = fileExt ? fileExt.toUpperCase() : "DOCX";
           return (
             <div
               key={index}
@@ -1017,7 +1107,7 @@ const MessageMedia = ({
                     onMediaClick?.(
                       item.url,
                       "document",
-                      item.name || displayName,
+                      displayName,
                     );
                   }}
                   className={cn(
@@ -1640,6 +1730,8 @@ function MessageBubble(props: MessageBubbleProps) {
     statusLabel,
   } = props;
 
+  const { activeProfile } = useActiveProfile();
+  const { data: session } = useSession();
   const isMe = message.sender === "me";
   const resolvedShowAvatar = showAvatar !== undefined ? showAvatar : !isMe;
 
@@ -1706,7 +1798,6 @@ function MessageBubble(props: MessageBubbleProps) {
     return !text || isJustUrl || text === "Shared a post" || text === "Shared a profile";
   })();
 
-  const { activeProfile } = useActiveProfile();
   const isCompanyProfile = activeProfile?.type === "COMPANY";
 
   // Helper for dynamic classes
@@ -2019,9 +2110,11 @@ function MessageBubble(props: MessageBubbleProps) {
                       normalizedUserType === "INSTITUTION";
 
                     const effectiveAvatar = isMe
-                      ? message.senderAvatar ||
-                        (activeProfile as any)?.avatar ||
-                        (activeProfile as any)?.avatar_url
+                      ? activeProfile?.avatar_url ||
+                        (session?.user as any)?.image ||
+                        message.senderAvatar
+                      : (!isGroup && chatAvatar)
+                      ? chatAvatar
                       : message.senderAvatar || chatAvatar;
 
                     const isUnknownSender = Boolean(
@@ -2215,28 +2308,24 @@ function MessageBubble(props: MessageBubbleProps) {
                             <SharedPostCard
                               message={message}
                               onMediaLoad={onMediaLoad}
+                              isMe={isMe}
                             />
                             {finalProfileId &&
                               finalProfileType &&
                               !hasPost && (
-                                message.sharedProfile ? (
-                                  <ProfilePreviewCard
-                                    profile={message.sharedProfile}
-                                    profileId={finalProfileId}
-                                    profileType={finalProfileType}
-                                  />
-                                ) : (
-                                  <FallbackProfileCard
-                                    profileId={finalProfileId}
-                                    profileType={finalProfileType}
-                                  />
-                                )
+                                <SharedProfileCard
+                                  profileId={finalProfileId}
+                                  profileType={finalProfileType}
+                                  initialProfile={message.sharedProfile}
+                                  isMe={isMe}
+                                />
                               )}
                             {fallbackChannelId && (
                               <EntityPreviewCard
                                 entityType="channel"
                                 entityId={fallbackChannelId}
                                 onLoad={onMediaLoad}
+                                isMe={isMe}
                               />
                             )}
                             {/* Universal Entity Preview — only for any other metadata types (e.g. event) */}
@@ -2251,6 +2340,7 @@ function MessageBubble(props: MessageBubbleProps) {
                                   entityType={message.entityType as any}
                                   entityId={message.entityId}
                                   onLoad={onMediaLoad}
+                                  isMe={isMe}
                                 />
                               )}
                             {/* Channel explicitly shared in metadata */}
@@ -2261,6 +2351,7 @@ function MessageBubble(props: MessageBubbleProps) {
                                   entityType="channel"
                                   entityId={message.entityId}
                                   onLoad={onMediaLoad}
+                                  isMe={isMe}
                                 />
                               )}
                             {isJobEntity &&
@@ -2271,6 +2362,8 @@ function MessageBubble(props: MessageBubbleProps) {
                                   }
                                   entityId={message.entityId}
                                   conversationId={conversationId}
+                                  isMe={isMe}
+                                  message={message}
                                 />
                               )}
                           </>
@@ -2519,6 +2612,7 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
   return (
     prevProps.message.id === nextProps.message.id &&
     prevProps.message.text === nextProps.message.text &&
+    (prevProps.message.text_content || "") === (nextProps.message.text_content || "") &&
     prevProps.message.status === nextProps.message.status &&
     prevProps.isEditing === nextProps.isEditing &&
     prevProps.showSenderName === nextProps.showSenderName &&
@@ -2532,7 +2626,11 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.message.is_edited === nextProps.message.is_edited &&
     prevProps.message.isBlocked === nextProps.message.isBlocked &&
     prevProps.message.media === nextProps.message.media &&
+    prevProps.message.sharedPost === nextProps.message.sharedPost &&
+    prevProps.message.sharedPostId === nextProps.message.sharedPostId &&
+    (prevProps.message as any).shared_post_id === (nextProps.message as any).shared_post_id &&
     prevProps.message.sharedProfile === nextProps.message.sharedProfile &&
+    prevProps.message.sharedProfileId === nextProps.message.sharedProfileId &&
     prevProps.message.entityType === nextProps.message.entityType &&
     prevProps.message.entityId === nextProps.message.entityId &&
     prevProps.isSelected === nextProps.isSelected &&
