@@ -1835,7 +1835,7 @@ export default function ChatWindow({
                                 "Page unavailable"
                               : chat.role || ""}
                         </span>
-                        {!isBlockedByOther &&
+                        {!isBlockedByOther && !chat.is_requesting &&
                           (typingDisplayString || chat.online) && (
                             <>
                               <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
@@ -2373,6 +2373,7 @@ export default function ChatWindow({
         onConfirm={async () => {
           try {
             await deletePersonalChat(chat.id);
+            queryClient.removeQueries({ queryKey: ["messages", chat.id] });
             queryClient.setQueryData(
               [
                 "conversations",

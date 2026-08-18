@@ -137,9 +137,11 @@ export default function MobileChatHeader({
                       <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate" : "text-xs text-muted-foreground truncate"}`}>{chat.role}</p>
                     ) : (
                       <p className={`${isQuickChat ? "font-['Poppins'] font-normal text-[10px] leading-[15px] text-[#6B7280] truncate" : "text-xs truncate"}`}>
-                        {chat.online 
-                          ? <span className={`${isQuickChat ? "text-[#6B7280]" : "text-emerald-500 font-medium"}`}>Active now</span>
-                          : <span className={`${isQuickChat ? "text-[#6B7280]" : "text-muted-foreground"}`}>Offline</span>}
+                        {!chat.is_requesting && (
+                          chat.online 
+                            ? <span className={`${isQuickChat ? "text-[#6B7280]" : "text-emerald-500 font-medium"}`}>Active now</span>
+                            : <span className={`${isQuickChat ? "text-[#6B7280]" : "text-muted-foreground"}`}>Offline</span>
+                        )}
                       </p>
                     )}
                   </div>
