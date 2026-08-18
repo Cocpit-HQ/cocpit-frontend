@@ -681,7 +681,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         >
           {/* Header metadata row / Frame 2608732 */}
           <div 
-            className={`flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0`}
+            onClick={() => {
+              if (candidateDetail?.applicantId) {
+                router.push(`/profile/${candidateDetail.applicantId}?source=job_application_dashboard`);
+              }
+            }}
+            className={`flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2A2D35] transition-colors`}
           >
             {/* User details / Frame 2608774 */}
             <div className={`flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0`}>

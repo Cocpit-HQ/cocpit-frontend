@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -33,6 +34,7 @@ export const OverviewTab = ({
   dateRange,
   setDateRange,
 }: OverviewTabProps) => {
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -222,8 +224,8 @@ export const OverviewTab = ({
                   </AreaChart>
                 </ResponsiveContainer>
               )}
-              <span className="absolute -bottom-[8px] left-0 text-[10px] font-normal text-[#6B7280] font-['Poppins']">{chartStartDate}</span>
-              <span className="absolute -bottom-[8px] right-[6px] text-[10px] font-normal text-[#6B7280] font-['Poppins']">{chartEndDate}</span>
+              <span className="absolute top-full mt-1 left-0 text-[10px] font-normal text-[#6B7280] font-['Poppins']">{chartStartDate}</span>
+              <span className="absolute top-full mt-1 right-[6px] text-[10px] font-normal text-[#6B7280] font-['Poppins']">{chartEndDate}</span>
             </div>
 
             <div className="flex flex-row justify-between items-center pt-[16px] w-full h-[32px]">
@@ -235,7 +237,14 @@ export const OverviewTab = ({
         </div>
 
         {/* Profile Completeness Card */}
-        <div className="col-span-1 flex flex-col items-start p-4 gap-2 bg-white shadow-[0_1px_2px_rgba(99,102,241,0.08)] rounded-[24px]">
+        <div 
+          className={`col-span-1 flex flex-col items-start p-4 gap-2 bg-white shadow-[0_1px_2px_rgba(99,102,241,0.08)] rounded-[24px] ${strengthScore < 100 ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
+          onClick={() => {
+            if (strengthScore < 100) {
+              router.push('/profile');
+            }
+          }}
+        >
           <div className="flex flex-col items-start gap-2 w-full h-[66px]">
             <span className="text-[12px] font-medium text-[#6B7280] font-['Poppins'] leading-[16px] flex items-center h-[16px] w-full">Profile strength</span>
             <div className="flex flex-row justify-between items-center w-full h-[26px]">

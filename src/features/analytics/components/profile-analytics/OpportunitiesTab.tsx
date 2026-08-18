@@ -144,29 +144,37 @@ export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: 
         <div className="flex flex-col items-start p-[16px] gap-[16px] w-[468px] h-[312px] bg-[#FFFFFF] shadow-[0px_1px_2px_rgba(99,102,241,0.08)] rounded-[24px]">
           <span className="w-[436px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000]">Top Organizations</span>
           {isLoading
-            ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-[436px] h-[40px]" />)
+            ? (
+                <div className="flex flex-col gap-[16px] w-full overflow-hidden">
+                  {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-[40px]" />)}
+                </div>
+              )
             : topOrgs.length > 0
-              ? topOrgs.slice(0, 4).map((org, idx) => (
-                  <div key={idx} className="flex flex-row justify-between items-center p-0 gap-[8px] w-[436px] h-[40px]">
-                    <div className="flex flex-row items-center p-0 gap-[8px] flex-1 h-[40px]">
-                      <div className="w-[40px] h-[40px] rounded-[8px] overflow-hidden flex shrink-0 bg-[#EEF2FF] items-center justify-center">
-                        {org.icon && org.icon !== '/images/analytics/organization1.png' ? (
-                          <img src={org.icon} alt={org.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <Icon icon="lucide:building-2" className="w-[20px] h-[20px] text-[#6366F1]" />
-                        )}
+              ? (
+                  <div className="flex flex-col items-start p-0 gap-[16px] w-full flex-1 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+                    {topOrgs.map((org, idx) => (
+                      <div key={idx} className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[40px] shrink-0">
+                        <div className="flex flex-row items-center p-0 gap-[8px] flex-1 h-[40px]">
+                          <div className="w-[40px] h-[40px] rounded-[8px] overflow-hidden flex shrink-0 bg-[#EEF2FF] items-center justify-center">
+                            {org.icon && org.icon !== '/images/analytics/organization1.png' ? (
+                              <img src={org.icon} alt={org.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <Icon icon="lucide:building-2" className="w-[20px] h-[20px] text-[#6366F1]" />
+                            )}
+                          </div>
+                          <div className="flex flex-col items-start p-0 gap-[4px] flex-1 h-[39px] min-w-0">
+                            <span className="w-full h-[20px] font-['Poppins'] font-semibold text-[14px] leading-[20px] flex items-center text-[#000000] truncate block">{org.name}</span>
+                            <span className="w-full h-[15px] font-['Poppins'] font-normal text-[10px] leading-[15px] flex items-center text-[#6B7280] truncate block">{org.industry}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end p-0 gap-[4px] shrink-0 h-[35px] max-w-[150px]">
+                          <span className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000] text-right">{org.visits}</span>
+                          <span className="w-full h-[15px] font-['Poppins'] font-normal text-[10px] leading-[15px] flex items-center justify-end text-[#6B7280] text-right truncate block">{org.role}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col items-start p-0 gap-[4px] flex-1 h-[39px] min-w-0">
-                        <span className="w-full h-[20px] font-['Poppins'] font-semibold text-[14px] leading-[20px] flex items-center text-[#000000] truncate block">{org.name}</span>
-                        <span className="w-full h-[15px] font-['Poppins'] font-normal text-[10px] leading-[15px] flex items-center text-[#6B7280] truncate block">{org.industry}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end p-0 gap-[4px] shrink-0 h-[35px] max-w-[150px]">
-                      <span className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000] text-right">{org.visits}</span>
-                      <span className="w-full h-[15px] font-['Poppins'] font-normal text-[10px] leading-[15px] flex items-center justify-end text-[#6B7280] text-right truncate block">{org.role}</span>
-                    </div>
+                    ))}
                   </div>
-                ))
+                )
               : <span className="text-[12px] text-[#6B7280] font-['Poppins']">No organization data for this period.</span>
           }
         </div>

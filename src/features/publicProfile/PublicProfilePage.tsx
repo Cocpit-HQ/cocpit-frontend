@@ -322,14 +322,16 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     refetchOnMount: false,
   });
 
+  const sourceQueryParam = searchParams.get('source') || undefined;
+
   // Record profile view
   useEffect(() => {
     if (user && userId && session?.user?.id && userId !== session.user.id) {
-      recordProfileView(userId, 'user', sourcePostId).catch(() => {
+      recordProfileView(userId, 'user', sourcePostId, sourceQueryParam).catch(() => {
         // Silently ignore tracking errors to avoid console spam
       });
     }
-  }, [userId, session?.user?.id, user, sourcePostId]);
+  }, [userId, session?.user?.id, user, sourcePostId, sourceQueryParam]);
 
   const isOwnProfile = !!(activeProfile?.type === 'USER' && (session?.user?.id === userId || (user && session?.user?.id === user.id)));
   // In company mode, SocialContext's followingIds is NOT seeded from the org's following list,
