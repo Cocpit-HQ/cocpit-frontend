@@ -1043,8 +1043,13 @@ export default function ChatWindow({
       );
     },
     onMutate: async ({ text, files, sharedPostId }) => {
-      await queryClient.cancelQueries({ queryKey: ["messages", chat.id] });
-      const previousMessages = queryClient.getQueryData(["messages", chat.id]);
+      const activeQueryKey = ["messages", chat.id, activeProfile?.id || "USER"];
+      const fallbackQueryKey = ["messages", chat.id];
+
+      await queryClient.cancelQueries({ queryKey: activeQueryKey });
+      await queryClient.cancelQueries({ queryKey: fallbackQueryKey });
+
+      const previousMessages = queryClient.getQueryData(activeQueryKey) || queryClient.getQueryData(fallbackQueryKey);
 
       // Optimistic update
       const tempMedia = files.map((file) => {
@@ -1074,7 +1079,10 @@ export default function ChatWindow({
           minute: "2-digit",
         }),
         // Add minimal required fields for mapping/rendering
-        senderId: session?.user?.id || "me",
+        senderId:
+          activeProfile?.type === "COMPANY"
+            ? activeProfile.id
+            : session?.user?.id || "me",
         senderMemberName:
           (session?.user as any)?.full_name ||
           session?.user?.name ||
@@ -1099,20 +1107,18 @@ export default function ChatWindow({
           : null,
       };
 
-      queryClient.setQueryData(
-        ["messages", chat.id],
-        (old: InfiniteData<Message[]> | undefined) => {
-          if (!old) return { pages: [[newMessage]], pageParams: [null] };
+      const updateCacheWithTemp = (old: InfiniteData<Message[]> | undefined) => {
+        if (!old) return { pages: [[newMessage]], pageParams: [null] };
+        const newPages = [...old.pages];
+        newPages[0] = [...newPages[0], newMessage];
+        return {
+          ...old,
+          pages: newPages,
+        };
+      };
 
-          // Add to the FIRST page (most recent)
-          const newPages = [...old.pages];
-          newPages[0] = [...newPages[0], newMessage];
-          return {
-            ...old,
-            pages: newPages,
-          };
-        },
-      );
+      queryClient.setQueryData(activeQueryKey, updateCacheWithTemp);
+      queryClient.setQueryData(fallbackQueryKey, updateCacheWithTemp);
 
       // Optimistically update conversation thread in list
       const nowIso = new Date().toISOString();
@@ -1143,10 +1149,10 @@ export default function ChatWindow({
       return { previousMessages, tempId: newMessage.id };
     },
     onError: (err: any, newTodo, context) => {
-      queryClient.setQueryData(
-        ["messages", chat.id],
-        context?.previousMessages,
-      );
+      const activeQueryKey = ["messages", chat.id, activeProfile?.id || "USER"];
+      const fallbackQueryKey = ["messages", chat.id];
+      queryClient.setQueryData(activeQueryKey, context?.previousMessages);
+      queryClient.setQueryData(fallbackQueryKey, context?.previousMessages);
       console.error("Failed to send message", err);
     },
     onSuccess: (data, variables, context) => {
@@ -1160,41 +1166,36 @@ export default function ChatWindow({
         activeProfile?.type === "COMPANY" ? activeProfile.id : undefined,
       );
 
-      queryClient.setQueryData(
-        ["messages", chat.id],
-        (old: InfiniteData<Message[]> | undefined) => {
-          // If cache is empty for any reason, seed it with the real message
-          if (!old) {
-            return { pages: [[realMessage]], pageParams: [null] };
-          }
+      const updateCacheWithReal = (old: InfiniteData<Message[]> | undefined) => {
+        if (!old) {
+          return { pages: [[realMessage]], pageParams: [null] };
+        }
 
-          const newPages = [...old.pages];
-
-          // Check if the real message is already in cache (e.g. socket arrived first)
-          const alreadyExists = newPages[0].some(
-            (m) => m.id === realMessage.id,
-          );
-          if (alreadyExists) {
-            // Just ensure the temp placeholder is cleaned up
-            newPages[0] = newPages[0].filter((m) => m.id !== context?.tempId);
-            return { ...old, pages: newPages };
-          }
-
-          // Replace the temp placeholder with the real confirmed message
-          const tempReplaced = newPages[0].map((m) =>
-            m.id === context?.tempId ? realMessage : m,
-          );
-
-          // If temp was not found (e.g. cache was refreshed between onMutate and onSuccess),
-          // append the real message so it's never silently lost
-          const tempExists = newPages[0].some((m) => m.id === context?.tempId);
-          newPages[0] = tempExists
-            ? tempReplaced
-            : [...newPages[0], realMessage];
-
+        const newPages = [...old.pages];
+        const alreadyExists = newPages[0].some(
+          (m) => m.id === realMessage.id,
+        );
+        if (alreadyExists) {
+          newPages[0] = newPages[0].filter((m) => m.id !== context?.tempId);
           return { ...old, pages: newPages };
-        },
-      );
+        }
+
+        const tempReplaced = newPages[0].map((m) =>
+          m.id === context?.tempId ? realMessage : m,
+        );
+
+        const tempExists = newPages[0].some((m) => m.id === context?.tempId);
+        newPages[0] = tempExists
+          ? tempReplaced
+          : [...newPages[0], realMessage];
+
+        return { ...old, pages: newPages };
+      };
+
+      const activeQueryKey = ["messages", chat.id, activeProfile?.id || "USER"];
+      const fallbackQueryKey = ["messages", chat.id];
+      queryClient.setQueryData(activeQueryKey, updateCacheWithReal);
+      queryClient.setQueryData(fallbackQueryKey, updateCacheWithReal);
 
       queryClient.invalidateQueries({
         queryKey: [

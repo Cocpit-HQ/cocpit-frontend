@@ -281,15 +281,6 @@ function JobApplicationContextCard({
   }
 
   const rawJob = job as any;
-  const isSenderDeactivated = Boolean(
-    message &&
-      (message.senderName === "Unknown User" ||
-        message.senderName === "Unknown user" ||
-        message.senderName === "Deactivated User" ||
-        (message as any).sender_name === "Unknown User" ||
-        (message as any).sender_name === "Deactivated User" ||
-        message.is_unavailable === true)
-  );
 
   const isNotFound =
     !job ||
@@ -299,8 +290,7 @@ function JobApplicationContextCard({
     rawJob.recruiter_name === "Deactivated User" ||
     rawJob.recruiter_name === "Unknown User" ||
     rawJob.recruiter_name === "Unknown user" ||
-    rawJob.is_deactivated === true ||
-    isSenderDeactivated;
+    rawJob.is_deactivated === true;
   const isJobBlocked = Boolean(
     rawJob &&
       ((rawJob.companyId && isBlocked(rawJob.companyId)) ||
@@ -539,6 +529,8 @@ const SharedPostCard = ({
   const isLocalBlocked =
     (initialAuthorId && isBlocked(initialAuthorId)) ||
     (fetchedPost?.authorId && isBlocked(fetchedPost.authorId)) ||
+    (message.senderId && isBlocked(message.senderId)) ||
+    ((message as any).sender_id && isBlocked((message as any).sender_id)) ||
     (message as any).is_unavailable ||
     (message as any).isUnavailable;
 
@@ -876,6 +868,7 @@ const ImageMediaItem = ({
   index,
   isLastOdd,
   mediaLength,
+  isSending,
   onMediaLoad,
   onMediaClick,
 }: {
@@ -883,6 +876,7 @@ const ImageMediaItem = ({
   index: number;
   isLastOdd: boolean;
   mediaLength: number;
+  isSending?: boolean;
   onMediaLoad?: () => void;
   onMediaClick?: (
     url: string,
@@ -913,15 +907,28 @@ const ImageMediaItem = ({
     onMediaLoad?.();
   };
 
+  if (isSending) {
+    return (
+      <div
+        className={cn(
+          "relative bg-gray-200 dark:bg-gray-800 animate-pulse rounded-[12px] flex items-center justify-center overflow-hidden w-[260px] max-w-full min-h-[160px]",
+          isLastOdd && mediaLength > 1 ? "col-span-2 aspect-[2/1]" : aspectClass,
+        )}
+      >
+        <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 opacity-60" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "relative bg-black/5 flex items-center justify-center overflow-hidden w-full",
+        "relative bg-black/5 flex items-center justify-center overflow-hidden w-full min-w-[220px]",
         isLastOdd && mediaLength > 1 ? "col-span-2 aspect-[2/1]" : aspectClass,
       )}
     >
       {!isLoaded && (
-        <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-800 animate-pulse rounded-[12px] z-10 flex items-center justify-center">
+        <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-800 animate-pulse rounded-[12px] z-10 flex items-center justify-center min-w-[220px] min-h-[160px]">
           <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 opacity-60" />
         </div>
       )}
@@ -948,6 +955,7 @@ const VideoMediaItem = ({
   index,
   isLastOdd,
   mediaLength,
+  isSending,
   onMediaLoad,
   onMediaClick,
 }: {
@@ -955,6 +963,7 @@ const VideoMediaItem = ({
   index: number;
   isLastOdd: boolean;
   mediaLength: number;
+  isSending?: boolean;
   onMediaLoad?: () => void;
   onMediaClick?: (
     url: string,
@@ -982,6 +991,19 @@ const VideoMediaItem = ({
     }
     onMediaLoad?.();
   };
+
+  if (isSending) {
+    return (
+      <div
+        className={cn(
+          "relative bg-gray-200 dark:bg-gray-800 animate-pulse rounded-[12px] flex items-center justify-center overflow-hidden w-[260px] max-w-full min-h-[160px]",
+          isLastOdd && mediaLength > 1 ? "col-span-2 aspect-[2/1]" : aspectClass,
+        )}
+      >
+        <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 opacity-60" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1049,6 +1071,12 @@ const MessageMedia = ({
   )
     return null;
 
+  const isSending = Boolean(
+    String(message.id).startsWith("temp-") ||
+    (message as any).isSending ||
+    (message as any).status === "sending"
+  );
+
   return (
     <div
       className={cn(
@@ -1074,6 +1102,7 @@ const MessageMedia = ({
               index={index}
               isLastOdd={isLastOdd}
               mediaLength={message.media!.length}
+              isSending={isSending}
               onMediaLoad={onMediaLoad}
               onMediaClick={onMediaClick}
             />
@@ -1081,6 +1110,30 @@ const MessageMedia = ({
         }
 
         if (isDocumentType(item)) {
+          if (isSending) {
+            return (
+              <div
+                key={index}
+                className="relative bg-black/5 flex items-center justify-center overflow-hidden w-full max-w-[300px]"
+              >
+                <div
+                  className={cn(
+                    "relative w-full",
+                    isMediaOnly ? "bg-muted/40" : "",
+                  )}
+                >
+                  <div className="flex items-center gap-3 p-3 w-full min-w-[200px] rounded-[12px] bg-background/50 backdrop-blur-sm animate-pulse">
+                    <div className="w-10 h-10 rounded-lg bg-gray-300 dark:bg-gray-700 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="h-3.5 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-1.5" />
+                      <div className="h-2.5 bg-gray-300 dark:bg-gray-700 rounded w-1/3" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           const displayName = item.name || (item as any).filename || `Document-${index + 1}`;
           const fileExt = displayName.includes(".")
             ? displayName.split(".").pop()!.toLowerCase()
@@ -1141,6 +1194,7 @@ const MessageMedia = ({
             index={index}
             isLastOdd={isLastOdd}
             mediaLength={message.media!.length}
+            isSending={isSending}
             onMediaLoad={onMediaLoad}
             onMediaClick={onMediaClick}
           />
@@ -2109,14 +2163,6 @@ function MessageBubble(props: MessageBubbleProps) {
                       normalizedUserType === "ORGANIZATION" ||
                       normalizedUserType === "INSTITUTION";
 
-                    const effectiveAvatar = isMe
-                      ? activeProfile?.avatar_url ||
-                        (session?.user as any)?.image ||
-                        message.senderAvatar
-                      : (!isGroup && chatAvatar)
-                      ? chatAvatar
-                      : message.senderAvatar || chatAvatar;
-
                     const isUnknownSender = Boolean(
                       message.isBlocked === true ||
                       message.isBlockedByOther === true ||
@@ -2132,6 +2178,17 @@ function MessageBubble(props: MessageBubbleProps) {
                       (message as any).sender_org_headline === "This page has been deactivated" ||
                       (message as any).sender_org_headline === "User unavailable"
                     );
+
+                    const effectiveAvatar = isUnknownSender
+                      ? null
+                      : isMe
+                      ? (activeProfile as any)?.avatar ||
+                        (activeProfile as any)?.avatar_url ||
+                        (session?.user as any)?.image ||
+                        message.senderAvatar
+                      : (!isGroup && chatAvatar)
+                      ? chatAvatar
+                      : message.senderAvatar || chatAvatar;
 
                     const effectiveName = isUnknownSender
                       ? (isOrgConv ? "Unknown Page" : "Unknown User")
@@ -2617,6 +2674,7 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.isEditing === nextProps.isEditing &&
     prevProps.showSenderName === nextProps.showSenderName &&
     prevProps.showAvatar === nextProps.showAvatar &&
+    prevProps.chatAvatar === nextProps.chatAvatar &&
     prevProps.showTime === nextProps.showTime &&
     prevProps.isOpponentOnline === nextProps.isOpponentOnline &&
     prevProps.message.is_deleted_for_everyone ===

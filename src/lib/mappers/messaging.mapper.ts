@@ -112,7 +112,9 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     orgHeadline: !backendChat.is_group && isUnknown 
       ? "Page unavailable" 
       : (backendChat.org_headline || ""),
-    lastMessage: isPostUrl(backendChat.last_message_text)
+    lastMessage: (backendChat.last_message_text === 'Message unavailable' || (backendChat as any).is_unavailable)
+      ? 'Message unavailable'
+      : isPostUrl(backendChat.last_message_text)
       ? "Shared a post"
       : isJobUrl(backendChat.last_message_text)
       ? "Shared a job"
@@ -176,10 +178,20 @@ export const mapBackendMessageToMessage = (
   currentUserId?: string,
   companyId?: string
 ): Message => {
-  const isMe = currentUserId
-    ? backendMessage.sender_id === currentUserId ||
-      (companyId && backendMessage.sender_id === companyId)
-    : false;
+  const authorOrgId = backendMessage.author_org_id || backendMessage.author_company_id;
+  const isOrgMessage = Boolean(authorOrgId);
+  const messageSenderId = isOrgMessage
+    ? authorOrgId
+    : (backendMessage.sender_id || (backendMessage as any).senderId);
+
+  let isMe = false;
+  if (companyId) {
+    // Current active profile is COMPANY context (activeProfile.type === "COMPANY")
+    isMe = isOrgMessage && Boolean(messageSenderId && String(messageSenderId) === String(companyId));
+  } else if (currentUserId) {
+    // Current active profile is USER context (activeProfile.type !== "COMPANY")
+    isMe = !isOrgMessage && Boolean(messageSenderId && String(messageSenderId) === String(currentUserId));
+  }
 
   return {
     id: backendMessage.message_id,

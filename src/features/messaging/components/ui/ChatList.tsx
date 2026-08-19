@@ -153,19 +153,24 @@ export function ChatList({
   }, [socket, queryClient, session?.user?.id]);
 
   const [localActiveTab, setLocalActiveTab] = useState<'chat' | 'jobs' | 'requests'>('chat');
-  const activeTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
+  const rawActiveTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
   const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : setLocalActiveTab;
+
+  // Strict normalization: in User mode, tab can ONLY be 'chat' or 'requests'; in Company mode, 'chat' or 'jobs'
+  const effectiveTab: 'chat' | 'jobs' | 'requests' = isCompany
+    ? (rawActiveTab === 'jobs' ? 'jobs' : 'chat')
+    : (rawActiveTab === 'requests' ? 'requests' : 'chat');
 
   const otherTabQuery = useQuery({
     queryKey: [
       "conversations",
       activeProfile?.type ?? "USER",
       activeProfile?.id ?? "me",
-      activeProfile?.type === "COMPANY" ? (activeTab === "jobs" ? "chat" : "jobs") : "none",
+      activeProfile?.type === "COMPANY" ? (effectiveTab === "jobs" ? "chat" : "jobs") : "none",
     ],
     queryFn: async () => {
       if (activeProfile?.type !== "COMPANY") return [];
-      const otherTabParam = activeTab === "jobs" ? "GENERAL" : "JOBS";
+      const otherTabParam = effectiveTab === "jobs" ? "GENERAL" : "JOBS";
       const backendChats = await getConversations({ companyId: activeProfile.id, tab: otherTabParam });
       return backendChats.map(mapBackendChatToChatThread);
     },
@@ -178,11 +183,11 @@ export function ChatList({
   const otherTabHasUnread = (otherTabQuery.data || []).some(chat => chat.unread > 0);
 
   const hasUnreadChats = isCompany
-    ? (activeTab === 'chat' ? currentTabHasUnread : otherTabHasUnread)
+    ? (effectiveTab === 'chat' ? currentTabHasUnread : otherTabHasUnread)
     : chats.some(chat => !chat.is_requesting && chat.unread > 0);
 
   const hasUnreadJobChats = isCompany
-    ? (activeTab === 'jobs' ? currentTabHasUnread : otherTabHasUnread)
+    ? (effectiveTab === 'jobs' ? currentTabHasUnread : otherTabHasUnread)
     : false;
 
   const hasUnreadRequests = chats.some(chat => {
@@ -201,22 +206,32 @@ export function ChatList({
   })), [chats, isUserOnline]);
 
   const filteredChats = React.useMemo(() => {
-    let list = chatsWithStatus.filter((chat) => {
-      // Company mode logic: Chat (General) vs Jobs
+    // Step 1: First check Tab basis (Chat vs Requests or Chat vs Jobs)
+    const tabBaseChats = chatsWithStatus.filter((chat) => {
       if (isCompany) {
         const isJob = Boolean(chat.isJobChat || (chat.jobIds && chat.jobIds.length > 0));
-        if (activeTab === 'chat' && isJob) return false;
-        if (activeTab === 'jobs' && !isJob) return false;
+        if (effectiveTab === 'chat') return !isJob;
+        if (effectiveTab === 'jobs') return isJob;
+        return true;
       } else {
-        // User mode logic: Chat vs Requests
-        if (activeTab === 'chat' && chat.is_requesting) return false;
-        if (activeTab === 'requests' && !chat.is_requesting) return false;
+        if (effectiveTab === 'chat') return !chat.is_requesting;
+        if (effectiveTab === 'requests') return Boolean(chat.is_requesting);
+        return true;
       }
+    });
 
-      // Filter by dropdown (All | Groups) - only for user actors
+    // Step 2: Then apply dropdown filter (All | Groups) and search on that tab basis
+    const filteredList = tabBaseChats.filter((chat) => {
       if (isUserActor && selectedFilter === 'Groups') {
-        const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
-        if (!isGroupChat) return false;
+        if (effectiveTab === 'requests') {
+          const isGroupInvitation = Boolean(
+            chat.isGroup || (chat as any).is_group || chat.request_source === 'group_invitation'
+          );
+          if (!isGroupInvitation) return false;
+        } else {
+          const isGroupChat = Boolean(chat.isGroup || (chat as any).is_group);
+          if (!isGroupChat) return false;
+        }
       }
 
       // Filter by Search
@@ -224,14 +239,14 @@ export function ChatList({
     });
 
     // Sort strictly by latest message timestamp (most recent first)
-    return [...list].sort((a, b) => {
+    return [...filteredList].sort((a, b) => {
       const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
       const validTimeA = isNaN(timeA) ? 0 : timeA;
       const validTimeB = isNaN(timeB) ? 0 : timeB;
       return validTimeB - validTimeA;
     });
-  }, [chatsWithStatus, activeTab, searchTerm, isCompany, isUserActor, selectedFilter]);
+  }, [chatsWithStatus, effectiveTab, searchTerm, isCompany, isUserActor, selectedFilter]);
 
   // Virtualizer setup
   const rowVirtualizer = useVirtualizer({
@@ -309,7 +324,7 @@ export function ChatList({
           <div className="relative w-full h-[36px] border-b border-[#EEF2FF] mt-2 mb-1">
             <button 
               onClick={() => setActiveTab('chat')}
-              className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${activeTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+              className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
             >
               <span className="font-['Poppins'] text-[14px] leading-[20px]">Chat</span>
               {hasUnreadChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
@@ -317,7 +332,7 @@ export function ChatList({
             {!isCompany ? (
               <button 
                 onClick={() => setActiveTab('requests')}
-                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${activeTab === 'requests' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'requests' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
               >
                 <span className="font-['Poppins'] text-[14px] leading-[20px]">Requests</span>
                 {hasUnreadRequests && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
@@ -325,7 +340,7 @@ export function ChatList({
             ) : (
               <button 
                 onClick={() => setActiveTab('jobs')}
-                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${activeTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
               >
                 <span className="font-['Poppins'] text-[14px] leading-[20px]">Jobs</span>
                 {hasUnreadJobChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
@@ -339,36 +354,36 @@ export function ChatList({
           <>
             <div className="flex flex-row items-start p-0 gap-[16px] w-[298px] h-[40px] overflow-x-auto scrollbar-hide shrink-0">
               <TagChip
-            active={activeTab === 'chat'}
-            label="Chat"
-            hasIndicator={hasUnreadChats}
-            disabled={!canChat}
-            onClick={() => {
-              if (canChat) {
-                setActiveTab('chat');
-              }
-            }}
-          />
-          {isCompany ? (
-            <TagChip
-              active={activeTab === 'jobs'}
-              label="Jobs"
-              hasIndicator={hasUnreadJobChats}
-              disabled={!canJobsChat}
-              onClick={() => {
-                if (canJobsChat) {
-                  setActiveTab('jobs');
-                }
-              }}
-            />
-          ) : (
-            <TagChip
-              active={activeTab === 'requests'}
-              label="Requests"
-              hasIndicator={hasUnreadRequests}
-              onClick={() => setActiveTab('requests')}
-            />
-          )}
+                active={effectiveTab === 'chat'}
+                label="Chat"
+                hasIndicator={hasUnreadChats}
+                disabled={!canChat}
+                onClick={() => {
+                  if (canChat) {
+                    setActiveTab('chat');
+                  }
+                }}
+              />
+              {isCompany ? (
+                <TagChip
+                  active={effectiveTab === 'jobs'}
+                  label="Jobs"
+                  hasIndicator={hasUnreadJobChats}
+                  disabled={!canJobsChat}
+                  onClick={() => {
+                    if (canJobsChat) {
+                      setActiveTab('jobs');
+                    }
+                  }}
+                />
+              ) : (
+                <TagChip
+                  active={effectiveTab === 'requests'}
+                  label="Requests"
+                  hasIndicator={hasUnreadRequests}
+                  onClick={() => setActiveTab('requests')}
+                />
+              )}
             </div>
 
             {/* Inbox Count */}
@@ -408,7 +423,7 @@ export function ChatList({
                       return;
                     }
                     onSelectChat?.(chat);
-                    if (chat.isJobChat && activeTab !== 'jobs' && setActiveTab) {
+                    if (isCompany && chat.isJobChat && rawActiveTab !== 'jobs' && setActiveTab) {
                       setActiveTab('jobs');
                     }
                   }}

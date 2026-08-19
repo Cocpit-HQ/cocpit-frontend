@@ -553,6 +553,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleOrganizationDeactivated = (payload: { orgId: string }) => {
       console.log("[Socket] ORGANIZATION_DEACTIVATED received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['jobContext'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedPost'] });
+      queryClient.invalidateQueries({ queryKey: ['profilePreview'] });
+      queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
+      queryClient.refetchQueries({ queryKey: ['conversations'] });
+      queryClient.refetchQueries({ queryKey: ['messages'] });
+      queryClient.refetchQueries({ queryKey: ['jobContext'] });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'] });
+
       const currentProfile = activeProfileRef.current;
       if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
         if (session?.user) {
@@ -568,6 +580,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleOrgStatusChanged = (payload: any) => {
       console.log("[Socket] org_status_changed event received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['jobContext'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedPost'] });
+      queryClient.invalidateQueries({ queryKey: ['profilePreview'] });
+      queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
+      queryClient.refetchQueries({ queryKey: ['conversations'] });
+      queryClient.refetchQueries({ queryKey: ['messages'] });
+      queryClient.refetchQueries({ queryKey: ['jobContext'] });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'] });
+
       const targetOrgId = payload?.orgId || payload?.companyId;
       const currentProfile = activeProfileRef.current;
 
@@ -655,6 +678,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     newSocket.on('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
+    newSocket.on('organization_deactivated', handleOrganizationDeactivated);
+    newSocket.on('ORGANIZATION_REACTIVATED', handleAccountStateChanged);
+    newSocket.on('organization_reactivated', handleAccountStateChanged);
     newSocket.on('user_deactivated', handleAccountStateChanged);
     newSocket.on('USER_DEACTIVATED', handleAccountStateChanged);
     newSocket.on('user_reactivated', handleAccountStateChanged);
@@ -696,6 +722,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
       newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
       newSocket.off('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
+      newSocket.off('organization_deactivated', handleOrganizationDeactivated);
+      newSocket.off('ORGANIZATION_REACTIVATED', handleAccountStateChanged);
+      newSocket.off('organization_reactivated', handleAccountStateChanged);
       newSocket.off('user_deactivated', handleAccountStateChanged);
       newSocket.off('USER_DEACTIVATED', handleAccountStateChanged);
       newSocket.off('user_reactivated', handleAccountStateChanged);

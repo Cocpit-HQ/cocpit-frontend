@@ -49,6 +49,19 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
   const [initialUnread] = useState(unreadCount)
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false)
 
+  const firstUnreadMessageId = useMemo(() => {
+    if (initialUnread <= 0 || messages.length === 0) return null;
+    const unreadIdx = Math.max(0, messages.length - initialUnread);
+    for (let i = unreadIdx; i < messages.length; i++) {
+      const m = messages[i];
+      const isMsgMe = m.sender === 'me' || (m.senderId && currentUserId && String(m.senderId) === String(currentUserId));
+      if (!isMsgMe && m.type !== 'system') {
+        return m.id;
+      }
+    }
+    return null;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
   const scrollTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -100,8 +113,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     );
 
     if (initialUnread > 0 && !hasScrolledToUnread && displayMessages.length > 0) {
-      const firstUnreadIndex = Math.max(0, displayMessages.length - initialUnread);
-      const el = document.getElementById(`msg-${displayMessages[firstUnreadIndex]?.id}`);
+      const targetId = firstUnreadMessageId || displayMessages[Math.max(0, displayMessages.length - initialUnread)]?.id;
+      const el = targetId ? document.getElementById(`msg-${targetId}`) : null;
       if (el) {
         el.scrollIntoView({ block: "start" });
       }
@@ -290,9 +303,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
               const isLastInGroup =
                 !next || (next as any).isSkeleton || !isSameNextMember || isDateBreakWithNext;
 
-              const isFirstUnread =
-                initialUnread > 0 &&
-                index === displayMessages.length - initialUnread;
+              const isFirstUnread = Boolean(firstUnreadMessageId && msg.id === firstUnreadMessageId);
 
               const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
               const msgTimeDisplay = formatTime(msg.created_at || msg.time);

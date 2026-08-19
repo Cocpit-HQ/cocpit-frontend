@@ -7,6 +7,8 @@ import { companyService } from '@/services/organization.service';
 import { ActionModal } from './ActionModal';
 import { toast } from 'sonner';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 type PageStatus = 'active' | 'deactivated' | 'scheduled_for_deletion' | 'associated';
 
 type Org = {
@@ -75,6 +77,8 @@ export function OrganizationsSettingsPage() {
 
   const selectedOrg = [...ownedOrgs, ...associatedOrgs].find(o => o.id === selectedOrgId);
 
+  const queryClient = useQueryClient();
+
   const triggerActorContextRefresh = () => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('cocpit:refresh-actor-context'));
@@ -89,6 +93,14 @@ export function OrganizationsSettingsPage() {
       await companyService.reactivateOrgWithOTP(selectedOrg.id, otp || '');
       toast.success('Your company account has been reactivated');
       setModalState(null);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['jobContext'] });
+      queryClient.invalidateQueries({ queryKey: ['profilePreview'] });
+      queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
+      queryClient.refetchQueries({ queryKey: ['conversations'] });
+      queryClient.refetchQueries({ queryKey: ['messages'] });
+      queryClient.refetchQueries({ queryKey: ['jobContext'] });
       await fetchOrgs();
       triggerActorContextRefresh();
     } catch (err: any) {

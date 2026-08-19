@@ -36,6 +36,7 @@ export interface BackendMessage {
   created_at: string;
   read_at: string | null;
   author_company_id?: string | null; // Added for company messaging
+  author_org_id?: string | null;
   sender_name?: string;
   sender_member_name?: string;
   org_headline?: string;
