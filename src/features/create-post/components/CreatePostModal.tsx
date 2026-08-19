@@ -83,6 +83,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             onCropComplete={media.handleCropComplete}
             onAspectChange={media.handleAspectChange}
             onMediaLoaded={media.handleActiveMediaLoaded}
+            onCropInteraction={media.handleCropInteraction}
             aspectMode={media.aspectRatioMode}
             galleryInputRef={galleryInputRef}
             isEditingMedia={state.isEditingMedia}

@@ -34,6 +34,7 @@ export interface MediaItem {
   rotation?: number;
   naturalWidth?: number;
   naturalHeight?: number;
+  hasUserCropInteraction?: boolean;
 }
 
 export interface PollOption {

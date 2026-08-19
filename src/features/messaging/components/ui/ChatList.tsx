@@ -339,8 +339,9 @@ export function ChatList({
               </button>
             ) : (
               <button 
-                onClick={() => setActiveTab('jobs')}
-                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+                onClick={() => { if (canJobsChat) setActiveTab('jobs'); }}
+                title={!canJobsChat ? "You don't have permission to access Jobs Chat" : undefined}
+                className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors ${!canJobsChat ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 <span className="font-['Poppins'] text-[14px] leading-[20px]">Jobs</span>
                 {hasUnreadJobChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}

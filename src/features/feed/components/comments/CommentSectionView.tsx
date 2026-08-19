@@ -57,7 +57,10 @@ export default function CommentSectionView({
   };
 
   return (
-    <div className="flex flex-col min-h-0 md:max-h-[450px] bg-background relative font-poppins">
+    <div 
+      className="flex flex-col min-h-0 md:max-h-[450px] bg-background relative font-poppins comment-section"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="p-3 md:p-4 bg-card z-10 sticky top-0">
         <CommentInput
           onAddComment={(text) => {

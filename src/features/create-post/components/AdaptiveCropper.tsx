@@ -18,6 +18,7 @@ interface AdaptiveCropperProps {
   containerClassName?: string;
   containerStyle?: React.CSSProperties;
   cropAreaStyle?: React.CSSProperties;
+  onInteractionEnd?: () => void;
 }
 
 type CropBoxSize = { width: number; height: number };
@@ -57,6 +58,7 @@ export function AdaptiveCropper({
   containerClassName,
   containerStyle,
   cropAreaStyle,
+  onInteractionEnd,
 }: AdaptiveCropperProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [cropSize, setCropSize] = useState<CropBoxSize | null>(null);
@@ -106,8 +108,8 @@ export function AdaptiveCropper({
             onCropComplete={onCropComplete}
             onMediaLoaded={onMediaLoaded}
             showGrid={true}
-            objectFit="horizontal-cover"
             restrictPosition={true}
+            onInteractionEnd={onInteractionEnd}
             style={{
               containerStyle: { background: 'transparent', overflow: 'visible' },
               cropAreaStyle,

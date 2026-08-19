@@ -63,7 +63,7 @@ export const PostMedia = ({
         } ${!forceSquare && hasMedia ? 'mt-0 mb-0' : ''} ${!videoSrc && validImages.length > 0 ? 'border border-[#EEF2FF] dark:border-white/10' : ''} ${onClick ? 'cursor-pointer' : ''}`}
       style={
         !forceSquare
-          ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio, maxHeight: '700px' } : undefined))
+          ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio } : undefined))
           : undefined
       }
     >

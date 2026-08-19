@@ -248,9 +248,9 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                                     <BadgeCheck className="w-[18px] h-[18px] text-foreground mt-0.5" strokeWidth={2} />
                                 </div>
                                 <span className="text-muted-foreground text-[14px] font-normal">
-                                    {user.is_identity_verified
-                                        ? "Identity verified"
-                                        : (isOwnProfile ? "You don't have any verifications yet" : "User is unverified")}
+                                    {isOwnProfile
+                                        ? (user.is_identity_verified ? "You are verified" : "You don't have any verifications yet")
+                                        : (user.is_identity_verified ? "User is verified" : "User is not verified")}
                                 </span>
                             </div>
                         </div>

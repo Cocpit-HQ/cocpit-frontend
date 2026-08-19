@@ -63,7 +63,7 @@ export const usePostMedia = (
 
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
     const file: File | undefined = e instanceof File ? e : e.target.files?.[0];
-    
+
     if (file) {
       const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
       if (file.size > MAX_FILE_SIZE) {
@@ -185,14 +185,14 @@ export const usePostMedia = (
         if (itemToRemove.croppedBlobUrl) URL.revokeObjectURL(itemToRemove.croppedBlobUrl);
       }
       const remaining = prev.filter(item => item.id !== id);
-      
+
       const originalUrls = new Set(remaining.map(item => item.url));
       previewMediaUrlsRef.current.forEach(url => {
         if (!originalUrls.has(url)) {
           URL.revokeObjectURL(url);
         }
       });
-      
+
       if (remaining.length === 0) setActiveImageIndex(0);
       else if (activeImageIndex >= remaining.length) setActiveImageIndex(remaining.length - 1);
       return remaining;
@@ -272,6 +272,15 @@ export const usePostMedia = (
     setUploadedImages(prev => prev.map((img, idx) => {
       if (idx === activeImageIndex) {
         return { ...img, crop };
+      }
+      return img;
+    }));
+  }, [activeImageIndex]);
+
+  const handleCropInteraction = useCallback(() => {
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, hasUserCropInteraction: true };
       }
       return img;
     }));
@@ -421,14 +430,12 @@ export const usePostMedia = (
     return false;
   }, []);
 
-  const hasImageEdits = useCallback((item: MediaItem) => {
+  const hasImageEdits = useCallback((item: MediaItem, _targetAspect: number) => {
     return (
+      !!item.hasUserCropInteraction ||
       !!item.flipH ||
       !!item.flipV ||
-      (item.rotation || 0) !== 0 ||
-      Math.abs((item.zoom || 1) - 1) > 0.001 ||
-      Math.abs(item.crop?.x || 0) > 0.001 ||
-      Math.abs(item.crop?.y || 0) > 0.001
+      (item.rotation || 0) !== 0
     );
   }, []);
 
@@ -447,7 +454,7 @@ export const usePostMedia = (
 
     if (postType === 'photo') {
       for (const img of uploadedImages) {
-        if (img.isExisting || !hasImageEdits(img)) {
+        if (img.isExisting || !hasImageEdits(img, aspectRatio)) {
           newUrls.push(img.url);
           continue;
         }
@@ -496,13 +503,13 @@ export const usePostMedia = (
   };
 
   const clearMedia = useCallback(() => {
-     revokeAllMediaUrls();
-     setUploadedImages([]);
-     setUploadedVideos([]);
-     setActiveImageIndex(0);
-     setSelectedAspectRatio(DEFAULT_ASPECT_RATIO);
-     setAspectRatioMode('4:5');
-     setPreviewMediaUrls([]);
+    revokeAllMediaUrls();
+    setUploadedImages([]);
+    setUploadedVideos([]);
+    setActiveImageIndex(0);
+    setSelectedAspectRatio(DEFAULT_ASPECT_RATIO);
+    setAspectRatioMode('4:5');
+    setPreviewMediaUrls([]);
   }, [revokeAllMediaUrls]);
 
   const prepareFilesToUpload = async (postType: string, currentAspectRatio: number) => {
@@ -512,7 +519,7 @@ export const usePostMedia = (
       const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
         if (item.isExisting) return undefined;
         if (item.file) {
-          if (!hasImageEdits(item)) {
+          if (!hasImageEdits(item, currentAspectRatio)) {
             return item.file;
           }
 
@@ -568,6 +575,7 @@ export const usePostMedia = (
     handleVideoCropChange,
     handleVideoZoomChange,
     handleVideoCropComplete,
+    handleCropInteraction,
     handleAspectChange,
     handleActiveMediaLoaded,
     handleFlipHChange,

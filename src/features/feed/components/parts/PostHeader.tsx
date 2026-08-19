@@ -216,8 +216,8 @@ export const PostHeader = ({
             )}
           </div>
           {!shared_post && (
-            <div className={`text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] truncate w-full block ${hideOptions ? 'text-[#6B7280]' : (isOverlay ? 'text-white/80' : 'text-muted-foreground')}`} title={authorRole || title || ''}>
-              {authorRole || title || ''}
+            <div className={`text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] truncate w-full block ${hideOptions ? 'text-[#6B7280]' : (isOverlay ? 'text-white/80' : 'text-muted-foreground')}`} title={authorRole || ''}>
+              {authorRole || ''}
             </div>
           )}
           {(location || (timeAgo && !isRepostWithoutThoughts)) && (() => {

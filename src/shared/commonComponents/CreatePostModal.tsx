@@ -101,7 +101,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       } catch (e) {
         console.error("Failed to load recent prompts", e);
       }
-      
+
       // Fetch AI limit
       api.get('/ai/usage')
         .then(res => {
@@ -168,7 +168,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       const generatedText = response.data.text;
       state.setDescription(generatedText);
       setRemainingCaptions(prev => Math.max(0, prev - 1));
-      
+
       // Save prompt to history
       const promptToSave = aiPrompt.trim();
       setRecentPrompts(prev => {
@@ -883,8 +883,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       <div className="w-11 h-11 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base ring-2 ring-border shadow-sm overflow-hidden shrink-0 select-none relative">
                         {state.isCompanyPost && ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url) ? (
                           <>
-                            <img 
-                              src={(state.currentPoster as any).logo_url || (state.currentPoster as any).avatar_url} 
+                            <img
+                              src={(state.currentPoster as any).logo_url || (state.currentPoster as any).avatar_url}
                               className="w-full h-full object-cover relative z-10"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -897,8 +897,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           </>
                         ) : !state.isCompanyPost && state.currentUser?.image ? (
                           <>
-                            <img 
-                              src={state.currentUser.image} 
+                            <img
+                              src={state.currentUser.image}
                               className="w-full h-full object-cover relative z-10"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -1516,17 +1516,17 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                 100% { transform: translate(-50%, -50%) rotate(360deg); }
                               }
                             `}</style>
-                            
+
                             {/* Spinning gradient for the full border */}
-                            <div 
+                            <div
                               className="absolute top-1/2 left-1/2 w-[800px] h-[800px] origin-center"
-                              style={{ 
+                              style={{
                                 background: 'conic-gradient(from 0deg, transparent 0%, transparent 75%, #6366F1 100%)',
                                 animation: 'spinBorder 2.5s linear infinite',
                                 transform: 'translate(-50%, -50%) rotate(0deg)'
-                              }} 
+                              }}
                             />
-                            
+
                             {/* Inner content capsule */}
                             <div className="relative z-10 flex items-center justify-between bg-[#F8FAFC] rounded-[23px] pl-4 pr-2 h-full w-full">
                               <div className="flex items-center gap-2">
@@ -1539,7 +1539,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                 </span>
                               </div>
 
-                              <button 
+                              <button
                                 className="w-[36px] h-[36px] flex items-center justify-center rounded-full bg-[#E0E7FF] hover:bg-[#C7D2FE] transition-colors animate-[pulse_2s_ease-in-out_infinite]"
                               >
                                 <div className="w-[12px] h-[12px] bg-[#6366F1] rounded-[2px]" />
@@ -1610,7 +1610,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           </div>
                         )}
                         <div className="flex justify-between items-center px-1 mt-1 relative">
-                          <div 
+                          <div
                             className="relative flex items-center"
                             onMouseEnter={() => setShowAIPopup(true)}
                             onMouseLeave={() => setShowAIPopup(false)}
@@ -1622,9 +1622,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               <Icon icon="fluent:info-16-regular" className="w-[14px] h-[14px]" />
                               {aiLimitError || `${remainingCaptions} captions left this month`}
                             </button>
-                            
+
                             {showAIPopup && (
-                              <div 
+                              <div
                                 ref={aiPopupRef}
                                 className="absolute bottom-[calc(100%+8px)] left-0 w-[373px] bg-[#EEF2FF] border border-[#EEF2FF] rounded-[16px] p-4 flex flex-col items-center justify-center gap-2 shadow-[2px_2px_4px_rgba(99,102,241,0.05)] z-[100] box-border cursor-default text-left"
                               >

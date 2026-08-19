@@ -16,6 +16,7 @@ interface MediaCropperProps {
   aspectMode?: '1:1' | '4:5' | '16:9';
   isMobile: boolean;
   readOnly?: boolean;
+  onCropInteraction?: () => void;
 }
 
 const ASPECT_RATIOS = [
@@ -37,6 +38,7 @@ export function MediaCropper({
   aspectMode = '4:5',
   isMobile,
   readOnly,
+  onCropInteraction,
 }: MediaCropperProps) {
   return (
     <div className="flex flex-col h-full w-full gap-4">
@@ -54,6 +56,7 @@ export function MediaCropper({
             onZoomChange={onZoomChange}
             onCropComplete={onCropComplete}
             onMediaLoaded={onMediaLoaded}
+            onInteractionEnd={onCropInteraction}
             cropAreaStyle={{ border: '2px solid rgba(255, 255, 255, 0.5)' }}
           />
         )}
@@ -72,7 +75,10 @@ export function MediaCropper({
               max={3}
               step={0.1}
               aria-labelledby="Zoom"
-              onChange={(e) => onZoomChange(Number(e.target.value))}
+              onChange={(e) => {
+                onCropInteraction?.();
+                onZoomChange(Number(e.target.value));
+              }}
               className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
             />
           </div>
@@ -89,7 +95,10 @@ export function MediaCropper({
                 return (
                   <button
                     key={ratio.label}
-                    onClick={() => onAspectChange(ratio.value)}
+                    onClick={() => {
+                      onCropInteraction?.();
+                      onAspectChange(ratio.value);
+                    }}
                     className={`
                     flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
                     ${isActive

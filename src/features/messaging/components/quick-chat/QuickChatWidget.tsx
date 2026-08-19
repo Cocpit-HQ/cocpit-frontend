@@ -15,6 +15,7 @@ import { Icon } from "@iconify/react";
 import { useSocket } from "@/context/SocketContext";
 import { QuickNewChat } from "./QuickNewChat";
 import { ChatFilterDropdown, ChatFilterOption } from "../ui/ChatFilterDropdown";
+import { useCompanyPermissions } from "@/components/organizations/hooks/use-company";
 
 export function QuickChatWidget() {
   const pathname = usePathname();
@@ -28,14 +29,17 @@ export function QuickChatWidget() {
   const [chatFilter, setChatFilter] = useState<ChatFilterOption>('All');
   const [leftOffset, setLeftOffset] = useState<string | null>(null);
   const [panelAlign, setPanelAlign] = useState<'left' | 'right'>('left');
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { checkPermission } = useCompanyPermissions(activeProfile);
   const isUserActor = !activeProfile || activeProfile.type === "USER";
   const router = useRouter();
   const { socket } = useSocket();
   const [stripNotification, setStripNotification] = useState({ show: false, text: '' });
 
   const isFeedPage = pathname === '/feed' || pathname === '/';
-  const shouldHide = !isFeedPage;
+  // Hide only if the user lacks the 'chat' permission specifically.
+  const hasChatPermission = !isCompany || checkPermission('chat') || checkPermission('CHAT');
+  const shouldHide = !isFeedPage || !hasChatPermission;
 
   // Fetch chats logic duplicated from MessagingPage (will share cache with the same query key)
   const rawChatsQuery = useQuery({
@@ -304,6 +308,7 @@ export function QuickChatWidget() {
                     isMobile={true}
                     isQuickChat={true}
                     chatFilter={chatFilter}
+                    isCompany={isCompany}
                   />
                 </div>
               </div>

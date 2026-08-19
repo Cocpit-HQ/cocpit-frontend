@@ -31,13 +31,6 @@ export const usePostMediaObserver = (id: string | number, videoSrc?: string, asp
     return () => observer.disconnect();
   }, [videoSrc]);
 
-  const snapAspectRatio = (ratio: number) => {
-    const targets = [1, 0.8, 16 / 9];
-    return targets.reduce((prev, curr) =>
-      Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev
-    );
-  };
-
   const handleMediaLoad = (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => {
     if (!aspectRatio || aspectRatio === 'auto') {
       const element = event.currentTarget;
@@ -46,9 +39,8 @@ export const usePostMediaObserver = (id: string | number, videoSrc?: string, asp
       
       const ratio = width / height;
       if (ratio && !isNaN(ratio)) {
-        const snapped = snapAspectRatio(ratio);
-        setDynamicAspectRatio(snapped);
-        setImageAspectRatio(id.toString(), snapped);
+        setDynamicAspectRatio(ratio);
+        setImageAspectRatio(id.toString(), ratio);
       }
     }
   };

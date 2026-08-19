@@ -83,7 +83,7 @@ export default function PublicChannelHeader({ channel, onToggleSubscribe }: Publ
               </div>
             </div>
 
-            <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal font-['Poppins'] leading-[18px] md:leading-[24px] md:h-[24px] w-full">
+            <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[12px] font-normal font-['Poppins'] leading-[18px] md:leading-[24px] w-full">
               {channel.description}
             </p>
           </div>

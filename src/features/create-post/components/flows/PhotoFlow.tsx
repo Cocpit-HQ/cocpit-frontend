@@ -22,6 +22,7 @@ interface PhotoFlowProps {
   onCropComplete: (croppedArea: Area, croppedAreaPixels: Area) => void;
   onAspectChange: (aspect: number) => void;
   onMediaLoaded?: (mediaSize: MediaSize) => void;
+  onCropInteraction?: () => void;
   aspectMode?: '1:1' | '4:5' | '16:9';
   galleryInputRef: React.RefObject<HTMLInputElement | null>;
   isEditingMedia?: boolean;
@@ -44,6 +45,7 @@ const PhotoFlow = ({
   onCropComplete,
   onAspectChange,
   onMediaLoaded,
+  onCropInteraction,
   aspectMode,
   galleryInputRef,
   isEditingMedia,
@@ -89,6 +91,7 @@ const PhotoFlow = ({
                 onCropComplete={onCropComplete}
                 onAspectChange={onAspectChange}
                 onMediaLoaded={onMediaLoaded}
+                onCropInteraction={onCropInteraction}
                 aspectMode={aspectMode}
                 isMobile={true}
                 readOnly={isEdit && !isEditingMedia}
@@ -191,6 +194,7 @@ const PhotoFlow = ({
               onCropComplete={onCropComplete}
               onAspectChange={onAspectChange}
               onMediaLoaded={onMediaLoaded}
+              onCropInteraction={onCropInteraction}
               aspectMode={aspectMode}
               isMobile={false}
               readOnly={isEdit && !isEditingMedia}

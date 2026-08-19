@@ -74,46 +74,52 @@ export default function SinglePostPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-[592px] mx-auto px-4 py-10">
-                {/* Navigation Header */}
-                <div className="flex items-center gap-4 mb-8">
-                    <button
-                        onClick={() => router.back()}
-                        className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors text-foreground"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <h1 className="text-2xl font-bold text-foreground font-[family-name:var(--font-poppins)]">Post Details</h1>
-                </div>
-
-                <div className="flex flex-col gap-[24px]">
-                    {/* Main Content Area */}
-                    <div className="space-y-[24px]">
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-card rounded-[24px] border border-border/40">
-                                <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-                                <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">Loading post details...</p>
-                            </div>
-                        ) : error ? (
-                            <div className="text-center py-20 bg-card rounded-[24px] border border-destructive/20">
-                                <p className="text-destructive font-medium font-[family-name:var(--font-poppins)]">{error}</p>
-                                <button 
+            <div className="pt-4 md:pt-6 pb-4 md:pb-8">
+                <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
+                    <div className="mx-auto max-w-[998px] w-full flex flex-col items-start">
+                        <div className="max-w-[592px] w-full px-4 md:px-0 mb-8">
+                            {/* Navigation Header */}
+                            <div className="flex items-center gap-4 mb-8">
+                                <button
                                     onClick={() => router.back()}
-                                    className="mt-4 px-6 py-2 bg-primary text-white rounded-full text-sm font-medium"
+                                    className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors text-foreground"
                                 >
-                                    Go Back
+                                    <ArrowLeft className="w-5 h-5" />
                                 </button>
+                                <h1 className="text-2xl font-bold text-foreground font-[family-name:var(--font-poppins)]">Post Details</h1>
                             </div>
-                        ) : post ? (
-                            <div className="w-full bg-card rounded-[24px] overflow-hidden">
-                                <FeedPost
-                                    {...post}
-                                    menuAccess={menuAccess}
-                                    isFullContent={true}
-                                    initialShowComments={showComments}
-                                />
+
+                            <div className="flex flex-col gap-[24px]">
+                                {/* Main Content Area */}
+                                <div className="space-y-[24px]">
+                                    {loading ? (
+                                        <div className="flex flex-col items-center justify-center py-20 bg-card rounded-[24px] border border-border/40">
+                                            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                                            <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">Loading post details...</p>
+                                        </div>
+                                    ) : error ? (
+                                        <div className="text-center py-20 bg-card rounded-[24px] border border-destructive/20">
+                                            <p className="text-destructive font-medium font-[family-name:var(--font-poppins)]">{error}</p>
+                                            <button 
+                                                onClick={() => router.back()}
+                                                className="mt-4 px-6 py-2 bg-primary text-white rounded-full text-sm font-medium"
+                                            >
+                                                Go Back
+                                            </button>
+                                        </div>
+                                    ) : post ? (
+                                        <div className="w-full bg-card rounded-[24px] overflow-hidden">
+                                            <FeedPost
+                                                {...post}
+                                                menuAccess={menuAccess}
+                                                isFullContent={true}
+                                                initialShowComments={showComments}
+                                            />
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
-                        ) : null}
+                        </div>
                     </div>
                 </div>
             </div>
