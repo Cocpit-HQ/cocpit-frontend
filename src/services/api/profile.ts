@@ -54,6 +54,7 @@ export interface ProfilePost {
   liked_users?: { username: string; avatar_url: string | null }[];
   comment_count: number;
   share_count: number;
+  external_share_count?: number;
   poll: ProfilePostPoll | null;
   sample_liker_username?: string | null;
   author_headline?: string;
@@ -78,6 +79,7 @@ export interface ProfilePost {
     like_count?: number;
     comment_count?: number;
     share_count?: number;
+    external_share_count?: number;
     is_liked?: boolean;
     is_reposted?: boolean;
     is_commented?: boolean;

@@ -674,10 +674,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           postId={localPost.id}
-          onShare={() => {
+          onShare={(selectedIds) => {
             setLocalPost(prev => ({
               ...prev,
-              shares: (Number(prev.shares) || 0) + 1 + ""
+              externalShares: (Number(prev.externalShares) || 0) + selectedIds.length
             }));
           }}
         />

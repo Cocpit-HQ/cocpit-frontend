@@ -158,6 +158,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
           is_commented: sp.is_commented,
           is_saved: sp.is_saved,
           likedUsers: (sp as any).liked_users || [],
+          sampleLikerUsername: ((sp as any).liked_users && (sp as any).liked_users.length > 0) ? (sp as any).liked_users[0].username : null,
           comments: (sp.comment_count || 0).toString(),
           shares: (sp.share_count || 0).toString(),
           images: sp.media?.filter(m => m.media_type === 'image').map(m => m.url),

@@ -32,6 +32,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes);
   const [commentCount, setCommentCount] = useState(typeof props.comments === 'string' ? parseInt(props.comments || '0') : (props.comments || 0));
   const [shareCount, setShareCount] = useState(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
+  const [externalShareCount, setExternalShareCount] = useState(typeof props.externalShares === 'string' ? parseInt(props.externalShares || '0') : (props.externalShares || 0));
 
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
@@ -54,7 +55,8 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setRepostId(props.repostId || null);
     setPollData(poll);
     setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
-  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, poll, props.shares, props.repostId]);
+    setExternalShareCount(typeof props.externalShares === 'string' ? parseInt(props.externalShares || '0') : (props.externalShares || 0));
+  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, poll, props.shares, props.externalShares, props.repostId]);
 
   // Sync likeCount from props when no local optimistic like is in flight.
   useEffect(() => {
@@ -158,6 +160,10 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setShareCount(prev => prev + 1);
   };
 
+  const incrementExternalShareCount = (count: number = 1) => {
+    setExternalShareCount(prev => prev + count);
+  };
+
   const handleRepostToggle = async (isCompany: boolean, activeProfileId?: string) => {
     const prevReposted = isReposted;
     const prevCount = shareCount;
@@ -221,6 +227,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     likeCount,
     commentCount,
     shareCount,
+    externalShareCount,
     pollData,
     isVoting,
     setPollData,
@@ -235,6 +242,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     handleRepostToggle,
     incrementCommentCount,
     decrementCommentCount,
-    incrementShareCount
+    incrementShareCount,
+    incrementExternalShareCount
   };
 };

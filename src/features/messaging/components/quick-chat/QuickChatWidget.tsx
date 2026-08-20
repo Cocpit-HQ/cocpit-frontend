@@ -21,12 +21,12 @@ export function QuickChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
-  const constraintsRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [chatFilter, setChatFilter] = useState<ChatFilterOption>('All');
+  const [activeTab, setActiveTab] = useState<'chat' | 'jobs' | 'requests'>('chat');
+  const [isOpening, setIsOpening] = useState(false);
   const [leftOffset, setLeftOffset] = useState<string | null>(null);
   const [panelAlign, setPanelAlign] = useState<'left' | 'right'>('left');
   const { activeProfile, isCompany } = useActiveProfile();
@@ -47,14 +47,14 @@ export function QuickChatWidget() {
       "conversations",
       activeProfile?.type ?? "USER",
       activeProfile?.id ?? "me",
-      "all", // Default to 'all' or 'GENERAL' for quick chat
+      activeTab, // Dynamic tab for quick chat
     ],
     queryFn: async () => {
       const params =
         activeProfile?.type === "COMPANY"
           ? {
               companyId: activeProfile.id,
-              tab: "GENERAL" as "JOBS" | "GENERAL",
+              tab: activeTab === 'jobs' ? "JOBS" as const : "GENERAL" as const,
             }
           : {};
       const backendChats = await getConversations(params);
@@ -192,33 +192,26 @@ export function QuickChatWidget() {
   }
 
   return (
-    <>
-      {/* Invisible container to restrict dragging within the viewport (leaving room for navbar and bottom edge) */}
-      <div ref={constraintsRef} className="fixed top-20 bottom-4 left-4 right-4 pointer-events-none z-[49]" />
-      <motion.div 
+    <div className="hidden md:block">
+      <motion.div
         ref={widgetRef}
-        drag
-        dragConstraints={constraintsRef}
-        dragMomentum={false}
-      onDragStart={() => setIsDragging(true)}
-      onDragEnd={() => setTimeout(() => setIsDragging(false), 150)}
-      className="fixed z-50 pointer-events-auto"
-      style={{
-        left: leftOffset || undefined,
-        right: !leftOffset ? '16px' : undefined,
-        bottom: '16px'
-      }}
-    >
+        className="fixed z-50 pointer-events-auto"
+        style={{
+          left: leftOffset || undefined,
+          right: !leftOffset ? '16px' : undefined,
+          bottom: '16px'
+        }}
+      >
         <AnimatePresence>
         {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0' : 'right-0'} w-[calc(100vw-32px)] sm:w-[340px] ${selectedChat ? 'h-[65vh] max-h-[480px] sm:h-[480px]' : 'h-auto min-h-[250px] max-h-[584px]'} bg-white border border-[#EEF2FF] shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-[12px] flex flex-col overflow-hidden transition-all duration-300`}
-            style={{ transformOrigin: 'bottom' }}
-          >
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className={`absolute bottom-[68px] ${panelAlign === 'left' ? 'left-0' : 'right-0'} w-[calc(100vw-32px)] sm:w-[340px] ${selectedChat ? 'h-[65vh] max-h-[480px] sm:h-[480px]' : 'h-auto min-h-[250px] max-h-[550px]'} bg-white border border-[#EEF2FF] shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-[16px] flex flex-col overflow-hidden`}
+              style={{ transformOrigin: panelAlign === 'left' ? 'bottom left' : 'bottom right' }}
+            >
           {/* Main Content Area */}
           <div className="flex-1 overflow-hidden relative flex flex-col bg-background">
             {selectedChat ? (
@@ -275,8 +268,7 @@ export function QuickChatWidget() {
               <div className="flex flex-col h-full">
                 {/* Header for ChatList since ChatWindow brings its own header usually */}
                 <div 
-                  className="flex justify-between items-center px-4 py-4 bg-white rounded-t-[12px] cursor-grab active:cursor-grabbing shrink-0 h-[56px]"
-                  style={{ touchAction: "none" }}
+                  className="flex justify-between items-center px-4 py-4 bg-white rounded-t-[12px] shrink-0 h-[56px]"
                 >
                   <div className="flex justify-start">
                     <h3 className="font-medium text-[16px] text-[#0B1C30] select-none">Messaging</h3>
@@ -309,6 +301,8 @@ export function QuickChatWidget() {
                     isQuickChat={true}
                     chatFilter={chatFilter}
                     isCompany={isCompany}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
                   />
                 </div>
               </div>
@@ -322,16 +316,20 @@ export function QuickChatWidget() {
         onClick={() => {
           if (isOpen) {
             setIsOpen(false);
-          } else if (!isDragging) {
-            setIsOpen(true);
+          } else if (!isOpening) {
+            setIsOpening(true);
+            setTimeout(() => {
+              setIsOpening(false);
+              setIsOpen(true);
+            }, 400); // 400ms delay for the spin animation
           }
           setStripNotification(prev => ({ ...prev, show: false })); // Hide on click
         }}
         initial={false}
         animate={{ 
-          width: stripNotification.show ? 'auto' : 50,
+          transition: { type: "spring", stiffness: 400, damping: 25 },
         }}
-        className="relative bg-white text-black border border-[#EEF2FF] rounded-[12px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex items-center hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing whitespace-nowrap overflow-hidden"
+        className="relative bg-white text-black border border-[#EEF2FF] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] flex items-center hover:bg-gray-50 transition-colors whitespace-nowrap overflow-hidden"
         style={{
           flexDirection: panelAlign === 'left' ? 'row' : 'row-reverse',
           height: '50px'
@@ -360,7 +358,7 @@ export function QuickChatWidget() {
           )}
         </AnimatePresence>
       </motion.button>
-    </motion.div>
-    </>
+      </motion.div>
+    </div>
   );
 }

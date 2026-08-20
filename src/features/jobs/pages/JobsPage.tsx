@@ -520,18 +520,18 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
             {/* Stats Cards Row */}
             <div className="w-full flex flex-row gap-2 sm:gap-[24px]">
               {/* Card 1: Total Applied */}
-              <div className="flex-1 min-h-[94px] p-2 sm:p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-center gap-1 sm:gap-[8px]">
+              <div className="flex-1 min-h-[94px] p-2 sm:p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-start gap-1 sm:gap-[8px]">
                 <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.length
                     : (applicationStats.totalApplied || jobs.length)}
                 </div>
-                <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-center">
+                <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-left">
                   Total Applied
                 </div>
               </div>
               {/* Card 2: Shortlisted */}
-              <div className="flex-1 min-h-[94px] p-2 sm:p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-center gap-1 sm:gap-[8px]">
+              <div className="flex-1 min-h-[94px] p-2 sm:p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-start gap-1 sm:gap-[8px]">
                 <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.filter(
@@ -539,7 +539,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       ).length
                     : (applicationStats.shortlisted || 0)}
                 </div>
-                <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-center">
+                <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-left">
                   Shortlisted
                 </div>
               </div>

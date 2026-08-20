@@ -61,7 +61,7 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
     <div
       className={`box-border flex flex-col justify-center items-start px-[16px] w-full cursor-pointer transition-all mx-auto ${
         isQuickChat
-          ? `py-[16px] ${!isFirst ? 'border-t border-solid border-[#EEF2FF]' : ''} rounded-none mb-0`
+          ? `py-[8px] ${!isFirst ? 'border-t border-solid border-[#EEF2FF]' : ''} rounded-none mb-0`
           : 'mb-[16px] rounded-[24px]'
       } ${!isMobile && isSelected ? 'bg-chat-active-item-bg' : 'bg-[#FFFFFF]'}`}
     >
@@ -121,10 +121,11 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
               </p>
             )}
           </div>
+
         </div>
 
         {/* GROUP 2: Last Message */}
-        <div className={`${isQuickChat ? 'mt-[-14px]' : 'mt-[8px]'} pl-[48px] flex items-center justify-between w-full`}>
+        <div className={`${isQuickChat ? 'mt-[-4px]' : 'mt-[8px]'} pl-[48px] flex items-center justify-between w-full`}>
           <p className={`font-['Poppins'] ${isQuickChat ? 'text-[12px] leading-[16px]' : 'text-[14px] leading-[20px]'} truncate flex-1 pr-[8px] ${displayUnread > 0 ? 'font-semibold text-[#111827]' : 'font-normal text-[#6B7280]'}`}>
             {isTyping ? (
               <span className="text-[#10B981] font-medium inline-flex items-center gap-1.5">

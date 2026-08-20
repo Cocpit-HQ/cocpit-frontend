@@ -85,6 +85,12 @@ export function ChatList({
   const { data: session } = useSession();
 
   useEffect(() => {
+    if (chatFilter) {
+      setSelectedFilter(chatFilter);
+    }
+  }, [chatFilter]);
+
+  useEffect(() => {
     console.log("ChatList Rendered:", {
       currentUserId: session?.user?.id,
       activeProfile: activeProfile?.type,
@@ -252,7 +258,7 @@ export function ChatList({
   const rowVirtualizer = useVirtualizer({
     count: filteredChats.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => isQuickChat ? 74 : 88, // 74px for Quick Chat, 88px (80+8) for main list
+    estimateSize: () => isQuickChat ? 68 : 88, // 68px for Quick Chat, 88px (80+8) for main list
     overscan: 6,
   });
 
@@ -307,7 +313,7 @@ export function ChatList({
         )}
 
         {/* Search Bar (Frame 2608500) */}
-        <div className={isQuickChat ? "p-[8px]" : ""}>
+        <div className={isQuickChat ? "px-[16px] pb-[8px] pt-[0px]" : ""}>
           <div className="box-border flex flex-row justify-between items-center px-[16px] py-[8px] gap-[10px] w-full h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] relative">
             <Search className="w-[20px] h-[20px] text-[#6B7280]" />
             <input
@@ -321,7 +327,7 @@ export function ChatList({
         </div>
 
         {isQuickChat && (
-          <div className="relative w-full h-[36px] border-b border-[#EEF2FF] mt-2 mb-1">
+          <div className="relative w-full h-[36px] border-b border-[#EEF2FF] mt-0 mb-0">
             <button 
               onClick={() => setActiveTab('chat')}
               className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
@@ -395,7 +401,7 @@ export function ChatList({
         )}
       </div>
 
-      <div ref={parentRef} className="flex flex-col flex-1 w-full overflow-y-auto pb-24 md:pb-0 scrollbar-hide relative gap-[8px]">
+      <div ref={parentRef} className={`flex flex-col flex-1 w-full overflow-y-auto ${isQuickChat ? 'pb-[20px]' : 'pb-24 md:pb-0'} scrollbar-hide relative gap-[8px]`}>
         {/* ... */}
         {isLoading && <ConversationListSkeleton />}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}

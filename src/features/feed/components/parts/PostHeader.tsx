@@ -65,7 +65,7 @@ export const PostHeader = ({
   const hasValidAvatar = Boolean(authorAvatar && authorAvatar !== '/assets/pngegg.png' && !imgError);
   const initial = author ? author.charAt(0).toUpperCase() : 'U';
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
-  const isRepostWithoutThoughts = !!shared_post && (!content || content.trim() === '');
+  const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;

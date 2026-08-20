@@ -28,7 +28,11 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   const { data: myProfile } = useMyProfile();
 
   const isUserVerified = activeProfile?.type === 'USER' && myProfile?.user?.is_identity_verified;
-  const isCompanyVerified = activeProfile?.type === 'COMPANY' && activeProfile?.verification_status === 'VERIFIED';
+  
+  // Bugfix ID-572: Companies can post jobs without verification
+  // const isCompanyVerified = activeProfile?.type === 'COMPANY' && activeProfile?.verification_status === 'VERIFIED';
+  const isCompanyVerified = activeProfile?.type === 'COMPANY';
+  
   const isVerified = Boolean(isUserVerified || isCompanyVerified);
 
   const {

@@ -19,6 +19,15 @@ export const getReportReasons = async (): Promise<ReportReason[]> => {
 };
 
 export const createReport = async (data: CreateReportRequest): Promise<{ message: string }> => {
-  const response = await api.post<{ message: string }>("/report/reports", data);
+  const headers: Record<string, string> = {};
+  
+  if (api.defaults.headers.common["x-actor-type"]) {
+    headers["x-actor-type"] = api.defaults.headers.common["x-actor-type"] as string;
+  }
+  if (api.defaults.headers.common["x-actor-id"]) {
+    headers["x-actor-id"] = api.defaults.headers.common["x-actor-id"] as string;
+  }
+
+  const response = await api.post<{ message: string }>("/report/reports", data, { headers });
   return response.data;
 };

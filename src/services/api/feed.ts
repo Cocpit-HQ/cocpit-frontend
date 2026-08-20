@@ -88,6 +88,7 @@ export interface BackendPost {
   like_count: number;
   comment_count: number;
   share_count: number;
+  external_share_count?: number;
   is_liked: boolean;
   is_reposted?: boolean;
   repost_id?: string | null;
@@ -115,6 +116,7 @@ export interface BackendPost {
     like_count?: number;
     comment_count?: number;
     share_count?: number;
+    external_share_count?: number;
     is_liked?: boolean;
     is_reposted?: boolean;
     is_commented?: boolean;

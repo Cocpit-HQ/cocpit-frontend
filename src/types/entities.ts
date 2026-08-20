@@ -154,6 +154,7 @@ export interface Post {
   likedUsers?: { username: string; avatar_url: string | null }[];
   comments: string;
   shares: string;
+  externalShares?: string | number;
   commentData?: Comment[];
   category?: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article';
   visibility?: PostVisibility;

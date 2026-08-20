@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
+import { universalShare } from "@/services/api/shareService";
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
 
 export interface ShareUser {
@@ -196,6 +197,9 @@ export default function CocpitShareModel({
       // Only invalidate conversations (sidebar) — the socket event updates the message list in real time
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
+      // Note: We don't call universalShare({ shareMethod: 'message' }) here because 
+      // sendMessage already tracks the share via shared_post_id on the backend.
+
       onShare?.(selectedUsers);
       handleClose();
     } catch (err: any) {
@@ -223,6 +227,9 @@ export default function CocpitShareModel({
             `mailto:?subject=Check this out&body=${encodeURIComponent(shareUrl)}`,
             "_blank"
           );
+          if (postId) {
+            universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
+          }
         },
       },
       {
@@ -233,6 +240,9 @@ export default function CocpitShareModel({
             `https://wa.me/?text=${encodeURIComponent(shareUrl)}`,
             "_blank"
           );
+          if (postId) {
+            universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
+          }
         },
       },
       {
@@ -243,10 +253,13 @@ export default function CocpitShareModel({
             `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
             "_blank"
           );
+          if (postId) {
+            universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
+          }
         },
       },
     ],
-    [shareUrl, toast]
+    [shareUrl, toast, postId]
   );
 
   return (

@@ -34,29 +34,22 @@ export function DeactivateAccountModal({ isOpen, onClose, hasCompanyAccount = fa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
-      <div className="relative flex flex-col items-center bg-white rounded-[24px] p-4 w-[450px] max-w-full shadow-lg pb-6">
+      <div className="relative flex flex-col items-center bg-white rounded-[24px] p-4 w-[328px] max-w-full shadow-lg">
         
-        {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[#FF6B6B] hover:opacity-80 transition-opacity"
-        >
-          <X className="w-6 h-6" />
-        </button>
-
         {/* Title & Description */}
-        <div className="flex flex-col items-center gap-2 mb-4 w-[418px] mt-2">
-          <h2 className="text-[18px] font-medium text-black leading-[26px] text-center m-0">Deactivate your account</h2>
-          <p className="text-[14px] font-normal text-[#6B7280] leading-[20px] text-center m-0 px-2">
-            Deactivating your account will hide your profile, posts, and comments from other users. 
-            {hasCompanyAccount && " Any companies you own will also be deactivated. "}
-            You can reactivate your account at any time by logging back in.
+        <div className="flex flex-col items-center gap-[16px] mb-4 w-[296px] mt-2">
+          <h2 className="w-[234px] h-[26px] flex items-center justify-center text-[18px] font-medium text-black leading-[26px] text-center m-0">Deactivate your account?</h2>
+          <p className="w-[296px] h-[140px] flex items-center justify-center text-[14px] font-normal text-[#6B7280] leading-[20px] text-center m-0">
+            Your profile will be hidden from cocpit. Access to organizations you're associated with will be removed, and organizations you own will be deactivated. Your followers, posts, and data will be retained and restored if you reactivate your account.
+          </p>
+          <p className="w-[296px] h-[32px] flex items-center justify-center text-[12px] font-medium text-black leading-[16px] text-center m-0">
+            You can reactivate your account anytime during the recovery period by logging in again
           </p>
         </div>
 
         {errorMsg && <p className="text-[14px] text-[#FF6B6B] mb-2">{errorMsg}</p>}
 
-        <div className="w-[418px] mb-4">
+        <div className="w-[296px] mb-4">
           <input
             type="password"
             className="w-full p-2.5 rounded-[12px] border border-[#E5E7EB] text-[14px] focus:outline-none focus:ring-1 focus:ring-[#818CF8]"
@@ -67,22 +60,24 @@ export function DeactivateAccountModal({ isOpen, onClose, hasCompanyAccount = fa
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-row justify-center items-center w-[418px] h-[40px] gap-4 mt-4">
+        <div className="flex flex-row items-start justify-center w-[296px] h-[40px] gap-[16px]">
           <button 
             onClick={onClose} 
-            className="flex items-center justify-center w-[140px] h-[40px] rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-normal leading-[20px] transition-colors hover:bg-indigo-50"
+            className="box-border flex flex-row items-center justify-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] rounded-[24px] border border-[#6366F1] bg-[#FFFFFF] text-[#6366F1] transition-colors hover:bg-indigo-50"
           >
-            Cancel
+            <span className="w-[50px] h-[20px] text-[14px] font-normal leading-[20px] text-center font-['Poppins']">Cancel</span>
           </button>
           
           <button 
             onClick={handleDeactivate} 
             disabled={!password || deactivateMutation.isPending}  
-            className={`flex items-center justify-center w-[140px] h-[40px] rounded-[24px] text-[14px] font-normal leading-[20px] transition-colors ${
-              !password ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white'
+            className={`box-border flex flex-row items-center justify-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] rounded-[24px] transition-colors ${
+              !password ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : 'bg-[#FF6B6B] text-[#FFFFFF] hover:opacity-90 border border-[#FFFFFF]'
             }`}
           >
-            {deactivateMutation.isPending ? "Deactivating..." : "Deactivate"}
+            <span className="w-[77px] h-[20px] text-[14px] font-normal leading-[20px] text-center font-['Poppins']">
+              {deactivateMutation.isPending ? "Wait..." : "Deactivate"}
+            </span>
           </button>
         </div>
         

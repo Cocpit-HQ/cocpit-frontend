@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const formatCompanyName = (name?: string): string => {
   if (!name) return "";
@@ -33,7 +33,7 @@ import { useProfile } from "../hooks/useProfile"
 import { Icon } from "@iconify/react"
 import { getUserPosts } from "../services/profile.service"
 import { toggleSavePost } from "../services/profile.service"
-import { toggleLike, updatePost, deletePost } from "../services/profile.service"
+import { toggleLike, updatePost, deletePost, createRepost } from "../services/profile.service"
 import { mapPublicPostToPost } from "@/lib/mappers/public-profile.mapper"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import { Post } from "@/types/entities"
@@ -97,14 +97,15 @@ const FilterChip = ({ label, active, onClick }: { label: string, active: boolean
   </button>
 )
 
-const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDelete, onEdit, currentUser, activeTab, targetProfile }: {
+const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDelete, onEdit, onRepost, currentUser, activeTab, targetProfile }: {
   post: Post,
-  onLike?: () => void,
-  onSave?: () => void,
+  onLike?: (targetId: string) => void,
+  onSave?: (targetId: string, isSaved: boolean) => void,
   onShare?: () => void,
   onTogglePrivacy?: () => void,
   onDelete?: () => void,
   onEdit?: () => void,
+  onRepost?: () => void,
   currentUser?: any,
   activeTab?: string,
   targetProfile?: any
@@ -113,16 +114,19 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
   const { data: session } = useSession();
   const isOwner = post.authorId === currentUser?.id || post.author === currentUser?.name;
   const router = useRouter();
-  const [showComments, setShowComments] = useState(activeTab === 'Comments');
-  const [commentsCount, setCommentsCount] = useState(parseInt(post.comments) || 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const image = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
-  const videoSrc = post.videoSrc || null;
-  const isArticlePost = post.category === 'Article' || post.post_type === 'article';
-  const isPollPost = Boolean(post.poll);
-  const articleExcerpt = post.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
-  const pollQuestion = articleExcerpt || post.title || "Untitled poll";
-  const pollOptions = post.poll?.options?.slice(0, 4) || [];
+  const isRepostWithoutThoughts = !!post.shared_post && (!post.content || post.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
+  const mainPost = isRepostWithoutThoughts ? post.shared_post! : post;
+  const [showComments, setShowComments] = useState(activeTab === 'Comments');
+  const [commentsCount, setCommentsCount] = useState(parseInt(mainPost.comments) || 0);
+
+  const image = mainPost?.imageSrc || (mainPost?.images && mainPost.images.length > 0 ? mainPost.images[0] : null);
+  const videoSrc = mainPost?.videoSrc || null;
+  const isArticlePost = mainPost?.category === 'Article' || mainPost?.post_type === 'article';
+  const isPollPost = Boolean(mainPost?.poll);
+  const articleExcerpt = mainPost?.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
+  const pollQuestion = articleExcerpt || mainPost?.title || "Untitled poll";
+  const pollOptions = mainPost?.poll?.options?.slice(0, 4) || [];
 
   const handleToggleComments = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -137,8 +141,9 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
           <div className="w-5 h-5 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden shrink-0 font-['Poppins'] select-none">
             {targetProfile.avatar_url && targetProfile.avatar_url !== '/assets/pngegg.png' ? (
               <img src={targetProfile.avatar_url} alt={targetProfile.full_name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            ) : null}
-            <span>{(targetProfile.full_name || targetProfile.account_name || 'U').charAt(0).toUpperCase()}</span>
+            ) : (
+              <span>{(targetProfile.full_name || targetProfile.account_name || 'U').charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <span className="font-[family-name:var(--font-poppins)] text-xs text-muted-foreground font-medium">
             <span className="text-foreground font-semibold">{targetProfile.full_name || targetProfile.account_name}</span> commented on this
@@ -146,36 +151,45 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
         </div>
       )}
 
+      {/* Repost Header */}
+      {isRepostWithoutThoughts && (
+        <div className="flex items-center gap-1 text-[#6B7280] text-[12px] font-poppins px-4 pt-3 pb-1 select-none">
+          <Icon icon="lucide:repeat" className="w-3.5 h-3.5 text-[#6B7280]" style={{ strokeWidth: '1.5px' }} />
+          <span>{post.author} reposted</span>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex w-full flex-row items-start justify-between px-4 pt-4">
+      <div className={`flex w-full flex-row items-start justify-between px-4 ${isRepostWithoutThoughts ? 'pt-1' : 'pt-4'}`}>
         <div 
           className="flex items-start gap-2 cursor-pointer group"
           onClick={(e) => {
             e.stopPropagation();
-            const authorLink = post.isCompanyPost ? `/organization/${post.authorSlug}` : `/profile/${post.authorSlug || post.authorId}`;
+            const authorLink = mainPost.isCompanyPost ? `/organization/${mainPost.authorSlug}` : `/profile/${mainPost.authorSlug || mainPost.authorId}`;
             router.push(authorLink);
           }}
         >
           <div className="w-8 h-8 rounded-full overflow-hidden bg-[#EEF2FF] text-[#6366F1] relative flex-shrink-0 mt-0.5 flex items-center justify-center font-semibold text-xs font-['Poppins'] select-none">
-            {post.authorAvatar && post.authorAvatar !== '/assets/pngegg.png' ? (
+            {mainPost.authorAvatar && mainPost.authorAvatar !== '/assets/pngegg.png' ? (
               <img
-                src={post.authorAvatar}
-                alt={post.author}
+                src={mainPost.authorAvatar}
+                alt={mainPost.author}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
-            ) : null}
-            <span>{(post.author || 'U').charAt(0).toUpperCase()}</span>
+            ) : (
+              <span>{(mainPost.author || 'U').charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden flex-1">
             <div className="flex items-center gap-1">
               <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight truncate">
-                {post.isCompanyPost ? formatCompanyName(post.author) : post.author}
+                {mainPost.isCompanyPost ? formatCompanyName(mainPost.author) : mainPost.author}
               </span>
               {/* @ts-ignore - Assuming isVerified might be added to Post type */}
-              {(post as any).isVerified && (
+              {(mainPost as any).isVerified && (
                 <div className="relative w-[20px] h-[19px] flex-shrink-0">
                   <svg
                     width="20"
@@ -199,27 +213,27 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 </div>
               )}
             </div>
-            <div className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
-              {post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}
+            <div className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block" title={mainPost.authorHeadline || mainPost.title || (mainPost.isCompanyPost ? 'Organization' : '')}>
+              {mainPost.authorHeadline || mainPost.title || (mainPost.isCompanyPost ? 'Organization' : '')}
             </div>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
-              {post.location && (() => {
-                const displayLoc = post.location.split(',')[0].trim();
+              {mainPost.location && (() => {
+                const displayLoc = mainPost.location.split(',')[0].trim();
                 const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
                 return (
                   <>
-                    <span title={post.location}>{truncatedLoc}</span>
+                    <span title={mainPost.location}>{truncatedLoc}</span>
                     <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
                   </>
                 );
               })()}
-              <span className="flex-none">{post.timeAgo || '6 days ago'}</span>
+              <span className="flex-none">{mainPost.timeAgo || post.timeAgo || '6 days ago'}</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {post.tags && post.tags.length > 0 && (
+          {mainPost.tags && mainPost.tags.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
                 <button className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors outline-none text-[#6B7280] hover:text-[#6366F1] data-[state=open]:text-[#6366F1]">
@@ -232,7 +246,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 sideOffset={8}
               >
                 <div className="flex flex-col gap-1">
-                  {post.tags.map((tag: any, idx: number) => (
+                  {mainPost.tags.map((tag: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-[12px] transition-colors cursor-pointer">
                       <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50">
                         {tag.avatar_url || tag.avatar ? (
@@ -330,7 +344,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
             </p>
           ) : (
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap">
-              {post.content}
+              {mainPost.content}
             </p>
           )}
         </div>
@@ -338,7 +352,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
 
 
         {/* Shared Post Content */}
-        {post.shared_post && (
+        {(!isRepostWithoutThoughts && post.shared_post) && (
           <div className="w-full border border-border rounded-[16px] p-3 mt-2 mb-4 bg-card">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
@@ -349,8 +363,9 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
-                ) : null}
-                <span>{(post.shared_post.author || 'U').charAt(0).toUpperCase()}</span>
+                ) : (
+                  <span>{(post.shared_post.author || 'U').charAt(0).toUpperCase()}</span>
+                )}
               </div>
               <div className="flex flex-col">
                 <span className="font-[family-name:var(--font-poppins)] font-semibold text-[14px] text-foreground truncate max-w-[200px]">
@@ -407,7 +422,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
           </div>
         )}
 
-        {!post.shared_post && (
+        {(!post.shared_post || isRepostWithoutThoughts) && (
           isPollPost ? (
             <div className="mb-4 rounded-[20px] border border-[#E3E9FF] bg-[#F8FAFF] p-4">
               <div className="flex items-center justify-between gap-2 mb-4">
@@ -415,7 +430,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                   Poll
                 </span>
                 <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
-                  {post.poll?.total_votes || 0} votes
+                  {mainPost.poll?.total_votes || 0} votes
                 </span>
               </div>
 
@@ -437,9 +452,9 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 ))}
               </div>
 
-              {post.poll && post.poll.options.length > pollOptions.length && (
+              {mainPost.poll && mainPost.poll.options.length > pollOptions.length && (
                 <div className="pt-3 text-[11px] leading-[16px] text-muted-foreground font-[family-name:var(--font-poppins)]">
-                  +{post.poll.options.length - pollOptions.length} more option{post.poll.options.length - pollOptions.length === 1 ? "" : "s"}
+                  +{mainPost.poll.options.length - pollOptions.length} more option{mainPost.poll.options.length - pollOptions.length === 1 ? "" : "s"}
                 </div>
               )}
             </div>
@@ -447,19 +462,19 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
             <>
               <div className="relative -mx-4 mb-3 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px]">
                 {image ? (
-                  <Image src={image} alt={post.title || "Article cover"} fill className="object-cover" />
+                  <Image src={image} alt={mainPost.title || "Article cover"} fill className="object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#DDE5FF] flex items-center justify-center px-8 text-center">
                     <span className="text-[20px] leading-[28px] text-[#6366F1] font-semibold font-[family-name:var(--font-poppins)] line-clamp-3">
-                      {post.title || "Untitled Article"}
+                      {mainPost.title || "Untitled Article"}
                     </span>
                   </div>
                 )}
               </div>
               <div className="mb-4">
-                <Link href={`/post/${post.id}`} className="block">
+                <Link href={`/post/${mainPost.id}`} className="block">
                   <h3 className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] leading-[24px] text-foreground line-clamp-2">
-                    {post.title || "Untitled Article"}
+                    {mainPost.title || "Untitled Article"}
                   </h3>
                 </Link>
               </div>
@@ -469,7 +484,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
               className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-black sm:h-[420px] md:h-[501px] cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/post/${post.id}`);
+                router.push(`/post/${mainPost.id}`);
               }}
             >
               <video
@@ -480,28 +495,28 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 preload="metadata"
               />
             </div>
-          ) : ((post.images && post.images.length > 0) || post.imageSrc) ? (
+          ) : ((mainPost.images && mainPost.images.length > 0) || mainPost.imageSrc) ? (
             <div 
               className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px] cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/post/${post.id}`);
+                router.push(`/post/${mainPost.id}`);
               }}
             >
-              {post.images && post.images.length > 1 ? (
-                <PostCarousel images={post.images} />
+              {mainPost.images && mainPost.images.length > 1 ? (
+                <PostCarousel images={mainPost.images} />
               ) : (
-                <Image src={post.imageSrc || post.images?.[0] || ''} alt="Post content" fill className="object-cover" />
+                <Image src={mainPost.imageSrc || mainPost.images?.[0] || ''} alt="Post content" fill className="object-cover" />
               )}
             </div>
           ) : null
         )}
 
-        {Number(post.likes || 0) > 0 && (
+        {Number(mainPost.likes || 0) > 0 && (
           <div className="pt-3 px-0 mb-4 border-t border-transparent flex items-center gap-2">
-            {post.likedUsers && post.likedUsers.length > 0 && (() => {
+            {mainPost.likedUsers && mainPost.likedUsers.length > 0 && (() => {
               const viewerUsername = (isCompany ? activeProfile?.slug : ((activeProfile as any)?.account_name || (session?.user as any)?.username))?.toLowerCase();
-              const filteredLikedUsers = post.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
+              const filteredLikedUsers = mainPost.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
               if (filteredLikedUsers.length === 0) return null;
               return (
                 <div className="flex -space-x-1.5 overflow-hidden">
@@ -516,21 +531,22 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
                       />
-                    ) : null}
-                    <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                    ) : (
+                      <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
                   ))}
                 </div>
               );
             })()}
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground">
-              {Number(post.likes || 0) === 1 && post.isLiked ? (
-                `${Number(post.likes || 0)} like`
+              {Number(mainPost.likes || 0) === 1 && mainPost.isLiked ? (
+                `${Number(mainPost.likes || 0)} like`
               ) : (
                 <>
-                  Liked by <span className="font-semibold hover:underline cursor-pointer">@{post.sampleLikerUsername || 'someone'}</span>
-                  {Number(post.likes || 0) > 1 && (
-                    <> and <span className="font-semibold hover:underline cursor-pointer">{Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}</span></>
+                  Liked by <span className="font-semibold hover:underline cursor-pointer">@{mainPost.sampleLikerUsername || 'someone'}</span>
+                  {Number(mainPost.likes || 0) > 1 && (
+                    <> and <span className="font-semibold hover:underline cursor-pointer">{Number(mainPost.likes || 0) - 1} {Number(mainPost.likes || 0) - 1 === 1 ? 'other' : 'others'}</span></>
                   )}
                 </>
               )}
@@ -542,7 +558,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
         <div className="flex justify-between items-center px-0 w-full h-10">
           <div className="flex items-center gap-[16px]">
             <div
-              onClick={(e) => { e.stopPropagation(); onLike?.(); }}
+              onClick={(e) => { e.stopPropagation(); onLike?.(mainPost.id); }}
               className="flex items-center gap-1.5 cursor-pointer group"
             >
               <svg
@@ -552,10 +568,10 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 viewBox="0 0 24 24"
                 className={cn(
                   "transition-all",
-                  post.isLiked ? "text-primary" : "text-foreground group-hover:text-primary"
+                  mainPost.isLiked ? "text-primary" : "text-foreground group-hover:text-primary"
                 )}
               >
-                {post.isLiked ? (
+                {mainPost.isLiked ? (
                   <>
                     <path
                       fill="currentColor"
@@ -575,7 +591,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                   />
                 )}
               </svg>
-              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{post.likes || 0}</span>
+              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{mainPost.likes || 0}</span>
             </div>
             <div
               onClick={handleToggleComments}
@@ -598,7 +614,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
               </svg>
               <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{commentsCount}</span>
             </div>
-            <div className="flex items-center gap-1.5 cursor-pointer group">
+            <div className="flex items-center gap-1.5 cursor-pointer group" onClick={(e) => { e.stopPropagation(); onRepost?.(); }}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -612,7 +628,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                   <path d="M18.5 5.5h-8c-3.287 0-4.931 0-6.038.908a4 4 0 0 0-.554.554C3 8.07 3 9.712 3 13" />
                 </g>
               </svg>
-              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{post.shares || 0}</span>
+              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{mainPost.shares || 0}</span>
             </div>
             <div className="flex items-center cursor-pointer group" onClick={(e) => { e.stopPropagation(); onShare?.(); }}>
               <svg
@@ -626,21 +642,21 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
               </svg>
             </div>
           </div>
-          <div
-            onClick={(e) => { e.stopPropagation(); onSave?.(); }}
-            className="flex items-center cursor-pointer group"
-          >
-            <svg
+            <div
+              onClick={(e) => { e.stopPropagation(); onSave?.(mainPost.id, !!mainPost.is_saved); }}
+              className="flex items-center justify-center cursor-pointer group"
+            >
+              <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
               height="20"
               viewBox="0 0 24 24"
               className={cn(
                 "transition-all",
-                post.is_saved ? "text-[#6366F1]" : "text-[#000000] group-hover:text-[#6366F1]"
+                mainPost.is_saved ? "text-[#6366F1]" : "text-[#000000] group-hover:text-[#6366F1]"
               )}
             >
-              {post.is_saved ? (
+              {mainPost.is_saved ? (
                 <path
                   fill="currentColor"
                   fillRule="evenodd"
@@ -666,7 +682,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
         {showComments && (
           <div className="w-full mt-4 border-t border-[#EEF2FF] pt-4">
             <CommentSection
-              postId={post.id}
+              postId={mainPost.id}
               isPostOwner={isOwner}
               incrementCommentCount={() => setCommentsCount(prev => prev + 1)}
               decrementCommentCount={() => setCommentsCount(prev => prev - 1)}
@@ -681,12 +697,14 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
 export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'Post' | 'Repost' | 'Like' | 'Comments' | 'Private post' | 'Save'>('Post')
-  const [posts, setPosts] = useState<Post[]>([])
+const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [saveModalPostId, setSaveModalPostId] = useState<string | null>(null)
-  const [shareModalPostId, setShareModalPostId] = useState<string | null>(null)
+  const [shareModalPostId, setShareModalPostId] = useState<string | null>(null);
+  const sharedPosts = useRef<Set<string>>(new Set());
+  const [undoRepostPost, setUndoRepostPost] = useState<Post | null>(null);
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
   const { setEditMode } = useUIStore()
   const { data: targetProfile, isLoading: isTargetProfileLoading } = useProfile(userId)
@@ -715,27 +733,110 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
     }
   }, []);
 
-  const handleToggleLike = async (postId: string) => {
+  const handleToggleLike = async (postId: string, originalWrapperId: string) => {
     try {
       const result = await toggleLike(postId);
-      setPosts(prev => prev.map(p =>
-        p.id === postId ? { ...p, isLiked: result.liked, likes: result.likeCount } : p
-      ));
+      setPosts(prev => prev.map(p => {
+        if (p.id === originalWrapperId) {
+          const isRepostWithoutThoughts = !!p.shared_post && (!p.content || p.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
+          if (isRepostWithoutThoughts && p.shared_post) {
+            return {
+              ...p,
+              shared_post: {
+                ...p.shared_post,
+                isLiked: result.liked,
+                likes: result.likeCount
+              }
+            };
+          } else {
+            return {
+              ...p,
+              isLiked: result.liked,
+              likes: result.likeCount
+            };
+          }
+        }
+        return p;
+      }));
     } catch (error) {
       console.error("Failed to toggle like:", error);
     }
+  }
+
+  const handleToggleRepost = async (post: Post) => {
+    try {
+      const isRepostWithoutThoughts = !!post.shared_post && (!post.content || post.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
+      const mainPost = isRepostWithoutThoughts ? post.shared_post! : post;
+      
+      if (mainPost.isReposted) {
+        setUndoRepostPost(post);
+        return;
+      }
+      
+      const targetPostId = mainPost.id;
+      const res = await createRepost(targetPostId) as any;
+      
+      if (res.reposted !== false) {
+        setPosts(prev => prev.map(p => {
+             if (p.id === post.id) {
+               if (isRepostWithoutThoughts && p.shared_post) {
+                 return { ...p, shared_post: { ...p.shared_post, shares: ((Number(p.shared_post.shares) || 0) + 1).toString(), isReposted: true, repostId: res.post_id } };
+               }
+               return { ...p, shares: ((Number(p.shares) || 0) + 1).toString(), isReposted: true, repostId: res.post_id };
+             }
+             return p;
+          }));
+      }
+    } catch (error) {
+      console.error("Failed to toggle repost:", error);
+    }
   };
 
-  const handleToggleSave = async (postId: string) => {
+  const confirmUndoRepost = async () => {
+    if (!undoRepostPost) return;
+    const post = undoRepostPost;
+    setUndoRepostPost(null);
+    try {
+      const isRepostWithoutThoughts = !!post.shared_post && (!post.content || post.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
+      const targetPostId = isRepostWithoutThoughts ? post.shared_post!.id : post.id;
+      
+      const res = await createRepost(targetPostId) as any;
+      if (res.reposted === false) {
+        if (activeTab === 'Repost') {
+          setPosts(prev => prev.filter(p => p.id !== post.id));
+        } else {
+          setPosts(prev => prev.map(p => {
+             if (p.id === post.id) {
+               if (isRepostWithoutThoughts && p.shared_post) {
+                 return { ...p, shared_post: { ...p.shared_post, shares: Math.max(0, (Number(p.shared_post.shares) || 1) - 1).toString(), isReposted: false, repostId: null } };
+               }
+               return { ...p, shares: Math.max(0, (Number(p.shares) || 1) - 1).toString(), isReposted: false, repostId: null };
+             }
+             return p;
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to undo repost:", error);
+    }
+  };
+
+  const handleToggleSave = async (postId: string, originalWrapperId: string) => {
     try {
       const result = await toggleSavePost(postId);
       setPosts(prev => {
-        const updated = prev.map(p =>
-          p.id === postId ? { ...p, is_saved: result.saved } : p
-        );
-        // If we are on the Save tab and it was unsaved, remove it from list
+        const updated = prev.map(p => {
+          if (p.id === originalWrapperId) {
+            const isRepostWithoutThoughts = !!p.shared_post && (!p.content || p.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
+            if (isRepostWithoutThoughts && p.shared_post) {
+              return { ...p, shared_post: { ...p.shared_post, is_saved: result.saved } };
+            }
+            return { ...p, is_saved: result.saved };
+          }
+          return p;
+        });
         if (activeTab === 'Save' && !result.saved) {
-          return updated.filter(p => p.id !== postId);
+          return updated.filter(p => p.id !== originalWrapperId);
         }
         return updated;
       });
@@ -744,13 +845,13 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
     }
   };
 
-  const handleSaveClick = async (postId: string, isSaved: boolean) => {
+  const handleSaveClick = async (postId: string, isSaved: boolean, originalWrapperId: string) => {
     if (!isSaved) {
       setSaveModalPostId(postId);
       return;
     }
 
-    await handleToggleSave(postId);
+    await handleToggleSave(postId, originalWrapperId);
   };
 
   const handleTogglePrivacy = async (postId: string, currentVisibility: string) => {
@@ -761,7 +862,6 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
         const updated = prev.map(p =>
           p.id === postId ? { ...p, visibility: newVisibility as any } : p
         );
-        // If visibility changed, it might need to be removed from the current tab
         if (activeTab === 'Private post' && newVisibility === 'public') {
           return updated.filter(p => p.id !== postId);
         }
@@ -796,7 +896,6 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      // Don't fetch if we're still loading profile data or target profile
       if (isProfileLoading || !targetProfile) return;
 
       setLoading(true)
@@ -807,38 +906,28 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
 
         let mappedPosts: Post[] = [];
         if (isOwner) {
-          // If owner, use the private 'me' endpoint with explicit filter
           const data = await getUserPosts({ filter: activeTab as any });
           mappedPosts = data.posts.map(mapProfilePostToPost);
         } else {
-          // For visitors, use the public endpoint with 'All' category, then filter client-side
           const data = await getPublicProfilePosts(userId, 'All');
           mappedPosts = data.posts.map(mapPublicPostToPost);
         }
 
-        // Visitors should never see private posts
         if (!isOwner) {
           mappedPosts = mappedPosts.filter(p => p.visibility !== 'private');
         }
 
-        // Client-side safeguard: filter by author and tab type
         if (activeTab === 'Post') {
-          // In Post tab, only show PUBLIC posts shared by the target user (exclude reposts)
           mappedPosts = mappedPosts.filter(p => !p.shared_post && (String(p.authorId) === String(targetId) || p.author === targetName) && p.visibility !== 'private');
         } else if (activeTab === 'Repost') {
-          // In Repost tab, only show posts that ARE reposts (have shared_post) and were shared by the target user
           mappedPosts = mappedPosts.filter(p => p.shared_post && (String(p.authorId) === String(targetId) || p.author === targetName));
         } else if (activeTab === 'Like') {
-          // In Like tab, only show posts the user has liked
           mappedPosts = mappedPosts.filter(p => p.isLiked);
         } else if (activeTab === 'Comments') {
-          // In Comments tab, only show posts where the user has actually commented
           mappedPosts = mappedPosts.filter(p => p.is_commented);
         } else if (activeTab === 'Private post') {
-          // In Private tab, only show private posts (visitors shouldn't see private posts)
           mappedPosts = isOwner ? mappedPosts.filter(p => p.visibility === 'private') : [];
         } else if (activeTab === 'Save') {
-          // In Save tab, only show posts that the user has actually saved
           mappedPosts = mappedPosts.filter(p => p.is_saved);
         }
 
@@ -883,10 +972,8 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
             <div className="flex flex-row gap-4 w-full overflow-x-auto scrollbar-hide py-1">
               <FilterChip label="Post" active={activeTab === 'Post'} onClick={() => setActiveTab('Post')} />
               <FilterChip label="Repost" active={activeTab === 'Repost'} onClick={() => setActiveTab('Repost')} />
-              {/* <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} /> */}
               <FilterChip label="Comments" active={activeTab === 'Comments'} onClick={() => setActiveTab('Comments')} />
               <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
-              {/* <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} /> */}
             </div>
           )}
         </div>
@@ -905,11 +992,12 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                 <PublicPostCard
                   key={post.id}
                   post={post}
-                  onLike={() => handleToggleLike(post.id)}
-                  onSave={() => handleSaveClick(post.id, !!post.is_saved)}
+                  onLike={(targetId) => handleToggleLike(targetId, post.id)}
+                  onSave={(targetId, isSaved) => handleSaveClick(targetId, isSaved, post.id)}
                   onShare={() => setShareModalPostId(post.id)}
                   onTogglePrivacy={() => handleTogglePrivacy(post.id, post.visibility || 'public')}
                   onDelete={() => handleDeletePost(post.id)}
+                  onRepost={() => handleToggleRepost(post)}
                   onEdit={() => {
                     if (post.category === 'Article' || Boolean(post.articleBody)) {
                       router.push(`/article/edit/${post.id}`);
@@ -971,10 +1059,15 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           isOpen={!!shareModalPostId}
           onClose={() => setShareModalPostId(null)}
           postId={shareModalPostId}
-          onShare={() => {
-            setPosts(prev => prev.map(p => 
-              p.id === shareModalPostId ? { ...p, shares: String(Number(p.shares) + 1) } : p
-            ));
+          onShare={(selectedIds) => {
+            if (shareModalPostId) {
+              setPosts(prev => prev.map(p => {
+                if (p.id === shareModalPostId) {
+                  return { ...p, externalShares: (Number(p.externalShares) || 0) + selectedIds.length };
+                }
+                return p;
+              }));
+            }
           }}
         />
       )}
@@ -984,6 +1077,14 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
         onClose={() => setPostToDelete(null)}
         onConfirm={confirmDeletePost}
         isDeleting={isDeletingPost}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={!!undoRepostPost}
+        onClose={() => setUndoRepostPost(null)}
+        onConfirm={confirmUndoRepost}
+        title="Delete Repost"
+        description="Are you sure you want to delete this repost?"
       />
         </div>
       </div>

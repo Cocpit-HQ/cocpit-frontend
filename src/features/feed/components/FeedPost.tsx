@@ -53,19 +53,26 @@ export const FeedPost = (props: FeedPostProps) => {
   const { updatePostInFeed, addPost, deletePost: globalDeletePost } = useFeed(false);
   const { toast } = useToast();
 
+  const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
+  const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId } : props;
+
   const {
-    isLiked, likeCount, isCommented, isSaved, isReposted, pollData, isVoting, commentCount, shareCount,
-    handleLike, handleVote, setIsSaved, setIsCommented, setIsReposted, incrementCommentCount, decrementCommentCount, incrementShareCount, handleRepostToggle, setShareCount,
+    isLiked, likeCount, isCommented, isSaved, isReposted, pollData, isVoting, commentCount, shareCount, externalShareCount,
+    handleLike, handleVote, setIsSaved, setIsCommented, setIsReposted, incrementCommentCount, decrementCommentCount, incrementShareCount, incrementExternalShareCount, handleRepostToggle, setShareCount,
     repostId, setRepostId
-  } = usePostInteractions(props);
+  } = usePostInteractions(interactionTargetProps as any);
 
   const {
     showOptions, setShowOptions, optionsPos, setOptionsPos,
     isEditModalOpen, setIsEditModalOpen, isReportModalOpen, setIsReportModalOpen,
     isDeleteDialogOpen, setIsDeleteDialogOpen, confirmDelete,
     handleToggleVisibility, handleDelete
-  } = usePostOptions(props, (id, data) => {
-    updatePostInFeed(id.toString(), data);
+  } = usePostOptions(interactionTargetProps as any, (targetId, data) => {
+    if (isRepostWithoutThoughts && shared_post) {
+      updatePostInFeed(id.toString(), { shared_post: { ...shared_post, ...data } });
+    } else {
+      updatePostInFeed(id.toString(), data);
+    }
   });
 
   const { videoRef, finalAspectRatio, isVerticalVideo, handleMediaLoad } = usePostMediaObserver(id, videoSrc, props.aspectRatio);
@@ -156,11 +163,15 @@ export const FeedPost = (props: FeedPostProps) => {
       setShareCount(prev => Math.max(0, prev - 1));
       setRepostId(null);
       try {
-        updatePostInFeed(id.toString(), { isReposted: false, shares: Math.max(0, shareCount - 1).toString(), repostId: null });
+        if (isRepostWithoutThoughts && shared_post) {
+          updatePostInFeed(id.toString(), { shared_post: { ...shared_post, isReposted: false, shares: Math.max(0, shareCount - 1).toString(), repostId: null } });
+        } else {
+          updatePostInFeed(id.toString(), { isReposted: false, shares: Math.max(0, shareCount - 1).toString(), repostId: null });
+        }
       } catch (feedErr) {
         console.warn("Failed to update feed cache:", feedErr);
       }
-      window.dispatchEvent(new CustomEvent('repostDeleted', { detail: { originalPostId: id, repostId: targetRepostId } }));
+      window.dispatchEvent(new CustomEvent('repostDeleted', { detail: { originalPostId: interactionTargetProps.id, repostId: targetRepostId } }));
       if (props.onDelete) {
         Promise.resolve(props.onDelete(targetRepostId)).catch((err) => {
           console.error("Background onDelete failed:", err);
@@ -169,7 +180,11 @@ export const FeedPost = (props: FeedPostProps) => {
           setShareCount(prev => prev + 1);
           setRepostId(targetRepostId);
           try {
-            updatePostInFeed(id.toString(), { isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId });
+            if (isRepostWithoutThoughts && shared_post) {
+              updatePostInFeed(id.toString(), { shared_post: { ...shared_post, isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId } });
+            } else {
+              updatePostInFeed(id.toString(), { isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId });
+            }
           } catch (feedErr) {}
           toast({
             title: "Error",
@@ -183,7 +198,11 @@ export const FeedPost = (props: FeedPostProps) => {
           setShareCount(prev => prev + 1);
           setRepostId(targetRepostId);
           try {
-            updatePostInFeed(id.toString(), { isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId });
+            if (isRepostWithoutThoughts && shared_post) {
+              updatePostInFeed(id.toString(), { shared_post: { ...shared_post, isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId } });
+            } else {
+              updatePostInFeed(id.toString(), { isReposted: true, shares: (shareCount).toString(), repostId: targetRepostId });
+            }
           } catch (feedErr) {}
           toast({
             title: "Error",
@@ -200,16 +219,22 @@ export const FeedPost = (props: FeedPostProps) => {
     const handlePostCreated = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newPost = customEvent.detail;
-      if (newPost && newPost.shared_post?.id?.toString() === id.toString()) {
+      if (newPost && newPost.shared_post?.id?.toString() === interactionTargetProps.id.toString()) {
         setIsReposted(true);
         setRepostId(newPost.id.toString());
         setShareCount(prev => prev + 1);
         try {
-          updatePostInFeed(id.toString(), { 
-            isReposted: true, 
-            shares: (shareCount + 1).toString(), 
-            repostId: newPost.id.toString() 
-          });
+          if (isRepostWithoutThoughts && shared_post) {
+            updatePostInFeed(id.toString(), { 
+              shared_post: { ...shared_post, isReposted: true, shares: (shareCount + 1).toString(), repostId: newPost.id.toString() } 
+            });
+          } else {
+            updatePostInFeed(id.toString(), { 
+              isReposted: true, 
+              shares: (shareCount + 1).toString(), 
+              repostId: newPost.id.toString() 
+            });
+          }
         } catch (feedErr) {
           console.warn("Failed to update feed cache:", feedErr);
         }
@@ -219,16 +244,22 @@ export const FeedPost = (props: FeedPostProps) => {
     const handleRepostDeleted = (e: Event) => {
       const customEvent = e as CustomEvent;
       const { originalPostId } = customEvent.detail;
-      if (originalPostId?.toString() === id.toString() && isReposted) {
+      if (originalPostId?.toString() === interactionTargetProps.id.toString() && isReposted) {
         setIsReposted(false);
         setRepostId(null);
         setShareCount(prev => Math.max(0, prev - 1));
         try {
-          updatePostInFeed(id.toString(), { 
-            isReposted: false, 
-            shares: Math.max(0, shareCount - 1).toString(), 
-            repostId: null 
-          });
+          if (isRepostWithoutThoughts && shared_post) {
+            updatePostInFeed(id.toString(), { 
+              shared_post: { ...shared_post, isReposted: false, shares: Math.max(0, shareCount - 1).toString(), repostId: null } 
+            });
+          } else {
+            updatePostInFeed(id.toString(), { 
+              isReposted: false, 
+              shares: Math.max(0, shareCount - 1).toString(), 
+              repostId: null 
+            });
+          }
         } catch (feedErr) {
           console.warn("Failed to update feed cache:", feedErr);
         }
@@ -241,7 +272,7 @@ export const FeedPost = (props: FeedPostProps) => {
       window.removeEventListener('postCreated', handlePostCreated);
       window.removeEventListener('repostDeleted', handleRepostDeleted);
     };
-  }, [id, shareCount, isReposted, updatePostInFeed, setIsReposted, setRepostId, setShareCount]);
+  }, [id, interactionTargetProps.id, shareCount, isReposted, updatePostInFeed, setIsReposted, setRepostId, setShareCount, isRepostWithoutThoughts, shared_post]);
 
   const feedCardRef = useRef<HTMLDivElement>(null);
 
@@ -367,7 +398,6 @@ export const FeedPost = (props: FeedPostProps) => {
     return null;
   }
 
-  const isRepostWithoutThoughts = !!shared_post && (!content || content.trim() === '');
 
   return (
     <div
@@ -800,7 +830,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
         <div>
           <PostActions
-            id={id}
+            id={interactionTargetProps.id}
             isLiked={isLiked}
             likeCount={likeCount}
             handleLike={() => handleLike(isCompany, activeProfile?.id)}
@@ -819,6 +849,7 @@ export const FeedPost = (props: FeedPostProps) => {
             handleSaveToggle={() => setIsSaveModalOpen(true)}
             onShowLikes={() => setIsLikesModalOpen(true)}
             isSharedPost={!!shared_post}
+            externalShares={externalShareCount}
           />
         </div>
       </div>
@@ -826,7 +857,7 @@ export const FeedPost = (props: FeedPostProps) => {
       {/* Lazy Modals */}
       {isCommentSectionOpen && (
         <CommentSection
-          postId={id.toString()}
+          postId={interactionTargetProps.id.toString()}
           isPostOwner={props.isOwnPost}
           incrementCommentCount={incrementCommentCount}
           decrementCommentCount={decrementCommentCount}
@@ -876,8 +907,8 @@ export const FeedPost = (props: FeedPostProps) => {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           postId={id.toString()}
-          onShare={() => {
-            incrementShareCount();
+          onShare={(selectedIds) => {
+            incrementExternalShareCount(selectedIds.length);
           }}
         />
       )}
@@ -905,11 +936,15 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {isEditModalOpen && (
         <EditPostModal
-          isOpen={true}
+          isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          editPostId={id.toString()}
-          onUpdate={(updatedPost) => {
-            updatePostInFeed(id.toString(), updatedPost);
+          editPostId={interactionTargetProps.id.toString()}
+          onUpdate={(updatedData: Partial<any>) => {
+            if (isRepostWithoutThoughts && shared_post) {
+              updatePostInFeed(id.toString(), { shared_post: { ...shared_post, ...updatedData } });
+            } else {
+              updatePostInFeed(id.toString(), updatedData);
+            }
           }}
         />
       )}
