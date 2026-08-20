@@ -682,11 +682,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* Header metadata row / Frame 2608732 */}
           <div 
             onClick={() => {
+              if (candidateDetail?.isDeactivated) return;
               if (candidateDetail?.applicantId) {
                 router.push(`/profile/${candidateDetail.applicantId}?source=job_application_dashboard`);
               }
             }}
-            className={`flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2A2D35] transition-colors`}
+            title={candidateDetail?.isDeactivated ? "User is no longer available" : undefined}
+            className={`flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0 transition-colors ${candidateDetail?.isDeactivated ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2A2D35]'}`}
           >
             {/* User details / Frame 2608774 */}
             <div className={`flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0`}>
@@ -717,7 +719,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   {/* Role */}
                   <span
                     className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center truncate`}
-                    style={{ maxWidth: '88px' }}
+                    style={{ maxWidth: '200px' }}
                   >
                     {candidateDetail?.headline}
                   </span>
@@ -726,7 +728,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   {/* Location */}
                   <span
                     className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${t.textMuted} flex items-center truncate`}
-                    style={{ maxWidth: '76px' }}
+                    style={{ maxWidth: '180px' }}
                   >
                     {candidateDetail?.location}
                   </span>
@@ -790,14 +792,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                   <button
                     onClick={() => {
-                      if (!canJobsChat) return;
+                      if (!canJobsChat || candidateDetail?.isDeactivated) return;
                       router.push(`/messaging?userId=${candidateDetail.applicantId}&jobContext=${listing.id}`);
                     }}
-                    disabled={!canJobsChat}
-                    title={!canJobsChat ? "Permission required to chat with job candidates" : ""}
+                    disabled={!canJobsChat || candidateDetail?.isDeactivated}
+                    title={candidateDetail?.isDeactivated ? "User is no longer available" : (!canJobsChat ? "Permission required to chat with job candidates" : "")}
                     type="button"
                     className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 transition-all ${
-                      !canJobsChat
+                      (!canJobsChat || candidateDetail?.isDeactivated)
                         ? 'opacity-50 cursor-not-allowed bg-gray-200 dark:bg-gray-800 text-gray-400 border-gray-300 dark:border-gray-700'
                         : `hover:bg-slate-50 ${t.ultraLight} active:scale-95 ${
                             isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8]' : 'border-[#818CF8] text-[#818CF8]'
@@ -1449,10 +1451,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   Add a note
                 </button>
                 <div className="flex-1" />
-                <button className={`px-4 py-2 rounded-full border border-[#1A73E8] text-[#1A73E8] ${isCompanyMode ? '' : 'border-indigo-500 text-indigo-500'} text-sm font-medium`}>
+                <button className={`px-4 py-2 rounded-full border border-[#1A73E8] text-[#1A73E8] ${isCompanyMode ? '' : 'border-indigo-500 text-indigo-500'} text-sm font-medium`} onClick={() => handleDecline(selectedCandidate?.applicationId)}>
                   Decline
                 </button>
-                <button className={`px-4 py-2 rounded-full ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-indigo-500'} text-white text-sm font-medium`}>
+                <button className={`px-4 py-2 rounded-full ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-indigo-500'} text-white text-sm font-medium`} onClick={() => handleShortlist(selectedCandidate?.applicationId)}>
                   Shortlist
                 </button>
               </div>
@@ -1469,7 +1471,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Resume Card */}
               {candidateDetail.resume && (
-                <div className="flex flex-row items-center justify-between w-full">
+                <div className="flex flex-row items-center justify-between w-full" onClick={() => {
+                    if (candidateDetail?.resumeUrl) {
+                      window.open(candidateDetail.resumeUrl, '_blank');
+                    } else if (candidateDetail?.resumeName) {
+                      window.open(`/resumes/${candidateDetail.resumeName}`, '_blank');
+                    }
+                }}>
                   <div className="flex flex-row items-center gap-3">
                     <Icon icon="carbon:document-pdf" className="w-8 h-8 text-[#FF6B6B]" />
                     <div className="flex flex-col">
@@ -1477,7 +1485,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       <span className={`text-[10px] uppercase ${t.textMuted}`}>DOCUMENT</span>
                     </div>
                   </div>
-                  <Icon icon="lucide:eye" className={`w-5 h-5 ${t.text}`} />
+                  <Icon icon="lucide:eye" className={`w-5 h-5 ${t.text} cursor-pointer`} />
                 </div>
               )}
 
