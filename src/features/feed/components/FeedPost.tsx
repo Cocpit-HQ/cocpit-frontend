@@ -781,17 +781,24 @@ export const FeedPost = (props: FeedPostProps) => {
               if (filteredLikedUsers.length === 0) return null;
               return (
                 <div className="flex -space-x-1.5 overflow-hidden">
-                  {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                    <img
-                      key={idx}
-                      src={user.avatar_url || "/assets/pngegg.png"}
-                      alt={user.username || "user"}
-                      className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/assets/pngegg.png";
-                      }}
-                    />
-                  ))}
+                  {filteredLikedUsers.slice(0, 3).map((user, idx) => {
+                    const hasAvatar = user.avatar_url && user.avatar_url !== '/assets/pngegg.png';
+                    return hasAvatar ? (
+                      <img
+                        key={idx}
+                        src={user.avatar_url || undefined}
+                        alt={user.username || "user"}
+                        className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/assets/pngegg.png";
+                        }}
+                      />
+                    ) : (
+                      <div key={idx} className="inline-flex h-5 w-5 rounded-full ring-2 ring-background bg-[#EEF2FF] text-[#6366F1] font-medium text-[10px] items-center justify-center flex-shrink-0 select-none">
+                        {(user.username || '?').charAt(0).toUpperCase()}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })()}

@@ -19,7 +19,7 @@ export function ActivitySettingsPage() {
 
   const tabs = ['Likes', 'Comments', 'Tags'] as const;
 
-  const { data, isLoading, removeActivity } = useActivityLogs(activeTab, companyId);
+  const { data, isLoading, isError, removeActivity } = useActivityLogs(activeTab, companyId);
 
   React.useEffect(() => {
     const handleRefresh = () => {
@@ -64,6 +64,16 @@ export function ActivitySettingsPage() {
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className={`w-8 h-8 animate-spin ${isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} />
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <p className="text-[14px] text-red-500">Failed to load activity. Please refresh the page and try again.</p>
+            </div>
+          ) : data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <p className={`text-[14px] text-gray-400 ${isCompany ? 'dark:text-company-secondary' : 'dark:text-muted-foreground'}`}>
+                No {activeTab.toLowerCase()} activity yet.
+              </p>
             </div>
           ) : (
             <>
@@ -234,7 +244,6 @@ export function ActivitySettingsPage() {
                   )}
                 </div>
               ))}
-
             </>
           )}
         </div>

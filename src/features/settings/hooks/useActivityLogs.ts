@@ -55,6 +55,8 @@ export function useActivityLogs(tab: ActivityTab, companyId?: string) {
   return {
     data: query.data || [],
     isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
     removeActivity: removeMutation.mutate,
   };
 }
