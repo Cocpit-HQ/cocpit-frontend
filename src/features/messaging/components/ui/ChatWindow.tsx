@@ -365,7 +365,9 @@ export default function ChatWindow({
       chat.isDeleted ||
       chat.name === "Deleted Page" ||
       chat.name === "Deleted User" ||
-      chat.name === "Deactivated User" ||
+      chat.role === "This user is no longer available" ||
+      chat.role === "This page is no longer available" ||
+      chat.orgHeadline === "This page is no longer available" ||
       chat.role === "This account has been deactivated"
     );
   const isDeactivatedAccount =
@@ -373,9 +375,10 @@ export default function ChatWindow({
     !isDeletedAccount &&
     Boolean(
       chat.isDeactivated ||
-      chat.orgHeadline === "This page has been deactivated" ||
+      chat.name === "Deactivated User" ||
       chat.role === "This user has gone offline - for a while." ||
-      chat.role === "This page has gone offline - for a while."
+      chat.role === "This page has gone offline - for a while." ||
+      chat.orgHeadline === "This page has gone offline - for a while."
     );
 
   // Sync state with URL parameter on mount or when chat/param changes

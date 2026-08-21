@@ -81,14 +81,16 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     backendChat.is_deleted_user ||
     backendChat.other_user_name === "Deleted User" ||
     backendChat.other_user_name === "Deleted Page" ||
-    backendChat.other_user_name === "Deactivated User" ||
+    backendChat.other_user_headline === "This user is no longer available" ||
+    backendChat.other_user_headline === "This page is no longer available" ||
+    backendChat.org_headline === "This page is no longer available" ||
     backendChat.other_user_headline === "This account has been deactivated"
   );
   const isDeactivated = !isDeleted && Boolean(
     backendChat.is_deactivated ||
+    backendChat.other_user_name === "Deactivated User" ||
     backendChat.other_user_headline === "This user has gone offline - for a while." ||
     backendChat.other_user_headline === "This page has gone offline - for a while." ||
-    backendChat.org_headline === "This page has been deactivated" ||
     backendChat.org_headline === "This page has gone offline - for a while."
   );
 
