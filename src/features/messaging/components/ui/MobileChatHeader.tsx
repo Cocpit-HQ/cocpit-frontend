@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIcon, Trash2 } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import Avatar from "@/components/shared/Avatar"
+import { hasMessageMedia } from "./MessageBubble"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@iconify/react"
 import {
@@ -182,9 +183,11 @@ export default function MobileChatHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onMessageAction?.('copy')}>
-                    <Copy className="w-4 h-4 mr-2" /> Copy
-                  </DropdownMenuItem>
+                  {!hasMessageMedia(selectedMessage) && (
+                    <DropdownMenuItem onClick={() => onMessageAction?.('copy')}>
+                      <Copy className="w-4 h-4 mr-2" /> Copy
+                    </DropdownMenuItem>
+                  )}
                   {isMyMessage && (
                     <>
                       <DropdownMenuItem onClick={() => onMessageAction?.('info')}>

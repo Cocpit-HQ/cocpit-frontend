@@ -49,12 +49,14 @@ import {
   formatTimeAgo,
 } from "@/lib/mappers/messaging.mapper";
 import Avatar from "@/components/shared/Avatar";
+import { hasMessageMedia } from "./MessageBubble";
 import { useSocial } from "@/context/SocialContext";
 import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service";
 import { cn } from "@/lib/utils";
 import { ReportModal } from "@/components/shared/ReportModal";
 import MessageInfoModal from "../../MessageInfoModal";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { getMessageCopyText } from "@/features/messaging/utils/messageCopy";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { Plus } from "lucide-react";
@@ -98,6 +100,7 @@ function ChatHeaderMenu({
     selectedMessage.sender === "me" ||
     selectedMessage.senderId === currentUserId ||
     selectedMessage.senderId === "me";
+  const isMedia = hasMessageMedia(selectedMessage);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -192,20 +195,22 @@ function ChatHeaderMenu({
                 color="var(--foreground)"
               />
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onMessageAction("copy")}
-              className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-            >
-              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">
-                Copy
-              </span>
-              <Icon
-                icon="fluent:copy-16-regular"
-                width={24}
-                height={24}
-                color="var(--foreground)"
-              />
-            </DropdownMenuItem>
+            {!isMedia && (
+              <DropdownMenuItem
+                onClick={() => onMessageAction("copy")}
+                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
+              >
+                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">
+                  Copy
+                </span>
+                <Icon
+                  icon="fluent:copy-16-regular"
+                  width={24}
+                  height={24}
+                  color="var(--foreground)"
+                />
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -1235,14 +1240,44 @@ export default function ChatWindow({
         }
       }
 
+      let effectiveSharedPostId = pendingSharedPostId || undefined;
+      let effectiveSharedProfileId = pendingSharedProfileId || undefined;
+      let effectiveEntityType = pendingEntityContext?.type || undefined;
+      let effectiveEntityId = pendingEntityContext?.id || undefined;
+
+      if (!effectiveSharedPostId && !effectiveSharedProfileId && !effectiveEntityId && text) {
+        const postMatch = text.match(/(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i);
+        const isUuid = (val?: string) => Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+
+        if (postMatch && isUuid(postMatch[1])) {
+          effectiveSharedPostId = postMatch[1];
+        }
+
+        const jobMatch = text.match(/(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i);
+        if (jobMatch) {
+          effectiveEntityType = "job";
+          effectiveEntityId = jobMatch[1];
+        }
+
+        const profileMatch = text.match(/(?:https?:\/\/[^\/\s]+)?\/profile\/([a-zA-Z0-9_.-]+)/i);
+        if (profileMatch && isUuid(profileMatch[1])) {
+          effectiveSharedProfileId = profileMatch[1];
+        }
+
+        const orgMatch = text.match(/(?:https?:\/\/[^\/\s]+)?\/(?:organization|company)\/([a-zA-Z0-9_-]+)/i);
+        if (orgMatch && isUuid(orgMatch[1])) {
+          effectiveSharedProfileId = orgMatch[1];
+        }
+      }
+
       sendMessageMutation.mutate({
         text,
         files,
         replyMessageId: replyingTo?.messageId,
-        sharedPostId: pendingSharedPostId || undefined,
-        sharedProfileId: pendingSharedProfileId || undefined,
-        entityType: pendingEntityContext?.type || undefined,
-        entityId: pendingEntityContext?.id || undefined,
+        sharedPostId: effectiveSharedPostId,
+        sharedProfileId: effectiveSharedProfileId,
+        entityType: effectiveEntityType,
+        entityId: effectiveEntityId,
       });
       setReplyingTo(null);
       setPendingSharedPostId(null);
@@ -1489,9 +1524,9 @@ export default function ChatWindow({
         setIsMessageSelected(false);
       }
     } else if (action === "copy") {
-      navigator.clipboard.writeText(
-        targetMsg!.text || targetMsg!.text_content || "",
-      );
+      if (targetMsg) {
+        navigator.clipboard.writeText(getMessageCopyText(targetMsg));
+      }
       if (selectedMessage) {
         setSelectedMessage(null);
         setIsMessageSelected(false);

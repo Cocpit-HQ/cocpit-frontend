@@ -40,7 +40,7 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
 
   const displayName = chat.isGroup ? chat.name : (chat.name || entityFallbackName);
   const rawSubtitle = isCompanyType ? (chat.orgHeadline || chat.role || "") : (chat.role || "");
-  const isUnknownEntity = Boolean(
+  const isUnknownEntity = !chat.isGroup && Boolean(
     chat.isBlockedByOther ||
     chat.isDeactivated ||
     chat.isDeleted ||
@@ -53,9 +53,11 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
     chat.orgHeadline === "User unavailable"
   );
 
-  const displaySubtitle = (isUnknownEntity || chat.isBlockedByOther || chat.isDeleted || chat.isDeactivated || rawSubtitle === 'User unavailable' || rawSubtitle === 'Page unavailable')
-    ? entityUnavailableText
-    : rawSubtitle;
+  const displaySubtitle = chat.isGroup
+    ? (chat.role || "")
+    : ((isUnknownEntity || chat.isBlockedByOther || chat.isDeleted || chat.isDeactivated || rawSubtitle === 'User unavailable' || rawSubtitle === 'Page unavailable')
+        ? entityUnavailableText
+        : rawSubtitle);
 
   const content = (
     <div
@@ -77,6 +79,7 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
                 name={displayName}
                 size="md"
                 online={chat.online}
+                showOnlineStatus={true}
                 fallbackGradient="gradient-1"
                 className="w-full h-full"
               />
@@ -91,6 +94,7 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
                   name={displayName}
                   size="md"
                   online={chat.online}
+                  showOnlineStatus={true}
                   fallbackGradient="gradient-1"
                   isCompany={isCompanyType}
                   isUnknown={isUnknownEntity}

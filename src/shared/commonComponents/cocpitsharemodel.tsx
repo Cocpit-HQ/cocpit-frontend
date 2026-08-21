@@ -47,7 +47,13 @@ export default function CocpitShareModel({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    const origin = window.location.origin;
+    if (postId) return `${origin}/post/${postId}`;
+    if (profileId) return `${origin}/profile/${profileId}`;
+    return window.location.href;
+  }, [postId, profileId]);
 
   // Pagination states
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -171,7 +177,7 @@ export default function CocpitShareModel({
           if (target && target.type === "GROUP") {
             return sendGroupMessage(
               targetUserId,
-              shareUrl,
+              "",
               "text",
               undefined,
               undefined,
@@ -181,12 +187,12 @@ export default function CocpitShareModel({
           } else {
             return sendMessage(
               targetUserId,
-              shareUrl,
-              postId,
+              "",
+              postId || undefined,
               undefined,
               effectiveCompanyId,
               undefined,
-              profileId
+              profileId || undefined
             );
           }
         })

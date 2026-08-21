@@ -53,6 +53,42 @@ const CustomReplyIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const CopyButton = ({
+  isCopied,
+  onClick,
+}: {
+  isCopied: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}) => (
+  <button
+    className={cn(
+      "p-1 z-50 relative transition-all",
+      isCopied
+        ? "text-primary scale-110"
+        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+    )}
+    onClick={onClick}
+    onPointerDown={(e) => {
+      e.stopPropagation();
+      e.preventDefault();
+    }}
+    onMouseDown={(e) => {
+      e.stopPropagation();
+      e.preventDefault();
+    }}
+    title={isCopied ? "Copied" : "Copy message"}
+  >
+    {isCopied ? (
+      <Icon
+        icon="solar:copy-bold"
+        className="w-[20px] h-[20px] text-primary animate-in zoom-in-75 duration-150"
+      />
+    ) : (
+      <Copy className="w-[20px] h-[20px]" />
+    )}
+  </button>
+);
+
 // --- Types ---
 interface MessageBubbleProps {
   message: Message;
@@ -140,7 +176,14 @@ const useMessageEditor = (
 
 // --- Sub-Components ---
 
-const MessageMenu = ({
+export const hasMessageMedia = (msg?: any): boolean => {
+  if (!msg || !msg.media) return false;
+  if (Array.isArray(msg.media)) return msg.media.length > 0;
+  if (typeof msg.media === "object") return Object.keys(msg.media).length > 0;
+  return false;
+};
+
+const MessageActionsDropdown = ({
   message,
   onAction,
   currentUserId,
@@ -150,6 +193,7 @@ const MessageMenu = ({
   currentUserId?: string;
 }) => {
   if (!onAction) return null;
+  const isMedia = hasMessageMedia(message);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -161,9 +205,11 @@ const MessageMenu = ({
         <DropdownMenuItem onClick={() => onAction("info", message)}>
           <Info className="w-4 h-4 mr-2" /> Info
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onAction("copy", message)}>
-          <Copy className="w-4 h-4 mr-2" /> Copy
-        </DropdownMenuItem>
+        {!isMedia && (
+          <DropdownMenuItem onClick={() => onAction("copy", message)}>
+            <Copy className="w-4 h-4 mr-2" /> Copy
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => onAction("edit", message)}>
           <Pencil className="w-4 h-4 mr-2" /> Edit
         </DropdownMenuItem>
@@ -451,7 +497,7 @@ const SharedPostCard = ({
 
   const rawText = message.text || message.text_content || "";
   const postUrlRegex =
-    /(?:https?:\/\/[^\/\s]+)?\/(?:post|article)\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i;
+    /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
   const match = rawText.match(postUrlRegex);
   const extractedPostId = match ? match[1] : null;
 
@@ -528,11 +574,7 @@ const SharedPostCard = ({
 
   const isLocalBlocked =
     (initialAuthorId && isBlocked(initialAuthorId)) ||
-    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId)) ||
-    (message.senderId && isBlocked(message.senderId)) ||
-    ((message as any).sender_id && isBlocked((message as any).sender_id)) ||
-    (message as any).is_unavailable ||
-    (message as any).isUnavailable;
+    (fetchedPost?.authorId && isBlocked(fetchedPost.authorId));
 
   if (isLocalBlocked) {
     return <UnavailableContentCard isMe={isMe} />;
@@ -612,8 +654,21 @@ const SharedPostCard = ({
     postToRender.isCompany
   );
 
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    return html
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .trim();
+  };
+
   const postId = postToRender.id || postToRender.post_id || "";
-  const postContent = postToRender.content || "";
+  const postContent = stripHtml(postToRender.content || "");
   const postSubtext =
     postToRender.authorHeadline ||
     postToRender.author_headline ||
@@ -753,7 +808,7 @@ const SharedPostCard = ({
 
   if (isArticle) {
     const articleCover = postToRender.article_cover_image || postToRender.coverImage || postToRender.imageSrc || (mediaItems && mediaItems.length > 0 ? mediaItems[0].url : null);
-    const articleTitle = postToRender.title || postToRender.article_title || "Untitled Article";
+    const articleTitle = stripHtml(postToRender.title || postToRender.article_title || "Untitled Article");
 
     return (
       <div
@@ -1296,7 +1351,13 @@ const JobCard = ({
   );
 };
 
-const JobPreview = ({ jobId }: { jobId: string }) => {
+const JobPreview = ({
+  jobId,
+  conversationId,
+}: {
+  jobId: string;
+  conversationId?: string;
+}) => {
   const [job, setJob] = useState<
     Job | { notFound: boolean; message: string } | null
   >(null);
@@ -1378,7 +1439,10 @@ const JobPreview = ({ jobId }: { jobId: string }) => {
       )}
       onClick={(e) => {
         e.stopPropagation();
-        router.push(`/jobs/${jobId}`);
+        const returnTo = conversationId
+          ? `/messaging?conversationId=${conversationId}`
+          : "/messaging";
+        router.push(`/jobs/${jobId}?returnTo=${encodeURIComponent(returnTo)}`);
       }}
     >
       <div className="flex flex-row items-center gap-[12px] w-full min-w-0">
@@ -1417,10 +1481,12 @@ const MessageText = ({
   message,
   isMediaOnly,
   isMe,
+  conversationId,
 }: {
   message: Message;
   isMediaOnly: boolean;
   isMe: boolean;
+  conversationId?: string;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
@@ -1470,7 +1536,7 @@ const MessageText = ({
         if (jobId) {
           return (
             <div key={i} className="my-2 max-w-full overflow-hidden">
-              <JobPreview jobId={jobId} />
+              <JobPreview jobId={jobId} conversationId={conversationId} />
             </div>
           );
         }
@@ -1520,10 +1586,15 @@ const MessageText = ({
     });
   };
 
+  const lines = rawText.split("\n");
   const words = rawText.split(/\s+/);
-  const isLong = words.length > 50;
+  const isLong = lines.length > 3 || words.length > 20 || rawText.length > 120;
   const textToShow =
-    isLong && !isExpanded ? words.slice(0, 50).join(" ") + "..." : rawText;
+    isLong && !isExpanded
+      ? (lines.length > 3
+          ? lines.slice(0, 3).join("\n")
+          : words.slice(0, 20).join(" ")) + "..."
+      : rawText;
 
   return (
     <div
@@ -1788,6 +1859,7 @@ function MessageBubble(props: MessageBubbleProps) {
   const { data: session } = useSession();
   const isMe = message.sender === "me";
   const resolvedShowAvatar = showAvatar !== undefined ? showAvatar : !isMe;
+  const hasMedia = hasMessageMedia(message);
 
   // Helper to determine if message is media-only
   const isMediaOnly =
@@ -1813,17 +1885,20 @@ function MessageBubble(props: MessageBubbleProps) {
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) return false;
 
     const textContent = message.text || message.text_content || "";
-    const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:post|article)\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i;
+    const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
     const extractedPostId = textContent.match(postUrlRegex)?.[1];
 
-    const profileUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/profile\/([a-zA-Z0-9_.-]+)$/i;
+    const profileUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/profile\/([a-zA-Z0-9_.-]+)/i;
     const extractedProfileId = textContent.match(profileUrlRegex)?.[1];
 
-    const orgUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/organization\/([a-zA-Z0-9_-]+)$/i;
+    const orgUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:organization|company)\/([a-zA-Z0-9_-]+)/i;
     const extractedOrgId = textContent.match(orgUrlRegex)?.[1];
 
     const channelUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/channels\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$/i;
     const extractedChannelId = textContent.match(channelUrlRegex)?.[1];
+
+    const jobUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i;
+    const extractedJobId = textContent.match(jobUrlRegex)?.[1];
 
     const hasPost = Boolean(
       message.sharedPost ||
@@ -1840,16 +1915,17 @@ function MessageBubble(props: MessageBubbleProps) {
     const hasChannel = Boolean(fallbackChannelId || ((message.entityType === 'channel' || message.entityType === 'community') && message.entityId));
 
     const isJobEntity = message.entityType === "job" || message.entityType === "offer";
-    const hasJob = isJobEntity && Boolean(message.entityId);
+    const finalJobId = (isJobEntity && message.entityId) || (!hasPost && !hasProfile && !hasChannel ? extractedJobId : null);
+    const hasJob = Boolean(finalJobId);
 
     const hasCard = hasPost || hasProfile || hasChannel || hasJob;
     if (!hasCard) return false;
 
     const text = textContent.trim();
-    const entityUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/(?:profile|organization|post|article|channels|jobs|offer)\/[a-zA-Z0-9_\.\-\/]+$/i;
+    const entityUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/(?:profile|organization|post|article|channels|jobs|offer)\/[a-zA-Z0-9_\.\-\/]+(?:\?[^\s]*)?$/i;
     const isJustUrl = entityUrlRegex.test(text) || /^https?:\/\/[^\s]+$/i.test(text);
 
-    return !text || isJustUrl || text === "Shared a post" || text === "Shared a profile";
+    return !text || isJustUrl || text === "Shared a post" || text === "Shared a profile" || text === "Shared a job";
   })();
 
   const isCompanyProfile = activeProfile?.type === "COMPANY";
@@ -1914,6 +1990,26 @@ function MessageBubble(props: MessageBubbleProps) {
     top: number;
     left: number;
   } | null>(null);
+
+  const [isCopied, setIsCopied] = useState(false);
+  const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
+
+  const handleCopyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onAction?.("copy", message);
+    setIsCopied(true);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => {
+      setIsCopied(false);
+    }, 2000);
+  };
 
   const handleReactionBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -2020,9 +2116,11 @@ function MessageBubble(props: MessageBubbleProps) {
   };
 
   // Compute reaction badge data
-  const validReactions = (message.reactions || []).filter(
-    (r) => r.emoji && r.emoji !== "",
-  );
+  const validReactions = (
+    message.is_deleted_for_everyone || message.is_deleted_for_me
+      ? []
+      : message.reactions || []
+  ).filter((r) => r.emoji && r.emoji !== "");
   const myReaction = validReactions.find((r) => r.user_id === currentUserId);
   // Display user's reaction if exists, else the last reaction in the list
   const displayReaction =
@@ -2169,7 +2267,7 @@ function MessageBubble(props: MessageBubbleProps) {
                       (message as any).is_blocked_by_other === true ||
                       (message as any).is_unavailable === true ||
                       (message as any).is_deactivated === true ||
-                      (message as any).is_deleted === true ||
+                      (message as any).is_deleted_user === true ||
                       message.senderName === "Unknown Page" ||
                       message.senderName === "Unknown user" ||
                       message.senderName === "Unknown User" ||
@@ -2253,24 +2351,9 @@ function MessageBubble(props: MessageBubbleProps) {
                   >
                     <CustomReplyIcon className="w-[20px] h-[20px]" />
                   </button>
-                  <button
-                    className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAction?.("copy", message);
-                    }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    title="Copy message"
-                  >
-                    <Copy className="w-[20px] h-[20px]" />
-                  </button>
+                  {!hasMedia && (
+                    <CopyButton isCopied={isCopied} onClick={handleCopyClick} />
+                  )}
                 </div>
               )}
 
@@ -2282,8 +2365,8 @@ function MessageBubble(props: MessageBubbleProps) {
                   !message.is_deleted_for_everyone &&
                   !message.is_deleted_for_me
                   ? "max-w-[85%] sm:max-w-[300px] w-fit"
-                  : "max-w-[70%] md:max-w-[85%]",
-                isEditing && "w-full max-w-full md:max-w-[70%]",
+                  : "max-w-[85%] md:max-w-[60%]",
+                isEditing && "w-full max-w-full md:max-w-[60%]",
               )}
             >
               <div
@@ -2330,17 +2413,20 @@ function MessageBubble(props: MessageBubbleProps) {
                     {!message.is_deleted_for_everyone &&
                       !message.is_deleted_for_me && (() => {
                         const textContent = message.text || message.text_content || "";
-                        const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:post|article)\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i;
+                        const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:(?:channels\/[^\/\s]+\/article)|(?:channel\/article)|(?:post\/article)|(?:article\/edit)|(?:article)|(?:post))\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9_-]+)/i;
                         const extractedPostId = textContent.match(postUrlRegex)?.[1];
 
-                        const profileUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/profile\/([a-zA-Z0-9_.-]+)$/i;
+                        const profileUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/profile\/([a-zA-Z0-9_.-]+)/i;
                         const extractedProfileId = textContent.match(profileUrlRegex)?.[1];
 
-                        const orgUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/organization\/([a-zA-Z0-9_-]+)$/i;
+                        const orgUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/(?:organization|company)\/([a-zA-Z0-9_-]+)/i;
                         const extractedOrgId = textContent.match(orgUrlRegex)?.[1];
 
                         const channelUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/channels\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$/i;
                         const extractedChannelId = textContent.match(channelUrlRegex)?.[1];
+
+                        const jobUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/jobs\/([a-zA-Z0-9_-]+)/i;
+                        const extractedJobId = textContent.match(jobUrlRegex)?.[1];
 
                         const hasPost = Boolean(
                           message.sharedPost ||
@@ -2359,6 +2445,7 @@ function MessageBubble(props: MessageBubbleProps) {
                         const fallbackChannelId = !message.sharedProfileId && !hasPost && !fallbackProfileId && !fallbackOrgId ? extractedChannelId : null;
 
                         const isJobEntity = message.entityType === "job" || message.entityType === "offer";
+                        const finalJobId = (isJobEntity && message.entityId) || (!hasPost && !finalProfileId && !fallbackChannelId ? extractedJobId : null);
 
                         return (
                           <>
@@ -2390,7 +2477,7 @@ function MessageBubble(props: MessageBubbleProps) {
                               message.entityId &&
                               !hasPost &&
                               !finalProfileId &&
-                              !isJobEntity &&
+                              !finalJobId &&
                               message.entityType !== "channel" &&
                               message.entityType !== "community" && (
                                 <EntityPreviewCard
@@ -2411,18 +2498,15 @@ function MessageBubble(props: MessageBubbleProps) {
                                   isMe={isMe}
                                 />
                               )}
-                            {isJobEntity &&
-                              message.entityId && (
-                                <JobApplicationContextCard
-                                  entityType={
-                                    message.entityType as "job" | "offer"
-                                  }
-                                  entityId={message.entityId}
-                                  conversationId={conversationId}
-                                  isMe={isMe}
-                                  message={message}
-                                />
-                              )}
+                            {finalJobId && (
+                              <JobApplicationContextCard
+                                entityType="job"
+                                entityId={finalJobId}
+                                conversationId={conversationId}
+                                isMe={isMe}
+                                message={message}
+                              />
+                            )}
                           </>
                         );
                       })()}
@@ -2436,13 +2520,17 @@ function MessageBubble(props: MessageBubbleProps) {
                       message={message}
                       isMediaOnly={isMediaOnly || isCardOnly}
                       isMe={isMe}
+                      conversationId={conversationId}
                     />
                   </>
                 )}
               </div>
 
               {/* Overlapping Reaction Badge */}
-              {validReactions.length > 0 && displayReaction && (
+              {!message.is_deleted_for_everyone &&
+                !message.is_deleted_for_me &&
+                validReactions.length > 0 &&
+                displayReaction && (
                 <button
                   onClick={handleReactionBadgeClick}
                   className={cn(
@@ -2512,24 +2600,9 @@ function MessageBubble(props: MessageBubbleProps) {
                   >
                     <CustomReplyIcon className="w-[20px] h-[20px]" />
                   </button>
-                  <button
-                    className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAction?.("copy", message);
-                    }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    title="Copy message"
-                  >
-                    <Copy className="w-[20px] h-[20px]" />
-                  </button>
+                  {!hasMedia && (
+                    <CopyButton isCopied={isCopied} onClick={handleCopyClick} />
+                  )}
                 </div>
               )}
           </div>
@@ -2617,13 +2690,15 @@ function MessageBubble(props: MessageBubbleProps) {
             <div className="flex justify-center p-3 pb-1">
               <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
             </div>
-            <button
-              className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
-              onClick={() => handleMobileAction("copy")}
-            >
-              <Copy className="w-5 h-5 text-muted-foreground" />
-              <span>Copy</span>
-            </button>
+            {!hasMedia && (
+              <button
+                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
+                onClick={() => handleMobileAction("copy")}
+              >
+                <Copy className="w-5 h-5 text-muted-foreground" />
+                <span>Copy</span>
+              </button>
+            )}
             {isMe && (
               <>
                 <button

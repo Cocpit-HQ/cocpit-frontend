@@ -613,6 +613,9 @@ export default function MessagingPage() {
               return {
                 ...c,
                 name: updatedGroup.conversation_name || c.name,
+                role: updatedGroup.group_headline !== undefined 
+                  ? (updatedGroup.group_headline || "") 
+                  : (updatedGroup.headline !== undefined ? (updatedGroup.headline || "") : c.role),
                 avatar:
                   "group_avatar" in updatedGroup
                     ? updatedGroup.group_avatar || ""
@@ -623,6 +626,7 @@ export default function MessagingPage() {
           });
         },
       );
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
     const handleConversationUpdated = (payload: any) => {
@@ -812,7 +816,6 @@ export default function MessagingPage() {
     const handleBlock = (payload: any) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
-      if (!conversationId) return;
 
       const isMeBlocker =
         String(payload.blocked_by_user_id) === String(user?.id) ||
@@ -825,40 +828,53 @@ export default function MessagingPage() {
         activeProfile?.type ?? "USER",
         activeProfile?.id ?? "me",
       ];
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: ChatThread[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((c) => {
-            if (String(c.id) === String(conversationId)) {
-              return {
-                ...c,
-                isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
-                isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
-              };
-            }
-            return c;
-          });
-        }
-      );
 
-      if (selectedChat?.id && String(selectedChat.id) === String(conversationId)) {
-        setSelectedChat((prev) =>
-          prev
-            ? {
-              ...prev,
-              isBlockedByMe: isMeBlocker ? true : prev.isBlockedByMe,
-              isBlockedByOther: !isMeBlocker ? true : prev.isBlockedByOther,
-            }
-            : null
+      if (conversationId) {
+        queryClient.setQueryData(
+          queryKey,
+          (oldData: ChatThread[] | undefined) => {
+            if (!oldData) return oldData;
+            return oldData.map((c) => {
+              if (String(c.id) === String(conversationId)) {
+                return {
+                  ...c,
+                  isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
+                  isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
+                };
+              }
+              return c;
+            });
+          }
         );
+
+        if (selectedChat?.id && String(selectedChat.id) === String(conversationId)) {
+          setSelectedChat((prev) =>
+            prev
+              ? {
+                ...prev,
+                isBlockedByMe: isMeBlocker ? true : prev.isBlockedByMe,
+                isBlockedByOther: !isMeBlocker ? true : prev.isBlockedByOther,
+              }
+              : null
+          );
+        }
       }
+
+      queryClient.resetQueries({ queryKey: ["sharedPost"], exact: false });
+      queryClient.resetQueries({ queryKey: ["profilePreview"], exact: false });
+      queryClient.resetQueries({ queryKey: ["entityPreview"], exact: false });
+      queryClient.resetQueries({ queryKey: ["jobContext"], exact: false });
+      queryClient.refetchQueries({ queryKey: ["sharedPost"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["profilePreview"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["entityPreview"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["jobContext"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["messages"], type: "all" });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
     const handleUnblock = (payload: any) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
-      if (!conversationId) return;
 
       const isMeUnblocker =
         String(payload.unblocked_by_user_id) === String(user?.id) ||
@@ -872,34 +888,47 @@ export default function MessagingPage() {
         activeProfile?.type ?? "USER",
         activeProfile?.id ?? "me",
       ];
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: ChatThread[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((c) => {
-            if (String(c.id) === String(conversationId)) {
-              return {
-                ...c,
-                isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
-                isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
-              };
-            }
-            return c;
-          });
-        }
-      );
 
-      if (selectedChat?.id && String(selectedChat.id) === String(conversationId)) {
-        setSelectedChat((prev) =>
-          prev
-            ? {
-              ...prev,
-              isBlockedByMe: isMeUnblocker ? false : prev.isBlockedByMe,
-              isBlockedByOther: !isMeUnblocker ? false : prev.isBlockedByOther,
-            }
-            : null
+      if (conversationId) {
+        queryClient.setQueryData(
+          queryKey,
+          (oldData: ChatThread[] | undefined) => {
+            if (!oldData) return oldData;
+            return oldData.map((c) => {
+              if (String(c.id) === String(conversationId)) {
+                return {
+                  ...c,
+                  isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
+                  isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
+                };
+              }
+              return c;
+            });
+          }
         );
+
+        if (selectedChat?.id && String(selectedChat.id) === String(conversationId)) {
+          setSelectedChat((prev) =>
+            prev
+              ? {
+                ...prev,
+                isBlockedByMe: isMeUnblocker ? false : prev.isBlockedByMe,
+                isBlockedByOther: !isMeUnblocker ? false : prev.isBlockedByOther,
+              }
+              : null
+          );
+        }
       }
+
+      queryClient.resetQueries({ queryKey: ["sharedPost"], exact: false });
+      queryClient.resetQueries({ queryKey: ["profilePreview"], exact: false });
+      queryClient.resetQueries({ queryKey: ["entityPreview"], exact: false });
+      queryClient.resetQueries({ queryKey: ["jobContext"], exact: false });
+      queryClient.refetchQueries({ queryKey: ["sharedPost"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["profilePreview"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["entityPreview"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["jobContext"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["messages"], type: "all" });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 

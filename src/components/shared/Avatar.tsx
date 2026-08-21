@@ -10,6 +10,7 @@ interface AvatarProps {
     name: string
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
     online?: boolean
+    showOnlineStatus?: boolean
     className?: string
     isCompany?: boolean
     isUnknown?: boolean
@@ -25,6 +26,7 @@ export default function Avatar({
     name,
     size = 'md',
     online,
+    showOnlineStatus = false,
     className = "",
     isCompany = false,
     isUnknown = false
@@ -98,7 +100,7 @@ export default function Avatar({
                 ) : null}
             </div>
 
-            {online && (
+            {online && showOnlineStatus && (
                 <div
                     className={`absolute bottom-0 right-0 ${indicatorSize[size]} bg-green-500 rounded-full border-2 border-background z-10`}
                 />

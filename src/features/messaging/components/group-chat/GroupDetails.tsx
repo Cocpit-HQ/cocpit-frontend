@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGroupChat } from "./groupChat.context";
 import SharedAvatar from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { LogOut, Trash2, Pencil, ChevronLeft, Plus, Camera } from "lucide-react"
 import { MoreVertical, UserCog, Share2, Info, Ban } from "lucide-react";
 import { useSocket } from "@/context/SocketContext";
 import { GroupAvatarUploadModal } from "./GroupAvatarUploadModal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { updateGroupAvatar, updateGroupDetails } from "@/services/api/group-chat";
 import { createReport } from "@/services/api/report";
 import { uploadMedia } from "@/services/api/upload";
@@ -34,6 +36,7 @@ interface GroupDetailsProps {
 
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember, activeView, setActiveView }: GroupDetailsProps) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup, cancelInvitation, sentInvitations } = useGroupChat();
     const { isUserOnline } = useSocket();
     const { blockUser, unblockUser, isBlocked } = useSocial();
@@ -182,6 +185,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
             });
 
             refreshGroup();
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
             onClose('info');
         } catch (err) {
             console.error("Failed to update group details:", err);
@@ -311,8 +315,10 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     {visibleMembers.map((member) => {
                         const isSelf = member.user_id === currentUserId;
                         const isBlockedByOther = !isSelf && (Boolean(member.is_blocked_by_other) || isBlocked(member.user_id));
-                        const isDeactivatedOrDeleted = member.is_deactivated || member.is_deleted;
-                        const isUnknown = isBlockedByOther || isDeactivatedOrDeleted;
+                        const isDeactivated = Boolean(member.is_deactivated);
+                        const isDeleted = Boolean(member.is_deleted);
+                        const isDeactivatedOrDeleted = isDeactivated || isDeleted || Boolean(member.is_unavailable);
+                        const isUnknown = isBlockedByOther || isDeactivatedOrDeleted || member.full_name === "Unknown User" || member.full_name === "Unknown Page";
                         const displayName = isSelf ? "You" : (isUnknown ? (member.org_name ? "Unknown Page" : "Unknown User") : member.full_name);
                         const displayHeadline = isUnknown ? "User unavailable" : (member.headline || "Member");
                         const isCompany = Boolean(member.org_name);
@@ -372,77 +378,105 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
                             {/* Right: 3-dot menu (only if isAdmin) */}
                             {isAdmin && (
-                                <DropdownMenu onOpenChange={setIsDropdownOpen}>
-                                    <DropdownMenuTrigger asChild>
-                                        <Icon
-                                            icon="mdi-light:dots-vertical"
-                                            width={24}
-                                            height={24}
-                                            style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
-                                        />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuPortal>
-                                        <DropdownMenuContent
-                                            align="end"
-                                            className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
-                                            style={{ borderRadius: '24px 0px 24px 24px' }}
-                                        >
-                                            {member.user_id === currentUserId ? (
-                                                <DropdownMenuItem
-                                                    onClick={() => setShowLeaveConfirm(true)}
-                                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                isUnknown ? (
+                                    <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    disabled
+                                                    className="cursor-not-allowed opacity-40 p-1 outline-none bg-transparent border-none flex items-center justify-center"
+                                                    aria-label="User unavailable"
                                                 >
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
-                                                    <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
-                                                </DropdownMenuItem>
-                                            ) : (
-                                                <>
-                                                    {member.role !== 'admin' ? (
-                                                        <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
-                                                            <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
-                                                        </DropdownMenuItem>
-                                                    ) : (
-                                                        <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
-                                                            <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    <DropdownMenuItem onClick={() => setUserToShareProfile(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
-                                                        <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
-                                                        <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
-                                                    </DropdownMenuItem>
-                                                    {isBlocked(member.user_id) ? (
-                                                         <DropdownMenuItem onClick={async () => {
-                                                             try {
-                                                                 await unblockUser(member.user_id);
-                                                             } catch (err) {}
-                                                         }} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                             <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
-                                                             <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
-                                                         </DropdownMenuItem>
-                                                     ) : (
-                                                         <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                             <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
-                                                             <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
-                                                         </DropdownMenuItem>
-                                                     )}
+                                                    <Icon
+                                                        icon="mdi-light:dots-vertical"
+                                                        width={24}
+                                                        height={24}
+                                                        style={{ color: 'var(--muted-foreground)' }}
+                                                    />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent 
+                                                side="left" 
+                                                className="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-['Poppins'] text-[12px] shadow-md z-[100]"
+                                            >
+                                                <p>{isDeactivated ? "This user's account is deactivated" : (isDeleted ? "User account is deleted" : "User unavailable")}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <DropdownMenu onOpenChange={setIsDropdownOpen}>
+                                        <DropdownMenuTrigger asChild>
+                                            <Icon
+                                                icon="mdi-light:dots-vertical"
+                                                width={24}
+                                                height={24}
+                                                style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
+                                            />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
+                                                style={{ borderRadius: '24px 0px 24px 24px' }}
+                                            >
+                                                {member.user_id === currentUserId ? (
                                                     <DropdownMenuItem
-                                                        onClick={() => setUserToRemove(member.user_id)}
+                                                        onClick={() => setShowLeaveConfirm(true)}
                                                         className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                                     >
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
                                                         <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                                     </DropdownMenuItem>
-                                                </>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenuPortal>
-                                </DropdownMenu>
+                                                ) : (
+                                                    <>
+                                                        {member.role !== 'admin' ? (
+                                                            <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
+                                                                <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
+                                                            </DropdownMenuItem>
+                                                        ) : (
+                                                            <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
+                                                                <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem onClick={() => setUserToShareProfile(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
+                                                            <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
+                                                            <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                                                        </DropdownMenuItem>
+                                                        {isBlocked(member.user_id) ? (
+                                                             <DropdownMenuItem onClick={async () => {
+                                                                 try {
+                                                                     await unblockUser(member.user_id);
+                                                                 } catch (err) {}
+                                                             }} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                 <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
+                                                                 <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                             </DropdownMenuItem>
+                                                         ) : (
+                                                             <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                 <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                                                                 <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                             </DropdownMenuItem>
+                                                         )}
+                                                        <DropdownMenuItem
+                                                            onClick={() => setUserToRemove(member.user_id)}
+                                                            className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                                        >
+                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
+                                                            <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenu>
+                                )
                             )}
                         </div>
                         );

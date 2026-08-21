@@ -118,9 +118,10 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const handled = mentionKeyDown(e, onSelect);
-        if (!handled) {
-            // Additional custom key handling if needed
+        if (!handled && props.onKeyDown) {
+            props.onKeyDown(e);
         }
+        setTimeout(handleScroll, 0);
     };
 
     const selectUser = (user: UserMention, format: 'account' | 'full' = 'account') => {
@@ -366,9 +367,15 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     value={value}
                     onChange={handleInput}
                     onScroll={handleScroll}
-                    onKeyDown={(e) => mentionKeyDown(e, onSelect)}
-                    className={cn("w-full resize-none bg-transparent outline-none relative z-10", className)}
+                    onKeyUp={handleScroll}
+                    onClick={handleScroll}
+                    onSelect={handleScroll}
                     {...props}
+                    onKeyDown={handleKeyDown}
+                    className={cn(
+                        "w-full resize-none bg-transparent outline-none relative z-10 selection:bg-[var(--primary)] selection:text-white dark:selection:text-white",
+                        className
+                    )}
                     style={{
                         ...props.style,
                         color: value.length > 0 ? 'transparent' : 'inherit',

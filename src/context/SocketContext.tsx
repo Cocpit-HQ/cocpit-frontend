@@ -463,6 +463,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       }
 
+      queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
+      queryClient.resetQueries({ queryKey: ['profilePreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['entityPreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['jobContext'], exact: false });
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
       queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
@@ -472,6 +476,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['organization-jobs'] });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
     };
 
     const handleUnblock = (payload: any) => {
@@ -512,6 +521,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       }
 
+      queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
+      queryClient.resetQueries({ queryKey: ['profilePreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['entityPreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['jobContext'], exact: false });
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['companyProfile'] });
       queryClient.invalidateQueries({ queryKey: ['publicProfile'] });
@@ -521,6 +534,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['organization-jobs'] });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
     };
 
     // Fired by acceptTeamsInvite / declineTeamsInvite / removeMember whenever

@@ -108,7 +108,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     name: finalName,
     role: !backendChat.is_group && isUnknown 
       ? (isCompany ? "Page unavailable" : "User unavailable") 
-      : (backendChat.other_user_headline || ""),
+      : (backendChat.other_user_headline || (backendChat as any).group_headline || (backendChat as any).left_group_headline || ""),
     orgHeadline: !backendChat.is_group && isUnknown 
       ? "Page unavailable" 
       : (backendChat.org_headline || ""),

@@ -302,7 +302,7 @@ export default function UnifiedMessageInput({
                             onKeyDown={handleKeyDown}
                             placeholder={disabledMessage || (isQuickChat ? "Write a message..." : (placeholder || (isDisabled ? "Loading..." : "Message...")))}
                             rows={1}
-                            className={`w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide overflow-hidden ${isQuickChat ? "text-[12px] leading-[18px] font-['Poppins'] text-[#6B7280] placeholder:text-[#6B7280] p-0 my-auto" : "px-2 py-2 max-h-32 text-[15px] leading-[20px] text-foreground placeholder:text-muted-foreground/60 flex items-center"}`}
+                            className={`w-full bg-transparent border-0 resize-none focus:outline-none scrollbar-hide ${isQuickChat ? "text-[12px] leading-[18px] font-['Poppins'] text-[#6B7280] placeholder:text-[#6B7280] p-0 my-auto" : "px-2 py-2 max-h-32 text-[15px] leading-[20px] text-foreground placeholder:text-muted-foreground/60"}`}
                             style={{ minHeight: isQuickChat ? "18px" : "36px" }}
                             disabled={isDisabled}
                         />

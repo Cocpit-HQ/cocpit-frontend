@@ -24,6 +24,7 @@ import ChatSkeleton from "../ui/ChatSkeleton";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSocial } from "@/context/SocialContext";
 import { cn } from "@/lib/utils";
+import { getMessageCopyText } from "@/features/messaging/utils/messageCopy";
 
 interface GroupChatProps {
     groupId: string;
@@ -147,7 +148,9 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         if (action === 'info') {
             setIsMessageInfoOpen(true);
         } else if (action === 'copy') {
-            navigator.clipboard.writeText(targetMsg.text || targetMsg.text_content || "");
+            if (targetMsg) {
+                navigator.clipboard.writeText(getMessageCopyText(targetMsg));
+            }
             setSelectedMessage(null);
             setIsMessageSelected(false);
         } else if (action === 'edit') {
@@ -247,7 +250,29 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
     const fetchedMessages = React.useMemo(() => {
         if (!data) return [];
-        return [...data.pages].reverse().flatMap(page => page);
+        const allMsgs = [...data.pages].reverse().flatMap(page => page);
+
+        // Collect IDs and text content of confirmed (non-temp) messages
+        const realMessageIds = new Set<string>();
+        const realTexts = new Set<string>();
+        allMsgs.forEach(m => {
+            if (m && m.id && !m.id.startsWith('temp-')) {
+                realMessageIds.add(m.id);
+                if (m.text) realTexts.add(m.text.trim());
+            }
+        });
+
+        const seenIds = new Set<string>();
+        return allMsgs.filter(m => {
+            if (!m || !m.id) return false;
+            if (seenIds.has(m.id)) return false;
+            // If it's an optimistic placeholder and a confirmed message with same text is already loaded, filter it out
+            if (m.id.startsWith('temp-') && m.text && realTexts.has(m.text.trim())) {
+                return false;
+            }
+            seenIds.add(m.id);
+            return true;
+        });
     }, [data]);
 
     useEffect(() => {
@@ -273,17 +298,25 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             // Filter
             if (message.conversation_id !== groupId && message.group_id !== groupId) return;
 
-            const isMe = message.sender_id === (currentUser.id || currentUser.user_id);
-            const senderMember = activeGroup?.members?.find((m: any) => m.user_id === message.sender_id);
+            const myId = currentUser.id || currentUser.user_id;
+            const isMe = String(message.sender_id || message.senderId) === String(myId);
+            const senderMember = activeGroup?.members?.find((m: any) => String(m.user_id) === String(message.sender_id || message.senderId));
             const isSenderBlocked = message.sender_id && !isMe && (
-                senderMember?.is_blocked_by_other ||
-                isBlocked(message.sender_id) ||
-                message.is_unavailable
+                message.is_unavailable === true ||
+                message.is_blocked === true ||
+                message.isBlocked === true ||
+                Boolean(senderMember?.is_blocked_by_other) ||
+                Boolean(senderMember?.is_blocked) ||
+                Boolean(senderMember?.is_unavailable) ||
+                isBlocked(message.sender_id)
             );
 
-            const uiMessage = mapBackendMessageToMessage(message, currentUser.id || currentUser.user_id, activeProfile?.type === "COMPANY" ? activeProfile.id : undefined);
+            const uiMessage = mapBackendMessageToMessage(message, myId, activeProfile?.type === "COMPANY" ? activeProfile.id : undefined);
             if (isSenderBlocked) {
                 uiMessage.is_unavailable = true;
+                uiMessage.isBlocked = true;
+                uiMessage.senderName = "Unknown user";
+                uiMessage.senderAvatar = undefined;
             }
 
             // Clear typing indicator for the sender
@@ -330,7 +363,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     const firstPage = newPages[0];
                     const optimisticMatch = firstPage.find(m =>
                         m.id.startsWith('temp-') &&
-                        m.text === uiMessage.text
+                        (m.text === uiMessage.text || (m.text_content && m.text_content === uiMessage.text))
                     );
                     if (optimisticMatch) {
                         newPages[0] = firstPage.map(m => m.id === optimisticMatch.id ? uiMessage : m);
@@ -435,14 +468,51 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             }
         };
 
-        const handleBlockOrDeactivate = () => {
+        const handleBlockOrDeactivate = (payload?: any) => {
+            if (payload && (payload.blocker_id || payload.target_id || payload.userId || payload.user_id)) {
+                const myId = currentUser.id || currentUser.user_id;
+                const blockedId = String(payload.blocker_id) === String(myId)
+                    ? String(payload.target_id || payload.userId || payload.user_id)
+                    : String(payload.blocker_id || payload.target_id || payload.userId || payload.user_id);
+                const isBlockedEvent = payload.is_blocked !== false;
+                
+                // Optimistically update group details cache
+                queryClient.setQueryData(['group-details', groupId], (oldGroup: any) => {
+                    if (!oldGroup || !oldGroup.members) return oldGroup;
+                    return {
+                        ...oldGroup,
+                        members: oldGroup.members.map((m: any) => {
+                            if (String(m.user_id) === blockedId) {
+                                return {
+                                    ...m,
+                                    is_blocked: isBlockedEvent,
+                                    is_blocked_by_other: isBlockedEvent,
+                                    is_unavailable: isBlockedEvent,
+                                    full_name: isBlockedEvent ? 'Unknown user' : m.full_name,
+                                    avatar_url: isBlockedEvent ? null : m.avatar_url
+                                };
+                            }
+                            return m;
+                        })
+                    };
+                });
+            }
+
             queryClient.resetQueries({ queryKey: ['messages', groupId], exact: false });
             queryClient.resetQueries({ queryKey: ['groupDetails', groupId], exact: false });
             queryClient.resetQueries({ queryKey: ['group-details', groupId], exact: false });
+            queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
+            queryClient.resetQueries({ queryKey: ['profilePreview'], exact: false });
+            queryClient.resetQueries({ queryKey: ['entityPreview'], exact: false });
+            queryClient.resetQueries({ queryKey: ['jobContext'], exact: false });
             queryClient.refetchQueries({ queryKey: ['messages', groupId], type: 'all' });
             queryClient.refetchQueries({ queryKey: ['groupDetails', groupId], type: 'all' });
             queryClient.refetchQueries({ queryKey: ['group-details', groupId], type: 'all' });
             queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
+            queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
         };
 
         const handleMessageEdited = (payload: { messageId: string; conversationId: string; text_content: string }) => {
@@ -603,9 +673,28 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             // Clear typing indicator immediately on send
             setTypingMap(new Map());
 
-            // Invalidate to fetch the true state
-            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
-            // queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] }); // Optimistic update is enough, avoid sidebar re-render
+            const myId = currentUser.id || currentUser.user_id;
+            const realMessage = mapBackendMessageToMessage(
+                data.data || data,
+                myId,
+                activeProfile?.type === "COMPANY" ? activeProfile.id : undefined,
+            );
+
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return { pages: [[realMessage]], pageParams: [null] };
+                const newPages = [...old.pages];
+                const alreadyExists = newPages[0].some(m => m.id === realMessage.id);
+                if (alreadyExists) {
+                    if (context?.tempId) {
+                        newPages[0] = newPages[0].filter(m => m.id !== context.tempId);
+                    }
+                } else if (context?.tempId) {
+                    newPages[0] = newPages[0].map(m => m.id === context.tempId ? realMessage : m);
+                } else {
+                    newPages[0] = [...newPages[0], realMessage];
+                }
+                return { ...old, pages: newPages };
+            });
         },
     });
 
@@ -620,8 +709,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             if (displayMessages.length > 0) {
                 try {
                     const { markGroupAsRead } = await import("@/services/api/group-chat");
-                    // Fire and forget - don't wait for it to block UI
-                    markGroupAsRead(groupId).catch(console.error);
+                    markGroupAsRead(groupId).catch(() => {});
 
                     // Optimistically update conversation unread count
                     queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldData: any[]) => {

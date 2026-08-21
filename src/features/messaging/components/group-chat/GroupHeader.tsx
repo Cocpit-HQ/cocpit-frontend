@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Message } from "@/types/messaging";
+import { hasMessageMedia } from "../ui/MessageBubble";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import {
     DropdownMenu,
@@ -121,13 +122,15 @@ export default function GroupHeader({
                                     <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Info</span>
                                     <Icon icon="fluent:info-16-regular" width={24} height={24} color="var(--foreground)" />
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => onMessageAction?.('copy')}
-                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
-                                >
-                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Copy</span>
-                                    <Icon icon="fluent:copy-16-regular" width={24} height={24} color="var(--foreground)" />
-                                </DropdownMenuItem>
+                                {!hasMessageMedia(selectedMessage) && (
+                                    <DropdownMenuItem
+                                        onClick={() => onMessageAction?.('copy')}
+                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
+                                    >
+                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Copy</span>
+                                        <Icon icon="fluent:copy-16-regular" width={24} height={24} color="var(--foreground)" />
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
