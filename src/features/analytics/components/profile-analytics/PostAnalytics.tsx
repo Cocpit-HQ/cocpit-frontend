@@ -62,7 +62,7 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
     : (data?.audienceDemographics?.countries ?? []);
   
   const industries = data?.audienceDemographics?.industries ?? [];
-  const postTitle = post?.content ? post.content.substring(0, 80) + '...' : 'Post Analytics';
+  const postTitle = post?.title || 'Post Analytics';
 
   return (
     <div className="flex flex-col w-full">
@@ -105,10 +105,10 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
 
               {dropdownOpen && (
                 <div className="absolute top-[36px] right-0 z-50 flex flex-col items-center p-2 w-[135px] bg-white border border-[#EEF2FF] rounded-[16px] shadow-lg">
-                  {['Custom', 'Last 7 days', 'Last 30 days', 'All time'].map((f) => (
+                  {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((f) => (
                     <div
                       key={f}
-                      className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[32px] rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors ${
+                      className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[32px] rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors whitespace-nowrap ${
                         filter === f ? 'text-[#6366F1] font-medium' : 'text-[#6B7280]'
                       }`}
                       onClick={() => { setFilter(f); setDropdownOpen(false); }}
@@ -157,7 +157,11 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
         <div className="flex flex-row gap-4 mb-8">
           <div className="w-[80px] h-[80px] bg-indigo-50 rounded-[12px] flex items-center justify-center shrink-0 overflow-hidden relative">
             {post?.mediaUrl ? (
-              <img src={post.mediaUrl} alt={postTitle} className="w-full h-full object-cover" />
+              post.type?.toLowerCase().includes('video') ? (
+                <video src={post.mediaUrl} className="w-full h-full object-cover" muted playsInline />
+              ) : (
+                <img src={post.mediaUrl} alt={postTitle} className="w-full h-full object-cover" />
+              )
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#C7D2FE] flex items-center justify-center relative">
                 <Icon icon="lucide:layout-template" className="w-8 h-8 text-[#6366F1] opacity-50" />
@@ -169,8 +173,8 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
           </div>
           <div className="flex flex-col flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="bg-[#EEF2FF] text-[#6366F1] text-[10px] font-medium px-2 py-0.5 rounded-[4px] font-['Poppins'] capitalize">{post?.postType || 'Article'}</span>
-              <span className="text-[10px] text-gray-400 font-['Poppins']">• Published on {post?.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '...'}</span>
+              <span className="bg-[#EEF2FF] text-[#6366F1] text-[10px] font-medium px-2 py-0.5 rounded-[4px] font-['Poppins'] capitalize">{post?.type || 'Article post'}</span>
+              <span className="text-[10px] text-gray-400 font-['Poppins']">• Published on {post?.publishedAt || '...'}</span>
             </div>
             {isLoading ? <Skeleton className="w-full h-[40px]" /> : (
               <p className="text-[14px] font-medium text-gray-900 font-['Poppins'] leading-snug line-clamp-3">
@@ -224,30 +228,50 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
             {(() => {
               const reachData = data?.reachChart?.datasets?.[0]?.data ?? [];
               const maxReach = Math.max(...reachData, 1);
-              const reachPoints = reachData.length > 1
-                ? reachData.map((v, i) => {
-                    const x = (i / (reachData.length - 1)) * 400;
-                    const y = 90 - ((v / maxReach) * 80);
-                    return `${x.toFixed(1)},${y.toFixed(1)}`;
-                  }).join(' ')
-                : '0,90 400,90';
+              const points = reachData.map((v, i) => {
+                const x = (i / Math.max(reachData.length - 1, 1)) * 400;
+                const y = 90 - ((v / maxReach) * 80);
+                return { x, y };
+              });
+
+              let smoothPath = '';
+              if (points.length > 0) {
+                smoothPath = `M ${points[0].x},${points[0].y}`;
+                for (let i = 0; i < points.length - 1; i++) {
+                  const curr = points[i];
+                  const next = points[i + 1];
+                  const midX = (curr.x + next.x) / 2;
+                  smoothPath += ` C ${midX},${curr.y} ${midX},${next.y} ${next.x},${next.y}`;
+                }
+              }
+
+              const fillPath = smoothPath ? `${smoothPath} L ${points[points.length - 1].x},100 L 0,100 Z` : '';
 
               return (
                 <svg viewBox="0 0 400 100" className="w-full h-full preserve-aspect-ratio-none absolute -left-6" style={{ width: 'calc(100% + 48px)' }} preserveAspectRatio="none">
-                  <polyline
-                    points={reachPoints}
-                    fill="none" stroke="#818CF8" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"
-                  />
-                  {reachData.length > 0 && (
-                    <>
-                      <circle cx="0" cy={90 - ((reachData[0] / maxReach) * 80)} r="4" fill="#818CF8" />
-                      <circle cx="400" cy={90 - ((reachData[reachData.length - 1] / maxReach) * 80)} r="4" fill="#818CF8" />
-                    </>
+                  <defs>
+                    <linearGradient id="reachGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#818CF8" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {fillPath && <path d={fillPath} fill="url(#reachGradient)" />}
+                  {smoothPath ? (
+                    <path d={smoothPath} fill="none" stroke="#6366F1" strokeWidth="3" strokeLinecap="round" />
+                  ) : (
+                    <line x1="0" y1="90" x2="400" y2="90" stroke="#6366F1" strokeWidth="3" />
                   )}
                 </svg>
               );
             })()}
           </div>
+          
+          {data?.reachChart && (data.reachChart.dateRangeStr || data.reachChart.labels.length > 0) && (
+            <div className="flex justify-between w-full mt-4 text-[10px] text-gray-400 font-['Poppins'] z-10 relative">
+              <span>{data.reachChart.dateRangeStr?.start ?? data.reachChart.labels[0]}</span>
+              <span>{data.reachChart.dateRangeStr?.end ?? data.reachChart.labels[data.reachChart.labels.length - 1]}</span>
+            </div>
+          )}
         </div>
 
         {/* Direct impact */}

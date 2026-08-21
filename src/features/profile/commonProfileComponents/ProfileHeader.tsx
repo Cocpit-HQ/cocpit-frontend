@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { ProfileIdentityChips } from "../components/ProfileIdentityChips";
 import { CompanyRolesList } from "../components/CompanyRolesList";
 import EditCoverPhoto from "../components/EditCoverPhoto";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 import {
     DropdownMenu,
@@ -95,6 +96,10 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     };
 
     const [isDownloadingResume, setIsDownloadingResume] = useState(false);
+    
+    const { activeProfile } = useActiveProfile();
+    const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+
     const handleDownloadResume = async () => {
         if (!user?.id) return;
         try {
@@ -106,7 +111,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
 
             // Record download event
             try {
-                await recordResumeEvent(user.id, "download");
+                await recordResumeEvent(user.id, "download", orgId);
             } catch (err) {
                 console.error("Failed to record resume download event", err);
             }

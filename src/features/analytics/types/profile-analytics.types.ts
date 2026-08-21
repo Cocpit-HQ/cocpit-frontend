@@ -110,12 +110,12 @@ export interface OpportunitiesApiResponse {
 // ─────────────────────────────────────────────
 export interface PostAnalyticsApiResponse {
   post: {
-    postId: string;
-    content: string | null;
-    postType: string;
-    createdAt: string;
+    title: string;
+    type: string;
+    publishedAt: string;
+    contentSnippet: string;
     mediaUrl: string | null;
-    mediaType: string | null;
+    fallbackIcon: string | null;
   };
   performance: {
     impressions: number;
@@ -128,6 +128,10 @@ export interface PostAnalyticsApiResponse {
   reachChart: {
     labels: string[];
     datasets: { label: string; data: number[] }[];
+    dateRangeStr?: {
+      start: string;
+      end: string;
+    };
   };
   directImpact: {
     profileVisits: { value: number; vsAvg: string; isPositive: boolean };

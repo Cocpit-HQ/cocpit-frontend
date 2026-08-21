@@ -79,10 +79,10 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
 
           {dateDropdownOpen && (
             <div className="absolute top-8 right-0 z-50 flex flex-col items-center p-2 w-[157px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-lg">
-              {['Last 7 Days', 'Last 30 Days', 'All Time', 'Custom'].map((option) => (
+              {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((option) => (
                 <div
                   key={option}
-                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors ${
+                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap ${
                     filter === option ? 'text-[#6366F1]' : 'text-black'
                   }`}
                   onClick={() => { setFilter(option); setDateDropdownOpen(false); }}
@@ -119,7 +119,10 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
                 onSelect={setDateRange}
-                numberOfMonths={2}
+                numberOfMonths={1}
+                captionLayout="dropdown"
+                startMonth={new Date(2020, 0)}
+                endMonth={new Date(2030, 11)}
               />
             </PopoverContent>
           </Popover>

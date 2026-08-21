@@ -113,10 +113,10 @@ export const OverviewTab = ({
 
             {dropdownOpen && (
               <div className="absolute top-[36px] right-0 z-50 flex flex-col items-center p-2 w-[135px] bg-white border border-[#EEF2FF] rounded-[16px] shadow-lg">
-                {['Custom', 'Last 7 days', 'Last 30 days', 'All time'].map((f) => (
+                {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((f) => (
                   <div
                     key={f}
-                    className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[32px] rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors ${
+                    className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[32px] rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors whitespace-nowrap ${
                       filter === f ? 'text-[#6366F1] font-medium' : 'text-[#6B7280]'
                     }`}
                     onClick={() => { setFilter(f); setDropdownOpen(false); }}
@@ -153,7 +153,10 @@ export const OverviewTab = ({
                   defaultMonth={dateRange?.from}
                   selected={dateRange}
                   onSelect={setDateRange}
-                  numberOfMonths={2}
+                  numberOfMonths={1}
+                  captionLayout="dropdown"
+                  startMonth={new Date(2020, 0)}
+                  endMonth={new Date(2030, 11)}
                   className="bg-white"
                 />
               </PopoverContent>

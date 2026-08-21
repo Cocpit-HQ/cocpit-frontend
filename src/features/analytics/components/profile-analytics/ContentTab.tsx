@@ -73,7 +73,7 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
               {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((f) => (
                 <div
                   key={f}
-                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors ${filter === f ? 'text-[#6366F1]' : 'text-black'}`}
+                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap ${filter === f ? 'text-[#6366F1]' : 'text-black'}`}
                   onClick={() => { setFilter(f); setDropdownOpen(false); }}
                 >
                   <span className="text-[14px] font-normal font-['Poppins']">{f}</span>
@@ -107,7 +107,10 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
                 onSelect={setDateRange}
-                numberOfMonths={2}
+                numberOfMonths={1}
+                captionLayout="dropdown"
+                startMonth={new Date(2020, 0)}
+                endMonth={new Date(2030, 11)}
               />
             </PopoverContent>
           </Popover>
@@ -150,8 +153,14 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
       {/* Top Performing Posts Header */}
       <div className="flex flex-row justify-center items-center px-4 gap-[10px] w-full h-[46px] mb-6">
         <div className="flex flex-col justify-center items-start gap-1 flex-1 h-[46px]">
-          <h3 className="text-[18px] font-medium text-black font-['Poppins'] leading-[26px] m-0 p-0">Top performing posts</h3>
-          <span className="text-[12px] font-normal text-[#6B7280] font-['Poppins'] leading-[16px]">Ranked by engagement and professional impact</span>
+          <h3 className="text-[18px] font-medium text-black font-['Poppins'] leading-[26px] m-0 p-0">{sortOption} posts</h3>
+          <span className="text-[12px] font-normal text-[#6B7280] font-['Poppins'] leading-[16px]">
+            {sortOption === 'Top performing' && 'Ranked by engagement and professional impact'}
+            {sortOption === 'Most recent' && 'Ranked by publication date'}
+            {sortOption === 'Most viewed' && 'Ranked by views'}
+            {sortOption === 'Most liked' && 'Ranked by likes'}
+            {sortOption === 'Most shared' && 'Ranked by shares'}
+          </span>
         </div>
 
         <div className="relative" ref={sortDropdownRef}>
@@ -164,7 +173,7 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
           </div>
           {sortDropdownOpen && (
             <div className="absolute top-8 right-0 z-50 flex flex-col items-center p-2 w-[157px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-lg">
-              {['Top performing', 'Most viewed', 'Most liked', 'Most shared'].map((option) => (
+              {['Top performing', 'Most recent', 'Most viewed', 'Most liked', 'Most shared'].map((option) => (
                 <div
                   key={option}
                   className={`flex flex-row items-center px-4 py-2 gap-[10px] w-[141px] h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors ${sortOption === option ? 'text-[#6366F1]' : 'text-black'}`}
@@ -179,7 +188,7 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
       </div>
 
       {/* Posts List */}
-      <div className="flex flex-col gap-4 relative z-10">
+      <div className="flex flex-col gap-4 relative z-10 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent pr-2">
         {isLoading
           ? Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex flex-row items-center p-[16px] gap-[16px] w-full h-[92px] bg-white border-b border-gray-50">
@@ -199,7 +208,11 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
               <Link href={`/analytics/post/${post.id}`} key={idx} className="flex flex-row items-center p-[16px] gap-[16px] w-full h-[92px] bg-white border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer">
                 <div className="w-[60px] h-[60px] rounded-[12px] overflow-hidden shrink-0 flex items-center justify-center bg-[#EEF2FF]">
                   {post.imgSrc ? (
-                    <img src={post.imgSrc} alt={post.title} className="w-full h-full object-cover" />
+                    post.type.toLowerCase().includes('video') ? (
+                      <video src={post.imgSrc} className="w-full h-full object-cover" muted playsInline />
+                    ) : (
+                      <img src={post.imgSrc} alt={post.title} className="w-full h-full object-cover" />
+                    )
                   ) : (
                     <Icon icon={post.icon ?? 'lucide:type'} className="w-[24px] h-[24px] text-[#6366F1]" />
                   )}

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { recordResumeEvent } from "@/services/api/analytics";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface LivingResumeProps {
   userId: string;
@@ -36,6 +37,9 @@ export function LivingResume({
 }: LivingResumeProps) {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [tempFile, setTempFile] = useState<File | null>(null);
+  
+  const { activeProfile } = useActiveProfile();
+  const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
   
   // Only call hooks if it's own profile, or call them but don't use them (React hook rules require calling unconditionally)
   const resumeMutations = useResumeMutations();
@@ -69,7 +73,7 @@ export function LivingResume({
     if (resumeUrl) {
       try {
         // Log the view or download event
-        await recordResumeEvent(userId, isOwnProfile ? 'download' : 'view');
+        await recordResumeEvent(userId, isOwnProfile ? 'download' : 'view', orgId);
       } catch (err) {
         console.error("Failed to record resume event:", err);
       }
@@ -88,7 +92,7 @@ export function LivingResume({
   const handleDownloadPublic = async () => {
     if (resumeUrl) {
       try {
-        await recordResumeEvent(userId, 'download');
+        await recordResumeEvent(userId, 'download', orgId);
       } catch (err) {
         console.error("Failed to record resume event:", err);
       }

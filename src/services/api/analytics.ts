@@ -48,6 +48,7 @@ export function buildAnalyticsParams(
 export function sortOptionToParam(uiSort: string): string {
   const map: Record<string, string> = {
     "Top performing": "top_performing",
+    "Most recent": "most_recent",
     "Most viewed": "most_viewed",
     "Most liked": "most_liked",
     "Most shared": "most_shared",
@@ -109,10 +110,11 @@ export const getPostAnalytics = async (
   return response.data.data;
 };
 
-export const recordResumeEvent = async (targetUserId: string, eventType: 'view' | 'download') => {
+export const recordResumeEvent = async (targetUserId: string, eventType: 'view' | 'download', orgId?: string) => {
   const response = await api.post('/analytics/resume-events', {
     targetUserId,
-    eventType
+    eventType,
+    orgId
   });
   return response.data;
 };

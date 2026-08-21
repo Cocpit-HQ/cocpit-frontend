@@ -52,7 +52,7 @@ export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: 
               {['Last 7 days', 'Last 30 days', 'All time'].map((f) => (
                 <div
                   key={f}
-                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-[119px] h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors ${filter === f ? 'text-[#6366F1]' : 'text-black'}`}
+                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap ${filter === f ? 'text-[#6366F1]' : 'text-black'}`}
                   onClick={() => { setFilter(f); setDropdownOpen(false); }}
                 >
                   <span className="text-[14px] font-normal font-['Poppins']">{f}</span>

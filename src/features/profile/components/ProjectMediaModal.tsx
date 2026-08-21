@@ -207,14 +207,35 @@ export function ProjectMediaModal({
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full sm:w-[200px] h-[240px] mx-auto rounded-[16px] border border-border bg-secondary flex flex-col items-center justify-center p-4 text-center cursor-pointer group hover:border-[#6366F1] transition-all relative overflow-hidden shadow-sm"
                 >
-                  {/* Mock thumbnail preview effect for document */}
-                  <div className="w-16 h-20 bg-white dark:bg-card border border-border rounded shadow-md flex items-center justify-center mb-3 text-[#6366F1]">
-                    <FileText className="w-8 h-8" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground max-w-full truncate px-2">
-                    {fileName || "document.pdf"}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground mt-1">Click to replace</span>
+                  {(fileName?.toLowerCase().endsWith(".pdf") || pendingFile?.type === "application/pdf") ? (
+                    <>
+                      <div className="absolute inset-0 w-full h-full p-2 pointer-events-none overflow-hidden">
+                        <iframe
+                          src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                          className="w-full h-full border-0 pointer-events-none select-none rounded-[8px]"
+                          tabIndex={-1}
+                          scrolling="no"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-4">
+                        <span className="text-xs font-medium max-w-full truncate px-2 mb-1">
+                          {fileName || "document.pdf"}
+                        </span>
+                        <span className="text-[10px] font-medium">Click to replace</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Fallback mock thumbnail preview effect for non-PDF documents */}
+                      <div className="w-16 h-20 bg-white dark:bg-card border border-border rounded shadow-md flex items-center justify-center mb-3 text-[#6366F1]">
+                        <FileText className="w-8 h-8" />
+                      </div>
+                      <span className="text-xs font-medium text-foreground max-w-full truncate px-2">
+                        {fileName || "document.pdf"}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground mt-1">Click to replace</span>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div
