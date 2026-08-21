@@ -109,14 +109,19 @@ export default function InviteMemberModal({
                   onClick={() => toggleSelection(c.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src={c.avatarUrl || '/assets/pngegg.png'}
-                      alt={c.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/assets/pngegg.png';
-                      }}
-                    />
+                    <div className="relative w-10 h-10 flex-shrink-0 rounded-full overflow-hidden bg-[#E2E8F0] dark:bg-gray-700 flex items-center justify-center text-[#707EAE] dark:text-gray-300 font-semibold font-['Poppins']">
+                      <span>{(c.name || '?').charAt(0).toUpperCase()}</span>
+                      {c.avatarUrl && c.avatarUrl !== '/assets/pngegg.png' && (
+                        <img
+                          src={c.avatarUrl}
+                          alt={c.name}
+                          className="absolute inset-0 w-full h-full object-cover bg-white dark:bg-[#1A1D24]"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                    </div>
                     <span className="text-[14px] font-medium text-[#000000] dark:text-gray-200 font-['Poppins']">
                       {c.name}
                     </span>
