@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { CareerTrajectorySnapshot } from '../../types/trajectory.types';
-import { MOCK_TRAJECTORY, MOCK_STUDENT_TRAJECTORY } from '../../data/mock-data';
+import { useAnalyticsStore } from '@/store/analytics.store';
+import { useCareerTrajectory } from '../../hooks/useCareerTrajectory';
+import { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 
 // Mock components to be built out later
 const TrajectorySummary = ({ data }: { data: any }) => (
@@ -143,33 +145,27 @@ const NextBestAction = ({ data }: { data: any }) => {
 };
 
 export function CareerTrajectoryHome() {
-  const [analyzing, setAnalyzing] = useState(false);
-  const [results, setResults] = useState<CareerTrajectorySnapshot | null>(null);
-  const [selectedRole, setSelectedRole] = useState('vp-marketing');
-
+  const { selectedRole, setSelectedRole } = useAnalyticsStore();
+  
+  const { data: results, isFetching: analyzing, refetch } = useCareerTrajectory(selectedRole);
+  const { data: overviewData } = useAnalyticsOverview('Last 30 days');
+  
   const roleLabels: Record<string, string> = {
     'vp-marketing': 'VP of Marketing',
     'junior-designer': 'Junior UI Designer',
     'senior-engineer': 'Senior Software Engineer'
   };
 
-  // Mock profile strength (in a real app, this would come from a global context or API)
-  const profileStrength = 95;
+  const profileStrength = overviewData?.profileStrength?.score ?? 0;
 
   const isStudent = selectedRole === 'junior-designer';
   const threshold = isStudent ? 80 : 90;
-  const isReady = selectedRole && profileStrength >= threshold;
+  const isReady = !!selectedRole && profileStrength >= threshold;
 
   const handleRunAnalysis = () => {
     if (!isReady) return;
-    setAnalyzing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setResults(isStudent ? MOCK_STUDENT_TRAJECTORY : MOCK_TRAJECTORY);
-      setAnalyzing(false);
-    }, 1500);
+    refetch();
   };
-
 
   if (results) {
     return (

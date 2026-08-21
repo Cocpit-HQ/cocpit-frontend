@@ -8,15 +8,9 @@ import dayjs from 'dayjs';
 import { AnalyticsErrorState } from './AnalyticsErrorState';
 import { AnalyticsEmptyState } from './AnalyticsEmptyState';
 
-interface AudienceTabProps {
-  data: AudienceApiResponse | null;
-  isLoading: boolean;
-  error: string | null;
-  filter: string;
-  setFilter: (f: string) => void;
-  dateRange?: DateRange;
-  setDateRange?: (dr: DateRange | undefined) => void;
-}
+import { AnalyticsFilterBar } from '../ui/AnalyticsFilterBar';
+import { useAnalyticsStore } from '@/store/analytics.store';
+import { useAnalyticsAudience } from '../../hooks/useAnalyticsAudience';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-100 rounded-lg ${className ?? ''}`} />
@@ -36,20 +30,13 @@ const TrendBadge = ({ metric }: { metric: MetricWithTrend }) => {
   );
 };
 
-export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRange, setDateRange }: AudienceTabProps) => {
-  const [locationType, setLocationType] = useState<'Cities' | 'Countries'>('Cities');
-  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+export const AudienceTab = () => {
+  const { filter, dateRange } = useAnalyticsStore();
+  const { data, isLoading, error } = useAnalyticsAudience(filter, dateRange);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDateDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const [locationType, setLocationType] = useState<'Cities' | 'Countries'>('Cities');
+
+
 
   const locationItems = data
     ? (locationType === 'Cities' ? data.audienceLocation.cities : data.audienceLocation.countries)
@@ -60,78 +47,11 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
 
   return (
     <div className="flex flex-col w-full mt-6">
-      {/* Header */}
-      <div className="flex flex-row items-center py-0 gap-[10px] w-full h-[26px] mb-6">
-        <span className="w-[815px] h-[26px] text-[18px] font-medium text-black font-['Poppins'] leading-[26px] flex-1">
-          Audience overview
-        </span>
-
-        <div className="relative" ref={dropdownRef}>
-          <div
-            className="flex flex-row items-center p-0 gap-[8px] w-[103px] h-[20px] cursor-pointer"
-            onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
-          >
-            <span className="text-[12px] font-normal text-[#6B7280] font-['Poppins'] leading-[16px] w-[75px] h-[16px]">
-              {filter}
-            </span>
-            <Icon icon="lucide:chevron-down" className={`w-[20px] h-[20px] text-[#6B7280] transition-transform ${dateDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
-          </div>
-
-          {dateDropdownOpen && (
-            <div className="absolute top-8 right-0 z-50 flex flex-col items-center p-2 w-[157px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-lg">
-              {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((option) => (
-                <div
-                  key={option}
-                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap ${
-                    filter === option ? 'text-[#6366F1]' : 'text-black'
-                  }`}
-                  onClick={() => { setFilter(option); setDateDropdownOpen(false); }}
-                >
-                  <span className="text-[14px] font-normal font-['Poppins'] leading-[20px]">{option}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        {filter === 'Custom' && setDateRange && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer border border-[#EEF2FF] px-3 py-1.5 rounded-[16px] text-xs text-[#6B7280] bg-white hover:bg-gray-50 transition-colors ml-4">
-                <Icon icon="lucide:calendar" className="w-[16px] h-[16px]" />
-                {dateRange?.from ? (
-                  dateRange.to ? (
-                    <span className="font-['Poppins']">
-                      {dayjs(dateRange.from).format('MMM DD, YYYY')} - {dayjs(dateRange.to).format('MMM DD, YYYY')}
-                    </span>
-                  ) : (
-                    <span className="font-['Poppins']">{dayjs(dateRange.from).format('MMM DD, YYYY')}</span>
-                  )
-                ) : (
-                  <span className="font-['Poppins']">Select Date Range</span>
-                )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={1}
-                captionLayout="dropdown"
-                startMonth={new Date(2020, 0)}
-                endMonth={new Date(2030, 11)}
-              />
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
+      <AnalyticsFilterBar title="Audience overview" />
 
       {/* Error state */}
       {error && !isLoading && (
-        <AnalyticsErrorState message={error} />
+        <AnalyticsErrorState message={error.message || 'An error occurred'} />
       )}
 
       {/* Empty State */}
@@ -189,8 +109,8 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
           </div>
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-[436px] h-[36px]" />)
-            : locationItems.length > 0
-              ? locationItems.slice(0, 4).map((item, idx) => (
+            : locationItems.length > 0 ? (
+                locationItems.slice(0, 4).map((item: any, idx: number) => (
                   <div key={idx} className="flex flex-col items-start p-0 gap-[8px] w-[436px] h-[36px]">
                     <div className="flex flex-row justify-between items-start p-0 w-[436px] h-[20px]">
                       <span className="h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000]">{item.name}</span>
@@ -201,7 +121,7 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
                     </div>
                   </div>
                 ))
-              : <span className="text-[12px] text-[#6B7280] font-['Poppins']">No data available for this period.</span>
+              ) : <span className="text-[12px] text-[#6B7280] font-['Poppins']">No data available for this period.</span>
           }
         </div>
 
@@ -211,7 +131,7 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-[436px] h-[36px]" />)
             : industries.length > 0
-              ? industries.slice(0, 4).map((item, idx) => (
+              ? industries.slice(0, 4).map((item: any, idx: number) => (
                   <div key={idx} className="flex flex-col items-start p-0 gap-[8px] w-[436px] h-[36px]">
                     <div className="flex flex-row justify-between items-start p-0 w-[436px] h-[20px]">
                       <span className="h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000]">{item.name}</span>
@@ -242,7 +162,7 @@ export const AudienceTab = ({ data, isLoading, error, filter, setFilter, dateRan
             </div>
           ) : insights.length > 0 ? (
             <ul className="flex flex-col m-0 pl-[24px] gap-0 list-disc marker:text-[#6B7280]">
-              {insights.map((insight, i) => (
+              {insights.map((insight: any, i: number) => (
                 <li key={i} className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[#6B7280]">{insight}</li>
               ))}
             </ul>

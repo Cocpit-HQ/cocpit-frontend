@@ -4,29 +4,17 @@ import { OpportunitiesApiResponse } from '../../types/profile-analytics.types';
 import { AnalyticsErrorState } from './AnalyticsErrorState';
 import { AnalyticsEmptyState } from './AnalyticsEmptyState';
 
-interface OpportunitiesTabProps {
-  data: OpportunitiesApiResponse | null;
-  isLoading: boolean;
-  error: string | null;
-  filter: string;
-  setFilter: (f: string) => void;
-}
+import { AnalyticsFilterBar } from '../ui/AnalyticsFilterBar';
+import { useAnalyticsStore } from '@/store/analytics.store';
+import { useAnalyticsOpportunities } from '../../hooks/useAnalyticsOpportunities';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-100 rounded-lg ${className ?? ''}`} />
 );
 
-export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: OpportunitiesTabProps) => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+export const OpportunitiesTab = () => {
+  const { filter, dateRange } = useAnalyticsStore();
+  const { data, isLoading, error } = useAnalyticsOpportunities(filter, dateRange);
 
   const topOrgs = data?.topOrganizations ?? [];
   const orgIndustries = data?.organizationIndustries ?? [];
@@ -34,38 +22,11 @@ export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: 
 
   return (
     <div className="flex flex-col w-full mt-6">
-      {/* Header */}
-      <div className="flex flex-row items-center py-0 gap-[10px] w-full h-[26px] mb-6">
-        <span className="w-[815px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#000000] flex-1">
-          Opportunity overview
-        </span>
-        <div className="relative" ref={dropdownRef}>
-          <div
-            className="flex flex-row items-center p-0 gap-[8px] w-[103px] h-[20px] cursor-pointer"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <span className="w-[75px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]">{filter}</span>
-            <Icon icon="lucide:chevron-down" className={`w-[20px] h-[20px] text-[#6B7280] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
-          </div>
-          {dropdownOpen && (
-            <div className="absolute top-8 right-0 z-50 flex flex-col items-center p-2 w-[135px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-lg">
-              {['Last 7 days', 'Last 30 days', 'All time'].map((f) => (
-                <div
-                  key={f}
-                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap ${filter === f ? 'text-[#6366F1]' : 'text-black'}`}
-                  onClick={() => { setFilter(f); setDropdownOpen(false); }}
-                >
-                  <span className="text-[14px] font-normal font-['Poppins']">{f}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <AnalyticsFilterBar title="Opportunity overview" allowCustom={false} />
 
       {/* Error state */}
       {error && !isLoading && (
-        <AnalyticsErrorState message={error} />
+        <AnalyticsErrorState message={error.message || 'An error occurred'} />
       )}
 
       {/* Empty State */}
@@ -152,7 +113,7 @@ export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: 
             : topOrgs.length > 0
               ? (
                   <div className="flex flex-col items-start p-0 gap-[16px] w-full flex-1 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
-                    {topOrgs.map((org, idx) => (
+                    {topOrgs.map((org: any, idx: number) => (
                       <div key={idx} className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[40px] shrink-0">
                         <div className="flex flex-row items-center p-0 gap-[8px] flex-1 h-[40px]">
                           <div className="w-[40px] h-[40px] rounded-[8px] overflow-hidden flex shrink-0 bg-[#EEF2FF] items-center justify-center">
@@ -185,7 +146,7 @@ export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: 
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-[436px] h-[36px]" />)
             : orgIndustries.length > 0
-              ? orgIndustries.slice(0, 4).map((item, idx) => (
+              ? orgIndustries.slice(0, 4).map((item: any, idx: number) => (
                   <div key={idx} className="flex flex-col items-start p-0 gap-[8px] w-[436px] h-[36px]">
                     <div className="flex flex-row justify-between items-start p-0 w-[436px] h-[20px]">
                       <span className="h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000]">{item.name}</span>
@@ -215,7 +176,7 @@ export const OpportunitiesTab = ({ data, isLoading, error, filter, setFilter }: 
             </div>
           ) : insights.length > 0 ? (
             <ul className="flex flex-col m-0 pl-[24px] gap-0 list-disc marker:text-[#6B7280]">
-              {insights.map((insight, i) => (
+              {insights.map((insight: any, i: number) => (
                 <li key={i} className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[#6B7280]">{insight}</li>
               ))}
             </ul>

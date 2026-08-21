@@ -10,43 +10,20 @@ import { OverviewApiResponse } from '../../types/profile-analytics.types';
 import { AnalyticsErrorState } from './AnalyticsErrorState';
 import { AnalyticsEmptyState } from './AnalyticsEmptyState';
 
-interface OverviewTabProps {
-  data: OverviewApiResponse | null;
-  isLoading: boolean;
-  error: string | null;
-  filter: string;
-  setFilter: (f: string) => void;
-  dateRange: DateRange | undefined;
-  setDateRange: (dr: DateRange | undefined) => void;
-}
+import { AnalyticsFilterBar } from '../ui/AnalyticsFilterBar';
+import { useAnalyticsStore } from '@/store/analytics.store';
+import { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 
 // Skeleton shimmer block
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-100 rounded-lg ${className ?? ''}`} />
 );
 
-export const OverviewTab = ({
-  data,
-  isLoading,
-  error,
-  filter,
-  setFilter,
-  dateRange,
-  setDateRange,
-}: OverviewTabProps) => {
+export const OverviewTab = () => {
   const router = useRouter();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  
+  const { filter, dateRange } = useAnalyticsStore();
+  const { data, isLoading, error } = useAnalyticsOverview(filter, dateRange);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -66,7 +43,7 @@ export const OverviewTab = ({
 
   // Build chart data from API response
   const chartData = data
-    ? data.chart.labels.map((label, i) => ({
+    ? data.chart.labels.map((label: any, i: number) => ({
         date: label,
         views: data.chart.datasets[0]?.data[i] ?? 0,
       }))
@@ -96,82 +73,16 @@ export const OverviewTab = ({
 
   return (
     <div className="flex flex-col w-full mt-6">
-      {/* Header */}
-      <div className="flex flex-row items-center py-0 gap-[10px] w-full h-[26px] mb-6">
-        <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#000000] flex-1">
-          Key metrics
-        </span>
-        <div className="flex items-center gap-4">
-          <div className="relative" ref={dropdownRef}>
-            <div
-              className="flex flex-row items-center gap-[8px] cursor-pointer border border-[#EEF2FF] px-3 py-1.5 rounded-full text-xs text-[#6B7280] bg-white hover:bg-gray-50 transition-colors shadow-sm"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
-              <span className="font-['Poppins'] font-normal">{filter}</span>
-              <Icon icon="lucide:chevron-down" className={`w-[16px] h-[16px] text-[#6B7280] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
-            </div>
-
-            {dropdownOpen && (
-              <div className="absolute top-[36px] right-0 z-50 flex flex-col items-center p-2 w-[135px] bg-white border border-[#EEF2FF] rounded-[16px] shadow-lg">
-                {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((f) => (
-                  <div
-                    key={f}
-                    className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[32px] rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors whitespace-nowrap ${
-                      filter === f ? 'text-[#6366F1] font-medium' : 'text-[#6B7280]'
-                    }`}
-                    onClick={() => { setFilter(f); setDropdownOpen(false); }}
-                  >
-                    <span className="text-[12px] font-['Poppins']">{f}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {filter === 'Custom' && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="flex items-center gap-2 cursor-pointer border border-[#EEF2FF] px-3 py-1.5 rounded-full text-xs text-[#6B7280] bg-white hover:bg-gray-50 transition-colors shadow-sm">
-                  <Icon icon="lucide:calendar" className="w-[16px] h-[16px]" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <span className="font-['Poppins']">
-                        {dayjs(dateRange.from).format('MMM DD, YYYY')} - {dayjs(dateRange.to).format('MMM DD, YYYY')}
-                      </span>
-                    ) : (
-                      <span className="font-['Poppins']">{dayjs(dateRange.from).format('MMM DD, YYYY')}</span>
-                    )
-                  ) : (
-                    <span className="font-['Poppins']">Pick a date</span>
-                  )}
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-2 z-[120] bg-white border border-[#EEF2FF] shadow-lg rounded-[16px]" align="end" side="bottom" sideOffset={8}>
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={dateRange?.from}
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  numberOfMonths={1}
-                  captionLayout="dropdown"
-                  startMonth={new Date(2020, 0)}
-                  endMonth={new Date(2030, 11)}
-                  className="bg-white"
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-      </div>
+      {/* Header with Filters */}
+      <AnalyticsFilterBar title="Key metrics" />
 
       {/* Error state */}
       {error && !isLoading && (
-        <AnalyticsErrorState message={error} />
+        <AnalyticsErrorState message={error.message || 'An error occurred'} />
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && data && chartData.every(d => d.views === 0) && keyMetricItems.every(m => Number(m.value) === 0) ? (
+      {!isLoading && !error && data && chartData.every((d: any) => d.views === 0) && keyMetricItems.every(m => Number(m.value) === 0) ? (
         <AnalyticsEmptyState 
           title="No analytics yet" 
           message="Your profile hasn't received any views or engagement in this period. Start connecting and posting to see your metrics grow."
@@ -334,7 +245,7 @@ export const OverviewTab = ({
             </div>
           ) : insights.length > 0 ? (
             <ul className="flex flex-col m-0 pl-[24px] gap-0 list-disc marker:text-[#6B7280]">
-              {insights.map((insight, i) => (
+              {insights.map((insight: any, i: number) => (
                 <li key={i} className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[#6B7280]">{insight}</li>
               ))}
             </ul>

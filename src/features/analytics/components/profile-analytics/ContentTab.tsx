@@ -9,31 +9,23 @@ import dayjs from 'dayjs';
 import { AnalyticsErrorState } from './AnalyticsErrorState';
 import { AnalyticsEmptyState } from './AnalyticsEmptyState';
 
-interface ContentTabProps {
-  data: ContentApiResponse | null;
-  isLoading: boolean;
-  error: string | null;
-  filter: string;
-  setFilter: (f: string) => void;
-  sortOption: string;
-  setSortOption: (s: string) => void;
-  dateRange?: DateRange;
-  setDateRange?: (dr: DateRange | undefined) => void;
-}
+import { AnalyticsFilterBar } from '../ui/AnalyticsFilterBar';
+import { useAnalyticsStore } from '@/store/analytics.store';
+import { useAnalyticsContent } from '../../hooks/useAnalyticsContent';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-100 rounded-lg ${className ?? ''}`} />
 );
 
-export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOption, setSortOption, dateRange, setDateRange }: ContentTabProps) => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+export const ContentTab = () => {
+  const { filter, dateRange, sortOption, setSortOption } = useAnalyticsStore();
+  const { data, isLoading, error } = useAnalyticsContent(filter, sortOption, dateRange);
+
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false);
       if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) setSortDropdownOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -53,73 +45,11 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
 
   return (
     <div className="flex flex-col w-full mt-6">
-      {/* Format Performance Header */}
-      <div className="flex flex-row items-center py-0 gap-[10px] w-full h-[26px] mb-6">
-        <span className="w-[815px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#000000] flex-1">
-          Content format performance
-        </span>
-        <div className="relative" ref={dropdownRef}>
-          <div
-            className="flex flex-row items-center p-0 gap-[8px] w-[103px] h-[20px] cursor-pointer"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <span className="w-[75px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]">
-              {filter}
-            </span>
-            <Icon icon="lucide:chevron-down" className={`w-[20px] h-[20px] text-[#6B7280] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
-          </div>
-          {dropdownOpen && (
-            <div className="absolute top-8 right-0 z-50 flex flex-col items-center p-2 w-[135px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-lg">
-              {['Last 7 days', 'Last 30 days', 'All time', 'Custom'].map((f) => (
-                <div
-                  key={f}
-                  className={`flex flex-row items-center px-4 py-2 gap-[10px] w-full h-[36px] bg-white rounded-[24px] cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap ${filter === f ? 'text-[#6366F1]' : 'text-black'}`}
-                  onClick={() => { setFilter(f); setDropdownOpen(false); }}
-                >
-                  <span className="text-[14px] font-normal font-['Poppins']">{f}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        {filter === 'Custom' && setDateRange && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer border border-[#EEF2FF] px-3 py-1.5 rounded-[16px] text-xs text-[#6B7280] bg-white hover:bg-gray-50 transition-colors ml-4">
-                <Icon icon="lucide:calendar" className="w-[16px] h-[16px]" />
-                {dateRange?.from ? (
-                  dateRange.to ? (
-                    <span className="font-['Poppins']">
-                      {dayjs(dateRange.from).format('MMM DD, YYYY')} - {dayjs(dateRange.to).format('MMM DD, YYYY')}
-                    </span>
-                  ) : (
-                    <span className="font-['Poppins']">{dayjs(dateRange.from).format('MMM DD, YYYY')}</span>
-                  )
-                ) : (
-                  <span className="font-['Poppins']">Select Date Range</span>
-                )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={1}
-                captionLayout="dropdown"
-                startMonth={new Date(2020, 0)}
-                endMonth={new Date(2030, 11)}
-              />
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
+      <AnalyticsFilterBar title="Content format performance" />
 
       {/* Error state */}
       {error && !isLoading && (
-        <AnalyticsErrorState message={error} />
+        <AnalyticsErrorState message={error.message || 'An error occurred'} />
       )}
 
       {/* Empty State */}
@@ -204,7 +134,7 @@ export const ContentTab = ({ data, isLoading, error, filter, setFilter, sortOpti
                 </div>
               </div>
             ))
-          : topPosts.map((post, idx) => (
+          : topPosts.map((post: any, idx: number) => (
               <Link href={`/analytics/post/${post.id}`} key={idx} className="flex flex-row items-center p-[16px] gap-[16px] w-full h-[92px] bg-white border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer">
                 <div className="w-[60px] h-[60px] rounded-[12px] overflow-hidden shrink-0 flex items-center justify-center bg-[#EEF2FF]">
                   {post.imgSrc ? (

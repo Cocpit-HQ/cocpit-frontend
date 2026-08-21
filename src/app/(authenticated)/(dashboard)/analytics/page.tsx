@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { AnalyticsHeader } from '@/features/analytics/components/layout/AnalyticsHeader'
-import { AnalyticsTabs, AnalyticsTabType } from '@/features/analytics/components/layout/AnalyticsTabs'
+import { AnalyticsTabs } from '@/features/analytics/components/layout/AnalyticsTabs'
 import { CareerTrajectoryHome } from '@/features/analytics/components/career-trajectory/CareerTrajectoryHome'
 import { ProfileAnalyticsHome } from '@/features/analytics/components/profile-analytics/ProfileAnalyticsHome'
+import { useAnalyticsStore } from '@/store/analytics.store'
 
 export default function AnalyticsPage() {
   const [mounted, setMounted] = useState(false)
-  const [activeTab, setActiveTab] = useState<AnalyticsTabType>('career-trajectory')
+  const { mainTab } = useAnalyticsStore()
   const { data: session } = useSession()
 
   useEffect(() => {
@@ -33,13 +34,10 @@ export default function AnalyticsPage() {
           <AnalyticsHeader userName={userName} />
 
           {/* Top-level Tabs */}
-          <AnalyticsTabs 
-            activeTab={activeTab} 
-            onTabChange={(tab) => setActiveTab(tab)} 
-          />
+          <AnalyticsTabs />
 
           {/* Tab Content */}
-          {activeTab === 'career-trajectory' ? (
+          {mainTab === 'career-trajectory' ? (
             <CareerTrajectoryHome />
           ) : (
             <ProfileAnalyticsHome />

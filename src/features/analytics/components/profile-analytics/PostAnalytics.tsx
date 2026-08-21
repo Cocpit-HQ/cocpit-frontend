@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { getPostAnalytics } from '@/services/api/analytics';
-import { PostAnalyticsApiResponse } from '../../types/profile-analytics.types';
+import { usePostAnalytics } from '../../hooks/usePostAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,11 +14,11 @@ import { AnalyticsEmptyState } from './AnalyticsEmptyState';
 
 export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }: { postId: string; filter?: string }) => {
   const [locationType, setLocationType] = useState<'Cities' | 'Countries'>('Cities');
-  const [data, setData] = useState<PostAnalyticsApiResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState(initialFilter);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  
+  const { data, isLoading, error } = usePostAnalytics(postId, filter, dateRange);
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -32,26 +31,6 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!postId) return;
-      if (filter === 'Custom' && (!dateRange?.from || !dateRange?.to)) return;
-
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await getPostAnalytics(postId, filter, dateRange);
-        setData(result);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load post analytics.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [postId, filter, dateRange]);
 
   const post = data?.post;
   const metrics = data?.performance;
@@ -78,7 +57,7 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
       </div>
 
       {error && !isLoading && (
-        <AnalyticsErrorState message={error} onRetry={() => setFilter(filter)} />
+        <AnalyticsErrorState message={error.message || 'An error occurred'} onRetry={() => setFilter(filter)} />
       )}
 
       {!isLoading && !error && data && (!metrics || metrics.impressions === 0) ? (
@@ -228,7 +207,7 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
             {(() => {
               const reachData = data?.reachChart?.datasets?.[0]?.data ?? [];
               const maxReach = Math.max(...reachData, 1);
-              const points = reachData.map((v, i) => {
+              const points = reachData.map((v: any, i: number) => {
                 const x = (i / Math.max(reachData.length - 1, 1)) * 400;
                 const y = 90 - ((v / maxReach) * 80);
                 return { x, y };
@@ -343,7 +322,7 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-[20px]" />)
               ) : locationItems.length > 0 ? (
-                locationItems.slice(0, 4).map((item, idx) => (
+                locationItems.slice(0, 4).map((item: any, idx: number) => (
                   <div key={idx} className="flex flex-col w-full">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[10px] font-medium text-gray-900 font-['Poppins']">{item.name}</span>
@@ -367,7 +346,7 @@ export const PostAnalytics = ({ postId, filter: initialFilter = 'Last 30 Days' }
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="w-full h-[20px]" />)
               ) : industries.length > 0 ? (
-                industries.slice(0, 4).map((item, idx) => (
+                industries.slice(0, 4).map((item: any, idx: number) => (
                   <div key={idx} className="flex flex-col w-full">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[10px] font-medium text-gray-900 font-['Poppins']">{item.name}</span>

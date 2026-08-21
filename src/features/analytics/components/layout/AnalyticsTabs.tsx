@@ -1,13 +1,11 @@
 import React from 'react';
+import { useAnalyticsStore } from '@/store/analytics.store';
 
 export type AnalyticsTabType = 'career-trajectory' | 'profile-analytics';
 
-interface AnalyticsTabsProps {
-  activeTab: AnalyticsTabType;
-  onTabChange: (tab: AnalyticsTabType) => void;
-}
-
-export function AnalyticsTabs({ activeTab, onTabChange }: AnalyticsTabsProps) {
+export function AnalyticsTabs() {
+  const { mainTab: activeTab, setMainTab: onTabChange } = useAnalyticsStore();
+  
   return (
     <div className="flex flex-row items-start gap-4 h-[40px]">
       <button
