@@ -24,7 +24,7 @@ const TagChip = ({ active, label, hasIndicator, onClick, disabled }: { active: b
   <button
     onClick={disabled ? undefined : onClick}
     disabled={disabled}
-    title={disabled ? "Permission required to view job chats" : undefined}
+    title={disabled ? (label === 'Jobs' ? "Permission required to access job chat" : "Permission required to access chat") : undefined}
     className={`flex flex-row justify-center items-center px-[16px] py-[6px] gap-[8px] h-[32px] rounded-[24px] flex-none order-0 ${
       disabled
         ? "opacity-50 cursor-not-allowed bg-gray-100 border border-gray-300"
@@ -329,8 +329,10 @@ export function ChatList({
         {isQuickChat && (
           <div className="relative w-full h-[36px] border-b border-[#EEF2FF] mt-0 mb-0">
             <button 
-              onClick={() => setActiveTab('chat')}
-              className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors`}
+              onClick={() => { if (canChat) setActiveTab('chat'); }}
+              disabled={!canChat}
+              title={!canChat ? "Permission required to access chat" : undefined}
+              className={`absolute left-[16px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'chat' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors ${!canChat ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <span className="font-['Poppins'] text-[14px] leading-[20px]">Chat</span>
               {hasUnreadChats && <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] flex-none" />}
@@ -346,7 +348,8 @@ export function ChatList({
             ) : (
               <button 
                 onClick={() => { if (canJobsChat) setActiveTab('jobs'); }}
-                title={!canJobsChat ? "You don't have permission to access Jobs Chat" : undefined}
+                disabled={!canJobsChat}
+                title={!canJobsChat ? "Permission required to access job chat" : undefined}
                 className={`absolute left-[206px] flex flex-row justify-center items-center gap-[4px] px-[16px] py-[8px] h-[36px] border-b ${effectiveTab === 'jobs' ? 'border-[#6366F1] text-[#6366F1] font-semibold' : 'border-transparent text-[#000000] font-normal'} transition-colors ${!canJobsChat ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 <span className="font-['Poppins'] text-[14px] leading-[20px]">Jobs</span>

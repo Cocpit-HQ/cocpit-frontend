@@ -30,6 +30,9 @@ export interface CocpitShareModelProps {
   onShare?: (selectedIds: string[]) => void;
   postId?: string;
   profileId?: string;
+  jobId?: string;
+  entityType?: "post" | "profile" | "company" | "job" | "event" | "offer" | "channel" | "community" | "article";
+  entityId?: string;
 }
 
 export default function CocpitShareModel({
@@ -39,6 +42,9 @@ export default function CocpitShareModel({
   onShare,
   postId,
   profileId,
+  jobId,
+  entityType,
+  entityId,
 }: CocpitShareModelProps) {
   const { startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
@@ -52,8 +58,18 @@ export default function CocpitShareModel({
     const origin = window.location.origin;
     if (postId) return `${origin}/post/${postId}`;
     if (profileId) return `${origin}/profile/${profileId}`;
+    if (jobId) return `${origin}/jobs/${jobId}`;
+    if (entityType && entityId) {
+      if (entityType === "job" || entityType === "offer") return `${origin}/jobs/${entityId}`;
+      if (entityType === "post" || entityType === "article") return `${origin}/post/${entityId}`;
+      if (entityType === "profile") return `${origin}/profile/${entityId}`;
+      if (entityType === "company") return `${origin}/organization/${entityId}`;
+      if (entityType === "channel" || entityType === "community") return `${origin}/channels/${entityId}`;
+      if (entityType === "event") return `${origin}/events/${entityId}`;
+      return `${origin}/${entityType}/${entityId}`;
+    }
     return window.location.href;
-  }, [postId, profileId]);
+  }, [postId, profileId, jobId, entityType, entityId]);
 
   // Pagination states
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -171,28 +187,41 @@ export default function CocpitShareModel({
       const isCompany = activeProfile?.type === "COMPANY";
       const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
 
+      const effectiveJobId = jobId || (entityType === "job" ? entityId : undefined);
+      const effectiveEntityType = entityType || (effectiveJobId ? "job" : undefined);
+      const effectiveEntityId = entityId || effectiveJobId;
+
+      // If text is empty and no specific entity (post/profile/entity), fall back to shareUrl so text is never empty
+      const isEntityPresent = Boolean(postId || profileId || effectiveEntityId);
+      const messageText = isEntityPresent ? "" : shareUrl;
+
       await Promise.all(
         selectedUsers.map((targetUserId) => {
           const target = users.find((u) => u.id === targetUserId);
           if (target && target.type === "GROUP") {
             return sendGroupMessage(
               targetUserId,
-              "",
+              messageText,
               "text",
               undefined,
               undefined,
               postId || undefined,
-              profileId || undefined
+              profileId || undefined,
+              undefined,
+              effectiveEntityType,
+              effectiveEntityId
             );
           } else {
             return sendMessage(
               targetUserId,
-              "",
+              messageText,
               postId || undefined,
               undefined,
               effectiveCompanyId,
               undefined,
-              profileId || undefined
+              profileId || undefined,
+              effectiveEntityType,
+              effectiveEntityId
             );
           }
         })
@@ -204,7 +233,7 @@ export default function CocpitShareModel({
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
       // Note: We don't call universalShare({ shareMethod: 'message' }) here because 
-      // sendMessage already tracks the share via shared_post_id on the backend.
+      // sendMessage already sends and tracks the message directly on the messaging API.
 
       onShare?.(selectedUsers);
       handleClose();
@@ -216,8 +245,22 @@ export default function CocpitShareModel({
     }
   };
 
-  const shareOptions = useMemo(
-    () => [
+  const shareOptions = useMemo(() => {
+    const effectiveJobId = jobId || (entityType === "job" ? entityId : undefined);
+    const effectiveEntityType = entityType || (effectiveJobId ? "job" : undefined);
+    const effectiveEntityId = entityId || effectiveJobId;
+
+    const trackShare = () => {
+      if (postId) {
+        universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
+      } else if (effectiveJobId) {
+        universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" }).catch(() => {});
+      } else if (effectiveEntityType && effectiveEntityId) {
+        universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId, shareMethod: "copy_link" }).catch(() => {});
+      }
+    };
+
+    return [
       {
         icon: <Briefcase className="w-5 h-5 text-[var(--muted-foreground)]" />,
         label: "Work in progress",
@@ -233,9 +276,7 @@ export default function CocpitShareModel({
             `mailto:?subject=Check this out&body=${encodeURIComponent(shareUrl)}`,
             "_blank"
           );
-          if (postId) {
-            universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
-          }
+          trackShare();
         },
       },
       {
@@ -246,9 +287,7 @@ export default function CocpitShareModel({
             `https://wa.me/?text=${encodeURIComponent(shareUrl)}`,
             "_blank"
           );
-          if (postId) {
-            universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
-          }
+          trackShare();
         },
       },
       {
@@ -259,14 +298,11 @@ export default function CocpitShareModel({
             `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
             "_blank"
           );
-          if (postId) {
-            universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
-          }
+          trackShare();
         },
       },
-    ],
-    [shareUrl, toast, postId]
-  );
+    ];
+  }, [shareUrl, toast, postId, jobId, entityType, entityId]);
 
   return (
     <>

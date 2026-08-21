@@ -37,9 +37,18 @@ export function QuickChatWidget() {
   const [stripNotification, setStripNotification] = useState({ show: false, text: '' });
 
   const isFeedPage = pathname === '/feed' || pathname === '/';
-  // Hide only if the user lacks the 'chat' permission specifically.
-  const hasChatPermission = !isCompany || checkPermission('chat') || checkPermission('CHAT');
+  const canChat = !isCompany || checkPermission('chat') || checkPermission('CHAT');
+  const canJobsChat = !isCompany || checkPermission('jobs_chat') || checkPermission('JOBS_CHAT');
+  const hasChatPermission = canChat || canJobsChat;
   const shouldHide = !isFeedPage || !hasChatPermission;
+
+  useEffect(() => {
+    if (isCompany && !canChat && canJobsChat) {
+      setActiveTab('jobs');
+    } else if (isCompany && canChat && !canJobsChat && activeTab === 'jobs') {
+      setActiveTab('chat');
+    }
+  }, [isCompany, canChat, canJobsChat]);
 
   // Fetch chats logic duplicated from MessagingPage (will share cache with the same query key)
   const rawChatsQuery = useQuery({
@@ -224,6 +233,9 @@ export function QuickChatWidget() {
                     chat={selectedChat}
                     isMobile={true}
                     onBack={handleBackToList}
+                    onChatCreated={(createdChat) => {
+                      setSelectedChat(createdChat);
+                    }}
                     isQuickChat={true}
                   />
                 </div>

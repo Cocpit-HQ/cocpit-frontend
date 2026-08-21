@@ -9,6 +9,8 @@ import { BellOff } from "lucide-react"
 import Avatar from "@/components/shared/Avatar"
 import { useSocket } from "@/context/SocketContext"
 import { formatTimeAgo } from "@/lib/mappers/messaging.mapper"
+import { useAuth } from "@/hooks/use-auth"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 const getAvatarGradient = (avatar: string) => {
   return avatarGradients[avatar] || "from-gray-400 to-gray-500";
@@ -26,6 +28,29 @@ interface ChatListItemProps {
 
 export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead, isTyping, isQuickChat, isFirst }: ChatListItemProps) {
   const { activeConversationId } = useSocket();
+  const { user } = useAuth();
+  const { activeProfile } = useActiveProfile();
+  const currentUserName = (activeProfile?.name || user?.name || (user as any)?.full_name || '').trim();
+  const currentUserId = activeProfile?.id || user?.id || (user as any)?.user_id;
+
+  const resolvedLastMessage = React.useMemo(() => {
+    if (!chat.lastMessage) return '';
+    if (chat.isGroup) {
+      const match = chat.lastMessage.match(/(?:^|\b)(.*)\s+created the group(?:\s*"(.*)")?/i);
+      if (match) {
+        const creatorName = match[1]?.trim() || '';
+        const isMe =
+          creatorName.toLowerCase() === 'you' ||
+          (currentUserName && creatorName.toLowerCase() === currentUserName.toLowerCase()) ||
+          (currentUserName && chat.lastMessage.toLowerCase().startsWith(currentUserName.toLowerCase())) ||
+          ((chat as any).admin_id && String((chat as any).admin_id) === String(currentUserId));
+        if (isMe) {
+          return 'You created the group';
+        }
+      }
+    }
+    return chat.lastMessage;
+  }, [chat.lastMessage, chat.isGroup, (chat as any).admin_id, currentUserName, currentUserId]);
   const isRequest = !!chat.is_requesting;
   const isGroupInvitation = isRequest && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
   const displayUnread = isSelected 
@@ -137,7 +162,7 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
                 Typing...
               </span>
             ) : (
-              chat.lastMessage
+              resolvedLastMessage
             )}
           </p>
           {displayUnread > 0 && (

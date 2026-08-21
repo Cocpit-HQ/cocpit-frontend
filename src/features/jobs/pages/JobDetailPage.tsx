@@ -747,6 +747,9 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         <CocpitShareModel
           isOpen={showShareModal}
           onClose={() => setShowShareModal(false)}
+          jobId={jobId}
+          entityType="job"
+          entityId={jobId}
         />
 
         {/* Decline Offer Confirmation Modal */}

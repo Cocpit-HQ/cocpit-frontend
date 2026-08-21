@@ -55,9 +55,11 @@ export default function GroupHeader({
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showMuteConfirm, setShowMuteConfirm] = useState(false);
     const [showUnmuteConfirm, setShowUnmuteConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     if (!activeGroup) return null;
 
+    const isAdmin = activeGroup.members.some(m => String(m.user_id) === String(currentUserId) && m.role === 'admin') || String((activeGroup as any).admin_id) === String(currentUserId);
     const memberCount = activeGroup.members.length;
 
     return (
@@ -222,7 +224,7 @@ export default function GroupHeader({
                                     <BellOff className="w-4 h-4" />
                                 </DropdownMenuItem>
                             )}
-                            {(!isInactive && activeGroup.members.some(m => m.user_id === currentUserId)) ? (
+                            {(!isInactive && activeGroup.members.some(m => String(m.user_id) === String(currentUserId))) && (
                                 <DropdownMenuItem
                                     onClick={onLeaveGroup}
                                     className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
@@ -230,13 +232,10 @@ export default function GroupHeader({
                                     <span className="text-sm font-normal">Leave Group</span>
                                     <LogOut className="w-4 h-4" />
                                 </DropdownMenuItem>
-                            ) : (
+                            )}
+                            {(isAdmin || isInactive || !activeGroup.members.some(m => String(m.user_id) === String(currentUserId))) && (
                                 <DropdownMenuItem
-                                    onClick={() => {
-                                        if (confirm("Delete group from your list? This will not affect other members.")) {
-                                            deleteGroup(activeGroup.conversation_id);
-                                        }
-                                    }}
+                                    onClick={() => setShowDeleteConfirm(true)}
                                     className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
                                 >
                                     <span className="text-sm font-normal">Delete Group</span>
@@ -318,6 +317,30 @@ export default function GroupHeader({
                     }
                 }}
                 onCancel={() => setShowUnmuteConfirm(false)}
+            />
+
+            <CocpitConfirmBox
+                isOpen={showDeleteConfirm}
+                title="Delete this group?"
+                message={isAdmin && !isInactive ? "This will permanently delete the group for all members." : "Delete group from your list? This will not affect other members."}
+                confirmText="Delete"
+                cancelText="Cancel"
+                onConfirm={async () => {
+                    try {
+                        await deleteGroup(activeGroup.conversation_id);
+                        toast({ description: "Group deleted successfully" });
+                    } catch (err: any) {
+                        const errorMsg = err?.response?.data?.message || err?.message || "Failed to delete group";
+                        toast({
+                            title: "Error",
+                            description: errorMsg,
+                            variant: "destructive"
+                        });
+                    } finally {
+                        setShowDeleteConfirm(false);
+                    }
+                }}
+                onCancel={() => setShowDeleteConfirm(false)}
             />
         </div>
     );

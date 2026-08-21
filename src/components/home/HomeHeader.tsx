@@ -43,7 +43,7 @@ export const HomeHeader = () => {
             "all",
         ],
         queryFn: async () => {
-            const params = activeProfile?.type === "COMPANY" ? { companyId: activeProfile.id, tab: "GENERAL" as "JOBS" | "GENERAL" } : {};
+            const params = activeProfile?.type === "COMPANY" ? { companyId: activeProfile.id } : {};
             const backendChats = await getConversations(params);
             return backendChats.map(mapBackendChatToChatThread);
         },
@@ -51,7 +51,7 @@ export const HomeHeader = () => {
         refetchOnWindowFocus: false,
     });
     
-    const hasUnreadMessages = rawChatsQuery.data?.some((c: any) => c.unread > 0) || false;
+    const hasUnreadMessages = rawChatsQuery.data?.some((c: any) => c.unread > 0 || c.is_read === false) || false;
     // Reset popover-open state when navigating away from /notifications
     // so the active pill style doesn't get stuck after "See all" navigation
     useEffect(() => {

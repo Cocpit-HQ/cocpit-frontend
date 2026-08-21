@@ -462,10 +462,13 @@ function SharedProfileCard({
     return <UnavailableContentCard isMe={isMe} />;
   }
 
+  const rawHeadline = preview.subtitle || initialProfile?.headline;
+  const cleanHeadline = (rawHeadline && rawHeadline !== "Cocpit Member") ? rawHeadline : undefined;
+
   const profileData = {
     name: preview.title || initialProfile?.name,
     avatar: preview.image || initialProfile?.avatar,
-    headline: preview.subtitle || initialProfile?.headline,
+    headline: cleanHeadline,
     username: profileType === "user" ? (preview.entityId || profileId) : undefined,
     slug: profileType === "company" ? (preview.entityId || profileId) : undefined,
     id: preview.entityId || profileId,
@@ -515,7 +518,12 @@ const SharedPostCard = ({
   const initialAuthorId =
     initialPost?.author_id ||
     initialPost?.authorId ||
-    (typeof initialPost?.author === "object" ? initialPost.author?.id : null);
+    initialPost?.author_org_id ||
+    initialPost?.authorOrgId ||
+    initialPost?.companyId ||
+    initialPost?.company_id ||
+    initialPost?.org_id ||
+    (typeof initialPost?.author === "object" ? initialPost.author?.id || initialPost.author?.org_id : null);
 
   const {
     data: fetchedPost,
@@ -1933,14 +1941,11 @@ function MessageBubble(props: MessageBubbleProps) {
   // Helper for dynamic classes
   const getBubbleClasses = () => {
     if (message.is_unavailable) {
-      return isMe
-        ? "bg-[var(--primary)] rounded-[12px]"
-        : "bg-chat-bubble-received-bg text-[var(--foreground)] rounded-[12px]";
+      return "bg-transparent rounded-[12px] overflow-hidden shadow-none border-none";
     }
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) {
       return "italic text-sm shadow-none rounded-[12px] bg-chat-bubble-received-bg text-muted-foreground border border-dashed border-border";
     }
-
 
     if (message.repliedMessage && message.repliedMessage.senderName) {
       return isMe
@@ -1967,7 +1972,7 @@ function MessageBubble(props: MessageBubbleProps) {
   const paddingClasses = isEditing
     ? "px-[16px] py-[16px]"
     : message.is_unavailable
-      ? "px-[16px] py-[12px]"
+      ? "p-0 overflow-hidden"
       : message.is_deleted_for_everyone || message.is_deleted_for_me
         ? "px-[16px] py-[10px]"
         : (message.media && message.media.length > 0) || isCardOnly
@@ -2265,7 +2270,6 @@ function MessageBubble(props: MessageBubbleProps) {
                       message.isBlocked === true ||
                       message.isBlockedByOther === true ||
                       (message as any).is_blocked_by_other === true ||
-                      (message as any).is_unavailable === true ||
                       (message as any).is_deactivated === true ||
                       (message as any).is_deleted_user === true ||
                       message.senderName === "Unknown Page" ||

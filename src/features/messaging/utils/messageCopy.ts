@@ -61,6 +61,22 @@ export function getMessageCopyText(targetMsg?: Message | null): string {
     return `${origin}/jobs/${targetMsg.entityId}`;
   }
 
-  // 4. Default plain text
+  // 4. Shared Channel or Community
+  if (
+    (targetMsg.entityType === "channel" || targetMsg.entityType === "community") &&
+    targetMsg.entityId
+  ) {
+    return `${origin}/channels/${targetMsg.entityId}`;
+  }
+
+  // 5. Shared Event
+  if (
+    targetMsg.entityType === "event" &&
+    targetMsg.entityId
+  ) {
+    return `${origin}/events/${targetMsg.entityId}`;
+  }
+
+  // 6. Default plain text
   return targetMsg.text || targetMsg.text_content || "";
 }

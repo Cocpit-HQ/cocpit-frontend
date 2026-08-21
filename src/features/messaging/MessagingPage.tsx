@@ -65,11 +65,11 @@ export default function MessagingPage() {
       searchParams.get('jobContext') ||
       searchParams.get('offerContext');
 
-    if (hasJobContext && activeProfile?.type === 'COMPANY') {
+    if (hasJobContext && activeProfile?.type === 'COMPANY' && companyPermissions.canJobsChat) {
       setActiveTab('jobs');
       hasForcedJobTabRef.current = true;
     }
-  }, [searchParams, activeProfile?.type]);
+  }, [searchParams, activeProfile?.type, companyPermissions.canJobsChat]);
 
   // Controlled Auto-Switch when switching conversations
   useEffect(() => {
@@ -122,12 +122,16 @@ export default function MessagingPage() {
     }
   }, [selectedChat?.id, selectedChat?.otherUserId, initialEntityContext?.targetId]);
 
-  // Default activeTab to 'jobs' if company profile has JOBS_CHAT permission but NO general CHAT permission
+  // Default activeTab based on granular CHAT vs JOBS_CHAT permission
   useEffect(() => {
-    if (activeProfile?.type === 'COMPANY' && !companyPermissions.canChat && companyPermissions.canJobsChat) {
-      setActiveTab('jobs');
+    if (activeProfile?.type === 'COMPANY') {
+      if (!companyPermissions.canChat && companyPermissions.canJobsChat) {
+        setActiveTab('jobs');
+      } else if (companyPermissions.canChat && !companyPermissions.canJobsChat && activeTab === 'jobs') {
+        setActiveTab('chat');
+      }
     }
-  }, [activeProfile?.id, activeProfile?.type, companyPermissions.canChat, companyPermissions.canJobsChat]);
+  }, [activeProfile?.id, activeProfile?.type, companyPermissions.canChat, companyPermissions.canJobsChat, activeTab]);
 
   // Clear selected chat when switching profiles (user <-> company)
   useEffect(() => {
@@ -190,7 +194,13 @@ export default function MessagingPage() {
 
   const activeChat = React.useMemo(() => {
     if (!selectedChat) return null;
-    return chats.find((c) => String(c.id) === String(selectedChat.id)) || selectedChat;
+    return (
+      chats.find((c) => String(c.id) === String(selectedChat.id)) ||
+      (selectedChat.id === "new" && selectedChat.otherUserId
+        ? chats.find((c) => String(c.otherUserId) === String(selectedChat.otherUserId))
+        : null) ||
+      selectedChat
+    );
   }, [chats, selectedChat]);
 
   const { user } = useAuth();
@@ -258,6 +268,13 @@ export default function MessagingPage() {
           if (!isMobile && typeof window !== 'undefined') {
             window.history.replaceState(null, "", `/messaging?conversationId=${conversationId}`);
           }
+        } else if (!isLoading) {
+          // Conversation not found or was deleted — clean up URL to prevent infinite skeleton loading
+          processedUserIdRef.current = conversationId;
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(null, "", "/messaging");
+          }
+          router.replace("/messaging");
         }
       };
       processConvId();
@@ -294,6 +311,7 @@ export default function MessagingPage() {
             processedUserIdRef.current = userId;
             if (!userId || userId === "null" || userId === "undefined") return;
             try {
+              queryClient.removeQueries({ queryKey: ["messages", "new"] });
               const response = await getUserById(userId);
               const targetUser = response.user;
               const hasJobContextParam = Boolean(
@@ -365,6 +383,7 @@ export default function MessagingPage() {
           // No existing chat, fetch user details to create a draft
           if (!userId || userId === "null" || userId === "undefined") return;
           try {
+            queryClient.removeQueries({ queryKey: ["messages", "new"] });
             const response = await getUserById(userId);
             const user = response.user;
             const hasJobContextParam = Boolean(
@@ -991,8 +1010,13 @@ export default function MessagingPage() {
     socket.on("USER_DEACTIVATED", handleAccountStateChanged);
     socket.on("user_reactivated", handleAccountStateChanged);
     socket.on("USER_REACTIVATED", handleAccountStateChanged);
+    socket.on("account_deactivated", handleAccountStateChanged);
+    socket.on("ACCOUNT_DEACTIVATED", handleAccountStateChanged);
     socket.on("ORGANIZATION_DEACTIVATED", handleAccountStateChanged);
+    socket.on("organization_deactivated", handleAccountStateChanged);
     socket.on("ORGANIZATION_REACTIVATED", handleAccountStateChanged);
+    socket.on("organization_reactivated", handleAccountStateChanged);
+    socket.on("org_status_changed", handleAccountStateChanged);
 
     return () => {
       socket.off("new_message", handleNewMessage);
@@ -1013,8 +1037,13 @@ export default function MessagingPage() {
       socket.off("USER_DEACTIVATED", handleAccountStateChanged);
       socket.off("user_reactivated", handleAccountStateChanged);
       socket.off("USER_REACTIVATED", handleAccountStateChanged);
+      socket.off("account_deactivated", handleAccountStateChanged);
+      socket.off("ACCOUNT_DEACTIVATED", handleAccountStateChanged);
       socket.off("ORGANIZATION_DEACTIVATED", handleAccountStateChanged);
+      socket.off("organization_deactivated", handleAccountStateChanged);
       socket.off("ORGANIZATION_REACTIVATED", handleAccountStateChanged);
+      socket.off("organization_reactivated", handleAccountStateChanged);
+      socket.off("org_status_changed", handleAccountStateChanged);
     };
   }, [
     socket,
@@ -1100,6 +1129,10 @@ export default function MessagingPage() {
                     setSelectedChat(null);
                     processedUserIdRef.current = null;
                     router.push("/messaging");
+                  }}
+                  onChatCreated={(createdChat) => {
+                    setSelectedChat(createdChat);
+                    processedUserIdRef.current = createdChat.id;
                   }}
                   onAcceptSuccess={() => {
                     setActiveTab('chat');

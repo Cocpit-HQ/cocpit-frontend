@@ -56,7 +56,7 @@ export function ProfilePreviewCard({ profile, profileId, profileType, isUnavaila
                     <span className="font-['Poppins'] font-medium text-[14px] leading-[20px] text-[#000000] dark:text-zinc-100 truncate w-full block text-left">
                         {profile.name}
                     </span>
-                    {profile.headline ? (
+                    {profile.headline && profile.headline !== "Cocpit Member" ? (
                         <span className="font-['Poppins'] font-normal text-[10px] leading-[14px] text-[#6B7280] dark:text-gray-400 truncate w-full block text-left">
                             {profile.headline}
                         </span>

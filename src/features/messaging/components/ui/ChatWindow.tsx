@@ -78,6 +78,7 @@ interface ChatWindowProps {
   isMobile: boolean;
   onBack?: () => void;
   onAcceptSuccess?: () => void;
+  onChatCreated?: (createdChat: ChatThread) => void;
   initialEntityContext?: { type: "job" | "offer" | "event"; id: string };
   activeTab?: "chat" | "jobs" | "requests";
   isQuickChat?: boolean;
@@ -223,6 +224,7 @@ export default function ChatWindow({
   isMobile,
   onBack,
   onAcceptSuccess,
+  onChatCreated,
   initialEntityContext,
   activeTab,
   isQuickChat,
@@ -318,6 +320,19 @@ export default function ChatWindow({
         await unblockUser(targetId);
       }
       toast({ description: "Account unblocked successfully" });
+      const convKey = [
+        "conversations",
+        activeProfile?.type ?? "USER",
+        activeProfile?.id ?? "me",
+      ];
+      queryClient.setQueryData(convKey, (oldChats: ChatThread[] | undefined) => {
+        if (!oldChats) return [];
+        return oldChats.map((c) =>
+          String(c.id) === String(chat.id) || (targetId && String(c.otherUserId) === String(targetId))
+            ? { ...c, isBlockedByMe: false }
+            : c
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ["messages", chat.id] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     } catch (err: any) {
@@ -980,6 +995,20 @@ export default function ChatWindow({
       }
     };
 
+    const handleBlockOrDeactivate = () => {
+      queryClient.resetQueries({ queryKey: ["messages", chat.id], exact: false });
+      queryClient.resetQueries({ queryKey: ["sharedPost"], exact: false });
+      queryClient.resetQueries({ queryKey: ["profilePreview"], exact: false });
+      queryClient.resetQueries({ queryKey: ["entityPreview"], exact: false });
+      queryClient.resetQueries({ queryKey: ["jobContext"], exact: false });
+      queryClient.refetchQueries({ queryKey: ["messages", chat.id], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["conversations"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["sharedPost"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["profilePreview"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["entityPreview"], type: "all" });
+      queryClient.refetchQueries({ queryKey: ["jobContext"], type: "all" });
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("isTyping", handleTyping);
     socket.on("stoppedTyping", handleStopTyping);
@@ -990,6 +1019,25 @@ export default function ChatWindow({
     socket.on("message_edited", handleMessageEdited);
     socket.on("message_reaction_updated", handleReactionUpdated);
     socket.on("conversation_preference_updated", handlePreferenceUpdated);
+    socket.on("user_blocked", handleBlockOrDeactivate);
+    socket.on("block_confirmed", handleBlockOrDeactivate);
+    socket.on("user_unblocked", handleBlockOrDeactivate);
+    socket.on("unblock_confirmed", handleBlockOrDeactivate);
+    socket.on("ORGANIZATION_USER_BLOCKED", handleBlockOrDeactivate);
+    socket.on("ORGANIZATION_USER_UNBLOCKED", handleBlockOrDeactivate);
+    socket.on("ORGANIZATION_BLOCK_UPDATED", handleBlockOrDeactivate);
+    socket.on("relationshipUpdated", handleBlockOrDeactivate);
+    socket.on("ORGANIZATION_DEACTIVATED", handleBlockOrDeactivate);
+    socket.on("organization_deactivated", handleBlockOrDeactivate);
+    socket.on("ORGANIZATION_REACTIVATED", handleBlockOrDeactivate);
+    socket.on("organization_reactivated", handleBlockOrDeactivate);
+    socket.on("org_status_changed", handleBlockOrDeactivate);
+    socket.on("user_deactivated", handleBlockOrDeactivate);
+    socket.on("USER_DEACTIVATED", handleBlockOrDeactivate);
+    socket.on("user_reactivated", handleBlockOrDeactivate);
+    socket.on("USER_REACTIVATED", handleBlockOrDeactivate);
+    socket.on("account_deactivated", handleBlockOrDeactivate);
+    socket.on("ACCOUNT_DEACTIVATED", handleBlockOrDeactivate);
 
     return () => {
       socket.off("new_message", handleNewMessage);
@@ -1002,6 +1050,25 @@ export default function ChatWindow({
       socket.off("message_edited", handleMessageEdited);
       socket.off("message_reaction_updated", handleReactionUpdated);
       socket.off("conversation_preference_updated", handlePreferenceUpdated);
+      socket.off("user_blocked", handleBlockOrDeactivate);
+      socket.off("block_confirmed", handleBlockOrDeactivate);
+      socket.off("user_unblocked", handleBlockOrDeactivate);
+      socket.off("unblock_confirmed", handleBlockOrDeactivate);
+      socket.off("ORGANIZATION_USER_BLOCKED", handleBlockOrDeactivate);
+      socket.off("ORGANIZATION_USER_UNBLOCKED", handleBlockOrDeactivate);
+      socket.off("ORGANIZATION_BLOCK_UPDATED", handleBlockOrDeactivate);
+      socket.off("relationshipUpdated", handleBlockOrDeactivate);
+      socket.off("ORGANIZATION_DEACTIVATED", handleBlockOrDeactivate);
+      socket.off("organization_deactivated", handleBlockOrDeactivate);
+      socket.off("ORGANIZATION_REACTIVATED", handleBlockOrDeactivate);
+      socket.off("organization_reactivated", handleBlockOrDeactivate);
+      socket.off("org_status_changed", handleBlockOrDeactivate);
+      socket.off("user_deactivated", handleBlockOrDeactivate);
+      socket.off("USER_DEACTIVATED", handleBlockOrDeactivate);
+      socket.off("user_reactivated", handleBlockOrDeactivate);
+      socket.off("USER_REACTIVATED", handleBlockOrDeactivate);
+      socket.off("account_deactivated", handleBlockOrDeactivate);
+      socket.off("ACCOUNT_DEACTIVATED", handleBlockOrDeactivate);
     };
   }, [
     socket,
@@ -1214,7 +1281,42 @@ export default function ChatWindow({
         const newConversationId =
           data.data?.conversation_id || data.conversation_id;
         if (newConversationId) {
-          router.replace(`/messaging?conversationId=${newConversationId}`);
+          const newActiveQueryKey = ["messages", newConversationId, activeProfile?.id || "USER"];
+          const newFallbackQueryKey = ["messages", newConversationId];
+          queryClient.setQueryData(newActiveQueryKey, updateCacheWithReal);
+          queryClient.setQueryData(newFallbackQueryKey, updateCacheWithReal);
+          queryClient.removeQueries({ queryKey: ["messages", "new"] });
+
+          const convKey = [
+            "conversations",
+            activeProfile?.type ?? "USER",
+            activeProfile?.id ?? "me",
+          ];
+          const newThread: ChatThread = {
+            ...chat,
+            id: newConversationId,
+            lastMessage: variables.text || "Attachment",
+            time: "Just now",
+            lastMessageAt: new Date().toISOString(),
+          };
+          queryClient.setQueryData(convKey, (oldChats: ChatThread[] | undefined) => {
+            const list = oldChats || [];
+            if (!list.some((c) => String(c.id) === String(newConversationId))) {
+              return [newThread, ...list];
+            }
+            return list;
+          });
+
+          if (onChatCreated) {
+            onChatCreated(newThread);
+          }
+
+          if (!isQuickChat) {
+            if (typeof window !== 'undefined') {
+              window.history.replaceState(null, "", `/messaging?conversationId=${newConversationId}`);
+            }
+            router.replace(`/messaging?conversationId=${newConversationId}`);
+          }
         }
       }
     },
@@ -2423,6 +2525,9 @@ export default function ChatWindow({
             );
             queryClient.invalidateQueries({ queryKey: ["conversations"] });
             toast({ description: "Chat deleted successfully" });
+            if (typeof window !== 'undefined') {
+              window.history.replaceState(null, "", "/messaging");
+            }
             if (onBack) onBack();
           } catch (err: any) {
             const errorMsg =

@@ -53,7 +53,7 @@ export function useCompanyPermissions(company?: any | null) {
 
         // JOBS sub-permissions
         if (cleanPerm === 'JOBS_CHAT') {
-            return upperPerms.includes("JOBS") || upperPerms.includes("JOBS_CHAT");
+            return upperPerms.includes("JOBS_CHAT");
         }
         const jobsSubPerms = ["POST_JOBS", "VIEW_APPLICANTS", "JOBS"];
         if (jobsSubPerms.includes(cleanPerm) && upperPerms.includes("JOBS")) return true;

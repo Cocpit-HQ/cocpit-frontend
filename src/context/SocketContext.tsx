@@ -430,12 +430,31 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
 
+      const myId = session?.user?.id || activeProfileRef.current?.id;
       const isMeBlocker =
         String(payload.blocked_by_user_id) === String(session?.user?.id) ||
         String(payload.blocked_by_user_id) === String(activeProfileRef.current?.id) ||
         String(payload.blocker_id) === String(session?.user?.id) ||
         String(payload.blocker_id) === String(activeProfileRef.current?.id);
       const currentProfile = activeProfileRef.current;
+
+      const otherPartyId = isMeBlocker
+        ? String(payload.target_id || payload.user_id || payload.userId)
+        : String(payload.blocker_id || payload.blocked_by_user_id || payload.target_id || payload.userId || payload.user_id);
+
+      if (typeof window !== "undefined" && otherPartyId && otherPartyId !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("cocpit:block_status_changed", {
+            detail: { targetId: otherPartyId, isBlocked: true },
+          }),
+        );
+        try {
+          localStorage.setItem(
+            "cocpit_block_event",
+            JSON.stringify({ targetId: otherPartyId, isBlocked: true, timestamp: Date.now() }),
+          );
+        } catch (_) {}
+      }
 
       const queryKey = [
         "conversations",
@@ -481,12 +500,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
     };
 
     const handleUnblock = (payload: any) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
 
+      const myId = session?.user?.id || activeProfileRef.current?.id;
       const isMeUnblocker =
         String(payload.unblocked_by_user_id) === String(session?.user?.id) ||
         String(payload.unblocked_by_user_id) === String(activeProfileRef.current?.id) ||
@@ -494,6 +515,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         String(payload.blocker_id) === String(activeProfileRef.current?.id) ||
         payload.is_blocked === false;
       const currentProfile = activeProfileRef.current;
+
+      const otherPartyId = isMeUnblocker
+        ? String(payload.target_id || payload.user_id || payload.userId)
+        : String(payload.blocker_id || payload.unblocked_by_user_id || payload.target_id || payload.userId || payload.user_id);
+
+      if (typeof window !== "undefined" && otherPartyId && otherPartyId !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("cocpit:block_status_changed", {
+            detail: { targetId: otherPartyId, isBlocked: false },
+          }),
+        );
+        try {
+          localStorage.setItem(
+            "cocpit_block_event",
+            JSON.stringify({ targetId: otherPartyId, isBlocked: false, timestamp: Date.now() }),
+          );
+        } catch (_) {}
+      }
 
       const queryKey = [
         "conversations",
@@ -539,6 +578,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
+    };
+
+    const handleOrgBlockUpdated = (payload: any) => {
+      if (payload?.is_blocked === false || payload?.status === 'none') {
+        handleUnblock(payload);
+      } else {
+        handleBlock(payload);
+      }
+    };
+
+    const handleRelationshipUpdated = (payload: any) => {
+      if (payload?.is_blocked === false || payload?.status === 'none') {
+        handleUnblock(payload);
+      } else if (payload?.is_blocked === true || payload?.status === 'blocked') {
+        handleBlock(payload);
+      }
     };
 
     // Fired by acceptTeamsInvite / declineTeamsInvite / removeMember whenever
@@ -648,13 +704,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    const handleActivityUpdated = () => {
-      console.log("[Socket] activity_updated event received");
-      queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
-
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('cocpit:activity-updated'));
-      }
+    const handleActivityUpdated = (payload: any) => {
+      console.log("[Socket] activity_updated event received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['activityLog'] });
     };
 
     const handleAccountStateChanged = (payload: any) => {
@@ -691,8 +743,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
+    newSocket.on('ORGANIZATION_USER_BLOCKED', handleBlock);
     newSocket.on('ORGANIZATION_USER_UNBLOCKED', handleUnblock);
-    newSocket.on('ORGANIZATION_BLOCK_UPDATED', handleUnblock);
+    newSocket.on('ORGANIZATION_BLOCK_UPDATED', handleOrgBlockUpdated);
+    newSocket.on('relationshipUpdated', handleRelationshipUpdated);
     newSocket.on('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     newSocket.on('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
@@ -737,6 +791,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('block_confirmed', handleBlock);
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
+      newSocket.off('ORGANIZATION_USER_BLOCKED', handleBlock);
+      newSocket.off('ORGANIZATION_USER_UNBLOCKED', handleUnblock);
+      newSocket.off('ORGANIZATION_BLOCK_UPDATED', handleOrgBlockUpdated);
+      newSocket.off('relationshipUpdated', handleRelationshipUpdated);
       newSocket.off('USER_PRIVACY_UPDATED', handlePrivacyUpdated);
       newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
       newSocket.off('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
