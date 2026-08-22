@@ -434,7 +434,8 @@ function SharedProfileCard({
       const { fetchEntityPreview } = await import("@/services/api/shareService");
       return fetchEntityPreview(profileType === "user" ? "profile" : "company", profileId);
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    gcTime: 0,
     retry: false,
   });
 

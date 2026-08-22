@@ -899,8 +899,7 @@ export default function MessagingPage() {
         String(payload.unblocked_by_user_id) === String(user?.id) ||
         String(payload.unblocked_by_user_id) === String(activeProfile?.id) ||
         String(payload.blocker_id) === String(user?.id) ||
-        String(payload.blocker_id) === String(activeProfile?.id) ||
-        payload.is_blocked === false;
+        String(payload.blocker_id) === String(activeProfile?.id);
 
       const queryKey = [
         "conversations",

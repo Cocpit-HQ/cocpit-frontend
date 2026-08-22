@@ -512,8 +512,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         String(payload.unblocked_by_user_id) === String(session?.user?.id) ||
         String(payload.unblocked_by_user_id) === String(activeProfileRef.current?.id) ||
         String(payload.blocker_id) === String(session?.user?.id) ||
-        String(payload.blocker_id) === String(activeProfileRef.current?.id) ||
-        payload.is_blocked === false;
+        String(payload.blocker_id) === String(activeProfileRef.current?.id);
       const currentProfile = activeProfileRef.current;
 
       const otherPartyId = isMeUnblocker
@@ -627,6 +626,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleOrganizationDeactivated = (payload: { orgId: string }) => {
       console.log("[Socket] ORGANIZATION_DEACTIVATED received:", payload);
+      queryClient.resetQueries({ queryKey: ['jobContext'], exact: false });
+      queryClient.resetQueries({ queryKey: ['messages'], exact: false });
+      queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
+      queryClient.resetQueries({ queryKey: ['profilePreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['entityPreview'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
       queryClient.invalidateQueries({ queryKey: ['jobContext'] });
@@ -634,10 +638,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['profilePreview'] });
       queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
       queryClient.invalidateQueries({ queryKey: ['organization'] });
-      queryClient.refetchQueries({ queryKey: ['conversations'] });
-      queryClient.refetchQueries({ queryKey: ['messages'] });
-      queryClient.refetchQueries({ queryKey: ['jobContext'] });
-      queryClient.refetchQueries({ queryKey: ['sharedPost'] });
+      queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
 
       const currentProfile = activeProfileRef.current;
       if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
@@ -654,16 +660,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleOrgStatusChanged = (payload: any) => {
       console.log("[Socket] org_status_changed event received:", payload);
+      queryClient.resetQueries({ queryKey: ['jobContext'], exact: false });
+      queryClient.resetQueries({ queryKey: ['messages'], exact: false });
+      queryClient.resetQueries({ queryKey: ['sharedPost'], exact: false });
+      queryClient.resetQueries({ queryKey: ['profilePreview'], exact: false });
+      queryClient.resetQueries({ queryKey: ['entityPreview'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
       queryClient.invalidateQueries({ queryKey: ['jobContext'] });
       queryClient.invalidateQueries({ queryKey: ['sharedPost'] });
       queryClient.invalidateQueries({ queryKey: ['profilePreview'] });
       queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
-      queryClient.refetchQueries({ queryKey: ['conversations'] });
-      queryClient.refetchQueries({ queryKey: ['messages'] });
-      queryClient.refetchQueries({ queryKey: ['jobContext'] });
-      queryClient.refetchQueries({ queryKey: ['sharedPost'] });
+      queryClient.refetchQueries({ queryKey: ['conversations'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['messages'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['jobContext'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
+      queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
 
       const targetOrgId = payload?.orgId || payload?.companyId;
       const currentProfile = activeProfileRef.current;
@@ -757,10 +770,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('organization_reactivated', handleAccountStateChanged);
     newSocket.on('user_deactivated', handleAccountStateChanged);
     newSocket.on('USER_DEACTIVATED', handleAccountStateChanged);
+    newSocket.on('user_deleted', handleAccountStateChanged);
+    newSocket.on('USER_DELETED', handleAccountStateChanged);
     newSocket.on('user_reactivated', handleAccountStateChanged);
     newSocket.on('USER_REACTIVATED', handleAccountStateChanged);
     newSocket.on('account_deactivated', handleAccountStateChanged);
     newSocket.on('ACCOUNT_DEACTIVATED', handleAccountStateChanged);
+    newSocket.on('account_deleted', handleAccountStateChanged);
+    newSocket.on('ACCOUNT_DELETED', handleAccountStateChanged);
+    newSocket.on('account_state_changed', handleAccountStateChanged);
     newSocket.on('saved_folders_updated', handleSavedUpdated);
     newSocket.on('saved_posts_updated', handleSavedUpdated);
     newSocket.on('activity_updated', handleActivityUpdated);
@@ -807,10 +825,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('organization_reactivated', handleAccountStateChanged);
       newSocket.off('user_deactivated', handleAccountStateChanged);
       newSocket.off('USER_DEACTIVATED', handleAccountStateChanged);
+      newSocket.off('user_deleted', handleAccountStateChanged);
+      newSocket.off('USER_DELETED', handleAccountStateChanged);
       newSocket.off('user_reactivated', handleAccountStateChanged);
       newSocket.off('USER_REACTIVATED', handleAccountStateChanged);
       newSocket.off('account_deactivated', handleAccountStateChanged);
       newSocket.off('ACCOUNT_DEACTIVATED', handleAccountStateChanged);
+      newSocket.off('account_deleted', handleAccountStateChanged);
+      newSocket.off('ACCOUNT_DELETED', handleAccountStateChanged);
+      newSocket.off('account_state_changed', handleAccountStateChanged);
       newSocket.off('member_sync', handleMemberSync);
       newSocket.off('saved_folders_updated', handleSavedUpdated);
       newSocket.off('saved_posts_updated', handleSavedUpdated);
