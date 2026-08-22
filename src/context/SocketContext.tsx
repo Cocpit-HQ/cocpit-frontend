@@ -48,7 +48,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000"
 const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "auto";
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
   const { toast } = useToast();
   const router = useRouter();
@@ -181,10 +181,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         transports: selectedTransports,
       });
       if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
-        console.log("Authentication failed for socket. Forcefully signing out to prevent loop.");
+        console.log("Authentication failed for socket (token likely expired). Requesting session update...");
         newSocket.disconnect();
-        // Instead of update(), we signOut because the token is clearly invalid and refresh likely failed or will fail
-        signOut();
+        // The access token expires every 15 minutes. 
+        // Do NOT call signOut() here, as the user likely still has a valid 7-day refresh token.
+        // Instead, we force NextAuth to update the session. If the refresh token is truly invalid, 
+        // the session update will fail and the session?.user?.error check at the top of the effect will handle the signOut.
+        update();
       }
     });
 
