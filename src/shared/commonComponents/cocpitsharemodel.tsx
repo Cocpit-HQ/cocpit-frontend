@@ -180,6 +180,11 @@ export default function CocpitShareModel({
     });
   };
 
+  const effectiveJobId = jobId || (entityType === "job" ? entityId : undefined);
+  const effectiveEntityType = entityType || (effectiveJobId ? "job" : undefined);
+  const effectiveEntityId = entityId || effectiveJobId;
+  const messageText = shareUrl;
+
   const handleSendClick = async () => {
     if (selectedUsers.length === 0 || isSending) return;
     setIsSending(true);
@@ -187,15 +192,7 @@ export default function CocpitShareModel({
       const isCompany = activeProfile?.type === "COMPANY";
       const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
 
-      const effectiveJobId = jobId || (entityType === "job" ? entityId : undefined);
-      const effectiveEntityType = entityType || (effectiveJobId ? "job" : undefined);
-      const effectiveEntityId = entityId || effectiveJobId;
-
-      // If text is empty and no specific entity (post/profile/entity), fall back to shareUrl so text is never empty
-      const isEntityPresent = Boolean(postId || profileId || effectiveEntityId);
-      const messageText = isEntityPresent ? "" : shareUrl;
-
-      await Promise.all(
+      const responses = await Promise.all(
         selectedUsers.map((targetUserId) => {
           const target = users.find((u) => u.id === targetUserId);
           if (target && target.type === "GROUP") {
@@ -232,10 +229,10 @@ export default function CocpitShareModel({
       // Only invalidate conversations (sidebar) — the socket event updates the message list in real time
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
-      // Note: We don't call universalShare({ shareMethod: 'message' }) here because 
-      // sendMessage already sends and tracks the message directly on the messaging API.
+      // Calculate how many shares were actually tracked as new
+      const newlyTrackedCount = responses.filter((r: any) => r && r.shareTracked).length;
 
-      onShare?.(selectedUsers);
+      onShare?.(newlyTrackedCount > 0 ? Array(newlyTrackedCount).fill("") : []);
       handleClose();
     } catch (err: any) {
       console.error(err);
@@ -246,10 +243,6 @@ export default function CocpitShareModel({
   };
 
   const shareOptions = useMemo(() => {
-    const effectiveJobId = jobId || (entityType === "job" ? entityId : undefined);
-    const effectiveEntityType = entityType || (effectiveJobId ? "job" : undefined);
-    const effectiveEntityId = entityId || effectiveJobId;
-
     const trackShare = () => {
       if (postId) {
         universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
