@@ -88,6 +88,7 @@ export interface PublicUserProfileResponse {
     connection_request_sender?: 'me' | 'them' | null;
     created_at: string;
     is_identity_verified?: boolean;
+    is_blocked_by_me?: boolean;
   };
   experiences: ApiExperience[];
   educations: ApiEducation[];

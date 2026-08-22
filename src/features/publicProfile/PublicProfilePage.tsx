@@ -339,7 +339,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const isUserFollowing = user
     ? (activeProfile?.type === 'COMPANY' ? !!(user as any).is_following : isFollowing(user.id))
     : false;
-  const isUserBlocked = user ? isBlocked(user.id) : false;
+  const isUserBlocked = user ? Boolean(user.is_blocked_by_me || isBlocked(user.id)) : false;
 
   const queryClient = useQueryClient();
   const isFirstMount = useRef(true);
@@ -374,8 +374,20 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!user) return;
     await blockUser(user.id);
     setShowBlockDialog(false);
-    window.location.reload();
-  }, [user, blockUser]);
+    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile-posts', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile-posts-preview', userId] });
+  }, [user, userId, blockUser, queryClient]);
+
+  const handleUnblock = useCallback(async () => {
+    if (!user) return;
+    await unblockUser(user.id);
+    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile-posts', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile-posts-preview', userId] });
+  }, [user, userId, unblockUser, queryClient]);
 
   const handleRoleClick = useCallback((role: CompanyRole) => {
     setSelectedRole(role);
@@ -544,6 +556,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             profileStats={profileStats}
             latestExperience={latestExperience}
             latestEducation={latestEducation}
+            isBlockedByMe={isUserBlocked}
             onAvatarClick={() => {
               if (user.avatar) {
                 setIsViewAvatarOpen(true);
@@ -556,61 +569,84 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             dropdownActions={dropdownActions}
           />
 
-          {/* <SkillOverlap currentUserSkills={currentUserSkills} profileUserSkills={user.skills} /> */}
+          {isUserBlocked ? (
+            <div className="w-full h-72 px-4 bg-card inline-flex flex-col justify-center items-center gap-4 my-4">
+              <div className="self-stretch flex flex-col justify-center items-center gap-2">
+                <div className="size-10 relative overflow-hidden flex items-center justify-center">
+                  <Ban className="w-8 h-8 text-foreground" strokeWidth={1.75} />
+                </div>
+                <div className="self-stretch text-center text-foreground text-2xl font-semibold font-['Poppins'] leading-8">
+                  You&apos;ve blocked
+                </div>
+                <div className="self-stretch text-center text-muted-foreground text-xs font-normal font-['Poppins'] leading-4 max-w-[420px] mx-auto">
+                  Unblock this member to view their profile, posts, and professional information again.
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUnblock}
+                  className="w-48 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 dark:bg-[#6366F1] dark:hover:bg-[#5558E6] rounded-3xl inline-flex justify-center items-center gap-2.5 cursor-pointer transition-all border-none outline-none mt-2 shadow-sm active:scale-[0.98]"
+                >
+                  <span className="text-center text-white text-sm font-normal font-['Poppins'] leading-5">Unblock</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <ProfileAbout
+                aboutText={user.about}
+                isOwnProfile={isOwnProfile}
+              />
 
-          <ProfileAbout
-            aboutText={user.about}
-            isOwnProfile={isOwnProfile}
-          />
+              <LivingResume
+                userId={user.id}
+                experiences={flatExperiences}
+                skills={user.skills}
+                resumeName={user.resume?.originalName}
+                resumeUrl={user.resume?.url}
+                isOwnProfile={isOwnProfile}
+              />
 
-          <LivingResume
-            userId={user.id}
-            experiences={flatExperiences}
-            skills={user.skills}
-            resumeName={user.resume?.originalName}
-            resumeUrl={user.resume?.url}
-            isOwnProfile={isOwnProfile}
-          />
+              <ProfilePosts
+                posts={visiblePreviewPosts}
+                isOwnProfile={isOwnProfile}
+                isCompany={activeProfile?.type === 'COMPANY'}
+                profileSlug={user?.account_name || user?.id || ""}
+                userName={user?.name || ""}
+                isLoading={isPreviewPostsLoading}
+              />
 
-          <ProfilePosts
-            posts={visiblePreviewPosts}
-            isOwnProfile={isOwnProfile}
-            isCompany={activeProfile?.type === 'COMPANY'}
-            profileSlug={user?.account_name || user?.id || ""}
-            userName={user?.name || ""}
-            isLoading={isPreviewPostsLoading}
-          />
+              <ProfileSkills
+                skills={user.skills}
+                experiences={flatExperiences}
+                posts={visiblePosts}
+                isOwnProfile={isOwnProfile}
+              />
 
-          <ProfileSkills
-            skills={user.skills}
-            experiences={flatExperiences}
-            posts={visiblePosts}
-            isOwnProfile={isOwnProfile}
-          />
+              <ProfileExperience
+                experiences={groupedExperiences}
+                isOwnProfile={isOwnProfile}
+              />
 
-          <ProfileExperience
-            experiences={groupedExperiences}
-            isOwnProfile={isOwnProfile}
-          />
+              <ProfileEducation
+                educations={user.educations || []}
+                isOwnProfile={isOwnProfile}
+              />
 
-          <ProfileEducation
-            educations={user.educations || []}
-            isOwnProfile={isOwnProfile}
-          />
-
-          <ProfileProjects
-            projects={(user as any).projects || []}
-            isOwnProfile={isOwnProfile}
-            onMediaClick={(mediaItem) => {
-              let url = mediaItem.fileUrl || mediaItem.url;
-              if (url) {
-                if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                  url = 'https://' + url;
-                }
-                window.open(url, "_blank");
-              }
-            }}
-          />
+              <ProfileProjects
+                projects={(user as any).projects || []}
+                isOwnProfile={isOwnProfile}
+                onMediaClick={(mediaItem) => {
+                  let url = mediaItem.fileUrl || mediaItem.url;
+                  if (url) {
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                      url = 'https://' + url;
+                    }
+                    window.open(url, "_blank");
+                  }
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
 

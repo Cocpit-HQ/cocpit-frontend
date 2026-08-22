@@ -426,7 +426,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                                         className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                                     >
                                                         <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
-                                                        <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                        <LogOut className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                                     </DropdownMenuItem>
                                                 ) : (
                                                     <>
@@ -555,18 +555,11 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                 Leave group
                             </span>
                         </button>
-                        {isAdmin ? (
+                        {isAdmin && (
                             <button
                                 onClick={() => setShowDeleteConfirm(true)}
                                 className="bg-transparent border-none outline-none cursor-pointer p-1 hover:bg-[var(--destructive)]/10 rounded transition-colors"
                                 title="Delete group"
-                            >
-                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setShowLeaveConfirm(true)}
-                                className="bg-transparent border-none outline-none cursor-pointer"
                             >
                                 <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                             </button>

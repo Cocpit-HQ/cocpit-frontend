@@ -38,6 +38,7 @@ export interface User {
   } | null;
   created_at?: string;
   is_identity_verified?: boolean;
+  is_blocked_by_me?: boolean;
 }
 
 export interface CompanyRole {
@@ -87,6 +88,7 @@ export interface UserData {
   following_count: number;
   connections_count: number;
   is_identity_verified?: boolean;
+  is_blocked_by_me?: boolean;
   created_at?: string;
   latest_education: {
     school: string;

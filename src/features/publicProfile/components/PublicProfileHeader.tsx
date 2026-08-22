@@ -42,6 +42,7 @@ interface PublicProfileHeaderProps {
     // Public actions & dropdown slots (optional, from publicProfile feature)
     publicActions?: React.ReactNode;
     dropdownActions?: React.ReactNode;
+    isBlockedByMe?: boolean;
 }
 
 export const PublicProfileHeader = React.memo(function PublicProfileHeader({
@@ -64,6 +65,7 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
     scrollToEducation,
     publicActions,
     dropdownActions,
+    isBlockedByMe = false,
 }: PublicProfileHeaderProps) {
     const router = useRouter();
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -200,60 +202,64 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                         )}
                     </div>
 
-                    {!isOwnProfile ? (
-                        <div className="mt-12 mr-4 flex items-center gap-2 md:hidden">
+                    {!isBlockedByMe && (
+                        !isOwnProfile ? (
+                            <div className="mt-12 mr-4 flex items-center gap-2 md:hidden">
+                                <button
+                                    onClick={onContactInfoClick}
+                                    className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
+                                >
+                                    <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
+                                </button>
+                            </div>
+                        ) : (
                             <button
                                 onClick={onContactInfoClick}
-                                className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
+                                className="md:hidden mt-12 mr-4 text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
                             >
                                 <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
                             </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={onContactInfoClick}
-                            className="md:hidden mt-12 mr-4 text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
-                        >
-                            <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
-                        </button>
+                        )
                     )}
 
-                    <div className="hidden md:flex flex-col items-end mt-[59px] pr-[16px] gap-2">
-                        {isOwnProfile ? (
-                            <button
-                                onClick={onContactInfoClick}
-                                className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
-                            >
-                                Contact Info
-                            </button>
-                        ) : (
-                            <div className="flex items-center gap-2">
+                    {!isBlockedByMe && (
+                        <div className="hidden md:flex flex-col items-end mt-[59px] pr-[16px] gap-2">
+                            {isOwnProfile ? (
                                 <button
                                     onClick={onContactInfoClick}
                                     className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
                                 >
                                     Contact Info
                                 </button>
-                            </div>
-                        )}
-                    </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={onContactInfoClick}
+                                        className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
+                                    >
+                                        Contact Info
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Stats Section */}
                 <div className="md:hidden w-full px-4 mt-6">
                     <div className="flex justify-between items-center w-full px-2">
-                        <div onClick={() => onFollowListClick?.("following")} className="flex flex-col items-center cursor-pointer">
-                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                        <div onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("following")} className={cn("flex flex-col items-center", isBlockedByMe ? "cursor-default" : "cursor-pointer")}>
+                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.following_count || 0)}</span>
                             <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Following</span>
                         </div>
                         <div className="w-[1px] h-8 bg-border"></div>
-                        <div onClick={() => onFollowListClick?.("followers")} className="flex flex-col items-center cursor-pointer">
-                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                        <div onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("followers")} className={cn("flex flex-col items-center", isBlockedByMe ? "cursor-default" : "cursor-pointer")}>
+                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.followers_count || 0)}</span>
                             <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Followers</span>
                         </div>
                         <div className="w-[1px] h-8 bg-border"></div>
-                        <div onClick={() => onFollowListClick?.("connections")} className="flex flex-col items-center cursor-pointer">
-                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                        <div onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("connections")} className={cn("flex flex-col items-center", isBlockedByMe ? "cursor-default" : "cursor-pointer")}>
+                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.connections_count || 0)}</span>
                             <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Connection</span>
                         </div>
                     </div>
@@ -262,28 +268,37 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                 <div className="hidden md:flex w-full h-[90px] items-center pt-[16px] pr-[16px] pb-[16px] pl-[40px] mt-[16px] mb-0">
                     <div className="flex gap-[16px] items-center w-full">
                         <button
-                            onClick={() => onFollowListClick?.("following")}
-                            className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all bg-[#EEF2FF] dark:bg-[#1C2340]"
+                            onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("following")}
+                            className={cn(
+                                "flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] bg-[#EEF2FF] dark:bg-[#1C2340]",
+                                isBlockedByMe ? "cursor-default" : "cursor-pointer hover:opacity-90 transition-all"
+                            )}
                             style={{ boxShadow: '0px 0px 4px 0px rgba(99, 102, 241, 0.05)' }}
                         >
                             <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Following</span>
-                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.following_count || 0)}</span>
                         </button>
                         <button
-                            onClick={() => onFollowListClick?.("followers")}
-                            className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all bg-[#EEF2FF] dark:bg-[#1C2340]"
+                            onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("followers")}
+                            className={cn(
+                                "flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] bg-[#EEF2FF] dark:bg-[#1C2340]",
+                                isBlockedByMe ? "cursor-default" : "cursor-pointer hover:opacity-90 transition-all"
+                            )}
                             style={{ boxShadow: '0px 0px 4px 0px rgba(99, 102, 241, 0.05)' }}
                         >
                             <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Followers</span>
-                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.followers_count || 0)}</span>
                         </button>
                         <button
-                            onClick={() => onFollowListClick?.("connections")}
-                            className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all bg-[#EEF2FF] dark:bg-[#1C2340]"
+                            onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("connections")}
+                            className={cn(
+                                "flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] bg-[#EEF2FF] dark:bg-[#1C2340]",
+                                isBlockedByMe ? "cursor-default" : "cursor-pointer hover:opacity-90 transition-all"
+                            )}
                             style={{ boxShadow: '0px 0px 4px 0px rgba(99, 102, 241, 0.05)' }}
                         >
                             <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Connection</span>
-                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.connections_count || 0)}</span>
                         </button>
                     </div>
                 </div>
@@ -294,23 +309,6 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                     <div className="flex items-center justify-between gap-3 mb-1 w-full">
                         <div className="flex items-center gap-3 flex-wrap md:flex-nowrap min-w-0">
                             <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight truncate md:overflow-visible md:text-clip md:whitespace-nowrap">{user?.name}</h1>
-
-                            {/* {visibleRoles.length > 0 && (
-                                <div className="flex items-center gap-2 flex-wrap md:flex-nowrap min-w-0">
-                                    <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-[#EEF2FF] dark:bg-[#1C2340] rounded-[24px] border border-transparent flex-shrink-0 w-fit h-[36px]">
-                                        <Icon icon="solar:buildings-linear" className="w-5 h-5 text-[#6366F1] dark:text-[#818CF8]" />
-                                        <span className="text-[12px] font-normal leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap text-[#6366F1] dark:text-[#818CF8]">
-                                            {visibleRoles[0].role} at {visibleRoles[0].name}
-                                        </span>
-                                    </div>
-
-                                    {visibleRoles.length > 1 && (
-                                        <span className="text-[12px] font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-0.5 rounded-full border border-border">
-                                            + {visibleRoles.length - 1} more
-                                        </span>
-                                    )}
-                                </div>
-                            )} */}
                         </div>
                     </div>
 
@@ -320,7 +318,7 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                         </p>
                     )}
 
-                    {(user?.location || user?.website) && (
+                    {!isBlockedByMe && (user?.location || user?.website) && (
                         <div className="flex flex-col gap-2 mb-4">
                             {user?.location && (
                                 <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)]">
@@ -335,9 +333,9 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                         </div>
                     )}
 
-                    <ProfileIdentityChips initialIdentity={profileIdentity} readOnly />
+                    {!isBlockedByMe && <ProfileIdentityChips initialIdentity={profileIdentity} readOnly />}
 
-                    {!isOwnProfile && (
+                    {!isOwnProfile && !isBlockedByMe && (
                         <div className="flex items-center gap-4 mt-6 mb-2">
                             {publicActions}
                             
@@ -360,67 +358,69 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                     )}
                 </div>
 
-                <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px]">
-                    <div className="flex flex-col gap-4">
-                        {latestExperience && (
-                            <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
-                                <div className="flex items-center gap-[10px]">
-                                    <div className={cn(
-                                        "w-[48px] h-[48px] rounded-[12px] flex items-center justify-center flex-shrink-0 overflow-hidden",
-                                        ((latestExperience.logo_url || latestExperience.company_logo) && !expImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54]"
-                                    )}>
-                                        {(latestExperience.logo_url || latestExperience.company_logo) && !expImgError ? (
-                                            <img
-                                                src={latestExperience.logo_url || latestExperience.company_logo}
-                                                alt={latestExperience.company_name}
-                                                className="w-full h-full object-contain"
-                                                onError={() => setExpImgError(true)}
-                                            />
-                                        ) : (
-                                            <Icon icon="lucide:building-2" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.company_name}</span>
-                                        <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.title}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {latestEducation && (
-                            <div onClick={scrollToEducation} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
-                                <div className="flex items-center gap-[10px]">
-                                    <div className={cn(
-                                        "w-[48px] h-[48px] rounded-[12px] flex items-center justify-center flex-shrink-0 overflow-hidden",
-                                        (latestEducation.school_logo && !eduImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54]"
-                                    )}>
-                                        {latestEducation.school_logo && !eduImgError ? (
-                                            <img
-                                                src={latestEducation.school_logo}
-                                                alt="School Logo"
-                                                className="w-full h-full object-contain"
-                                                onError={() => setEduImgError(true)}
-                                            />
-                                        ) : (
-                                            <Icon icon="qlementine-icons:education-24" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">
-                                            {latestEducation.school_name || latestEducation.school || 'University'}
-                                        </span>
-                                        <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestEducation.degree}</span>
+                {!isBlockedByMe && (
+                    <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px]">
+                        <div className="flex flex-col gap-4">
+                            {latestExperience && (
+                                <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
+                                    <div className="flex items-center gap-[10px]">
+                                        <div className={cn(
+                                            "w-[48px] h-[48px] rounded-[12px] flex items-center justify-center flex-shrink-0 overflow-hidden",
+                                            ((latestExperience.logo_url || latestExperience.company_logo) && !expImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54]"
+                                        )}>
+                                            {(latestExperience.logo_url || latestExperience.company_logo) && !expImgError ? (
+                                                <img
+                                                    src={latestExperience.logo_url || latestExperience.company_logo}
+                                                    alt={latestExperience.company_name}
+                                                    className="w-full h-full object-contain"
+                                                    onError={() => setExpImgError(true)}
+                                                />
+                                            ) : (
+                                                <Icon icon="lucide:building-2" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.company_name}</span>
+                                            <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.title}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
 
-                    <div className="ml-auto">
-                        {/* The top-right dropdown was moved to the left side in the public profile view */}
+                            {latestEducation && (
+                                <div onClick={scrollToEducation} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
+                                    <div className="flex items-center gap-[10px]">
+                                        <div className={cn(
+                                            "w-[48px] h-[48px] rounded-[12px] flex items-center justify-center flex-shrink-0 overflow-hidden",
+                                            (latestEducation.school_logo && !eduImgError) ? "bg-secondary" : "bg-[#E0E7FF] dark:bg-[#252E54]"
+                                        )}>
+                                            {latestEducation.school_logo && !eduImgError ? (
+                                                <img
+                                                    src={latestEducation.school_logo}
+                                                    alt="School Logo"
+                                                    className="w-full h-full object-contain"
+                                                    onError={() => setEduImgError(true)}
+                                                />
+                                            ) : (
+                                                <Icon icon="qlementine-icons:education-24" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">
+                                                {latestEducation.school_name || latestEducation.school || 'University'}
+                                            </span>
+                                            <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestEducation.degree}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="ml-auto">
+                            {/* The top-right dropdown was moved to the left side in the public profile view */}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
