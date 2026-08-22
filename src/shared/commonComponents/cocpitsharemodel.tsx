@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
@@ -183,7 +184,10 @@ export default function CocpitShareModel({
   const effectiveJobId = jobId || (entityType === "job" ? entityId : undefined);
   const effectiveEntityType = entityType || (effectiveJobId ? "job" : undefined);
   const effectiveEntityId = entityId || effectiveJobId;
-  const messageText = shareUrl;
+
+  // If text is empty and no specific entity (post/profile/entity), fall back to shareUrl so text is never empty
+  const isEntityPresent = Boolean(postId || profileId || effectiveEntityId);
+  const messageText = isEntityPresent ? "" : shareUrl;
 
   const handleSendClick = async () => {
     if (selectedUsers.length === 0 || isSending) return;
