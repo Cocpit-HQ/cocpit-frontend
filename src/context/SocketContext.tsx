@@ -11,6 +11,8 @@ import Avatar from '@/components/shared/Avatar';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotificationSettings, NOTIFICATION_SETTINGS_QUERY_KEY } from '@/features/settings/hooks/useNotificationSettings';
 import type { NotificationPreferences } from '@/services/api/settings';
+import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
+import type { BackendChat, ChatThread } from '@/types/messaging';
 
 type TargetedMessageNotification = NotificationPayload & {
   targetProfileType?: 'USER' | 'COMPANY';
@@ -192,38 +194,47 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Handle incoming events
-    const refreshMessagingCaches = (conversationId?: string | null) => {
-      if (conversationId) {
-        queryClient.setQueryData(
-          ["conversations", activeProfileRef.current?.type ?? "USER", activeProfileRef.current?.id ?? "me", "all"],
-          (oldData: any[]) => {
+    const refreshMessagingCaches = (conversationId?: string | null, fullConvPayload?: any) => {
+      const currentProfile = activeProfileRef.current;
+      const actorType = currentProfile?.type ?? "USER";
+      const actorId = currentProfile?.id ?? "me";
+
+      if (fullConvPayload && (fullConvPayload.other_user_name || fullConvPayload.name || fullConvPayload.conversation_name || fullConvPayload.is_group)) {
+        const mappedThread = mapBackendChatToChatThread(fullConvPayload as BackendChat);
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", actorType, actorId] },
+          (oldData) => {
+            if (!oldData) return [mappedThread];
+            const exists = oldData.some(c => String(c.id) === String(mappedThread.id));
+            if (exists) {
+              return oldData.map(c => String(c.id) === String(mappedThread.id) ? { ...c, ...mappedThread } : c);
+            }
+            return [mappedThread, ...oldData];
+          }
+        );
+      } else if (conversationId) {
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", actorType, actorId] },
+          (oldData) => {
             if (!oldData) return oldData;
-            let found = false;
-            const newData = oldData.map(c => {
+            return oldData.map(c => {
               if (String(c.id) === String(conversationId)) {
-                found = true;
-                return { ...c, unread: (c.unread || 0) + 1 };
+                return { ...c, unread: (c.unread || 0) + 1, is_read: false };
               }
               return c;
             });
-            if (!found) {
-              newData.unshift({ id: conversationId, unread: 1 });
-            }
-            return newData;
           }
         );
       }
 
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-        if (conversationId) {
-          queryClient.invalidateQueries({
-            queryKey: ['messages', conversationId],
-            refetchType: 'none',
-          });
-        }
-      }, 500);
+      if (conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: ['messages', conversationId],
+          refetchType: 'none',
+        });
+      }
     };
 
     const handleNotification = (payload: NotificationPayload) => {
@@ -384,12 +395,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    const handleNewMessage = (payload: { conversation_id?: string; conversationId?: string }) => {
-      refreshMessagingCaches(payload.conversation_id || payload.conversationId);
+    const handleNewMessage = (payload: any) => {
+      const convId = payload?.conversation_id || payload?.conversationId;
+      refreshMessagingCaches(convId);
     };
 
-    const handleConversationUpdated = (payload: { conversation_id?: string; conversationId?: string }) => {
-      refreshMessagingCaches(payload.conversation_id || payload.conversationId);
+    const handleConversationUpdated = (payload: any) => {
+      const convId = payload?.conversation_id || payload?.conversationId || payload?.id;
+      refreshMessagingCaches(convId, payload);
     };
 
     const handleUserStatus = (payload: UserStatusPayload) => {

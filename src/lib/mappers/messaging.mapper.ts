@@ -102,50 +102,50 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     backendChat.other_user_headline === "Page unavailable";
 
   const finalName = backendChat.is_group 
-    ? (backendChat.other_user_name || "Group")
-    : (isUnknown ? fallbackName : (backendChat.other_user_name || fallbackName));
+    ? (backendChat.other_user_name || (backendChat as any).name || (backendChat as any).conversation_name || "Group")
+    : (isUnknown ? fallbackName : (backendChat.other_user_name || (backendChat as any).name || fallbackName));
 
   return {
-    id: backendChat.conversation_id,
+    id: backendChat.conversation_id || (backendChat as any).id,
     name: finalName,
     role: !backendChat.is_group && isUnknown 
       ? (isCompany ? "Page unavailable" : "User unavailable") 
-      : (backendChat.other_user_headline || (backendChat as any).group_headline || (backendChat as any).left_group_headline || ""),
+      : (backendChat.other_user_headline || (backendChat as any).role || (backendChat as any).group_headline || (backendChat as any).left_group_headline || ""),
     orgHeadline: !backendChat.is_group && isUnknown 
       ? "Page unavailable" 
-      : (backendChat.org_headline || ""),
+      : (backendChat.org_headline || (backendChat as any).orgHeadline || ""),
     lastMessage: (backendChat.last_message_text === 'Message unavailable' || (backendChat as any).is_unavailable)
       ? 'Message unavailable'
-      : isPostUrl(backendChat.last_message_text)
+      : isPostUrl(backendChat.last_message_text || (backendChat as any).lastMessage)
       ? "Shared a post"
-      : isJobUrl(backendChat.last_message_text)
+      : isJobUrl(backendChat.last_message_text || (backendChat as any).lastMessage)
       ? "Shared a job"
-      : isProfileUrl(backendChat.last_message_text)
+      : isProfileUrl(backendChat.last_message_text || (backendChat as any).lastMessage)
       ? "Shared a profile"
-      : backendChat.last_message_text,
+      : (backendChat.last_message_text || (backendChat as any).lastMessage || ""),
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
-      : (backendChat.timeAgo || ""),
+      : (backendChat.timeAgo || (backendChat as any).time || ""),
     unread: finalUnread,
-    avatar: (isUnknown || !backendChat.other_user_avatar) ? undefined : backendChat.other_user_avatar,
-    online: false, // Default to false, updated via socket
+    avatar: (isUnknown || !(backendChat.other_user_avatar || (backendChat as any).avatar)) ? undefined : (backendChat.other_user_avatar || (backendChat as any).avatar),
+    online: (backendChat as any).online || false,
     pinnedContext: undefined,
-    otherUserId: backendChat.other_user_id, // Map other_user_id
-    otherUserType: backendChat.other_user_type, // Map other_user_type
-    otherUserSlug: backendChat.other_user_slug, // Map other_user_slug
-    isGroup: backendChat.is_group,
-    isBlockedByMe: backendChat.is_blocked_by_me || false,
-    isBlockedByOther: backendChat.is_blocked_by_other || false,
-    lastMessageAt: backendChat.last_message_at || backendChat.updated_at || new Date().toISOString(),
+    otherUserId: backendChat.other_user_id || (backendChat as any).otherUserId,
+    otherUserType: backendChat.other_user_type || (backendChat as any).otherUserType,
+    otherUserSlug: backendChat.other_user_slug || (backendChat as any).otherUserSlug,
+    isGroup: backendChat.is_group ?? (backendChat as any).isGroup ?? false,
+    isBlockedByMe: backendChat.is_blocked_by_me ?? (backendChat as any).isBlockedByMe ?? false,
+    isBlockedByOther: backendChat.is_blocked_by_other ?? (backendChat as any).isBlockedByOther ?? false,
+    lastMessageAt: backendChat.last_message_at || (backendChat as any).lastMessageAt || backendChat.updated_at || new Date().toISOString(),
     isDeleted: isDeleted,
     isDeactivated: isDeactivated,
-    is_requesting: backendChat.is_requesting || false,
-    invitation_id: backendChat.invitation_id,
-    request_source: backendChat.request_source,
-    is_read: backendChat.is_read ?? true,
-    is_muted: backendChat.is_muted || false,
-    muted_until: backendChat.muted_until || null,
-    isJobChat: backendChat.is_job_chat || false,
+    is_requesting: backendChat.is_requesting ?? (backendChat as any).is_requesting ?? (backendChat as any).isRequesting ?? false,
+    invitation_id: backendChat.invitation_id || (backendChat as any).invitation_id,
+    request_source: backendChat.request_source || (backendChat as any).request_source,
+    is_read: backendChat.is_read ?? (backendChat as any).is_read ?? (backendChat as any).isRead ?? true,
+    is_muted: backendChat.is_muted ?? (backendChat as any).is_muted ?? (backendChat as any).isMuted ?? false,
+    muted_until: backendChat.muted_until ?? (backendChat as any).muted_until ?? (backendChat as any).mutedUntil ?? null,
+    isJobChat: backendChat.is_job_chat ?? (backendChat as any).isJobChat ?? false,
   };
 };
 

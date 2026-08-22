@@ -320,19 +320,17 @@ export default function ChatWindow({
         await unblockUser(targetId);
       }
       toast({ description: "Account unblocked successfully" });
-      const convKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(convKey, (oldChats: ChatThread[] | undefined) => {
-        if (!oldChats) return [];
-        return oldChats.map((c) =>
-          String(c.id) === String(chat.id) || (targetId && String(c.otherUserId) === String(targetId))
-            ? { ...c, isBlockedByMe: false }
-            : c
-        );
-      });
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
+        (oldChats: ChatThread[] | undefined) => {
+          if (!oldChats) return [];
+          return oldChats.map((c) =>
+            String(c.id) === String(chat.id) || (targetId && String(c.otherUserId) === String(targetId))
+              ? { ...c, isBlockedByMe: false }
+              : c
+          );
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ["messages", chat.id] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     } catch (err: any) {
@@ -441,12 +439,8 @@ export default function ChatWindow({
           throw new Error("Invitation ID missing");
         }
         await respondInvitation(chat.invitation_id, "accept");
-        queryClient.setQueryData(
-          [
-            "conversations",
-            activeProfile?.type ?? "USER",
-            activeProfile?.id ?? "me",
-          ],
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
           (oldChats: ChatThread[] | undefined) => {
             if (!oldChats) return [];
             return oldChats.map((c) =>
@@ -460,12 +454,8 @@ export default function ChatWindow({
         if (onAcceptSuccess) onAcceptSuccess();
       } else {
         await acceptChatRequest(chat.id);
-        queryClient.setQueryData(
-          [
-            "conversations",
-            activeProfile?.type ?? "USER",
-            activeProfile?.id ?? "me",
-          ],
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
           (oldChats: ChatThread[] | undefined) => {
             if (!oldChats) return [];
             return oldChats.map((c) =>
@@ -493,12 +483,8 @@ export default function ChatWindow({
           throw new Error("Invitation ID missing");
         }
         await respondInvitation(chat.invitation_id, "reject");
-        queryClient.setQueryData(
-          [
-            "conversations",
-            activeProfile?.type ?? "USER",
-            activeProfile?.id ?? "me",
-          ],
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
           (oldChats: ChatThread[] | undefined) => {
             if (!oldChats) return [];
             return oldChats.filter((c) => c.id !== chat.id);
@@ -1290,11 +1276,6 @@ export default function ChatWindow({
           queryClient.setQueryData(newFallbackQueryKey, updateCacheWithReal);
           queryClient.removeQueries({ queryKey: ["messages", "new"] });
 
-          const convKey = [
-            "conversations",
-            activeProfile?.type ?? "USER",
-            activeProfile?.id ?? "me",
-          ];
           const newThread: ChatThread = {
             ...chat,
             id: newConversationId,
@@ -1302,13 +1283,16 @@ export default function ChatWindow({
             time: "Just now",
             lastMessageAt: new Date().toISOString(),
           };
-          queryClient.setQueryData(convKey, (oldChats: ChatThread[] | undefined) => {
-            const list = oldChats || [];
-            if (!list.some((c) => String(c.id) === String(newConversationId))) {
-              return [newThread, ...list];
+          queryClient.setQueriesData<ChatThread[]>(
+            { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
+            (oldChats: ChatThread[] | undefined) => {
+              const list = oldChats || [];
+              if (!list.some((c) => String(c.id) === String(newConversationId))) {
+                return [newThread, ...list];
+              }
+              return list.map(c => String(c.id) === String(newConversationId) ? { ...c, ...newThread } : c);
             }
-            return list;
-          });
+          );
 
           if (onChatCreated) {
             onChatCreated(newThread);
@@ -2515,12 +2499,8 @@ export default function ChatWindow({
           try {
             await deletePersonalChat(chat.id);
             queryClient.removeQueries({ queryKey: ["messages", chat.id] });
-            queryClient.setQueryData(
-              [
-                "conversations",
-                activeProfile?.type ?? "USER",
-                activeProfile?.id ?? "me",
-              ],
+            queryClient.setQueriesData<ChatThread[]>(
+              { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
               (oldChats: ChatThread[] | undefined) => {
                 if (!oldChats) return [];
                 return oldChats.filter((c) => c.id !== chat.id);
@@ -2558,13 +2538,8 @@ export default function ChatWindow({
         onConfirm={async () => {
           try {
             // Optimistic Cache Update
-            const queryKey = [
-              "conversations",
-              activeProfile?.type ?? "USER",
-              activeProfile?.id ?? "me",
-            ];
-            queryClient.setQueryData(
-              queryKey,
+            queryClient.setQueriesData<ChatThread[]>(
+              { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
               (oldChats: ChatThread[] | undefined) => {
                 if (!oldChats) return [];
                 return oldChats.map((c) =>
@@ -2604,13 +2579,8 @@ export default function ChatWindow({
         onConfirm={async () => {
           try {
             // Optimistic Cache Update
-            const queryKey = [
-              "conversations",
-              activeProfile?.type ?? "USER",
-              activeProfile?.id ?? "me",
-            ];
-            queryClient.setQueryData(
-              queryKey,
+            queryClient.setQueriesData<ChatThread[]>(
+              { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
               (oldChats: ChatThread[] | undefined) => {
                 if (!oldChats) return [];
                 return oldChats.map((c) =>

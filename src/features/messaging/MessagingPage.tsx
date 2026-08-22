@@ -194,13 +194,24 @@ export default function MessagingPage() {
 
   const activeChat = React.useMemo(() => {
     if (!selectedChat) return null;
-    return (
+    const foundChat =
       chats.find((c) => String(c.id) === String(selectedChat.id)) ||
       (selectedChat.id === "new" && selectedChat.otherUserId
         ? chats.find((c) => String(c.otherUserId) === String(selectedChat.otherUserId))
-        : null) ||
-      selectedChat
-    );
+        : null);
+
+    if (foundChat) {
+      return {
+        ...selectedChat,
+        ...foundChat,
+        name: foundChat.name || selectedChat.name,
+        role: foundChat.role || selectedChat.role,
+        avatar: foundChat.avatar || selectedChat.avatar,
+        otherUserId: foundChat.otherUserId || selectedChat.otherUserId,
+        otherUserSlug: foundChat.otherUserSlug || selectedChat.otherUserSlug,
+      };
+    }
+    return selectedChat;
   }, [chats, selectedChat]);
 
   const { user } = useAuth();
@@ -532,13 +543,8 @@ export default function MessagingPage() {
         });
       }
 
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(
-        queryKey,
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
         (oldData: ChatThread[] | undefined) => {
           if (!oldData) return oldData;
 
@@ -618,13 +624,8 @@ export default function MessagingPage() {
     };
 
     const handleGroupUpdate = (updatedGroup: any) => {
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(
-        queryKey,
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
         (oldData: ChatThread[] | undefined) => {
           if (!oldData) return oldData;
           return oldData.map((c) => {
@@ -654,14 +655,8 @@ export default function MessagingPage() {
       const conversationId = payload.conversation_id || payload.conversationId;
       if (!conversationId) return;
 
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-
-      queryClient.setQueryData(
-        queryKey,
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
         (oldData: ChatThread[] | undefined) => {
           if (!oldData) return oldData;
 
@@ -762,13 +757,8 @@ export default function MessagingPage() {
 
       if (!isLastMessage) return;
 
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(
-        queryKey,
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
         (oldData: ChatThread[] | undefined) => {
           if (!oldData) return oldData;
           return oldData.map((c) => {
@@ -810,13 +800,8 @@ export default function MessagingPage() {
 
       if (!isLastMessage) return;
 
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(
-        queryKey,
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
         (oldData: ChatThread[] | undefined) => {
           if (!oldData) return oldData;
           return oldData.map((c) => {
@@ -842,15 +827,9 @@ export default function MessagingPage() {
         String(payload.blocker_id) === String(user?.id) ||
         String(payload.blocker_id) === String(activeProfile?.id);
 
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-
       if (conversationId) {
-        queryClient.setQueryData(
-          queryKey,
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
           (oldData: ChatThread[] | undefined) => {
             if (!oldData) return oldData;
             return oldData.map((c) => {
@@ -901,15 +880,9 @@ export default function MessagingPage() {
         String(payload.blocker_id) === String(user?.id) ||
         String(payload.blocker_id) === String(activeProfile?.id);
 
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-
       if (conversationId) {
-        queryClient.setQueryData(
-          queryKey,
+        queryClient.setQueriesData<ChatThread[]>(
+          { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
           (oldData: ChatThread[] | undefined) => {
             if (!oldData) return oldData;
             return oldData.map((c) => {
@@ -954,13 +927,8 @@ export default function MessagingPage() {
       conversationId: string;
       preference: { is_muted: boolean; muted_until: string | null };
     }) => {
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(
-        queryKey,
+      queryClient.setQueriesData<ChatThread[]>(
+        { queryKey: ["conversations", activeProfile?.type ?? "USER", activeProfile?.id ?? "me"] },
         (oldData: ChatThread[] | undefined) => {
           if (!oldData) return oldData;
           return oldData.map((c) => {
