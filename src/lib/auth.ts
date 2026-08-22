@@ -240,12 +240,16 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (data?.accessToken && data?.user) {
-            // Extract refreshToken from Set-Cookie header
+            // Extract refreshToken: prefer Set-Cookie header (httpOnly cookie path),
+            // but fall back to the response body value if header extraction fails.
+            // This is a server-to-server fetch so the browser cookie jar is not involved;
+            // the body fallback ensures the refresh token is always captured.
             const setCookieHeader = typeof res.headers.getSetCookie === 'function'
               ? res.headers.getSetCookie()
               : res.headers.get("set-cookie");
 
-            const refreshToken = getCookieValue(setCookieHeader, "refreshToken");
+            const refreshTokenFromCookie = getCookieValue(setCookieHeader, "refreshToken");
+            const refreshToken = refreshTokenFromCookie || data.refreshToken || "";
 
             const userPayload = {
               id: data.user.id,
@@ -254,7 +258,7 @@ export const authOptions: NextAuthOptions = {
               image: data.user.avatar_url,
               roles: data.user.roles,
               accessToken: data.accessToken,
-              refreshToken: refreshToken || "",
+              refreshToken,
               onboarding_complete: data.user.onboarding_complete === true,
             };
             console.log("Authorize returning user. Onboarding complete:", userPayload.onboarding_complete);
@@ -353,6 +357,24 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    // 7 days — matches the backend refresh token TTL.
+    // Without maxAge, NextAuth creates a session-scoped cookie that is wiped
+    // when the browser closes, causing logout on every restart.
+    maxAge: 7 * 24 * 60 * 60,
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        // Explicit maxAge makes this a persistent cookie (survives browser restarts).
+        // Matches session.maxAge above.
+        maxAge: 7 * 24 * 60 * 60,
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
