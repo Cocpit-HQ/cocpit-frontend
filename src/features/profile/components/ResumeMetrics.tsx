@@ -9,7 +9,7 @@ interface ResumeMetricsProps {
 
 export function ResumeMetrics({ experiences, skills }: ResumeMetricsProps) {
   // Calculate unique domains based on company names or description keywords (Mock logic)
-  const domains = new Set(experiences.map(e => e.company_name)).size + 2; // +2 for implied domains
+  const domains = new Set(experiences.map(e => e.company_name)).size;
   const toolsCount = skills.length;
 
   // Calculate total years based on months

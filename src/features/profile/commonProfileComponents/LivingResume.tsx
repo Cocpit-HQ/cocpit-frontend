@@ -48,7 +48,7 @@ export function LivingResume({
   const overview = getResumeOverview(experiences);
 
   // Metrics calculations
-  const domains = new Set(experiences.map(e => e.company_name)).size + 2;
+  const domains = new Set(experiences.map(e => e.company_name)).size;
   const toolsCount = skills.length;
   // Calculate total years based on months
   let totalMonths = 0;

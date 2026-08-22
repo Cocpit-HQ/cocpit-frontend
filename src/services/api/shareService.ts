@@ -51,8 +51,8 @@ export interface EntityPreviewRequest {
  */
 export const universalShare = async (payload: UniversalSharePayload): Promise<ShareResult> => {
     const { senderCompanyId, ...rest } = payload;
-    void senderCompanyId;
-    const { data } = await api.post("/share", rest);
+    const requestPayload = senderCompanyId ? { ...rest, senderOrgId: senderCompanyId } : rest;
+    const { data } = await api.post("/share", requestPayload);
     return data;
 };
 
