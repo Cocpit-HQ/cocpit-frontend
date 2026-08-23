@@ -20,6 +20,7 @@ import { getProfile } from "@/services/api/profile";
 import { toast } from "sonner";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
+import { useSession } from "next-auth/react";
 
 const EducationStep = lazy(() => import("@/components/onboarding/EducationStep"));
 const WorkExperienceStep = lazy(() => import("@/components/onboarding/WorkExperienceStep"));
@@ -130,6 +131,7 @@ export default function OnboardingPage() {
     workExperienceList, setWorkExperienceList,
     parsedResumeData,
   } = useOnboardingStore();
+  const { update } = useSession();
 
   const maxAllowedStepRef = useRef<{ step: number; showSubStep: boolean }>({ step: 1, showSubStep: false });
 
@@ -472,6 +474,9 @@ export default function OnboardingPage() {
       await saveOnboardingSkills(selectedSkills);
       await completeOnboarding();
       sessionStorage.removeItem("cocpit_onboarding_step");
+      
+      // Update NextAuth session so middleware knows we are onboarded
+      await update({ onboarding_complete: true });
       
       setIsCompleted(true);
       toast.success("Onboarding completed!");

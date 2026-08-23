@@ -127,7 +127,7 @@ export const saveOnboardingSkills = async (skills: string[]): Promise<any> => {
 
 // Complete onboarding (mark as done)
 export const completeOnboarding = async (): Promise<CompleteOnboardingResponse> => {
-  const response = await api.post<CompleteOnboardingResponse>("/onboarding/complete", {});
+  const response = await api.post<CompleteOnboardingResponse>("/onboarding/complete", { finish: true });
   return response.data;
 };
 
