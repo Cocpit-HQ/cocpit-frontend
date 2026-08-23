@@ -34,11 +34,23 @@ interface CommentProps {
 
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
   if (!text) return null;
-  const parts = text.split(/(@\w+)/g);
+  // Match both structured mentions @[Name](account) and legacy mentions @account
+  const parts = text.split(/(@\[[^\]]+\]\([^)]+\)|@\w+)/g);
+  
   return parts.map((part, index) => {
-    if (part.startsWith('@')) {
-      const accountName = part.substring(1);
-      
+    let accountName = '';
+    let displayName = '';
+    
+    const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
+    if (structuredMatch) {
+      displayName = structuredMatch[1];
+      accountName = structuredMatch[2];
+    } else if (part.startsWith('@')) {
+      accountName = part.substring(1);
+      displayName = accountName; // Legacy fallback
+    }
+
+    if (accountName) {
       const params = new URLSearchParams();
       if (postId) params.set('openPost', postId.toString());
       if (currentCommentId) params.set('commentId', currentCommentId.toString());
@@ -52,7 +64,7 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
           href={href}
           className="text-primary font-medium cursor-pointer hover:underline"
         >
-          {accountName}
+          {displayName}
         </Link>
       );
     }

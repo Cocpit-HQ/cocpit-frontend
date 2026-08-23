@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Smile, X, Send } from 'lucide-react';
 import { searchUsers, UserMention } from '@/services/api/users';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
 
 interface CommentInputProps {
     onAddComment: (text: string) => void;
@@ -40,6 +41,7 @@ export default function CommentInput({
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
     const [mentionQuery, setMentionQuery] = useState('');
     const [mentionIndex, setMentionIndex] = useState(0);
+    const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -64,7 +66,9 @@ export default function CommentInput({
             }
         }
         if (editingComment && textareaRef.current) {
-            setCommentText(editingComment.text);
+            const parsed = parseMentionsForFrontend(editingComment.text);
+            setCommentText(parsed.content);
+            setInlineMentions(parsed.inlineMentions);
             textareaRef.current.focus();
             // Trigger auto-resize
             textareaRef.current.style.height = 'auto';
@@ -130,12 +134,13 @@ export default function CommentInput({
         const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
         const textAfterCursor = commentText.substring(cursorPos);
-        const mentionText = `@${user.account_name || user.full_name.replace(/\s+/g, '_').toLowerCase()} `;
+        const mentionText = `\u200B${user.full_name} `;
 
         const newText = commentText.substring(0, lastAtIndex) + mentionText + textAfterCursor;
         setCommentText(newText);
         setMentionQuery('');
         setShowMentionDropdown(false);
+        setInlineMentions(prev => [...prev, user]);
 
         // Set cursor focus back to textarea after state update
         setTimeout(() => {
@@ -151,11 +156,14 @@ export default function CommentInput({
         e?.preventDefault();
         if (!commentText.trim()) return;
 
-        onAddComment(commentText.trim());
+        const finalContent = formatMentionsForBackend(commentText, inlineMentions);
+
+        onAddComment(finalContent.trim());
         setCommentText('');
         setShowEmojiPicker(false);
         setMentionQuery('');
         setShowMentionDropdown(false);
+        setInlineMentions([]);
         onCancelReply?.();
         onCancelEdit?.();
 

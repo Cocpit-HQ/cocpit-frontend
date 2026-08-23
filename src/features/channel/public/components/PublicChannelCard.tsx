@@ -149,7 +149,7 @@ export default function PublicChannelCard({
   return (
     <div
       onClick={onClick}
-      className={`w-[300px] shrink-0 md:w-full h-[152px] md:h-[130px] flex flex-col items-center p-[16px] gap-[16px] bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
+      className={`w-[300px] shrink-0 md:w-full h-[152px] flex flex-col items-center p-[16px] gap-[16px] bg-white dark:bg-[#121B2B] rounded-[24px] border border-[#EEF2FF] dark:border-[#1C2340] hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
       style={{ backdropFilter: 'blur(2px)' }}
     >
       <div className="flex flex-row items-start gap-[10px] w-full shrink-0">
