@@ -93,6 +93,7 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
     setIsLoading(true);
     setErrorMsg('');
     try {
+      sessionStorage.setItem('skip_org_deactivate_toast', 'true');
       await deactivateOrganization(activeProfile.id, code);
       setIsSuccess(true);
       toast.success(`Your ${entityLabel} account has been deactivated`);

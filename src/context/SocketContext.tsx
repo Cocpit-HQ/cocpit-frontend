@@ -664,11 +664,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const currentProfile = activeProfileRef.current;
       if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
         if (session?.user) {
-          toast({
-            title: "Organization Deactivated",
-            description: "The organization you were acting as has been deactivated.",
-            variant: "destructive",
-          });
+          if (sessionStorage.getItem('skip_org_deactivate_toast') === 'true') {
+            sessionStorage.removeItem('skip_org_deactivate_toast');
+          } else {
+            toast({
+              title: "Organization Deactivated",
+              description: "The organization you were acting as has been deactivated.",
+              variant: "destructive",
+            });
+          }
           switchProfile('USER', (session.user as any).id || "user");
         }
       }
