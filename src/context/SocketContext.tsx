@@ -664,15 +664,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const currentProfile = activeProfileRef.current;
       if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
         if (session?.user) {
-          if (sessionStorage.getItem('skip_org_deactivate_toast') === 'true') {
-            sessionStorage.removeItem('skip_org_deactivate_toast');
-          } else {
-            toast({
-              title: "Organization Deactivated",
-              description: "The organization you were acting as has been deactivated.",
-              variant: "destructive",
-            });
-          }
           switchProfile('USER', (session.user as any).id || "user");
         }
       }
@@ -784,8 +775,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
     newSocket.on('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
     newSocket.on('organization_deactivated', handleOrganizationDeactivated);
-    newSocket.on('org_deleted', handleOrganizationDeactivated);
-    newSocket.on('org_status_changed', handleOrgStatusChanged);
     newSocket.on('ORGANIZATION_REACTIVATED', handleAccountStateChanged);
     newSocket.on('organization_reactivated', handleAccountStateChanged);
     newSocket.on('user_deactivated', handleAccountStateChanged);
@@ -827,6 +816,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('isTyping', handleTyping);
       newSocket.off('stoppedTyping', handleStopTyping);
       newSocket.off('member_sync', handleMemberSync);
+      newSocket.off('org_status_changed', handleOrgStatusChanged);
+      newSocket.off('org_deleted', handleOrgStatusChanged);
       newSocket.off('user_blocked', handleBlock);
       newSocket.off('block_confirmed', handleBlock);
       newSocket.off('user_unblocked', handleUnblock);
@@ -839,8 +830,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('USER_NOTIFICATIONS_UPDATED', handleUserNotificationsUpdated);
       newSocket.off('ORGANIZATION_DEACTIVATED', handleOrganizationDeactivated);
       newSocket.off('organization_deactivated', handleOrganizationDeactivated);
-      newSocket.off('org_deleted', handleOrganizationDeactivated);
-      newSocket.off('org_status_changed', handleOrgStatusChanged);
       newSocket.off('ORGANIZATION_REACTIVATED', handleAccountStateChanged);
       newSocket.off('organization_reactivated', handleAccountStateChanged);
       newSocket.off('user_deactivated', handleAccountStateChanged);
