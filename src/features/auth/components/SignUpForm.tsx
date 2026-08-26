@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { MailWarning, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import AuthImagePanel from "@/components/auth/AuthImagePanel";
+import AuthImagePanel from "./AuthImagePanel";
 import { register, requestOTP, verifyOTP } from "@/services/api/auth";
 import { registrationSchema, getFirstMissingPasswordRequirement, isPasswordFullyValid } from "@/lib/validators";
 import { PasswordRequirementsCard } from "@/components/shared/PasswordRequirementsCard";
@@ -15,8 +15,6 @@ import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 import { resendRecoveryEmail } from "@/services/api/user";
-
-import styles from "./SignUpForm.module.css";
 
 export default function SignUpForm() {
   useForceLightTheme();
@@ -274,29 +272,28 @@ export default function SignUpForm() {
 
   const isPasswordValid = isPasswordFullyValid(password);
 
-
   return (
-    <div className={styles.pageWrapper} data-theme="light">
+    <div className="min-h-screen flex w-full bg-white" data-theme="light">
       {/* Left side - Branded overlay */}
       <AuthImagePanel />
       {/* Right side - Form container */}
-      <div className={styles.formPanel}>
-        <div className={styles.formContainer}>
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-6 md:p-12 relative">
+        <div className="w-full max-w-sm flex flex-col gap-4">
 
           {/* Header Title */}
-          <div className={styles.header}>
-            <h2 className={styles.title}>
+          <div className="flex flex-col text-center items-center">
+            <h2 className="text-[32px] md:text-[36px] font-bold text-black tracking-tight leading-tight">
               {step === 2 ? (
-                <>Create{" "}<span className={styles.titleGradient}>password</span></>
+                <>Create{" "}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">password</span></>
               ) : otpSent ? (
-                <>Verify your{" "}<span className={styles.titleGradient}>account</span></>
+                <>Verify your{" "}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">account</span></>
               ) : pendingDeletion ? (
-                <>Account{" "}<span className={styles.titleGradient}>pending deletion</span></>
+                <>Account{" "}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">pending deletion</span></>
               ) : (
-                <>Welcome to{" "}<span className={styles.titleGradient}>Cocpit</span></>
+                <>Welcome to{" "}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Cocpit</span></>
               )}
             </h2>
-            <p className={styles.subtitle}>
+            <p className="text-sm text-gray-500 mt-1">
               {step === 2
                 ? "Set a password to continue"
                 : otpSent
@@ -308,29 +305,23 @@ export default function SignUpForm() {
             </p>
           </div>
 
-          {/* Pending Deletion Banner */}
+          {/* Deletion Warning Banner */}
           {pendingDeletion && (
-            <div style={{
-              background: "#fff7ed",
-              border: "1px solid #f97316",
-              borderRadius: "12px",
-              padding: "16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              marginBottom: "8px",
-            }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <MailWarning size={20} style={{ color: "#f97316", flexShrink: 0, marginTop: "2px" }} />
+            <div className="w-full p-4 bg-orange-50 border border-orange-200 rounded-2xl flex flex-col gap-3 text-xs text-orange-900">
+              <div className="flex items-start gap-2.5">
+                <MailWarning className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                 <div>
-                  <p style={{ fontWeight: 600, fontSize: "14px", color: "#92400e", margin: 0 }}>
-                    Account scheduled for deletion
-                  </p>
-                  <p style={{ fontSize: "13px", color: "#b45309", margin: "4px 0 0" }}>
-                    {pendingDeletion.deletionDate
-                      ? <>Permanently deleted on <strong>{new Date(pendingDeletion.deletionDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</strong>. </>
-                      : ""}
-                    Check your email for the restoration link.
+                  <p className="font-semibold text-orange-950">Account scheduled for deletion</p>
+                  <p className="text-orange-800 text-[11px] mt-0.5">
+                    An account with this email is set to be permanently deleted on{" "}
+                    <strong>
+                      {new Date(pendingDeletion.deletionDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </strong>
+                    .
                   </p>
                 </div>
               </div>
@@ -338,41 +329,27 @@ export default function SignUpForm() {
                 type="button"
                 onClick={handleResendRecovery}
                 disabled={isResending || resendCooldown > 0}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "#f97316",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "8px 14px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: isResending || resendCooldown > 0 ? "not-allowed" : "pointer",
-                  opacity: isResending || resendCooldown > 0 ? 0.7 : 1,
-                  alignSelf: "flex-start",
-                }}
+                className="inline-flex items-center gap-1.5 bg-[#EC6229] text-white rounded-full px-3.5 py-1.5 text-xs font-medium self-start disabled:opacity-60 cursor-pointer shadow-xs hover:opacity-90 transition-opacity"
               >
-                <Send size={14} />
-                {isResending 
-                  ? "Sending..." 
-                  : resendCooldown > 0 
-                    ? `Resend in ${Math.floor(resendCooldown / 60)}:${(resendCooldown % 60).toString().padStart(2, "0")}` 
+                <Send className="w-3 h-3" />
+                {isResending
+                  ? "Sending..."
+                  : resendCooldown > 0
+                    ? `Resend in ${Math.floor(resendCooldown / 60)}:${(resendCooldown % 60).toString().padStart(2, "0")}`
                     : "Resend Recovery Email"
                 }
               </button>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className={styles.form}>
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 mt-4">
 
             {/* ═══ STEP 1: Email + OTP ═══ */}
             {step === 1 && (
               <>
                 {/* Email */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Email</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
                     placeholder="Enter email"
@@ -384,7 +361,7 @@ export default function SignUpForm() {
                       setOtp("");
                     }}
                     disabled={emailVerified}
-                    className={styles.input}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     required
                   />
                 </div>
@@ -394,8 +371,11 @@ export default function SignUpForm() {
                   type="button"
                   onClick={handleSendOtp}
                   disabled={isVerifying || !email || otpSent || emailVerified}
-                  className={`${styles.verifyButton} ${email && !emailVerified ? styles.verifyButtonActive : ""
-                    }`}
+                  className={`w-full py-2.5 px-4 font-medium text-sm rounded-full transition-colors ${
+                    email && !emailVerified
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer shadow-sm"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
                   style={{ display: otpSent ? 'none' : 'block' }}
                 >
                   {isVerifying ? "Sending..." : emailVerified ? "Verified" : "Verify"}
@@ -403,9 +383,9 @@ export default function SignUpForm() {
 
                 {/* OTP Input */}
                 {otpSent && (
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Verification code</label>
-                    <div className={styles.inputWrapper}>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Verification code</label>
+                    <div className="relative flex items-center">
                       <input
                         type="text"
                         placeholder="Enter OTP"
@@ -418,32 +398,32 @@ export default function SignUpForm() {
                             handleVerifyOtp(val);
                           }
                         }}
-                        className={`${styles.input} ${styles.inputWithIcon} ${otpError ? styles.inputError : ''}`}
+                        className={`w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10 ${otpError ? '!border-red-500 !ring-red-500/20' : ''}`}
                         maxLength={6}
                         required
                       />
                       {isCheckingOtp && (
-                        <div className={styles.inputStatusIcon}>
-                          <svg className={styles.spinnerIcon} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className={styles.spinnerTrack} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className={styles.spinnerArc} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        <div className="absolute right-3 flex items-center justify-center pointer-events-none">
+                          <svg className="w-4 h-4 text-indigo-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                           </svg>
                         </div>
                       )}
                       {emailVerified && !isCheckingOtp && (
-                        <div className={`${styles.inputStatusIcon} ${styles.inputStatusIconFront}`}>
-                          <Icon icon="bitcoin-icons:verify-outline" className={styles.verifyIcon} />
+                        <div className="absolute right-3 flex items-center justify-center pointer-events-none text-gray-400">
+                          <Icon icon="bitcoin-icons:verify-outline" className="w-5 h-5 text-green-500" />
                         </div>
                       )}
                       {otpError && !isCheckingOtp && (
-                        <div className={`${styles.inputStatusIcon} ${styles.inputStatusIconFront}`}>
-                          <Icon icon="mdi:close-circle-outline" className={styles.errorIcon} />
+                        <div className="absolute right-3 flex items-center justify-center pointer-events-none text-gray-400">
+                          <Icon icon="mdi:close-circle-outline" className="w-5 h-5 text-red-500" />
                         </div>
                       )}
                     </div>
-                    <div className={styles.otpHelperRow}>
+                    <div className="flex items-center justify-between mt-1 text-xs">
                       {otpError ? (
-                        <span className={styles.otpErrorText}>*Incorrect code, try again</span>
+                        <span className="text-red-500 font-medium">*Incorrect code, try again</span>
                       ) : (
                         <span></span>
                       )}
@@ -451,7 +431,7 @@ export default function SignUpForm() {
                         type="button"
                         onClick={handleSendOtp}
                         disabled={isVerifying}
-                        className={styles.resendButton}
+                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium hover:underline disabled:opacity-50 ml-auto cursor-pointer"
                       >
                         Resend code
                       </button>
@@ -467,8 +447,7 @@ export default function SignUpForm() {
                         }
                       }}
                       disabled={isCheckingOtp || (!emailVerified && otp.length !== 6)}
-                      className={styles.primaryButton}
-                      style={{ marginTop: '0.5rem' }}
+                      className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center mt-2 cursor-pointer"
                     >
                       {isCheckingOtp ? "Verifying..." : "Continue"}
                     </button>
@@ -477,10 +456,10 @@ export default function SignUpForm() {
 
 
                 {/* Google Sign In Wrapper */}
-                <div className={styles.googleButtonWrapper} ref={containerRef}>
+                <div className="relative w-full h-10" ref={containerRef}>
                   {/* Custom Visual Button simulating designer mock exactly */}
-                  <div className={styles.googleButtonVisual}>
-                    <svg className={styles.googleIcon} viewBox="0 0 24 24">
+                  <div className="w-full h-10 px-4 py-2 border border-gray-200 rounded-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 transition-colors pointer-events-none shadow-xs">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                         fill="#4285F4"
@@ -498,11 +477,11 @@ export default function SignUpForm() {
                         fill="#EA4335"
                       />
                     </svg>
-                    <span className={styles.googleButtonText}>Continue with Google</span>
+                    <span className="text-sm font-medium text-gray-700">Continue with Google</span>
                   </div>
 
                   {/* Real Google Button layered invisibly on top */}
-                  <div className={styles.googleButtonReal}>
+                  <div className="absolute inset-0 opacity-0 overflow-hidden rounded-full">
                     {containerWidth !== undefined && (
                       <GoogleLogin
                         onSuccess={(credentialResponse) => {
@@ -532,15 +511,15 @@ export default function SignUpForm() {
             {step === 2 && (
               <>
                 {/* Password */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Password</label>
-                  <div className={styles.inputWrapper}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Password</label>
+                  <div className="relative flex items-center">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className={`${styles.input} ${styles.inputWithIcon}`}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10"
                       maxLength={15}
                       required
                     />
@@ -548,7 +527,7 @@ export default function SignUpForm() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className={styles.passwordToggle}
+                        className="absolute right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                       >
                         {showPassword
                           ? <Icon icon="fluent:eye-20-regular" width={20} height={20} />
@@ -566,7 +545,11 @@ export default function SignUpForm() {
                 <button
                   type="submit"
                   disabled={!isPasswordValid || isVerifying}
-                  className={`${styles.submitButton} ${isPasswordValid ? styles.submitButtonActive : ''}`}
+                  className={`w-full py-2.5 px-4 font-medium text-sm rounded-full transition-colors disabled:cursor-not-allowed ${
+                    isPasswordValid
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer shadow-sm"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
                 >
                   {isVerifying ? "Creating account..." : "Continue"}
                 </button>
@@ -576,10 +559,10 @@ export default function SignUpForm() {
 
           {/* Login link */}
           {step === 1 && (
-            <div className={styles.navigation}>
-              <p className={styles.navigationText}>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-500">
                 Already have an account?{" "}
-                <Link href="/" className={styles.navigationLink}>
+                <Link href="/" className="text-indigo-600 font-medium hover:underline">
                   sign in
                 </Link>
               </p>
@@ -588,9 +571,9 @@ export default function SignUpForm() {
         </div>
 
         {/* Footer Text */}
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            By continuing, you agree to our <span className={styles.footerLink}>Terms &<br className={styles.mobileBreak} /> Privacy Policy</span>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400">
+            By continuing, you agree to our <span className="text-gray-600 hover:underline cursor-pointer">Terms &<br className="block sm:hidden" /> Privacy Policy</span>
           </p>
         </div>
       </div>

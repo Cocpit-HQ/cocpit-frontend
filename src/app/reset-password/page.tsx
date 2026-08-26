@@ -8,8 +8,7 @@ import { Icon } from "@iconify/react";
 import { verifyResetToken, resetPasswordWithToken } from "@/services/api/auth";
 import { passwordSchema } from "@/lib/validators";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
-import AuthImagePanel from "@/components/auth/AuthImagePanel";
-import styles from "@/components/auth/ForgotPasswordForm.module.css";
+import AuthImagePanel from "@/features/auth/components/AuthImagePanel";
 
 type ResetStatus = "loading" | "valid" | "used" | "expired" | "invalid" | "success";
 
@@ -98,11 +97,11 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className={styles.pageWrapper} data-theme="light">
+    <div className="min-h-screen flex w-full bg-white" data-theme="light">
       <AuthImagePanel />
 
-      <div className={styles.formPanel}>
-        <div className={styles.formContainer}>
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-6 md:p-12 relative">
+        <div className="w-full max-w-sm flex flex-col gap-4">
           {/* Loading state */}
           {status === "loading" && (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -153,17 +152,17 @@ function ResetPasswordContent() {
           {/* Valid Token -> Form */}
           {status === "valid" && (
             <>
-              <div className={styles.header}>
-                <h2 className={styles.title}>
-                  Create new <span className={styles.titleGradient}>password</span>
+              <div className="flex flex-col text-center items-center">
+                <h2 className="text-[32px] md:text-[36px] font-bold text-black tracking-tight leading-tight">
+                  Create new <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">password</span>
                 </h2>
-                <p className={styles.subtitle}>Set a new password for your account</p>
+                <p className="text-sm text-gray-500 mt-1">Set a new password for your account</p>
               </div>
 
-              <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>New password</label>
-                  <div className={styles.inputWrapperFlex}>
+              <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4 mt-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">New password</label>
+                  <div className="relative flex items-center">
                     <input
                       type={showNewPassword ? "text" : "password"}
                       placeholder="Enter new password"
@@ -172,7 +171,7 @@ function ResetPasswordContent() {
                         setNewPassword(e.target.value);
                         if (errorMessage) setErrorMessage("");
                       }}
-                      className={`${styles.input} ${styles.inputWithIcon}`}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10"
                       maxLength={15}
                       required
                     />
@@ -180,12 +179,12 @@ function ResetPasswordContent() {
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className={styles.passwordToggle}
+                        className="absolute right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showNewPassword ? (
-                          <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} />
+                          <Icon icon="fluent:eye-20-regular" className="w-4 h-4" />
                         ) : (
-                          <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />
+                          <Icon icon="fluent:eye-off-20-regular" className="w-4 h-4" />
                         )}
                       </button>
                     )}
@@ -193,43 +192,43 @@ function ResetPasswordContent() {
                 </div>
 
                 {/* Password Requirements Checklist */}
-                <div className={styles.checklistContainer}>
-                  <p className={styles.checklistTitle}>Password must contain:</p>
-                  <ul className={styles.checklist}>
-                    <li className={newPassword.length >= 8 && newPassword.length <= 15 ? styles.checkMet : styles.checkUnmet}>
+                <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Password must contain:</p>
+                  <ul className="space-y-1.5">
+                    <li className={newPassword.length >= 8 && newPassword.length <= 15 ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                       <Icon
                         icon={newPassword.length >= 8 && newPassword.length <= 15 ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
+                        className="w-3.5 h-3.5 shrink-0"
                       />
                       <span>8 to 15 characters</span>
                     </li>
-                    <li className={/[A-Z]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                    <li className={/[A-Z]/.test(newPassword) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                       <Icon
                         icon={/[A-Z]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
+                        className="w-3.5 h-3.5 shrink-0"
                       />
                       <span>At least 1 uppercase letter (A–Z)</span>
                     </li>
-                    <li className={/[a-z]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                    <li className={/[a-z]/.test(newPassword) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                       <Icon
                         icon={/[a-z]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
+                        className="w-3.5 h-3.5 shrink-0"
                       />
                       <span>At least 1 lowercase letter (a–z)</span>
                     </li>
-                    <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                    <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                       <Icon
                         icon={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                        className={styles.checkIcon}
+                        className="w-3.5 h-3.5 shrink-0"
                       />
                       <span>At least 1 special character (e.g., @, #, $, %, &, *)</span>
                     </li>
                   </ul>
                 </div>
 
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Confirm password</label>
-                  <div className={styles.inputWrapperFlex}>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Confirm password</label>
+                  <div className="relative flex items-center">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm new password"
@@ -238,7 +237,7 @@ function ResetPasswordContent() {
                         setConfirmPassword(e.target.value);
                         if (errorMessage) setErrorMessage("");
                       }}
-                      className={`${styles.input} ${styles.inputWithIcon}`}
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10"
                       maxLength={15}
                       required
                     />
@@ -246,12 +245,12 @@ function ResetPasswordContent() {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className={styles.passwordToggle}
+                        className="absolute right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         {showConfirmPassword ? (
-                          <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} />
+                          <Icon icon="fluent:eye-20-regular" className="w-4 h-4" />
                         ) : (
-                          <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />
+                          <Icon icon="fluent:eye-off-20-regular" className="w-4 h-4" />
                         )}
                       </button>
                     )}
@@ -266,7 +265,7 @@ function ResetPasswordContent() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !isPasswordValid || !confirmPassword || newPassword !== confirmPassword}
-                  className={styles.primaryButton}
+                  className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {isSubmitting ? "Resetting Password..." : "Set New Password"}
                 </button>
@@ -275,11 +274,11 @@ function ResetPasswordContent() {
           )}
         </div>
 
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400">
             By continuing, you agree to our{" "}
-            <span className={styles.footerLink}>
-              Terms &<br className={styles.mobileBreak} /> Privacy Policy
+            <span className="text-gray-600 hover:underline cursor-pointer">
+              Terms &<br className="block sm:hidden" /> Privacy Policy
             </span>
           </p>
         </div>

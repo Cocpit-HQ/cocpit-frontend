@@ -8,8 +8,7 @@ import { Icon } from "@iconify/react";
 import { useToast } from "@/hooks/use-toast";
 import { resetPassword, requestOTP, verifyOTP } from "@/services/api/auth";
 import Image from "next/image";
-import AuthImagePanel from "@/components/auth/AuthImagePanel";
-import styles from "./ForgotPasswordForm.module.css";
+import AuthImagePanel from "./AuthImagePanel";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 import { passwordSchema } from "@/lib/validators";
 
@@ -142,13 +141,13 @@ export default function ForgotPasswordForm() {
   return (
     <>
     {resetSuccess ? (
-      <div className={styles.pageWrapper} data-theme="light">
+      <div className="min-h-screen flex w-full bg-white" data-theme="light">
         {/* Left side - Rectangle 4 image */}
         <AuthImagePanel />
 
         {/* Right side - Success content */}
-        <div className={styles.formPanel}>
-          <div className={styles.successContent}>
+        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-6 md:p-12 relative">
+          <div className="flex flex-col items-center text-center gap-4 py-8">
             <Image
               src="/assets/Illustration - Asset 40 1.png"
               alt="Success"
@@ -156,51 +155,51 @@ export default function ForgotPasswordForm() {
               height={187}
               priority
             />
-            <h2 className={styles.successTitle}>
-              <span className={styles.titleGradient}>
+            <h2 className="text-3xl font-bold text-gray-900">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                 Successful
               </span>
             </h2>
-            <p className={styles.successSubtitle}>
+            <p className="text-sm text-gray-500 max-w-xs">
               Account recovered successfully. Redirecting to login...
             </p>
           </div>
 
           {/* Footer Text */}
-          <div className={styles.footer}>
-            <p className={styles.footerText}>
-              By continuing, you agree to our <span className={styles.footerLink}>Terms &<br className={styles.mobileBreak} /> Privacy Policy</span>
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-400">
+              By continuing, you agree to our <span className="text-gray-600 hover:underline cursor-pointer">Terms &<br className="block sm:hidden" /> Privacy Policy</span>
             </p>
           </div>
         </div>
       </div>
     ) : (
-    <div className={styles.pageWrapper} data-theme="light">
+    <div className="min-h-screen flex w-full bg-white" data-theme="light">
       {/* Left side - Branded overlay */}
       <AuthImagePanel />
 
       {/* Right side - Form container */}
-      <div className={styles.formPanel}>
-        <div className={styles.formContainer}>
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white p-6 md:p-12 relative">
+        <div className="w-full max-w-sm flex flex-col gap-4">
           
           {/* Header Title */}
-          <div className={styles.header}>
-            <h2 className={styles.title}>
+          <div className="flex flex-col text-center items-center">
+            <h2 className="text-[32px] md:text-[36px] font-bold text-black tracking-tight leading-tight">
               {emailVerified ? "Create new " : otpSent && !emailVerified ? "Verify your " : "Recover your "}
-              <span className={styles.titleGradient}>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                 {emailVerified ? "password" : "account"}
               </span>
             </h2>
-            <p className={styles.subtitle}>
+            <p className="text-sm text-gray-500 mt-1">
               {emailVerified ? "Set a new password to continue" : otpSent && !emailVerified ? "Enter the code sent to your email" : "Find jobs, connect, grow"}
             </p>
           </div>
 
           {/* Step 1: Request OTP */}
           {!otpSent && (
-            <form onSubmit={handleSendOtp} className={styles.form}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>
+            <form onSubmit={handleSendOtp} className="w-full flex flex-col gap-4 mt-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">
                   Email
                 </label>
                 <input
@@ -211,7 +210,7 @@ export default function ForgotPasswordForm() {
                     setEmail(e.target.value);
                     if (error) setError(null);
                   }}
-                  className={styles.input}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   required
                 />
               </div>
@@ -219,7 +218,7 @@ export default function ForgotPasswordForm() {
               <button
                 type="submit"
                 disabled={isVerifying}
-                className={styles.primaryButton}
+                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
               >
                 {isVerifying ? "Sending..." : "Continue"}
               </button>
@@ -228,13 +227,13 @@ export default function ForgotPasswordForm() {
 
           {/* Step 2: Verify OTP */}
           {otpSent && !emailVerified && (
-            <div className={styles.form}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>
+            <div className="w-full flex flex-col gap-4 mt-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">
                   Verification code
                 </label>
-                <div className={styles.fieldGroup}>
-                  <div className={styles.inputWrapper}>
+                <div className="flex flex-col gap-1.5">
+                  <div className="relative flex items-center">
                     <input
                       type="text"
                       placeholder="Enter OTP"
@@ -247,29 +246,29 @@ export default function ForgotPasswordForm() {
                           handleVerifyOtp(val);
                         }
                       }}
-                      className={`${styles.input} ${styles.inputWithIcon} ${otpError ? styles.inputError : ''}`}
+                      className={`w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10 ${otpError ? '!border-red-500 !ring-red-500/20' : ''}`}
                       maxLength={6}
                       required
                     />
                     {isCheckingOtp && (
-                      <div className={styles.inputStatusIcon}>
-                        <Loader2 className={styles.spinnerIcon} />
+                      <div className="absolute right-3 flex items-center justify-center pointer-events-none">
+                        <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
                       </div>
                     )}
                     {showVerified && !isCheckingOtp && (
-                      <div className={`${styles.inputStatusIcon} ${styles.inputStatusIconFront}`}>
-                        <Icon icon="bitcoin-icons:verify-outline" className={styles.verifyIcon} />
+                      <div className="absolute right-3 flex items-center justify-center pointer-events-none text-gray-400">
+                        <Icon icon="bitcoin-icons:verify-outline" className="w-5 h-5 text-green-500" />
                       </div>
                     )}
                     {otpError && !isCheckingOtp && (
-                      <div className={`${styles.inputStatusIcon} ${styles.inputStatusIconFront}`}>
-                        <Icon icon="mdi:close-circle-outline" className={styles.errorIcon} />
+                      <div className="absolute right-3 flex items-center justify-center pointer-events-none text-gray-400">
+                        <Icon icon="mdi:close-circle-outline" className="w-5 h-5 text-red-500" />
                       </div>
                     )}
                   </div>
-                  <div className={styles.otpHelperRow}>
+                  <div className="flex items-center justify-between mt-1 text-xs">
                     {otpError ? (
-                      <span className={styles.otpErrorText}>*Incorrect code, try again</span>
+                      <span className="text-red-500 font-medium">*Incorrect code, try again</span>
                     ) : (
                       <span></span>
                     )}
@@ -277,7 +276,7 @@ export default function ForgotPasswordForm() {
                       type="button"
                       onClick={() => handleSendOtp()}
                       disabled={isVerifying}
-                      className={styles.resendButton}
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-medium hover:underline disabled:opacity-50 ml-auto cursor-pointer"
                     >
                       Resend code
                     </button>
@@ -285,14 +284,14 @@ export default function ForgotPasswordForm() {
                 </div>
               </div>
 
-              <div className={styles.actionRow}>
+              <div className="flex items-center gap-3 mt-2">
                 <button
                   type="button"
                   onClick={handleGoBack}
-                  className={styles.backButton}
+                  className="p-2.5 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors flex items-center justify-center cursor-pointer shrink-0"
                   aria-label="Go back to enter email"
                 >
-                  <ChevronLeft className={styles.backIcon} />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   type="button"
@@ -304,12 +303,11 @@ export default function ForgotPasswordForm() {
                         description: "You may now set a new password.",
                       });
                     } else if (!isCheckingOtp) {
-                      // Guard: don't fire if a verify request is already in-flight
                       handleVerifyOtp(otp);
                     }
                   }}
                   disabled={isCheckingOtp || otp.length !== 6}
-                  className={styles.primaryButton}
+                  className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
                 >
                   {isCheckingOtp ? "Verifying..." : "Continue"}
                 </button>
@@ -319,101 +317,101 @@ export default function ForgotPasswordForm() {
 
           {/* Step 3: New Password */}
           {emailVerified && (
-            <form onSubmit={handleSubmitNewPassword} className={styles.form}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>New password</label>
-                <div className={styles.inputWrapperFlex}>
+            <form onSubmit={handleSubmitNewPassword} className="w-full flex flex-col gap-4 mt-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">New password</label>
+                <div className="relative flex items-center">
                   <input
                     type={showNewPassword ? "text" : "password"}
                     placeholder="Enter Password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className={`${styles.input} ${styles.inputWithIcon}`}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10"
                     maxLength={15}
                   />
                   {newPassword.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className={styles.passwordToggle}
+                      className="absolute right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                     >
-                      {showNewPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
+                      {showNewPassword ? <Icon icon="fluent:eye-20-regular" className="w-4 h-4" /> : <Icon icon="fluent:eye-off-20-regular" className="w-4 h-4" />}
                     </button>
                   )}
                 </div>
               </div>
 
               {/* Password Requirements Checklist */}
-              <div className={styles.checklistContainer}>
-                <p className={styles.checklistTitle}>Password must contain:</p>
-                <ul className={styles.checklist}>
-                  <li className={(newPassword.length >= 8 && newPassword.length <= 15) ? styles.checkMet : styles.checkUnmet}>
+              <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                <p className="text-xs font-medium text-gray-500 mb-2">Password must contain:</p>
+                <ul className="space-y-1.5">
+                  <li className={(newPassword.length >= 8 && newPassword.length <= 15) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                     <Icon
                       icon={(newPassword.length >= 8 && newPassword.length <= 15) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                      className={styles.checkIcon}
+                      className="w-3.5 h-3.5 shrink-0"
                     />
                     <span>8 to 15 characters</span>
                   </li>
-                  <li className={/[A-Z]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                  <li className={/[A-Z]/.test(newPassword) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                     <Icon
                       icon={/[A-Z]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                      className={styles.checkIcon}
+                      className="w-3.5 h-3.5 shrink-0"
                     />
                     <span>At least 1 uppercase letter (A–Z)</span>
                   </li>
-                  <li className={/[a-z]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                  <li className={/[a-z]/.test(newPassword) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                     <Icon
                       icon={/[a-z]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                      className={styles.checkIcon}
+                      className="w-3.5 h-3.5 shrink-0"
                     />
                     <span>At least 1 lowercase letter (a–z)</span>
                   </li>
-                  <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                  <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? "flex items-center gap-2 text-xs text-green-600 font-medium" : "flex items-center gap-2 text-xs text-gray-400"}>
                     <Icon
                       icon={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
-                      className={styles.checkIcon}
+                      className="w-3.5 h-3.5 shrink-0"
                     />
                     <span>At least 1 special character (e.g., @, #, $, %, &, *)</span>
                   </li>
                 </ul>
               </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Confirm password</label>
-                <div className={styles.inputWrapperFlex}>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Confirm password</label>
+                <div className="relative flex items-center">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Enter Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`${styles.input} ${styles.inputWithIcon}`}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all pr-10"
                     maxLength={15}
                   />
                   {confirmPassword.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className={styles.passwordToggle}
+                      className="absolute right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                     >
-                      {showConfirmPassword ? <Icon icon="fluent:eye-20-regular" className={styles.toggleIcon} /> : <Icon icon="fluent:eye-off-20-regular" className={styles.toggleIcon} />}
+                      {showConfirmPassword ? <Icon icon="fluent:eye-20-regular" className="w-4 h-4" /> : <Icon icon="fluent:eye-off-20-regular" className="w-4 h-4" />}
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className={styles.actionRow}>
+              <div className="flex items-center gap-3 mt-2">
                 <button
                   type="button"
                   onClick={handleGoBack}
-                  className={styles.backButton}
+                  className="p-2.5 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors flex items-center justify-center cursor-pointer shrink-0"
                   aria-label="Go back to enter email"
                 >
-                  <ChevronLeft className={styles.backIcon} />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   type="submit"
                   disabled={isResetting || !isPasswordValid || !confirmPassword}
-                  className={styles.primaryButton}
+                  className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
                 >
                   {isResetting ? "Resetting..." : "Continue"}
                 </button>
@@ -423,10 +421,10 @@ export default function ForgotPasswordForm() {
 
           {/* Navigation — only shown on Step 1 (enter email) */}
           {!otpSent && (
-            <div className={styles.navigation}>
-              <p className={styles.navigationText}>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-500">
                 Back to{" "}
-                <Link href="/" className={styles.navigationLink}>
+                <Link href="/" className="text-indigo-600 font-medium hover:underline">
                   Sign in
                 </Link>
               </p>
@@ -435,9 +433,9 @@ export default function ForgotPasswordForm() {
         </div>
 
         {/* Footer Text */}
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            By continuing, you agree to our <span className={styles.footerLink}>Terms &<br className={styles.mobileBreak} /> Privacy Policy</span>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400">
+            By continuing, you agree to our <span className="text-gray-600 hover:underline cursor-pointer">Terms &<br className="block sm:hidden" /> Privacy Policy</span>
           </p>
         </div>
       </div>

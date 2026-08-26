@@ -1,7 +1,9 @@
 // Invalidate layout cache to reload global styles
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Roboto, DM_Sans } from "next/font/google";
 import "./globals.css";
+import "./newGlobal.css"; // New design system — typography, motion, spacing tokens
+
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,7 +18,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { Roboto } from "next/font/google";
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
+
 const poppins = Poppins({
   variable: "--font-poppins-base",
   subsets: ["latin"],
@@ -46,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden`}
+        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden`}
       >
         <Providers>
           {children}

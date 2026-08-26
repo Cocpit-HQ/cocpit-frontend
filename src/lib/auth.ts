@@ -171,25 +171,28 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        // Google OAuth fields — passed when signing in via Google
-        idToken: { label: "Google ID Token", type: "text" },
+        // Social OAuth fields (Google & Apple)
+        idToken: { label: "Social ID Token", type: "text" },
+        provider: { label: "Provider", type: "text" },
+        fullName: { label: "Full Name", type: "text" },
         accountType: { label: "Account Type", type: "text" },
       },
       async authorize(credentials, req) {
-        const isGoogleLogin = !!credentials?.idToken;
+        const isSocialLogin = !!credentials?.idToken;
+        const provider = credentials?.provider || (isSocialLogin ? "google" : null);
 
         console.log(
-          isGoogleLogin
-            ? `Authorize: Google login`
+          isSocialLogin
+            ? `Authorize: ${provider} social login`
             : `Authorize: Credentials login for ${credentials?.email}`
         );
 
         // Validate required fields based on login type
-        if (!isGoogleLogin && (!credentials?.email || !credentials?.password)) {
+        if (!isSocialLogin && (!credentials?.email || !credentials?.password)) {
           throw new Error("Email and password are required");
         }
-        if (isGoogleLogin && !credentials?.idToken) {
-          throw new Error("Google ID token is required");
+        if (isSocialLogin && !credentials?.idToken) {
+          throw new Error(`${provider || "Social"} ID token is required`);
         }
 
         try {
@@ -199,11 +202,17 @@ export const authOptions: NextAuthOptions = {
           const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : (userAgentHeader || "node");
           const xForwardedFor = Array.isArray(forwardedHeader) ? forwardedHeader[0] : (forwardedHeader || "");
 
-          // Branch: Google login hits /auth/google, credentials login hits /auth/login
-          const endpoint = isGoogleLogin ? "/auth/google" : "/auth/login";
-          const body = isGoogleLogin
+          // Branch: /auth/apple for Apple, /auth/google for Google, /auth/login for credentials
+          const endpoint = provider === "apple"
+            ? "/auth/apple"
+            : isSocialLogin
+            ? "/auth/google"
+            : "/auth/login";
+
+          const body = isSocialLogin
             ? {
               idToken: credentials!.idToken,
+              ...(credentials!.fullName ? { fullName: credentials!.fullName } : {}),
               ...(credentials!.accountType ? { accountType: credentials!.accountType } : {}),
             }
             : {
