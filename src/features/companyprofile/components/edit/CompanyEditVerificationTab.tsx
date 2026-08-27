@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { toast } from "sonner";
-import { verifyIdentity } from "@/services/api/settings";
+import { companyService } from "@/services/organization.service";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import {
   Select,
@@ -50,14 +50,14 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
       formData.append("incorporationMonth", incorpMonth);
       formData.append("incorporationYear", incorpYear);
 
-      const res = await verifyIdentity(formData, orgId);
-      if (res.success) {
-        toast.success("Verification details submitted successfully!");
+      const res = await companyService.submitOrgVerification(orgId, formData);
+      if (res.message) { // Assuming backend sends { message: "..." } on success
+        toast.success(res.message || "Verification details submitted successfully!");
         if (refreshProfile) await refreshProfile();
         if (refreshCompanies) await refreshCompanies();
         onCancel();
       } else {
-        toast.error(res.message || "Failed to submit verification details");
+        toast.error("Failed to submit verification details");
       }
     } catch (error) {
       console.error(error);

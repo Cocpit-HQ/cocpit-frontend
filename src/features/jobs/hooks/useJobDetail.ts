@@ -146,9 +146,9 @@ export const useJobDetail = (jobId: string) => {
         };
       }
 
-      await jobsService.applyJob(job.id, formData, jsonBody);
+      const res = await jobsService.applyJob(job.id, formData, jsonBody);
       addAppliedId(job.id);
-      toast.success('Successfully applied to the job!');
+      toast.success(res?.message || 'Successfully applied to the job!');
     } catch (error) {
       console.error('Failed to apply to job:', error);
       toast.error('Failed to submit application.');

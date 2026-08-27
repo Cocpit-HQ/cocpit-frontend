@@ -250,8 +250,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   const applyMutation = useMutation({
     mutationFn: async ({ jobId, formData }: { jobId: string; formData?: FormData }) => {
-      await jobsService.applyJob(jobId, formData);
-      return jobId;
+      const res = await jobsService.applyJob(jobId, formData);
+      return res;
     },
     onMutate: async ({ jobId }) => {
       addAppliedId(jobId);
@@ -263,8 +263,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       removeAppliedId(jobId);
       toast.error(err.response?.data?.message || 'Failed to submit application.');
     },
-    onSuccess: () => {
-      toast.success('Successfully applied to the job!');
+    onSuccess: (res: any) => {
+      toast.success(res?.message || 'Successfully applied to the job!');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs', 'applied'] });

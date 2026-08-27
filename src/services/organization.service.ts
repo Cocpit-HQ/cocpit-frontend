@@ -153,6 +153,17 @@ export const companyService = {
         return res.data;
     },
 
+    async submitOrgVerification(companyId: string, formData: FormData) {
+        const res = await api.post(`/organizations/${companyId}/verify/document`, formData, {
+            headers: {
+                'x-actor-type': 'ORGANIZATION',
+                'x-actor-id': companyId,
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+        return res.data;
+    },
+
     async transferOwnership(companyId: string, newOwnerId: string) {
         const res = await api.post(`/organizations/${companyId}/transfer-ownership`, { newOwnerId }, {
             headers: {

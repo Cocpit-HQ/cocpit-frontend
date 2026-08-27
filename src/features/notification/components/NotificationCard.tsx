@@ -113,9 +113,17 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                 : `/post/${postReferenceId}`;
 
             router.push(url);
+        } else if (notification.type === 'channel_article' && postReferenceId) {
+            router.push(`/post/${postReferenceId}`)
+        } else if (notification.type === 'company_channel_subscriber' && notification.reference_id) {
+            router.push(`/profile/${notification.reference_id}`)
+        } else if (notification.type === 'company_channel_milestone' && notification.reference_id) {
+            // notification.reference_id is the orgId
+            const slug = notification.metadata?.org_slug || notification.reference_id;
+            router.push(`/organization/${slug}`)
         } else if (notification.type === 'advocacy' && postReferenceId) {
             router.push(`/post/${postReferenceId}`)
-        } else if (notification.type.includes('job') && notification.reference_id) {
+        } else if ((notification.type.includes('job') || notification.type.includes('application') || notification.type.includes('offer')) && notification.reference_id) {
             router.push(`/jobs/${notification.reference_id}`)
         } else if (notification.type === 'community_invite') {
             // Channel invitation — open connections page on the channels invitation tab
@@ -123,6 +131,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         } else if (notification.type === 'organization_invite' || notification.type === 'ORGANIZATION_INVITE') {
             // Team / Organization invitation — open connections page on the teams invitation tab
             router.push('/connections?tab=invitations&sub=teams')
+        } else if (notification.type === 'new_device_login' || notification.type === 'password_changed' || notification.type === 'email_changed') {
+            router.push('/settings/security')
         }
     }
 
@@ -168,9 +178,9 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                         </span>
                     )}
                     <span className="font-poppins font-normal text-[14px] leading-[20px] text-[#6B7280] dark:text-muted-foreground">
-                        {notification.type === 'advocacy'
+                        {notification.type === 'advocacy' || notification.type === 'new_application_threshold'
                             ? notification.text
-                            : notification.text.replace(notification.actor_name || '', '').trim()
+                            : notification.text.replace(new RegExp('^"?' + (notification.actor_name || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '"?\\s*', 'i'), '').trim()
                         }
                     </span>
                 </div>

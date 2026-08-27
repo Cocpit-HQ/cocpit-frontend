@@ -162,7 +162,9 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
                 Typing...
               </span>
             ) : (
-              resolvedLastMessage
+              isQuickChat && chat.lastMessage && chat.lastMessage.length > 10
+                ? `${chat.lastMessage.substring(0, 10)}...`
+                : chat.lastMessage
             )}
           </p>
           {displayUnread > 0 && (

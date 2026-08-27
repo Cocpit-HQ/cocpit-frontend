@@ -370,7 +370,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       const expiryDate = new Date(offerExpiresAt);
       const now = new Date();
       const diffMs = expiryDate.getTime() - now.getTime();
-      offer_days_left = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      offer_days_left = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
       if (offer_days_left <= 0) {
         offer_expiry_text = 'Offer expired';
         status = 'Expired';
@@ -447,18 +447,19 @@ export const saveJob = async (jobId: string, shouldSave: boolean): Promise<boole
   }
 };
 
-export const applyJob = async (jobId: string, formData?: FormData, jsonBody?: any): Promise<boolean> => {
+export const applyJob = async (jobId: string, formData?: FormData, jsonBody?: any): Promise<any> => {
   try {
+    let response;
     if (formData) {
-      await api.post(`/jobs/${jobId}/apply`, formData, {
+      response = await api.post(`/jobs/${jobId}/apply`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
     } else if (jsonBody) {
-      await api.post(`/jobs/${jobId}/apply`, jsonBody);
+      response = await api.post(`/jobs/${jobId}/apply`, jsonBody);
     } else {
-      await api.post(`/jobs/${jobId}/apply`);
+      response = await api.post(`/jobs/${jobId}/apply`);
     }
-    return true;
+    return response.data;
   } catch (error) {
     console.error("Failed to apply for job:", error);
     throw error;
@@ -616,7 +617,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
         const expiryDate = new Date(offerExpiresAt);
         const now = new Date();
         const diffMs = expiryDate.getTime() - now.getTime();
-        offer_days_left = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        offer_days_left = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
         if (offer_days_left <= 0) {
           offer_expiry_text = 'Offer expired';
           status = 'Expired';

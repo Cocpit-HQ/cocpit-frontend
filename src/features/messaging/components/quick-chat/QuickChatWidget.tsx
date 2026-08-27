@@ -174,7 +174,11 @@ export function QuickChatWidget() {
     if (!socket) return;
     const handleNotification = (payload: any) => {
       if (!isOpen && (payload.type === 'message' || payload.type === 'new_message')) {
-        setStripNotification({ show: true, text: `${payload.senderName || 'Someone'} sent you a message` });
+        let previewText = `${payload.senderName || 'Someone'} sent you a message`;
+        if (payload.text) {
+          previewText = payload.text;
+        }
+        setStripNotification({ show: true, text: previewText });
         
         // Auto-hide after 3 seconds
         setTimeout(() => {

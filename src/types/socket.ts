@@ -4,7 +4,7 @@ export interface UserStatusPayload {
 }
 
 export interface NotificationPayload {
-  type: 'message' | 'system' | 'job' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement' | 'post_tag' | 'mention' | 'like' | 'comment' | (string & {});
+  type: 'message' | 'system' | 'job' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement' | 'post_tag' | 'mention' | 'like' | 'comment' | 'job_application_chat' | 'job_offer_chat' | 'application_submitted' | 'application_under_review' | 'application_shortlisted' | 'job_offer' | 'offer_expiring' | 'offer_accepted' | 'job_offer_declined' | 'new_application_threshold' | 'new_device_login' | 'password_changed' | 'email_changed' | (string & {});
   from?: string; // Sender User ID
   senderName?: string;
   senderAvatar?: string;
@@ -12,6 +12,7 @@ export interface NotificationPayload {
   isGroup?: boolean;
   isJobChat?: boolean; // Indicates if the message originates from a job context chat
   // Company notification fields
+  title?: string;
   actor_name?: string;
   actor_avatar?: string;
   actor_slug?: string;

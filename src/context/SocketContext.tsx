@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
@@ -54,6 +54,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   useNotificationSettings(); // Eagerly fetch preferences so the cache is always populated
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -238,6 +239,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleNotification = (payload: NotificationPayload) => {
+      console.log("[DEBUG] Socket received 'notification' event!", payload);
       // Always refresh notification badge & dropdown first — regardless of preferences.
       // Preferences ONLY control the toast popup, never the notification component.
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -261,10 +263,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       // Toast suppression: only controls the popup — DB notification is already saved
       if (prefs) {
         // Master toggles
-        if (isMessage && prefs.messages === false) return;
+        if (isMessage && prefs.messages === false) { console.log("[DEBUG] Suppressed by prefs.messages"); return; }
         // Sub-toggles for messages
-        if (isRegularMessage && prefs.messageChats === false) return;
-        if (isJobMessage && prefs.messageJobs === false) return;
+        if (isRegularMessage && prefs.messageChats === false) { console.log("[DEBUG] Suppressed by prefs.messageChats"); return; }
+        if (isJobMessage && prefs.messageJobs === false) { console.log("[DEBUG] Suppressed by prefs.messageJobs"); return; }
         
         if (isPost && prefs.posts === false) return;
         // Exclude job messages from being incorrectly suppressed by the "Job Alerts" toggle
@@ -276,6 +278,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Suppress notification if user is currently viewing this conversation
         if (payload.conversationId && payload.conversationId === activeConversationRef.current) {
+          console.log("[DEBUG] Suppressed: viewing this conversation");
           return;
         }
 
@@ -288,12 +291,22 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         if (targetedPayload.targetProfileType) {
           const targetType = targetedPayload.targetProfileType;
           if (targetType === 'COMPANY' && (currentProfileType !== 'COMPANY' || currentProfileId !== targetedPayload.targetCompanyId)) {
+            console.log("[DEBUG] Suppressed: cross-profile company");
             return; // Company-targeted notification, but not viewing that company
           }
           if (targetType === 'USER' && currentProfileType !== 'USER') {
+            console.log("[DEBUG] Suppressed: cross-profile user");
             return; // User-targeted notification, but viewing as company
           }
         }
+
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (currentPath === '/feed' || currentPath === '/') {
+          console.log("[DEBUG] Suppressed: on feed path", currentPath);
+          return;
+        }
+
+        console.log("[DEBUG] Firing standard message toast!");
 
         toast({
           title: "New Message",
@@ -306,15 +319,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               }}
             >
-              {payload.senderName && (
+              {payload.senderAvatar && (
                 <Avatar
-                  name={payload.senderName}
+                  name={payload.senderName || "Someone"}
                   url={payload.senderAvatar}
                   size="sm"
                 />
               )}
-              <span>
-                You have a message from <span className="font-semibold">{payload.senderName || "someone"}</span>
+              <span className="text-sm">
+                {payload.text || `You have a message from ${payload.senderName || "someone"}`}
               </span>
             </div>
           ),
@@ -386,8 +399,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else {
         if (payload.text) {
+          // If it's a message, don't show the standard toast on the feed screen
+          if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
+            return;
+          }
+          
           toast({
-            title: payload.senderName || "Notification",
+            title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : (payload.title || payload.senderName || "Notification"),
             description: payload.text,
             duration: 5000,
           });

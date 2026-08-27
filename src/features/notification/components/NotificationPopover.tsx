@@ -62,7 +62,8 @@ export function NotificationPopover({
     const fetchNotifications = async () => {
       try {
         const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
-        const data = await getNotifications(companyId)
+        const rawData = await getNotifications(companyId)
+        const data = rawData.filter((n: any) => n.type !== 'message' && n.type !== 'new_message');
         // Take only first 5 for the popover
         setNotifications(data.slice(0, 3))
       } catch (error) {
@@ -80,6 +81,9 @@ export function NotificationPopover({
     if (!socket) return;
 
     const handleNewNotification = (newNotification: Notification) => {
+      // Do not add standard chat messages to the Notification Popover
+      if ((newNotification.type as string) === 'message' || (newNotification.type as string) === 'new_message') return;
+
       const normalizedNotification: Notification = {
         ...newNotification,
         notification_id: newNotification.notification_id || `temp-${Date.now()}-${Math.random()}`,
@@ -262,7 +266,7 @@ export function NotificationPopover({
   const olderNotifications = notifications.filter(n => !n.created_at || !isToday(new Date(n.created_at)));
 
     const renderNotificationItem = (notification: Notification) => {
-    const text = notification.text ? notification.text.replace(notification.actor_name || '', '').trim() : '';
+    const text = notification.text ? notification.text.replace(new RegExp('^' + (notification.actor_name || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i'), '').trim() : '';
     const isCompanyActor = Boolean(
       notification.is_company_actor ||
       (notification as any).isCompanyActor ||

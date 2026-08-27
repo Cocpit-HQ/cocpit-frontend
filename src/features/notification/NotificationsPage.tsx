@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { NotificationCard } from '@/features/notification/components/NotificationCard'
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { ArrowLeft, ChevronLeft, Bell, CircleAlert, Info } from 'lucide-react'
+import { useSocket } from '@/context/SocketContext'
 
 type EmptyStateProps = {
   title: string
@@ -38,6 +40,7 @@ export default function NotificationsPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const { data: session } = useSession()
   const user = session?.user
+  const { socket } = useSocket()
 
   // Fetch Data
   useEffect(() => {
@@ -48,7 +51,9 @@ export default function NotificationsPage() {
         const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
 
         const notifsData = await getNotifications(companyId)
-        const sortedData = [...notifsData].sort((a, b) => {
+        const filteredData = notifsData.filter((n: any) => n.type !== 'message' && n.type !== 'new_message');
+        
+        const sortedData = [...filteredData].sort((a, b) => {
           if (a.is_read === b.is_read) return 0;
           return a.is_read ? 1 : -1;
         });
@@ -65,6 +70,49 @@ export default function NotificationsPage() {
       fetchData()
     }
   }, [user, activeProfile, isCompany])
+
+  // Real-time updates via Socket
+  useEffect(() => {
+    if (!user || !socket) return;
+
+    const handleNewNotification = (newNotif: any) => {
+      // Do not add standard chat messages to the Notification Center
+      if (newNotif.type === 'message' || newNotif.type === 'new_message') return;
+      
+      setNotifications(prev => {
+        // Prevent duplicates
+        if (prev.some(n => n.notification_id === newNotif.notification_id)) return prev;
+        
+        // Normalize the notification
+        const normalized = {
+          ...newNotif,
+          actor_name: newNotif.actor_name || newNotif.senderName,
+          actor_avatar: newNotif.actor_avatar || newNotif.senderAvatar,
+          is_read: newNotif.is_read ?? false,
+          created_at: newNotif.created_at || new Date().toISOString(),
+        };
+
+        // If it's a company notification and we're not that company, ignore
+        if (normalized.recipient_company_id) {
+          if (!isCompany || activeProfile?.id !== normalized.recipient_company_id) return prev;
+        } else {
+          if (isCompany) return prev;
+        }
+
+        const updated = [normalized, ...prev];
+        // Keep the sorting logic consistent with initial fetch
+        return updated.sort((a, b) => {
+          if (a.is_read === b.is_read) return 0;
+          return a.is_read ? 1 : -1;
+        });
+      });
+    };
+
+    socket.on("notification", handleNewNotification);
+    return () => {
+      socket.off("notification", handleNewNotification);
+    };
+  }, [user, isCompany, activeProfile?.id]);
 
   const handleRead = (id: string) => {
     setNotifications(prev => prev.map(n =>
@@ -127,7 +175,7 @@ export default function NotificationsPage() {
 
   // Filter helpers
   const jobs = notifications.filter(n =>
-    n.type === 'organization_job' || n.type === 'job_offer' || n.type.includes('job')
+    n.type === 'organization_job' || n.type === 'job_offer' || n.type.includes('job') || n.type.includes('application') || n.type.includes('offer')
   )
 
   // Show "Mark all as read" only when there are unread notifications in the current tab
