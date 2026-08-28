@@ -16,6 +16,7 @@ import {
   SendIcon,
   LoadingIcon,
 } from "@/components/icons";
+import BottomToast from "@/shared/commonComponents/BottomToast";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +28,13 @@ const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason");
+  const toastParam = searchParams.get("toast") || searchParams.get("status");
+  const toastMessage =
+    toastParam === "password_updated"
+      ? "Password updated"
+      : toastParam === "session_expired"
+      ? "Session expired"
+      : toastParam;
   const [sessionEnded, setSessionEnded] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -491,6 +499,16 @@ const LoginForm = () => {
           <span className="!text-[#FFECE6] font-medium">Sign up</span>
         </Link>
       </div>
+
+      {/* Confirmation pop-up toast */}
+      {toastMessage && (
+        <BottomToast
+          message={toastMessage}
+          onClose={() => {
+            router.replace("/", { scroll: false });
+          }}
+        />
+      )}
     </div>
   );
 };

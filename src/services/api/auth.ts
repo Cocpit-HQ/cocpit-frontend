@@ -23,8 +23,12 @@ export interface ActorContextResponse {
 }
 
 // 1. Request OTP (Public)
-export const requestOTP = async (email: string, purpose: "signup" | "password_reset" = "signup") => {
-  const response = await publicApi.post("/auth/request-otp", { email, purpose });
+export const requestOTP = async (
+  email: string,
+  purpose: "signup" | "password_reset" = "signup",
+  isResend: boolean = false
+) => {
+  const response = await publicApi.post("/auth/request-otp", { email, purpose, isResend });
   return response.data;
 };
 
@@ -107,11 +111,19 @@ export const logoutAllOtherSessions = async (password?: string) => {
 
 // --- Password Reset ---
 
-export const resetPassword = async (email: string, newPassword: string, otp: string) => {
+export const resetPassword = async (
+  email: string,
+  newPassword: string,
+  otp: string,
+  logoutOtherDevices?: boolean
+) => {
   const response = await publicApi.post("/auth/reset-password", {
     email,
     newPassword,
-    otp
+    otp,
+    ...(typeof logoutOtherDevices === "boolean"
+      ? { logoutOtherDevices, logoutOthers: logoutOtherDevices }
+      : {}),
   });
   return response.data;
 };
@@ -126,10 +138,17 @@ export const verifyResetToken = async (token: string) => {
   return response.data;
 };
 
-export const resetPasswordWithToken = async (token: string, newPassword: string) => {
+export const resetPasswordWithToken = async (
+  token: string,
+  newPassword: string,
+  logoutOtherDevices?: boolean
+) => {
   const response = await publicApi.post("/auth/reset-password-token", {
     token,
     newPassword,
+    ...(typeof logoutOtherDevices === "boolean"
+      ? { logoutOtherDevices, logoutOthers: logoutOtherDevices }
+      : {}),
   });
   return response.data;
 };
@@ -137,5 +156,14 @@ export const resetPasswordWithToken = async (token: string, newPassword: string)
 export const getResetLinkStatus = async () => {
   const response = await api.get("/auth/reset-link-status");
   return response.data as { hasActiveLink: boolean; remainingSeconds: number };
+};
+
+export const validateResetPassword = async (payload: {
+  email?: string;
+  token?: string;
+  password: string;
+}) => {
+  const response = await publicApi.post("/auth/validate-password", payload);
+  return response.data as { isSamePassword: boolean; message?: string };
 };
 

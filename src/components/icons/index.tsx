@@ -23,7 +23,12 @@ export type IconName =
   | "mail-warning"
   | "send"
   | "loading"
-  | "spinner";
+  | "spinner"
+  | "left-arrow"
+  | "arrow-left"
+  | "close"
+  | "cross"
+  | "close-cross";
 
 export interface IconProps extends React.SVGProps<SVGSVGElement> {
   name?: IconName;
@@ -366,8 +371,55 @@ export const LoadingIcon: React.FC<IconProps> = ({
     />
   </svg>
 );
+export const LeftArrowIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size = 20,
+  fill = "currentColor",
+  ...props
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M13.8342 16.1543C13.8854 16.199 13.9264 16.253 13.9549 16.3129C13.9834 16.3728 13.9987 16.4374 13.9999 16.503C14.0012 16.5686 13.9883 16.6337 13.9621 16.6945C13.9359 16.7553 13.8969 16.8106 13.8474 16.857C13.798 16.9033 13.739 16.9399 13.6742 16.9645C13.6093 16.989 13.5398 17.0011 13.4699 16.9999C13.3999 16.9988 13.331 16.9844 13.2671 16.9577C13.2032 16.931 13.1457 16.8925 13.098 16.8446L6.15235 10.3329C6.05479 10.2414 6 10.1172 6 9.98782C6 9.8584 6.05479 9.73427 6.15235 9.6427L13.098 3.13107C13.1967 3.04481 13.3273 2.99784 13.4623 3.00008C13.5972 3.00231 13.726 3.05356 13.8214 3.14304C13.9169 3.23252 13.9716 3.35324 13.9739 3.47976C13.9763 3.60628 13.9262 3.72873 13.8342 3.82131L7.25757 9.98782L13.8342 16.1543Z"
+      fill={fill === "currentColor" ? "currentColor" : fill}
+    />
+  </svg>
+);
+
+export const CloseCrossIcon: React.FC<IconProps> = ({
+  className = "w-5 h-5",
+  size = 20,
+  fill = "currentColor",
+  ...props
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M15.9563 15.2938C16.0023 15.3367 16.0393 15.3884 16.0649 15.4459C16.0905 15.5034 16.1043 15.5655 16.1054 15.6285C16.1065 15.6914 16.0949 15.7539 16.0714 15.8123C16.0478 15.8706 16.0127 15.9237 15.9682 15.9682C15.9237 16.0127 15.8706 16.0478 15.8123 16.0714C15.7539 16.0949 15.6914 16.1065 15.6285 16.1054C15.5655 16.1043 15.5034 16.0905 15.4459 16.0649C15.3884 16.0393 15.3367 16.0023 15.2938 15.9563L10 10.6633L4.70628 15.9563C4.61742 16.0391 4.49989 16.0842 4.37845 16.082C4.25701 16.0799 4.14115 16.0307 4.05526 15.9448C3.96938 15.8589 3.92018 15.743 3.91804 15.6216C3.9159 15.5002 3.96098 15.3826 4.04378 15.2938L9.33675 10L4.04378 4.70628C3.96098 4.61742 3.9159 4.49989 3.91804 4.37845C3.92018 4.25701 3.96938 4.14115 4.05526 4.05526C4.14115 3.96938 4.25701 3.92018 4.37845 3.91804C4.49989 3.9159 4.61742 3.96098 4.70628 4.04378L10 9.33675L15.2938 4.04378C15.3826 3.96098 15.5002 3.9159 15.6216 3.91804C15.743 3.92018 15.8589 3.96938 15.9448 4.05526C16.0307 4.14115 16.0799 4.25701 16.082 4.37845C16.0842 4.49989 16.0391 4.61742 15.9563 4.70628L10.6633 10L15.9563 15.2938Z"
+      fill={fill === "currentColor" ? "currentColor" : fill}
+    />
+  </svg>
+);
 
 export const SpinnerIcon = LoadingIcon;
+export const ArrowLeftIcon = LeftArrowIcon;
+export const CloseIcon = CloseCrossIcon;
+export const CrossIcon = CloseCrossIcon;
+export const XIcon = CloseCrossIcon;
 
 // ─── SVG Dictionary Mapping ──────────────────────────────────────────────────
 
@@ -395,6 +447,11 @@ export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   send: SendIcon,
   loading: LoadingIcon,
   spinner: LoadingIcon,
+  "left-arrow": LeftArrowIcon,
+  "arrow-left": LeftArrowIcon,
+  close: CloseCrossIcon,
+  cross: CloseCrossIcon,
+  "close-cross": CloseCrossIcon,
 };
 
 // ─── Universal Icon Component ────────────────────────────────────────────────
