@@ -183,6 +183,9 @@ export function useSignUp() {
 
   // Shared post-login redirect logic
   const handlePostLoginRedirect = async () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cocpit_active_onboarding_session", "true");
+    }
     const session = await getSession();
     if (!session || !session.user) {
       window.location.href = "/onboarding";

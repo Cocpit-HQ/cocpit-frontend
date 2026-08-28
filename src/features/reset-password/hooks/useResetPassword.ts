@@ -295,9 +295,11 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
       return;
     }
 
+    const emailToUse = email.trim() || (typeof window !== "undefined" ? sessionStorage.getItem("cocpit_reset_session_email") || "" : "");
+
     try {
       const res = await resetPasswordService.validatePassword({
-        email: !token ? email : undefined,
+        email: !token ? emailToUse : undefined,
         token: token || undefined,
         password: pwd,
       });

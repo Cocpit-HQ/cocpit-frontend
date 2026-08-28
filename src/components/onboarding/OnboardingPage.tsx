@@ -20,7 +20,7 @@ import { getProfile } from "@/services/api/profile";
 import { toast } from "sonner";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 const EducationStep = lazy(() => import("@/components/onboarding/EducationStep"));
 const WorkExperienceStep = lazy(() => import("@/components/onboarding/WorkExperienceStep"));
@@ -144,6 +144,16 @@ export default function OnboardingPage() {
 
   const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const activeSession = sessionStorage.getItem("cocpit_active_onboarding_session");
+      if (!activeSession) {
+        // Tab was closed or navigated away -> session ended -> redirect to login page
+        signOut({ redirect: false }).then(() => {
+          window.location.href = "/";
+        });
+        return;
+      }
+    }
     setHasMounted(true);
   }, []);
 
@@ -474,6 +484,7 @@ export default function OnboardingPage() {
       await saveOnboardingSkills(selectedSkills);
       await completeOnboarding();
       sessionStorage.removeItem("cocpit_onboarding_step");
+      sessionStorage.removeItem("cocpit_active_onboarding_session");
       
       // Update NextAuth session so middleware knows we are onboarded
       await update({ onboarding_complete: true });

@@ -9,12 +9,8 @@ import Link from "next/link";
 export default async function Home() {
   const session = await getServerSession(authOptions);
 
-  if (session?.user) {
-    if (!session.user.onboarding_complete) {
-      redirect("/onboarding");
-    } else {
-      redirect("/feed");
-    }
+  if (session?.user && session.user.onboarding_complete) {
+    redirect("/feed");
   }
 
   return (

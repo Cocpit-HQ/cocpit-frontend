@@ -123,6 +123,9 @@ const LoginForm = () => {
 
   // Shared redirect logic — used by both credential and Google login
   const handlePostLoginRedirect = async () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cocpit_active_onboarding_session", "true");
+    }
     const session = await getSession();
 
     // Fallback to window.location if session is not yet available
