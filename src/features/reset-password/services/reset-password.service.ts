@@ -11,15 +11,15 @@ export const resetPasswordService = {
   /**
    * Request an OTP for password reset
    */
-  requestOtp: async (email: string) => {
-    return await requestOTP(email.toLowerCase().trim(), "password_reset");
+  requestOtp: async (email: string, isResend: boolean = false) => {
+    return await requestOTP(email.toLowerCase().trim(), "password_reset", isResend);
   },
 
   /**
    * Verify an OTP code
    */
   verifyOtp: async (email: string, otp: string) => {
-    return await verifyOTP(email.toLowerCase().trim(), otp.trim());
+    return await verifyOTP(email.toLowerCase().trim(), otp.trim(), "password_reset");
   },
 
   /**

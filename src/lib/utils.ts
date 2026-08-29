@@ -43,3 +43,19 @@ export function formatTimeAgo(dateString?: string, fallback?: string): string {
   const years = Math.floor(days / 365);
   return `${years}y ago`;
 }
+
+export function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return email;
+  const [localPart, domain] = email.split('@');
+  
+  if (localPart.length <= 4) {
+    if (localPart.length <= 2) {
+      return `***@${domain}`;
+    }
+    return `${localPart[0]}***${localPart[localPart.length - 1]}@${domain}`;
+  }
+
+  const firstTwo = localPart.slice(0, 2);
+  const lastTwo = localPart.slice(-2);
+  return `${firstTwo}****${lastTwo}@${domain}`;
+}

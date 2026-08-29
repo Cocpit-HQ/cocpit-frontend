@@ -8,6 +8,7 @@ import StepEmail from "../components/StepEmail";
 import StepOtp from "../components/StepOtp";
 import StepPassword from "../components/StepPassword";
 import BottomToast from "@/shared/commonComponents/BottomToast";
+import { LeaveConfirmationModal } from "@/components/shared";
 
 export const SignUpFlow: React.FC = () => {
   const router = useRouter();
@@ -45,9 +46,12 @@ export const SignUpFlow: React.FC = () => {
     handleGoogleLogin,
     handleAppleLogin,
     handleResendRecovery,
-    handleGoBack,
     handleClose,
+    isMounted,
   } = useSignUp();
+  
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = React.useState(false);
+
 
   useEffect(() => {
     if (toastParam === "session_expired") {
@@ -60,9 +64,11 @@ export const SignUpFlow: React.FC = () => {
       ? "Session expired"
       : toastParam;
 
+  if (!isMounted) return null;
+
   return (
     <>
-      <SignUpLayout step={step} onClose={step === "EMAIL" ? undefined : handleGoBack} showClose={step !== "EMAIL"}>
+      <SignUpLayout step={step} onClose={step === "EMAIL" ? undefined : () => setIsLeaveModalOpen(true)} showClose={step !== "EMAIL"}>
         {step === "EMAIL" && (
           <StepEmail
             email={email}
@@ -131,6 +137,15 @@ export const SignUpFlow: React.FC = () => {
           }}
         />
       )}
+
+      <LeaveConfirmationModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        onConfirm={() => {
+          setIsLeaveModalOpen(false);
+          handleClose();
+        }}
+      />
     </>
   );
 };

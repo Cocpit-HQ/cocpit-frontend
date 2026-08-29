@@ -9,6 +9,7 @@ import StepOtp from "../components/StepOtp";
 import StepNewPassword from "../components/StepNewPassword";
 import LogoutOtherDevicesModal from "../components/LogoutOtherDevicesModal";
 import BottomToast from "@/shared/commonComponents/BottomToast";
+import { LeaveConfirmationModal } from "@/components/shared";
 
 interface ResetPasswordFlowProps {
   initialToken?: string | null;
@@ -52,9 +53,11 @@ export const ResetPasswordFlow: React.FC<ResetPasswordFlowProps> = ({ initialTok
     handleValidateNewPassword,
     handlePromptResetPassword,
     handleConfirmResetPassword,
-    handleGoBack,
     handleClose,
+    isMounted,
   } = useResetPassword({ initialToken });
+
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = React.useState(false);
 
   useEffect(() => {
     if (toastParam === "session_expired") {
@@ -69,9 +72,11 @@ export const ResetPasswordFlow: React.FC<ResetPasswordFlowProps> = ({ initialTok
       ? "Password updated"
       : toastParam;
 
+  if (!isMounted) return null;
+
   return (
     <>
-      <ResetPasswordLayout onClose={handleClose} showClose={step !== "SUCCESS"}>
+      <ResetPasswordLayout onClose={() => setIsLeaveModalOpen(true)} showClose={step !== "SUCCESS"}>
         {step === "EMAIL" && (
           <StepEmail
             email={email}
@@ -145,6 +150,16 @@ export const ResetPasswordFlow: React.FC<ResetPasswordFlowProps> = ({ initialTok
           }}
         />
       )}
+
+      <LeaveConfirmationModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        title="Leave password reset?"
+        onConfirm={() => {
+          setIsLeaveModalOpen(false);
+          handleClose();
+        }}
+      />
     </>
   );
 };

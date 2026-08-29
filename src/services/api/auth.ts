@@ -33,8 +33,14 @@ export const requestOTP = async (
 };
 
 // 1.5 Verify OTP (Public - Check only)
-export const verifyOTP = async (email: string, otp: string) => {
-  const response = await publicApi.post("/auth/verify-otp", { email, otp });
+export const verifyOTP = async (email: string, otp: string, purpose: string = "signup") => {
+  const response = await publicApi.post("/auth/verify-otp", { email, otp, purpose });
+  return response.data;
+};
+
+// 1.75 Cancel OTP (Public)
+export const cancelOTP = async (email: string, purpose: string = "signup") => {
+  const response = await publicApi.post("/auth/cancel-otp", { email, purpose });
   return response.data;
 };
 

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { LoadingIcon } from "@/components/icons";
+import { maskEmail } from "@/lib/utils";
 
 interface StepOtpProps {
   email: string;
@@ -37,7 +38,7 @@ export const StepOtp: React.FC<StepOtpProps> = ({
   onClearError,
 }) => {
   const isOtpComplete = otp.trim().length === 6;
-  const isButtonActive = (isOtpComplete || isOtpVerified) && !isCheckingOtp && !isLoading && !isRateLimited;
+  const isButtonActive = isOtpVerified && !isCheckingOtp && !isLoading && !isRateLimited;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isRateLimited) return;
@@ -62,7 +63,7 @@ export const StepOtp: React.FC<StepOtpProps> = ({
         </h1>
         {/* Subtitle: We sent a 6-digit code to [email] (1 line) */}
         <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] text-center px-1 whitespace-nowrap">
-          We sent a 6-digit code to <span className="font-semibold">{email || "[email]"}</span>
+          We sent a 6-digit code to <span className="font-semibold">{maskEmail(email) || "[email]"}</span>
         </p>
       </div>
 
@@ -92,7 +93,7 @@ export const StepOtp: React.FC<StepOtpProps> = ({
               onFocus={() => {
                 if (errorMessage || otpError) onClearError();
               }}
-              disabled={isCheckingOtp || isLoading || isRateLimited}
+              disabled={isCheckingOtp || isLoading || isRateLimited || isOtpVerified}
               className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
                 isRateLimited ? "opacity-40 cursor-not-allowed" : ""
               }`}

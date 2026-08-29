@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { signupService } from "../services/signup.service";
+import { cancelOTP } from "@/services/api/auth";
 import { SignUpStep, PasswordCriteria, PendingDeletionInfo } from "../types/signup.types";
 
 const SESSION_LIFETIME_MS = 10 * 60 * 1000; // 10 minutes
@@ -25,9 +26,22 @@ export function useSignUp() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [otpError, setOtpError] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [targetCooldownExpiry, setTargetCooldownExpiry] = useState<number | null>(null);
+  const [targetCooldownExpiry, setTargetCooldownExpiry] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("cocpit_signup_cooldown_expiry");
+      if (stored) {
+        const expiry = parseInt(stored, 10);
+        if (Date.now() < expiry) return expiry;
+        sessionStorage.removeItem("cocpit_signup_cooldown_expiry");
+      }
+    }
+    return null;
+  });
   const [pendingDeletion, setPendingDeletion] = useState<PendingDeletionInfo | null>(null);
   const [showSessionExpiredToast, setShowSessionExpiredToast] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => setIsMounted(true), []);
 
   // Email format validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -46,6 +60,17 @@ export function useSignUp() {
     passwordCriteria.number &&
     passwordCriteria.specialChar;
 
+  // Persist cooldown expiry
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (targetCooldownExpiry) {
+        sessionStorage.setItem("cocpit_signup_cooldown_expiry", targetCooldownExpiry.toString());
+      } else {
+        sessionStorage.removeItem("cocpit_signup_cooldown_expiry");
+      }
+    }
+  }, [targetCooldownExpiry]);
+
   // Live countdown timer computed against exact target timestamp (immune to API lag/time drift)
   useEffect(() => {
     if (!targetCooldownExpiry) {
@@ -55,7 +80,7 @@ export function useSignUp() {
 
     const updateCooldown = () => {
       const remaining = Math.max(0, Math.ceil((targetCooldownExpiry - Date.now()) / 1000));
-      const clamped = Math.min(120, remaining);
+      const clamped = Math.min(60, remaining);
       setResendCooldown(clamped);
       if (remaining <= 0) {
         setTargetCooldownExpiry(null);
@@ -72,6 +97,45 @@ export function useSignUp() {
     };
   }, [targetCooldownExpiry]);
 
+  // Persist step
+  const isFirstMount = React.useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cocpit_signup_session_step", step);
+    }
+  }, [step]);
+
+  // Mount Restoration for Page Refresh
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const expiryStr = sessionStorage.getItem("cocpit_signup_session_expiry");
+    const sessionEmail = sessionStorage.getItem("cocpit_signup_session_email");
+    const sessionOtp = sessionStorage.getItem("cocpit_signup_session_otp");
+    const sessionStep = sessionStorage.getItem("cocpit_signup_session_step");
+
+    if (expiryStr && sessionEmail) {
+      const expiry = parseInt(expiryStr, 10);
+      if (Date.now() < expiry) {
+        setEmail(sessionEmail);
+        if (sessionStep === "PASSWORD" && sessionOtp) {
+          setOtp(sessionOtp);
+          setIsOtpVerified(true);
+          setStep("PASSWORD");
+        } else if (sessionOtp) {
+          setOtp(sessionOtp);
+          setIsOtpVerified(true);
+          setStep("OTP");
+        } else {
+          setStep("OTP");
+        }
+      }
+    }
+  }, []);
+
   // Edge Case 2: 10-Minute session timeout monitor (active on password screen)
   useEffect(() => {
     const checkSessionExpiry = () => {
@@ -85,6 +149,7 @@ export function useSignUp() {
         sessionStorage.removeItem("cocpit_signup_session_expiry");
         sessionStorage.removeItem("cocpit_signup_session_email");
         sessionStorage.removeItem("cocpit_signup_session_otp");
+        sessionStorage.removeItem("cocpit_signup_session_step");
 
         // Reset all state to clean initial email screen
         setEmail("");
@@ -121,7 +186,7 @@ export function useSignUp() {
       return null;
     }
     if (typeof fallbackSecs === "number" && fallbackSecs > 0) {
-      return Date.now() + Math.min(120, fallbackSecs) * 1000;
+      return Date.now() + Math.min(60, fallbackSecs) * 1000;
     }
     return null;
   };
@@ -223,22 +288,6 @@ export function useSignUp() {
         return;
       }
 
-      // Edge Case 1: Verified 10-minute session is already active for this email -> Go directly to PASSWORD
-      if (res && res.sessionActive) {
-        const expiryMs = res.sessionExpiresAt
-          ? new Date(res.sessionExpiresAt).getTime()
-          : Date.now() + (res.remainingSeconds || 600) * 1000;
-
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("cocpit_signup_session_expiry", String(expiryMs));
-          sessionStorage.setItem("cocpit_signup_session_email", email.toLowerCase().trim());
-        }
-
-        setIsOtpVerified(true);
-        setStep("PASSWORD");
-        return;
-      }
-
       // Edge Case 3: Active OTP already sent & not expired for this email
       if (res && res.otpActive) {
         const targetExpiry = computeTargetExpiry(res.cooldownExpiresAt, res.serverTime, res.remainingCooldown);
@@ -246,15 +295,25 @@ export function useSignUp() {
         setOtp("");
         setIsOtpVerified(false);
         setStep("OTP");
+        if (typeof window !== "undefined") {
+          const expiryMs = Date.now() + 10 * 60 * 1000;
+          sessionStorage.setItem("cocpit_signup_session_expiry", String(expiryMs));
+          sessionStorage.setItem("cocpit_signup_session_email", email.toLowerCase().trim());
+        }
         return;
       }
 
       // Fresh OTP generated & sent
-      const targetExpiry = computeTargetExpiry(res?.cooldownExpiresAt, res?.serverTime, 120);
+      const targetExpiry = computeTargetExpiry(res?.cooldownExpiresAt, res?.serverTime, 60);
       setTargetCooldownExpiry(targetExpiry);
       setOtp("");
       setIsOtpVerified(false);
       setStep("OTP");
+      if (typeof window !== "undefined") {
+        const expiryMs = Date.now() + 10 * 60 * 1000;
+        sessionStorage.setItem("cocpit_signup_session_expiry", String(expiryMs));
+        sessionStorage.setItem("cocpit_signup_session_email", email.toLowerCase().trim());
+      }
     } catch (err: any) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
@@ -371,7 +430,7 @@ export function useSignUp() {
 
     try {
       const res = await signupService.requestOtp(email, true);
-      const targetExpiry = computeTargetExpiry(res?.cooldownExpiresAt, res?.serverTime, 120);
+      const targetExpiry = computeTargetExpiry(res?.cooldownExpiresAt, res?.serverTime, 60);
       setTargetCooldownExpiry(targetExpiry);
       setOtp("");
       setIsOtpVerified(false);
@@ -530,8 +589,22 @@ export function useSignUp() {
   };
 
   // ─── Navigation Handlers ─────────────────────────────────────────────────────
-  const handleGoBack = useCallback(() => {
-    // When navigating back or closing screen, always return to clean empty Email screen
+
+  // Close / Dismiss cross button handler
+  const handleClose = useCallback(() => {
+    if (step === "OTP" || step === "PASSWORD") {
+      if (email) {
+        cancelOTP(email).catch((err) => console.error("Failed to cancel OTP:", err));
+      }
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("cocpit_signup_session_expiry");
+        sessionStorage.removeItem("cocpit_signup_session_email");
+        sessionStorage.removeItem("cocpit_signup_session_otp");
+        sessionStorage.removeItem("cocpit_signup_session_step");
+      }
+    }
+
+    // Return to the initial signup step
     setStep("EMAIL");
     setEmail("");
     setOtp("");
@@ -542,25 +615,7 @@ export function useSignUp() {
     setTargetCooldownExpiry(null);
     setResendCooldown(0);
     setErrorMessage(null);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    if (step === "EMAIL") {
-      router.push("/");
-    } else {
-      // Dismissing from OTP or PASSWORD returns to clean empty Email screen
-      setStep("EMAIL");
-      setEmail("");
-      setOtp("");
-      setPassword("");
-      setOtpError(false);
-      setIsOtpVerified(false);
-      setIsRateLimited(false);
-      setTargetCooldownExpiry(null);
-      setResendCooldown(0);
-      setErrorMessage(null);
-    }
-  }, [step, router]);
+  }, [step, email]);
 
   return {
     step,
@@ -595,8 +650,8 @@ export function useSignUp() {
     handleGoogleLogin,
     handleAppleLogin,
     handleResendRecovery,
-    handleGoBack,
     handleClose,
+    isMounted,
   };
 }
 

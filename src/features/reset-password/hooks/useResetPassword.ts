@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resetPasswordService } from "../services/reset-password.service";
+import { cancelOTP } from "@/services/api/auth";
 import { ResetPasswordStep, PasswordCriteria } from "../types/reset-password.types";
 
 const SESSION_LIFETIME_MS = 10 * 60 * 1000; // 10 minutes
@@ -29,9 +30,23 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
   const [otpError, setOtpError] = useState(false);
   const [isOldPasswordError, setIsOldPasswordError] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [targetCooldownExpiry, setTargetCooldownExpiry] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("cocpit_reset_cooldown_expiry");
+      if (stored) {
+        const expiry = parseInt(stored, 10);
+        if (Date.now() < expiry) return expiry;
+        sessionStorage.removeItem("cocpit_reset_cooldown_expiry");
+      }
+    }
+    return null;
+  });
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [showSessionExpiredToast, setShowSessionExpiredToast] = useState(false);
   const [isTokenFlow, setIsTokenFlow] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => setIsMounted(true), []);
 
   // Email format validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -99,6 +114,7 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
         sessionStorage.removeItem("cocpit_reset_session_expiry");
         sessionStorage.removeItem("cocpit_reset_session_email");
         sessionStorage.removeItem("cocpit_reset_session_otp");
+        sessionStorage.removeItem("cocpit_reset_session_step");
 
         setEmail("");
         setOtp("");
@@ -125,16 +141,95 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
     };
   }, [token, router]);
 
+  // Persist cooldown expiry
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (targetCooldownExpiry) {
+        sessionStorage.setItem("cocpit_reset_cooldown_expiry", targetCooldownExpiry.toString());
+      } else {
+        sessionStorage.removeItem("cocpit_reset_cooldown_expiry");
+      }
+    }
+  }, [targetCooldownExpiry]);
+
   // Cooldown countdown timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (resendCooldown > 0) {
-      timer = setInterval(() => {
-        setResendCooldown((prev) => prev - 1);
-      }, 1000);
+    if (!targetCooldownExpiry) {
+      setResendCooldown(0);
+      return;
     }
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
+
+    const updateCooldown = () => {
+      const remaining = Math.max(0, Math.ceil((targetCooldownExpiry - Date.now()) / 1000));
+      const clamped = Math.min(60, remaining);
+      setResendCooldown(clamped);
+      if (remaining <= 0) {
+        setTargetCooldownExpiry(null);
+      }
+    };
+
+    updateCooldown();
+    const timer = setInterval(updateCooldown, 1000);
+    window.addEventListener("focus", updateCooldown);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", updateCooldown);
+    };
+  }, [targetCooldownExpiry]);
+
+  const computeTargetExpiry = (cooldownExpiresAt?: string | null, serverTime?: string | null, fallbackSecs?: number): number | null => {
+    if (cooldownExpiresAt) {
+      const serverTimeMs = serverTime ? new Date(serverTime).getTime() : Date.now();
+      const clockSkew = Date.now() - serverTimeMs;
+      const target = new Date(cooldownExpiresAt).getTime() + clockSkew;
+      if (target > Date.now()) return target;
+      return null;
+    }
+    if (typeof fallbackSecs === "number" && fallbackSecs > 0) {
+      return Date.now() + Math.min(60, fallbackSecs) * 1000;
+    }
+    return null;
+  };
+
+  // Persist step
+  const isFirstMount = React.useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cocpit_reset_session_step", step);
+    }
+  }, [step]);
+
+  // Mount Restoration for Page Refresh
+  useEffect(() => {
+    if (typeof window === "undefined" || token) return;
+    const expiryStr = sessionStorage.getItem("cocpit_reset_session_expiry");
+    const sessionEmail = sessionStorage.getItem("cocpit_reset_session_email");
+    const sessionOtp = sessionStorage.getItem("cocpit_reset_session_otp");
+    const sessionStep = sessionStorage.getItem("cocpit_reset_session_step");
+
+    if (expiryStr && sessionEmail) {
+      const expiry = parseInt(expiryStr, 10);
+      if (Date.now() < expiry) {
+        setEmail(sessionEmail);
+        if (sessionStep === "NEW_PASSWORD" && sessionOtp) {
+          setOtp(sessionOtp);
+          setIsOtpVerified(true);
+          setStep("NEW_PASSWORD");
+        } else if (sessionOtp) {
+          setOtp(sessionOtp);
+          setIsOtpVerified(true);
+          setStep("OTP");
+        } else {
+          setStep("OTP");
+        }
+      }
+    }
+  }, [token]);
 
   // Step 1: Send OTP to Email
   const handleSendEmail = useCallback(async (e?: React.FormEvent) => {
@@ -157,10 +252,38 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
         }
         return;
       }
-      setResendCooldown(120); // 2 minutes
+      
+      // Defensive fallback if we somehow hit a stale sessionActive (which should be cleaned up by backend now)
+      if (res && res.sessionActive) {
+        cancelOTP(email, "password_reset").catch(() => {});
+        setErrorMessage("Please try again.");
+        return;
+      }
+
+      if (res && res.otpActive) {
+        const targetExpiry = computeTargetExpiry(res.cooldownExpiresAt, res.serverTime, res.remainingCooldown);
+        setTargetCooldownExpiry(targetExpiry);
+        setOtp("");
+        setIsOtpVerified(false);
+        setStep("OTP");
+        if (typeof window !== "undefined") {
+          const expiryMs = Date.now() + SESSION_LIFETIME_MS;
+          sessionStorage.setItem("cocpit_reset_session_expiry", String(expiryMs));
+          sessionStorage.setItem("cocpit_reset_session_email", email.toLowerCase().trim());
+        }
+        return;
+      }
+
+      const targetExpiry = computeTargetExpiry(res?.cooldownExpiresAt, res?.serverTime, 60);
+      setTargetCooldownExpiry(targetExpiry);
       setOtp("");
       setIsOtpVerified(false);
       setStep("OTP");
+      if (typeof window !== "undefined") {
+        const expiryMs = Date.now() + SESSION_LIFETIME_MS;
+        sessionStorage.setItem("cocpit_reset_session_expiry", String(expiryMs));
+        sessionStorage.setItem("cocpit_reset_session_email", email.toLowerCase().trim());
+      }
     } catch (err: any) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
@@ -276,8 +399,9 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
     setOtpError(false);
 
     try {
-      await resetPasswordService.requestOtp(email);
-      setResendCooldown(120); // 2 minutes
+      const res = await resetPasswordService.requestOtp(email, true);
+      const targetExpiry = computeTargetExpiry(res?.cooldownExpiresAt, res?.serverTime, 60);
+      setTargetCooldownExpiry(targetExpiry);
       setOtp("");
       setIsOtpVerified(false);
     } catch (err: any) {
@@ -379,31 +503,21 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
 
   // Close / Dismiss cross button handler
   const handleClose = useCallback(() => {
-    if (step === "EMAIL") {
-      router.push("/");
-    } else {
-      // If leaving OTP or NEW_PASSWORD screen, clear verified session and return to EMAIL screen
-      setStep("EMAIL");
-      setEmail("");
-      setOtp("");
-      setOtpError(false);
-      setIsOtpVerified(false);
-      setIsRateLimited(false);
-      setIsOldPasswordError(false);
-      setNewPassword("");
-      setConfirmPassword("");
-      setErrorMessage(null);
-      setResendCooldown(0);
+    if (step === "OTP" || step === "NEW_PASSWORD") {
+      if (email) {
+        cancelOTP(email, "password_reset").catch((err) => console.error("Failed to cancel OTP:", err));
+      }
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("cocpit_reset_session_expiry");
         sessionStorage.removeItem("cocpit_reset_session_email");
         sessionStorage.removeItem("cocpit_reset_session_otp");
-      }
-      if (token) {
-        router.push("/");
+        sessionStorage.removeItem("cocpit_reset_session_step");
       }
     }
-  }, [step, token, router]);
+    
+    // Always return to login
+    router.push("/");
+  }, [step, router, email]);
 
   const handleGoBack = handleClose;
 
@@ -448,6 +562,7 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
     handleConfirmResetPassword,
     handleGoBack,
     handleClose,
+    isMounted,
   };
 }
 
