@@ -20,6 +20,7 @@ const EXPRESS_AUTH_ROUTES = [
   "google",
   "apple",
   "admin",
+  "validate-password",
 ];
 
 const nextConfig: NextConfig = {
