@@ -160,7 +160,7 @@ export const StepEmail: React.FC<StepEmailProps> = ({
           <button
             type="button"
             disabled={isAnyLoading}
-            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all cursor-pointer disabled:opacity-60"
             onClick={onAppleLogin}
           >
             {isAppleLoading ? (

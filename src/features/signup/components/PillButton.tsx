@@ -27,7 +27,7 @@ export const PillButton: React.FC<PillButtonProps> = ({
       disabled={isDisabled}
       className={`w-[260px] h-9 px-3 py-1.5 bg-[#1A1A20] rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
         isDisabled
-          ? "text-[#726B67] opacity-60 cursor-not-allowed"
+          ? "text-[#726B67] opacity-60"
           : "text-[#FFECE6] hover:bg-[#222228] cursor-pointer shadow-[0_0_0_1px_#27272A]"
       } ${className}`}
     >

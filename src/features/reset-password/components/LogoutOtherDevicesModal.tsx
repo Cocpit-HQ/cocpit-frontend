@@ -82,7 +82,7 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
             type="button"
             disabled={isLoading}
             onClick={() => handleAction(false)}
-            className="box-border w-[136px] h-[38px] px-3 py-1.5 border border-[#2C2C33] rounded-[100px] bg-transparent hover:bg-white/5 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="box-border w-[136px] h-[38px] px-3 py-1.5 border border-[#2C2C33] rounded-[100px] bg-transparent hover:bg-white/5 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
             {isLoading && clickedAction === "keep" ? (
               <LoadingIcon
@@ -101,7 +101,7 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
             type="button"
             disabled={isLoading}
             onClick={() => handleAction(true)}
-            className="box-border w-[136px] h-[38px] px-3 py-1.5 bg-[#1A1A20] hover:bg-[#2C2C33] rounded-[100px] transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="box-border w-[136px] h-[38px] px-3 py-1.5 bg-[#1A1A20] hover:bg-[#2C2C33] rounded-[100px] transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
             {isLoading && clickedAction === "logout" ? (
               <LoadingIcon

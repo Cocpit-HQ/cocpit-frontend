@@ -492,7 +492,7 @@ const LoginForm = () => {
             className={`w-[260px] h-9 px-3 py-1.5 bg-[#1A1A20] text-[#FFECE6] rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] transition-all ${
               isFormValid && !isLoading
                 ? "hover:bg-[#222228] cursor-pointer shadow-[0_0_0_1px_#27272A]"
-                : "opacity-60 cursor-not-allowed"
+                : "opacity-60"
             }`}
           >
             {isLoading ? (
@@ -535,7 +535,7 @@ const LoginForm = () => {
           <button
             type="button"
             disabled={isLoading || isGoogleLoading || isAppleLoading}
-            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all cursor-pointer disabled:opacity-60"
             onClick={handleAppleLogin}
           >
             {isAppleLoading ? (
