@@ -275,15 +275,6 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
         <div className="size-4 p-0.5 inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden shrink-0">
           {loading ? (
             <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-[#B8ADA8]" />
-          ) : query ? (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="w-3.5 h-3.5 flex items-center justify-center text-stone-500 hover:text-[#FFECE6] transition-colors"
-              aria-label="Clear location"
-            >
-              <CloseCrossIcon size={12} className="w-3 h-3" />
-            </button>
           ) : (
             <button
               type="button"
@@ -302,7 +293,7 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {open && (
         <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-black flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
-          <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 custom-scrollbar pr-1">
+          <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
             {displaySuggestions.length > 0 ? (
               displaySuggestions.map((item) => {
                 const isSelected = value === item.lineText;

@@ -249,7 +249,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
 
             {/* If searching >= 3 characters: Show Figma Dropdown List View */}
             {search.trim().length >= 3 ? (
-              <div className="w-64 max-h-[180px] py-2 bg-black flex flex-col justify-start items-start gap-1 overflow-y-auto custom-scrollbar">
+              <div className="w-64 max-h-[180px] py-2 bg-black flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide">
                 {searchResults.length > 0 ? (
                   searchResults.map((item, index) => {
                     const isSelected = selectedSkills.includes(item);
@@ -296,7 +296,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                 <div
                   ref={scrollContainerRef}
                   onScroll={handleScroll}
-                  className="w-64 min-h-[64px] max-h-[100px] flex flex-row flex-wrap items-start content-start p-0 gap-2 overflow-y-auto custom-scrollbar pr-0.5"
+                  className="w-64 min-h-[64px] max-h-[100px] flex flex-row flex-wrap items-start content-start p-0 gap-2 overflow-y-auto scrollbar-hide pr-0.5"
                 >
                   {/* 1. Selected Chips ALWAYS rendered first */}
                   {displayedChips.selected.map((skill, index) => (

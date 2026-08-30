@@ -252,7 +252,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
 
             {/* Month Dropdown Menu */}
             {isMonthSelectOpen && (
-              <div className="absolute top-10 left-0 z-50 w-28 max-h-48 overflow-y-auto bg-zinc-900 border border-neutral-800 rounded-lg shadow-xl p-1 flex flex-col gap-0.5 custom-scrollbar">
+              <div className="absolute top-10 left-0 z-50 w-28 max-h-48 overflow-y-auto bg-zinc-900 border border-neutral-800 rounded-lg shadow-xl p-1 flex flex-col gap-0.5 scrollbar-hide">
                 {SHORT_MONTHS.map((mName, idx) => {
                   const isMonthDisabled = viewYear === computedMaxYear && idx > maxDate.getMonth();
                   const isSelected = viewMonth === idx;
@@ -300,7 +300,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
 
             {/* Year Dropdown Menu */}
             {isYearSelectOpen && (
-              <div className="absolute top-10 right-0 z-50 w-24 max-h-48 overflow-y-auto bg-zinc-900 border border-neutral-800 rounded-lg shadow-xl p-1 flex flex-col gap-0.5 custom-scrollbar">
+              <div className="absolute top-10 right-0 z-50 w-24 max-h-48 overflow-y-auto bg-zinc-900 border border-neutral-800 rounded-lg shadow-xl p-1 flex flex-col gap-0.5 scrollbar-hide">
                 {yearOptions.map((y) => {
                   const isSelected = viewYear === y;
                   return (

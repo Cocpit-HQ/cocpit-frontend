@@ -25,7 +25,7 @@ export const OnboardingProgressBar: React.FC<OnboardingProgressBarProps> = ({
       </span>
 
       {/* Frame 32: 360px x 6px Track and Fill */}
-      <div className="w-[360px] h-[6px] bg-[#1A1A20] border border-[#2C2C33] rounded-[100px] overflow-hidden relative">
+      <div className="w-[360px] h-[6px] bg-[#222228] border border-[#2C2C33] rounded-[100px] overflow-hidden relative">
         <div
           className="h-full bg-[#EC6229] rounded-[100px] transition-all duration-300 ease-out"
           style={{ width: `${percentage}%` }}

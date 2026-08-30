@@ -185,15 +185,6 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
         <div className="size-4 p-0.5 inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden shrink-0">
           {isLoading ? (
             <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-[#B8ADA8]" />
-          ) : clearable && (searchable ? searchQuery : currentText) ? (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="w-3.5 h-3.5 flex items-center justify-center text-stone-500 hover:text-[#FFECE6] transition-colors"
-              aria-label="Clear selection"
-            >
-              <CloseCrossIcon size={12} className="w-3 h-3" />
-            </button>
           ) : (
             <div
               className={`w-4 h-4 flex items-center justify-center transition-transform duration-200 ${
@@ -223,7 +214,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
           }`}
         >
           {/* Options List */}
-          <div className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 custom-scrollbar pr-1">
+          <div className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, index) => {
                 const isSelected = opt.id === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
