@@ -144,6 +144,11 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   // Toggle skill selection directly in store
   const handleToggleSkill = (skillName: string) => {
     const exists = selectedSkills.includes(skillName);
+    
+    if (!exists && selectedSkills.length >= 7) {
+      return;
+    }
+
     const updated = exists
       ? selectedSkills.filter((s) => s !== skillName)
       : [...selectedSkills, skillName];
@@ -154,9 +159,10 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   const searchResults = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (q.length < 3) return [];
-    const exactMatch = availableSkills.some(
-      (s) => s.toLowerCase() === q || selectedSkills.some((sel) => sel.toLowerCase() === q)
-    );
+    const isAlreadySelected = selectedSkills.some((sel) => sel.toLowerCase() === q);
+    const isAvailable = availableSkills.some((s) => s.toLowerCase() === q);
+    const exactMatch = isAvailable || isAlreadySelected;
+    
     const customOption = !exactMatch ? [search.trim()] : [];
     const matched = availableSkills.filter((s) => s.toLowerCase().includes(q));
     return Array.from(new Set([...customOption, ...matched]));
@@ -178,7 +184,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   // Validation rules: 3 to 7 skills
   const isValid = selectedSkills.length >= 3 && selectedSkills.length <= 7;
   const isBelowMin = selectedSkills.length < 3;
-  const isAboveMax = selectedSkills.length > 7;
+  const isAboveMax = selectedSkills.length >= 7;
 
   // Submit Handler
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -243,7 +249,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
 
             {/* If searching >= 3 characters: Show Figma Dropdown List View */}
             {search.trim().length >= 3 ? (
-              <div className="w-64 max-h-[180px] py-2 px-2 bg-black border border-[#2C2C33] rounded-lg flex flex-col justify-start items-start gap-1 overflow-y-auto custom-scrollbar shadow-2xl">
+              <div className="w-64 max-h-[180px] py-2 bg-black flex flex-col justify-start items-start gap-1 overflow-y-auto custom-scrollbar">
                 {searchResults.length > 0 ? (
                   searchResults.map((item, index) => {
                     const isSelected = selectedSkills.includes(item);
@@ -255,10 +261,10 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                           handleToggleSkill(item);
                           setSearch("");
                         }}
-                        className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 px-3 py-1.5 rounded-md transition-colors cursor-pointer truncate ${
+                        className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 py-1.5 transition-colors cursor-pointer truncate ${
                           isSelected
-                            ? "text-[#EC6229] font-medium bg-[#1A1A20]"
-                            : "text-[#B8ADA8] hover:text-[#FFECE6] hover:bg-[#1A1A20]"
+                            ? "text-[#EC6229] font-medium"
+                            : "text-[#B8ADA8] hover:text-[#FFECE6]"
                         }`}
                       >
                         <span className="truncate">{item}</span>
@@ -266,7 +272,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                     );
                   })
                 ) : (
-                  <div className="py-2 px-3 text-xs text-stone-500 font-sans">
+                  <div className="py-2 text-xs text-stone-500 font-sans">
                     {loading ? "Searching..." : "No skills found"}
                   </div>
                 )}

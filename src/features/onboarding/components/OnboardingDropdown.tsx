@@ -131,10 +131,17 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
   const filteredOptions = useMemo(() => {
     if (!searchable || !searchQuery.trim()) return options;
     const q = searchQuery.toLowerCase().trim();
-    return options.filter((o) =>
+    const matched = options.filter((o) =>
       o.label.toLowerCase().includes(q) ||
       (o.sublabel && o.sublabel.toLowerCase().includes(q))
     );
+
+    const exactMatch = options.some((o) => o.label.toLowerCase() === q);
+    if (!exactMatch) {
+      return [{ id: searchQuery.trim(), label: searchQuery.trim() }, ...matched];
+    }
+
+    return matched;
   }, [options, searchQuery, searchable]);
 
   return (
@@ -211,7 +218,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {isOpen && (
         <div
-          className={`absolute left-0 z-50 w-64 py-3 px-3 bg-black border border-zinc-800 rounded-lg shadow-2xl flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
+          className={`absolute left-0 z-50 w-64 py-2 bg-black flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
             placement === "top" ? "bottom-[46px]" : "top-[44px]"
           }`}
         >
@@ -228,7 +235,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
                       e.preventDefault();
                       handleItemClick(opt);
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-1 min-h-[30px] flex items-center transition-colors cursor-pointer truncate ${
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 min-h-[30px] flex items-center transition-colors cursor-pointer truncate ${
                       isSelected
                         ? "text-[#EC6229] font-medium"
                         : "text-[#B8ADA8] hover:text-[#FFECE6]"

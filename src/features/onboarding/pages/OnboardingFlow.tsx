@@ -89,7 +89,7 @@ const isStepAhead = (stepA: number, subA: boolean, stepB: number, subB: boolean)
 
 const getMaxAllowedStep = (backendStep: string | null): { step: number; showSubStep: boolean } => {
   if (!backendStep || backendStep === "IDENTITY" || backendStep === "PROFILE") {
-    return { step: 1, showSubStep: false };
+    return { step: 0, showSubStep: false };
   }
   const mappedStep = STEP_MAP[backendStep];
   if (mappedStep !== undefined) {
