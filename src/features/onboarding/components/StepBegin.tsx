@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { UploadIcon, TextFormattingIcon, LoadingIcon, PdfFileIcon } from "@/components/icons";
+import { UploadIcon, TextFormattingIcon, LoadingIcon, PdfFileIcon, DeleteIcon } from "@/components/icons";
 import { parseResume } from "@/services/api/onboarding";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { toast } from "sonner";
@@ -41,6 +41,15 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
   const handleManualCardClick = () => {
     if (isParsing) return;
     setSelected("manual");
+  };
+
+  const handleFileRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedFile(null);
+    setSelected(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,12 +152,12 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
       />
 
       {/* Frame 2608511: Title Section */}
-      <div className="w-[359px] h-[104px] flex flex-col items-center justify-center p-0 gap-2 text-center">
-        <h1 className="text-[32px] font-bold font-['DM_Sans'] leading-[40px] tracking-tight">
+      <div className="w-[359px] flex flex-col items-center justify-center p-0 gap-2 text-center">
+        <h1 className="w-[359px] h-[48px] font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-[#FFECE6] tracking-normal m-0 p-0">
           <span className="text-[#FFECE6]">Set up your </span>
           <span className="text-[#EC6229]">profile</span>
         </h1>
-        <p className="text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-[#FFECE6] max-w-[320px]">
+        <p className="w-[359px] h-[48px] font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-[#FFECE6] self-stretch m-0 p-0">
           Create your profile so people can discover who you are and what you do
         </p>
       </div>
@@ -160,8 +169,10 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           <button
             type="button"
             onClick={handleUploadCardClick}
-            className={`w-[214px] h-[112px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-colors cursor-pointer border-none outline-none ${
-              selected === "upload" ? "bg-[#2C2C33]" : "bg-transparent hover:bg-[#2C2C33]"
+            className={`w-[214px] h-[112px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-all cursor-pointer border outline-none ${
+              selected === "upload"
+                ? "bg-[#2C2C33] border-[#EC6229]"
+                : "bg-transparent border-transparent hover:bg-[#2C2C33]"
             }`}
           >
             {/* Upload Icon Frame */}
@@ -186,14 +197,28 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           /* Uploaded File Selected State */
           <div
             onClick={handleUploadCardClick}
-            className="w-40 px-3 py-2 bg-zinc-900 rounded-2xl outline outline-1 outline-offset-[-0.50px] outline-[#EC6229] flex flex-col justify-start items-center gap-2 overflow-hidden cursor-pointer hover:brightness-110 transition-all"
+            className={`group relative w-[214px] h-[112px] py-2 px-3 rounded-[16px] border flex flex-col justify-center items-center gap-2 cursor-pointer transition-all box-border overflow-hidden ${
+              selected === "upload"
+                ? "bg-zinc-900 border-[#EC6229]"
+                : "bg-transparent border-transparent hover:bg-zinc-900"
+            }`}
           >
-            <div className="flex flex-col justify-start items-center gap-1.5">
-              <div className="flex flex-col justify-start items-center gap-0.5">
-                <div className="w-5 h-5 flex items-center justify-center text-[#FFECE6]">
-                  <PdfFileIcon size={18} className="w-[18px] h-[18px] text-[#FFECE6]" />
+            <div className="flex flex-col justify-center items-center gap-1.5 w-full">
+              <div className="flex flex-col justify-center items-center gap-1 w-full">
+                {/* PDF Icon Frame with Center Remove Overlay on Hover (Matching StepProfile Avatar Pattern) */}
+                <div className="relative w-7 h-7 flex items-center justify-center rounded-lg overflow-hidden">
+                  <PdfFileIcon size={22} className="w-[22px] h-[22px] text-[#FFECE6]" />
+                  {/* Remove Icon Overlay on Hover */}
+                  <div
+                    onClick={handleFileRemove}
+                    className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-lg"
+                    title="Remove file"
+                  >
+                    <DeleteIcon size={16} className="w-4 h-4 text-[#EC6229]" />
+                  </div>
                 </div>
-                <div className="text-[#FFECE6] text-[10px] font-normal font-['DM_Sans'] leading-3 max-w-[130px] truncate text-center">
+
+                <div className="text-[#FFECE6] text-xs font-medium font-['DM_Sans'] leading-4 max-w-[170px] truncate text-center">
                   {selectedFile.name}
                 </div>
               </div>
@@ -203,7 +228,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                className="text-[#FFECE6] text-xs font-normal font-['DM_Sans'] leading-4 hover:underline cursor-pointer"
+                className="text-[#FFECE6] text-xs font-normal font-['DM_Sans'] leading-4 hover:text-[#EC6229] transition-colors cursor-pointer"
               >
                 Change
               </button>
@@ -224,8 +249,10 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
         <button
           type="button"
           onClick={handleManualCardClick}
-          className={`w-[214px] h-[92px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-colors cursor-pointer border-none outline-none ${
-            selected === "manual" ? "bg-[#2C2C33]" : "bg-transparent hover:bg-[#2C2C33]"
+          className={`w-[214px] h-[92px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-all cursor-pointer border outline-none ${
+            selected === "manual"
+              ? "bg-[#2C2C33] border-[#EC6229]"
+              : "bg-transparent border-transparent hover:bg-[#2C2C33]"
           }`}
         >
           {/* Text formatting Icon Frame */}

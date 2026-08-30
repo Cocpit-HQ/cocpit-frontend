@@ -73,8 +73,8 @@ export const OnboardingDatePicker: React.FC<OnboardingDatePickerProps> = ({
         }`}
       >
         <span
-          className={`font-['DM_Sans'] text-[14px] leading-[20px] ${
-            displayValue ? "text-[#FFECE6] font-medium" : "text-[#726B67] font-normal"
+          className={`font-['DM_Sans'] text-[14px] leading-[20px] font-normal ${
+            displayValue ? "text-[#FFECE6]" : "text-[#726B67]"
           }`}
         >
           {displayValue || "Date of birth"}

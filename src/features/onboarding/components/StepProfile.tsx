@@ -371,7 +371,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
                 {/* Frame 2609481: 60px x 60px Upload Circle */}
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] bg-[#1A1A20] border border-[#2C2C33] rounded-[100px] cursor-pointer hover:border-[#EC6229] transition-colors"
+                  className="w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] bg-[#1A1A20] hover:bg-[#222228] border border-[#2C2C33] rounded-[100px] cursor-pointer transition-colors"
                   role="button"
                   tabIndex={0}
                   aria-label="Add photo"
@@ -393,7 +393,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
                 {/* Frame 2609481: 60px x 60px Image Preview Circle */}
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="group relative w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] border border-[#2C2C33] rounded-[100px] overflow-hidden cursor-pointer hover:border-[#EC6229] transition-colors"
+                  className="group relative w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] border border-[#2C2C33] rounded-[100px] overflow-hidden cursor-pointer transition-colors"
                 >
                   <img
                     src={displayImage}
