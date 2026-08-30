@@ -280,6 +280,8 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
                   setIndustry(val);
                 }}
                 searchable
+                allowCustom={false}
+                fallbackOption={{ id: "Other", label: "Other" }}
                 isLoading={loadingIndustries}
                 disabled={submitting}
                 clearable

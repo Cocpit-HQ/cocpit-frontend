@@ -24,6 +24,8 @@ interface OnboardingDropdownProps {
   clearable?: boolean;
   errorMessage?: string;
   placement?: "bottom" | "top";
+  allowCustom?: boolean;
+  fallbackOption?: DropdownOption;
 }
 
 export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
@@ -40,6 +42,8 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
   clearable = true,
   errorMessage,
   placement = "bottom",
+  allowCustom = true,
+  fallbackOption,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>(() => {
@@ -137,12 +141,16 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
     );
 
     const exactMatch = options.some((o) => o.label.toLowerCase() === q);
-    if (!exactMatch) {
+    if (allowCustom && !exactMatch) {
       return [{ id: searchQuery.trim(), label: searchQuery.trim() }, ...matched];
     }
 
+    if (!allowCustom && matched.length === 0 && fallbackOption) {
+      return [fallbackOption];
+    }
+
     return matched;
-  }, [options, searchQuery, searchable]);
+  }, [options, searchQuery, searchable, allowCustom, fallbackOption]);
 
   return (
     <div className="relative w-64 select-none" ref={containerRef} id={id}>
@@ -166,6 +174,14 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={() => setIsOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (isOpen && filteredOptions.length > 0) {
+                  handleItemClick(filteredOptions[0]);
+                }
+              }
+            }}
             placeholder={placeholder}
             disabled={disabled}
             autoComplete="off"

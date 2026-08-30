@@ -207,8 +207,8 @@ export const authOptions: NextAuthOptions = {
           const endpoint = provider === "apple"
             ? "/auth/apple"
             : isSocialLogin
-            ? "/auth/google"
-            : "/auth/login";
+              ? "/auth/google"
+              : "/auth/login";
 
           const body = isSocialLogin
             ? {

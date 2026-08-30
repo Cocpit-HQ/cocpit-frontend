@@ -118,7 +118,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
             setWorkExperienceList(parsed.workExperience);
           }
           if (parsed.skills?.length > 0) {
-            setSelectedSkills(parsed.skills.slice(0, 15));
+            setSelectedSkills(parsed.skills.slice(0, 7));
           }
 
           toast.success("Resume parsed successfully!");
