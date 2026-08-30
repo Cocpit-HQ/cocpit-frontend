@@ -12,6 +12,7 @@ interface OnboardingState {
   initialAccountName: string | null;
   profileImage: string | null;
   profileImageFile: File | null;
+  dob: string | null;
   
   // Location Data
   locationPlaceId: string | null;
@@ -21,6 +22,9 @@ interface OnboardingState {
   locationCity: string | null;
   locationLat: number | null;
   locationLng: number | null;
+
+  // Industry Data
+  industry: string | null;
 
   // Legacy fields (retained for transition)
   locationId: string | null;
@@ -56,6 +60,8 @@ interface OnboardingState {
   setInitialAccountName: (name: string | null) => void;
   setProfileImage: (image: string | null) => void;
   setProfileImageFile: (file: File | null) => void;
+  setDob: (dob: string | null) => void;
+  setIndustry: (industry: string | null) => void;
   setLocation: (loc: { id?: string | number, name?: string | null, placeId?: string, formattedAddress?: string, country?: string, state?: string | null, city?: string, latitude?: string | number | null, longitude?: string | number | null } | null) => void;
   setSelectedInterests: (interests: string[]) => void;
   setSelectedSkills: (skills: string[]) => void;
@@ -78,6 +84,8 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   initialAccountName: null,
   profileImage: null,
   profileImageFile: null,
+  dob: null,
+  industry: null,
   locationPlaceId: null,
   locationFormatted: null,
   locationCountry: null,
@@ -109,6 +117,8 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   setInitialAccountName: (initialAccountName) => set({ initialAccountName }),
   setProfileImage: (profileImage) => set({ profileImage }),
   setProfileImageFile: (profileImageFile) => set({ profileImageFile }),
+  setDob: (dob) => set({ dob }),
+  setIndustry: (industry) => set({ industry }),
   setLocation: (loc) => {
     if (!loc) {
       set({

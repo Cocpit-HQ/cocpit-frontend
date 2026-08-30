@@ -13,6 +13,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        sans: ["var(--font-dm-sans)", "DM Sans", "sans-serif"],
+        "dm-sans": ["var(--font-dm-sans)", "DM Sans", "sans-serif"],
         poppins: ["Twemoji Country Flags", "var(--font-poppins)", "Poppins", "sans-serif"],
       },
       boxShadow: {

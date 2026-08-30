@@ -1,5 +1,5 @@
-import OnboardingPage from "@/components/onboarding/OnboardingPage";
+import { OnboardingFlow } from "@/features/onboarding";
 
 export default function OnboardingRoute() {
-  return <OnboardingPage />;
+  return <OnboardingFlow />;
 }

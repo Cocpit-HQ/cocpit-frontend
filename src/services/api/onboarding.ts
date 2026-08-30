@@ -260,3 +260,43 @@ export const getOnboardingSkills = async (
   return response.data;
 };
 
+// ─── Step 2 Situation & Options Endpoints ─────────────────────────────────
+
+export interface OnboardingOptionItem {
+  id: string;
+  label: string;
+}
+
+export const getOnboardingOptions = async (
+  slug: string,
+  q?: string
+): Promise<OnboardingOptionItem[]> => {
+  const response = await api.get<{ success: boolean; data: OnboardingOptionItem[] }>(
+    `/onboarding/options/${slug}`,
+    {
+      params: q ? { q } : undefined,
+    }
+  );
+  return response.data.data || [];
+};
+
+export interface SaveOnboardingSituationPayload {
+  status: string;
+  industry?: string | null;
+  formattedAddress: string;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeId?: string | null;
+}
+
+export const saveOnboardingSituation = async (
+  payload: SaveOnboardingSituationPayload
+): Promise<any> => {
+  const response = await api.patch("/onboarding/situation", payload);
+  return response.data;
+};
+
+

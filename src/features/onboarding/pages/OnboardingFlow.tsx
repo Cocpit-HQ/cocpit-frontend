@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import LetsBeginStep from "@/components/onboarding/LetsBeginStep";
-import ProfileStep from "@/components/onboarding/ProfileStep";
-import TellUsAboutYouStep from "@/components/onboarding/TellUsAboutYouStep";
-import UserRoleStep from "@/components/onboarding/UserRoleStep";
-import InterestsStep from "@/components/onboarding/InterestsStep";
+import {
+  OnboardingLayout,
+  StepBegin,
+  StepProfile,
+  StepLocationStatus,
+  StepBackground,
+  StepInterests,
+  StepSkills,
+  StepSuccess,
+} from "../components";
 import {
   completeOnboarding,
   saveOnboardingInterests,
@@ -19,49 +24,35 @@ import { useOnboardingStore } from "@/store/onboarding.store";
 import { getProfile } from "@/services/api/profile";
 import { toast } from "sonner";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 import { useSession, signOut } from "next-auth/react";
-
-const EducationStep = lazy(() => import("@/components/onboarding/EducationStep"));
-const WorkExperienceStep = lazy(() => import("@/components/onboarding/WorkExperienceStep"));
-const OpenToWorkStep = lazy(() => import("@/components/onboarding/OpenToWorkStep"));
 
 const ONBOARDING_FLOW: Record<string | number, { next: any; prev: any }> = {
   0: { next: 1, prev: null },
   1: { next: 2, prev: 0 },
   2: { next: 3, prev: 1 },
-  3: { 
-    next: (role: string) => role === "unemployed" ? 4 : "substep",
-    prev: 2 
-  },
-  "substep": { 
-    next: 4, 
-    prev: 3 
-  },
-  4: { 
-    next: 5, 
-    prev: (role: string) => role === "unemployed" ? 3 : "substep" 
-  },
-  5: { next: null, prev: 4 }
+  3: { next: 4, prev: 2 },
+  4: { next: 5, prev: 3 },
+  5: { next: null, prev: 4 },
 };
 
 // Maps backend onboarding_step string → frontend step number
 const STEP_MAP: Record<string, number> = {
+  IDENTITY:  1,
   PROFILE:   1,
   LOCATION:  2,
   ROLE:      3,
-  DETAILS:   3, // substep handled separately
-  INTERESTS: 4,
-  SKILLS:    5,
+  DETAILS:   3,
+  SKILLS:    4,
+  INTERESTS: 5,
 };
 
-const stepToKey = (stepNum: number, isSubStep: boolean): string => {
+const stepToKey = (stepNum: number, _isSubStep?: boolean): string => {
   if (stepNum === 0) return "begin";
   if (stepNum === 1) return "profile";
   if (stepNum === 2) return "location";
-  if (stepNum === 3) return isSubStep ? "details" : "role";
-  if (stepNum === 4) return "interests";
-  if (stepNum === 5) return "skills";
+  if (stepNum === 3) return "details";
+  if (stepNum === 4) return "skills";
+  if (stepNum === 5) return "interests";
   return "begin";
 };
 
@@ -70,28 +61,22 @@ const keyToStep = (key: string): { step: number; showSubStep: boolean } => {
     case "begin": return { step: 0, showSubStep: false };
     case "profile": return { step: 1, showSubStep: false };
     case "location": return { step: 2, showSubStep: false };
-    case "role": return { step: 3, showSubStep: false };
-    case "details": return { step: 3, showSubStep: true };
-    case "interests": return { step: 4, showSubStep: false };
-    case "skills": return { step: 5, showSubStep: false };
+    case "details":
+    case "role":
+    case "background":
+    case "experience":
+    case "education":
+      return { step: 3, showSubStep: false };
+    case "skills": return { step: 4, showSubStep: false };
+    case "interests": return { step: 5, showSubStep: false };
     default: return { step: 0, showSubStep: false };
   }
 };
 
-const getPrevStep = (currentStep: number, isSubStep: boolean, role: string): { step: number; showSubStep: boolean } | null => {
-  const currentState = isSubStep ? "substep" : currentStep;
-  const config = ONBOARDING_FLOW[currentState];
+const getPrevStep = (currentStep: number, _isSubStep: boolean, _role: string): { step: number; showSubStep: boolean } | null => {
+  const config = ONBOARDING_FLOW[currentStep];
   if (!config || config.prev === null) return null;
-
-  const target = typeof config.prev === "function"
-    ? config.prev(role)
-    : config.prev;
-
-  if (target === "substep") {
-    return { step: 3, showSubStep: true };
-  } else {
-    return { step: target, showSubStep: false };
-  }
+  return { step: config.prev, showSubStep: false };
 };
 
 const isStepAhead = (stepA: number, subA: boolean, stepB: number, subB: boolean): boolean => {
@@ -103,11 +88,8 @@ const isStepAhead = (stepA: number, subA: boolean, stepB: number, subB: boolean)
 };
 
 const getMaxAllowedStep = (backendStep: string | null): { step: number; showSubStep: boolean } => {
-  if (!backendStep) {
-    return { step: 0, showSubStep: false };
-  }
-  if (backendStep === "DETAILS") {
-    return { step: 3, showSubStep: true };
+  if (!backendStep || backendStep === "IDENTITY" || backendStep === "PROFILE") {
+    return { step: 1, showSubStep: false };
   }
   const mappedStep = STEP_MAP[backendStep];
   if (mappedStep !== undefined) {
@@ -116,8 +98,7 @@ const getMaxAllowedStep = (backendStep: string | null): { step: number; showSubS
   return { step: 5, showSubStep: false };
 };
 
-export default function OnboardingPage() {
-  useForceLightTheme();
+export default function OnboardingFlow() {
   const {
     step, setStep,
     userRole, setUserRole,
@@ -125,11 +106,10 @@ export default function OnboardingPage() {
     selectedInterests, setSelectedInterests,
     selectedSkills, setSelectedSkills,
     isInitialized, setInitialized,
-    setFullName, setAccountName, setInitialAccountName, setProfileImage,
+    setFullName, setAccountName, setInitialAccountName, setProfileImage, setDob, setIndustry,
     setLocation, setEducation, setWorkExperience,
-    educationList, setEducationList,
-    workExperienceList, setWorkExperienceList,
-    parsedResumeData,
+    educationList,
+    workExperienceList,
   } = useOnboardingStore();
   const { update } = useSession();
 
@@ -243,11 +223,12 @@ export default function OnboardingPage() {
             setInitialAccountName(u.account_name);
           }
           if (u.avatar) setProfileImage(u.avatar);
+          if (u.dob) setDob(typeof u.dob === "string" ? u.dob.split("T")[0] : String(u.dob).split("T")[0]);
 
           // ── Step 2: Location (structured) ──────────────────────────────
-          if (u.location_place_id) {
+          if (u.location_formatted || u.location || u.location_place_id) {
             setLocation({
-              placeId: u.location_place_id,
+              placeId: u.location_place_id || "loc-default",
               formattedAddress: u.location_formatted || u.location || "",
               country: u.location_country || "",
               state: u.location_state || null,
@@ -257,8 +238,11 @@ export default function OnboardingPage() {
             });
           }
 
-          // ── Step 3: Role ────────────────────────────────────────────────
+          // ── Step 2: Role & Industry ─────────────────────────────────────
           if (u.user_role) setUserRole(u.user_role);
+          if (u.working_industry || u.industry) {
+            setIndustry(u.working_industry || u.industry || null);
+          }
 
           // ── Step 3 Details: Education & Work ────────────────────────────
           if (profile.educations && profile.educations.length > 0) {
@@ -266,20 +250,21 @@ export default function OnboardingPage() {
             setEducation(latestEd.school_name || "", latestEd.degree || "");
           }
           if (profile.experiences && profile.experiences.length > 0) {
-            // experiences are returned grouped by company_name
             const latestExpGroup = profile.experiences[0];
             if (latestExpGroup.experiences && latestExpGroup.experiences.length > 0) {
               const latestExp = latestExpGroup.experiences[0];
               setWorkExperience(latestExp.company_name || "", latestExp.title || "");
+            } else if (latestExpGroup.company_name) {
+              setWorkExperience(latestExpGroup.company_name, "");
             }
           }
 
-          // ── Step 4: Interests (already submitted) ───────────────────────
+          // ── Step 4: Interests ──────────────────────────────────────────
           if (u.interest_names && u.interest_names.length > 0) {
             setSelectedInterests(u.interest_names);
           }
 
-          // ── Step 5: Skills (already submitted) ─────────────────────────
+          // ── Step 5: Skills ────────────────────────────────────────────
           if (u.skill_names && u.skill_names.length > 0) {
             setSelectedSkills(u.skill_names);
           }
@@ -433,7 +418,7 @@ export default function OnboardingPage() {
       }
       advanceMaxAllowedStep(4, false);
       setStep(4);
-      window.history.pushState({ stepKey: "interests" }, "", "?step=interests");
+      window.history.pushState({ stepKey: "skills" }, "", "?step=skills");
     } else {
       advanceMaxAllowedStep(3, true);
       setShowSubStep(true);
@@ -445,43 +430,22 @@ export default function OnboardingPage() {
     advanceMaxAllowedStep(4, false);
     setShowSubStep(false);
     setStep(4);
-    window.history.pushState({ stepKey: "interests" }, "", "?step=interests");
+    window.history.pushState({ stepKey: "skills" }, "", "?step=skills");
   };
 
-  const handleInterestsSubmit = async () => {
-    if (selectedInterests.length < 3) {
+  const handleInterestsSubmit = async (items: string[]) => {
+    if (items.length < 3) {
       toast.error("Please select at least 3 interests");
       return;
     }
-    if (selectedInterests.length > 7) {
+    if (items.length > 7) {
       toast.error("Please select at most 7 interests");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await saveOnboardingInterests(selectedInterests);
-      advanceMaxAllowedStep(5, false);
-      setStep(5);
-      window.history.pushState({ stepKey: "skills" }, "", "?step=skills");
-    } catch (error: any) {
-      console.error("Failed to save interests:", error);
-      const message = error.response?.data?.message || "Failed to save interests. Please try again.";
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSkillsSubmit = async () => {
-    if (selectedSkills.length < 3) {
-      toast.error("Please select at least 3 skills");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await saveOnboardingSkills(selectedSkills);
+      await saveOnboardingInterests(items);
       await completeOnboarding();
       sessionStorage.removeItem("cocpit_onboarding_step");
       sessionStorage.removeItem("cocpit_active_onboarding_session");
@@ -493,10 +457,10 @@ export default function OnboardingPage() {
       toast.success("Onboarding completed!");
       setTimeout(() => {
         window.location.href = "/feed";
-      }, 2000);
+      }, 120000); // 2 minutes for testing
     } catch (error: any) {
       console.error("Failed to complete onboarding:", error);
-      const message = error.response?.data?.message || "Failed to complete onboarding. Please check your connection.";
+      const message = error.response?.data?.message || "Failed to complete onboarding. Please try again.";
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -504,22 +468,29 @@ export default function OnboardingPage() {
   };
 
   const renderStepContent = (activeStep: number, activeSubStep: boolean) => {
+    if (isCompleted || activeStep >= 6) {
+      return <StepSuccess redirectUrl="/profile" delayMs={120000} />; // 2 minutes for testing
+    }
+
     return (
-      <div className="min-h-screen bg-white overflow-hidden relative" data-theme="light">
+      <OnboardingLayout
+        onBack={handleBack}
+        showBack={activeStep > 0 || activeSubStep}
+      >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeSubStep ? `substep-${userRole}` : `step-${activeStep}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="min-h-screen"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="flex items-center justify-center w-full"
           >
             {activeStep === 0 && (
-              <LetsBeginStep onNext={handleNext} />
+              <StepBegin onNext={handleNext} />
             )}
             {activeStep === 1 && (
-              <ProfileStep
+              <StepProfile
                 onNext={handleNext}
                 onBack={handleBack}
                 currentStep={1}
@@ -527,7 +498,7 @@ export default function OnboardingPage() {
               />
             )}
             {activeStep === 2 && (
-              <TellUsAboutYouStep
+              <StepLocationStatus
                 onNext={handleNext}
                 onBack={handleBack}
                 currentStep={2}
@@ -535,94 +506,32 @@ export default function OnboardingPage() {
               />
             )}
             {activeStep === 3 && (
-              !activeSubStep ? (
-                <UserRoleStep
-                  onNext={handleRoleSelect}
-                  onBack={handleBack}
-                  currentStep={3}
-                  totalSteps={totalSteps}
-                />
-              ) : (
-                <Suspense fallback={
-                  <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
-                  </div>
-                }>
-                  {["student", "fresher", "intern"].includes(userRole || "") ? (
-                    <EducationStep
-                      onNext={handleDetailsSubmit}
-                      onBack={handleBack}
-                      currentStep={3}
-                      totalSteps={totalSteps}
-                    />
-                  ) : userRole === "employed" || userRole === "self_employed" ? (
-                    <WorkExperienceStep
-                      onNext={handleDetailsSubmit}
-                      onBack={handleBack}
-                      currentStep={3}
-                      totalSteps={totalSteps}
-                    />
-                  ) : (
-                    <OpenToWorkStep
-                      onNext={handleDetailsSubmit}
-                      onBack={handleBack}
-                      currentStep={3}
-                      totalSteps={totalSteps}
-                    />
-                  )}
-                </Suspense>
-              )
+              <StepBackground
+                onNext={handleNext}
+                onBack={handleBack}
+                currentStep={3}
+                totalSteps={totalSteps}
+              />
             )}
             {activeStep === 4 && (
-              <InterestsStep
-                onNext={handleInterestsSubmit}
+              <StepSkills
+                onNext={handleNext}
                 onBack={handleBack}
                 currentStep={4}
                 totalSteps={totalSteps}
-                title="What are you interested in?"
-                subtitle="Select a few to personalize your feed"
-                placeholder="Search interests"
-                initialData={interestItems}
-                selectedItems={selectedInterests}
-                onChange={setSelectedInterests}
-                isLoading={isSubmitting}
-                isFetchingInitial={isLoadingInterests}
-                isLoadingMore={isFetchingMoreInterests}
-                hasMore={hasMoreInterests}
-                loadingText="Loading interests..."
-                onLoadMore={fetchNextInterests}
-                onSearchChange={setInterestSearch}
-                minSelection={3}
-                maxSelection={7}
               />
             )}
             {activeStep === 5 && (
-              <InterestsStep
-                onNext={handleSkillsSubmit}
+              <StepInterests
+                onNext={() => setIsCompleted(true)}
                 onBack={handleBack}
                 currentStep={5}
                 totalSteps={totalSteps}
-                title="Add your skills to continue"
-                subtitle="Help us match you with better opportunities"
-                placeholder="Search"
-                initialData={skillItems}
-                actionLabel="Continue"
-                selectedItems={selectedSkills}
-                onChange={setSelectedSkills}
-                isLoading={isSubmitting}
-                isFetchingInitial={isLoadingSkills}
-                isLoadingMore={isFetchingMoreSkills}
-                hasMore={hasMoreSkills}
-                loadingText="Loading skills..."
-                onLoadMore={fetchNextSkills}
-                onSearchChange={setSkillSearch}
-                minSelection={3}
-                maxSelection={15}
               />
             )}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </OnboardingLayout>
     );
   };
 
@@ -637,6 +546,12 @@ export default function OnboardingPage() {
         const saved = sessionStorage.getItem("cocpit_onboarding_step");
         if (saved) {
           localSaved = JSON.parse(saved);
+        } else {
+          const params = new URLSearchParams(window.location.search);
+          const urlStep = params.get("step");
+          if (urlStep) {
+            localSaved = keyToStep(urlStep);
+          }
         }
       } catch (e) {
         // ignore
@@ -648,77 +563,22 @@ export default function OnboardingPage() {
     }
 
     return (
-      <div className="min-h-screen bg-white overflow-hidden relative flex flex-col items-center justify-center p-4" data-theme="light">
-        <div className="w-full max-w-[480px] bg-white rounded-2xl border border-zinc-100 p-6 md:p-8 space-y-8 animate-pulse">
-          {/* Header Skeleton */}
-          <div className="flex items-center justify-between">
-            <div className="w-12 h-12 bg-zinc-200 rounded-xl"></div>
-            <div className="space-y-2 w-32">
-              <div className="h-3 bg-zinc-200 rounded w-16 ml-auto"></div>
-              <div className="h-1.5 bg-zinc-200 rounded w-32"></div>
-            </div>
-          </div>
-
-          {/* Heading Skeleton */}
-          <div className="space-y-3 pt-4">
-            <div className="h-7 bg-zinc-200 rounded w-48"></div>
-            <div className="h-4 bg-zinc-200 rounded w-72"></div>
-          </div>
-
-          {/* Large Card Options or Avatar Skeleton */}
-          <div className="space-y-4 pt-2">
-            <div className="h-32 bg-zinc-100 rounded-xl border border-dashed border-zinc-200 flex flex-col items-center justify-center p-6 space-y-3">
-              <div className="w-10 h-10 bg-zinc-200 rounded-full"></div>
-              <div className="h-4 bg-zinc-200 rounded w-36"></div>
-              <div className="h-3 bg-zinc-200 rounded w-24"></div>
-            </div>
-            
-            <div className="h-16 bg-zinc-100 rounded-xl border border-zinc-200 flex items-center px-6 space-x-4">
-              <div className="w-8 h-8 bg-zinc-200 rounded-full"></div>
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-zinc-200 rounded w-28"></div>
-                <div className="h-3 bg-zinc-200 rounded w-44"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Fields Skeleton */}
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <div className="h-3.5 bg-zinc-200 rounded w-20"></div>
-              <div className="h-11 bg-zinc-100 rounded-lg border border-zinc-200"></div>
-            </div>
-          </div>
-
-          {/* Action Buttons Skeleton */}
-          <div className="flex items-center space-x-3 pt-6">
-            <div className="w-11 h-11 bg-zinc-100 rounded-lg border border-zinc-200"></div>
-            <div className="flex-1 h-11 bg-zinc-200 rounded-lg"></div>
-          </div>
+      <OnboardingLayout>
+        <div className="w-[391px] min-h-[456px] rounded-[24px] p-6 flex flex-col items-center justify-center gap-4 animate-pulse">
+          <div className="w-8 h-8 rounded-full border-2 border-[#EC6229] border-t-transparent animate-spin" />
+          <span className="text-sm font-medium text-[#B8ADA8] font-['DM_Sans']">
+            Loading your profile...
+          </span>
         </div>
-      </div>
+      </OnboardingLayout>
     );
   }
 
   if (isCompleted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white" data-theme="light">
-        <div className="flex flex-col items-center" style={{ width: "208px", gap: "8px" }}>
-          <img
-            src="/assets/profilecompletion.svg"
-            alt="Success"
-            className="object-contain"
-            style={{ width: "200px", height: "200px" }}
-          />
-          <h1 className="text-[28px] leading-tight font-bold m-0 p-0 text-center">
-            <span className="text-[#6366F1]">You're</span>{" "}
-            <span className="text-[#10b981]">all set</span>
-          </h1>
-          <p className="text-[#71717A] text-[13px] m-0 p-0 font-normal animate-pulse text-center">
-            Loading...
-          </p>
-        </div>
-      </div>
+      <OnboardingLayout showClose={false}>
+        <StepSuccess />
+      </OnboardingLayout>
     );
   }
 

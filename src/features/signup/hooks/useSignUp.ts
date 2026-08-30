@@ -253,7 +253,7 @@ export function useSignUp() {
     }
     const session = await getSession();
     if (!session || !session.user) {
-      window.location.href = "/onboarding";
+      window.location.href = "/onboarding?step=begin";
       return;
     }
 

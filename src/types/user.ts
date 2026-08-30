@@ -122,6 +122,8 @@ export interface UserData {
   skill_names?: string[];
   interest_names?: string[];
   industry?: string | null;
+  working_industry?: string | null;
+  dob?: string | null;
 }
 
 export interface UpdateProfilePayload {

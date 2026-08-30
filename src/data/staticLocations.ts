@@ -43,6 +43,10 @@ export const STATIC_LOCATIONS: StaticLocation[] = [
   { id: "noida-in", city: "Noida", state: "Uttar Pradesh", country: "India", formattedAddress: "Noida, Uttar Pradesh, India", latitude: 28.5355, longitude: 77.391 },
   { id: "mysore-in", city: "Mysuru", state: "Karnataka", country: "India", formattedAddress: "Mysuru, Karnataka, India", latitude: 12.2958, longitude: 76.6394 },
   { id: "bhubaneswar-in", city: "Bhubaneswar", state: "Odisha", country: "India", formattedAddress: "Bhubaneswar, Odisha, India", latitude: 20.2961, longitude: 85.8245 },
+  { id: "kolhapur-in", city: "Kolhapur", state: "Maharashtra", country: "India", formattedAddress: "Kolhapur, Maharashtra, India", latitude: 16.705, longitude: 74.2433 },
+  { id: "sangli-in", city: "Sangli", state: "Maharashtra", country: "India", formattedAddress: "Sangli, Maharashtra, India", latitude: 16.8524, longitude: 74.5815 },
+  { id: "satara-in", city: "Satara", state: "Maharashtra", country: "India", formattedAddress: "Satara, Maharashtra, India", latitude: 17.6805, longitude: 73.9934 },
+  { id: "solapur-in", city: "Solapur", state: "Maharashtra", country: "India", formattedAddress: "Solapur, Maharashtra, India", latitude: 17.6599, longitude: 75.9064 },
 
   // UAE
   { id: "dubai-ae", city: "Dubai", state: "Dubai", country: "United Arab Emirates", formattedAddress: "Dubai, UAE", latitude: 25.2048, longitude: 55.2708 },
