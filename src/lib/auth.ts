@@ -176,6 +176,7 @@ export const authOptions: NextAuthOptions = {
         provider: { label: "Provider", type: "text" },
         fullName: { label: "Full Name", type: "text" },
         accountType: { label: "Account Type", type: "text" },
+        action: { label: "Action", type: "text" },
       },
       async authorize(credentials, req) {
         const isSocialLogin = !!credentials?.idToken;
@@ -214,6 +215,7 @@ export const authOptions: NextAuthOptions = {
               idToken: credentials!.idToken,
               ...(credentials!.fullName ? { fullName: credentials!.fullName } : {}),
               ...(credentials!.accountType ? { accountType: credentials!.accountType } : {}),
+              ...(credentials!.action ? { action: credentials!.action } : {}),
             }
             : {
               email: credentials!.email,
@@ -243,6 +245,12 @@ export const authOptions: NextAuthOptions = {
                 message: data.message,
                 deletionDate: data.deletionDate,
                 email: data.email,
+              }));
+            }
+            if (data?.code === "ACCOUNT_NOT_FOUND") {
+              throw new Error(JSON.stringify({
+                code: "ACCOUNT_NOT_FOUND",
+                message: data.message,
               }));
             }
             throw new Error(data?.message || "Authentication failed");

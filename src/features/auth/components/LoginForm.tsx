@@ -38,8 +38,9 @@ const LoginForm = () => {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Pending deletion state — shown when backend returns 403 ACCOUNT_PENDING_DELETION
   const [pendingDeletion, setPendingDeletion] = useState<{ deletionDate: string; email: string } | null>(null);
+  const [showNoAccountModal, setShowNoAccountModal] = useState(false);
+  const [pendingSocialLogin, setPendingSocialLogin] = useState<{ idToken: string; provider: string; fullName?: string } | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -156,6 +157,19 @@ const LoginForm = () => {
     return false;
   };
 
+  const tryParseNoAccountError = (errorStr: string): boolean => {
+    try {
+      const parsed = JSON.parse(errorStr);
+      if (parsed?.code === "ACCOUNT_NOT_FOUND") {
+        setShowNoAccountModal(true);
+        return true;
+      }
+    } catch {
+      // Not a JSON error
+    }
+    return false;
+  };
+
   // ─── Credential Login ────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,14 +209,20 @@ const LoginForm = () => {
   const handleGoogleLogin = async (idToken: string) => {
     setIsGoogleLoading(true);
     setPendingDeletion(null);
+    setPendingSocialLogin(null);
     try {
       const result = await signIn("credentials", {
         idToken,
+        action: "login",
         redirect: false,
       });
 
       if (result?.error) {
-        tryParseDeletionError(result.error, email);
+        if (tryParseNoAccountError(result.error)) {
+          setPendingSocialLogin({ idToken, provider: "google" });
+        } else {
+          tryParseDeletionError(result.error, email);
+        }
         setIsGoogleLoading(false);
       } else {
         await handlePostLoginRedirect();
@@ -217,6 +237,7 @@ const LoginForm = () => {
     if (isLoading || isGoogleLoading || isAppleLoading) return;
     setIsAppleLoading(true);
     setPendingDeletion(null);
+    setPendingSocialLogin(null);
     try {
       if (typeof window === "undefined" || !(window as any).AppleID?.auth) {
         console.warn("Apple Sign-In SDK is not ready.");
@@ -236,11 +257,16 @@ const LoginForm = () => {
           idToken,
           provider: "apple",
           fullName,
+          action: "login",
           redirect: false,
         });
 
         if (result?.error) {
-          tryParseDeletionError(result.error, email);
+          if (tryParseNoAccountError(result.error)) {
+            setPendingSocialLogin({ idToken, provider: "apple", fullName });
+          } else {
+            tryParseDeletionError(result.error, email);
+          }
           setIsAppleLoading(false);
         } else {
           await handlePostLoginRedirect();
@@ -250,6 +276,38 @@ const LoginForm = () => {
       }
     } catch (err: any) {
       console.warn("Apple login error:", err);
+      setIsAppleLoading(false);
+    }
+  };
+
+  // ─── Auto-Create Social Account from Modal ──────────────────────────────────
+  const handleCreateSocialAccount = async () => {
+    if (!pendingSocialLogin) return;
+    
+    setShowNoAccountModal(false);
+    
+    if (pendingSocialLogin.provider === "google") setIsGoogleLoading(true);
+    else setIsAppleLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        idToken: pendingSocialLogin.idToken,
+        provider: pendingSocialLogin.provider,
+        ...(pendingSocialLogin.fullName && { fullName: pendingSocialLogin.fullName }),
+        // Notice we do NOT pass action: "login" here, so backend defaults to account creation
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setAuthError("Failed to create account. Please try again.");
+        setIsGoogleLoading(false);
+        setIsAppleLoading(false);
+      } else {
+        await handlePostLoginRedirect();
+      }
+    } catch (err) {
+      setAuthError("Failed to create account. Please try again.");
+      setIsGoogleLoading(false);
       setIsAppleLoading(false);
     }
   };
@@ -511,6 +569,41 @@ const LoginForm = () => {
             router.replace("/", { scroll: false });
           }}
         />
+      )}
+
+      {/* Account Not Found Modal */}
+      {showNoAccountModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="box-border w-[318px] h-[142px] bg-[#030303] border border-[#2C2C33] rounded-2xl flex flex-col items-center px-3 py-2 gap-4">
+            
+            <div className="w-[292px] flex flex-col items-center gap-2">
+              <h3 className="font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6]">
+                No account found
+              </h3>
+              <p className="font-['DM_Sans'] font-normal text-sm leading-5 text-center text-[#B8ADA8]">
+                This account isn't registered with Cocpit. Create an account to continue
+              </p>
+            </div>
+
+            <div className="w-[292px] flex justify-center items-start gap-2">
+              <button
+                type="button"
+                onClick={handleCreateSocialAccount}
+                className="w-[142px] h-[36px] flex justify-center items-center px-3 py-1.5 bg-[#EC6229] rounded-[100px] font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] hover:bg-[#D95522] transition-colors cursor-pointer shrink-0"
+              >
+                Create account
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNoAccountModal(false)}
+                className="w-[142px] h-[36px] flex justify-center items-center px-3 py-1.5 border border-[#2C2C33] rounded-[100px] font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+              >
+                Cancel
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
     </div>
   );
