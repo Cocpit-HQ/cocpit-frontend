@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import {
   LoadingIcon,
   ImageIcon,
@@ -19,6 +20,7 @@ import UnderlineInput from "./UnderlineInput";
 import PillButton from "./PillButton";
 import OnboardingProgressBar from "./OnboardingProgressBar";
 import OnboardingDatePicker from "./OnboardingDatePicker";
+import { CocpitUserProfileImageEditor } from "@/shared/commonComponents/CocpitUserProfileImageEditor";
 
 interface StepProfileProps {
   onNext: () => void;
@@ -48,9 +50,14 @@ export const StepProfile: React.FC<StepProfileProps> = ({
     isInitialized,
   } = useOnboardingStore();
 
+  const searchParams = useSearchParams();
+  const themeParam = (searchParams?.get("theme") as "dark" | "light") || "dark";
+
   const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isImageEditorOpen, setIsImageEditorOpen] = useState(false);
+  const [editorInitialImage, setEditorInitialImage] = useState<string | null>(null);
   const [loadingInitial, setLoadingInitial] = useState(!isInitialized);
 
   // Date of Birth state (Mandatory field)
@@ -150,23 +157,28 @@ export const StepProfile: React.FC<StepProfileProps> = ({
     };
   }, [debouncedAccountName, loadingInitial, initialAccountName]);
 
-  // Handle avatar selection from file picker
+  // Handle avatar selection from file picker: opens CocpitImageEditor with selected image
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setProfileImageFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
-        setProfileImage(event.target?.result as string);
+        const dataUrl = event.target?.result as string;
+        setEditorInitialImage(dataUrl);
+        setIsImageEditorOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
-  const handleAvatarDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleAvatarDelete = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setProfileImage(null);
     setProfileImageFile(null);
+    setEditorInitialImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -388,8 +400,16 @@ export const StepProfile: React.FC<StepProfileProps> = ({
               <div className="w-[80px] h-[84px] flex flex-col items-center p-0 gap-[8px]">
                 {/* Frame 2609481: 60px x 60px Image Preview Circle */}
                 <div
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    setEditorInitialImage(displayImage);
+                    setIsImageEditorOpen(true);
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                   className="group relative w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] border border-[#2C2C33] rounded-[100px] overflow-hidden cursor-pointer transition-colors"
+                  title="Click to edit, double-click to change"
                 >
                   <img
                     src={displayImage}
@@ -465,6 +485,27 @@ export const StepProfile: React.FC<StepProfileProps> = ({
           </form>
         </div>
       </div>
+
+      {/* Cocpit User Profile Image Editor Modal */}
+      <CocpitUserProfileImageEditor
+        isOpen={isImageEditorOpen}
+        onClose={() => setIsImageEditorOpen(false)}
+        initialImage={editorInitialImage}
+        theme={themeParam}
+        onSave={(dataUrl, file) => {
+          setProfileImage(dataUrl);
+          setProfileImageFile(file);
+          setIsImageEditorOpen(false);
+        }}
+        onRemove={() => {
+          setProfileImage(null);
+          setProfileImageFile(null);
+          setEditorInitialImage(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        }}
+      />
     </div>
   );
 };
