@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { CloseCrossIcon, CocpitLogoIcon, LeftArrowIcon } from "@/components/icons";
@@ -20,9 +20,20 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   onClose,
   showClose = true,
 }) => {
-  const handleClose =
-    onClose ||
-    (async () => {
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
+
+  const handleCloseClick = () => {
+    setShowConfirmClose(true);
+  };
+
+  const handleStay = () => {
+    setShowConfirmClose(false);
+  };
+
+  const handleLeave = async () => {
+    if (onClose) {
+      onClose();
+    } else {
       try {
         if (typeof window !== "undefined") {
           localStorage.removeItem("nextauth.message");
@@ -33,7 +44,8 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         // ignore
       }
       await signOut({ redirect: true, callbackUrl: "/" });
-    });
+    }
+  };
 
   return (
     <main
@@ -62,7 +74,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       {showClose && (
         <button
           type="button"
-          onClick={handleClose}
+          onClick={handleCloseClick}
           aria-label="Close"
           className="absolute right-[40px] top-[40px] w-[24px] h-[24px] flex flex-row items-center justify-center p-0 text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer z-20"
         >
@@ -87,6 +99,42 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           <CocpitLogoIcon className="w-[27px] h-[30px]" />
         </Link>
       </div>
+
+      {/* Confirmation Popup */}
+      {showConfirmClose && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="flex flex-col items-center p-[8px_12px] gap-[16px] bg-[#030303] border border-[#2C2C33] rounded-[16px] box-border absolute"
+            style={{ width: "193px", height: "142px" }}
+          >
+            <div className="flex flex-col items-center p-0 gap-[8px] w-[167px] h-[72px]">
+              <span className="font-medium text-[16px] leading-[24px] text-[#FFECE6] whitespace-nowrap">
+                Leave profile setup?
+              </span>
+              <span className="font-normal text-[14px] leading-[20px] text-center text-[#B8ADA8]">
+                Don't worry, your progress will be saved
+              </span>
+            </div>
+            
+            <div className="flex flex-row justify-center items-start p-0 gap-[8px] w-[144px] h-[36px]">
+              <button
+                type="button"
+                onClick={handleStay}
+                className="flex flex-row justify-center items-center p-[6px_12px] gap-[10px] w-[68px] h-[36px] bg-[#EC6229] rounded-[100px] font-medium text-[16px] leading-[24px] text-[#FFECE6] hover:opacity-90 transition-opacity"
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                onClick={handleLeave}
+                className="flex flex-row justify-center items-center p-[6px_12px] gap-[10px] w-[68px] h-[36px] border border-[#2C2C33] rounded-[100px] font-medium text-[16px] leading-[24px] text-[#FFECE6] hover:opacity-80 transition-opacity bg-transparent"
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

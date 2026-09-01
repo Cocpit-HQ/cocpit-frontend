@@ -592,6 +592,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         } else if (showOtherSchool) {
           selectSchool(schoolSearch.trim())
         }
+      } else if (schoolSearch.trim()) {
+        const exactMatchIdx = schoolOptions.findIndex(o => o.name.toLowerCase() === schoolSearch.trim().toLowerCase());
+        if (exactMatchIdx >= 0) {
+          selectSchool(schoolOptions[exactMatchIdx]);
+        } else {
+          selectSchool(schoolSearch.trim());
+        }
       }
     }
   }
@@ -608,6 +615,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         } else if (showOtherDegree) {
           selectDegree(degreeSearch.trim())
         }
+      } else if (degreeSearch.trim()) {
+        const exactMatchIdx = degreeOptions.findIndex(o => o.toLowerCase() === degreeSearch.trim().toLowerCase());
+        if (exactMatchIdx >= 0) {
+          selectDegree(degreeOptions[exactMatchIdx]);
+        } else {
+          selectDegree(degreeSearch.trim());
+        }
       }
     }
   }
@@ -623,6 +637,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           selectSpecialization(specializationOptions[specializationHighlight])
         } else if (showOtherSpecialization) {
           selectSpecialization(specializationSearch.trim())
+        }
+      } else if (specializationSearch.trim()) {
+        const exactMatchIdx = specializationOptions.findIndex(o => o.toLowerCase() === specializationSearch.trim().toLowerCase());
+        if (exactMatchIdx >= 0) {
+          selectSpecialization(specializationOptions[exactMatchIdx]);
+        } else {
+          selectSpecialization(specializationSearch.trim());
         }
       }
     }

@@ -254,6 +254,16 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = search.trim();
+                      if (val) {
+                        handleToggleInterest(val);
+                        setSearch("");
+                      }
+                    }
+                  }}
                   placeholder="Search"
                   autoComplete="off"
                   className="w-[220px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-[#FFECE6] placeholder-[#B8ADA8]"

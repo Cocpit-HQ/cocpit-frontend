@@ -40,10 +40,6 @@ export const StepSuccess: React.FC<StepSuccessProps> = ({
         </div>
       </div>
 
-      {/* Watermark Logo bottom right */}
-      <div className="fixed bottom-6 right-6 opacity-80 pointer-events-none">
-        <CocpitLogoIcon size={28} className="w-7 h-7 text-[#FFECE6]" />
-      </div>
     </div>
   );
 };

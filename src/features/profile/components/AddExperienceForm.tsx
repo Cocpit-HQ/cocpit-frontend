@@ -280,6 +280,13 @@ function RoleSection({
       if (roleHighlight >= 0) {
         if (roleHighlight < roleOptions.length) selectRole(roleOptions[roleHighlight])
         else selectRole(roleSearch.trim())
+      } else if (roleSearch.trim()) {
+        const exactMatchIdx = roleOptions.findIndex(o => o.toLowerCase() === roleSearch.trim().toLowerCase());
+        if (exactMatchIdx >= 0) {
+          selectRole(roleOptions[exactMatchIdx]);
+        } else {
+          selectRole(roleSearch.trim());
+        }
       }
     }
   }
@@ -861,6 +868,13 @@ export default function AddExperienceForm({
       if (companyHighlight >= 0) {
         if (companyHighlight < companyOptions.length) selectCompany(companyOptions[companyHighlight])
         else selectCompany(companySearch.trim())
+      } else if (companySearch.trim()) {
+        const exactMatchIdx = companyOptions.findIndex(o => o.name.toLowerCase() === companySearch.trim().toLowerCase());
+        if (exactMatchIdx >= 0) {
+          selectCompany(companyOptions[exactMatchIdx]);
+        } else {
+          selectCompany(companySearch.trim());
+        }
       }
     }
   }

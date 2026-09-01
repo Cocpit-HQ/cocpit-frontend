@@ -87,7 +87,10 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
           if (query.length < 3) {
             setAvailableSkills(Array.from(new Set([...fetchedNames, ...FALLBACK_SKILLS])));
           } else {
-            setAvailableSkills(fetchedNames);
+            const matchingFallbacks = FALLBACK_SKILLS.filter((s) =>
+              s.toLowerCase().includes(query.toLowerCase())
+            );
+            setAvailableSkills(Array.from(new Set([...fetchedNames, ...matchingFallbacks])));
           }
 
           setNextCursor(res.data.next_cursor || null);
