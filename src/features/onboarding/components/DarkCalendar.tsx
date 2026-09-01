@@ -269,7 +269,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                         isSelected
                           ? "bg-neutral-800 text-rose-100 font-semibold"
                           : isMonthDisabled
-                          ? "text-stone-500 opacity-40 cursor-not-allowed"
+                          ? "text-stone-500 opacity-40 cursor-default"
                           : "text-rose-100 hover:bg-neutral-800"
                       }`}
                     >
@@ -380,7 +380,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                     <div
                       key={cIdx}
                       data-state="Disabled"
-                      className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center cursor-not-allowed"
+                      className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center cursor-default"
                     >
                       <div className="text-center justify-center text-stone-500 text-sm font-normal font-['DM_Sans'] leading-5 opacity-40">
                         {cell.day}

@@ -251,7 +251,18 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
     apiSuggestions.length === 0;
 
   return (
-    <div className="relative w-64 select-none" ref={wrapperRef} id={id}>
+    <div 
+      className="relative w-64 select-none" 
+      ref={wrapperRef} 
+      id={id}
+      onBlur={(e) => {
+        if (open && wrapperRef.current && !wrapperRef.current.contains(e.relatedTarget as Node)) {
+          setOpen(false);
+          if (!value) setQuery("");
+          else setQuery(value);
+        }
+      }}
+    >
       {/* Figma Trigger: w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center */}
       <div
         onClick={handleWrapperClick}
@@ -295,24 +306,46 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
         <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-black flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
           <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
             {displaySuggestions.length > 0 ? (
-              displaySuggestions.map((item) => {
+              displaySuggestions.map((item, index) => {
                 const isSelected = value === item.lineText;
                 return (
                   <button
                     key={item.kind === "static" ? item.data.id : item.data.placeId}
                     type="button"
+                    tabIndex={0}
                     onMouseDown={(e) => {
+                      e.preventDefault(); // Keep focus on input for mouse clicks
+                    }}
+                    onClick={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       if (item.kind === "static") {
                         handleSelectStatic(item.data);
                       } else {
                         handleSelectApi(item.data);
                       }
+                      inputRef.current?.focus();
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 min-h-[30px] flex items-center transition-colors cursor-pointer truncate ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp") {
+                        e.stopPropagation();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setOpen(false);
+                        inputRef.current?.focus();
+                      }
+                      if (e.key === "Tab" && e.shiftKey && index === 0) {
+                        e.preventDefault();
+                        setOpen(false);
+                        inputRef.current?.focus();
+                      }
+                    }}
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-neutral-800 focus:text-[#FFECE6] ${
                       isSelected
                         ? "text-[#EC6229] font-medium"
-                        : "text-[#B8ADA8] hover:text-[#FFECE6]"
+                        : "text-[#B8ADA8] hover:text-[#FFECE6] hover:bg-neutral-800"
                     }`}
                   >
                     <span className="truncate">{item.lineText}</span>

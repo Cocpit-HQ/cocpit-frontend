@@ -54,6 +54,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
     }
     return "";
   });
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,8 +75,11 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
       // If cleared from parent
       setSearchQuery("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, options]);
+
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchQuery, isOpen]);
 
   // Click outside listener
   useEffect(() => {
@@ -153,19 +157,82 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
   }, [options, searchQuery, searchable, allowCustom, fallbackOption]);
 
   return (
-    <div className="relative w-64 select-none" ref={containerRef} id={id}>
+    <div 
+      className="relative w-64 select-none" 
+      ref={containerRef} 
+      id={id}
+      onBlur={(e) => {
+        if (isOpen && containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+          setIsOpen(false);
+        }
+      }}
+    >
       {/* Figma Trigger: w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center */}
       <div
         onClick={handleToggle}
-        className={`w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center bg-transparent cursor-pointer transition-colors ${
+        onKeyDown={(e) => {
+          if (!isOpen && (e.key === "Enter" || e.key === " " || e.key === "ArrowDown" || e.key === "ArrowUp")) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+            if (!disabled) {
+              setIsOpen(true);
+              if (searchable) {
+                // Focus input if searchable
+                setTimeout(() => inputRef.current?.focus(), 0);
+              }
+            }
+            return;
+          }
+
+          if (isOpen) {
+            switch (e.key) {
+              case "ArrowDown":
+                e.preventDefault();
+                e.stopPropagation();
+                setHighlightedIndex((prev) =>
+                  prev < filteredOptions.length - 1 ? prev + 1 : prev
+                );
+                break;
+              case "ArrowUp":
+                e.preventDefault();
+                e.stopPropagation();
+                setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                break;
+              case "Enter":
+                e.preventDefault();
+                e.stopPropagation();
+                if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+                  handleItemClick(filteredOptions[highlightedIndex]);
+                } else if (filteredOptions.length > 0) {
+                  handleItemClick(filteredOptions[0]); // fallback
+                }
+                break;
+              case "Escape":
+                e.preventDefault();
+                e.stopPropagation();
+                setIsOpen(false);
+                if (searchable) {
+                  inputRef.current?.focus();
+                } else {
+                  (containerRef.current?.firstElementChild as HTMLElement)?.focus();
+                }
+                break;
+            }
+          }
+        }}
+        className={`w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center bg-transparent transition-colors ${
           errorMessage
             ? "border-[#E5484D]"
             : isOpen
             ? "border-[#EC6229]"
             : "border-[#2C2C33] hover:border-[#726B67]"
-        }`}
-        role="button"
-        tabIndex={0}
+        } ${searchable ? "cursor-text" : "cursor-pointer"}`}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-controls={`${id}-listbox`}
+        tabIndex={searchable ? -1 : 0}
       >
         {searchable ? (
           <input
@@ -174,14 +241,6 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={() => setIsOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (isOpen && filteredOptions.length > 0) {
-                  handleItemClick(filteredOptions[0]);
-                }
-              }
-            }}
             placeholder={placeholder}
             disabled={disabled}
             autoComplete="off"
@@ -230,22 +289,52 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
           }`}
         >
           {/* Options List */}
-          <div className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
+          <div id={`${id}-listbox`} className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, index) => {
                 const isSelected = opt.id === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
+                const isHighlighted = index === highlightedIndex;
                 return (
                   <button
                     key={`${opt.id}-${index}`}
                     type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={0}
                     onMouseDown={(e) => {
-                      e.preventDefault();
-                      handleItemClick(opt);
+                      e.preventDefault(); // Keep focus on input/trigger for mouse clicks
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 min-h-[30px] flex items-center transition-colors cursor-pointer truncate ${
-                      isSelected
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp") {
+                        e.stopPropagation();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsOpen(false);
+                        if (searchable) inputRef.current?.focus();
+                        else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
+                      }
+                      if (e.key === "Tab" && e.shiftKey && index === 0) {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        if (searchable) inputRef.current?.focus();
+                        else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
+                      }
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleItemClick(opt);
+                      if (searchable) inputRef.current?.focus();
+                      else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
+                    }}
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-neutral-800 focus:text-[#FFECE6] ${
+                      isHighlighted
+                        ? "bg-neutral-800 text-[#FFECE6]"
+                        : isSelected
                         ? "text-[#EC6229] font-medium"
-                        : "text-[#B8ADA8] hover:text-[#FFECE6]"
+                        : "text-[#B8ADA8] hover:text-[#FFECE6] hover:bg-neutral-800"
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>
