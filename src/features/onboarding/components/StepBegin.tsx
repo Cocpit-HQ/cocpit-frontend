@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { UploadIcon, TextFormattingIcon, LoadingIcon, PdfFileIcon, DeleteIcon } from "@/components/icons";
+import { UploadIcon, TextFormattingIcon, LoadingIcon, PdfFileIcon } from "@/components/icons";
 import { parseResume } from "@/services/api/onboarding";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { toast } from "sonner";
@@ -43,14 +43,6 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
     setSelected("manual");
   };
 
-  const handleFileRemove = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedFile(null);
-    setSelected(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -205,17 +197,9 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           >
             <div className="flex flex-col justify-center items-center gap-1.5 w-full">
               <div className="flex flex-col justify-center items-center gap-1 w-full">
-                {/* PDF Icon Frame with Center Remove Overlay on Hover (Matching StepProfile Avatar Pattern) */}
-                <div className="relative w-7 h-7 flex items-center justify-center rounded-lg overflow-hidden">
+                {/* PDF Icon Frame */}
+                <div className="w-7 h-7 flex items-center justify-center rounded-lg">
                   <PdfFileIcon size={22} className="w-[22px] h-[22px] text-[#FFECE6]" />
-                  {/* Remove Icon Overlay on Hover */}
-                  <div
-                    onClick={handleFileRemove}
-                    className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-lg"
-                    title="Remove file"
-                  >
-                    <DeleteIcon size={16} className="w-4 h-4 text-[#EC6229]" />
-                  </div>
                 </div>
 
                 <div className="text-[#FFECE6] text-xs font-medium font-['DM_Sans'] leading-4 max-w-[170px] truncate text-center">

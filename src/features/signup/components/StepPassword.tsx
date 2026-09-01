@@ -90,19 +90,21 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
               }`}
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="w-4 h-4 p-0.5 flex items-center justify-center text-[#726B67] hover:text-[#FFECE6] transition-colors cursor-pointer shrink-0"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              disabled={isLoading}
-            >
-              {showPassword ? (
-                <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-              ) : (
-                <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-              )}
-            </button>
+            {password.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="w-4 h-4 p-0.5 flex items-center justify-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={isLoading}
+              >
+                {showPassword ? (
+                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                ) : (
+                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                )}
+              </button>
+            )}
           </div>
 
           {/* Note below input (width: 260px, height: 16px) */}

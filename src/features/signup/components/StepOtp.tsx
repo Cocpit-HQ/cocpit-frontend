@@ -130,7 +130,7 @@ export const StepOtp: React.FC<StepOtpProps> = ({
                 {resendCooldown > 0 && !isExpired ? (
                   <span className="font-['DM_Sans'] font-normal text-xs leading-4 whitespace-nowrap flex items-center">
                     <span className="text-[#B8ADA8]">Resend code in </span>
-                    <span className="text-[#EC6229] tabular-nums font-mono text-xs ml-1 inline-block min-w-[34px] text-right">
+                    <span className="text-[#EC6229] font-['DM_Sans'] font-normal text-xs leading-4 tabular-nums ml-1 inline-block min-w-[34px] text-right">
                       {formattedMinutes}:{formattedSeconds}
                     </span>
                   </span>

@@ -227,21 +227,17 @@ export const StepProfile: React.FC<StepProfileProps> = ({
   const usernameHelperText = useMemo(() => {
     if (!accountName || usernameErrorMessage || isCheckingAvailability) return null;
     if (nameAvailable === true) {
-      if (accountName === initialAccountName) {
-        return "Suggested for you";
-      }
       return "Username available";
     }
     return null;
-  }, [accountName, usernameErrorMessage, isCheckingAvailability, nameAvailable, initialAccountName]);
+  }, [accountName, usernameErrorMessage, isCheckingAvailability, nameAvailable]);
 
   const usernameHelperColor = useMemo(() => {
     if (nameAvailable === true) {
-      if (accountName === initialAccountName) return "#726B67";
       return "#3FB950";
     }
     return "#726B67";
-  }, [nameAvailable, accountName, initialAccountName]);
+  }, [nameAvailable]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

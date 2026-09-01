@@ -114,19 +114,21 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 }`}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword((prev) => !prev)}
-                className="w-4 h-4 p-0.5 flex items-center justify-center text-[#726B67] hover:text-[#FFECE6] transition-colors cursor-pointer shrink-0"
-                aria-label={showNewPassword ? "Hide password" : "Show password"}
-                disabled={isLoading}
-              >
-                {showNewPassword ? (
-                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-                ) : (
-                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-                )}
-              </button>
+              {newPassword.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  className="w-4 h-4 p-0.5 flex items-center justify-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  disabled={isLoading}
+                >
+                  {showNewPassword ? (
+                    <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                  ) : (
+                    <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Note below first input (width: 260px, height: 16px, color: #B8ADA8 or #E5484D) */}
@@ -170,19 +172,21 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 }`}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="w-4 h-4 p-0.5 flex items-center justify-center text-[#726B67] hover:text-[#FFECE6] transition-colors cursor-pointer shrink-0"
-                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                disabled={isLoading}
-              >
-                {showConfirmPassword ? (
-                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-                ) : (
-                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-                )}
-              </button>
+              {confirmPassword.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="w-4 h-4 p-0.5 flex items-center justify-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? (
+                    <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                  ) : (
+                    <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Note below second input (width: 260px, height: 16px) */}
