@@ -693,6 +693,26 @@
   h6 {
     font-family: var(--font-heading);
   }
+
+  /* ── Browser Autofill Reset ────────────────────────────── */
+  /* Eliminates native WebKit/Chrome autofill background highlight across Light & Dark themes */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+    box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+    -webkit-text-fill-color: var(--ds-text-primary) !important;
+    caret-color: var(--ds-text-primary) !important;
+    transition: background-color 50000s ease-in-out 0s !important;
+  }
+
+  input:autofill {
+    box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+    -webkit-text-fill-color: var(--ds-text-primary) !important;
+    caret-color: var(--ds-text-primary) !important;
+    filter: none !important;
+  }
 }
 
 @layer components {
@@ -1755,11 +1775,22 @@
 [data-theme="dark"] input:-webkit-autofill:hover,
 [data-theme="dark"] input:-webkit-autofill:focus,
 [data-theme="dark"] input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #030303 inset !important;
-  box-shadow: 0 0 0 1000px #030303 inset !important;
-  -webkit-text-fill-color: #FFECE6 !important;
-  caret-color: #FFECE6 !important;
-  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+  -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  -webkit-text-fill-color: var(--ds-text-primary) !important;
+  caret-color: var(--ds-text-primary) !important;
+  transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s;
+}
+
+[data-theme="light"] input:-webkit-autofill,
+[data-theme="light"] input:-webkit-autofill:hover,
+[data-theme="light"] input:-webkit-autofill:focus,
+[data-theme="light"] input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  -webkit-text-fill-color: var(--ds-text-primary) !important;
+  caret-color: var(--ds-text-primary) !important;
+  transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s;
 }
 
 [data-theme="dark"] .focus-visible\:border-\[\#C7D2FE\]:focus-visible {

@@ -54,7 +54,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
           onChange={onChange}
           disabled={disabled}
           placeholder={placeholder}
-          className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-[14px] font-normal font-['DM_Sans'] leading-[20px] autofill:bg-transparent ${
+          className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-[14px] font-normal font-['DM_Sans'] leading-[20px] ${
             centerText ? "text-center placeholder:text-center" : "text-left placeholder:text-left"
           } ${isPassword && !showPassword && value ? "tracking-[2px]" : ""} ${className}`}
         />

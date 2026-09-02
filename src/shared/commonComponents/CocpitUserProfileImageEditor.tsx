@@ -35,7 +35,7 @@ export const CocpitUserProfileImageEditor: React.FC<
   initialImage = null,
   onSave,
   onRemove,
-  theme = "dark",
+  theme,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialImage);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

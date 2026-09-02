@@ -421,7 +421,7 @@ const LoginForm = () => {
                 setEmail(e.target.value);
                 if (authError) setAuthError(null);
               }}
-              className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4 autofill:bg-transparent"
+              className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4"
               disabled={isLoading || isGoogleLoading || isAppleLoading}
             />
           </div>
@@ -443,7 +443,7 @@ const LoginForm = () => {
                 setPassword(e.target.value);
                 if (authError) setAuthError(null);
               }}
-              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4 autofill:bg-transparent placeholder:tracking-normal ${
+              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4 placeholder:tracking-normal ${
                 !showPassword && password.length > 0 ? "tracking-[2px]" : ""
               }`}
               disabled={isLoading || isGoogleLoading || isAppleLoading}

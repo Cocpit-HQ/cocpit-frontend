@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import {
   LoadingIcon,
   ImageIcon,
@@ -49,9 +48,6 @@ export const StepProfile: React.FC<StepProfileProps> = ({
     setDob,
     isInitialized,
   } = useOnboardingStore();
-
-  const searchParams = useSearchParams();
-  const themeParam = (searchParams?.get("theme") as "dark" | "light") || "dark";
 
   const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
@@ -491,7 +487,6 @@ export const StepProfile: React.FC<StepProfileProps> = ({
         isOpen={isImageEditorOpen}
         onClose={() => setIsImageEditorOpen(false)}
         initialImage={editorInitialImage}
-        theme={themeParam}
         onSave={(dataUrl, file) => {
           setProfileImage(dataUrl);
           setProfileImageFile(file);

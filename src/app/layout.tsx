@@ -1,4 +1,4 @@
-// Invalidate layout cache to reload global styles
+// Invalidate layout cache to reload global styles - timestamp 1725259560
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins, Roboto, DM_Sans } from "next/font/google";
 import "./globals.css";
@@ -65,6 +65,27 @@ export default function RootLayout({
                   document.documentElement.setAttribute('data-theme', 'dark');
                 }
               })();
+            `,
+          }}
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              input:-webkit-autofill,
+              input:-webkit-autofill:hover,
+              input:-webkit-autofill:focus,
+              input:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+                box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+                -webkit-text-fill-color: var(--ds-text-primary) !important;
+                caret-color: var(--ds-text-primary) !important;
+                transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s !important;
+              }
+              input:autofill {
+                box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+                -webkit-text-fill-color: var(--ds-text-primary) !important;
+                caret-color: var(--ds-text-primary) !important;
+              }
             `,
           }}
         />
