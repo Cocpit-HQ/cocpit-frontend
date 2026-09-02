@@ -99,8 +99,8 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                   if (errorMessage) onClearError();
                 }}
                 onFocus={() => {
-                  if (onClearOldPasswordError) onClearOldPasswordError();
-                  if (errorMessage) onClearError();
+                  // Error states are intentionally NOT cleared here.
+                  // They are cleared in the onChange handler above when the user actually modifies the input.
                 }}
                 onBlur={() => {
                   if (onValidatePassword && newPassword.length >= 8) {
