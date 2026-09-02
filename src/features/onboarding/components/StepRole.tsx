@@ -52,17 +52,17 @@ export const StepRole: React.FC<StepRoleProps> = ({
   };
 
   return (
-    <div className="w-[391px] min-h-[480px] p-4 flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-[#FFECE6] select-none">
+    <div className="w-[391px] min-h-[480px] p-4 flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-ds-text-primary select-none">
       {/* Title Section */}
       <div className="w-[359px] flex flex-col items-center justify-center p-0 gap-2 text-center">
-        <span className="text-[12px] font-medium tracking-wide text-[#EC6229] uppercase">
+        <span className="text-[12px] font-medium tracking-wide text-ds-accent uppercase">
           Step {currentStep} of {totalSteps}
         </span>
         <h1 className="text-[32px] font-bold font-['DM_Sans'] leading-[40px] tracking-tight">
-          <span className="text-[#FFECE6]">What best </span>
-          <span className="text-[#EC6229]">describes you?</span>
+          <span className="text-ds-text-primary">What best </span>
+          <span className="text-ds-accent">describes you?</span>
         </h1>
-        <p className="text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-[#B8ADA8] max-w-[320px]">
+        <p className="text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-ds-text-secondary max-w-[320px]">
           Select your current professional or student status
         </p>
       </div>
@@ -78,8 +78,8 @@ export const StepRole: React.FC<StepRoleProps> = ({
               onClick={() => handleSelect(role.id)}
               className={`h-11 px-3 rounded-xl border flex items-center justify-center font-['DM_Sans'] text-sm font-medium transition-all cursor-pointer ${
                 isSelected
-                  ? "bg-[#2C2C33] border-[#EC6229] text-[#FFECE6] shadow-[0_0_0_1px_#EC6229]"
-                  : "bg-[#1A1A20] border-[#2C2C33] text-[#B8ADA8] hover:bg-[#2C2C33] hover:text-[#FFECE6]"
+                  ? "bg-ds-surface-2 border-ds-accent text-ds-text-primary shadow-[0_0_0_1px_var(--ds-accent)]"
+                  : "bg-ds-surface-1 border-ds-border text-ds-text-secondary hover:bg-ds-surface-2 hover:text-ds-text-primary"
               }`}
             >
               {role.label}
@@ -94,7 +94,7 @@ export const StepRole: React.FC<StepRoleProps> = ({
           type="button"
           onClick={onBack}
           disabled={isSaving}
-          className="w-9 h-9 rounded-full bg-[#1A1A20] hover:bg-[#2C2C33] flex items-center justify-center text-[#FFECE6] transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+          className="w-9 h-9 rounded-full bg-ds-surface-1 hover:bg-ds-surface-2 flex items-center justify-center text-ds-text-primary transition-colors cursor-pointer shrink-0 disabled:opacity-50"
           aria-label="Back"
         >
           <LeftArrowIcon size={16} className="w-4 h-4" />

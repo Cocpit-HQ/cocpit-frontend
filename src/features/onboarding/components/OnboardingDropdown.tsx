@@ -167,7 +167,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
         }
       }}
     >
-      {/* Figma Trigger: w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center */}
+      {/* Figma Trigger: w-64 py-2 border-b border-ds-border inline-flex justify-between items-center */}
       <div
         onClick={handleToggle}
         onKeyDown={(e) => {
@@ -222,12 +222,12 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             }
           }
         }}
-        className={`w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center bg-transparent transition-colors ${
+        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent transition-colors ${
           errorMessage
-            ? "border-[#E5484D]"
+            ? "border-ds-error"
             : isOpen
-            ? "border-[#EC6229]"
-            : "border-[#2C2C33] hover:border-[#726B67]"
+            ? "border-ds-accent"
+            : "border-ds-border hover:border-ds-text-muted"
         } ${searchable ? "cursor-text" : "cursor-pointer"}`}
         role="combobox"
         aria-expanded={isOpen}
@@ -244,12 +244,12 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             autoComplete="off"
-            className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-[#FFECE6] placeholder-stone-500 truncate"
+            className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted truncate"
           />
         ) : (
           <span
             className={`font-sans text-sm font-normal leading-normal truncate max-w-[210px] ${
-              currentText ? "text-[#FFECE6]" : "text-stone-500"
+              currentText ? "text-ds-text-primary" : "text-ds-text-muted"
             }`}
           >
             {currentText || placeholder}
@@ -259,14 +259,14 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
         {/* Right Icon Actions */}
         <div className="size-4 p-0.5 inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden shrink-0">
           {isLoading ? (
-            <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-[#B8ADA8]" />
+            <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-ds-text-secondary" />
           ) : (
             <div
               className={`w-4 h-4 flex items-center justify-center transition-transform duration-200 ${
                 isOpen ? "rotate-180" : ""
               }`}
             >
-              <DownArrowIcon size={16} className="w-4 h-4 text-[#FFECE6]" />
+              <DownArrowIcon size={16} className="w-4 h-4 text-ds-text-primary" />
             </div>
           )}
         </div>
@@ -275,7 +275,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
       {/* Helper / Error Status text */}
       {errorMessage && (
         <div className="w-64 h-4 flex items-center justify-start mt-1">
-          <span className="font-sans text-[10px] leading-[12px] text-[#E5484D]">
+          <span className="font-sans text-[10px] leading-[12px] text-ds-error">
             {errorMessage}
           </span>
         </div>
@@ -284,7 +284,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {isOpen && (
         <div
-          className={`absolute left-0 z-50 w-64 py-2 bg-black flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
+          className={`absolute left-0 z-50 w-64 py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
             placement === "top" ? "bottom-[46px]" : "top-[44px]"
           }`}
         >
@@ -329,17 +329,17 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
                       if (searchable) inputRef.current?.focus();
                       else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-neutral-800 focus:text-[#FFECE6] ${
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-ds-surface-2 focus:text-ds-text-primary ${
                       isHighlighted
-                        ? "bg-neutral-800 text-[#FFECE6]"
+                        ? "bg-ds-surface-2 text-ds-text-primary"
                         : isSelected
-                        ? "text-[#EC6229] font-medium"
-                        : "text-[#B8ADA8] hover:text-[#FFECE6] hover:bg-neutral-800"
+                        ? "text-ds-accent font-medium"
+                        : "text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2"
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>
                     {opt.sublabel && (
-                      <span className="text-xs text-stone-500 ml-1.5 truncate">
+                      <span className="text-xs text-ds-text-muted ml-1.5 truncate">
                         ({opt.sublabel})
                       </span>
                     )}
@@ -347,7 +347,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
                 );
               })
             ) : (
-              <div className="py-3 text-center text-stone-500 text-xs font-sans">
+              <div className="py-3 text-center text-ds-text-muted text-xs font-sans">
                 {isLoading ? "Loading options..." : "No options found"}
               </div>
             )}

@@ -227,7 +227,7 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center font-['DM_Sans',sans-serif] text-[#FFECE6] select-none relative">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center font-['DM_Sans',sans-serif] text-ds-text-primary select-none relative">
       {/* Centered Vertical Stack: Progress Bar + 20px gap + Main Content Container */}
       <div className="flex flex-col items-center gap-5 z-10">
         {/* Progress Bar (Step 2 of 5) */}
@@ -237,10 +237,10 @@ export const StepLocationStatus: React.FC<StepLocationStatusProps> = ({
         <div className="w-[531px] p-4 flex flex-col items-center gap-5 rounded-[24px] box-border">
           {/* Header Section */}
           <div className="w-full flex flex-col items-center p-0 gap-2 text-center">
-            <h1 className="w-full font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-[#FFECE6] tracking-normal m-0 p-0">
-              Where are you <span className="text-[#EC6229]">right now?</span>
+            <h1 className="w-full font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+              Where are you <span className="text-ds-accent">right now?</span>
             </h1>
-            <p className="w-full font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-[#FFECE6] m-0 p-0">
+            <p className="w-full font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary m-0 p-0">
               Tell us about your current situation and interests
             </p>
           </div>

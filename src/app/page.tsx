@@ -15,8 +15,7 @@ export default async function Home() {
 
   return (
     <main
-      data-theme="dark"
-      className="min-h-screen w-full bg-[#030303] text-[#FFECE6] relative flex items-center justify-center overflow-x-hidden font-['DM_Sans',sans-serif]"
+      className="min-h-screen w-full bg-ds-bg text-ds-text-primary relative flex items-center justify-center overflow-x-hidden font-['DM_Sans',sans-serif]"
     >
       {/* Left Sidebar Navigation (Desktop: 40px from left edge, vertically centered) */}
       <div className="hidden lg:block absolute left-[40px] top-1/2 -translate-y-1/2 z-10">
@@ -26,14 +25,14 @@ export default async function Home() {
       {/* Main Centered Login Section (Horizontally & Vertically Centered) */}
       <div className="w-full flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-[384px] flex flex-col items-center">
-          <Suspense fallback={<div className="h-96 w-full animate-pulse bg-[#1A1A20] rounded-3xl" />}>
+          <Suspense fallback={<div className="h-96 w-full animate-pulse bg-ds-surface-1 rounded-3xl" />}>
             <LoginForm />
           </Suspense>
         </div>
       </div>
 
       {/* Mobile/Tablet Bottom Navigation Links */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full px-4 py-4 bg-[#030303]/90 backdrop-blur-md border-t border-zinc-900 flex justify-center z-10">
+      <div className="lg:hidden fixed bottom-0 left-0 w-full px-4 py-4 bg-ds-bg/90 backdrop-blur-md border-t border-ds-border flex justify-center z-10">
         <AuthSidebarLinks isMobile />
       </div>
 
@@ -44,7 +43,7 @@ export default async function Home() {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Cocpit"
-          className="block relative text-[#FFECE6] hover:opacity-80 transition-opacity"
+          className="block relative text-ds-text-primary hover:opacity-80 transition-opacity"
         >
           <CocpitLogoIcon className="w-[27px] h-[30px]" />
         </Link>

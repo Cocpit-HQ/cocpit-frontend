@@ -47,16 +47,16 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
   const isPasswordValid = currentHint === "";
 
   return (
-    <div className="w-full max-w-[390px] p-4 rounded-3xl flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-[#FFECE6]">
+    <div className="w-full max-w-[390px] p-4 rounded-3xl flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-ds-text-primary">
       {/* Title & Subtitle */}
       <div className="w-full max-w-[358px] flex flex-col items-center gap-3 text-center">
         {/* Title: Create password */}
         <h1 className="w-full text-[40px] font-bold font-['DM_Sans'] leading-[48px] text-center tracking-tight">
-          <span className="text-[#FFECE6]">Create </span>
-          <span className="text-[#EC6229]">password</span>
+          <span className="text-ds-text-primary">Create </span>
+          <span className="text-ds-accent">password</span>
         </h1>
         {/* Subtitle: Choose a new password for your account */}
-        <p className="w-full text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] text-center">
+        <p className="w-full text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary text-center">
           Choose a new password for your account
         </p>
       </div>
@@ -66,8 +66,8 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
         {/* Input Block: Password (width: 260px, height: 60px) */}
         <div className="w-[260px] flex flex-col items-start gap-2">
           <div
-            className={`w-[260px] h-9 py-2 border-b border-[#2C2C33] flex flex-row justify-between items-center gap-1 focus-within:border-[#EC6229] transition-colors ${
-              errorMessage ? "!border-[#E5484D]" : ""
+            className={`w-[260px] h-9 py-2 border-b border-ds-border flex flex-row justify-between items-center gap-1 focus-within:border-ds-accent transition-colors ${
+              errorMessage ? "!border-ds-error" : ""
             }`}
           >
             <input
@@ -85,7 +85,7 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
               }}
               disabled={isLoading}
               maxLength={15}
-              className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
+              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
                 !showPassword && password.length > 0 ? "tracking-[2px]" : ""
               }`}
               required
@@ -94,7 +94,7 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="w-4 h-4 p-0.5 flex items-center justify-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                className="w-4 h-4 p-0.5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 disabled={isLoading}
               >
@@ -110,11 +110,11 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
           {/* Note below input (width: 260px, height: 16px) */}
           <div className="w-[260px] h-4 flex items-center">
             {errorMessage ? (
-              <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+              <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                 {errorMessage}
               </span>
             ) : (
-              <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[#B8ADA8] text-left">
+              <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-ds-text-secondary text-left">
                 {currentHint}
               </span>
             )}
@@ -125,15 +125,15 @@ export const StepPassword: React.FC<StepPasswordProps> = ({
         <button
           type="submit"
           disabled={!isPasswordValid || isLoading}
-          className={`w-[260px] h-9 px-3 py-1.5 bg-[#1A1A20] rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
+          className={`w-[260px] h-9 px-3 py-1.5 bg-ds-surface-1 rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
             isPasswordValid && !isLoading
-              ? "text-[#FFECE6] hover:bg-[#222228] cursor-pointer shadow-[0_0_0_1px_#27272A]"
-              : "text-[#726B67] opacity-60"
+              ? "text-ds-text-primary hover:bg-ds-surface-2 cursor-pointer shadow-[0_0_0_1px_var(--ds-border)]"
+              : "text-ds-text-muted opacity-60"
           }`}
         >
           {isLoading ? (
             <LoadingIcon
-              className="w-6 h-6 animate-spin-smooth text-[#B8ADA8] shrink-0"
+              className="w-6 h-6 animate-spin-smooth text-ds-text-secondary shrink-0"
               style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
             />
           ) : (

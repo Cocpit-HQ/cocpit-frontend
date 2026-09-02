@@ -12,7 +12,12 @@ export function AppearanceSettingsPage() {
   const { isCompany } = useActiveProfile();
 
   const handleThemeChange = (newTheme: 'system' | 'light' | 'dark') => {
-    setTheme(newTheme);
+    if (newTheme === 'system') {
+      const isDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(isDark ? 'dark' : 'light');
+    } else {
+      setTheme(newTheme);
+    }
     toast.success('Appearance settings updated');
   };
 

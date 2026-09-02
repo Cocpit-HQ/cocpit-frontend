@@ -66,28 +66,28 @@ export const OnboardingDatePicker: React.FC<OnboardingDatePickerProps> = ({
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         className={`w-[260px] h-[36px] border-b flex items-center justify-between pb-2 bg-transparent cursor-pointer transition-colors ${
           errorMessage
-            ? "border-[#E5484D]"
+            ? "border-ds-error"
             : isOpen
-            ? "border-[#EC6229]"
-            : "border-[#2C2C33] hover:border-[#726B67]"
+            ? "border-ds-accent"
+            : "border-ds-border hover:border-ds-text-muted"
         }`}
       >
         <span
           className={`font-['DM_Sans'] text-[14px] leading-[20px] font-normal ${
-            displayValue ? "text-[#FFECE6]" : "text-[#726B67]"
+            displayValue ? "text-ds-text-primary" : "text-ds-text-muted"
           }`}
         >
           {displayValue || "Date of birth"}
         </span>
-        <div className="w-5 h-5 flex items-center justify-center text-[#FFECE6]">
-          <CalendarIcon size={16} className="w-4 h-4 text-[#FFECE6]" />
+        <div className="w-5 h-5 flex items-center justify-center text-ds-text-primary">
+          <CalendarIcon size={16} className="w-4 h-4 text-ds-text-primary" />
         </div>
       </div>
 
       {/* Helper / Error Status text */}
       <div className="w-[260px] h-[16px] flex items-center justify-start mt-[4px]">
         {errorMessage ? (
-          <span className="font-['DM_Sans'] text-[10px] leading-[12px] text-[#E5484D]">
+          <span className="font-['DM_Sans'] text-[10px] leading-[12px] text-ds-error">
             {errorMessage}
           </span>
         ) : null}

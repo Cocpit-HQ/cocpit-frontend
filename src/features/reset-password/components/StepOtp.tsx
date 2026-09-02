@@ -53,16 +53,16 @@ export const StepOtp: React.FC<StepOtpProps> = ({
   const isExpired = errorMessage?.toLowerCase().includes("expired");
 
   return (
-    <div className="w-full max-w-[540px] p-4 rounded-3xl flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-[#FFECE6]">
+    <div className="w-full max-w-[540px] p-4 rounded-3xl flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-ds-text-primary">
       {/* Header */}
       <div className="w-full flex flex-col items-center gap-3 text-center">
         {/* Title: Verify your email */}
         <h1 className="w-full text-[40px] font-bold font-['DM_Sans'] leading-[48px] text-center tracking-tight">
-          <span className="text-[#FFECE6]">Verify your </span>
-          <span className="text-[#EC6229]">email</span>
+          <span className="text-ds-text-primary">Verify your </span>
+          <span className="text-ds-accent">email</span>
         </h1>
         {/* Subtitle */}
-        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] text-center whitespace-nowrap">
+        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary text-center whitespace-nowrap">
           We sent a 6-digit code to <span className="font-semibold">{maskEmail(email) || "[email]"}</span>
         </p>
       </div>
@@ -73,12 +73,12 @@ export const StepOtp: React.FC<StepOtpProps> = ({
         <div className="w-[260px] flex flex-col items-start gap-2">
           {/* Input Row (width: 260px, height: 36px) */}
           <div
-            className={`w-[260px] h-9 py-2 border-b border-[#2C2C33] flex flex-row items-center gap-1 transition-colors ${
+            className={`w-[260px] h-9 py-2 border-b border-ds-border flex flex-row items-center gap-1 transition-colors ${
               isOtpVerified
-                ? "!border-[#3FB950]"
+                ? "!border-ds-success"
                 : otpError || errorMessage
-                ? "!border-[#E5484D]"
-                : "focus-within:border-[#EC6229]"
+                ? "!border-ds-error"
+                : "focus-within:border-ds-accent"
             }`}
           >
             <input
@@ -94,7 +94,7 @@ export const StepOtp: React.FC<StepOtpProps> = ({
                 if (errorMessage || otpError) onClearError();
               }}
               disabled={isCheckingOtp || isLoading || isRateLimited || isOtpVerified}
-              className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
+              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
                 isRateLimited ? "opacity-40" : ""
               }`}
               required
@@ -105,32 +105,32 @@ export const StepOtp: React.FC<StepOtpProps> = ({
           <div className="w-[260px] h-4 flex items-center justify-between self-stretch shrink-0">
             {/* Left side: Status or Error messages */}
             {isRateLimited ? (
-              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                 Too many attempts
               </span>
             ) : isOtpVerified ? (
-              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[#3FB950] text-left">
+              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-success text-left">
                 Account verified
               </span>
             ) : isExpired ? (
-              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                 This code has expired
               </span>
             ) : errorMessage ? (
-              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+              <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                 {errorMessage}
               </span>
             ) : (
               <span />
             )}
 
-            {/* Right side: Timer or Resend code link (width: 260px or hug, text-right, #EC6229) */}
+            {/* Right side: Timer or Resend code link (width: 260px or hug, text-right, text-ds-accent) */}
             {!isRateLimited && !isOtpVerified && (
               <div className="text-right flex items-center justify-end">
                 {resendCooldown > 0 && !isExpired ? (
                   <span className="font-['DM_Sans'] font-normal text-xs leading-4 whitespace-nowrap flex items-center">
-                    <span className="text-[#B8ADA8]">Resend code in </span>
-                    <span className="text-[#EC6229] font-['DM_Sans'] font-normal text-xs leading-4 tabular-nums ml-1 inline-block min-w-[34px] text-right">
+                    <span className="text-ds-text-secondary">Resend code in </span>
+                    <span className="text-ds-accent font-['DM_Sans'] font-normal text-xs leading-4 tabular-nums ml-1 inline-block min-w-[34px] text-right">
                       {formattedMinutes}:{formattedSeconds}
                     </span>
                   </span>
@@ -139,7 +139,7 @@ export const StepOtp: React.FC<StepOtpProps> = ({
                     type="button"
                     onClick={onResend}
                     disabled={isResending || isCheckingOtp}
-                    className="font-['DM_Sans'] font-normal text-xs leading-4 text-[#EC6229] hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 whitespace-nowrap text-right"
+                    className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-accent hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 whitespace-nowrap text-right"
                   >
                     Resend code
                   </button>
@@ -153,15 +153,15 @@ export const StepOtp: React.FC<StepOtpProps> = ({
         <button
           type="submit"
           disabled={!isButtonActive}
-          className={`w-[260px] h-9 px-3 py-1.5 bg-[#1A1A20] rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
+          className={`w-[260px] h-9 px-3 py-1.5 bg-ds-surface-1 rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
             isButtonActive
-              ? "text-[#FFECE6] hover:bg-[#222228] cursor-pointer shadow-[0_0_0_1px_#27272A]"
-              : "text-[#726B67] opacity-60"
+              ? "text-ds-text-primary hover:bg-ds-surface-2 cursor-pointer shadow-[0_0_0_1px_var(--ds-border)]"
+              : "text-ds-text-muted opacity-60"
           }`}
         >
           {isCheckingOtp || isLoading ? (
             <LoadingIcon
-              className="w-6 h-6 animate-spin-smooth text-[#B8ADA8] shrink-0"
+              className="w-6 h-6 animate-spin-smooth text-ds-text-secondary shrink-0"
               style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
             />
           ) : (

@@ -263,11 +263,11 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
         }
       }}
     >
-      {/* Figma Trigger: w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center */}
+      {/* Figma Trigger: w-64 py-2 border-b border-ds-border inline-flex justify-between items-center */}
       <div
         onClick={handleWrapperClick}
-        className={`w-64 py-2 border-b border-zinc-800 inline-flex justify-between items-center bg-transparent cursor-pointer transition-colors ${
-          open ? "border-[#EC6229]" : "border-[#2C2C33] hover:border-[#726B67]"
+        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent cursor-pointer transition-colors ${
+          open ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
         }`}
       >
         <input
@@ -279,18 +279,18 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
           placeholder="Location"
           disabled={disabled}
           autoComplete="off"
-          className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-[#FFECE6] placeholder-stone-500 truncate"
+          className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted truncate"
         />
 
         {/* Right Icon Actions */}
         <div className="size-4 p-0.5 inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden shrink-0">
           {loading ? (
-            <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-[#B8ADA8]" />
+            <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-ds-text-secondary" />
           ) : (
             <button
               type="button"
               onClick={handleChevronClick}
-              className={`w-4 h-4 flex items-center justify-center text-[#FFECE6] transition-transform duration-200 ${
+              className={`w-4 h-4 flex items-center justify-center text-ds-text-primary transition-transform duration-200 ${
                 open ? "rotate-180" : ""
               }`}
               aria-label="Toggle location options"
@@ -303,7 +303,7 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
 
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {open && (
-        <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-black flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
           <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
             {displaySuggestions.length > 0 ? (
               displaySuggestions.map((item, index) => {
@@ -342,10 +342,10 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
                         inputRef.current?.focus();
                       }
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-neutral-800 focus:text-[#FFECE6] ${
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-ds-surface-2 focus:text-ds-text-primary ${
                       isSelected
-                        ? "text-[#EC6229] font-medium"
-                        : "text-[#B8ADA8] hover:text-[#FFECE6] hover:bg-neutral-800"
+                        ? "text-ds-accent font-medium"
+                        : "text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2"
                     }`}
                   >
                     <span className="truncate">{item.lineText}</span>
@@ -353,11 +353,11 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
                 );
               })
             ) : showNoResults ? (
-              <div className="py-3 text-center text-stone-500 text-xs font-sans">
+              <div className="py-3 text-center text-ds-text-muted text-xs font-sans">
                 No locations found for &quot;{query}&quot;
               </div>
             ) : loading ? (
-              <div className="py-3 text-center text-stone-500 text-xs font-sans flex items-center justify-center gap-2">
+              <div className="py-3 text-center text-ds-text-muted text-xs font-sans flex items-center justify-center gap-2">
                 <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth" />
                 <span>Searching locations...</span>
               </div>

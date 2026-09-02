@@ -216,7 +216,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
 
   return (
     <div
-      className={`w-64 p-4 bg-black rounded-2xl inline-flex flex-col justify-start items-center select-none shadow-2xl border border-[#2C2C33] ${className}`}
+      className={`w-64 p-4 bg-ds-bg rounded-2xl inline-flex flex-col justify-start items-center select-none shadow-2xl border border-ds-border ${className}`}
     >
       {/* Top Bar: Nav Arrows + Month & Year Pills */}
       <div className="self-stretch inline-flex justify-between items-center relative">
@@ -226,9 +226,9 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
           onClick={handlePrevMonth}
           disabled={isPrevMonthDisabled}
           aria-label="Previous Month"
-          className="w-5 self-stretch p-0.5 flex justify-center items-center gap-2.5 overflow-hidden text-rose-100 hover:opacity-80 disabled:opacity-30 cursor-pointer bg-transparent border-0"
+          className="w-5 self-stretch p-0.5 flex justify-center items-center gap-2.5 overflow-hidden text-ds-text-primary hover:opacity-80 disabled:opacity-30 cursor-pointer bg-transparent border-0"
         >
-          <LeftArrowIcon size={12} className="text-rose-100" />
+          <LeftArrowIcon size={12} className="text-ds-text-primary" />
         </button>
 
         {/* Center Month & Year Selector Frame (w-40 flex gap-2) */}
@@ -240,19 +240,19 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                 setIsMonthSelectOpen((prev) => !prev);
                 setIsYearSelectOpen(false);
               }}
-              className="w-20 p-1.5 bg-zinc-900 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-black flex justify-between items-center cursor-pointer hover:bg-neutral-800 transition-colors"
+              className="w-20 p-1.5 bg-ds-surface-1 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-between items-center cursor-pointer hover:bg-ds-surface-2 transition-colors"
             >
-              <div className="justify-start text-rose-100 text-base font-medium font-['DM_Sans'] leading-6">
+              <div className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                 {SHORT_MONTHS[viewMonth]}
               </div>
               <div className="size-4 p-0.5 inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden">
-                <ChevronDownIcon size={12} className="text-rose-100" />
+                <ChevronDownIcon size={12} className="text-ds-text-primary" />
               </div>
             </div>
 
             {/* Month Dropdown Menu */}
             {isMonthSelectOpen && (
-              <div className="absolute top-10 left-0 z-50 w-28 max-h-48 overflow-y-auto bg-zinc-900 border border-neutral-800 rounded-lg shadow-xl p-1 flex flex-col gap-0.5 scrollbar-hide">
+              <div className="absolute top-10 left-0 z-50 w-28 max-h-48 overflow-y-auto bg-ds-surface-1 border border-ds-border rounded-lg shadow-xl p-1 flex flex-col gap-0.5 scrollbar-hide">
                 {SHORT_MONTHS.map((mName, idx) => {
                   const isMonthDisabled = viewYear === computedMaxYear && idx > maxDate.getMonth();
                   const isSelected = viewMonth === idx;
@@ -267,10 +267,10 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                       }}
                       className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${
                         isSelected
-                          ? "bg-neutral-800 text-rose-100 font-semibold"
+                          ? "bg-ds-surface-2 text-ds-text-primary font-semibold"
                           : isMonthDisabled
-                          ? "text-stone-500 opacity-40 cursor-default"
-                          : "text-rose-100 hover:bg-neutral-800"
+                          ? "text-ds-text-muted opacity-40 cursor-not-allowed"
+                          : "text-ds-text-primary hover:bg-ds-surface-2"
                       }`}
                     >
                       {mName}
@@ -288,19 +288,19 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                 setIsYearSelectOpen((prev) => !prev);
                 setIsMonthSelectOpen(false);
               }}
-              className="w-20 p-1.5 bg-zinc-900 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-black flex justify-between items-center cursor-pointer hover:bg-neutral-800 transition-colors"
+              className="w-20 p-1.5 bg-ds-surface-1 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-between items-center cursor-pointer hover:bg-ds-surface-2 transition-colors"
             >
-              <div className="justify-start text-rose-100 text-base font-medium font-['DM_Sans'] leading-6">
+              <div className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                 {viewYear}
               </div>
               <div className="size-4 p-0.5 inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden">
-                <ChevronDownIcon size={12} className="text-rose-100" />
+                <ChevronDownIcon size={12} className="text-ds-text-primary" />
               </div>
             </div>
 
             {/* Year Dropdown Menu */}
             {isYearSelectOpen && (
-              <div className="absolute top-10 right-0 z-50 w-24 max-h-48 overflow-y-auto bg-zinc-900 border border-neutral-800 rounded-lg shadow-xl p-1 flex flex-col gap-0.5 scrollbar-hide">
+              <div className="absolute top-10 right-0 z-50 w-24 max-h-48 overflow-y-auto bg-ds-surface-1 border border-ds-border rounded-lg shadow-xl p-1 flex flex-col gap-0.5 scrollbar-hide">
                 {yearOptions.map((y) => {
                   const isSelected = viewYear === y;
                   return (
@@ -316,8 +316,8 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                       }}
                       className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${
                         isSelected
-                          ? "bg-neutral-800 text-rose-100 font-semibold"
-                          : "text-rose-100 hover:bg-neutral-800"
+                          ? "bg-ds-surface-2 text-ds-text-primary font-semibold"
+                          : "text-ds-text-primary hover:bg-ds-surface-2"
                       }`}
                     >
                       {y}
@@ -335,10 +335,10 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
           onClick={handleNextMonth}
           disabled={isNextMonthDisabled}
           aria-label="Next Month"
-          className="w-5 self-stretch p-0.5 flex justify-center items-center gap-2.5 overflow-hidden text-rose-100 hover:opacity-80 disabled:opacity-30 cursor-pointer bg-transparent border-0"
+          className="w-5 self-stretch p-0.5 flex justify-center items-center gap-2.5 overflow-hidden text-ds-text-primary hover:opacity-80 disabled:opacity-30 cursor-pointer bg-transparent border-0"
         >
           <div className="rotate-180 flex items-center justify-center">
-            <LeftArrowIcon size={12} className="text-rose-100" />
+            <LeftArrowIcon size={12} className="text-ds-text-primary" />
           </div>
         </button>
       </div>
@@ -349,7 +349,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
         <div className="self-stretch inline-flex justify-center items-center">
           {WEEK_DAYS.map((wd) => (
             <div key={wd} className="flex-1 flex justify-center items-center">
-              <div className="text-center justify-center text-stone-400 text-xs font-normal font-['DM_Sans'] leading-4">
+              <div className="text-center justify-center text-ds-text-muted text-xs font-normal font-['DM_Sans'] leading-4">
                 {wd}
               </div>
             </div>
@@ -368,7 +368,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                       data-state="Disabled"
                       className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center"
                     >
-                      <div className="text-center justify-center text-stone-500 text-sm font-normal font-['DM_Sans'] leading-5 opacity-40">
+                      <div className="text-center justify-center text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 opacity-40">
                         {cell.day}
                       </div>
                     </div>
@@ -380,9 +380,9 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                     <div
                       key={cIdx}
                       data-state="Disabled"
-                      className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center cursor-default"
+                      className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center cursor-not-allowed"
                     >
-                      <div className="text-center justify-center text-stone-500 text-sm font-normal font-['DM_Sans'] leading-5 opacity-40">
+                      <div className="text-center justify-center text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 opacity-40">
                         {cell.day}
                       </div>
                     </div>
@@ -395,9 +395,9 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                       key={cIdx}
                       data-state="Active"
                       onClick={() => handleSelectDay(cell)}
-                      className="flex-1 h-8 p-1 bg-neutral-800 rounded-lg flex justify-center items-center cursor-pointer border border-[#EC6229]"
+                      className="flex-1 h-8 p-1 bg-ds-surface-2 rounded-lg flex justify-center items-center cursor-pointer border border-ds-accent"
                     >
-                      <div className="text-center justify-center text-rose-100 text-sm font-semibold font-['DM_Sans'] leading-5">
+                      <div className="text-center justify-center text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                         {cell.day}
                       </div>
                     </div>
@@ -409,9 +409,9 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                     key={cIdx}
                     data-state="Default"
                     onClick={() => handleSelectDay(cell)}
-                    className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center hover:bg-neutral-800 transition-colors cursor-pointer"
+                    className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center hover:bg-ds-surface-2 transition-colors cursor-pointer"
                   >
-                    <div className="text-center justify-center text-rose-100 text-sm font-normal font-['DM_Sans'] leading-5">
+                    <div className="text-center justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
                       {cell.day}
                     </div>
                   </div>

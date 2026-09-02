@@ -246,9 +246,9 @@ export const StepProfile: React.FC<StepProfileProps> = ({
 
   const usernameHelperColor = useMemo(() => {
     if (nameAvailable === true) {
-      return "#3FB950";
+      return "var(--ds-success)";
     }
-    return "#726B67";
+    return "var(--ds-text-muted)";
   }, [nameAvailable]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -340,7 +340,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
   }, [fullName, accountName, nameAvailable, isCheckingAvailability, dobRaw, isAgeValid]);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center font-['DM_Sans',sans-serif] text-[#FFECE6] select-none relative">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center font-['DM_Sans',sans-serif] text-ds-text-primary select-none relative">
       {/* Hidden File Input for Avatar */}
       <input
         type="file"
@@ -359,10 +359,10 @@ export const StepProfile: React.FC<StepProfileProps> = ({
         <div className="w-[447px] h-[488px] p-[16px] flex flex-col items-center gap-[20px] rounded-[24px] box-border">
           {/* Frame 2608520: Title & Subtitle Frame (415px x 80px) */}
           <div className="w-[415px] h-[80px] flex flex-col items-center p-0 gap-[8px] text-center">
-            <h1 className="w-[415px] h-[48px] font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-[#FFECE6] tracking-normal m-0 p-0">
-              Tell us about <span className="text-[#EC6229]">yourself</span>
+            <h1 className="w-[415px] h-[48px] font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+              Tell us about <span className="text-ds-accent">yourself</span>
             </h1>
-            <p className="w-[338px] h-[24px] font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-[#FFECE6] m-0 p-0">
+            <p className="w-[338px] h-[24px] font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary m-0 p-0">
               Add your basic details to create your profile
             </p>
           </div>
@@ -379,18 +379,18 @@ export const StepProfile: React.FC<StepProfileProps> = ({
                 {/* Frame 2609481: 60px x 60px Upload Circle */}
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] bg-[#1A1A20] hover:bg-[#222228] border border-[#2C2C33] rounded-[100px] cursor-pointer transition-colors"
+                  className="w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] bg-ds-surface-1 hover:bg-ds-surface-2 border border-ds-border rounded-[100px] cursor-pointer transition-colors"
                   role="button"
                   tabIndex={0}
                   aria-label="Add photo"
                 >
-                  <ImageIcon size={20} className="w-[20px] h-[20px] text-[#FFECE6]" />
+                  <ImageIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
                 </div>
                 {/* Text: Add photo(optional) */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-[113px] h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-[#B8ADA8] hover:text-[#FFECE6] transition-colors cursor-pointer"
+                  className="w-[113px] h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
                 >
                   Add photo(optional)
                 </button>
@@ -408,7 +408,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
                     e.stopPropagation();
                     fileInputRef.current?.click();
                   }}
-                  className="group relative w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] border border-[#2C2C33] rounded-[100px] overflow-hidden cursor-pointer transition-colors"
+                  className="group relative w-[60px] h-[60px] box-border flex flex-col justify-center items-center p-0 gap-[2px] border border-ds-border rounded-[100px] overflow-hidden cursor-pointer transition-colors"
                   title="Click to edit, double-click to change"
                 >
                   <img
@@ -422,14 +422,14 @@ export const StepProfile: React.FC<StepProfileProps> = ({
                     className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-[100px]"
                     title="Remove photo"
                   >
-                    <DeleteIcon size={18} className="w-[18px] h-[20px] text-[#EC6229]" />
+                    <DeleteIcon size={18} className="w-[18px] h-[20px] text-ds-accent" />
                   </div>
                 </div>
                 {/* Text: Change photo */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-[80px] h-[16px] font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer"
+                  className="w-[80px] h-[16px] font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   Change photo
                 </button>
@@ -459,7 +459,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
               helperColor={usernameHelperColor}
               suffix={
                 isCheckingAvailability ? (
-                  <LoadingIcon className="w-4 h-4 animate-spin-smooth text-[#B8ADA8]" />
+                  <LoadingIcon className="w-4 h-4 animate-spin-smooth text-ds-text-secondary" />
                 ) : null
               }
               required

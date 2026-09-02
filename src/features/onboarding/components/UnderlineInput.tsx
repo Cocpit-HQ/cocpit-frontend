@@ -19,7 +19,7 @@ interface UnderlineInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEl
 export const UnderlineInput: React.FC<UnderlineInputProps> = ({
   errorMessage,
   helperText,
-  helperColor = "#726B67",
+  helperColor = "var(--ds-text-muted)",
   showPasswordToggle = false,
   isPassword = false,
   containerClassName = "",
@@ -42,11 +42,11 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
     <div className={`w-[260px] h-[60px] flex flex-col items-start p-0 gap-2 font-['DM_Sans',sans-serif] ${containerClassName}`}>
       {/* Input container with bottom border: Frame / Box */}
       <div
-        className={`w-[260px] h-[36px] box-border flex flex-row items-center py-2 px-0 gap-1 border-b border-[#2C2C33] focus-within:border-[#EC6229] transition-colors ${
-          errorMessage ? "!border-[#E5484D]" : ""
+        className={`w-[260px] h-[36px] box-border flex flex-row items-center py-2 px-0 gap-1 border-b border-ds-border focus-within:border-ds-accent transition-colors ${
+          errorMessage ? "!border-ds-error" : ""
         }`}
       >
-        {prefix && <div className="shrink-0 mr-1 text-[#726B67]">{prefix}</div>}
+        {prefix && <div className="shrink-0 mr-1 text-ds-text-muted">{prefix}</div>}
         <input
           {...props}
           type={inputType}
@@ -54,7 +54,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
           onChange={onChange}
           disabled={disabled}
           placeholder={placeholder}
-          className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-[14px] font-normal font-['DM_Sans'] leading-[20px] autofill:bg-transparent ${
+          className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-[14px] font-normal font-['DM_Sans'] leading-[20px] autofill:bg-transparent ${
             centerText ? "text-center placeholder:text-center" : "text-left placeholder:text-left"
           } ${isPassword && !showPassword && value ? "tracking-[2px]" : ""} ${className}`}
         />
@@ -72,7 +72,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="w-4 h-4 inline-flex justify-center items-center text-[#726B67] hover:text-[#FFECE6] transition-colors cursor-pointer shrink-0"
+            className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
             aria-label={showPassword ? "Hide password" : "Show password"}
             disabled={disabled}
           >
@@ -88,7 +88,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
       {/* Reserved 16px Status / Helper / Error Line */}
       <div className="w-[260px] h-[16px] flex items-center overflow-hidden">
         {errorMessage ? (
-          <span className="w-[260px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[#E5484D] text-left truncate">
+          <span className="w-[260px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-error text-left truncate">
             {errorMessage}
           </span>
         ) : helperText ? (

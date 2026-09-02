@@ -119,17 +119,17 @@ export const StepDetails: React.FC<StepDetailsProps> = ({
   };
 
   return (
-    <div className="w-[391px] min-h-[480px] p-4 flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-[#FFECE6] select-none">
+    <div className="w-[391px] min-h-[480px] p-4 flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-ds-text-primary select-none">
       {/* Title Section */}
       <div className="w-[359px] flex flex-col items-center justify-center p-0 gap-2 text-center">
-        <span className="text-[12px] font-medium tracking-wide text-[#EC6229] uppercase">
+        <span className="text-[12px] font-medium tracking-wide text-ds-accent uppercase">
           Step {currentStep} of {totalSteps}
         </span>
         <h1 className="text-[32px] font-bold font-['DM_Sans'] leading-[40px] tracking-tight">
-          <span className="text-[#FFECE6]">Tell us </span>
-          <span className="text-[#EC6229]">more about you</span>
+          <span className="text-ds-text-primary">Tell us </span>
+          <span className="text-ds-accent">more about you</span>
         </h1>
-        <p className="text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-[#B8ADA8] max-w-[320px]">
+        <p className="text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-ds-text-secondary max-w-[320px]">
           {isStudent
             ? "Add your school or university and degree"
             : isEmployed
@@ -190,7 +190,7 @@ export const StepDetails: React.FC<StepDetailsProps> = ({
             type="button"
             onClick={onBack}
             disabled={isSaving}
-            className="w-9 h-9 rounded-full bg-[#1A1A20] hover:bg-[#2C2C33] flex items-center justify-center text-[#FFECE6] transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+            className="w-9 h-9 rounded-full bg-ds-surface-1 hover:bg-ds-surface-2 flex items-center justify-center text-ds-text-primary transition-colors cursor-pointer shrink-0 disabled:opacity-50"
             aria-label="Back"
           >
             <LeftArrowIcon size={16} className="w-4 h-4" />

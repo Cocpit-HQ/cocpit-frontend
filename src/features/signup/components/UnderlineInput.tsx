@@ -32,8 +32,8 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
     <div className={`w-[260px] flex flex-col items-center gap-2 ${containerClassName}`}>
       {/* Input container with bottom border */}
       <div
-        className={`w-[260px] h-9 py-2 border-b border-[#2C2C33] inline-flex items-center justify-between gap-1 focus-within:border-[#EC6229] transition-colors ${
-          errorMessage ? "!border-[#E5484D]" : ""
+        className={`w-[260px] h-9 py-2 border-b border-ds-border inline-flex items-center justify-between gap-1 focus-within:border-ds-accent transition-colors ${
+          errorMessage ? "!border-ds-error" : ""
         }`}
       >
         <input
@@ -43,7 +43,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
           onChange={onChange}
           disabled={disabled}
           placeholder={placeholder}
-          className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left autofill:bg-transparent ${
+          className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left autofill:bg-transparent ${
             centerText ? "text-center placeholder:text-center" : "text-left placeholder:text-left"
           } ${isPassword && !showPassword && value ? "tracking-[2px]" : ""} ${className}`}
         />
@@ -53,7 +53,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="w-4 h-4 inline-flex justify-center items-center text-[#726B67] hover:text-[#FFECE6] transition-colors cursor-pointer shrink-0"
+            className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
             aria-label={showPassword ? "Hide password" : "Show password"}
             disabled={disabled}
           >
@@ -69,7 +69,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
       {/* Reserved Supporting Area for Error Feedback to prevent layout shifts */}
       <div className="w-[260px] h-4 flex items-center">
         {errorMessage && (
-          <span className="w-[260px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+          <span className="w-[260px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
             {errorMessage}
           </span>
         )}

@@ -17,7 +17,7 @@ export const StepSuccess: React.FC = () => {
   return (
     <div className="w-full flex flex-col items-center gap-6 text-center py-4">
       {/* Success Badge Icon */}
-      <div className="w-16 h-16 rounded-full bg-[#1A1A20] border border-[#2C2C33] flex items-center justify-center text-[#3FB950]">
+      <div className="w-16 h-16 rounded-full bg-ds-surface-1 border border-ds-border flex items-center justify-center text-ds-success">
         <svg
           className="w-8 h-8"
           fill="none"
@@ -34,10 +34,10 @@ export const StepSuccess: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col items-center gap-3">
         <h1 className="text-[40px] font-bold font-['DM_Sans'] leading-[48px] tracking-tight">
-          <span className="text-[#FFECE6]">Password </span>
-          <span className="text-[#EC6229]">reset</span>
+          <span className="text-ds-text-primary">Password </span>
+          <span className="text-ds-accent">reset</span>
         </h1>
-        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] max-w-[360px]">
+        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary max-w-[360px]">
           Your password has been successfully reset. Redirecting to login...
         </p>
       </div>

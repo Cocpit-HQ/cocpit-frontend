@@ -565,8 +565,8 @@ export default function OnboardingFlow() {
     return (
       <OnboardingLayout>
         <div className="w-[391px] min-h-[456px] rounded-[24px] p-6 flex flex-col items-center justify-center gap-4 animate-pulse">
-          <div className="w-8 h-8 rounded-full border-2 border-[#EC6229] border-t-transparent animate-spin" />
-          <span className="text-sm font-medium text-[#B8ADA8] font-['DM_Sans']">
+          <div className="w-8 h-8 rounded-full border-2 border-ds-accent border-t-transparent animate-spin" />
+          <span className="text-sm font-medium text-ds-text-secondary font-['DM_Sans']">
             Loading your profile...
           </span>
         </div>

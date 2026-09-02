@@ -49,9 +49,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   return (
     <main
-      data-theme="dark"
-      className="h-screen w-full bg-[#030303] text-[#FFECE6] relative flex flex-col items-center justify-center overflow-hidden font-['DM_Sans',sans-serif] p-0 select-none"
-      style={{ backgroundColor: "#030303" }}
+      className="h-screen w-full bg-ds-bg text-ds-text-primary relative flex flex-col items-center justify-center overflow-hidden font-['DM_Sans',sans-serif] p-0 select-none"
     >
       {/* Top Left: Back Button (Frame 2609475: top: 40px, left: 40px) */}
       {showBack && onBack && (
@@ -59,12 +57,12 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="absolute left-[40px] top-[40px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-[#FFECE6] hover:opacity-80 transition-opacity z-20"
+          className="absolute left-[40px] top-[40px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity z-20"
         >
           <div className="w-[20px] h-[20px] flex items-center justify-center">
-            <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-[#FFECE6]" />
+            <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
           </div>
-          <span className="h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[#FFECE6]">
+          <span className="h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
             Back
           </span>
         </button>
@@ -76,9 +74,9 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           type="button"
           onClick={handleCloseClick}
           aria-label="Close"
-          className="absolute right-[40px] top-[40px] w-[24px] h-[24px] flex flex-row items-center justify-center p-0 text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer z-20"
+          className="absolute right-[40px] top-[40px] w-[24px] h-[24px] flex flex-row items-center justify-center p-0 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
         >
-          <CloseCrossIcon className="w-[20px] h-[20px] text-[#FFECE6]" size={20} />
+          <CloseCrossIcon className="w-[20px] h-[20px] text-ds-text-primary" size={20} />
         </button>
       )}
 
@@ -94,7 +92,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Cocpit"
-          className="block relative text-[#FFECE6] hover:opacity-80 transition-opacity"
+          className="block relative text-ds-text-primary hover:opacity-80 transition-opacity"
         >
           <CocpitLogoIcon className="w-[27px] h-[30px]" />
         </Link>
@@ -104,14 +102,14 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       {showConfirmClose && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
-            className="flex flex-col items-center p-[8px_12px] gap-[16px] bg-[#030303] border border-[#2C2C33] rounded-[16px] box-border absolute"
+            className="flex flex-col items-center p-[8px_12px] gap-[16px] bg-ds-bg border border-ds-border rounded-[16px] box-border absolute"
             style={{ width: "193px", height: "142px" }}
           >
             <div className="flex flex-col items-center p-0 gap-[8px] w-[167px] h-[72px]">
-              <span className="font-medium text-[16px] leading-[24px] text-[#FFECE6] whitespace-nowrap">
+              <span className="font-medium text-[16px] leading-[24px] text-ds-text-primary whitespace-nowrap">
                 Leave profile setup?
               </span>
-              <span className="font-normal text-[14px] leading-[20px] text-center text-[#B8ADA8]">
+              <span className="font-normal text-[14px] leading-[20px] text-center text-ds-text-secondary">
                 Don't worry, your progress will be saved
               </span>
             </div>
@@ -120,14 +118,14 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
               <button
                 type="button"
                 onClick={handleStay}
-                className="flex flex-row justify-center items-center p-[6px_12px] gap-[10px] w-[68px] h-[36px] bg-[#EC6229] rounded-[100px] font-medium text-[16px] leading-[24px] text-[#FFECE6] hover:opacity-90 transition-opacity"
+                className="flex flex-row justify-center items-center p-[6px_12px] gap-[10px] w-[68px] h-[36px] bg-ds-accent rounded-[100px] font-medium text-[16px] leading-[24px] text-white hover:opacity-90 transition-opacity"
               >
                 Stay
               </button>
               <button
                 type="button"
                 onClick={handleLeave}
-                className="flex flex-row justify-center items-center p-[6px_12px] gap-[10px] w-[68px] h-[36px] border border-[#2C2C33] rounded-[100px] font-medium text-[16px] leading-[24px] text-[#FFECE6] hover:opacity-80 transition-opacity bg-transparent"
+                className="flex flex-row justify-center items-center p-[6px_12px] gap-[10px] w-[68px] h-[36px] border border-ds-border rounded-[100px] font-medium text-[16px] leading-[24px] text-ds-text-primary hover:opacity-80 transition-opacity bg-transparent"
               >
                 Leave
               </button>

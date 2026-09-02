@@ -52,7 +52,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('theme');
+                  document.documentElement.setAttribute('data-theme', saved || 'dark');
+                } catch (e) {
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden`}
       >

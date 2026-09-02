@@ -213,7 +213,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center font-sans text-[#FFECE6] select-none relative">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center font-sans text-ds-text-primary select-none relative">
       {/* Centered Vertical Stack: Progress Bar + 20px gap + Main Content Container */}
       <div className="flex flex-col items-center gap-5 z-10">
         {/* Frame 41: Progress Bar (Step 4 of 5) */}
@@ -223,19 +223,19 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
         <div className="w-[471px] min-h-[410px] p-4 flex flex-col items-center gap-5 rounded-[24px] box-border">
           {/* Header Section */}
           <div className="w-full flex flex-col items-center p-0 gap-2 text-center">
-            <h1 className="w-full font-sans font-bold text-[40px] leading-[48px] text-center text-[#FFECE6] tracking-normal m-0 p-0">
-              What are you <span className="text-[#EC6229]">good at?</span>
+            <h1 className="w-full font-sans font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+              What are you <span className="text-ds-accent">good at?</span>
             </h1>
-            <p className="w-full font-sans font-semibold text-[16px] leading-[24px] text-center text-[#FFECE6] m-0 p-0">
+            <p className="w-full font-sans font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary m-0 p-0">
               Choose skills that represent your expertise
             </p>
           </div>
 
           {/* Frame 2608512: Skills Input + Chips/Dropdown Section (260px, gap 12px) */}
           <div className="w-64 flex flex-col items-center p-0 gap-3">
-            {/* Input with icon (260px x 36px, border-bottom 1px solid #2C2C33) */}
+            {/* Input with icon (260px x 36px, border-bottom 1px solid border-ds-border) */}
             <div className="w-64 flex flex-col items-start p-0 gap-2">
-              <div className="w-64 h-[36px] py-2 border-b border-[#2C2C33] flex flex-row justify-between items-center box-border focus-within:border-[#EC6229] transition-colors">
+              <div className="w-64 h-[36px] py-2 border-b border-ds-border flex flex-row justify-between items-center box-border focus-within:border-ds-accent transition-colors">
                 <input
                   type="text"
                   value={search}
@@ -251,17 +251,17 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                   }}
                   placeholder="Search"
                   autoComplete="off"
-                  className="w-[220px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-[#FFECE6] placeholder-[#B8ADA8]"
+                  className="w-[220px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted"
                 />
                 <div className="w-4 h-4 p-[2px] flex items-center justify-center shrink-0">
-                  <SearchIcon size={16} className="w-4 h-4 text-[#FFECE6]" />
+                  <SearchIcon size={16} className="w-4 h-4 text-ds-text-primary" />
                 </div>
               </div>
             </div>
 
             {/* If searching >= 3 characters: Show Figma Dropdown List View */}
             {search.trim().length >= 3 ? (
-              <div className="w-64 max-h-[180px] py-2 bg-black flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide">
+              <div className="w-64 max-h-[180px] py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide">
                 {searchResults.length > 0 ? (
                   searchResults.map((item, index) => {
                     const isSelected = selectedSkills.includes(item);
@@ -275,8 +275,8 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                         }}
                         className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 py-1.5 transition-colors cursor-pointer truncate ${
                           isSelected
-                            ? "text-[#EC6229] font-medium"
-                            : "text-[#B8ADA8] hover:text-[#FFECE6]"
+                            ? "text-ds-accent font-medium"
+                            : "text-ds-text-secondary hover:text-ds-text-primary"
                         }`}
                       >
                         <span className="truncate">{item}</span>
@@ -284,7 +284,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                     );
                   })
                 ) : (
-                  <div className="py-2 text-xs text-stone-500 font-sans">
+                  <div className="py-2 text-xs text-ds-text-muted font-sans">
                     {loading ? "Searching..." : "No skills found"}
                   </div>
                 )}
@@ -294,11 +294,11 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                 {/* Note / Helper message (260px x 16px, DM Sans 12px/16px) */}
                 <div className="w-64 h-4 flex items-center justify-start">
                   {isBelowMin ? (
-                    <span className="font-sans text-xs leading-4 font-normal text-[#B8ADA8]">
+                    <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary">
                       Minimum 3 skills
                     </span>
                   ) : isAboveMax ? (
-                    <span className="font-sans text-xs leading-4 font-normal text-[#E5484D]">
+                    <span className="font-sans text-xs leading-4 font-normal text-ds-error">
                       Maximum limit of 7 reached
                     </span>
                   ) : null}
@@ -316,9 +316,9 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                       key={`selected-${skill}-${index}`}
                       type="button"
                       onClick={() => handleToggleSkill(skill)}
-                      className="h-7 py-1.5 px-2 bg-[#1A1A20] border border-[#EC6229] rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
+                      className="h-7 py-1.5 px-2 bg-ds-surface-1 border border-ds-accent rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
                     >
-                      <span className="font-sans text-xs leading-4 font-normal text-[#B8ADA8] truncate max-w-[200px]">
+                      <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary truncate max-w-[200px]">
                         {skill}
                       </span>
                     </button>
@@ -330,9 +330,9 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
                       key={`unselected-${skill}-${index}`}
                       type="button"
                       onClick={() => handleToggleSkill(skill)}
-                      className="h-7 py-1.5 px-2 bg-[#1A1A20] border border-transparent hover:border-[#2C2C33] rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
+                      className="h-7 py-1.5 px-2 bg-ds-surface-1 border border-transparent hover:border-ds-border rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
                     >
-                      <span className="font-sans text-xs leading-4 font-normal text-[#B8ADA8] truncate max-w-[200px]">
+                      <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary truncate max-w-[200px]">
                         {skill}
                       </span>
                     </button>
@@ -340,7 +340,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
 
                   {/* Loader indicator when loading more */}
                   {loadingMore && (
-                    <div className="w-full py-2 flex items-center justify-center gap-2 text-stone-500 text-xs font-sans">
+                    <div className="w-full py-2 flex items-center justify-center gap-2 text-ds-text-muted text-xs font-sans">
                       <LoadingIcon className="w-3 h-3 animate-spin-smooth" />
                       <span>Loading more...</span>
                     </div>

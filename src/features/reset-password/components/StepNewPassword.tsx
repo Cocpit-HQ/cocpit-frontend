@@ -62,16 +62,16 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
   const isFormValid = isPasswordValid && isPasswordMatch && !isSameOldPassword;
 
   return (
-    <div className="w-full max-w-[390px] p-4 rounded-3xl flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-[#FFECE6]">
+    <div className="w-full max-w-[390px] p-4 rounded-3xl flex flex-col items-center gap-5 font-['DM_Sans',sans-serif] text-ds-text-primary">
       {/* Frame 2608511: Title & Subtitle */}
       <div className="w-full max-w-[358px] flex flex-col items-center gap-3 text-center">
         {/* Title: Create password */}
         <h1 className="w-full text-[40px] font-bold font-['DM_Sans'] leading-[48px] text-center tracking-tight">
-          <span className="text-[#FFECE6]">Create </span>
-          <span className="text-[#EC6229]">password</span>
+          <span className="text-ds-text-primary">Create </span>
+          <span className="text-ds-accent">password</span>
         </h1>
         {/* Subtitle: Choose a new password for your account */}
-        <p className="w-full text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] text-center">
+        <p className="w-full text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary text-center">
           Choose a new password for your account
         </p>
       </div>
@@ -83,8 +83,8 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
           {/* First Input Block: New Password (width: 260px, height: 60px) */}
           <div className="w-[260px] flex flex-col items-start gap-2">
             <div
-              className={`w-[260px] h-9 py-2 border-b border-[#2C2C33] flex flex-row justify-between items-center gap-1 focus-within:border-[#EC6229] transition-colors ${
-                isSameOldPassword ? "!border-[#E5484D]" : ""
+              className={`w-[260px] h-9 py-2 border-b border-ds-border flex flex-row justify-between items-center gap-1 focus-within:border-ds-accent transition-colors ${
+                isSameOldPassword ? "!border-ds-error" : ""
               }`}
             >
               <input
@@ -109,7 +109,7 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 }}
                 disabled={isLoading}
                 maxLength={15}
-                className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
+                className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
                   !showNewPassword && newPassword.length > 0 ? "tracking-[2px]" : ""
                 }`}
                 required
@@ -118,7 +118,7 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowNewPassword((prev) => !prev)}
-                  className="w-4 h-4 p-0.5 flex items-center justify-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                  className="w-4 h-4 p-0.5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
                   aria-label={showNewPassword ? "Hide password" : "Show password"}
                   disabled={isLoading}
                 >
@@ -131,14 +131,14 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
               )}
             </div>
 
-            {/* Note below first input (width: 260px, height: 16px, color: #B8ADA8 or #E5484D) */}
+            {/* Note below first input (width: 260px, height: 16px, color: text-ds-text-secondary or text-ds-error) */}
             <div className="w-[260px] h-4 flex items-center">
               {isSameOldPassword ? (
-                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                   Choose a different password
                 </span>
               ) : (
-                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[#B8ADA8] text-left">
+                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-ds-text-secondary text-left">
                   {currentHint}
                 </span>
               )}
@@ -148,8 +148,8 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
           {/* Second Input Block: Confirm Password (width: 260px, height: 60px) */}
           <div className="w-[260px] flex flex-col items-start gap-2">
             <div
-              className={`w-[260px] h-9 py-2 border-b border-[#2C2C33] flex flex-row justify-between items-center gap-1 focus-within:border-[#EC6229] transition-colors ${
-                showMismatchError ? "!border-[#E5484D]" : ""
+              className={`w-[260px] h-9 py-2 border-b border-ds-border flex flex-row justify-between items-center gap-1 focus-within:border-ds-accent transition-colors ${
+                showMismatchError ? "!border-ds-error" : ""
               }`}
             >
               <input
@@ -167,7 +167,7 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 }}
                 disabled={isLoading}
                 maxLength={15}
-                className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
+                className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
                   !showConfirmPassword && confirmPassword.length > 0 ? "tracking-[2px]" : ""
                 }`}
                 required
@@ -176,7 +176,7 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="w-4 h-4 p-0.5 flex items-center justify-center text-[#FFECE6] hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                  className="w-4 h-4 p-0.5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   disabled={isLoading}
                 >
@@ -192,11 +192,11 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
             {/* Note below second input (width: 260px, height: 16px) */}
             <div className="w-[260px] h-4 flex items-center">
               {showMismatchError ? (
-                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                   Passwords don&apos;t match
                 </span>
               ) : errorMessage && errorMessage !== "Choose a different password" ? (
-                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-left">
+                <span className="w-full font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-left">
                   {errorMessage}
                 </span>
               ) : null}
@@ -208,15 +208,15 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
         <button
           type="submit"
           disabled={!isFormValid || isLoading}
-          className={`w-[260px] h-9 px-3 py-1.5 bg-[#1A1A20] rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
+          className={`w-[260px] h-9 px-3 py-1.5 bg-ds-surface-1 rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-[21px] transition-all ${
             isFormValid && !isLoading
-              ? "text-[#FFECE6] hover:bg-[#222228] cursor-pointer shadow-[0_0_0_1px_#27272A]"
-              : "text-[#726B67] opacity-60"
+              ? "text-ds-text-primary hover:bg-ds-surface-2 cursor-pointer shadow-[0_0_0_1px_var(--ds-border)]"
+              : "text-ds-text-muted opacity-60"
           }`}
         >
           {isLoading ? (
             <LoadingIcon
-              className="w-6 h-6 animate-spin-smooth text-[#B8ADA8] shrink-0"
+              className="w-6 h-6 animate-spin-smooth text-ds-text-secondary shrink-0"
               style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
             />
           ) : (

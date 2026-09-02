@@ -47,26 +47,26 @@ export const StepEmail: React.FC<StepEmailProps> = ({
   const isAnyLoading = isLoading || isGoogleLoading || isAppleLoading;
 
   return (
-    <div className="w-full flex flex-col items-center gap-5 text-center font-['DM_Sans',sans-serif] text-[#FFECE6]">
+    <div className="w-full flex flex-col items-center gap-5 text-center font-['DM_Sans',sans-serif] text-ds-text-primary">
       {/* Title Section (Frame 2608511) */}
       <div className="flex flex-col items-center gap-3">
         <h1 className="text-[40px] font-bold font-['DM_Sans'] leading-[48px] tracking-tight">
-          <span className="text-[#FFECE6]">Create your </span>
-          <span className="text-[#EC6229]">account</span>
+          <span className="text-ds-text-primary">Create your </span>
+          <span className="text-ds-accent">account</span>
         </h1>
-        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] max-w-[295px]">
+        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary max-w-[295px]">
           Start building your professional profile
         </p>
       </div>
 
       {/* Account Pending Deletion Warning Banner */}
       {pendingDeletion && (
-        <div className="w-[260px] p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col gap-2 text-xs text-stone-400 text-left">
+        <div className="w-[260px] p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex flex-col gap-2 text-xs text-ds-text-secondary text-left">
           <div className="flex items-start gap-2">
-            <MailWarningIcon className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+            <MailWarningIcon className="w-4 h-4 text-ds-accent shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-[#FFECE6]">Account scheduled for deletion</p>
-              <p className="text-stone-400 text-[11px] mt-0.5">
+              <p className="font-semibold text-ds-text-primary">Account scheduled for deletion</p>
+              <p className="text-ds-text-secondary text-[11px] mt-0.5">
                 Your account will be permanently deleted on{" "}
                 <strong>
                   {new Date(pendingDeletion.deletionDate).toLocaleDateString("en-US", {
@@ -84,7 +84,7 @@ export const StepEmail: React.FC<StepEmailProps> = ({
               type="button"
               onClick={onResendRecovery}
               disabled={isResending || resendCooldown > 0}
-              className="inline-flex items-center gap-1.5 bg-[#EC6229] text-white rounded-full px-3 py-1 text-xs font-medium self-start disabled:opacity-60 cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-ds-accent text-white rounded-full px-3 py-1 text-xs font-medium self-start disabled:opacity-60 cursor-pointer"
             >
               <SendIcon className="w-3 h-3" />
               {isResending
@@ -130,9 +130,9 @@ export const StepEmail: React.FC<StepEmailProps> = ({
 
           {/* Google Sign In Button */}
           <div className="relative w-[260px] h-9 rounded-[100px] cursor-pointer overflow-hidden" ref={containerRef}>
-            <div className="w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all pointer-events-none cursor-pointer">
+            <div className="w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all pointer-events-none cursor-pointer">
               <GoogleIcon className="w-4 h-4 shrink-0" size={16} />
-              <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] text-left shrink-0">
+              <span className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary text-left shrink-0">
                 Continue with Google
               </span>
             </div>
@@ -160,18 +160,18 @@ export const StepEmail: React.FC<StepEmailProps> = ({
           <button
             type="button"
             disabled={isAnyLoading}
-            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all cursor-pointer disabled:opacity-60"
+            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all cursor-pointer disabled:opacity-60"
             onClick={onAppleLogin}
           >
             {isAppleLoading ? (
               <LoadingIcon
-                className="w-5 h-5 animate-spin-smooth text-[#B8ADA8] shrink-0"
+                className="w-5 h-5 animate-spin-smooth text-ds-text-secondary shrink-0"
                 style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
               />
             ) : (
               <>
-                <AppleIcon className="w-4 h-4 shrink-0 text-[#FFECE6]" size={16} />
-                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] text-left shrink-0">
+                <AppleIcon className="w-4 h-4 shrink-0 text-ds-text-primary" size={16} />
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary text-left shrink-0">
                   Continue with Apple
                 </span>
               </>
@@ -182,20 +182,20 @@ export const StepEmail: React.FC<StepEmailProps> = ({
 
       {/* Already Have An Account Link */}
       <div className="text-center text-xs font-['DM_Sans'] leading-4">
-        <span className="text-[#726B67] font-normal">Already have an account? </span>
+        <span className="text-ds-text-muted font-normal">Already have an account? </span>
         <Link href="/" className="hover:opacity-80 transition-opacity">
-          <span className="text-[#FFECE6] font-medium">Log in</span>
+          <span className="text-ds-text-primary font-medium">Log in</span>
         </Link>
       </div>
 
       {/* Terms & Conditions / User Policy Notice */}
-      <div className="w-[298px] text-center text-[10px] font-['DM_Sans'] leading-3 text-[#B8ADA8]">
+      <div className="w-[298px] text-center text-[10px] font-['DM_Sans'] leading-3 text-ds-text-secondary">
         <span>By continuing, you agree to our </span>
-        <Link href="/terms" className="!text-[#FFECE6] hover:opacity-80 transition-opacity">
+        <Link href="/terms" className="!text-ds-text-primary hover:opacity-80 transition-opacity">
           Terms &amp; Conditions
         </Link>
         <span> and acknowledge our </span>
-        <Link href="/user-agreement" className="!text-[#FFECE6] hover:opacity-80 transition-opacity">
+        <Link href="/user-agreement" className="!text-ds-text-primary hover:opacity-80 transition-opacity">
           User Policy
         </Link>
       </div>

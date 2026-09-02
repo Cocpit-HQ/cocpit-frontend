@@ -29,10 +29,10 @@ export const StepEmail: React.FC<StepEmailProps> = ({
       {/* Header */}
       <div className="flex flex-col items-center gap-3 text-center">
         <h1 className="text-[40px] font-bold font-['DM_Sans'] leading-[48px] tracking-tight">
-          <span className="text-[#FFECE6]">Reset your </span>
-          <span className="text-[#EC6229]">password</span>
+          <span className="text-ds-text-primary">Reset your </span>
+          <span className="text-ds-accent">password</span>
         </h1>
-        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-[#FFECE6] max-w-[408px]">
+        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary max-w-[408px]">
           Enter the email associated with your account and we&apos;ll send you a verification code
         </p>
       </div>
@@ -67,9 +67,9 @@ export const StepEmail: React.FC<StepEmailProps> = ({
 
       {/* Footer Link */}
       <div className="text-center text-xs font-['DM_Sans'] leading-4">
-        <span className="text-[#B8ADA8] font-normal">Remember your password? </span>
+        <span className="text-ds-text-secondary font-normal">Remember your password? </span>
         <Link href="/" className="hover:underline">
-          <span className="text-[#FFECE6] font-medium">Log in</span>
+          <span className="text-ds-text-primary font-medium">Log in</span>
         </Link>
       </div>
     </div>

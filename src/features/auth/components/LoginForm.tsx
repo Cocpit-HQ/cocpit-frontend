@@ -330,15 +330,15 @@ const LoginForm = () => {
   const isFormValid = validateEmailFormat(email) && password.length > 0;
 
   return (
-    <div className="w-96 p-4 rounded-3xl inline-flex flex-col justify-start items-center gap-5 overflow-hidden font-['DM_Sans'] text-[#FFECE6]" data-theme="dark">
+    <div className="w-96 p-4 rounded-3xl inline-flex flex-col justify-start items-center gap-5 overflow-hidden font-['DM_Sans'] text-ds-text-primary">
       {/* Header */}
       <div className="flex flex-col justify-start items-center gap-3">
         <div className="text-center justify-start">
-          <span className="text-[#FFECE6] text-[40px] font-bold font-['DM_Sans'] leading-[48px]">Just</span>
-          <span className="text-[#EC6229] text-[40px] font-bold font-['DM_Sans'] leading-[48px]"> Build.</span>
+          <span className="text-ds-text-primary text-[40px] font-bold font-['DM_Sans'] leading-[48px]">Just</span>
+          <span className="text-ds-accent text-[40px] font-bold font-['DM_Sans'] leading-[48px]"> Build.</span>
         </div>
         <div className="flex flex-col justify-start items-center gap-3">
-          <div className="text-center justify-start text-[#FFECE6] text-base font-semibold font-['DM_Sans'] leading-6">
+          <div className="text-center justify-start text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
             Log in to continue to your account
           </div>
         </div>
@@ -346,9 +346,9 @@ const LoginForm = () => {
 
       {/* Session Ended Alert */}
       {sessionEnded && (
-        <div className="w-64 p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-start gap-2 text-xs text-stone-400">
-          <AlertCircleIcon className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-stone-300">
+        <div className="w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">
+          <AlertCircleIcon className="w-4 h-4 text-ds-warning shrink-0 mt-0.5" />
+          <p className="text-ds-text-primary">
             You were signed out because your session ended. Please log in again.
           </p>
         </div>
@@ -356,11 +356,11 @@ const LoginForm = () => {
 
       {/* Deactivated Alert */}
       {reason === "deactivated" && (
-        <div className="w-64 p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-start gap-2 text-xs text-stone-400">
-          <AlertCircleIcon className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
+        <div className="w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">
+          <AlertCircleIcon className="w-4 h-4 text-ds-text-secondary shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-[#FFECE6]">Account deactivated</p>
-            <p className="text-stone-400 text-[11px] mt-0.5">
+            <p className="font-semibold text-ds-text-primary">Account deactivated</p>
+            <p className="text-ds-text-secondary text-[11px] mt-0.5">
               Your account is currently deactivated. Log in to automatically reactivate it.
             </p>
           </div>
@@ -369,12 +369,12 @@ const LoginForm = () => {
 
       {/* Pending Deletion Alert */}
       {pendingDeletion && (
-        <div className="w-64 p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col gap-2 text-xs text-stone-400">
+        <div className="w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex flex-col gap-2 text-xs text-ds-text-secondary">
           <div className="flex items-start gap-2">
-            <MailWarningIcon className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+            <MailWarningIcon className="w-4 h-4 text-ds-accent shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-[#FFECE6]">Account scheduled for deletion</p>
-              <p className="text-stone-400 text-[11px] mt-0.5">
+              <p className="font-semibold text-ds-text-primary">Account scheduled for deletion</p>
+              <p className="text-ds-text-secondary text-[11px] mt-0.5">
                 Your account will be permanently deleted on{" "}
                 <strong>
                   {new Date(pendingDeletion.deletionDate).toLocaleDateString("en-US", {
@@ -391,7 +391,7 @@ const LoginForm = () => {
             type="button"
             onClick={handleResendRecovery}
             disabled={isResending || resendCooldown > 0}
-            className="inline-flex items-center gap-1.5 bg-[#EC6229] text-white rounded-full px-3 py-1 text-xs font-medium self-start disabled:opacity-60 cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-ds-accent text-white rounded-full px-3 py-1 text-xs font-medium self-start disabled:opacity-60 cursor-pointer"
           >
             <SendIcon className="w-3 h-3" />
             {isResending
@@ -407,7 +407,7 @@ const LoginForm = () => {
       <form onSubmit={handleSubmit} className="w-[260px] flex flex-col justify-start items-start">
         {/* Email Field */}
         <div className="w-[260px] flex flex-col justify-start items-start">
-          <div className={`w-full py-2.5 border-b border-zinc-800 inline-flex justify-start items-center gap-1 focus-within:border-[#EC6229] transition-colors ${authError ? "!border-[#E5484D]" : ""}`}>
+          <div className={`w-full py-2.5 border-b border-ds-border inline-flex justify-start items-center gap-1 focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
             <input
               id="email"
               type="email"
@@ -421,7 +421,7 @@ const LoginForm = () => {
                 setEmail(e.target.value);
                 if (authError) setAuthError(null);
               }}
-              className="w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-xs font-medium font-['DM_Sans'] leading-4 autofill:bg-transparent"
+              className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4 autofill:bg-transparent"
               disabled={isLoading || isGoogleLoading || isAppleLoading}
             />
           </div>
@@ -429,7 +429,7 @@ const LoginForm = () => {
 
         {/* Password Field */}
         <div className="w-[260px] flex flex-col justify-start items-start gap-1 mt-6">
-          <div className={`w-full h-9 py-2.5 border-b border-zinc-800 inline-flex justify-between items-center focus-within:border-[#EC6229] transition-colors ${authError ? "!border-[#E5484D]" : ""}`}>
+          <div className={`w-full h-9 py-2.5 border-b border-ds-border inline-flex justify-between items-center focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -443,7 +443,7 @@ const LoginForm = () => {
                 setPassword(e.target.value);
                 if (authError) setAuthError(null);
               }}
-              className={`w-full bg-transparent border-none outline-none text-[#FFECE6] placeholder:text-[#726B67] text-xs font-medium font-['DM_Sans'] leading-4 autofill:bg-transparent placeholder:tracking-normal ${
+              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4 autofill:bg-transparent placeholder:tracking-normal ${
                 !showPassword && password.length > 0 ? "tracking-[2px]" : ""
               }`}
               disabled={isLoading || isGoogleLoading || isAppleLoading}
@@ -451,7 +451,7 @@ const LoginForm = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="size-4 inline-flex justify-center items-center text-stone-500 hover:text-[#FFECE6] transition-colors cursor-pointer shrink-0"
+              className="size-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
               aria-label={showPassword ? "Hide password" : "Show password"}
               disabled={isLoading || isGoogleLoading || isAppleLoading}
             >
@@ -467,7 +467,7 @@ const LoginForm = () => {
               href="/forgot-password"
               className="group inline-flex items-center text-xs font-normal font-['DM_Sans'] leading-4 !no-underline cursor-pointer"
             >
-              <span className="!text-[#B8ADA8] group-hover:!text-[#FFECE6] transition-colors !no-underline">
+              <span className="!text-ds-text-secondary group-hover:!text-ds-text-primary transition-colors !no-underline">
                 Forgot password?
               </span>
             </Link>
@@ -477,7 +477,7 @@ const LoginForm = () => {
         {/* Centered Error Message */}
         {authError && (
           <div className="w-[260px] flex justify-center items-center mt-5">
-            <span className="w-[211px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-[#E5484D] text-center shrink-0">
+            <span className="w-[211px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-center shrink-0">
               {authError}
             </span>
           </div>
@@ -489,15 +489,15 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={!isFormValid || isLoading || isGoogleLoading}
-            className={`w-[260px] h-9 px-3 py-1.5 bg-[#1A1A20] text-[#FFECE6] rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] transition-all ${
+            className={`w-[260px] h-9 px-3 py-1.5 bg-ds-surface-1 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] transition-all ${
               isFormValid && !isLoading
-                ? "hover:bg-[#222228] cursor-pointer shadow-[0_0_0_1px_#27272A]"
+                ? "hover:bg-ds-surface-2 cursor-pointer shadow-[0_0_0_1px_var(--ds-border)]"
                 : "opacity-60"
             }`}
           >
             {isLoading ? (
               <LoadingIcon
-                className="w-6 h-6 animate-spin-smooth text-[#B8ADA8] shrink-0"
+                className="w-6 h-6 animate-spin-smooth text-ds-text-secondary shrink-0"
                 style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
               />
             ) : (
@@ -507,9 +507,9 @@ const LoginForm = () => {
 
           {/* Google Sign In Button */}
           <div className="relative w-[260px] h-9 rounded-[100px] cursor-pointer overflow-hidden" ref={containerRef}>
-            <div className="w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all pointer-events-none cursor-pointer">
+            <div className="w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all pointer-events-none cursor-pointer">
               <GoogleIcon className="w-4 h-4 shrink-0" size={16} />
-              <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] text-left shrink-0">Continue with Google</span>
+              <span className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary text-left shrink-0">Continue with Google</span>
             </div>
 
             {/* Full-coverage functional Google Login button */}
@@ -535,18 +535,18 @@ const LoginForm = () => {
           <button
             type="button"
             disabled={isLoading || isGoogleLoading || isAppleLoading}
-            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-800 inline-flex justify-center items-center gap-[10px] hover:bg-white/5 transition-all cursor-pointer disabled:opacity-60"
+            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all cursor-pointer disabled:opacity-60"
             onClick={handleAppleLogin}
           >
             {isAppleLoading ? (
               <LoadingIcon
-                className="w-5 h-5 animate-spin-smooth text-[#B8ADA8] shrink-0"
+                className="w-5 h-5 animate-spin-smooth text-ds-text-secondary shrink-0"
                 style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
               />
             ) : (
               <>
-                <AppleIcon className="w-4 h-4 shrink-0 text-[#FFECE6]" size={16} />
-                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] text-left shrink-0">Continue with Apple</span>
+                <AppleIcon className="w-4 h-4 shrink-0 text-ds-text-primary" size={16} />
+                <span className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary text-left shrink-0">Continue with Apple</span>
               </>
             )}
           </button>
@@ -555,9 +555,9 @@ const LoginForm = () => {
 
       {/* Sign Up Link */}
       <div className="text-right justify-start text-xs font-['DM_Sans']">
-        <span className="text-[#726B67] font-normal">Don&apos;t have an account? </span>
+        <span className="text-ds-text-muted font-normal">Don&apos;t have an account? </span>
         <Link href="/signup" className="hover:underline">
-          <span className="!text-[#FFECE6] font-medium">Sign up</span>
+          <span className="!text-ds-text-primary font-medium">Sign up</span>
         </Link>
       </div>
 
@@ -574,13 +574,13 @@ const LoginForm = () => {
       {/* Account Not Found Modal */}
       {showNoAccountModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="box-border w-[318px] h-[142px] bg-[#030303] border border-[#2C2C33] rounded-2xl flex flex-col items-center px-3 py-2 gap-4">
+          <div className="box-border w-[318px] h-[142px] bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center px-3 py-2 gap-4">
             
             <div className="w-[292px] flex flex-col items-center gap-2">
-              <h3 className="font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6]">
+              <h3 className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary">
                 No account found
               </h3>
-              <p className="font-['DM_Sans'] font-normal text-sm leading-5 text-center text-[#B8ADA8]">
+              <p className="font-['DM_Sans'] font-normal text-sm leading-5 text-center text-ds-text-secondary">
                 This account isn't registered with Cocpit. Create an account to continue
               </p>
             </div>
@@ -589,14 +589,14 @@ const LoginForm = () => {
               <button
                 type="button"
                 onClick={handleCreateSocialAccount}
-                className="w-[142px] h-[36px] flex justify-center items-center px-3 py-1.5 bg-[#EC6229] rounded-[100px] font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] hover:bg-[#D95522] transition-colors cursor-pointer shrink-0"
+                className="w-[142px] h-[36px] flex justify-center items-center px-3 py-1.5 bg-ds-accent rounded-[100px] font-['DM_Sans'] font-medium text-base leading-6 text-white hover:opacity-90 transition-opacity cursor-pointer shrink-0"
               >
                 Create account
               </button>
               <button
                 type="button"
                 onClick={() => setShowNoAccountModal(false)}
-                className="w-[142px] h-[36px] flex justify-center items-center px-3 py-1.5 border border-[#2C2C33] rounded-[100px] font-['DM_Sans'] font-medium text-base leading-6 text-[#FFECE6] hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                className="w-[142px] h-[36px] flex justify-center items-center px-3 py-1.5 border border-ds-border rounded-[100px] font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer shrink-0"
               >
                 Cancel
               </button>
