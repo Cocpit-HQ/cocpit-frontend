@@ -192,15 +192,19 @@ const LoginForm = () => {
 
       if (result?.error) {
         if (!tryParseDeletionError(result.error, email)) {
-          setAuthError("Incorrect email or password. Try again");
+          setAuthError(
+            result.error !== "CredentialsSignin"
+              ? result.error
+              : "Incorrect email or password. Try again"
+          );
         }
         setIsLoading(false);
       } else {
         setAuthError(null);
         await handlePostLoginRedirect();
       }
-    } catch (err) {
-      setAuthError("Incorrect email or password. Try again");
+    } catch (err: any) {
+      setAuthError(err?.message || "Incorrect email or password. Try again");
       setIsLoading(false);
     }
   };
