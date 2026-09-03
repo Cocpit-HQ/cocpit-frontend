@@ -716,6 +716,16 @@
     caret-color: #EC6229 !important;
     filter: none !important;
   }
+
+  /* ── Microsoft Edge Password Reveal Reset ────────────────── */
+  /* Eliminates native Edge eye reveal & clear buttons in password inputs */
+  input::-ms-reveal {
+    display: none !important;
+  }
+
+  input::-ms-clear {
+    display: none !important;
+  }
 }
 
 @layer components {

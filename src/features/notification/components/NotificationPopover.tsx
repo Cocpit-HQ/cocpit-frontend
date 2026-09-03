@@ -262,14 +262,23 @@ export function NotificationPopover({
       }
       router.push(url);
       setIsOpen(false);
+    } else if (notification.type === 'profile_incomplete_nudge' || notification.text?.toLowerCase().includes('complete your profile')) {
+      const profileUrl = isCompany && activeProfile?.slug
+        ? `/organization/${activeProfile.slug}`
+        : '/profile';
+      router.push(profileUrl);
+      setIsOpen(false);
     }
   }
 
   const todayNotifications = notifications.filter(n => n.created_at && isToday(new Date(n.created_at)));
   const olderNotifications = notifications.filter(n => !n.created_at || !isToday(new Date(n.created_at)));
 
-    const renderNotificationItem = (notification: Notification) => {
-    const text = notification.text ? notification.text.replace(new RegExp('^' + (notification.actor_name || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i'), '').trim() : '';
+  const renderNotificationItem = (notification: Notification) => {
+    const rawText = notification.text ? notification.text.replace(new RegExp('^' + (notification.actor_name || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i'), '').trim() : '';
+    const text = notification.type === 'doc_verification_success' && !notification.text.startsWith('Congratulations')
+      ? `Congratulations ${notification.actor_name || activeProfile?.name || 'user'}, we have successfully reviewed and verified your documents. Your profile is now verified.`
+      : rawText;
     const isCompanyActor = Boolean(
       notification.is_company_actor ||
       (notification as any).isCompanyActor ||

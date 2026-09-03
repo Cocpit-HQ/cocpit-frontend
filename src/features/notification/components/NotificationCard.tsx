@@ -49,7 +49,7 @@ interface NotificationCardProps {
 
 export const NotificationCard: React.FC<NotificationCardProps> = ({ notification, onRead, onDelete }) => {
     const router = useRouter()
-    const { isCompany } = useActiveProfile()
+    const { isCompany, activeProfile } = useActiveProfile()
     
     const postReferenceId =
         notification.reference_id ||
@@ -137,6 +137,11 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             router.push('/connections?tab=invitations&sub=teams')
         } else if (notification.type === 'new_device_login' || notification.type === 'password_changed' || notification.type === 'email_changed') {
             router.push('/settings/security')
+        } else if (notification.type === 'profile_incomplete_nudge' || notification.text?.toLowerCase().includes('complete your profile')) {
+            const profileUrl = isCompany && activeProfile?.slug
+                ? `/organization/${activeProfile.slug}`
+                : '/profile';
+            router.push(profileUrl);
         }
     }
 
@@ -176,13 +181,19 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                     />
                 </div>
                 <div className="flex flex-row items-center gap-[4px] flex-wrap">
-                    {notification.type !== 'advocacy' && notification.actor_name && (
+                    {notification.type !== 'advocacy' && notification.type !== 'doc_verification_success' && notification.type !== 'doc_verification_rejected' && notification.actor_name && (
                         <span className="font-poppins font-medium text-[16px] leading-[24px] text-[#000000] dark:text-white">
                             {notification.actor_name}
                         </span>
                     )}
                     <span className="font-poppins font-normal text-[14px] leading-[20px] text-[#6B7280] dark:text-muted-foreground">
                         {notification.type === 'advocacy' || notification.type === 'new_application_threshold'
+                            ? notification.text
+                            : notification.type === 'doc_verification_success'
+                            ? (notification.text.startsWith('Congratulations')
+                                ? notification.text
+                                : `Congratulations ${notification.actor_name || activeProfile?.name || 'user'}, we have successfully reviewed and verified your documents. Your profile is now verified.`)
+                            : notification.type === 'doc_verification_rejected'
                             ? notification.text
                             : notification.text.replace(new RegExp('^"?' + (notification.actor_name || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '"?\\s*', 'i'), '').trim()
                         }
