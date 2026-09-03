@@ -63,7 +63,7 @@ export const useConnectionRequests = (tab: ConnectionTab, subTab?: InvitationSub
     // Only fetch invitations when actually on an invitations sub-tab.
     // For other tabs (received/sent), always enabled.
     enabled: tab !== 'invitations' || subTab === 'channels' || subTab === 'teams',
-    staleTime: tab === 'invitations' ? 60_000 : 30_000,
+    staleTime: 0, // Always fetch fresh data on mount to avoid stale UI when navigating
     retry: 1,
   });
 

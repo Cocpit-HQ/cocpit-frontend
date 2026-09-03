@@ -182,6 +182,9 @@ export function NotificationPopover({
 
       router.push(url);
       setIsOpen(false);
+    } else if (notification.type === 'message_reaction' && notification.reference_id) {
+      router.push(`/messaging?conversationId=${notification.reference_id}`);
+      setIsOpen(false);
     } else if (notification.type === 'company_invite') {
       // Navigate to invite accept page
       let inviteLink = '/';

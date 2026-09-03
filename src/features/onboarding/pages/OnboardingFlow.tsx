@@ -456,8 +456,8 @@ export default function OnboardingFlow() {
       setIsCompleted(true);
       toast.success("Onboarding completed!");
       setTimeout(() => {
-        window.location.href = "/feed";
-      }, 120000); // 2 minutes for testing
+        window.location.href = "/profile";
+      }, 5000); 
     } catch (error: any) {
       console.error("Failed to complete onboarding:", error);
       const message = error.response?.data?.message || "Failed to complete onboarding. Please try again.";
@@ -469,7 +469,7 @@ export default function OnboardingFlow() {
 
   const renderStepContent = (activeStep: number, activeSubStep: boolean) => {
     if (isCompleted || activeStep >= 6) {
-      return <StepSuccess redirectUrl="/profile" delayMs={120000} />; // 2 minutes for testing
+      return <StepSuccess redirectUrl="/profile" delayMs={5000} />; 
     }
 
     return (

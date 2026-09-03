@@ -16,6 +16,7 @@ export const useChannelInvitees = (search: string) => {
     },
     initialPageParam: 1,
     enabled: !!orgId,
+    gcTime: 0, // Ensure search results are never cached so fresh data is fetched when modal reopens
   });
 
   const invitees = data?.pages.flat() ?? [];

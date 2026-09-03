@@ -88,7 +88,9 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             router.push(`/profile/${notification.reference_id}`)
         } else if (notification.type === 'repost' && postReferenceId) {
             router.push(`/post/${postReferenceId}`)
-        } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request' || notification.type === 'new_connection') && notification.reference_id) {
+        } else if (notification.type === 'connection_request' && notification.reference_id) {
+            router.push('/connections?tab=received')
+        } else if ((notification.type === 'connection_accepted' || notification.type === 'new_connection') && notification.reference_id) {
             const url = notification.is_company_actor
                 ? `/organization/${notification.actor_slug}`
                 : `/profile/${notification.reference_id}`;
@@ -115,6 +117,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             router.push(url);
         } else if (notification.type === 'channel_article' && postReferenceId) {
             router.push(`/post/${postReferenceId}`)
+        } else if (notification.type === 'message_reaction' && notification.reference_id) {
+            router.push(`/messaging?conversationId=${notification.reference_id}`)
         } else if (notification.type === 'company_channel_subscriber' && notification.reference_id) {
             router.push(`/profile/${notification.reference_id}`)
         } else if (notification.type === 'company_channel_milestone' && notification.reference_id) {

@@ -13,7 +13,8 @@ export const postApi = {
         try {
           await api.post(`/posts/tags/sync`, {
             postId: response.data.postId,
-            tags: tagUserIds
+            tags: tagUserIds,
+            companyId: payload.companyId || null
           });
         } catch (e) {
           console.error("Failed to sync tags on create", e);
@@ -55,7 +56,8 @@ export const postApi = {
       try {
         await api.post(`/posts/tags/sync`, {
           postId: response.data.postId,
-          tags: tagUserIds
+          tags: tagUserIds,
+          companyId: payload.companyId || null
         });
       } catch (e) {
         console.error("Failed to sync tags on create", e);

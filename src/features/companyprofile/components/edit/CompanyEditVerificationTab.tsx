@@ -35,6 +35,17 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!legalName.trim()) {
+      toast.error("Please enter the company's full legal name");
+      return;
+    }
+    
+    if (!incorpDay || !incorpMonth || !incorpYear) {
+      toast.error("Please provide the complete date of incorporation");
+      return;
+    }
+
     if (!verificationDoc) {
       toast.error("Please upload a verification document");
       return;
@@ -44,7 +55,7 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
     try {
       const formData = new FormData();
       formData.append("documentType", "BRN"); // Assuming Business Registration Number
-      formData.append("frontImage", verificationDoc);
+      formData.append("document", verificationDoc);
       formData.append("legalName", legalName);
       formData.append("incorporationDay", incorpDay);
       formData.append("incorporationMonth", incorpMonth);

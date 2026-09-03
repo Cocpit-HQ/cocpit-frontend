@@ -254,11 +254,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       const prefs = queryClient.getQueryData<NotificationPreferences>(prefsQueryKey);
 
       const type = payload.type;
-      const isMessage = type === 'message' || type.includes('message');
+      
+      // Refresh connection requests when receiving relevant invites
+      if (['connection_request', 'community_invite', 'organization_invite', 'company_invite', 'team_invite'].includes(type) || type.includes('invite')) {
+        queryClient.invalidateQueries({ queryKey: ['connection-requests'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['connection-counts'], refetchType: 'all' });
+      }
+
+      const isMessage = type === 'message' || (type.includes('message') && type !== 'message_reaction');
       const isJobMessage = isMessage && payload.isJobChat;
       const isRegularMessage = isMessage && !isJobMessage;
       const isPost = ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention'].includes(type) || type.includes('post');
-      const isJob = type.includes('job') || type.includes('application'); // Catch all job-related events
+      const isJob = type.includes('job') || type.includes('application');
 
       // Toast suppression: only controls the popup — DB notification is already saved
       if (prefs) {
@@ -267,10 +274,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         // Sub-toggles for messages
         if (isRegularMessage && prefs.messageChats === false) { console.log("[DEBUG] Suppressed by prefs.messageChats"); return; }
         if (isJobMessage && prefs.messageJobs === false) { console.log("[DEBUG] Suppressed by prefs.messageJobs"); return; }
-        
-        if (isPost && prefs.posts === false) return;
+
+        // Always show toast for direct mentions/tags even if general post notifications are off
+        const isDirectInteraction = type === 'mention' || type === 'post_tag';
+        if (isPost && !isDirectInteraction && prefs.posts === false) return;
         // Exclude job messages from being incorrectly suppressed by the "Job Alerts" toggle
         if (isJob && !isJobMessage && prefs.jobs === false) return;
+      }
+
+      // Suppress toast for application_submitted because the frontend API hook (useJobs/useJobDetail) already triggers a success toast for it.
+      if (type === 'application_submitted') {
+        return;
       }
 
       if (isMessage) {
@@ -333,10 +347,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           ),
           duration: 5000,
         });
-      } else if (isPost || ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention', 'company_post'].includes(payload.type)) {
+      } else if (isPost || ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention', 'company_post', 'message_reaction'].includes(payload.type)) {
         const senderName = payload.senderName || (payload as any).actor_name || 'Someone';
         const senderAvatar = payload.senderAvatar || (payload as any).actor_avatar;
-        const notifText = payload.text || `${senderName} interacted with your post`;
+        let notifText = payload.text || `${senderName} interacted with your post`;
+        
+        if (senderName && senderName !== 'Someone') {
+            notifText = notifText.replace(new RegExp('^"?' + senderName.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '"?\\s*', 'i'), '').trim();
+        }
         const postId = payload.referenceId || (payload as any).reference_id || payload.metadata?.post_id;
 
         toast({
@@ -345,7 +363,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
-                if (postId) {
+                if (payload.type === 'message_reaction' && postId) {
+                  router.push(`/messaging?conversationId=${postId}`);
+                } else if (postId) {
                   router.push(`/post/${postId}`);
                 } else {
                   router.push('/notifications');
@@ -403,7 +423,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           if ((payload.type === 'message' || payload.type === 'new_message') && (pathname === '/feed' || pathname === '/')) {
             return;
           }
-          
+
           toast({
             title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : (payload.title || payload.senderName || "Notification"),
             description: payload.text,
@@ -487,7 +507,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             "cocpit_block_event",
             JSON.stringify({ targetId: otherPartyId, isBlocked: true, timestamp: Date.now() }),
           );
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const queryKey = [
@@ -564,7 +584,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             "cocpit_block_event",
             JSON.stringify({ targetId: otherPartyId, isBlocked: false, timestamp: Date.now() }),
           );
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const queryKey = [
