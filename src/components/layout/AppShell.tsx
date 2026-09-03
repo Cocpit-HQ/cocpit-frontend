@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { DarkSidebar } from "@/components/layout/DarkSidebar";
+import { Sidebar } from "@/features/navigation/components/Sidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useUIStore } from "@/store/ui.store";
-import { HomeHeader } from "@/components/home/HomeHeader";
+import { TopHeader } from "@/features/navigation/components/TopHeader";
 import { Plus } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -33,15 +33,19 @@ export function AppShell({
   const shouldHideBottomNav = hideBottomNav || isArticlePage;
 
   return (
-    <div className="relative flex min-h-screen bg-background text-foreground">
+    <div className="relative flex min-h-screen bg-ds-bg text-foreground">
       {/* Desktop sidebar */}
+      <div className="hidden md:block fixed left-0 top-0 h-screen z-40">
+        <Sidebar />
+      </div>
+      
+      {/* Top Header */}
       <div className="hidden md:block">
-        <DarkSidebar />
+        <TopHeader />
       </div>
 
       {/* Main content */}
-      <main className={`min-w-0 flex-1 w-full md:ml-[232px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0`}>
-        <HomeHeader />
+      <main className={`min-w-0 flex-1 w-full md:ml-[253px] pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
         {children}
       </main>
 
