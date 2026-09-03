@@ -1,3 +1,4 @@
+/* stylelint-disable at-rule-no-unknown */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
@@ -441,6 +442,16 @@
 @layer base {
   * {
     border-color: var(--border);
+    /* Sets the global cursor (caret) color to match the Figma design accent */
+    caret-color: #EC6229 !important;
+  }
+
+  /* Forces the caret color to persist even when browsers apply default styling to autofilled inputs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    caret-color: #EC6229 !important;
   }
 
   body {
@@ -1506,11 +1517,6 @@
   display: block !important;
   fill: none !important;
   z-index: 31 !important;
-}
-
-.article-editor .edit-img-btn svg,
-.article-editor .delete-img-btn svg {
-  /* SVG colors are now controlled by inline attributes to match Figma precisely */
 }
 
 /* Guarantee link action buttons and icons never compress or squash in flex containers */

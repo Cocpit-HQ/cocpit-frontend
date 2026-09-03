@@ -277,7 +277,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
 
               {/* If searching >= 3 characters: Show Figma Dropdown List View */}
               {search.trim().length >= 3 && (
-                <div className="absolute top-full left-0 mt-1 w-64 max-h-[180px] py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide shadow-lg z-50">
+                <div className="absolute top-full left-0 mt-1 w-64 max-h-[180px] py-2 bg-ds-bg rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide shadow-lg z-50">
                   {searchResults.length > 0 ? (
                     searchResults.map((item, index) => {
                       const isSelected = selectedSkills.includes(item);

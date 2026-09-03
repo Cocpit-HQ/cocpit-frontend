@@ -47,6 +47,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
         }`}
       >
         {prefix && <div className="shrink-0 mr-1 text-ds-text-muted">{prefix}</div>}
+        {/* style is added to force the cursor color via inline styles, guaranteeing it overrides any Tailwind/browser defaults */}
         <input
           {...props}
           type={inputType}
@@ -54,6 +55,7 @@ export const UnderlineInput: React.FC<UnderlineInputProps> = ({
           onChange={onChange}
           disabled={disabled}
           placeholder={placeholder}
+          style={{ caretColor: '#EC6229', ...props.style }}
           className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-[14px] font-normal font-['DM_Sans'] leading-[20px] ${
             centerText ? "text-center placeholder:text-center" : "text-left placeholder:text-left"
           } ${isPassword && !showPassword && value ? "tracking-[2px]" : ""} ${className}`}

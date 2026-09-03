@@ -94,18 +94,25 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                 placeholder="Enter your new password"
                 value={newPassword}
                 onChange={(e) => {
-                  onNewPasswordChange(e.target.value);
-                  if (onClearOldPasswordError) onClearOldPasswordError();
-                  if (errorMessage) onClearError();
+                  const val = e.target.value;
+                  onNewPasswordChange(val);
+                  
+                  if (val.length < 8) {
+                    if (onClearOldPasswordError) onClearOldPasswordError();
+                    if (errorMessage === "Choose a different password") onClearError();
+                  }
+
+                  if (val.length >= 8 && onValidatePassword) {
+                    onValidatePassword(val);
+                  }
+
+                  if (errorMessage && errorMessage !== "Choose a different password") onClearError();
                 }}
                 onFocus={() => {
                   // Error states are intentionally NOT cleared here.
                   // They are cleared in the onChange handler above when the user actually modifies the input.
                 }}
                 onBlur={() => {
-                  if (onValidatePassword && newPassword.length >= 8) {
-                    onValidatePassword(newPassword);
-                  }
                 }}
                 disabled={isLoading}
                 maxLength={15}
@@ -162,10 +169,7 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                   onConfirmPasswordChange(e.target.value);
                   if (errorMessage && errorMessage !== "Choose a different password") onClearError();
                 }}
-                onFocus={() => {
-                  if (errorMessage && errorMessage !== "Choose a different password") onClearError();
-                }}
-                disabled={isLoading}
+                disabled={isLoading || newPassword.length < 8 || !isPasswordValid || isSameOldPassword}
                 maxLength={15}
                 className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 text-left placeholder:text-left ${
                   !showConfirmPassword && confirmPassword.length > 0 ? "tracking-[2px]" : ""
@@ -178,7 +182,7 @@ export const StepNewPassword: React.FC<StepNewPasswordProps> = ({
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                   className="w-4 h-4 p-0.5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  disabled={isLoading}
+                  disabled={isLoading || newPassword.length < 8 || !isPasswordValid || isSameOldPassword}
                 >
                   {showConfirmPassword ? (
                     <EyeIcon className="w-4 h-4 shrink-0" size={16} />

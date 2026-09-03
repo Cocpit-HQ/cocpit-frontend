@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { LoadingIcon, CocpitLogoIcon } from "@/components/icons";
+
 
 interface StepSuccessProps {
   redirectUrl?: string;
@@ -10,7 +10,7 @@ interface StepSuccessProps {
 
 export const StepSuccess: React.FC<StepSuccessProps> = ({
   redirectUrl = "/profile",
-  delayMs = 4000,
+  delayMs = 3000,
 }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,10 +34,6 @@ export const StepSuccess: React.FC<StepSuccessProps> = ({
           </p>
         </div>
 
-        {/* Button with centered loader */}
-        <div className="w-64 h-[36px] bg-ds-surface-1 rounded-full flex items-center justify-center cursor-default mt-1">
-          <LoadingIcon className="w-4 h-4 text-ds-text-primary animate-spin-smooth" />
-        </div>
       </div>
 
     </div>

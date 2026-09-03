@@ -227,20 +227,8 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
 
   const handleWrapperClick = () => {
     if (disabled) return;
-    inputRef.current?.focus();
     setOpen(true);
-  };
-
-  const handleChevronClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (disabled) return;
-    if (open) {
-      setOpen(false);
-    } else {
-      setMode("idle");
-      setOpen(true);
-      inputRef.current?.focus();
-    }
+    inputRef.current?.focus();
   };
 
   const showNoResults =
@@ -266,9 +254,13 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
       {/* Figma Trigger: w-64 py-2 border-b border-ds-border inline-flex justify-between items-center */}
       <div
         onClick={handleWrapperClick}
-        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent cursor-pointer transition-colors ${
+        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent cursor-text transition-colors ${
           open ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
         }`}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={`${id}-listbox`}
+        tabIndex={-1}
       >
         <input
           ref={inputRef}
@@ -287,23 +279,20 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
           {loading ? (
             <LoadingIcon className="w-3.5 h-3.5 animate-spin-smooth text-ds-text-secondary" />
           ) : (
-            <button
-              type="button"
-              onClick={handleChevronClick}
+            <div
               className={`w-4 h-4 flex items-center justify-center text-ds-text-primary transition-transform duration-200 ${
                 open ? "rotate-180" : ""
               }`}
-              aria-label="Toggle location options"
             >
               <DownArrowIcon size={16} className="w-4 h-4" />
-            </button>
+            </div>
           )}
         </div>
       </div>
 
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {open && (
-        <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-ds-bg rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
           <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
             {displaySuggestions.length > 0 ? (
               displaySuggestions.map((item, index) => {

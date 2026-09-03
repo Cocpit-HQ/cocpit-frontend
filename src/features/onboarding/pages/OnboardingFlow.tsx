@@ -469,7 +469,7 @@ export default function OnboardingFlow() {
 
   const renderStepContent = (activeStep: number, activeSubStep: boolean) => {
     if (isCompleted || activeStep >= 6) {
-      return <StepSuccess redirectUrl="/profile" delayMs={5000} />; 
+      return <StepSuccess redirectUrl="/profile" delayMs={3000} />;
     }
 
     return (

@@ -18,6 +18,16 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const showErrorToast = (message: string) => {
+    toast.custom((t) => (
+      <div className="flex flex-col justify-center py-[8px] px-[12px] gap-[16px] w-[335px] h-auto min-h-[44px] bg-[#222228] border border-[#2C2C33] rounded-[8px] box-border shadow-lg">
+        <span className="w-full font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[#E5484D]">
+          {message}
+        </span>
+      </div>
+    ));
+  };
+
   const {
     setParsedResumeData,
     setFullName,
@@ -51,7 +61,17 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
 
       if (!validTypes.includes(file.type) && !file.name.match(/\.pdf$/i)) {
         setError("*Upload PDF only");
-        toast.error("Please upload a PDF file.");
+        showErrorToast("Please upload a PDF file.");
+        setSelectedFile(null);
+        setSelected(null);
+        e.target.value = "";
+        return;
+      }
+
+      const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_SIZE) {
+        setError("*File size should be less than 10MB");
+        showErrorToast("File size should be less than 10MB");
         setSelectedFile(null);
         setSelected(null);
         e.target.value = "";
@@ -117,15 +137,14 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           onNext();
         } else {
           setError("Failed to parse resume reliably.");
-          toast.error("Could not parse resume data.");
+          showErrorToast("Could not parse resume data.");
           // Still allow proceeding manually
           onNext();
         }
       } catch (err: any) {
         console.error("Resume parse error", err);
         setError("Parsing failed. You can fill manually.");
-        toast.error(err?.response?.data?.message || "Failed to parse resume.");
-        onNext();
+        showErrorToast(err?.response?.data?.message || "Failed to parse resume.");
       } finally {
         setIsParsing(false);
       }

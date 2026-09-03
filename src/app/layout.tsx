@@ -78,13 +78,15 @@ export default function RootLayout({
                 -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
                 box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
                 -webkit-text-fill-color: var(--ds-text-primary) !important;
-                caret-color: var(--ds-text-primary) !important;
+                /* Forces the cursor to match Figma's accent color (#EC6229) during browser autofill */
+                caret-color: #EC6229 !important;
                 transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s !important;
               }
               input:autofill {
                 box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
                 -webkit-text-fill-color: var(--ds-text-primary) !important;
-                caret-color: var(--ds-text-primary) !important;
+                /* Forces the cursor to match Figma's accent color (#EC6229) during browser autofill */
+                caret-color: #EC6229 !important;
               }
             `,
           }}

@@ -284,7 +284,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {isOpen && (
         <div
-          className={`absolute left-0 z-50 w-64 py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
+          className={`absolute left-0 z-50 w-64 py-2 bg-ds-bg rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150 ${
             placement === "top" ? "bottom-[46px]" : "top-[44px]"
           }`}
         >
