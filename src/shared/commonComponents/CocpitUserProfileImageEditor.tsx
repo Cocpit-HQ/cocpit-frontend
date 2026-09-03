@@ -53,7 +53,7 @@ export const CocpitUserProfileImageEditor: React.FC<
   const [positionX, setPositionX] = useState(0);
   const [positionY, setPositionY] = useState(0);
 
-  // Crop feature toggle (Figma Resize box with 8 handles)
+  // Crop feature toggle (Figma Adjust box with 8 handles)
   const [isCropMode, setIsCropMode] = useState(true);
 
   // Interaction states
@@ -269,7 +269,7 @@ export const CocpitUserProfileImageEditor: React.FC<
   };
 
   // Toolbar actions
-  // Crop icon ONLY toggles/activates the Resize feature (does NOT zoom in/out)
+  // Crop icon ONLY toggles/activates the Adjust feature (does NOT zoom in/out)
   const handleCropClick = () => {
     if (!previewUrl) return;
     setIsCropMode((prev) => !prev);
@@ -468,7 +468,7 @@ export const CocpitUserProfileImageEditor: React.FC<
                   onDoubleClick={openFilePicker}
                   onWheel={handleWheel}
                   className="relative w-48 h-48 rounded-2xl overflow-hidden select-none flex items-center justify-center bg-[var(--ds-surface-2)] cursor-grab active:cursor-grabbing"
-                  title="Double-click to change photo, drag to reposition, scroll to resize"
+                  title="Double-click to change photo, drag to reposition, scroll to Adjust"
                 >
                   {/* Perfectly Sized and Centered Image */}
                   <img
@@ -534,7 +534,7 @@ export const CocpitUserProfileImageEditor: React.FC<
 
           {/* Action Row: Crop, Flip, Rotate */}
           <div className="flex justify-center items-start gap-8">
-            {/* Crop (only toggles Resize feature, never zooms in/out) */}
+            {/* Crop (only toggles Adjust feature, never zooms in/out) */}
             <button
               type="button"
               onClick={handleCropClick}
@@ -547,11 +547,10 @@ export const CocpitUserProfileImageEditor: React.FC<
                     : "text-[var(--ds-text-primary)] hover:opacity-80 cursor-pointer"
                   : "text-[var(--ds-text-muted)] cursor-not-allowed",
               )}
-              title={isCropMode ? "Crop mode active" : "Activate Resize mode"}
             >
               <CropIcon size={20} className="w-5 h-5" />
               <span className="text-center text-xs font-medium font-['DM_Sans'] leading-4">
-                Resize
+                Adjust
               </span>
             </button>
 

@@ -448,19 +448,21 @@ const LoginForm = () => {
               }`}
               disabled={isLoading || isGoogleLoading || isAppleLoading}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="size-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              disabled={isLoading || isGoogleLoading || isAppleLoading}
-            >
-              {showPassword ? (
-                <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-              ) : (
-                <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-              )}
-            </button>
+            {password.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="size-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={isLoading || isGoogleLoading || isAppleLoading}
+              >
+                {showPassword ? (
+                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                ) : (
+                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                )}
+              </button>
+            )}
           </div>
           <div className="w-[260px] flex items-center justify-end">
             <Link
