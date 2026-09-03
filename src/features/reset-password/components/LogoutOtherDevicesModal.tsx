@@ -71,7 +71,8 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
           </h2>
           {/* Subtitle: Your password has been updated. Would you like to log out of all other devices? */}
           <p className="w-[280px] h-[40px] text-sm font-normal font-['DM_Sans'] leading-[20px] text-center text-ds-text-secondary">
-            Your password has been updated. Would you like to log out of all other devices?
+            Your password has been updated. Would you like to log out of all other devices?\]
+ 
           </p>
         </div>
 

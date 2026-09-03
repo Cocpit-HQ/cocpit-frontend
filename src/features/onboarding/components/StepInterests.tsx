@@ -59,6 +59,8 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
   // Search and available items state
   const [search, setSearch] = useState<string>("");
   const [availableInterests, setAvailableInterests] = useState<string[]>(FALLBACK_INTERESTS);
+  const [apiSearchResults, setApiSearchResults] = useState<string[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   // Cursor-based pagination state
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -89,8 +91,9 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
 
           if (query.length < 3) {
             setAvailableInterests(Array.from(new Set([...fetchedNames, ...FALLBACK_INTERESTS])));
+            setApiSearchResults([]);
           } else {
-            setAvailableInterests(fetchedNames);
+            setApiSearchResults(fetchedNames);
           }
 
           setNextCursor(res.data.next_cursor || null);
@@ -125,7 +128,13 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
       if (res?.data) {
         const items = res.data.items || [];
         const fetchedNames = items.map((i: Interest) => i.name);
-        setAvailableInterests((prev) => Array.from(new Set([...prev, ...fetchedNames])));
+        
+        if (query.length >= 3) {
+          setApiSearchResults((prev) => Array.from(new Set([...prev, ...fetchedNames])));
+        } else {
+          setAvailableInterests((prev) => Array.from(new Set([...prev, ...fetchedNames])));
+        }
+        
         setNextCursor(res.data.next_cursor || null);
         setHasMore(!!res.data.has_more);
       }
@@ -147,7 +156,7 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
   // Toggle interest selection directly in store
   const handleToggleInterest = (interestName: string) => {
     const exists = selectedInterests.includes(interestName);
-    
+
     if (!exists && selectedInterests.length >= 7) {
       return;
     }
@@ -163,13 +172,13 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
     const q = search.toLowerCase().trim();
     if (q.length < 3) return [];
     const isAlreadySelected = selectedInterests.some((sel) => sel.toLowerCase() === q);
-    const isAvailable = availableInterests.some((i) => i.toLowerCase() === q);
+    const isAvailable = availableInterests.some((i) => i.toLowerCase() === q) || apiSearchResults.some((i) => i.toLowerCase() === q);
     const exactMatch = isAvailable || isAlreadySelected;
-    
+
     const customOption = !exactMatch ? [search.trim()] : [];
-    const matched = availableInterests.filter((i) => i.toLowerCase().includes(q));
-    return Array.from(new Set([...customOption, ...matched]));
-  }, [search, availableInterests, selectedInterests]);
+    const matchedAvailable = availableInterests.filter((i) => i.toLowerCase().includes(q));
+    return Array.from(new Set([...customOption, ...apiSearchResults, ...matchedAvailable]));
+  }, [search, availableInterests, apiSearchResults, selectedInterests]);
 
   // Compute ordered chips list (when not actively searching):
   // 1. ALL selected interests ALWAYS come first
@@ -248,20 +257,35 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
           {/* Frame 2608512: Input + Chips/Dropdown Section (260px, gap 12px) */}
           <div className="w-64 flex flex-col items-center p-0 gap-3">
             {/* Input with icon (260px x 36px, border-bottom 1px solid border-ds-border) */}
-            <div className="w-64 flex flex-col items-start p-0 gap-2">
+            {/* Input with icon (260px x 36px, border-bottom 1px solid border-ds-border) */}
+            <div className="relative w-64 flex flex-col items-start p-0 gap-2 z-20">
               <div className="w-64 h-[36px] py-2 border-b border-ds-border flex flex-row justify-between items-center box-border focus-within:border-ds-accent transition-colors">
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setSelectedIndex(0);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       const val = search.trim();
                       if (val) {
-                        handleToggleInterest(val);
+                        if (val.length >= 3 && searchResults.length > 0) {
+                          handleToggleInterest(searchResults[selectedIndex] || searchResults[0]);
+                        } else {
+                          handleToggleInterest(val);
+                        }
                         setSearch("");
+                        setSelectedIndex(0);
                       }
+                    } else if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setSelectedIndex((prev) => (prev < searchResults.length - 1 ? prev + 1 : prev));
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
                     }
                   }}
                   placeholder="Search"
@@ -272,97 +296,100 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
                   <SearchIcon size={16} className="w-4 h-4 text-ds-text-primary" />
                 </div>
               </div>
-            </div>
 
-            {/* If searching >= 3 characters: Show Figma Dropdown List View */}
-            {search.trim().length >= 3 ? (
-              <div className="w-64 max-h-[180px] py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide">
-                {searchResults.length > 0 ? (
-                  searchResults.map((item, index) => {
-                    const isSelected = selectedInterests.includes(item);
-                    return (
-                      <button
-                        key={`search-interest-${item}-${index}`}
-                        type="button"
-                        onClick={() => {
-                          handleToggleInterest(item);
-                          setSearch("");
-                        }}
-                        className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 py-1.5 transition-colors cursor-pointer truncate ${
-                          isSelected
-                            ? "text-ds-accent font-medium"
-                            : "text-ds-text-secondary hover:text-ds-text-primary"
-                        }`}
-                      >
-                        <span className="truncate">{item}</span>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div className="py-2 text-xs text-ds-text-muted font-sans">
-                    {loading ? "Searching..." : "No interests found"}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Note / Helper message (260px x 16px, DM Sans 12px/16px) */}
-                <div className="w-64 h-4 flex items-center justify-start">
-                  {isBelowMin ? (
-                    <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary">
-                      Minimum 3 interest
-                    </span>
-                  ) : isAboveMax ? (
-                    <span className="font-sans text-xs leading-4 font-normal text-ds-error">
-                      Maximum limit of 7 reached
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* Frame 2609486: Interest Chips Container (260px x 64px, scrollable) */}
-                <div
-                  ref={scrollContainerRef}
-                  onScroll={handleScroll}
-                  className="w-64 min-h-[64px] max-h-[100px] flex flex-row flex-wrap items-start content-start p-0 gap-2 overflow-y-auto scrollbar-hide pr-0.5"
-                >
-                  {/* 1. Selected Chips ALWAYS rendered first */}
-                  {displayedChips.selected.map((interest, index) => (
-                    <button
-                      key={`selected-${interest}-${index}`}
-                      type="button"
-                      onClick={() => handleToggleInterest(interest)}
-                      className="h-7 py-1.5 px-2 bg-ds-surface-1 border border-ds-accent rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
-                    >
-                      <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary truncate max-w-[200px]">
-                        {interest}
-                      </span>
-                    </button>
-                  ))}
-
-                  {/* 2. Unselected Available Chips follow after */}
-                  {displayedChips.unselected.map((interest, index) => (
-                    <button
-                      key={`unselected-${interest}-${index}`}
-                      type="button"
-                      onClick={() => handleToggleInterest(interest)}
-                      className="h-7 py-1.5 px-2 bg-ds-surface-1 border border-transparent hover:border-ds-border rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
-                    >
-                      <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary truncate max-w-[200px]">
-                        {interest}
-                      </span>
-                    </button>
-                  ))}
-
-                  {/* Loader indicator when loading more */}
-                  {loadingMore && (
-                    <div className="w-full py-2 flex items-center justify-center gap-2 text-ds-text-muted text-xs font-sans">
-                      <LoadingIcon className="w-3 h-3 animate-spin-smooth" />
-                      <span>Loading more...</span>
+              {/* If searching >= 3 characters: Show Figma Dropdown List View */}
+              {search.trim().length >= 3 && (
+                <div className="absolute top-full left-0 mt-1 w-64 max-h-[180px] py-2 bg-ds-bg border border-ds-border rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide shadow-lg z-50">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((item, index) => {
+                      const isSelected = selectedInterests.includes(item);
+                      return (
+                        <button
+                          key={`search-interest-${item}-${index}`}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onMouseEnter={() => setSelectedIndex(index)}
+                          onClick={() => {
+                            handleToggleInterest(item);
+                            setSearch("");
+                            setSelectedIndex(0);
+                          }}
+                          className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-ds-surface-2 focus:text-ds-text-primary ${
+                            index === selectedIndex
+                              ? "bg-ds-surface-2 text-ds-text-primary"
+                              : isSelected
+                              ? "text-ds-accent font-medium"
+                              : "text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2"
+                          }`}
+                        >
+                          <span className="truncate">{item}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="py-2 text-xs text-ds-text-muted font-sans">
+                      {loading ? "Searching..." : "No interests found"}
                     </div>
                   )}
                 </div>
-              </>
-            )}
+              )}
+            </div>
+
+            {/* Note / Helper message (260px x 16px, DM Sans 12px/16px) */}
+            <div className="w-64 h-4 flex items-center justify-start">
+              {isBelowMin ? (
+                <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary">
+                  Minimum 3 interest
+                </span>
+              ) : isAboveMax ? (
+                <span className="font-sans text-xs leading-4 font-normal text-ds-error">
+                  Maximum limit of 7 reached
+                </span>
+              ) : null}
+            </div>
+
+            {/* Frame 2609486: Interest Chips Container (260px x 64px, scrollable) */}
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="w-64 min-h-[64px] max-h-[100px] flex flex-row flex-wrap items-start content-start p-0 gap-2 overflow-y-auto scrollbar-hide pr-0.5"
+            >
+              {/* 1. Selected Chips ALWAYS rendered first */}
+              {displayedChips.selected.map((interest, index) => (
+                <button
+                  key={`selected-${interest}-${index}`}
+                  type="button"
+                  onClick={() => handleToggleInterest(interest)}
+                  className="h-7 py-1.5 px-2 bg-ds-surface-1 border border-ds-accent rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
+                >
+                  <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary truncate max-w-[200px]">
+                    {interest}
+                  </span>
+                </button>
+              ))}
+
+              {/* 2. Unselected Available Chips follow after */}
+              {displayedChips.unselected.map((interest, index) => (
+                <button
+                  key={`unselected-${interest}-${index}`}
+                  type="button"
+                  onClick={() => handleToggleInterest(interest)}
+                  className="h-7 py-1.5 px-2 bg-ds-surface-1 border border-transparent hover:border-ds-border rounded-full flex flex-row justify-center items-center gap-2.5 transition-all cursor-pointer select-none shrink-0"
+                >
+                  <span className="font-sans text-xs leading-4 font-normal text-ds-text-secondary truncate max-w-[200px]">
+                    {interest}
+                  </span>
+                </button>
+              ))}
+
+              {/* Loader indicator when loading more */}
+              {loadingMore && (
+                <div className="w-full py-2 flex items-center justify-center gap-2 text-ds-text-muted text-xs font-sans">
+                  <LoadingIcon className="w-3 h-3 animate-spin-smooth" />
+                  <span>Loading more...</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Finish profile Button (260px x 36px) */}
