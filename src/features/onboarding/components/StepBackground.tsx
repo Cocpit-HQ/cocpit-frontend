@@ -96,7 +96,9 @@ export const StepBackground: React.FC<StepBackgroundProps> = ({
 
   // Determine branch: Experience vs. Education
   const isExperienceBranch = useMemo(() => {
-    return ["employed", "self_employed", "intern"].includes(userRole || "");
+    if (!userRole) return false;
+    const normalizedRole = userRole.toLowerCase().trim().replace(/[- ]/g, "_");
+    return ["employed", "self_employed", "intern"].includes(normalizedRole);
   }, [userRole]);
 
   // Form selections

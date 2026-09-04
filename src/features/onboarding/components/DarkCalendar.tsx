@@ -240,7 +240,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                 setIsMonthSelectOpen((prev) => !prev);
                 setIsYearSelectOpen(false);
               }}
-              className="w-20 p-1.5 bg-ds-surface-1 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-between items-center cursor-pointer hover:bg-ds-surface-2 transition-colors"
+              className="w-20 p-1.5 bg-ds-surface-1 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-between items-center cursor-pointer hover:text-ds-text-primary transition-colors"
             >
               <div className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                 {SHORT_MONTHS[viewMonth]}
@@ -267,10 +267,10 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                       }}
                       className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${
                         isSelected
-                          ? "bg-ds-surface-2 text-ds-text-primary font-semibold"
+                          ? "text-ds-text-primary font-semibold"
                           : isMonthDisabled
                           ? "text-ds-text-muted opacity-40 cursor-not-allowed"
-                          : "text-ds-text-primary hover:bg-ds-surface-2"
+                          : "text-ds-text-primary"
                       }`}
                     >
                       {mName}
@@ -288,7 +288,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                 setIsYearSelectOpen((prev) => !prev);
                 setIsMonthSelectOpen(false);
               }}
-              className="w-20 p-1.5 bg-ds-surface-1 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-between items-center cursor-pointer hover:bg-ds-surface-2 transition-colors"
+              className="w-20 p-1.5 bg-ds-surface-1 rounded-lg outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-between items-center cursor-pointer hover:text-ds-text-primary transition-colors"
             >
               <div className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                 {viewYear}
@@ -316,8 +316,8 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                       }}
                       className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${
                         isSelected
-                          ? "bg-ds-surface-2 text-ds-text-primary font-semibold"
-                          : "text-ds-text-primary hover:bg-ds-surface-2"
+                          ? "text-ds-text-primary font-semibold"
+                          : "text-ds-text-primary"
                       }`}
                     >
                       {y}

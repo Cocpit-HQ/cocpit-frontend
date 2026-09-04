@@ -58,6 +58,17 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
+
+  // Scroll listbox to bring highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listboxRef.current) {
+      const activeItem = listboxRef.current.children[highlightedIndex] as HTMLElement;
+      if (activeItem) {
+        activeItem.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex]);
 
   // Derive label to display on the trigger when not typing
   const selectedOption = useMemo(() => {
@@ -109,7 +120,12 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
       setIsOpen(true);
       inputRef.current?.focus();
     } else {
-      setIsOpen((prev) => !prev);
+      setIsOpen((prev) => {
+        if (!prev) {
+          setTimeout(() => containerRef.current?.focus(), 0);
+        }
+        return !prev;
+      });
     }
   };
 
@@ -222,7 +238,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             }
           }
         }}
-        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent transition-colors ${
+        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent transition-colors focus:outline-none ${
           errorMessage
             ? "border-ds-error"
             : isOpen
@@ -289,7 +305,7 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
           }`}
         >
           {/* Options List */}
-          <div id={`${id}-listbox`} className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
+          <div ref={listboxRef} id={`${id}-listbox`} className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, index) => {
                 const isSelected = opt.id === value || opt.label.toLowerCase() === searchQuery.toLowerCase();
@@ -329,12 +345,12 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
                       if (searchable) inputRef.current?.focus();
                       else (containerRef.current?.firstElementChild as HTMLElement)?.focus();
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-ds-surface-2 focus:text-ds-text-primary ${
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
                       isHighlighted
-                        ? "bg-ds-surface-2 text-ds-text-primary"
+                        ? "text-ds-text-primary"
                         : isSelected
                         ? "text-ds-accent font-medium"
-                        : "text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2"
+                        : "text-ds-text-secondary hover:text-ds-text-primary"
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>

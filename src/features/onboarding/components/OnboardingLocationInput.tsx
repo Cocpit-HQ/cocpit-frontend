@@ -74,7 +74,24 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
   const debouncedQuery = useDebounce(query, 300);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
   const sessionToken = useRef<string>(uuidv4());
+  
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  // Scroll listbox to bring highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listboxRef.current) {
+      const activeItem = listboxRef.current.children[highlightedIndex] as HTMLElement;
+      if (activeItem) {
+        activeItem.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex]);
+
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [debouncedQuery, open]);
 
   const resetSession = () => {
     sessionToken.current = uuidv4();
@@ -268,6 +285,31 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
           value={query}
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              if (!open) setOpen(true);
+              setHighlightedIndex((prev) =>
+                prev < displaySuggestions.length - 1 ? prev + 1 : prev
+              );
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              if (open && highlightedIndex >= 0 && highlightedIndex < displaySuggestions.length) {
+                const item = displaySuggestions[highlightedIndex];
+                if (item.kind === "static") {
+                  handleSelectStatic(item.data);
+                } else {
+                  handleSelectApi(item.data);
+                }
+              }
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              setOpen(false);
+            }
+          }}
           placeholder="Location"
           disabled={disabled}
           autoComplete="off"
@@ -293,7 +335,7 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
       {/* Figma Dropdown Open Menu with generous height & padding */}
       {open && (
         <div className="absolute left-0 top-[44px] z-50 w-64 py-2 bg-ds-bg rounded-xl px-2 flex flex-col justify-start gap-2.5 animate-in fade-in zoom-in-95 duration-150">
-          <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
+          <div ref={listboxRef} className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1">
             {displaySuggestions.length > 0 ? (
               displaySuggestions.map((item, index) => {
                 const isSelected = value === item.lineText;
@@ -331,10 +373,13 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
                         inputRef.current?.focus();
                       }
                     }}
-                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-ds-surface-2 focus:text-ds-text-primary ${
-                      isSelected
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    className={`self-stretch text-left font-sans text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
+                      index === highlightedIndex
+                        ? "text-ds-text-primary"
+                        : isSelected
                         ? "text-ds-accent font-medium"
-                        : "text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2"
+                        : "text-ds-text-secondary hover:text-ds-text-primary"
                     }`}
                   >
                     <span className="truncate">{item.lineText}</span>

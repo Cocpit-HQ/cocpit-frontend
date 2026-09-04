@@ -70,7 +70,18 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
   const debouncedSearch = useDebounce(search, 300);
+
+  // Scroll listbox to bring highlighted item into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && listboxRef.current) {
+      const activeItem = listboxRef.current.children[selectedIndex] as HTMLElement;
+      if (activeItem) {
+        activeItem.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [selectedIndex]);
 
   // Fetch initial interests list (or on debounced search change) using cursor API
   useEffect(() => {
@@ -299,7 +310,7 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
 
               {/* If searching >= 3 characters: Show Figma Dropdown List View */}
               {search.trim().length >= 3 && (
-                <div className="absolute top-full left-0 mt-1 w-64 max-h-[180px] py-2 bg-ds-bg rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide shadow-lg z-50">
+                <div ref={listboxRef} className="absolute top-full left-0 mt-1 w-64 max-h-[180px] py-2 bg-ds-bg rounded-xl px-2 flex flex-col justify-start items-start gap-1 overflow-y-auto scrollbar-hide shadow-lg z-50">
                   {searchResults.length > 0 ? (
                     searchResults.map((item, index) => {
                       const isSelected = selectedInterests.includes(item);
@@ -314,12 +325,12 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
                             setSearch("");
                             setSelectedIndex(0);
                           }}
-                          className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:bg-ds-surface-2 focus:text-ds-text-primary ${
+                          className={`self-stretch text-left font-['DM_Sans'] text-sm font-normal leading-5 py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate focus:outline-none focus:text-ds-text-primary ${
                             index === selectedIndex
-                              ? "bg-ds-surface-2 text-ds-text-primary"
+                              ? "text-ds-text-primary"
                               : isSelected
                               ? "text-ds-accent font-medium"
-                              : "text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2"
+                              : "text-ds-text-secondary hover:text-ds-text-primary"
                           }`}
                         >
                           <span className="truncate">{item}</span>
