@@ -32,7 +32,7 @@ export const ResetPasswordLayout: React.FC<ResetPasswordLayoutProps> = ({
           type="button"
           onClick={handleDismiss}
           aria-label="Close"
-          className="absolute right-6 top-6 lg:right-[40px] lg:top-[40px] w-5 h-5 flex flex-row items-center justify-center p-0 gap-2 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
+          className="absolute right-6 top-10 lg:right-[40px] lg:top-[40px] w-5 h-5 flex flex-row items-center justify-center p-0 gap-2 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
         >
           <CloseCrossIcon className="w-5 h-5 text-ds-text-primary" size={20} />
         </button>
@@ -43,8 +43,8 @@ export const ResetPasswordLayout: React.FC<ResetPasswordLayoutProps> = ({
         {children}
       </div>
 
-      {/* Bottom Right: Company Logo Mark */}
-      <div className="absolute right-6 bottom-6 lg:right-[40px] lg:bottom-[40px] z-20 pointer-events-auto">
+      {/* Company Logo Mark (Mobile: Top-Left, Tablet/Desktop: Bottom-Right) */}
+      <div className="absolute top-10 left-6 sm:fixed sm:top-auto sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-[40px] lg:right-[40px] z-20 pointer-events-auto">
         <Link
           href="https://cocpit.in"
           target="_blank"

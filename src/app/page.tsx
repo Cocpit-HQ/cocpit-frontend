@@ -23,8 +23,8 @@ export default async function Home() {
       </div>
 
       {/* Main Centered Login Section (Horizontally & Vertically Centered) */}
-      <div className="w-full flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[384px] flex flex-col items-center">
+      <div className="w-full flex items-center justify-center sm:px-4 py-12">
+        <div className="w-full max-w-[480px] sm:max-w-[384px] flex flex-col items-center">
           <Suspense fallback={<div className="h-96 w-full animate-pulse bg-ds-surface-1 rounded-3xl" />}>
             <LoginForm />
           </Suspense>
@@ -32,12 +32,12 @@ export default async function Home() {
       </div>
 
       {/* Mobile/Tablet Bottom Navigation Links */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full px-4 py-4 bg-ds-bg/90 backdrop-blur-md border-t border-ds-border flex justify-center z-10">
+      <div className="hidden sm:flex lg:hidden fixed bottom-0 left-0 w-full px-4 py-4 bg-ds-bg/90 backdrop-blur-md border-t border-ds-border justify-center z-10">
         <AuthSidebarLinks isMobile />
       </div>
 
-      {/* Bottom Right Company Logo Mark */}
-      <div className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-10 pointer-events-auto">
+      {/* Company Logo Mark (Mobile: Top-Left, Tablet/Desktop: Bottom-Right) */}
+      <div className="absolute top-10 left-6 sm:fixed sm:top-auto sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-10 pointer-events-auto">
         <Link
           href="https://cocpit.in"
           target="_blank"

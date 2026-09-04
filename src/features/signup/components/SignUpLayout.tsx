@@ -38,7 +38,7 @@ export const SignUpLayout: React.FC<SignUpLayoutProps> = ({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-6 top-6 lg:right-[40px] lg:top-[40px] w-5 h-5 flex flex-row items-center justify-center p-0 gap-2 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
+          className="absolute right-6 top-10 lg:right-[40px] lg:top-[40px] w-5 h-5 flex flex-row items-center justify-center p-0 gap-2 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
         >
           <CloseCrossIcon className="w-5 h-5 text-ds-text-primary" size={20} />
         </button>
@@ -51,13 +51,13 @@ export const SignUpLayout: React.FC<SignUpLayoutProps> = ({
 
       {/* Mobile/Tablet Bottom Navigation Links (on initial step) */}
       {!isSubStep && (
-        <div className="lg:hidden fixed bottom-0 left-0 w-full px-4 py-4 bg-ds-bg/90 backdrop-blur-md border-t border-ds-border flex justify-center z-10">
+        <div className="hidden sm:flex lg:hidden fixed bottom-0 left-0 w-full px-4 py-4 bg-ds-bg/90 backdrop-blur-md border-t border-ds-border justify-center z-10">
           <AuthSidebarLinks isMobile />
         </div>
       )}
 
-      {/* Bottom Right: Company Logo Mark */}
-      <div className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-10 pointer-events-auto">
+      {/* Company Logo Mark (Mobile: Top-Left, Tablet/Desktop: Bottom-Right) */}
+      <div className="absolute top-10 left-6 sm:fixed sm:top-auto sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-10 pointer-events-auto">
         <Link
           href="https://cocpit.in"
           target="_blank"

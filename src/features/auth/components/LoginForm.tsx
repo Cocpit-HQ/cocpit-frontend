@@ -334,15 +334,15 @@ const LoginForm = () => {
   const isFormValid = validateEmailFormat(email) && password.length > 0;
 
   return (
-    <div className="w-96 p-4 rounded-3xl inline-flex flex-col justify-start items-center gap-5 overflow-hidden font-['DM_Sans'] text-ds-text-primary">
+    <div className="w-full sm:w-96 px-6 min-[384px]:px-12 py-4 sm:p-4 rounded-3xl inline-flex flex-col justify-start items-center gap-5 overflow-hidden font-['DM_Sans'] text-ds-text-primary">
       {/* Header */}
       <div className="flex flex-col justify-start items-center gap-3">
         <div className="text-center justify-start">
-          <span className="text-ds-text-primary text-[40px] font-bold font-['DM_Sans'] leading-[48px]">Just</span>
-          <span className="text-ds-accent text-[40px] font-bold font-['DM_Sans'] leading-[48px]"> Build.</span>
+          <span className="text-ds-text-primary text-3xl font-bold font-['DM_Sans'] leading-10 sm:text-[40px] sm:leading-[48px]">Just</span>
+          <span className="text-ds-accent text-3xl font-bold font-['DM_Sans'] leading-10 sm:text-[40px] sm:leading-[48px]"> Build.</span>
         </div>
         <div className="flex flex-col justify-start items-center gap-3">
-          <div className="text-center justify-start text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
+          <div className="text-center justify-start text-ds-text-primary text-sm font-normal leading-5 sm:text-base sm:font-semibold sm:leading-6 font-['DM_Sans']">
             Log in to continue to your account
           </div>
         </div>
@@ -350,7 +350,7 @@ const LoginForm = () => {
 
       {/* Session Ended Alert */}
       {sessionEnded && (
-        <div className="w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">
+        <div className="w-full sm:w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">
           <AlertCircleIcon className="w-4 h-4 text-ds-warning shrink-0 mt-0.5" />
           <p className="text-ds-text-primary">
             You were signed out because your session ended. Please log in again.
@@ -360,7 +360,7 @@ const LoginForm = () => {
 
       {/* Deactivated Alert */}
       {reason === "deactivated" && (
-        <div className="w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">
+        <div className="w-full sm:w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">
           <AlertCircleIcon className="w-4 h-4 text-ds-text-secondary shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold text-ds-text-primary">Account deactivated</p>
@@ -373,7 +373,7 @@ const LoginForm = () => {
 
       {/* Pending Deletion Alert */}
       {pendingDeletion && (
-        <div className="w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex flex-col gap-2 text-xs text-ds-text-secondary">
+        <div className="w-full sm:w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex flex-col gap-2 text-xs text-ds-text-secondary">
           <div className="flex items-start gap-2">
             <MailWarningIcon className="w-4 h-4 text-ds-accent shrink-0 mt-0.5" />
             <div>
@@ -408,10 +408,10 @@ const LoginForm = () => {
       )}
 
       {/* Main Login Form */}
-      <form onSubmit={handleSubmit} className="w-[260px] flex flex-col justify-start items-start">
+      <form onSubmit={handleSubmit} className="w-full sm:w-[260px] flex flex-col justify-start items-start">
         {/* Email Field */}
-        <div className="w-[260px] flex flex-col justify-start items-start">
-          <div className={`w-full py-2.5 border-b border-ds-border inline-flex justify-start items-center gap-1 focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
+        <div className="w-full flex flex-col justify-start items-start">
+          <div className={`w-full py-2 sm:py-2.5 border-b border-ds-border inline-flex justify-start items-center gap-1 focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
             <input
               id="email"
               type="email"
@@ -425,15 +425,15 @@ const LoginForm = () => {
                 setEmail(e.target.value);
                 if (authError) setAuthError(null);
               }}
-              className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4"
+              className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal leading-5 sm:text-xs sm:font-medium sm:leading-4 font-['DM_Sans']"
               disabled={isLoading || isGoogleLoading || isAppleLoading}
             />
           </div>
         </div>
 
         {/* Password Field */}
-        <div className="w-[260px] flex flex-col justify-start items-start gap-1 mt-6">
-          <div className={`w-full h-9 py-2.5 border-b border-ds-border inline-flex justify-between items-center focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
+        <div className="w-full flex flex-col justify-start items-start gap-2 sm:gap-1 mt-3 sm:mt-6">
+          <div className={`w-full h-9 py-2 sm:py-2.5 border-b border-ds-border inline-flex justify-between items-center focus-within:border-ds-accent transition-colors ${authError ? "!border-ds-error" : ""}`}>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -447,28 +447,28 @@ const LoginForm = () => {
                 setPassword(e.target.value);
                 if (authError) setAuthError(null);
               }}
-              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-xs font-medium font-['DM_Sans'] leading-4 placeholder:tracking-normal ${
+              className={`w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal leading-5 sm:text-xs sm:font-medium sm:leading-4 font-['DM_Sans'] placeholder:tracking-normal ${
                 !showPassword && password.length > 0 ? "tracking-[2px]" : ""
               }`}
               disabled={isLoading || isGoogleLoading || isAppleLoading}
             />
-            {password.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="size-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                disabled={isLoading || isGoogleLoading || isAppleLoading}
-              >
-                {showPassword ? (
-                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-                ) : (
-                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-                )}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className={`size-4 justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0 ${
+                password.length > 0 ? "inline-flex" : "inline-flex sm:hidden"
+              }`}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              disabled={isLoading || isGoogleLoading || isAppleLoading}
+            >
+              {showPassword ? (
+                <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+              ) : (
+                <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+              )}
+            </button>
           </div>
-          <div className="w-[260px] flex items-center justify-end">
+          <div className="w-full flex items-center justify-end">
             <Link
               href="/forgot-password"
               className="group inline-flex items-center text-xs font-normal font-['DM_Sans'] leading-4 !no-underline cursor-pointer"
@@ -482,20 +482,20 @@ const LoginForm = () => {
 
         {/* Centered Error Message */}
         {authError && (
-          <div className="w-[260px] flex justify-center items-center mt-5">
-            <span className="w-[211px] h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-center shrink-0">
+          <div className="w-full flex justify-center items-center mt-4 sm:mt-5">
+            <span className="font-['DM_Sans'] font-normal text-xs leading-4 text-ds-error text-center">
               {authError}
             </span>
           </div>
         )}
 
         {/* Buttons / Actions */}
-        <div className="w-[260px] flex flex-col justify-start items-center gap-3 mt-5">
+        <div className="w-full flex flex-col justify-start items-center gap-3 mt-5">
           {/* Submit / Log in Button */}
           <button
             type="submit"
             disabled={!isFormValid || isLoading || isGoogleLoading}
-            className={`w-[260px] h-9 px-3 py-1.5 bg-ds-surface-1 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] transition-all ${
+            className={`w-full h-9 px-3 py-1.5 bg-ds-surface-1 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] transition-all ${
               isFormValid && !isLoading
                 ? "hover:bg-ds-surface-2 cursor-pointer shadow-[0_0_0_1px_var(--ds-border)]"
                 : "opacity-60"
@@ -512,8 +512,8 @@ const LoginForm = () => {
           </button>
 
           {/* Google Sign In Button */}
-          <div className="relative w-[260px] h-9 rounded-[100px] cursor-pointer overflow-hidden" ref={containerRef}>
-            <div className="w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all pointer-events-none cursor-pointer">
+          <div className="relative w-full h-9 rounded-[100px] cursor-pointer overflow-hidden" ref={containerRef}>
+            <div className="w-full h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all pointer-events-none cursor-pointer">
               <GoogleIcon className="w-4 h-4 shrink-0" size={16} />
               <span className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-primary text-left shrink-0">Continue with Google</span>
             </div>
@@ -532,7 +532,7 @@ const LoginForm = () => {
                 text="continue_with"
                 shape="pill"
                 size="large"
-                width="260"
+                width={containerWidth ? `${containerWidth}` : "288"}
               />
             </div>
           </div>
@@ -541,7 +541,7 @@ const LoginForm = () => {
           <button
             type="button"
             disabled={isLoading || isGoogleLoading || isAppleLoading}
-            className="self-stretch w-[260px] h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all cursor-pointer disabled:opacity-60"
+            className="w-full h-9 px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-ds-border inline-flex justify-center items-center gap-[10px] hover:bg-ds-surface-2 transition-all cursor-pointer disabled:opacity-60"
             onClick={handleAppleLogin}
           >
             {isAppleLoading ? (
@@ -560,8 +560,8 @@ const LoginForm = () => {
       </form>
 
       {/* Sign Up Link */}
-      <div className="text-right justify-start text-xs font-['DM_Sans']">
-        <span className="text-ds-text-muted font-normal">Don&apos;t have an account? </span>
+      <div className="w-[175px] h-4 flex items-center justify-center text-center text-xs font-['DM_Sans'] leading-4 text-ds-text-secondary">
+        <span className="font-normal">Don&apos;t have an account?&nbsp;</span>
         <Link href="/signup" className="hover:underline">
           <span className="!text-ds-text-primary font-medium">Sign up</span>
         </Link>

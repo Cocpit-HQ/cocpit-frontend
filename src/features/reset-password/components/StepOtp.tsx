@@ -62,8 +62,11 @@ export const StepOtp: React.FC<StepOtpProps> = ({
           <span className="text-ds-accent">email</span>
         </h1>
         {/* Subtitle */}
-        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary text-center whitespace-nowrap">
-          We sent a 6-digit code to <span className="font-semibold">{maskEmail(email) || "[email]"}</span>
+        <p className="text-base font-semibold font-['DM_Sans'] leading-6 text-ds-text-primary text-center px-1 sm:whitespace-nowrap">
+          We sent a 6-digit code to{" "}
+          <span className="inline-block sm:inline font-semibold break-all">
+            {maskEmail(email) || "[email]"}
+          </span>
         </p>
       </div>
 
