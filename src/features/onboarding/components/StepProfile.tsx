@@ -76,7 +76,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
   const { update } = useSession();
 
   const validateAccountName = (name: string) => {
-    const regex = /^[a-z0-9_.]{3,20}$/;
+    const regex = /^[a-z][a-z0-9_.]{2,19}$/;
     return regex.test(name);
   };
 
@@ -181,7 +181,9 @@ export const StepProfile: React.FC<StepProfileProps> = ({
   };
 
   const handleAccountNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase().trim();
+    let value = e.target.value.toLowerCase();
+    value = value.replace(/ /g, '_');
+    value = value.replace(/[^a-z0-9_.]/g, '');
     setAccountName(value);
     setNameAvailable(null);
   };

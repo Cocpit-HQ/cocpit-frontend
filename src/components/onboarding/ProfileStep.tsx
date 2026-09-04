@@ -44,8 +44,8 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   const { update } = useSession();
 
   const validateAccountName = (name: string) => {
-    // 3-20 characters, lowercase letters, numbers, dot, underscore only
-    const regex = /^[a-z0-9_.]{3,20}$/;
+    // 3-20 characters, must start with lowercase letter, numbers, dot, underscore only
+    const regex = /^[a-z][a-z0-9_.]{2,19}$/;
     return regex.test(name);
   };
 
@@ -103,7 +103,9 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   };
 
   const handleAccountNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase().trim();
+    let value = e.target.value.toLowerCase();
+    value = value.replace(/ /g, '_');
+    value = value.replace(/[^a-z0-9_.]/g, '');
     setAccountName(value);
     if (value !== debouncedAccountName) {
       setNameAvailable(null);
