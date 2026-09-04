@@ -26,10 +26,10 @@ export const StepSuccess: React.FC<StepSuccessProps> = ({
       <div className="flex flex-col items-center gap-5 z-10 text-center animate-in fade-in zoom-in-95 duration-300">
         {/* Text Container: Header & Subheading */}
         <div className="flex flex-col items-center gap-2 p-0">
-          <h1 className="font-sans font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+          <h1 className="w-full font-sans font-bold text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
             Your profile is <span className="text-ds-accent">ready</span>
           </h1>
-          <p className="font-sans font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary m-0 p-0">
+          <p className="w-full font-sans font-semibold text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-center text-ds-text-primary m-0 p-0">
             You&apos;re all set. Start building your network
           </p>
         </div>

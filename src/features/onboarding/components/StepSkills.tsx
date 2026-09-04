@@ -10,7 +10,6 @@ import {
 } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
-import OnboardingProgressBar from "./OnboardingProgressBar";
 import PillButton from "./PillButton";
 
 interface StepSkillsProps {
@@ -230,20 +229,17 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center font-sans text-ds-text-primary select-none relative">
-      {/* Centered Vertical Stack: Progress Bar + 20px gap + Main Content Container */}
+    <div className="w-full flex flex-col items-center justify-center font-sans text-ds-text-primary select-none relative">
+      {/* Centered Vertical Stack: Main Content Container */}
       <div className="flex flex-col items-center gap-5 z-10">
-        {/* Frame 41: Progress Bar (Step 4 of 5) */}
-        <OnboardingProgressBar currentStep={currentStep} totalSteps={totalSteps} />
-
-        {/* Frame 1: Main Content Container (471px x 410px, padding 16px, gap 20px, rounded 24px) */}
-        <div className="w-[471px] min-h-[410px] p-4 flex flex-col items-center gap-5 rounded-[24px] box-border">
+        {/* Frame 1: Main Content Container */}
+        <div className="w-full max-w-[471px] sm:w-[471px] h-full sm:h-auto min-h-[410px] p-4 flex flex-col items-center gap-5 sm:rounded-[24px] box-border">
           {/* Header Section */}
           <div className="w-full flex flex-col items-center p-0 gap-2 text-center">
-            <h1 className="w-full font-sans font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+            <h1 className="w-full h-auto font-sans font-bold text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
               What are you <span className="text-ds-accent">good at?</span>
             </h1>
-            <p className="w-full font-sans font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary m-0 p-0">
+            <p className="w-full h-auto font-sans font-semibold text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-center text-ds-text-primary m-0 p-0">
               Choose skills that represent your expertise
             </p>
           </div>

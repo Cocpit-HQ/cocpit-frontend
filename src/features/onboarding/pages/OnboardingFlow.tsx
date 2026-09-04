@@ -11,6 +11,7 @@ import {
   StepInterests,
   StepSkills,
   StepSuccess,
+  OnboardingProgressBar,
 } from "../components";
 import {
   completeOnboarding,
@@ -477,15 +478,19 @@ export default function OnboardingFlow() {
         onBack={handleBack}
         showBack={activeStep > 0 || activeSubStep}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activeSubStep ? `substep-${userRole}` : `step-${activeStep}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="flex items-center justify-center w-full"
-          >
+        <div className={`flex flex-col items-center w-full z-10 relative ${activeStep > 0 && activeStep < 6 && !isCompleted ? 'gap-[20px] min-h-[600px] justify-start pt-[4vh]' : 'justify-center'}`}>
+          {activeStep > 0 && activeStep < 6 && !isCompleted && (
+            <OnboardingProgressBar currentStep={activeStep} totalSteps={totalSteps} />
+          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={activeSubStep ? `substep-${userRole}` : `step-${activeStep}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="flex items-center justify-center w-full"
+            >
             {activeStep === 0 && (
               <StepBegin onNext={handleNext} />
             )}
@@ -531,6 +536,7 @@ export default function OnboardingFlow() {
             )}
           </motion.div>
         </AnimatePresence>
+        </div>
       </OnboardingLayout>
     );
   };

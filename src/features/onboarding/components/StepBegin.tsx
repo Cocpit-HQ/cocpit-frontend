@@ -152,7 +152,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
   };
 
   return (
-    <div className="flex flex-col items-center p-4 gap-5 w-[391px] min-h-[456px] rounded-[24px] font-['DM_Sans',sans-serif] text-ds-text-primary select-none">
+    <div className="flex flex-col items-center p-4 sm:p-4 gap-8 sm:gap-5 w-full max-w-[391px] h-full sm:h-auto min-h-[456px] sm:rounded-[24px] font-['DM_Sans',sans-serif] text-ds-text-primary select-none flex-1">
       {/* Hidden File Input for PDF Upload */}
       <input
         type="file"
@@ -163,24 +163,24 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
       />
 
       {/* Frame 2608511: Title Section */}
-      <div className="w-[359px] flex flex-col items-center justify-center p-0 gap-2 text-center">
-        <h1 className="w-[359px] h-[48px] font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+      <div className="w-full max-w-[359px] flex flex-col items-center justify-center p-0 gap-2 text-center mt-4 sm:mt-0">
+        <h1 className="w-full font-['DM_Sans'] font-bold text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
           <span className="text-ds-text-primary">Set up your </span>
           <span className="text-ds-accent">profile</span>
         </h1>
-        <p className="w-[359px] h-[48px] font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary self-stretch m-0 p-0">
+        <p className="w-full font-['DM_Sans'] font-medium text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-center text-ds-text-primary self-stretch m-0 p-0">
           Create your profile so people can discover who you are and what you do
         </p>
       </div>
 
       {/* Frame 2609478: Input / Selection Area */}
-      <div className="w-[214px] flex flex-col items-center p-0 gap-3">
+      <div className="w-full max-w-[214px] sm:w-[214px] flex flex-col items-center p-0 gap-3">
         {/* Upload Resume Option: Empty State vs Uploaded File State */}
         {!selectedFile ? (
           <button
             type="button"
             onClick={handleUploadCardClick}
-            className={`w-[214px] h-[112px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-all cursor-pointer border outline-none ${
+            className={`w-full h-[112px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-all cursor-pointer border outline-none ${
               selected === "upload"
                 ? "bg-ds-surface-2 border-ds-accent"
                 : "bg-transparent border-transparent hover:bg-ds-surface-2"
@@ -192,14 +192,14 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
             </div>
 
             {/* Upload Resume Text Area */}
-            <div className="w-[190px] h-[64px] flex flex-col items-center justify-center p-0 gap-2">
-              <span className="w-[152px] h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary text-center">
+            <div className="w-full flex flex-col items-center justify-center p-0 gap-2">
+              <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary text-center">
                 Upload your resume
               </span>
-              <span className="w-[190px] h-[12px] font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-ds-text-secondary">
+              <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-ds-text-secondary">
                 Let AI fill in your profile from your resume
               </span>
-              <span className="w-[41px] h-[12px] font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-center text-ds-text-secondary">
+              <span className="font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-center text-ds-text-secondary">
                 PDF only
               </span>
             </div>
@@ -208,7 +208,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           /* Uploaded File Selected State */
           <div
             onClick={handleUploadCardClick}
-            className={`group relative w-[214px] h-[112px] py-2 px-3 rounded-[16px] border flex flex-col justify-center items-center gap-2 cursor-pointer transition-all box-border overflow-hidden ${
+            className={`group relative w-full h-[112px] py-2 px-3 rounded-[16px] border flex flex-col justify-center items-center gap-2 cursor-pointer transition-all box-border overflow-hidden ${
               selected === "upload"
                 ? "bg-ds-surface-1 border-ds-accent"
                 : "bg-transparent border-transparent hover:bg-ds-surface-1"
@@ -240,19 +240,19 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
         )}
 
         {/* Frame 2608505: OR Separator */}
-        <div className="w-[208px] h-4 flex flex-row justify-center items-center p-0 gap-2">
-          <div className="w-[89px] h-0 border-t border-ds-border" />
-          <span className="w-[14px] h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-ds-text-muted">
+        <div className="w-full h-4 flex flex-row justify-center items-center p-0 gap-2">
+          <div className="flex-1 h-0 border-t border-ds-border" />
+          <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-ds-text-muted">
             Or
           </span>
-          <div className="w-[89px] h-0 border-t border-ds-border" />
+          <div className="flex-1 h-0 border-t border-ds-border" />
         </div>
 
         {/* Frame 2609474: Manual Setup Option */}
         <button
           type="button"
           onClick={handleManualCardClick}
-          className={`w-[214px] h-[92px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-all cursor-pointer border outline-none ${
+          className={`w-full h-[92px] flex flex-col items-center justify-center py-2 px-3 gap-3 rounded-[16px] transition-all cursor-pointer border outline-none ${
             selected === "manual"
               ? "bg-ds-surface-2 border-ds-accent"
               : "bg-transparent border-transparent hover:bg-ds-surface-2"
@@ -264,8 +264,8 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           </div>
 
           {/* Frame 2609475: Manual Setup Text Area */}
-          <div className="w-[190px] h-[44px] flex flex-col items-center justify-center p-0 gap-2">
-            <span className="w-[121px] h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary text-center">
+          <div className="w-full flex flex-col items-center justify-center p-0 gap-2">
+            <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary text-center">
               Set up manually
             </span>
             <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-ds-text-secondary">
@@ -276,7 +276,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
       </div>
 
       {/* Continue Button */}
-      <div className="flex flex-col items-center justify-center">
+      <div className="w-full max-w-[260px] h-[36px] mt-auto sm:mt-0 pb-8 sm:pb-0 flex items-center justify-center">
         <PillButton
           type="button"
           disabled={!selected || isParsing}

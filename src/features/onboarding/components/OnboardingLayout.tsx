@@ -49,7 +49,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   return (
     <main
-      className="h-screen w-full bg-ds-bg text-ds-text-primary relative flex flex-col items-center justify-center overflow-hidden font-['DM_Sans',sans-serif] p-0 select-none"
+      className="h-[100dvh] sm:h-screen w-full bg-ds-bg text-ds-text-primary relative flex flex-col items-center justify-center overflow-hidden font-['DM_Sans',sans-serif] p-0 select-none"
     >
       {/* Top Left: Back Button (Frame 2609475: top: 40px, left: 40px) */}
       {showBack && onBack && (
@@ -57,7 +57,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="absolute left-[40px] top-[40px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity z-20"
+          className="absolute left-6 top-8 sm:left-[40px] sm:top-[40px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity z-20"
         >
           <div className="w-[20px] h-[20px] flex items-center justify-center">
             <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
@@ -74,19 +74,19 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           type="button"
           onClick={handleCloseClick}
           aria-label="Close"
-          className="absolute right-[40px] top-[40px] w-[24px] h-[24px] flex flex-row items-center justify-center p-0 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
+          className="absolute right-6 top-8 sm:right-[40px] sm:top-[40px] w-[24px] h-[24px] flex flex-row items-center justify-center p-0 text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer z-20"
         >
           <CloseCrossIcon className="w-[20px] h-[20px] text-ds-text-primary" size={20} />
         </button>
       )}
 
       {/* Center Content Area */}
-      <div className="w-full flex items-center justify-center z-10 my-auto">
+      <div className="w-full flex items-center justify-center z-10 flex-1 sm:flex-none sm:my-auto pt-[104px] sm:pt-0 pb-6 sm:pb-0 overflow-y-auto sm:overflow-visible">
         {children}
       </div>
 
-      {/* Bottom Right: Company Logo Mark */}
-      <div className="absolute right-[40px] bottom-[40px] z-20 pointer-events-auto">
+      {/* Company Logo Mark */}
+      <div className={`absolute ${showBack ? "hidden sm:block" : "block"} left-6 top-8 sm:left-auto sm:top-auto sm:right-[40px] sm:bottom-[40px] z-20 pointer-events-auto`}>
         <Link
           href="https://cocpit.in"
           target="_blank"
@@ -94,7 +94,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           aria-label="Cocpit"
           className="block relative text-ds-text-primary hover:opacity-80 transition-opacity"
         >
-          <CocpitLogoIcon className="w-[27px] h-[30px]" />
+          <CocpitLogoIcon className="w-[27px] h-[30px]" fill="currentColor" />
         </Link>
       </div>
 

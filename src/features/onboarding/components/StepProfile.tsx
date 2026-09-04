@@ -17,7 +17,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import UnderlineInput from "./UnderlineInput";
 import PillButton from "./PillButton";
-import OnboardingProgressBar from "./OnboardingProgressBar";
 import OnboardingDatePicker from "./OnboardingDatePicker";
 import { CocpitUserProfileImageEditor } from "@/shared/commonComponents/CocpitUserProfileImageEditor";
 
@@ -338,7 +337,7 @@ export const StepProfile: React.FC<StepProfileProps> = ({
   }, [fullName, accountName, nameAvailable, isCheckingAvailability, dobRaw, isAgeValid]);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center font-['DM_Sans',sans-serif] text-ds-text-primary select-none relative">
+    <div className="w-full flex flex-col items-center justify-center font-['DM_Sans',sans-serif] text-ds-text-primary select-none relative">
       {/* Hidden File Input for Avatar */}
       <input
         type="file"
@@ -348,19 +347,16 @@ export const StepProfile: React.FC<StepProfileProps> = ({
         onChange={handleFileChange}
       />
 
-      {/* Centered Vertical Stack: Progress Bar + 20px gap + Main Content Container */}
+      {/* Centered Vertical Stack: Main Content Container */}
       <div className="flex flex-col items-center gap-[20px] z-10">
-        {/* Frame 41: Progress Bar (360px x 30px) */}
-        <OnboardingProgressBar currentStep={currentStep} totalSteps={totalSteps} />
-
-        {/* Frame 1: Main Content Container (447px x 488px) */}
-        <div className="w-[447px] h-[488px] p-[16px] flex flex-col items-center gap-[20px] rounded-[24px] box-border">
-          {/* Frame 2608520: Title & Subtitle Frame (415px x 80px) */}
-          <div className="w-[415px] h-[80px] flex flex-col items-center p-0 gap-[8px] text-center">
-            <h1 className="w-[415px] h-[48px] font-['DM_Sans'] font-bold text-[40px] leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
+        {/* Frame 1: Main Content Container */}
+        <div className="w-full max-w-[447px] sm:w-[447px] h-full sm:h-auto min-h-[488px] sm:min-h-0 p-[16px] flex flex-col items-center gap-[20px] sm:rounded-[24px] box-border">
+          {/* Frame 2608520: Title & Subtitle Frame */}
+          <div className="w-full max-w-[415px] sm:w-[415px] h-auto min-h-[80px] flex flex-col items-center p-0 gap-[8px] text-center">
+            <h1 className="w-full h-auto font-['DM_Sans'] font-bold text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] text-center text-ds-text-primary tracking-normal m-0 p-0">
               Tell us about <span className="text-ds-accent">yourself</span>
             </h1>
-            <p className="w-[338px] h-[24px] font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-center text-ds-text-primary m-0 p-0">
+            <p className="w-full max-w-[338px] h-auto font-['DM_Sans'] font-semibold text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-center text-ds-text-primary m-0 p-0">
               Add your basic details to create your profile
             </p>
           </div>
@@ -414,19 +410,15 @@ export const StepProfile: React.FC<StepProfileProps> = ({
                     alt="Profile Preview"
                     className="w-full h-full object-cover rounded-[100px]"
                   />
-                  {/* Remove Icon Overlay on Hover */}
-                  <div
-                    onClick={handleAvatarDelete}
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-[100px]"
-                    title="Remove photo"
-                  >
-                    <DeleteIcon size={18} className="w-[18px] h-[20px] text-ds-accent" />
-                  </div>
+
                 </div>
                 {/* Text: Change photo */}
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    setEditorInitialImage(displayImage);
+                    setIsImageEditorOpen(true);
+                  }}
                   className="w-[80px] h-[16px] font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   Change photo
@@ -472,14 +464,15 @@ export const StepProfile: React.FC<StepProfileProps> = ({
               disabled={submitting}
             />
 
-            {/* Continue Button (Frame: 260px x 36px) */}
-            <PillButton
-              type="submit"
-              disabled={!isFormValid || submitting}
-              isLoading={submitting}
-              label="Continue"
-              className="!w-[260px] !h-[36px] !mt-[8px]"
-            />
+            {/* Frame 2609485: Continue Button */}
+            <div className="w-full max-w-[260px] h-[36px] mt-[8px] flex items-center justify-center">
+              <PillButton
+                type="submit"
+                disabled={!isFormValid || submitting}
+                isLoading={submitting}
+                label="Continue"
+              />
+            </div>
           </form>
         </div>
       </div>

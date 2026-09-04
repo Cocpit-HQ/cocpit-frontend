@@ -54,7 +54,7 @@ export const CocpitUserProfileImageEditor: React.FC<
   const [positionY, setPositionY] = useState(0);
 
   // Crop feature toggle (Figma Adjust box with 8 handles)
-  const [isCropMode, setIsCropMode] = useState(true);
+  const [isCropMode, setIsCropMode] = useState(false);
 
   // Interaction states
   const [isDragging, setIsDragging] = useState(false);
@@ -91,7 +91,7 @@ export const CocpitUserProfileImageEditor: React.FC<
       setFlipV(false);
       setPositionX(0);
       setPositionY(0);
-      setIsCropMode(true);
+      setIsCropMode(false);
       setIsSaving(false);
     }
   }, [isOpen, initialImage]);
@@ -169,7 +169,7 @@ export const CocpitUserProfileImageEditor: React.FC<
       setFlipV(false);
       setPositionX(0);
       setPositionY(0);
-      setIsCropMode(true);
+      setIsCropMode(false);
     };
     reader.readAsDataURL(file);
   }, []);
@@ -213,12 +213,14 @@ export const CocpitUserProfileImageEditor: React.FC<
 
   // Dragging to pan image within strict frame limits
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isCropMode) return;
     e.preventDefault();
     lastPointer.current = { x: e.clientX, y: e.clientY };
     setIsDragging(true);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isCropMode) return;
     const touch = e.touches[0];
     lastPointer.current = { x: touch.clientX, y: touch.clientY };
     setIsDragging(true);
@@ -263,6 +265,7 @@ export const CocpitUserProfileImageEditor: React.FC<
 
   // Mouse wheel / trackpad pinch zoom (never below 0% / 1.0x cover)
   const handleWheel = (e: React.WheelEvent) => {
+    if (!isCropMode) return;
     e.preventDefault();
     const delta = -e.deltaY * 0.15;
     setZoom((prev) => Math.min(Math.max(prev + delta, 0), 150));
@@ -467,8 +470,11 @@ export const CocpitUserProfileImageEditor: React.FC<
                   onTouchStart={handleTouchStart}
                   onDoubleClick={openFilePicker}
                   onWheel={handleWheel}
-                  className="relative w-48 h-48 rounded-2xl overflow-hidden select-none flex items-center justify-center bg-[var(--ds-surface-2)] cursor-grab active:cursor-grabbing"
-                  title="Double-click to change photo, drag to reposition, scroll to Adjust"
+                  className={cn(
+                    "relative w-48 h-48 rounded-2xl overflow-hidden select-none flex items-center justify-center bg-[var(--ds-surface-2)]",
+                    isCropMode ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+                  )}
+                  title={isCropMode ? "Double-click to change photo, drag to reposition, scroll to Adjust" : "Double-click to change photo"}
                 >
                   {/* Perfectly Sized and Centered Image */}
                   <img
@@ -545,7 +551,7 @@ export const CocpitUserProfileImageEditor: React.FC<
                   ? isCropMode
                     ? "text-[var(--ds-accent)] hover:opacity-80 cursor-pointer"
                     : "text-[var(--ds-text-primary)] hover:opacity-80 cursor-pointer"
-                  : "text-[var(--ds-text-muted)] cursor-not-allowed",
+                  : "text-[var(--ds-text-muted)] cursor-default",
               )}
             >
               <CropIcon size={20} className="w-5 h-5" />
@@ -563,7 +569,7 @@ export const CocpitUserProfileImageEditor: React.FC<
                 "w-10 flex flex-col justify-start items-center gap-2 transition-colors",
                 hasImage
                   ? "text-[var(--ds-text-primary)] hover:opacity-80 cursor-pointer"
-                  : "text-[var(--ds-text-muted)] cursor-not-allowed",
+                  : "text-[var(--ds-text-muted)] cursor-default",
               )}
             >
               <FlipIcon size={20} className="w-5 h-5" />
@@ -581,7 +587,7 @@ export const CocpitUserProfileImageEditor: React.FC<
                 "w-10 flex flex-col justify-start items-center gap-2 transition-colors",
                 hasImage
                   ? "text-[var(--ds-text-primary)] hover:opacity-80 cursor-pointer"
-                  : "text-[var(--ds-text-muted)] cursor-not-allowed",
+                  : "text-[var(--ds-text-muted)] cursor-default",
               )}
             >
               <RotateIcon size={20} className="w-5 h-5" />
@@ -596,8 +602,8 @@ export const CocpitUserProfileImageEditor: React.FC<
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving}
-              className="w-16 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 rounded-[100px] flex justify-center items-center transition-opacity cursor-pointer disabled:opacity-50"
+              disabled={isSaving || !hasImage}
+              className="w-16 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 rounded-[100px] flex justify-center items-center transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-default"
             >
               <span className="text-[#FFECE6] text-base font-medium font-['DM_Sans'] leading-6">
                 Save
