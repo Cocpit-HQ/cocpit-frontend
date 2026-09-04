@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
 import Avatar from '@/components/shared/Avatar';
@@ -443,6 +444,22 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       refreshMessagingCaches(convId, payload);
     };
 
+    const handleGroupInvite = (payload?: any) => {
+      console.log("[Socket] group_invite event received:", payload);
+      const convId = payload?.conversation_id || payload?.conversationId;
+      refreshMessagingCaches(convId);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+      const groupName = payload?.other_user_name || payload?.conversation_name || payload?.group_name || payload?.name;
+      const inviterName = payload?.other_user_headline;
+
+      const message = inviterName
+        ? `${inviterName} invited you to join "${groupName || 'a group'}" group.`
+        : `You were invited to join "${groupName || 'a group'}" group.`;
+
+      sonnerToast.success(message);
+    };
+
     const handleUserStatus = (payload: UserStatusPayload) => {
       setOnlineUsers(prev => {
         const next = new Set(prev);
@@ -829,6 +846,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('saved_folders_updated', handleSavedUpdated);
     newSocket.on('saved_posts_updated', handleSavedUpdated);
     newSocket.on('activity_updated', handleActivityUpdated);
+    newSocket.on('group_invite', handleGroupInvite);
     socketRef.current = newSocket;
 
 
@@ -885,6 +903,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('saved_folders_updated', handleSavedUpdated);
       newSocket.off('saved_posts_updated', handleSavedUpdated);
       newSocket.off('activity_updated', handleActivityUpdated);
+      newSocket.off('group_invite', handleGroupInvite);
       newSocket.disconnect();
       setTypingConversations({});
     };

@@ -118,11 +118,6 @@ export function ChatList({
     if (!socket) return;
     const handleInvite = (payload?: any) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      if (payload && payload.other_user_name) {
-        toast.success(`You were added to "${payload.other_user_name}" group.`);
-      } else {
-        toast.success(`You were added to a group.`);
-      }
     };
     const handleInvitationUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
