@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React, { useState } from 'react';
 import { Smile } from 'lucide-react';
 import { MentionTextarea } from '@/components/ui/MentionTextarea';
 
@@ -69,3 +70,6 @@ const TextFlow = ({
 };
 
 export default TextFlow;
+
+*/
+export {};

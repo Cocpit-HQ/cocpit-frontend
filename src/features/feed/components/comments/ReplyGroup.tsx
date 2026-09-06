@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Comment as CommentType } from '@/types/entities';
 import Comment from './Comment';
+import CommentInput from './CommentInput';
 import { useSearchParams } from 'next/navigation';
 
 interface ReplyGroupProps {
@@ -14,9 +15,29 @@ interface ReplyGroupProps {
     onReport?: (commentId: string | number) => void;
     onEdit?: (commentId: string | number, currentText: string) => void;
     onHide?: (commentId: string | number) => void;
+    replyingTo?: { name: string; id: string | number; account_name?: string } | null;
+    onCancelReply?: () => void;
+    onAddComment?: (text: string, replyToId?: string | number) => void;
+    currentUserAvatar?: string;
 }
 
-export default function ReplyGroup({ replies, onReply, onDelete, onEdit, currentUserId, isDark, isPostOwner, postId, onReport, onHide }: ReplyGroupProps) {
+// ORIGINAL: export default function ReplyGroup({ replies, onReply, onDelete, onEdit, currentUserId, isDark, isPostOwner, postId, onReport, onHide }: ReplyGroupProps) {
+export default function ReplyGroup({ 
+    replies, 
+    onReply, 
+    onDelete, 
+    onEdit, 
+    currentUserId, 
+    isDark, 
+    isPostOwner, 
+    postId, 
+    onReport, 
+    onHide,
+    replyingTo,
+    onCancelReply,
+    onAddComment,
+    currentUserAvatar
+}: ReplyGroupProps) {
     const [isOpen, setIsOpen] = useState(false);
     const searchParams = useSearchParams();
     const targetCommentId = searchParams.get('commentId');
@@ -30,37 +51,55 @@ export default function ReplyGroup({ replies, onReply, onDelete, onEdit, current
     if (!replies || replies.length === 0) return null;
 
     return (
-        <div className="mt-1 ml-2 md:ml-2 font-poppins">
+        <div className="mt-1 ml-2 md:ml-2 font-dmsans">
             {!isOpen ? (
+                /* ORIGINAL VIEW REPLIES BUTTON: <button onClick={() => setIsOpen(true)} className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-2 py-1 pl-9">View replies</button> */
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-2 py-1 pl-9"
+                    className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity"
                 >
-                    View replies
+                    <div className="w-[30px] border-t border-ds-border" />
+                    <span className="ds-text-small-1 text-ds-text-secondary">View {replies.length} more {replies.length === 1 ? 'reply' : 'replies'}</span>
                 </button>
             ) : (
                 <div className="ml-8 md:ml-10  pl-3 md:pl-4 space-y-3 mt-2">
                     {replies.map((reply) => (
-                        <Comment
-                            key={reply.id}
-                            comment={reply}
-                            variant="reply"
-                            onReply={onReply}
-                            onDelete={onDelete}
-                            onEdit={onEdit}
-                            currentUserId={currentUserId}
-                            isPostOwner={isPostOwner}
-                            postId={postId}
-                            onReport={onReport}
-                            onHide={onHide}
-                        />
+                        /* ORIGINAL: <Comment key={reply.id} comment={reply} variant="reply" onReply={onReply} onDelete={onDelete} onEdit={onEdit} currentUserId={currentUserId} isPostOwner={isPostOwner} postId={postId} onReport={onReport} onHide={onHide} /> */
+                        <React.Fragment key={reply.id}>
+                            <Comment
+                                comment={reply}
+                                variant="reply"
+                                onReply={onReply}
+                                onDelete={onDelete}
+                                onEdit={onEdit}
+                                currentUserId={currentUserId}
+                                isPostOwner={isPostOwner}
+                                postId={postId}
+                                onReport={onReport}
+                                onHide={onHide}
+                            />
+                            {replyingTo?.id === reply.id && (
+                                <div className="pl-[32px]">
+                                    <CommentInput
+                                        variant="reply"
+                                        onAddComment={(text) => onAddComment?.(text, reply.id)}
+                                        replyingTo={replyingTo}
+                                        onCancelReply={onCancelReply}
+                                        currentUserAvatar={currentUserAvatar}
+                                        autoFocus={true}
+                                    />
+                                </div>
+                            )}
+                        </React.Fragment>
                     ))}
 
+                    {/* ORIGINAL HIDE REPLIES BUTTON: <button onClick={() => setIsOpen(false)} className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2 pl-11">Hide replies</button> */}
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2 pl-11"
+                        className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity mt-2"
                     >
-                        Hide replies
+                        <div className="w-[30px] border-t border-ds-border" />
+                        <span className="ds-text-small-1 text-ds-text-secondary">Hide replies</span>
                     </button>
                 </div>
             )}

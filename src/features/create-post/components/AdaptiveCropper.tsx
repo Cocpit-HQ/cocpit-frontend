@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React, { useEffect, useRef, useState } from 'react';
 import Cropper, { Area, MediaSize } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 
@@ -120,3 +121,6 @@ export function AdaptiveCropper({
     </div>
   );
 }
+
+*/
+export {};

@@ -58,32 +58,33 @@ export default function CommentSectionView({
 
   return (
     <div 
-      className="flex flex-col min-h-0 md:max-h-[450px] bg-background relative font-poppins comment-section"
+      className="flex flex-col min-h-0 md:max-h-[450px] bg-ds-bg relative font-dmsans comment-section"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="p-3 md:p-4 bg-card z-10 sticky top-0">
+      <div className="py-2 bg-ds-bg z-10 sticky top-0">
         <CommentInput
           onAddComment={(text) => {
             if (editingComment) {
               onEditComment?.(editingComment.id, text);
             } else {
-              onAddComment(text, replyingTo?.id);
+              /* ORIGINAL: onAddComment(text, replyingTo?.id); */
+              onAddComment(text);
             }
             handleCancelAll();
           }}
-          replyingTo={replyingTo}
-          onCancelReply={handleCancelAll}
+          /* ORIGINAL: replyingTo={replyingTo} */
+          /* ORIGINAL: onCancelReply={handleCancelAll} */
           editingComment={editingComment}
           onCancelEdit={handleCancelAll}
           currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 pb-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-4 scrollbar-hide">
         {isLoading && !comments.length ? (
           <CommentListSkeleton />
         ) : comments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
+          <div className="text-center py-8 text-ds-text-muted ds-text-secondary">
             No comments yet. Be the first to say something!
           </div>
         ) : (
@@ -97,13 +98,17 @@ export default function CommentSectionView({
             onHide={onHideComment}
             isPostOwner={isPostOwner}
             postId={postId}
+            replyingTo={replyingTo}
+            onCancelReply={handleCancelReply}
+            onAddComment={onAddComment}
+            currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
           />
         )}
       </div>
 
-      {reportTargetId && (
+      {reportTargetId !== null && (
         <ReportModal
-          isOpen={!!reportTargetId}
+          isOpen={reportTargetId !== null}
           onClose={() => setReportTargetId(null)}
           targetType="COMMENT"
           targetId={reportTargetId.toString()}

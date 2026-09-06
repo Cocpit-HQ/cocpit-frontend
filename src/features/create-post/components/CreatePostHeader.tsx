@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { X, ChevronDown, Check, Zap } from 'lucide-react';
 import VisibilityToggle from './shared/VisibilityToggle';
 import { PostVisibility } from '@/types/entities';
@@ -52,7 +53,7 @@ const CreatePostHeader = ({
           </button>
           <VisibilityToggle visibility={visibility} onToggle={onVisibilityToggle} isMobile={true} />
         </div>
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-10" /> {/* Spacer * /}
 
         {showAccountSelector && !isEdit && (
           <AccountSelectorOverlay 
@@ -204,3 +205,6 @@ const AccountSelectorOverlay = ({ userCompanies, onSelect, currentUser, onClose,
 );
 
 export default CreatePostHeader;
+
+*/
+export {};

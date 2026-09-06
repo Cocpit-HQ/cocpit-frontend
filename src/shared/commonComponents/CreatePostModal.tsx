@@ -1,3 +1,4 @@
+/* DEPRECATED
 import React, { useRef, useState, useEffect } from 'react';
 import { Dialog, DialogContent, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { X, ChevronDown, Check, Sparkles, Smile, Loader2, Plus, Square, RectangleHorizontal, RectangleVertical, ArrowLeft, ArrowRight, Pencil, Trash2 } from 'lucide-react';
@@ -20,7 +21,7 @@ import { AchievementPhotoPickerDialog } from '@/features/create-post/components/
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import { useUIStore } from '@/store/ui.store';
 import { UserMention } from '@/services/api/users';
-import { MentionTextarea } from '@/components/ui/MentionTextarea';
+import { MentionTextarea } from './MentionTextarea';
 import { TagPeopleSelector } from '@/shared/commonComponents/TagPeopleSelector';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { formatMentionsForBackend } from "@/lib/mentions";
@@ -601,21 +602,21 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         >
           <DialogTitle className="sr-only">{(isImageEditorMode || isVideoEditorMode) ? 'Edit Media' : 'Create Post'}</DialogTitle>
 
-          {/* Dimmer Overlay for Tag/Location Selectors */}
+          {/* Dimmer Overlay for Tag/Location Selectors * /}
           {(showTagSelector || showLocationSelector) && (
             <div className="absolute inset-0 bg-black/80 z-[300] pointer-events-auto transition-opacity" />
           )}
 
           {/* ═══════════════════════════════════════════
             IMAGE / VIDEO EDITOR MODE
-            ═══════════════════════════════════════════ */}
+            ═══════════════════════════════════════════ * /}
           {(isImageEditorMode || isVideoEditorMode) ? (
             <div className="flex flex-col items-center p-4 w-full pt-8">
-              {/* Content */}
+              {/* Content * /}
               <div className="flex flex-col items-center gap-4 w-full max-w-[570px]">
-                {/* Toolbar Row: + | flip/rotate/delete | counter */}
+                {/* Toolbar Row: + | flip/rotate/delete | counter * /}
                 <div className="self-stretch inline-flex justify-between items-center">
-                  {/* Add More */}
+                  {/* Add More * /}
                   {!isVideoEditorMode ? (
                     <button
                       onClick={() => addMoreInputRef.current?.click()}
@@ -628,7 +629,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     <div className="w-6 h-6" />
                   )}
 
-                  {/* Flip / Rotate / Delete */}
+                  {/* Flip / Rotate / Delete * /}
                   <ImageEditorToolbar
                     flipH={isVideoEditorMode ? (media.uploadedVideos[0]?.flipH || false) : (activeImage?.flipH || false)}
                     flipV={isVideoEditorMode ? (media.uploadedVideos[0]?.flipV || false) : (activeImage?.flipV || false)}
@@ -653,7 +654,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     }}
                   />
 
-                  {/* Counter */}
+                  {/* Counter * /}
                   {isVideoEditorMode ? (
                     <div className="w-[38px]" />
                   ) : (
@@ -663,7 +664,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   )}
                 </div>
 
-                {/* Image / Video Preview */}
+                {/* Image / Video Preview * /}
                 <div className="w-[570px] h-96 bg-white rounded-3xl shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] outline outline-1 outline-offset-[-1px] outline-indigo-50 overflow-hidden flex items-center justify-center">
                   {isVideoEditorMode && media.uploadedVideos[0] ? (
                     <div className="relative w-full h-full">
@@ -722,7 +723,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   ) : null}
                 </div>
 
-                {/* Thumbnails when multiple */}
+                {/* Thumbnails when multiple * /}
                 {!isVideoEditorMode && media.uploadedImages.length > 1 && (
                   <div className="flex gap-4 overflow-x-auto py-2 w-full justify-center custom-scrollbar">
                     {media.uploadedImages.map((img, idx) => {
@@ -751,7 +752,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   </div>
                 )}
 
-                {/* Zoom Slider */}
+                {/* Zoom Slider * /}
                 {!isEdit && (isImageEditorMode || isVideoEditorMode) && (
                   <div className="w-72 flex flex-col justify-start items-start">
                     <span className="text-center text-black text-xs font-normal font-['Poppins'] leading-4">
@@ -829,7 +830,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 </div>
               </div>
 
-              {/* Hidden add-more input */}
+              {/* Hidden add-more input * /}
               <input
                 ref={addMoreInputRef}
                 type="file"
@@ -842,10 +843,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
           ) : (
             /* ═══════════════════════════════════════════
                NORMAL CREATE POST MODE
-               ═══════════════════════════════════════════ */
+               ═══════════════════════════════════════════ * /
             <>
               <div className="w-full flex flex-col flex-1 min-h-0 items-center p-4">
-                {/* Frame 2608580: Close Button Block */}
+                {/* Frame 2608580: Close Button Block * /}
                 <div className="w-full flex flex-col items-end mb-2">
                   <button
                     type="button"
@@ -855,7 +856,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     <X className="w-full h-full stroke-[1.5px]" />
                   </button>
                 </div>
-                {/* Header — FIXED */}
+                {/* Header — FIXED * /}
                 {(state.postType !== 'article' || !!state.articleData) && (
                   state.postType === 'poll' ? (
                     <div className="relative w-full flex flex-col items-center">
@@ -876,7 +877,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   )
                 )}
 
-                {/* Profile — FIXED */}
+                {/* Profile — FIXED * /}
                 {(state.postType !== 'article' || !!state.articleData) && (
                   <div className="relative flex flex-row items-center justify-between gap-3.5 w-full mt-5 z-[60]">
                     <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
@@ -937,26 +938,26 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   </div>
                 )}
 
-                {/* Media Action Icons — FIXED */}
+                {/* Media Action Icons — FIXED * /}
                 {state.postType !== 'article' && !(state.postType === 'photo' && hasImages) && !(state.postType === 'video' && hasVideos) && state.postType !== 'poll' && !state.sharedPost && (
                   <div className="mt-4 w-full">
                     {renderMediaIcons()}
                   </div>
                 )}
 
-                {/* Scrollable content area — overflow-y: auto */}
+                {/* Scrollable content area — overflow-y: auto * /}
                 <div className={`flex flex-col w-full flex-1 min-h-0 ${(state.postType === 'article' && !state.articleData) ? '' : 'mt-3 overflow-y-auto custom-scrollbar'
                   } ${state.postType === 'poll' ? 'pb-24 overflow-visible' : ''}`}>
                   {(state.postType !== 'article' || !!state.articleData) ? (
                     <div className="relative flex flex-col gap-4 w-full">
 
 
-                      {/* Media preview and controls wrapper */}
+                      {/* Media preview and controls wrapper * /}
                       {selectedAchievementOption && state.postType === 'photo' && hasImages ? (
                         <div className="flex flex-col gap-2 w-full items-center">
                           {isCompactView ? (
                             <div className="flex items-center justify-between w-full p-2 bg-card border border-[#EEF2FF] rounded-[16px]">
-                              {/* Left: Thumbnail + Title */}
+                              {/* Left: Thumbnail + Title * /}
                               <div className="flex items-center gap-3">
                                 <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50">
                                   <img
@@ -980,7 +981,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   </span>
                                 </div>
                               </div>
-                              {/* Right: Controls */}
+                              {/* Right: Controls * /}
                               <div className="flex items-center gap-2">
                                 <button
                                   type="button"
@@ -1010,7 +1011,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             </div>
                           ) : (
                             <>
-                              {/* Full size preview */}
+                              {/* Full size preview * /}
                               <div className="w-full bg-white relative">
                                 <div className="relative w-full aspect-[16/10] overflow-hidden rounded-[8px]">
                                   <img
@@ -1021,7 +1022,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   />
                                 </div>
                               </div>
-                              {/* Centered translated category label */}
+                              {/* Centered translated category label * /}
                               <div className="text-center text-gray-500 text-[12px] font-normal font-poppins mt-1">
                                 {{
                                   'new-project': 'Launched a project',
@@ -1030,7 +1031,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   'certificate': 'Certificate',
                                 }[selectedAchievementOption.id] || 'Achievement'}
                               </div>
-                              {/* Right aligned edit and delete controls */}
+                              {/* Right aligned edit and delete controls * /}
                               <div className="flex justify-end gap-3 w-full pr-2 mt-1">
                                 <button
                                   type="button"
@@ -1062,11 +1063,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </div>
                       ) : ((state.postType === 'photo' && hasImages) || (state.postType === 'video' && hasVideos)) && (
                         <div className="flex flex-col gap-2 w-full items-center">
-                          {/* Photo preview attachment */}
+                          {/* Photo preview attachment * /}
                           {state.postType === 'photo' && hasImages && (
                             isCompactView ? (
                               <div className="flex items-center justify-between w-full p-2 bg-card border border-[#EEF2FF] rounded-[16px]">
-                                {/* Left: Thumbnail + File Info */}
+                                {/* Left: Thumbnail + File Info * /}
                                 <div className="flex items-center gap-3">
                                   <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50">
                                     <img
@@ -1092,7 +1093,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   </div>
                                 </div>
 
-                                {/* Right: Controls */}
+                                {/* Right: Controls * /}
                                 <div className="flex items-center gap-2">
                                   {media.uploadedImages.length > 1 && (
                                     <div className="flex items-center gap-2 bg-secondary/50 px-2 py-1 rounded-full mr-1">
@@ -1143,7 +1144,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               </div>
                             ) : (
                               <>
-                                {/* Large Full-Width Preview */}
+                                {/* Large Full-Width Preview * /}
                                 <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
                                   <div
                                     className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
@@ -1164,9 +1165,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   </div>
                                 </div>
 
-                                {/* Controls row for large preview */}
+                                {/* Controls row for large preview * /}
                                 <div className="flex items-center justify-between w-full px-1">
-                                  {/* Left: counter pill */}
+                                  {/* Left: counter pill * /}
                                   {media.uploadedImages.length > 1 ? (
                                     <div className="flex items-center gap-3.5 bg-card px-4 py-1.5 rounded-full">
                                       <button
@@ -1192,7 +1193,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   ) : (
                                     <div />
                                   )}
-                                  {/* Right: eye + edit + delete */}
+                                  {/* Right: eye + edit + delete * /}
                                   <div className="flex items-center gap-2">
                                     <button
                                       type="button"
@@ -1224,11 +1225,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             )
                           )}
 
-                          {/* Video preview attachment */}
+                          {/* Video preview attachment * /}
                           {state.postType === 'video' && hasVideos && (
                             isCompactView ? (
                               <div className="flex items-center justify-between w-full p-2 bg-card border border-[#EEF2FF] rounded-[16px]">
-                                {/* Left: Thumbnail + File Info */}
+                                {/* Left: Thumbnail + File Info * /}
                                 <div className="flex items-center gap-3">
                                   <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50 pointer-events-none">
                                     <CustomVideoPlayer
@@ -1250,7 +1251,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   </div>
                                 </div>
 
-                                {/* Right: Controls */}
+                                {/* Right: Controls * /}
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
@@ -1295,7 +1296,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                     />
                                   </div>
                                 </div>
-                                {/* Controls row for video */}
+                                {/* Controls row for video * /}
                                 <div className="flex items-center justify-between w-full px-1">
                                   <div />
                                   <div className="flex items-center gap-2">
@@ -1331,7 +1332,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </div>
                       )}
 
-                      {/* Article Preview Card */}
+                      {/* Article Preview Card * /}
                       {state.postType === 'article' && state.articleData && (
                         <div className="flex justify-center w-full mt-3 mb-4">
                           <div className="relative group w-full max-w-[420px]">
@@ -1385,7 +1386,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </div>
                       )}
 
-                      {/* Unified Content Textarea (Part of scroll unit) */}
+                      {/* Unified Content Textarea (Part of scroll unit) * /}
                       {(state.postType !== 'poll' && (state.postType !== 'article' || !!state.articleData)) && (
                         <div className="flex flex-col w-full pr-3 relative">
                           <MentionTextarea
@@ -1402,7 +1403,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       )}
 
 
-                      {/* Poll Flow Options */}
+                      {/* Poll Flow Options * /}
                       {state.postType === 'poll' && (
                         <PollFlow
                           pollQuestion={poll.pollQuestion}
@@ -1455,10 +1456,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   ) : null}
                 </div>
 
-                {/* Footer — FIXED */}
+                {/* Footer — FIXED * /}
                 {(state.postType !== 'article' || !!state.articleData) && (
                   <div className="flex flex-col gap-4 w-full mt-auto pt-5">
-                    {/* Tag, Location, Smile icons row */}
+                    {/* Tag, Location, Smile icons row * /}
                     <div className="flex items-center gap-4 px-1">
                       <button className="flex items-center gap-2 relative transition-colors group" title="Tag people" onClick={() => { setShowTagSelector(true); }}>
                         <Icon icon="la:user-tag" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
@@ -1517,7 +1518,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               }
                             `}</style>
 
-                            {/* Spinning gradient for the full border */}
+                            {/* Spinning gradient for the full border * /}
                             <div
                               className="absolute top-1/2 left-1/2 w-[800px] h-[800px] origin-center"
                               style={{
@@ -1527,7 +1528,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               }}
                             />
 
-                            {/* Inner content capsule */}
+                            {/* Inner content capsule * /}
                             <div className="relative z-10 flex items-center justify-between bg-[#F8FAFC] rounded-[23px] pl-4 pr-2 h-full w-full">
                               <div className="flex items-center gap-2">
                                 <div className="relative flex items-center justify-center w-[24px] h-[24px]">
@@ -1657,7 +1658,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
           )}
 
 
-          {/* Context Switch Warning */}
+          {/* Context Switch Warning * /}
           {state.showContextWarning && (
             <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
               <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4 font-poppins">
@@ -1681,7 +1682,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
             </div>
           )}
 
-          {/* Discard Confirmation Overlay */}
+          {/* Discard Confirmation Overlay * /}
           <DiscardConfirmOverlay
             isOpen={showDiscardConfirm}
             onCancel={() => setShowDiscardConfirm(false)}
@@ -1692,7 +1693,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
             }}
           />
 
-          {/* Hidden file input */}
+          {/* Hidden file input * /}
           <input
             ref={galleryInputRef}
             type="file"
@@ -1710,7 +1711,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Tag People Dialog */}
+      {/* Tag People Dialog * /}
       <Dialog
         open={showTagSelector}
         onOpenChange={(open) => {
@@ -1733,7 +1734,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         </BareDialogContent>
       </Dialog>
 
-      {/* Location Selector Dialog */}
+      {/* Location Selector Dialog * /}
       <Dialog
         open={showLocationSelector}
         onOpenChange={(open) => {
@@ -1756,7 +1757,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         </BareDialogContent>
       </Dialog>
 
-      {/* Achievement Picker Dialog — separate Dialog, matching Tag People flow */}
+      {/* Achievement Picker Dialog — separate Dialog, matching Tag People flow * /}
       <Dialog
         open={showAchievementDialog}
         onOpenChange={(open) => {
@@ -1781,7 +1782,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         </BareDialogContent>
       </Dialog>
 
-      {/* Achievement Photo Picker Dialog */}
+      {/* Achievement Photo Picker Dialog * /}
       <Dialog
         open={showAchievementPhotoPicker}
         onOpenChange={(open) => {
@@ -1823,3 +1824,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     </>
   );
 };
+
+*/
+export {};

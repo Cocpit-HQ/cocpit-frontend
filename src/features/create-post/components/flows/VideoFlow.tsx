@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Video, Plus, X, Trash2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import RichTextEditor from '../shared/RichTextEditor';
@@ -200,3 +201,6 @@ const VideoFlow = ({
   );
 };
       export default VideoFlow;
+
+*/
+export {};

@@ -18,6 +18,42 @@ interface EmojiPickerPortalProps {
   zIndex?: number;
 }
 
+function sanitizeSuggestedEmojis() {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    const raw = window.localStorage.getItem("epr_suggested");
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return;
+
+    const seenBases = new Set<string>();
+    const cleaned = list.filter((item: any) => {
+      const base =
+        item?.original ||
+        (item?.unified
+          ? item.unified
+              .split("-")
+              .filter(
+                (code: string) =>
+                  !["1f3fb", "1f3fc", "1f3fd", "1f3fe", "1f3ff"].includes(
+                    code.toLowerCase()
+                  )
+              )
+              .join("-")
+          : "");
+      if (!base || seenBases.has(base)) return false;
+      seenBases.add(base);
+      return true;
+    });
+
+    if (cleaned.length !== list.length) {
+      window.localStorage.setItem("epr_suggested", JSON.stringify(cleaned));
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function EmojiPickerPortal({
   isOpen,
   position,
@@ -28,12 +64,18 @@ export function EmojiPickerPortal({
   const { resolvedTheme } = useTheme();
   const pickerRef = useRef<HTMLDivElement>(null);
 
+  if (typeof window !== "undefined" && isOpen) {
+    sanitizeSuggestedEmojis();
+  }
+
   const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setTimeout(sanitizeSuggestedEmojis, 0);
     onEmojiSelect(emojiData.emoji);
   };
 
   useEffect(() => {
     if (!isOpen) return;
+    sanitizeSuggestedEmojis();
 
     const picker = pickerRef.current;
     if (!picker) return;

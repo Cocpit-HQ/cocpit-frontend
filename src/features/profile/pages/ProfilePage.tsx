@@ -60,7 +60,7 @@ import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationM
 import { EditProfileModal } from "../components/EditProfileModal"
 import { useProfileScore } from "@/features/profile-score/hooks/useProfileScore"
 import { ProfileScoreCard } from "@/features/profile-score/components/ProfileScoreCard"
-const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
 const routes: Record<string, string> = {
   home: "/feed",

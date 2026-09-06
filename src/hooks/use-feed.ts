@@ -71,7 +71,7 @@ export const useFeed = (enableInitialFetch = true) => {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const deletePost = useCallback(async (id: string) => {
+  const deletePost = useCallback(async (id: string, companyId?: string) => {
     queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
       return {
@@ -83,7 +83,7 @@ export const useFeed = (enableInitialFetch = true) => {
       };
     });
     try {
-      await apiDeletePost(id);
+      await apiDeletePost(id, companyId);
       toast.success("Post deleted successfully");
     } catch (error) {
       console.error("Failed to delete post:", error);

@@ -1,4 +1,5 @@
-'use client';
+/* DEPRECATED
+DEPRECATED\n// 'use client';
 
 import React, { useRef } from 'react';
 import ArticleFlow from '@/features/create-post/components/flows/ArticleFlow';
@@ -107,3 +108,6 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
     </div>
   );
 }
+
+*/
+export {};

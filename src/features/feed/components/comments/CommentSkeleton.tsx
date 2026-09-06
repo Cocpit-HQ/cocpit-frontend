@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function CommentItemSkeleton() {
   return (
-    <div className="flex gap-3 relative group transition-all duration-300 font-poppins">
+    <div className="flex gap-3 relative group transition-all duration-300 font-dmsans">
       {/* Avatar Column */}
       <div className="flex-shrink-0">
         <Skeleton className="w-8 h-8 rounded-full" />
@@ -41,7 +41,7 @@ export function CommentItemSkeleton() {
 
 export function CommentListSkeleton() {
   return (
-    <div className="space-y-6 font-poppins">
+    <div className="space-y-6 font-dmsans">
       {[1, 2, 3].map((i) => (
         <React.Fragment key={i}>
           {/* Root Comment */}

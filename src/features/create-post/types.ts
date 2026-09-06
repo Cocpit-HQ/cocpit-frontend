@@ -1,4 +1,5 @@
-import { Area } from 'react-easy-crop';
+/* DEPRECATED
+DEPRECATED\n// import { Area } from 'react-easy-crop';
 import { Post, PostVisibility } from '@/types/entities';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article' | 'milestone' | 'expert';
@@ -56,3 +57,6 @@ export type CategoryType =
   | 'Research'
   | 'Club Activity'
   | 'General';
+
+*/
+export {};

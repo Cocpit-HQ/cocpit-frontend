@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Area, MediaSize } from 'react-easy-crop';
 import { MediaItem } from '../types';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
@@ -94,8 +95,8 @@ export const usePostMedia = (
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        if (uploadedImagesRef.current.length >= 5) {
-          toast.error("Maximum 5 images allowed");
+        if (uploadedImagesRef.current.length >= 12) {
+          toast.error("Maximum 12 images allowed");
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
@@ -151,8 +152,8 @@ export const usePostMedia = (
       }
 
       // 5. Image count limit
-      if (uploadedImagesRef.current.length + imageFiles.length > 5) {
-        toast.error("Maximum 5 images allowed");
+      if (uploadedImagesRef.current.length + imageFiles.length > 12) {
+        toast.error("Maximum 12 images allowed");
         e.target.value = '';
         return;
       }
@@ -242,8 +243,8 @@ export const usePostMedia = (
       }
 
       // 5. Image count limit
-      if (uploadedImagesRef.current.length + imageFiles.length > 5) {
-        toast.error("Maximum 5 images allowed");
+      if (uploadedImagesRef.current.length + imageFiles.length > 12) {
+        toast.error("Maximum 12 images allowed");
         e.target.value = '';
         return;
       }
@@ -587,3 +588,6 @@ export const usePostMedia = (
     prepareFilesToUpload
   };
 };
+
+*/
+export {};

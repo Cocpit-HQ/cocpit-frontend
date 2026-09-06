@@ -7,7 +7,7 @@ import { StoriesProvider } from "@/context/StoriesContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
 import { usePathname } from "next/navigation";
 import { useUIStore } from "@/store/ui.store";
-import { FeedCreatePostModal } from "@/features/create-post/components/FeedCreatePostModal";
+import { CreatePostModal } from "@/features/feed/components/create-post";
 import { useNavigationTracker } from "@/hooks/use-navigation-memory";
 
 export default function DashboardLayout({
@@ -27,7 +27,7 @@ export default function DashboardLayout({
                     <AppShell>{children}</AppShell>
                     <GlobalUploadProgress />
                     
-                    <FeedCreatePostModal
+                    <CreatePostModal
                         isOpen={activeModal === 'create-post'}
                         onClose={() => setActiveModal(null)}
                         initialPostType={initialPostType}

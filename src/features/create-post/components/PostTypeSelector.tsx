@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Type, Image, Video, BarChart3, FileText } from 'lucide-react';
 import { PostType } from '../types';
 
@@ -70,3 +71,6 @@ const PostTypeSelector = ({
 };
 
 export default PostTypeSelector;
+
+*/
+export {};

@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Video } from 'lucide-react';
 import { Icon } from '@iconify/react';
 
@@ -82,9 +83,9 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
 
   return (
     <div className="flex flex-col gap-2 w-full mt-2">
-      {/* Card */}
+      {/* Card * /}
       <div className="self-stretch p-4 bg-white rounded-3xl shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col gap-4">
-        {/* Author row */}
+        {/* Author row * /}
         <div className="inline-flex items-center gap-2">
           <div className="size-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
             {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' ? (
@@ -123,12 +124,12 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
             </div>
           </div>
         </div>
-        {/* Content */}
+        {/* Content * /}
         <p className="text-black text-xs font-normal font-['Poppins'] leading-4 line-clamp-6">
           {sharedPost?.content || sharedPost?.description || sharedPost?.text}
         </p>
 
-        {/* Optional Media in new card design if you want to keep them */}
+        {/* Optional Media in new card design if you want to keep them * /}
         {sharedPost?.images && sharedPost.images.length > 0 && (
           <div className="rounded-lg overflow-hidden bg-black/5 relative flex justify-center items-center mt-2">
             <img src={sharedPost.images[0]} className="w-full max-h-[400px] object-contain rounded-lg" alt="Shared Media" />
@@ -141,7 +142,7 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
         )}
       </div>
 
-      {/* Eye + Delete icons */}
+      {/* Eye + Delete icons * /}
       <div className="inline-flex justify-end items-center gap-3 pr-1">
         <button type="button" className="p-1 text-[#000000]">
           <Icon icon="fluent:eye-off-24-regular" className="w-6 h-6" />
@@ -155,3 +156,6 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
 };
 
 export default SharedPreview;
+
+*/
+export {};

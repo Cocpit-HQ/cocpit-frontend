@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 
 interface DiscardConfirmOverlayProps {
   isOpen: boolean;
@@ -38,3 +39,6 @@ export const DiscardConfirmOverlay: React.FC<DiscardConfirmOverlayProps> = ({
     </div>
   );
 };
+
+*/
+export {};

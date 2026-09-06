@@ -101,6 +101,7 @@ export interface Comment {
   pinned_by?: string | null; // Who pinned it
   isPending?: boolean; // For optimistic UI
   reply_count?: number; // Added for UI display
+  is_edited?: boolean; // Whether the comment has been edited
 }
 
 export interface PollOption {

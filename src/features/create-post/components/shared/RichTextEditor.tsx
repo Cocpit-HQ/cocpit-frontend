@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React, { useState, useRef, useEffect } from 'react';
 import { useMentions } from '@/hooks/use-mentions';
 import { UserMention } from '@/services/api/users';
 import { HashtagSuggestion } from '@/services/api/hashtags';
@@ -260,3 +261,6 @@ const RichTextEditor = ({
 };
 
 export default RichTextEditor;
+
+*/
+export {};

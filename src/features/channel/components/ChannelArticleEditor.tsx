@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import ArticleFlow from '@/features/create-post/components/flows/ArticleFlow';
-import { MediaItem } from '@/features/create-post/types';
+import ArticleFlow from '@/features/feed/components/create-post/post-types/ArticleFlow';
+import { MediaItem } from '@/features/feed/types';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useMyChannel } from '../hooks/useMyChannel';
 import { useChannelArticle } from '../hooks/useChannelArticles';

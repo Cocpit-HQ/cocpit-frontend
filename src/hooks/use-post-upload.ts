@@ -3,7 +3,7 @@ import { CreatePostRequest } from '@/services/api/feed';
 import { useFeed } from '@/hooks/use-feed';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { postApi } from '@/features/create-post/api/post.api';
+import { postApi } from '@/features/feed/api/post.api';
 import { AxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 

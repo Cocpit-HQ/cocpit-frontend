@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import InlineArticleEditor from '@/features/create-post/components/InlineArticleEditor';
+import InlineArticleEditor from '@/features/feed/components/create-post/shared/InlineArticleEditor';
 
 export default function EditArticlePage() {
   const params = useParams();

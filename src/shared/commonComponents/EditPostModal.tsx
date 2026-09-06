@@ -3,7 +3,7 @@ import { Dialog, DialogContent, BareDialogContent, DialogTitle } from '@/compone
 import { X, Loader2, ArrowLeft } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { Post, PostVisibility } from '@/types/entities';
-import { postApi } from '@/features/create-post/api/post.api';
+import { postApi } from '@/features/feed/api/post.api';
 import { syncPostTags } from '@/services/api/posts';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { TagPeopleSelector } from '@/shared/commonComponents/TagPeopleSelector';
@@ -12,10 +12,10 @@ import { UserMention } from '@/services/api/users';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import VisibilityToggle from '@/features/create-post/components/shared/VisibilityToggle';
+import VisibilityToggle from '@/features/feed/components/create-post/shared/VisibilityToggle';
 import { PostCarousel } from '@/components/shared/PostCarousel';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
-import { MentionTextarea } from '@/components/ui/MentionTextarea';
+import { MentionTextarea } from './MentionTextarea';
 import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
 
 export interface EditPostModalProps {

@@ -1,4 +1,5 @@
-'use client';
+/* DEPRECATED
+DEPRECATED\n// 'use client';
 
 import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
@@ -54,7 +55,7 @@ export const AchievementPhotoPickerDialog = ({
   return (
     <div className="w-[640px] h-[670px] p-4 bg-white rounded-3xl flex flex-col justify-start items-end overflow-hidden">
       
-      {/* X close button */}
+      {/* X close button * /}
       <button 
         onClick={onClose} 
         className="self-stretch inline-flex justify-end items-center mb-1 shrink-0 group"
@@ -64,7 +65,7 @@ export const AchievementPhotoPickerDialog = ({
         </div>
       </button>
 
-      {/* Upload area or Selected Image Preview */}
+      {/* Upload area or Selected Image Preview * /}
       {selectedPhoto ? (
         <div className="self-stretch h-48 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-center items-center overflow-hidden relative w-full shrink-0 bg-indigo-50/10 border border-indigo-50">
           <img src={selectedPhoto.url} alt="Selected preview" className="w-full h-full object-contain p-2" />
@@ -89,12 +90,12 @@ export const AchievementPhotoPickerDialog = ({
         </button>
       )}
 
-      {/* Category label */}
+      {/* Category label * /}
       <div className="text-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4 self-stretch py-2 shrink-0">
         {categoryLabel}
       </div>
 
-      {/* Content */}
+      {/* Content * /}
       {isLoading ? (
         <div className="flex-1 w-full flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-[#6366F1] animate-spin" />
@@ -118,10 +119,10 @@ export const AchievementPhotoPickerDialog = ({
                       className="w-[213.36px] h-[190px] object-contain transition-transform duration-300 group-hover:scale-105"
                     />
                     
-                    {/* Hover Overlay */}
+                    {/* Hover Overlay * /}
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                     
-                    {/* Selection Indicator */}
+                    {/* Selection Indicator * /}
                     {isSelected && (
                       <div className="absolute top-3 right-3 w-6 h-6 bg-[#6366F1] rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-200 scale-100">
                         <Icon icon="mdi:check" className="w-4 h-4 text-white" />
@@ -131,7 +132,7 @@ export const AchievementPhotoPickerDialog = ({
                 );
               })}
               
-              {/* Add an empty placeholder if the row is not full */}
+              {/* Add an empty placeholder if the row is not full * /}
               {row.length === 1 && (
                 <div className="w-[276px] h-[200px] shrink-0" />
               )}
@@ -140,7 +141,7 @@ export const AchievementPhotoPickerDialog = ({
         </div>
       )}
 
-      {/* Back and Next buttons */}
+      {/* Back and Next buttons * /}
       <div className="self-stretch pt-4 flex justify-end items-center gap-3 shrink-0">
         <button
           onClick={onBack}
@@ -164,3 +165,6 @@ export const AchievementPhotoPickerDialog = ({
     </div>
   );
 };
+
+*/
+export {};

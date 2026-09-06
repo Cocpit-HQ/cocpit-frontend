@@ -1,4 +1,5 @@
-import { useRouter } from 'next/navigation';
+/* DEPRECATED
+DEPRECATED\n// import { useRouter } from 'next/navigation';
 
 interface Post {
   id?: string;
@@ -26,3 +27,6 @@ export const useEditNavigation = (post: Post | null | undefined) => {
 
   return { handlePencilClick };
 };
+
+*/
+export {};

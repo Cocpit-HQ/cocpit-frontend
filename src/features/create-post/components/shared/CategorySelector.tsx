@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { CategoryType } from '../../types';
 
 interface CategorySelectorProps {
@@ -48,3 +49,6 @@ const CategorySelector = ({
 };
 
 export default CategorySelector;
+
+*/
+export {};

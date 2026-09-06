@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Area, MediaSize } from 'react-easy-crop';
 import { Square, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { AdaptiveCropper } from './AdaptiveCropper';
@@ -42,7 +43,7 @@ export function MediaCropper({
 }: MediaCropperProps) {
   return (
     <div className="flex flex-col h-full w-full gap-4">
-      {/* Cropper Area */}
+      {/* Cropper Area * /}
       <div className="relative w-full h-[300px] md:h-[400px] bg-black rounded-lg overflow-hidden flex items-center justify-center">
         {readOnly ? (
           <img src={imageSrc} className="w-full h-full object-contain" alt="Post media" />
@@ -62,10 +63,10 @@ export function MediaCropper({
         )}
       </div>
 
-      {/* Controls - Hide if readOnly */}
+      {/* Controls - Hide if readOnly * /}
       {!readOnly && (
         <div className="flex flex-col gap-4 px-2">
-          {/* Zoom Control */}
+          {/* Zoom Control * /}
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-muted-foreground w-12">Zoom</span>
             <input
@@ -83,7 +84,7 @@ export function MediaCropper({
             />
           </div>
 
-          {/* Aspect Ratio Selector */}
+          {/* Aspect Ratio Selector * /}
           <div className="flex items-center justify-between md:justify-start md:gap-4">
             <span className="text-sm font-medium text-muted-foreground md:w-12">Ratio</span>
 
@@ -120,3 +121,6 @@ export function MediaCropper({
     </div>
   );
 }
+
+*/
+export {};

@@ -1,4 +1,5 @@
-'use client';
+/* DEPRECATED
+DEPRECATED\n// 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -272,7 +273,7 @@ export default function ArticleCoverEditor({
 
   return (
     <>
-      {/* Hidden input for file selection */}
+      {/* Hidden input for file selection * /}
       <input
         type="file"
         ref={fileInputRef}
@@ -281,7 +282,7 @@ export default function ArticleCoverEditor({
         className="hidden"
       />
 
-      {/* Article Cover Editor Page Trigger UI */}
+      {/* Article Cover Editor Page Trigger UI * /}
       <div className="w-full">
         {coverImage ? (
           <div className="relative aspect-[2/1] max-w-[600px] w-full overflow-hidden group bg-[#D9D9D9] mx-auto rounded-[24px]">
@@ -338,7 +339,7 @@ export default function ArticleCoverEditor({
         )}
       </div>
 
-      {/* Cover Preview Modal */}
+      {/* Cover Preview Modal * /}
       <Dialog open={isModalOpen} onOpenChange={(open) => {
         setIsModalOpen(open);
         if (!open) handleCancelPreview();
@@ -355,7 +356,7 @@ export default function ArticleCoverEditor({
             </div>
 
             <div className="relative flex flex-col items-center justify-center w-full">
-              {/* Transform Toolbar */}
+              {/* Transform Toolbar * /}
               <div className="flex justify-center items-center gap-4 mb-6">
                 <button
                   type="button"
@@ -398,7 +399,7 @@ export default function ArticleCoverEditor({
                 </button>
               </div>
 
-              {/* Image Preview with Drag-to-Reposition at 2:1 ratio */}
+              {/* Image Preview with Drag-to-Reposition at 2:1 ratio * /}
               <div
                 ref={containerRef}
                 className={cn(
@@ -419,7 +420,7 @@ export default function ArticleCoverEditor({
                   setZoom(prev => Math.min(200, Math.max(0, prev + delta)));
                 }}
               >
-                {/* Width-fill: image spans full container width by default */}
+                {/* Width-fill: image spans full container width by default * /}
                 <img
                   src={displayImage || "/assets/coverphoto.jpg"}
                   alt="Current Cover"
@@ -437,7 +438,7 @@ export default function ArticleCoverEditor({
                   }}
                 />
 
-                {/* Hover Overlay (hidden while dragging) */}
+                {/* Hover Overlay (hidden while dragging) * /}
                 {!isDraggingImage && (
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10 pointer-events-none">
                     <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
@@ -450,7 +451,7 @@ export default function ArticleCoverEditor({
                 )}
               </div>
 
-              {/* Zoom Slider */}
+              {/* Zoom Slider * /}
               <div className="mt-8 max-w-[400px] mx-auto w-full">
                 <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
                 <Slider
@@ -463,7 +464,7 @@ export default function ArticleCoverEditor({
               </div>
             </div>
 
-            {/* Footer Buttons */}
+            {/* Footer Buttons * /}
             <div className="flex justify-center gap-4 mt-10">
               <Button
                 type="button"
@@ -491,3 +492,6 @@ export default function ArticleCoverEditor({
     </>
   );
 }
+
+*/
+export {};

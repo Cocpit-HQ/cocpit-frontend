@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React, { useState } from 'react';
 import { Plus, X, ChevronDown } from 'lucide-react';
 import { PollOption } from '../../types';
 
@@ -34,7 +35,7 @@ const PollFlow = ({
 
   return (
     <div className={`space-y-5 ${isMobile ? '' : ''}`}>
-      {/* Question / Title Field */}
+      {/* Question / Title Field * /}
       <div className="space-y-2">
         <label className="text-[13.5px] font-normal text-foreground font-poppins">
           Title
@@ -48,7 +49,7 @@ const PollFlow = ({
         />
       </div>
 
-      {/* Options Fields */}
+      {/* Options Fields * /}
       <div className="space-y-3">
         <label className="text-[13.5px] font-normal text-foreground font-poppins">
           Options
@@ -76,7 +77,7 @@ const PollFlow = ({
           ))}
         </div>
 
-        {/* Add Option Button */}
+        {/* Add Option Button * /}
         {!isEdit && pollOptions.length < 6 && (
           <button
             type="button"
@@ -89,7 +90,7 @@ const PollFlow = ({
         )}
       </div>
 
-      {/* Duration Dropdown Select */}
+      {/* Duration Dropdown Select * /}
       <div className="space-y-2">
         <label className="text-[13.5px] font-normal text-foreground font-poppins">
           Poll duration
@@ -128,3 +129,6 @@ const PollFlow = ({
 };
 
 export default PollFlow;
+
+*/
+export {};

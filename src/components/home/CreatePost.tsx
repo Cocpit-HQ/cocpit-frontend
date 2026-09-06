@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
-import { PostType } from '@/features/create-post/types'
+import { PostType } from '@/features/feed/types'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useFeed } from '@/hooks/use-feed'
 import { useUIStore } from '@/store/ui.store'

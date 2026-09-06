@@ -30,6 +30,7 @@ export default function SinglePostPage({ params }: PageProps) {
     const { userCompanies, activeProfile } = useActiveProfile()
 
     useEffect(() => {
+        window.scrollTo(0, 0);
         const fetchPost = async () => {
             try {
                 const backendPost = await getPostById(id)
@@ -73,11 +74,11 @@ export default function SinglePostPage({ params }: PageProps) {
     })
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-transparent text-foreground md:pr-[253px]">
             <div className="pt-4 md:pt-6 pb-4 md:pb-8">
                 <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
-                    <div className="mx-auto max-w-[998px] w-full flex flex-col items-start">
-                        <div className="max-w-[592px] w-full px-4 md:px-0 mb-8">
+                    <div className="mx-auto max-w-[998px] w-full flex flex-col items-center">
+                        <div className="max-w-[442px] w-full px-4 md:px-0 mb-8">
                             {/* Navigation Header */}
                             <div className="flex items-center gap-4 mb-8">
                                 <button

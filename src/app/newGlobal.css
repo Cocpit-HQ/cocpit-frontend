@@ -705,7 +705,7 @@
     box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
     -webkit-text-fill-color: var(--ds-text-primary) !important;
     /* Forces the cursor to match Figma's accent color (#EC6229) during browser autofill */
-    caret-color: #EC6229 !important;
+    caret-color: var(--ds-text-accent) !important;
     transition: background-color 50000s ease-in-out 0s !important;
   }
 
@@ -713,7 +713,7 @@
     box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
     -webkit-text-fill-color: var(--ds-text-primary) !important;
     /* Forces the cursor to match Figma's accent color (#EC6229) during browser autofill */
-    caret-color: #EC6229 !important;
+    caret-color:var(--ds-text-accent) !important;
     filter: none !important;
   }
 
@@ -1487,11 +1487,29 @@
 
 /* ── Primary accent → Secondary accent ──────────────────── */
 [data-theme="dark"] .text-primary,
-[data-theme="dark"] a,
+[data-theme="dark"] a:not(.mention-link),
 [data-theme="dark"] [icon*="dots-three"],
 [data-theme="dark"] svg[data-icon*="dots-three"],
 [data-theme="dark"] button[data-state] svg {
   color: #F9FAFB !important;
+}
+
+/* ── Mention Links: Always orange per design system ──────── */
+a.mention-link,
+[data-theme="dark"] a.mention-link,
+[data-theme="navy"] a.mention-link,
+[data-theme="light"] a.mention-link,
+.mention-token,
+[data-theme="dark"] .mention-token,
+[data-theme="navy"] .mention-token,
+[data-theme="light"] .mention-token {
+  color: var(--ds-accent) !important;
+  -webkit-text-fill-color: var(--ds-accent) !important;
+}
+
+textarea.mention-textarea-input:not(:placeholder-shown) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 /* ── Indigo primary text → accent secondary ────────────── */

@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React, { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { Icon } from '@iconify/react';
@@ -9,7 +10,7 @@ import { useCreatePostForm } from '../hooks/use-create-post-form';
 import RichTextEditor from './shared/RichTextEditor';
 import { useUIStore } from '@/store/ui.store';
 
-// Shared Layout Components
+Shared Layout Components
 import CreatePostHeader from './CreatePostHeader';
 import CreatePostFooter from './CreatePostFooter';
 import PostTypeSelector from './PostTypeSelector';
@@ -17,7 +18,7 @@ import CategorySelector from './shared/CategorySelector';
 import PostIdentity from './shared/PostIdentity';
 import SharedPreview from './SharedPreview';
 
-// Post Flows
+Post Flows
 import TextFlow from './flows/TextFlow';
 import PhotoFlow from './flows/PhotoFlow';
 import VideoFlow from './flows/VideoFlow';
@@ -369,3 +370,6 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
     </Dialog>
   );
 };
+
+*/
+export {};

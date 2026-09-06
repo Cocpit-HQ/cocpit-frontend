@@ -33,23 +33,23 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
     <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[99]" />
-        <Drawer.Content className="bg-background flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none font-poppins">
-          <div className="p-4 bg-background border-b border-border flex items-center justify-between rounded-t-[20px]">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mb-4 absolute top-3 left-1/2 -translate-x-1/2" />
+        <Drawer.Content className="bg-ds-surface-1 flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none font-dmsans border-t border-ds-border">
+          <div className="p-4 bg-ds-surface-1 border-b border-ds-border flex items-center justify-between rounded-t-[20px]">
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-ds-border mb-4 absolute top-3 left-1/2 -translate-x-1/2" />
             <Drawer.Title className="flex items-center gap-2 mt-2">
-              <MessageCircle className="w-5 h-5 text-primary" />
-              <span className="text-lg font-bold">Comments</span>
-              <span className="text-sm text-muted-foreground font-normal">({comments.length})</span>
+              <MessageCircle className="w-5 h-5 text-ds-text-primary" />
+              <span className="ds-text-body-2 text-ds-text-primary">Comments</span>
+              <span className="ds-text-secondary text-ds-text-muted">({comments.length})</span>
             </Drawer.Title>
             <Drawer.Description className="sr-only">
               View and participate in the discussion for this post.
             </Drawer.Description>
-            <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors mt-2">
+            <button onClick={onClose} aria-label="Close comments" className="p-2 hover:bg-ds-surface-2 text-ds-text-secondary hover:text-ds-text-primary rounded-full transition-colors mt-2">
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0 bg-muted/5">
+          <div className="flex-1 flex flex-col min-h-0 bg-transparent px-4">
             {/* CommentSectionView owns its own loading spinner — no outer guard needed */}
             <CommentSectionView
               postId={postId}

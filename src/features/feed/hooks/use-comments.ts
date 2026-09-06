@@ -175,7 +175,7 @@ export const useComments = (postId: string) => {
     const prevComments = [...comments];
     
     // Optimistic update
-    setComments(prev => prev.map(c => c.id === commentId ? { ...c, text: newText } : c));
+    setComments(prev => prev.map(c => c.id === commentId ? { ...c, text: newText, is_edited: true } : c));
 
     try {
       const companyId = isCompany ? activeProfile?.id : undefined;

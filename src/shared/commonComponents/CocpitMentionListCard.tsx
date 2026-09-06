@@ -55,7 +55,7 @@ function highlightMatch(text: string, queryText: string): React.ReactNode {
             <>
                 {parts.map((part, i) =>
                     part.toLowerCase() === queryText.toLowerCase() ? (
-                        <b key={i} style={{ color: "#6366F1" }}>
+                        <b key={i} className="text-ds-text-primary font-bold">
                             {part}
                         </b>
                     ) : (
@@ -124,12 +124,12 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                     className={cn(
                         "flex flex-row items-center px-3 py-2 gap-3 h-14 rounded-lg cursor-pointer transition-colors duration-150 w-full box-border",
                         index === activeIndex
-                            ? "bg-[var(--edit-btn-hover,#C7D2FE)]"
-                            : "hover:bg-[var(--muted,#EEF2FF)] bg-transparent"
+                            ? "bg-ds-surface-1 text-ds-text-primary"
+                            : "hover:bg-ds-surface-1/50 bg-transparent text-ds-text-secondary"
                     )}
                 >
                     {/* Avatar */}
-                    <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-[#D9D9D9] text-[12px] font-semibold text-gray-500">
+                    <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[12px] font-semibold">
                         {/* Fallback Letter */}
                         <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
                         
@@ -149,12 +149,12 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                     {/* Text column */}
                     <div className="flex flex-col justify-center items-start p-0 min-w-0 overflow-hidden flex-1">
                         {/* Full name */}
-                        <span className="font-poppins font-medium text-[14px] leading-5 text-[var(--foreground,#000000)] truncate w-full">
+                        <span className="font-['DM_Sans'] font-medium text-[14px] leading-5 text-ds-text-primary truncate w-full">
                             {highlightMatch(user.full_name, query)}
                         </span>
 
                         {/* @account_name */}
-                        <span className="font-poppins font-normal text-[12px] leading-4 text-[var(--muted-foreground,#6B7280)] truncate w-full">
+                        <span className="font-['DM_Sans'] font-normal text-[12px] leading-4 text-ds-text-secondary truncate w-full">
                             @{highlightMatch(user.account_name, query)}
                         </span>
                     </div>
@@ -163,14 +163,14 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
 
             {/* ── Loading state ── */}
             {isLoading && (
-                <div className="px-3 py-3 text-xs text-muted-foreground animate-pulse text-center w-full">
+                <div className="px-3 py-3 text-xs text-ds-text-muted animate-pulse text-center w-full">
                     Searching...
                 </div>
             )}
 
             {/* ── No results ── */}
             {showNoResults && !isLoading && (
-                <div className="px-3 py-3 text-xs text-muted-foreground italic text-center w-full">
+                <div className="px-3 py-3 text-xs text-ds-text-muted italic text-center w-full">
                     No results found
                 </div>
             )}

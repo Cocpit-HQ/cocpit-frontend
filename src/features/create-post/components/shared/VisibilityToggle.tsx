@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { PostVisibility } from '@/types/entities';
 
@@ -39,3 +40,6 @@ const VisibilityToggle = ({
 };
 
 export default VisibilityToggle;
+
+*/
+export {};

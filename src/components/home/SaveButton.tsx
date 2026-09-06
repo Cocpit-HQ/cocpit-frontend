@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { toggleSavePost } from '@/features/settings/api/savedPost'
 import { cn } from '@/lib/utils'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
-import { Icon } from '@iconify/react'
+import { Icon } from '@/components/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolders'
 interface SaveButtonProps {
@@ -77,14 +77,14 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             aria-label={isSaved ? "Remove from saved" : "Save post"}
             className={cn(
                 "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group",
-                isSaved ? "text-primary hover:opacity-80" : "text-foreground hover:text-primary",
+                isSaved ? "text-primary" : "text-foreground",
                 className
             )}
         >
             <div className="flex items-center justify-center w-[24px] h-[24px]">
                 <div className="relative">
                     <Icon 
-                        icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
+                        name={isSaved ? "save-filled" : "save"}
                         className="w-6 h-6"
                         aria-hidden="true"
                     />

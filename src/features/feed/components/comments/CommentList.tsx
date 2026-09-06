@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Comment as CommentType } from '@/types/entities';
 import Comment from './Comment';
 import ReplyGroup from './ReplyGroup';
+import CommentInput from './CommentInput';
 import { useSearchParams } from 'next/navigation';
 
 interface CommentListProps {
@@ -15,9 +16,28 @@ interface CommentListProps {
   postId?: string | number;
   onReport?: (commentId: string | number) => void;
   onHide?: (commentId: string | number) => void;
+  replyingTo?: { name: string; id: string | number; account_name?: string } | null;
+  onCancelReply?: () => void;
+  onAddComment?: (text: string, replyToId?: string | number) => void;
+  currentUserAvatar?: string;
 }
 
-export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport, onHide }: CommentListProps) {
+// ORIGINAL: export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport, onHide }: CommentListProps) {
+export default function CommentList({ 
+  comments, 
+  onReply, 
+  onDelete, 
+  onEdit, 
+  currentUserId, 
+  isPostOwner, 
+  postId, 
+  onReport, 
+  onHide,
+  replyingTo,
+  onCancelReply,
+  onAddComment,
+  currentUserAvatar
+}: CommentListProps) {
   const [showAllComments, setShowAllComments] = useState(false);
 
   const searchParams = useSearchParams();
@@ -74,7 +94,7 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
         
         // Use extremely visible inline styles
         element.style.transition = 'all 0.5s ease-in-out';
-        element.style.backgroundColor = '#E0E7FF'; // Indigo 100 (Solid, very visible)
+        element.style.backgroundColor = 'var(--ds-surface-2)'; // highlight pulse
         element.style.borderRadius = '12px';
         element.style.padding = '12px';
         element.style.margin = '0 -12px';
@@ -94,7 +114,8 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
     : rootComments.slice(0, 3);
 
   return (
-    <div className="space-y-4 pb-4 font-poppins">
+    /* ORIGINAL: <div className="space-y-4 pb-4 font-poppins"> */
+    <div className="flex flex-col gap-3 pb-4 font-dmsans">
       {visibleRootComments.map((root, index) => (
         <React.Fragment key={root.id}>
           <Comment
@@ -109,6 +130,18 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
             onReport={onReport}
             onHide={onHide}
           />
+          {replyingTo?.id === root.id && (
+            <div className="pl-[32px]">
+              <CommentInput
+                variant="reply"
+                onAddComment={(text) => onAddComment?.(text, root.id)}
+                replyingTo={replyingTo}
+                onCancelReply={onCancelReply}
+                currentUserAvatar={currentUserAvatar}
+                autoFocus={true}
+              />
+            </div>
+          )}
           {/* Render Replies if any */}
           {replyMap.has(root.id) && (
             <ReplyGroup
@@ -122,6 +155,10 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
               postId={postId}
               onReport={onReport}
               onHide={onHide}
+              replyingTo={replyingTo}
+              onCancelReply={onCancelReply}
+              onAddComment={onAddComment}
+              currentUserAvatar={currentUserAvatar}
             />
           )}
         </React.Fragment>
@@ -131,7 +168,7 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
         <div className="flex justify-center w-full mt-4">
           <button
             onClick={() => setShowAllComments(true)}
-            className="text-sm font-semibold text-[#6366F1] hover:underline cursor-pointer"
+            className="ds-text-small-1 text-ds-text-secondary hover:underline cursor-pointer"
           >
             View more
           </button>
@@ -141,7 +178,7 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
         <div className="flex justify-center w-full mt-4">
           <button
             onClick={() => setShowAllComments(false)}
-            className="text-sm font-semibold text-[#6366F1] hover:underline cursor-pointer"
+            className="ds-text-small-1 text-ds-text-secondary hover:underline cursor-pointer"
           >
             Show less
           </button>

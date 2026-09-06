@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Mail, Facebook, Search, User, Briefcase } from "lucide-react";
+import { X, Mail, Facebook, Search, User, Briefcase, Link } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -325,212 +325,119 @@ export default function CocpitShareModel({
                 e.preventDefault();
               }
             }}
-            className="fixed left-1/2 top-1/2 z-[9999] w-[420px] h-[506px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] bg-[var(--card)] border border-[var(--border)] p-[16px] shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 flex flex-col"
+            className="fixed left-1/2 top-1/2 z-[9999] w-[400px] h-auto max-h-[470px] -translate-x-1/2 -translate-y-1/2 rounded-[16px] bg-ds-surface-2 border border-ds-border px-[12px] pb-[12px] pt-[44px] shadow-2xl outline-none flex flex-col gap-[12px] box-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           >
-            <div className="relative text-center">
-              <DialogPrimitive.Title className="text-[18px] font-semibold text-[var(--foreground)] font-['Poppins']">
+            {/* Header */}
+            <div className="relative flex justify-center items-center w-full h-[20px]">
+              <DialogPrimitive.Title className="text-ds-text-primary ds-text-body-1">
                 Share
               </DialogPrimitive.Title>
-              <DialogPrimitive.Description className="mt-1 text-[12px] text-[var(--muted-foreground)] font-normal font-['Poppins']">
-                Share this with others
-              </DialogPrimitive.Description>
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={isSending}
-                className="absolute -top-1 -right-1 h-8 w-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:outline-none"
+                className="absolute right-0 h-[20px] w-[20px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity"
                 aria-label="Close"
               >
-                <X className="h-5 w-5 text-[var(--destructive)]" strokeWidth={1} />
+                <X className="h-4 w-4" strokeWidth={2} />
               </button>
+              <DialogPrimitive.Description className="sr-only">
+                Share this with others
+              </DialogPrimitive.Description>
             </div>
 
-            <div className="mt-4 flex-1 flex flex-col overflow-hidden">
-              <div className="relative">
+            <div className="flex-1 flex flex-col overflow-hidden w-full gap-[8px]">
+              {/* Search */}
+              <div className="relative flex items-center justify-between w-full h-9 border-b border-ds-border py-[8px]">
                 <input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search"
-                  className="w-full h-[42px] rounded-full border border-[var(--border)] bg-[var(--background)] px-4 pr-11 text-[14px] text-[var(--foreground)] font-['Poppins'] outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+                  className="bg-transparent w-full outline-none text-ds-text-muted ds-text-secondary"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]">
-                  <Search className="w-5 h-5" strokeWidth={1.5} />
-                </div>
+                <Search className="w-4 h-4 text-ds-text-primary" strokeWidth={2} />
               </div>
 
-              {!isSearching ? (
-                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-                  <div onScroll={handleScroll} tabIndex={-1} className="mt-5 grid grid-cols-3 gap-4 text-center max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
-                    {users.map((u, index) => (
+              {/* List */}
+              <div onScroll={handleScroll} className="flex-1 overflow-y-auto overflow-x-hidden w-full flex flex-col gap-[8px] mt-2 pb-2 scrollbar-hide">
+                {(isSearching ? filteredUsers : users).length === 0 ? (
+                    <div className="py-8 text-center text-ds-text-muted ds-text-secondary">
+                      No users found
+                    </div>
+                ) : (
+                  (isSearching ? filteredUsers : users).map((u, index) => {
+                    const checked = selectedUsers.includes(u.id);
+                    return (
                       <div
                         key={`${u.id}-${index}`}
-                        className={`flex flex-col items-center cursor-pointer rounded-lg p-2 transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1 ${selectedUsers.includes(u.id) ? "border border-[var(--primary)] bg-[var(--primary-tint)]" : "border border-transparent hover:bg-[var(--primary)]/5"}`}
+                        className="flex items-center justify-between w-full h-[36px] shrink-0 gap-[8px] cursor-pointer group"
                         onClick={() => toggleSelected(u.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            toggleSelected(u.id);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="checkbox"
-                        aria-checked={selectedUsers.includes(u.id)}
-                        aria-label={u.name}
                       >
-                        <div className="relative h-12 w-12">
-                          <div className="relative h-full w-full rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base font-['Poppins'] select-none overflow-hidden">
-                            <span>{(u.name || 'U').charAt(0).toUpperCase()}</span>
-                            {u.avatar && u.avatar !== '/assets/pngegg.png' ? (
-                              <img
-                                src={u.avatar}
-                                alt={u.name}
-                                className="absolute inset-0 w-full h-full object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                              />
-                            ) : null}
+                        <div className="flex items-center gap-[8px]">
+                          <div className="relative h-[20px] w-[20px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center text-[10px] text-ds-text-primary shrink-0">
+                            <span className="absolute inset-0 flex items-center justify-center">{(u.name || 'U').charAt(0).toUpperCase()}</span>
+                            {u.avatar && u.avatar !== '/assets/pngegg.png' && (
+                              <img src={u.avatar} alt={u.name} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            )}
                           </div>
-                          {selectedUsers.includes(u.id) && (
-                            <div className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            </div>
-                          )}
+                          <span className="text-ds-text-primary ds-text-secondary line-clamp-1">
+                            {u.name}
+                          </span>
                         </div>
-                        <div className="mt-2 text-[12px] text-[var(--foreground)] font-medium font-['Poppins'] text-center flex flex-col items-center gap-0.5">
-                          <span className="line-clamp-1">{u.name}</span>
-                          {u.type === 'COMPANY' && (
-                            <span className="text-[9px] bg-[var(--primary-tint)] text-[var(--primary)] font-medium px-1.5 py-0.2 rounded-full">
-                              Company
-                            </span>
-                          )}
-                          {u.type === 'GROUP' && (
-                            <span className="text-[9px] bg-emerald-50 text-emerald-700 font-medium px-1.5 py-0.2 rounded-full">
-                              Group
-                            </span>
+                        {/* Checkbox */}
+                        <div className={`w-[20px] h-[20px] rounded-[4px] border shrink-0 ${checked ? 'border-ds-accent bg-ds-accent' : 'border-ds-border bg-ds-surface-1'} flex items-center justify-center transition-colors`}>
+                          {checked && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
                           )}
                         </div>
                       </div>
-                    ))}
+                    );
+                  })
+                )}
+                {isSearchingApi && searchResults.length > 0 && (
+                  <div className="flex justify-center py-2 w-full">
+                    <Icon icon="line-md:loading-twotone-loop" className="w-4 h-4 text-ds-text-primary" />
                   </div>
+                )}
+              </div>
+            </div>
 
-                  {isSearchingApi && searchResults.length > 0 && (
-                    <div className="flex justify-center py-2 w-full">
-                      <Icon icon="line-md:loading-twotone-loop" className="w-4 h-4 text-[var(--primary)]" />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div onScroll={handleScroll} className="mt-5 max-h-[280px] overflow-auto pr-1 flex-1">
-                  {filteredUsers.length === 0 ? (
-                    <div className="py-8 text-center text-[13px] text-[var(--muted-foreground)] font-['Poppins']">
-                      No users found
-                    </div>
-                  ) : (
-                    filteredUsers.map((u, index) => {
-                      const checked = selectedUsers.includes(u.id);
-                      return (
-                        <div
-                          key={`${u.id}-${index}`}
-                          className="flex items-center justify-between py-2"
-                        >
-                          <div
-                            className={`flex items-center gap-3 cursor-pointer flex-1 p-1 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1 ${checked ? "border border-[var(--primary)] bg-[var(--primary-tint)]" : "border border-transparent hover:bg-[var(--primary)]/5"}`}
-                            onClick={() => toggleSelected(u.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                toggleSelected(u.id);
-                              }
-                            }}
-                            tabIndex={0}
-                            role="checkbox"
-                            aria-checked={selectedUsers.includes(u.id)}
-                            aria-label={u.name}
-                          >
-                            <div className="relative h-8 w-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs shrink-0 font-['Poppins'] select-none overflow-hidden">
-                              <span>{(u.name || 'U').charAt(0).toUpperCase()}</span>
-                              {u.avatar && u.avatar !== '/assets/pngegg.png' ? (
-                                <img
-                                  src={u.avatar}
-                                  alt={u.name}
-                                  className="absolute inset-0 w-full h-full object-cover"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                />
-                              ) : null}
-                              {selectedUsers.includes(u.id) && (
-                                <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
-                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col text-left">
-                              <div className="text-[14px] text-[var(--foreground)] font-normal font-['Poppins'] flex items-center gap-1.5">
-                                <span>{u.name}</span>
-                                {u.type === 'COMPANY' && (
-                                  <span className="text-[10px] bg-[var(--primary-tint)] text-[var(--primary)] font-medium px-1.5 py-0.5 rounded-full">
-                                    Company
-                                  </span>
-                                )}
-                                {u.type === 'GROUP' && (
-                                  <span className="text-[10px] bg-emerald-50 text-emerald-700 font-medium px-1.5 py-0.5 rounded-full">
-                                    Group
-                                  </span>
-                                )}
-                              </div>
-                              {u.headline && (
-                                <div className="text-[11px] text-[var(--muted-foreground)] font-['Poppins'] truncate max-w-[200px]">
-                                  {u.headline}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+            {/* Bottom Section */}
+            <div className="w-full flex flex-col gap-[12px] mt-2">
+              <button
+                type="button"
+                className="flex items-center gap-[4px] cursor-pointer hover:opacity-80 transition-opacity self-start"
+                onClick={() => {
+                   navigator.clipboard.writeText(shareUrl);
+                   toast.success("Link copied!");
+                   if (postId || effectiveJobId || (effectiveEntityType && effectiveEntityId)) {
+                     universalShare({ entityType: (postId ? 'post' : effectiveJobId ? 'job' : effectiveEntityType) as any, entityId: (postId || effectiveJobId || effectiveEntityId) as string, shareMethod: "copy_link" }).catch(() => {});
+                   }
+                }}
+              >
+                <Link className="w-[12px] h-[12px] text-ds-accent" />
+                <span className="text-ds-accent ds-text-small">Copy post link</span>
+              </button>
 
-                  {isSearchingApi && searchResults.length > 0 && (
-                    <div className="flex justify-center py-2 w-full">
-                      <Icon icon="line-md:loading-twotone-loop" className="w-4 h-4 text-[var(--primary)]" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedUsers.length > 0 ? (
-                <div className="mt-auto pt-4 border-t border-[var(--border)]">
-                  <button
-                    type="button"
-                    onClick={handleSendClick}
-                    disabled={isSending}
-                    className="w-full h-[48px] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white bg-[#6366F1] hover:opacity-95 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSending ? "Sending..." : "Send"}
-                  </button>
-                </div>
-              ) : (
-                !isSearching && (
-                  <div className="mt-auto pt-4 border-t border-[var(--border)]">
-                    <div className="flex items-center justify-around">
-                      {shareOptions.map((opt) => (
-                        <button
-                          key={opt.label}
-                          type="button"
-                          onClick={opt.onClick}
-                          className="h-10 w-10 flex items-center justify-center hover:bg-[var(--primary-tint)] transition-colors rounded-full group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
-                          aria-label={opt.label}
-                          title={opt.label}
-                        >
-                          <span className="text-[var(--foreground)] group-hover:text-white">{opt.icon}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )
-              )}
+              <div className="flex items-center justify-center gap-[8px] w-full mt-2">
+                <button
+                  type="button"
+                  onClick={handleSendClick}
+                  disabled={selectedUsers.length === 0 || isSending}
+                  className="flex justify-center items-center px-[12px] py-[6px] h-[36px] w-[77px] rounded-[100px] ds-text-body-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-ds-accent text-ds-text-primary disabled:bg-ds-surface-1 disabled:text-ds-text-muted"
+                >
+                  {isSending ? "..." : "Send"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex justify-center items-center px-[12px] py-[6px] h-[36px] w-[77px] border border-ds-border rounded-[100px] text-ds-text-primary ds-text-body-1 cursor-pointer hover:bg-ds-border transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>

@@ -79,14 +79,16 @@ export const getPostLikes = async (postId: string): Promise<GetPostLikesResponse
 };
 
 export const voteInPoll = async (postId: string, optionId: string, companyId?: string): Promise<{ message: string }> => {
-  void companyId;
-  const response = await api.post<{ message: string }>(`/post/${postId}/poll/vote`, { option_id: optionId });
+  const payload: any = { option_id: optionId };
+  if (companyId) payload.companyId = companyId;
+  const response = await api.post<{ message: string }>(`/post/${postId}/poll/vote`, payload);
   return response.data;
 };
 
 export const removeVote = async (postId: string, companyId?: string): Promise<{ message: string }> => {
-  void companyId;
-  const response = await api.delete<{ message: string }>(`/post/${postId}/poll/vote`);
+  const config: any = {};
+  if (companyId) config.data = { companyId };
+  const response = await api.delete<{ message: string }>(`/post/${postId}/poll/vote`, config);
   return response.data;
 };
 

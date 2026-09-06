@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Image as ImageIcon, Plus, X } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { MediaCropper } from '../MediaCropper';
@@ -281,3 +282,6 @@ const PhotoFlow = ({
 };
 
 export default PhotoFlow;
+
+*/
+export {};

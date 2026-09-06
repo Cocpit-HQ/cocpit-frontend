@@ -26,7 +26,7 @@ import { useFeed } from '@/hooks/use-feed';
 import { useFeedUIStore } from '@/store/feed.store'
 import { useUIStore } from '@/store/ui.store';
 
-import InlineArticleEditor from '@/features/create-post/components/InlineArticleEditor';
+import InlineArticleEditor from '@/features/feed/components/create-post/shared/InlineArticleEditor';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
@@ -63,10 +63,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="pt-4 md:pt-6 pb-4 md:pb-8">
+    <div className="min-h-screen bg-transparent text-foreground md:pr-[253px]">
+      <div className="pb-4 md:pb-8">
         <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
-          <div className="mx-auto max-w-[998px] w-full flex flex-col items-start">
+          <div className="mx-auto max-w-[998px] w-full flex flex-col items-center">
             {isArticleMode ? (
               <InlineArticleEditor />
             ) : (

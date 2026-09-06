@@ -3,11 +3,13 @@ import { toast } from 'sonner';
 import { feedApi } from '../api/feed.api';
 import { FeedPostProps } from '../types';
 import { useFeed } from '@/hooks/use-feed';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any, data: any) => void) => {
-  const { id, visibility: initialVisibility = 'public', onDelete, onToggleVisibility } = props;
+  const { id, visibility: initialVisibility = 'public', onDelete, onToggleVisibility, isCompanyPost, authorId } = props;
   const { deletePost } = useFeed();
-  
+  const { activeProfile, isCompany } = useActiveProfile();
+
   const [showOptions, setShowOptions] = useState(false);
   const [optionsPos, setOptionsPos] = useState<{ top: number; right: number } | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -40,11 +42,15 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
   };
 
   const confirmDelete = async () => {
+    // Pass companyId when the post belongs to a company the user manages
+    const companyId = isCompany && isCompanyPost && activeProfile?.id
+      ? activeProfile.id.toString()
+      : undefined;
+    // Always call the API to actually delete the post
+    await deletePost(id.toString(), companyId);
+    // Also invoke the parent callback if provided (e.g. for profile-page list updates)
     if (onDelete) {
       onDelete(id.toString());
-    } else {
-      // Call the global deletePost from useFeed to update the UI
-      deletePost(id.toString());
     }
     setIsDeleteDialogOpen(false);
   };

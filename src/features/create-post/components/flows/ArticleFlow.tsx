@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React, { useState, useRef, useEffect } from 'react';
 import {
   Bold, Italic, Heading1, Heading2, Heading3, List, Link as LinkIcon,
   Image as ImageIcon, X, ArrowLeft, ChevronLeft, Loader2, Sparkles, Send
@@ -13,10 +14,10 @@ import { sanitizeArticleHtmlForDisplay } from '@/lib/sanitizeArticleHtml';
 import ArticleCoverEditor from './ArticleCoverEditor';
 import { DiscardConfirmOverlay } from '@/features/create-post/components/shared/DiscardConfirmOverlay';
 
-// Allowed structure for pasted content: matches what the toolbar itself can produce
-// (bold/italic/headings/lists/links). style/class/id are stripped so pasted text always
-// inherits the editor's own formatting instead of the source's (fixes ID-227: white/colored
-// text pasted from dark-mode sources like ChatGPT becoming invisible on our light editor).
+Allowed structure for pasted content: matches what the toolbar itself can produce
+(bold/italic/headings/lists/links). style/class/id are stripped so pasted text always
+inherits the editor's own formatting instead of the source's (fixes ID-227: white/colored
+text pasted from dark-mode sources like ChatGPT becoming invisible on our light editor).
 const ALLOWED_PASTE_TAGS = ['b', 'strong', 'i', 'em', 'u', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'a', 'span'];
 const ALLOWED_PASTE_ATTR = ['href'];
 
@@ -55,7 +56,7 @@ interface ArticleFlowProps {
   content: string;
   onContentChange: (html: string) => void;
   coverImage: MediaItem | null;
-  /** Called with the resolved URL after the modal saves, or null when removed */
+  /** Called with the resolved URL after the modal saves, or null when removed * /
   onCoverChange: (url: string | null) => void;
   onRemoveCover: () => void;
   isEdit: boolean;
@@ -355,10 +356,10 @@ const ArticleFlow = ({
   };
 
   const plainToParagraphs = (text: string) => {
-    const paragraphs = text.split(/\r?\n\r?\n/);
+    const paragraphs = text.split(/\r?\n// \r?\n// /);
     return paragraphs
       .map(p => {
-        const escaped = escapeHtml(p.trim()).replace(/\r?\n/g, '<br>');
+        const escaped = escapeHtml(p.trim()).replace(/\r?\n// /g, '<br>');
         return escaped ? `<p>${escaped}</p>` : '';
       })
       .filter(Boolean)
@@ -904,10 +905,10 @@ const ArticleFlow = ({
 
   return (
     <div className="relative flex flex-col flex-1 bg-background select-none h-full overflow-hidden">
-      {/* Custom Styles */}
+      {/* Custom Styles * /}
       {/* Typography (h1/h2/p/ul/img/etc.) is shared with the published article views via the
           .article-editor selectors in globals.css, so what you see while writing matches what
-          gets published. Only editor-specific chrome (the placeholder) lives here. */}
+          gets published. Only editor-specific chrome (the placeholder) lives here. * /}
       <style>{`
         .article-title-editor[contenteditable]:empty:before {
           content: attr(placeholder);
@@ -929,9 +930,9 @@ const ArticleFlow = ({
         }
       `}</style>
 
-      {/* Header Area */}
+      {/* Header Area * /}
       <div className="flex-shrink-0 bg-background flex flex-col pb-3 border-b border-border/20 shadow-xs z-30">
-        {/* Top Row: Title & Back */}
+        {/* Top Row: Title & Back * /}
         <div className="flex items-center gap-3 px-[16px] pt-4 pb-4">
           <button 
             onClick={handleOnClose} 
@@ -945,11 +946,11 @@ const ArticleFlow = ({
           </div>
         </div>
 
-        {/* Second Row: Profile, Toolbar, Actions */}
+        {/* Second Row: Profile, Toolbar, Actions * /}
         <div className="relative flex items-center px-[16px] w-full" style={{ height: '56px' }}>
-          {/* Author Line (Frame 43) */}
+          {/* Author Line (Frame 43) * /}
           <div className="flex flex-row items-center gap-[8px]" style={{ height: '42px', padding: '0px' }}>
-            {/* Frame 2608495 */}
+            {/* Frame 2608495 * /}
             <div className="flex flex-row items-center gap-[12px]" style={{ height: '42px', padding: '0px', flex: 'none' }}>
               <div className="w-[40px] h-[40px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm overflow-hidden font-['Poppins'] select-none shrink-0" style={{ flex: 'none' }}>
                 {avatarSrc ? (
@@ -960,7 +961,7 @@ const ArticleFlow = ({
                 )}
               </div>
 
-              {/* Frame 2608493 */}
+              {/* Frame 2608493 * /}
               <div className="flex flex-col items-start justify-center min-w-0" style={{ height: '42px', padding: '0px', flex: 'none', maxWidth: '180px' }}>
                 <h4 className="text-[#000000] truncate w-full" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '24px' }} title={authorName}>
                   {authorName}
@@ -972,7 +973,7 @@ const ArticleFlow = ({
             </div>
           </div>
 
-          {/* Pill Toolbar */}
+          {/* Pill Toolbar * /}
           <div className="absolute left-1/2 -translate-x-1/2 flex flex-row justify-center items-center gap-[8px] bg-[#FFFFFF] border border-[#000000] rounded-[24px]" style={{ width: '536px', height: '56px', padding: '8px 16px' }}>
             <button
               onMouseDown={(e) => e.preventDefault()}
@@ -1053,7 +1054,7 @@ const ArticleFlow = ({
             </button>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons * /}
           <div className="ml-auto flex flex-row justify-center items-center gap-[8px]" style={{ width: '188px', height: '40px' }}>
             <button
               onClick={handleOnClose}
@@ -1103,10 +1104,10 @@ const ArticleFlow = ({
         </div>
       </div>
 
-      {/* Editor Body Area */}
+      {/* Editor Body Area * /}
       <div className="flex-1 overflow-y-auto scrollbar-hide px-8 pt-6 pb-8 flex flex-col space-y-6 max-w-[600px] mx-auto w-full">
 
-        {/* Cover Image — dedicated 2:1 cover preview modal & upload UI */}
+        {/* Cover Image — dedicated 2:1 cover preview modal & upload UI * /}
         <ArticleCoverEditor
           coverImage={coverImage?.url ?? null}
           onCoverChange={(url) => onCoverChange(url)}
@@ -1114,7 +1115,7 @@ const ArticleFlow = ({
           isEdit={isEdit}
         />
 
-        {/* Hidden inputs & triggers */}
+        {/* Hidden inputs & triggers * /}
         <input
           ref={inlineImageInputRef}
           type="file"
@@ -1130,7 +1131,7 @@ const ArticleFlow = ({
           className="hidden"
         />
 
-        {/* Big Bold Title */}
+        {/* Big Bold Title * /}
         <div
           ref={titleInputRef}
           contentEditable
@@ -1160,7 +1161,7 @@ const ArticleFlow = ({
           }}
         />
 
-        {/* Rich contentEditable area */}
+        {/* Rich contentEditable area * /}
         <div
           ref={editorRef}
           contentEditable
@@ -1174,7 +1175,7 @@ const ArticleFlow = ({
         />
       </div>
 
-      {/* Add Link Dialog Modal */}
+      {/* Add Link Dialog Modal * /}
       {isLinkModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-[#FFFFFF] rounded-[32px] shadow-2xl p-8 flex flex-col relative animate-in zoom-in-95 duration-200 font-poppins" style={{ width: '400px', height: '338px' }}>
@@ -1239,7 +1240,7 @@ const ArticleFlow = ({
         </div>
       )}
 
-      {/* Discard Confirmation Overlay */}
+      {/* Discard Confirmation Overlay * /}
       <DiscardConfirmOverlay
         isOpen={showDiscardConfirm}
         onCancel={() => setShowDiscardConfirm(false)}
@@ -1253,3 +1254,6 @@ const ArticleFlow = ({
 };
 
 export default ArticleFlow;
+
+*/
+export {};

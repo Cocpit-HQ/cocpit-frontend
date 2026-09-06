@@ -1,4 +1,5 @@
-'use client';
+/* DEPRECATED
+DEPRECATED\n// 'use client';
 
 import { Dialog, BareDialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
@@ -73,19 +74,19 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
         </div>
         <div className="w-[600px] p-4 bg-white rounded-3xl inline-flex flex-col justify-start items-end overflow-hidden">
 
-          {/* X close button */}
+          {/* X close button * /}
           <button onClick={onClose} className="self-stretch inline-flex justify-end items-center gap-2.5">
             <X className="w-5 h-5 text-red-400 hover:text-red-500 transition-colors" />
           </button>
 
           <div className="self-stretch py-4 flex flex-col justify-start items-center gap-4">
-            {/* Title */}
+            {/* Title * /}
             <div className="self-stretch flex flex-col justify-start items-center gap-2">
               <div className="text-center text-black text-lg font-medium font-['Poppins'] leading-6">Select an option</div>
               <div className="text-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Post jobs, insights, or milestones to grow your presence.</div>
             </div>
 
-            {/* New Project — default highlighted */}
+            {/* New Project — default highlighted * /}
             <button
               onClick={() => { onSelect('new_project'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn achievement-btn-selected rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
@@ -97,7 +98,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               </div>
             </button>
 
-            {/* New Role */}
+            {/* New Role * /}
             <button
               onClick={() => { onSelect('new_role'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
@@ -109,7 +110,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               </div>
             </button>
 
-            {/* Academic Milestone */}
+            {/* Academic Milestone * /}
             <button
               onClick={() => { onSelect('academic_milestone'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
@@ -121,7 +122,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               </div>
             </button>
 
-            {/* Certificate */}
+            {/* Certificate * /}
             <button
               onClick={() => { onSelect('certificate'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
@@ -134,7 +135,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
             </button>
           </div>
 
-          {/* Back button */}
+          {/* Back button * /}
           <button
             onClick={onClose}
             className="w-24 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 inline-flex justify-center items-center gap-2.5"
@@ -149,3 +150,6 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
 };
 
 export type { AchievementOption };
+
+*/
+export {};

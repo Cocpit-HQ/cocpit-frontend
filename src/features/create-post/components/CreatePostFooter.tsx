@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 import { Send, Zap, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -107,3 +108,6 @@ const CreatePostFooter = ({
 };
 
 export default CreatePostFooter;
+
+*/
+export {};

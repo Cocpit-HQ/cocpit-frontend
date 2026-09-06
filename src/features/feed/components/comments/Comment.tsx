@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { useSocial } from '@/context/SocialContext';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { Icon } from '@iconify/react';
+import { Icon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
 interface CommentProps {
@@ -62,7 +62,8 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
         <Link
           key={index}
           href={href}
-          className="text-primary font-medium cursor-pointer hover:underline"
+          className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold no-underline hover:no-underline cursor-pointer transition-opacity hover:opacity-80"
+          style={{ color: 'var(--ds-accent)' }}
         >
           {displayName}
         </Link>
@@ -73,7 +74,7 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
 };
 
 export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport, onHide }: CommentProps) {
-  const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending } = comment;
+  const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending, is_edited } = comment;
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
   const { blockUser } = useSocial();
@@ -149,12 +150,12 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   return (
     <div 
       id={`comment-${id}`} 
-      className={`flex gap-3 relative group transition-all duration-300 font-poppins ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
+      className={`flex gap-3 relative group transition-all duration-300 font-dmsans ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {/* Avatar Column */}
       <div className="flex-shrink-0">
         <Link href={authorLink} className="block">
-          <div className={`${avatarSize} ${author?.isCompanyPost ? 'rounded-md' : 'rounded-full'} bg-[#EEF2FF] text-[#6366F1] overflow-hidden ring-1 ring-border/50 flex items-center justify-center font-semibold text-sm font-['Poppins'] select-none`}>
+          <div className={`w-[24px] h-[24px] ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-[100px]'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-xs font-dmsans select-none`}>
             {author?.avatar && author.avatar !== '/assets/pngegg.png' ? (
               <img 
                 src={author.avatar} 
@@ -181,69 +182,119 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         <div className="flex justify-between items-start mb-1">
           <div className="flex flex-col">
             <Link href={authorLink} className="hover:underline leading-tight flex items-baseline gap-1.5 flex-wrap">
-              <span className="text-sm font-bold text-black">{author?.name || 'Anonymous'}</span>
+              {/* ORIGINAL: <span className="text-sm font-bold text-black">{author?.name || 'Anonymous'}</span> */}
+              <span className="ds-text-body text-ds-text-primary">{author?.name || 'Anonymous'}</span>
             </Link>
             {author?.headline && (
-              <span className="text-[12px] text-muted-foreground font-normal leading-tight mt-0.5">
+              /* ORIGINAL: <span className="text-[12px] text-muted-foreground font-normal leading-tight mt-0.5">{author.headline}</span> */
+              <span className="ds-text-meta text-ds-text-secondary mt-0.5">
                 {author.headline}
               </span>
             )}
           </div>
           
-          <div className="flex items-center gap-4 pt-1">
-            <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+          {/* ORIGINAL: <div className="flex items-center gap-4 pt-1"> */}
+          <div className="flex items-center gap-2 pt-1">
+            {is_edited && (
+              <>
+                <span
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '10px',
+                    lineHeight: '12px',
+                    textAlign: 'center',
+                    color: '#B8ADA8',
+                    flexShrink: 0,
+                  }}
+                >
+                  Edited
+                </span>
+                <span
+                  style={{
+                    width: '4px',
+                    height: '4px',
+                    borderRadius: '50%',
+                    background: '#726B67',
+                    flexShrink: 0,
+                    display: 'inline-block',
+                  }}
+                />
+              </>
+            )}
+            {/* ORIGINAL: <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span> */}
+            <span className="ds-text-meta text-ds-text-secondary">{timeAgo}</span>
             {!isPending && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="text-black p-0.5 rounded-full flex items-center justify-center">
-                    <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
+                  <button
+                    aria-label="More options"
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent transition-colors"
+                  >
+                    <Icon name="menu" className="w-[20px] h-[20px]" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className={cn(
-                    "w-[210px] p-2 bg-white border border-[#C7D2FE] rounded-[24px_0px_24px_24px] shadow-[0px_4px_12px_rgba(0,0,0,0.05)] font-poppins",
-                    isOwner || isPostOwner ? "h-auto" : "h-auto"
-                  )}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans"
                 >
                   {isOwner && (
                     <DropdownMenuItem
-                      onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] text-black"
+                      onSelect={() => onEdit?.(id, text)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit?.(id, text);
+                      }}
+                      className="cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary focus:bg-transparent focus:text-ds-text-primary p-0 bg-transparent data-[highlighted]:bg-transparent data-[highlighted]:text-ds-text-primary"
                     >
-                      <span className="text-[14px] font-normal leading-[20px]">Edit comment</span>
-                      <Icon icon="fluent:edit-24-regular" width="24" height="24" />
+                      Edit comment
                     </DropdownMenuItem>
                   )}
 
                   {(isOwner || isPostOwner) && (
                     <DropdownMenuItem
-                      onClick={() => onDelete?.(id)}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-red-50 data-[highlighted]:text-[#FF6B6B] text-[#FF6B6B]"
+                      onSelect={() => onDelete?.(id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete?.(id);
+                      }}
+                      className="cursor-pointer outline-none w-full ds-text-secondary text-ds-error hover:opacity-80 focus:bg-transparent p-0 bg-transparent data-[highlighted]:bg-transparent"
                     >
-                      <span className="text-[14px] font-normal leading-[20px]">Delete comment</span>
-                      <Icon icon="fluent:delete-24-regular" width="24" height="24" />
+                      Delete comment
                     </DropdownMenuItem>
                   )}
 
                   {!isOwner && (
                     <>
                       <DropdownMenuItem
-                        onClick={() => onReport?.(id)}
-                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] text-black"
+                        onSelect={() => {
+                          setTimeout(() => {
+                            onReport?.(id);
+                          }, 50);
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTimeout(() => {
+                            onReport?.(id);
+                          }, 50);
+                        }}
+                        className="cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary focus:bg-transparent focus:text-ds-text-primary p-0 bg-transparent data-[highlighted]:bg-transparent data-[highlighted]:text-ds-text-primary"
                       >
-                        <span className="text-[14px] font-normal leading-[20px]">Report comment</span>
-                        <Icon icon="fluent:info-24-regular" width="24" height="24" />
+                        Report
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        onClick={() => {
-                          if (onHide) onHide(id);
+                        onSelect={() => onHide?.(id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onHide?.(id);
                         }}
-                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] text-black"
+                        className="cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary focus:bg-transparent focus:text-ds-text-primary p-0 bg-transparent data-[highlighted]:bg-transparent data-[highlighted]:text-ds-text-primary"
                       >
-                        <span className="text-[14px] font-normal leading-[20px]">Hide comment</span>
-                        <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" />
+                        Hide comment
                       </DropdownMenuItem>
                     </>
                   )}
@@ -254,22 +305,27 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         </div>
 
         {/* Comment Body */}
-        <div className="text-[14px] text-black/90 leading-normal mb-2 break-words">
+        {/* ORIGINAL: <div className="text-[14px] text-black/90 leading-normal mb-2 break-words"> */}
+        <div className="ds-text-small text-ds-text-primary leading-normal mb-2 break-words">
           {formatCommentText(text, postId, id)}
         </div>
 
         {/* Action Bar (Styled like Figma) */}
-        <div className="flex items-center gap-1.5 text-[12px] font-semibold text-black">
+        {/* ORIGINAL: <div className="flex items-center gap-1.5 text-[12px] font-semibold text-black"> */}
+        <div className="flex items-center gap-[8px] ds-text-small text-ds-text-primary">
           <button
             onClick={handleLike}
-            className={`hover:underline transition-colors ${isLiked ? 'text-primary' : ''}`}
+            className={`hover:underline transition-colors ${isLiked ? 'text-ds-accent' : ''}`}
           >
             Like
           </button>
-          <span className="font-normal text-muted-foreground">-</span>
-          <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span>
+          {/* ORIGINAL: <span className="font-normal text-muted-foreground">-</span> */}
+          <span className="font-normal text-ds-text-primary">-</span>
+          {/* ORIGINAL: <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span> */}
+          <span className="font-normal text-ds-text-secondary">{likes} {likes === 1 ? 'like' : 'likes'}</span>
           
-          <span className="font-normal text-[#DADADA] mx-1">|</span>
+          {/* ORIGINAL: <span className="font-normal text-[#DADADA] mx-1">|</span> */}
+          <div className="w-[1px] h-[16px] bg-ds-border mx-[4px]" />
 
           <button
             onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
@@ -277,8 +333,10 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           >
             Reply
           </button>
-          <span className="font-normal text-muted-foreground">-</span>
-          <span className="font-normal text-muted-foreground">{comment.reply_count || 0} reply</span>
+          {/* ORIGINAL: <span className="font-normal text-muted-foreground">-</span> */}
+          <span className="font-normal text-ds-text-primary">-</span>
+          {/* ORIGINAL: <span className="font-normal text-muted-foreground">{comment.reply_count || 0} reply</span> */}
+          <span className="font-normal text-ds-text-secondary">{comment.reply_count || 0} reply</span>
         </div>
       </div>
     </div>

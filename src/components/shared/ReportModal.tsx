@@ -1,13 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, Check, X } from 'lucide-react';
+import { Loader2, X, ArrowLeft } from 'lucide-react';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogDescription,
+// } from '@/components/ui/dialog';
 import {
   Dialog,
-  DialogContent,
+  BareDialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -22,8 +29,14 @@ interface ReportModalProps {
 }
 
 export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportModalProps) {
+//   const [reasons, setReasons] = useState<ReportReason[]>([]);
+//   const [selectedReasonId, setSelectedReasonId] = useState<number | null>(null);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [isFetchingReasons, setIsFetchingReasons] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
   const [reasons, setReasons] = useState<ReportReason[]>([]);
   const [selectedReasonId, setSelectedReasonId] = useState<number | null>(null);
+  const [additionalInfo, setAdditionalInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingReasons, setIsFetchingReasons] = useState(false);
 
@@ -42,11 +55,48 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
         }
       };
       fetchReasons();
+//     } else {
+//       setSelectedReasonId(null);
+//     }
     } else {
       setSelectedReasonId(null);
+      setStep(1);
+      setAdditionalInfo('');
     }
   }, [isOpen]);
 
+  const handleContinue = () => {
+    if (!selectedReasonId) {
+      toast.error('Please select a reason');
+      return;
+    }
+    setStep(2);
+  };
+
+//   const handleSubmit = async () => {
+//     if (!selectedReasonId) {
+//       toast.error('Please select a reason');
+//       return;
+//     }
+// 
+//     setIsLoading(true);
+//     try {
+//       await createReport({
+//         targetType,
+//         targetId,
+//         reasonId: selectedReasonId,
+//       });
+//       toast.success('Thank you for reporting. Our moderation team will review it.');
+//       onClose();
+//     } catch (error: any) {
+//       console.error('Failed to submit report', error);
+//       const errorMessage = error.response?.data?.message || 'Failed to submit report';
+//       toast.error(errorMessage);
+//       onClose();
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
   const handleSubmit = async () => {
     if (!selectedReasonId) {
       toast.error('Please select a reason');
@@ -59,6 +109,7 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
         targetType,
         targetId,
         reasonId: selectedReasonId,
+        customReason: additionalInfo.trim() || undefined,
       });
       toast.success('Thank you for reporting. Our moderation team will review it.');
       onClose();
@@ -85,6 +136,7 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      {/*
       <DialogContent className="max-w-[400px] bg-white border-none text-black sm:rounded-[24px] p-4">
         <DialogHeader className="space-y-2 pb-2">
           <DialogTitle className="text-[18px] leading-[26px] font-medium text-black text-center font-poppins">Report</DialogTitle>
@@ -121,9 +173,6 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
               </button>
             ))
           )}
-
-
-
         </div>
 
         <div className="pt-4">
@@ -143,6 +192,103 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
           </Button>
         </div>
       </DialogContent>
+      */}
+      <BareDialogContent 
+        className="max-w-[400px] w-full border rounded-[16px] p-3 flex flex-col gap-3 font-sans shadow-lg bg-ds-bg border-ds-border"
+      >
+        {/* Header Actions Row */}
+        <div className={cn("flex flex-row items-center w-full min-h-[20px] p-0 m-0", step === 2 ? "justify-between" : "justify-end")}>
+          {step === 2 && (
+            <button 
+              onClick={() => setStep(1)}
+              className="flex items-center justify-center w-[20px] h-[20px] text-ds-text-primary hover:opacity-80 transition-opacity"
+            >
+              <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+            </button>
+          )}
+          <DialogClose asChild>
+            <button className="flex items-center justify-center w-[20px] h-[20px] text-ds-text-primary hover:opacity-80 transition-opacity">
+              <X className="w-5 h-5" strokeWidth={1.5} />
+            </button>
+          </DialogClose>
+        </div>
+
+        <DialogHeader className="flex flex-row items-center justify-center p-0 m-0 h-[24px]">
+          <DialogTitle className="ds-text-body-1 text-ds-text-primary text-center leading-[24px]">
+            Report
+          </DialogTitle>
+        </DialogHeader>
+
+        {step === 1 ? (
+          <>
+            <div className="flex flex-col gap-2 p-0 m-0 w-full max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {isFetchingReasons ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-ds-accent" />
+                </div>
+              ) : (
+                reasons.map((reason) => (
+                  <button
+                    key={reason.id}
+                    onClick={() => setSelectedReasonId(selectedReasonId === reason.id ? null : reason.id)}
+                    className="flex items-start w-full min-h-[36px] py-1 outline-none focus-visible:opacity-80"
+                  >
+                    <span
+                      className={cn(
+                        "ds-text-secondary text-left transition-colors duration-200",
+                        selectedReasonId === reason.id
+                          ? "text-ds-accent"
+                          : "text-ds-text-primary"
+                      )}
+                    >
+                      {reason.label}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="flex flex-row justify-center items-center p-0 m-0 w-full min-h-[36px]">
+              <Button
+                onClick={handleContinue}
+                disabled={!selectedReasonId || isFetchingReasons}
+                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:bg-[#D95624] text-ds-text-primary rounded-full transition-all disabled:!bg-[var(--ds-surface-1)] disabled:opacity-100 disabled:text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+              >
+                Continue
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* PROPOSAL: Multi-line textarea mapped to Pill/Input tokens, as requested component does not exist in SKILL.md */}
+            <textarea
+              className="w-full min-h-[80px] bg-transparent border border-ds-border rounded-[16px] p-[10px] ds-text-secondary text-ds-text-primary placeholder:text-ds-text-secondary focus:outline-none focus:border-ds-accent resize-none custom-scrollbar m-0"
+              placeholder="Additional information (optional)"
+              value={additionalInfo}
+              onChange={(e) => setAdditionalInfo(e.target.value)}
+            />
+            
+            <div className="flex flex-row justify-center items-center gap-[8px] p-0 m-0 w-full min-h-[36px]">
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:bg-[#D95624] text-ds-text-primary rounded-full transition-all disabled:!bg-[var(--ds-surface-1)] disabled:opacity-100 disabled:text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Submit'}
+              </Button>
+              <DialogClose asChild>
+                <Button
+                  disabled={isLoading}
+                  variant="outline"
+                  className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-transparent border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary rounded-full transition-all disabled:opacity-100 disabled:text-ds-text-muted disabled:border-ds-border focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+            </div>
+          </>
+        )}
+      </BareDialogContent>
     </Dialog>
   );
 }

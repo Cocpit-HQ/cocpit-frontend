@@ -1,4 +1,5 @@
-import api from '@/lib/axios';
+/* DEPRECATED
+DEPRECATED\n// import api from '@/lib/axios';
 import { CreatePostRequest } from '@/services/api/feed';
 import { updatePost, UpdatePostRequest, getPostById } from '@/services/api/posts';
 import { companyService } from '@/services/organization.service';
@@ -111,3 +112,6 @@ export const postApi = {
     return await companyService.notifyEmployees(companyId, postId);
   }
 };
+
+*/
+export {};

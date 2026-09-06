@@ -10,6 +10,8 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   /** Tri-state post-menu visibility; takes precedence over isOwnPost when set. */
   menuAccess?: PostMenuAccess;
   onDelete?: (id: string) => void;
+  onEdit?: (post: any) => void;
+  onRepostWithThoughts?: (post: any) => void;
   onToggleVisibility?: (id: string) => void;
   isLiked?: boolean;
   isProfileView?: boolean;
@@ -27,6 +29,7 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   imageFit?: 'cover' | 'contain';
   forceSquareMedia?: boolean;
   onCommentClickOverride?: () => void;
+  authorRole?: string;
 }
 
 export type FeedInteraction = {
@@ -37,3 +40,5 @@ export type FeedInteraction = {
   commentCount: number;
   sharesCount: number;
 };
+
+export * from './components/create-post/types';

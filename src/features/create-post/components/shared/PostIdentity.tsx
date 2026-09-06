@@ -1,4 +1,5 @@
-import React from 'react';
+/* DEPRECATED
+DEPRECATED\n// import React from 'react';
 
 interface PostIdentityProps {
   isCompanyPost: boolean;
@@ -56,3 +57,6 @@ const PostIdentity = ({
 };
 
 export default PostIdentity;
+
+*/
+export {};

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { usePostUpload } from '@/context/PostUploadContext';
@@ -552,3 +553,6 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 };
 
 
+
+*/
+export {};

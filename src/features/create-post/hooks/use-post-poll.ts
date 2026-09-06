@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+/* DEPRECATED
+DEPRECATED\n// import { useState, useCallback } from 'react';
 import { PollOption } from '../types';
 
 export const usePostPoll = (initialOptions: PollOption[] = [{ id: '1', text: '' }, { id: '2', text: '' }]) => {
@@ -43,3 +44,6 @@ export const usePostPoll = (initialOptions: PollOption[] = [{ id: '1', text: '' 
     isPollValid
   };
 };
+
+*/
+export {};

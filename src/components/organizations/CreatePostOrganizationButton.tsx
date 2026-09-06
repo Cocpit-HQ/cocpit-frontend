@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { CreatePostModal } from '@/features/create-post/components/CreatePostModal';
+import { CreatePostModal } from '@/features/feed/components/create-post';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/hooks/use-organization';
 

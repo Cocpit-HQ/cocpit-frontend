@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 const CommentSection = dynamic(() => import('@/features/feed/components/comments/CommentSection'), { ssr: false });
-const SavePostModal = dynamic(() => import('@/features/settings/components/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 
