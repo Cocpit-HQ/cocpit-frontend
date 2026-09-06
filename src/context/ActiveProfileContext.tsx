@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { setActorRequestHeaders, trackActorMetric } from "@/lib/actor-context";
+import { trackActorMetric } from "@/lib/actor-context";
 import { getActorContext, setActorContext } from "@/services/api/auth";
 import { Company } from "@/services/organization.service";
 
@@ -115,7 +115,6 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         if (status === "loading") return;
 
         if (status === "unauthenticated") {
-            setActorRequestHeaders(null);
             bootstrapLockRef.current = null;
             queueMicrotask(() => {
                 setActiveProfile(null);
@@ -196,9 +195,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             isCancelled = true;
         };
     }, [session, status]);
-
     useEffect(() => {
-        setActorRequestHeaders(activeProfile ? { type: activeProfile.type, id: activeProfile.id } : null);
         if (activeProfile) {
             sessionStorage.setItem("cocpit_active_profile", JSON.stringify(activeProfile));
         } else {

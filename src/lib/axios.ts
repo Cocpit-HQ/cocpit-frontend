@@ -2,6 +2,7 @@ import axios from "axios";
 import { hardLogout } from "@/lib/logout";
 import { env } from "@/config/env";
 import { getHybridSession, setInMemorySession, clearInMemorySession } from "@/lib/session-cache";
+import { getActorHeadersFromStorage } from "@/lib/actor-context";
  
 export { setInMemorySession, clearInMemorySession, getHybridSession };
  
@@ -11,6 +12,18 @@ export const publicApi = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+ 
+publicApi.interceptors.request.use((config) => {
+  const actorHeaders = getActorHeadersFromStorage();
+  if (actorHeaders) {
+    config.headers["x-actor-type"] = actorHeaders.type;
+    config.headers["x-actor-id"] = actorHeaders.id;
+  } else {
+    delete config.headers["x-actor-type"];
+    delete config.headers["x-actor-id"];
+  }
+  return config;
 });
  
 // Authenticated API client
@@ -38,6 +51,15 @@ api.interceptors.request.use(
     // For FormData, the browser will automatically set the correct Content-Type with the boundary.
     if (!(config.data instanceof FormData)) {
       config.headers["Content-Type"] = "application/json";
+    }
+
+    const actorHeaders = getActorHeadersFromStorage();
+    if (actorHeaders) {
+      config.headers["x-actor-type"] = actorHeaders.type;
+      config.headers["x-actor-id"] = actorHeaders.id;
+    } else {
+      delete config.headers["x-actor-type"];
+      delete config.headers["x-actor-id"];
     }
  
     return config;

@@ -18,20 +18,28 @@ export function actorScopeKey(
   return [type, profile.id] as const;
 }
 
-export function setActorRequestHeaders(profile: ActorAwareProfile) {
-  if (!profile) {
-    delete api.defaults.headers.common["x-actor-type"];
-    delete api.defaults.headers.common["x-actor-id"];
-    delete publicApi.defaults.headers.common["x-actor-type"];
-    delete publicApi.defaults.headers.common["x-actor-id"];
-    return;
+export function getActorHeadersFromStorage() {
+  if (typeof window === "undefined") {
+    return null;
   }
 
-  const actorType = profile.type === "COMPANY" ? "ORGANIZATION" : "USER";
-  api.defaults.headers.common["x-actor-type"] = actorType;
-  api.defaults.headers.common["x-actor-id"] = profile.id;
-  publicApi.defaults.headers.common["x-actor-type"] = actorType;
-  publicApi.defaults.headers.common["x-actor-id"] = profile.id;
+  const storedProfile = sessionStorage.getItem("cocpit_active_profile");
+  if (!storedProfile) {
+    return null;
+  }
+
+  try {
+    const profile = JSON.parse(storedProfile) as ActorAwareProfile;
+    if (!profile) return null;
+    
+    const actorType = profile.type === "COMPANY" ? "ORGANIZATION" : "USER";
+    return {
+      type: actorType,
+      id: profile.id
+    };
+  } catch (e) {
+    return null;
+  }
 }
 
 export function trackActorMetric(name: string, detail?: Record<string, unknown>) {
