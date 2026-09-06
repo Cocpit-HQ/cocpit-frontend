@@ -68,12 +68,12 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
         return;
       }
 
-      const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
       if (file.size > MAX_SIZE) {
-        setError("*File size should be less than 10MB");
-        showErrorToast("File size should be less than 10MB");
-        setSelectedFile(null);
-        setSelected(null);
+        setSelectedFile(file);
+        setSelected("upload");
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        setError(`File is too large (${sizeMB}MB).`);
         e.target.value = "";
         return;
       }
@@ -196,11 +196,11 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
               <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary text-center">
                 Upload your resume
               </span>
-              <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-ds-text-secondary">
+              <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-center text-ds-text-secondary whitespace-nowrap">
                 Let AI fill in your profile from your resume
               </span>
               <span className="font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-center text-ds-text-secondary">
-                PDF only
+                PDF only (max 5MB)
               </span>
             </div>
           </button>
@@ -208,13 +208,15 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
           /* Uploaded File Selected State */
           <div
             onClick={handleUploadCardClick}
-            className={`group relative w-full h-[112px] py-2 px-3 rounded-[16px] border flex flex-col justify-center items-center gap-2 cursor-pointer transition-all box-border overflow-hidden ${
+            className={`group relative w-full h-[112px] py-2 px-3 rounded-[16px] border flex flex-col justify-center items-center gap-1 cursor-pointer transition-all box-border overflow-hidden ${
               selected === "upload"
-                ? "bg-ds-surface-1 border-ds-accent"
+                ? error?.includes("too large")
+                  ? "bg-ds-surface-1 border-[#E5484D]"
+                  : "bg-ds-surface-1 border-ds-accent"
                 : "bg-transparent border-transparent hover:bg-ds-surface-1"
             }`}
           >
-            <div className="flex flex-col justify-center items-center gap-1.5 w-full">
+            <div className="flex flex-col justify-center items-center gap-1 w-full">
               <div className="flex flex-col justify-center items-center gap-1 w-full">
                 {/* PDF Icon Frame */}
                 <div className="w-7 h-7 flex items-center justify-center rounded-lg">
@@ -225,13 +227,25 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
                   {selectedFile.name}
                 </div>
               </div>
+
+              {error?.includes("too large") && (
+                <div className="flex flex-col items-center">
+                  <span className="text-[#E5484D] text-[10px] leading-[12px] font-['DM_Sans'] font-normal text-center">
+                    {error}
+                  </span>
+                  <span className="text-[#E5484D] text-[10px] leading-[12px] font-['DM_Sans'] font-normal text-center">
+                    Maximum size is 5MB
+                  </span>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                className="text-ds-text-primary text-xs font-normal font-['DM_Sans'] leading-4 hover:text-ds-accent transition-colors cursor-pointer"
+                className={`text-ds-text-primary text-xs font-normal font-['DM_Sans'] leading-4 hover:text-ds-accent transition-colors cursor-pointer ${error?.includes("too large") ? "" : "mt-0.5"}`}
               >
                 Change
               </button>
@@ -279,7 +293,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
       <div className="w-full max-w-[260px] h-[36px] mt-auto sm:mt-0 pb-8 sm:pb-0 flex items-center justify-center">
         <PillButton
           type="button"
-          disabled={!selected || isParsing}
+          disabled={!selected || isParsing || (selected === "upload" && !!error && error.includes("too large"))}
           isLoading={isParsing}
           onClick={handleContinue}
           label={isParsing ? "Parsing resume..." : "Continue"}

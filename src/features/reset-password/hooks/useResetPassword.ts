@@ -125,6 +125,7 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
         setErrorMessage(null);
         setStep("EMAIL");
         setShowSessionExpiredToast(true);
+        setIsLogoutModalOpen(false);
 
         if (window.location.pathname !== "/forgot-password" && window.location.pathname !== "/") {
           router.replace("/forgot-password?toast=session_expired");
@@ -463,6 +464,14 @@ export function useResetPassword(options?: { initialToken?: string | null }) {
 
   // Execute Password Reset
   const handleConfirmResetPassword = useCallback(async (logoutOtherDevices: boolean = true) => {
+    // Session already expired locally
+    if (!token && (!email || !otp)) {
+      setIsLogoutModalOpen(false);
+      setStep("EMAIL");
+      setShowSessionExpiredToast(true);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 
