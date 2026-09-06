@@ -100,8 +100,16 @@ export const PostHeader = ({
     }
   });
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const isFollowActionLoading = isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending;
+
+  useEffect(() => {
+    setHasInteracted(false);
+  }, [id, authorUserId]);
+
   const handleToggleFollow = () => {
-    if (!authorUserId || isAuthorFollowLoading) return;
+    if (!authorUserId || isFollowActionLoading) return;
+    setHasInteracted(true);
     if (isCompanyPost) {
       if (isAuthorFollowing) unfollowCompanyMutation.mutate(authorUserId);
       else followCompanyMutation.mutate({ orgId: authorUserId, sourcePostId: id.toString() });
@@ -130,19 +138,19 @@ export const PostHeader = ({
     <div className="flex flex-row justify-between items-center w-full min-h-[40px]">
       <div className="flex flex-row items-center gap-2 flex-grow pr-2">
         {/* Avatar */}
-        <Link href={profileHref} className="shrink-0 block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-full">
-          <div className={`w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center shrink-0 border ${
-            variant === 'overlay' ? 'bg-black/40 border-white/30 shadow-md' : 'bg-ds-surface-2 border-ds-border'
+        <Link href={profileHref} className="shrink-0 flex-none block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-full">
+          <div className={`w-[32px] h-[32px] rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none ${
+            variant === 'overlay' ? 'bg-black/40 border border-white/30 shadow-md' : 'bg-ds-surface-2'
           }`}>
             {authorAvatar && !imgError ? (
               <img 
                 src={authorAvatar} 
                 alt={author} 
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover rounded-full" 
                 onError={() => setImgError(true)} 
               />
             ) : (
-              <span className={`text-xs font-medium ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'}`}>{initial}</span>
+              <span className={`text-[11px] font-medium ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'}`}>{initial}</span>
             )}
           </div>
         </Link>
@@ -179,13 +187,19 @@ export const PostHeader = ({
       
       {/* Follow and Menu Actions */}
       <div className="flex flex-row items-center gap-2 shrink-0 h-[24px]">
-        {!isMe && (
+        {!isMe && (!isAuthorFollowing || hasInteracted) && (
           <button 
             onClick={handleToggleFollow}
-            disabled={isAuthorFollowLoading}
-            className="h-[24px] px-1 flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] disabled:opacity-50 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded hover:opacity-90 transition-opacity"
+            disabled={isFollowActionLoading}
+            className={
+              isAuthorFollowing
+                ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-80 ${
+                    variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
+                  }`
+                : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-90`
+            }
           >
-            {isAuthorFollowing ? 'Following' : 'Follow'}
+            {isAuthorFollowing ? 'Unfollow' : 'Follow'}
           </button>
         )}
         
@@ -193,7 +207,7 @@ export const PostHeader = ({
           <button 
             ref={optionsBtnRef}
             onClick={handleOptionsClick}
-            className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${
+            className={`w-[20px] h-[20px] cursor-pointer flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${
               variant === 'overlay' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-primary'
             }`}
             aria-label="Post options"

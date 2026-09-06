@@ -96,10 +96,10 @@ export const PostMedia = ({
 
           {/* Liked By Overlay */}
           {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
-            <div className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-[#030303]/60 rounded-[16px] pointer-events-auto">
-              <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary text-center">
+            <div className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-ds-surface-2/90 backdrop-blur-md border border-ds-border rounded-[16px] pointer-events-auto shadow-sm">
+              <span className="text-[12px] font-normal leading-[16px] text-ds-text-secondary text-center">
                 Liked by{' '}
-                <span className="font-semibold">
+                <span className="font-semibold text-ds-text-primary">
                   {sampleLikerUsername}
                 </span>
                 {likeCount > (isLiked ? 2 : 1) ? ` and ${likeCount - (isLiked ? 2 : 1)} others` : ''}
@@ -118,13 +118,13 @@ export const PostMedia = ({
                           key={idx}
                           src={user.avatar_url || undefined}
                           alt={user.username || "user"}
-                          className="inline-block h-[16px] w-[16px] rounded-full border border-[#030303] object-cover flex-shrink-0"
+                          className="inline-block h-[16px] w-[16px] rounded-full border border-ds-surface-2 object-cover flex-shrink-0"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                       ) : (
-                        <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-[#030303] bg-ds-surface-2 text-ds-text-primary font-medium text-[8px] items-center justify-center flex-shrink-0 select-none">
+                        <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-ds-surface-1 text-ds-text-primary font-medium text-[8px] items-center justify-center flex-shrink-0 select-none">
                           {(user.username || '?').charAt(0).toUpperCase()}
                         </div>
                       );

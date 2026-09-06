@@ -23,7 +23,7 @@ import { PostActions } from './parts/PostActions';
 import { PostPoll } from './parts/PostPoll';
 import { PostOptionsMenu } from './parts/PostOptionsMenu';
 import SharedPreview from './create-post/SharedPreview';
-import { Icon } from '@iconify/react';
+import { RepostIcon } from '@/components/icons';
 const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr: false });
 const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
@@ -169,10 +169,11 @@ export const FeedPost = (props: FeedPostProps) => {
       onClick={handlePostClick}
     >
       {isRepostWithoutThoughts && shared_post && (
-        <div className="flex items-center gap-2 px-5 py-3 pb-0 text-[13px] text-ds-text-secondary">
-          <Icon icon="lucide:repeat" className="w-4 h-4" />
-          <span className="font-medium text-ds-text-primary">{props.author}</span>
-          <span>reposted this</span>
+        <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
+          <RepostIcon size={12} className="w-[12px] h-[12px] shrink-0 flex-none text-ds-text-secondary" />
+          <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-ds-text-secondary truncate shrink-0 flex-none">
+            {props.author} reposted
+          </span>
         </div>
       )}
 

@@ -15,8 +15,8 @@ export const PostBody = ({
 }: PostBodyProps) => {
   if (!content) return null;
 
-  const truncateLength = 160;
-  const maxLines = 3;
+  const truncateLength = 145;
+  const maxLines = 2;
   const trimmedContent = content.trimEnd();
   const lines = trimmedContent.split('\n');
   const nonEmptyLines = lines.filter((line) => line.trim() !== '');
@@ -49,6 +49,17 @@ export const PostBody = ({
       }
       displayContent = truncated;
     }
+
+    const displayLines = displayContent.split('\n');
+    if (displayLines.length >= 2 && displayLines[1].length > 45) {
+      let truncatedLine2 = displayLines[1].slice(0, 45);
+      const lastSpace = truncatedLine2.lastIndexOf(' ');
+      if (lastSpace > 0) truncatedLine2 = truncatedLine2.slice(0, lastSpace);
+      displayLines[1] = truncatedLine2;
+      displayContent = displayLines.slice(0, 2).join('\n');
+    }
+
+    displayContent = displayContent.replace(/[.\s]+$/, '');
   }
 
   return (
@@ -57,29 +68,22 @@ export const PostBody = ({
         variant === 'overlay' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-primary'
       }`}>
         <RichTextRenderer content={displayContent} authorName={author} authorSlug={authorSlug} />
-        {isLong && !isExpanded && (
-          <span 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleExpand?.();
-            }}
-            className="cursor-pointer text-[var(--ds-accent)] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] no-underline hover:no-underline hover:opacity-80 ml-1 transition-opacity"
-          >
-            ...See more
-          </span>
-        )}
-        {isLong && isExpanded && (
-          <span 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleExpand?.();
-            }}
-            className="block mt-1.5 w-fit cursor-pointer text-[var(--ds-accent)] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] no-underline hover:no-underline hover:opacity-80 transition-opacity"
-          >
-            Show less
-          </span>
+        {isLong && (
+          <>
+            {!isExpanded && <span>...</span>}
+            <span 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleExpand?.();
+              }}
+              className={`cursor-pointer text-[var(--ds-accent)] font-semibold no-underline hover:no-underline transition-opacity ${
+                isExpanded ? 'block mt-1.5 w-fit' : 'ml-1'
+              }`}
+            >
+              {isExpanded ? 'Show less' : 'See more'}
+            </span>
+          </>
         )}
       </div>
     </div>
