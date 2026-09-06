@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -12,6 +12,7 @@ import { usePostMediaObserver } from '../hooks/use-post-media-observer';
 import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
+import { feedApi } from '../api/feed.api';
 
 // New Parts
 import { PostHeader } from './parts/PostHeader';
@@ -24,6 +25,7 @@ import { PostPoll } from './parts/PostPoll';
 import { PostOptionsMenu } from './parts/PostOptionsMenu';
 import SharedPreview from './create-post/SharedPreview';
 import { RepostIcon } from '@/components/icons';
+import { toast } from 'sonner';
 const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr: false });
 const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
@@ -161,6 +163,87 @@ export const FeedPost = (props: FeedPostProps) => {
       return;
     }
     router.push(`/post/${id}`);
+  };
+
+  const isCompanyProfile = activeProfile?.type === 'COMPANY';
+  const currentUserHandle = isCompanyProfile
+    ? activeProfile?.slug
+    : ((activeProfile as any)?.account_name || (session?.user as any)?.username);
+  const currentUserName = isCompanyProfile
+    ? activeProfile?.name
+    : ((activeProfile as any)?.full_name || (session?.user as any)?.name || (session?.user as any)?.fullName);
+  
+  const isMentioned = useMemo(() => {
+    if (!targetContent) return false;
+    
+    let isMatch = false;
+
+    if (currentUserHandle) {
+      // Check for structured mentions e.g. @[Name](handle)
+      const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const structuredMatch = new RegExp(`@\\[[^\\]]+\\]\\(${escapeHandle}\\)`, 'i');
+      if (structuredMatch.test(targetContent)) isMatch = true;
+      
+      // Check for legacy mentions e.g. @handle
+      const legacyMatch = new RegExp(`(?:^|\\s)@${escapeHandle}(?:\\b|\\s|$)`, 'i');
+      if (legacyMatch.test(targetContent)) isMatch = true;
+    }
+
+    // Fallback: Check if the user's full name matches the display name in a structured mention
+    if (!isMatch && currentUserName) {
+      const escapeName = currentUserName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const structuredNameMatch = new RegExp(`@\\[${escapeName}\\]\\([^)]+\\)`, 'i');
+      if (structuredNameMatch.test(targetContent)) isMatch = true;
+    }
+
+    return isMatch;
+  }, [targetContent, currentUserHandle, currentUserName]);
+
+  const handleRemoveMention = async () => {
+    if (!targetContent) return;
+
+    let newContent = targetContent;
+
+    // 1. Strip structured mentions using the exact handle
+    if (currentUserHandle) {
+      const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const structuredMatch = new RegExp(`@\\[([^\\]]+)\\]\\(${escapeHandle}\\)`, 'gi');
+      newContent = newContent.replace(structuredMatch, '$1');
+    }
+
+    // 2. Strip structured mentions using the full name fallback
+    if (currentUserName) {
+      const escapeName = currentUserName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const structuredNameMatch = new RegExp(`@\\[(${escapeName})\\]\\([^)]+\\)`, 'gi');
+      newContent = newContent.replace(structuredNameMatch, '$1');
+    }
+
+    // 3. Strip legacy mentions
+    if (currentUserHandle) {
+      const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const legacyMatch = new RegExp(`@(${escapeHandle})\\b`, 'gi');
+      newContent = newContent.replace(legacyMatch, '$1');
+    }
+
+    // Optimistic Update
+    if (isRepostWithoutThoughts && shared_post) {
+      updatePostInFeed(id.toString(), { shared_post: { ...shared_post, content: newContent } });
+    } else {
+      updatePostInFeed(id.toString(), { content: newContent });
+    }
+
+    try {
+      await feedApi.removeMention(id.toString());
+      toast.success("Mention removed from this post.");
+    } catch (error) {
+      // Revert if API fails
+      if (isRepostWithoutThoughts && shared_post) {
+        updatePostInFeed(id.toString(), { shared_post: { ...shared_post, content: targetContent } });
+      } else {
+        updatePostInFeed(id.toString(), { content: targetContent });
+      }
+      toast.error("Failed to remove mention. Please try again.");
+    }
   };
 
   return (
@@ -405,6 +488,8 @@ export const FeedPost = (props: FeedPostProps) => {
         onReport={() => setIsReportModalOpen(true)}
         onInterested={() => console.log('Interested clicked for post', id)}
         onNotInterested={() => console.log('Not interested clicked for post', id)}
+        isMentioned={isMentioned}
+        onRemoveMention={handleRemoveMention}
       />
 
       {isReportModalOpen && (

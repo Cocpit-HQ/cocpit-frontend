@@ -14,6 +14,8 @@ interface PostOptionsMenuProps {
   onReport?: () => void;
   onInterested?: () => void;
   onNotInterested?: () => void;
+  isMentioned?: boolean;
+  onRemoveMention?: () => void;
 }
 
 export const PostOptionsMenu = ({
@@ -27,6 +29,8 @@ export const PostOptionsMenu = ({
   onReport,
   onInterested,
   onNotInterested,
+  isMentioned,
+  onRemoveMention,
 }: PostOptionsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -122,6 +126,14 @@ export const PostOptionsMenu = ({
           >
             Not interested
           </button>
+          {isMentioned && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleAction(onRemoveMention); }}
+              className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
+            >
+              Remove mention
+            </button>
+          )}
         </>
       )}
     </div>

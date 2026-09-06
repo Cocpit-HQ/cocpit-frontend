@@ -6,8 +6,6 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeed } from '@/hooks/use-feed';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { Icon } from '@/components/icons';
-// [OLD CODE COMMENTED OUT]
-// import { postApi } from '@/features/create-post/api/post.api';
 import { postApi } from '@/features/feed/api/post.api';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { formatMentionsForBackend } from '@/lib/mentions';

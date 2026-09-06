@@ -18,6 +18,10 @@ export const feedApi = {
   removeVote,
   updatePost,
   deletePost,
+  removeMention: async (postId: string) => {
+    const response = await api.delete(`/post/${postId}/mentions`);
+    return response.data;
+  },
 
   // Comments
   getComments,

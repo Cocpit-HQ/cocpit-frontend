@@ -326,19 +326,7 @@ export default function CommentInput({
 
 
             {variant === 'default' ? (
-                /* ORIGINAL COMMENT INPUT CONTAINER:
-                <div className="flex items-center gap-2 p-2 border border-border rounded-lg bg-background relative focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                    <textarea className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-sm text-foreground placeholder:text-muted-foreground" />
-                    <div className="flex items-center gap-[24px] flex-none">
-                        <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors flex-none order-0 flex-grow-0">
-                            <Smile className="w-6 h-6" />
-                        </button>
-                        <button onClick={() => handleSubmit()} disabled={!commentText.trim()} className="w-6 h-6 flex items-center justify-center transition-all flex-none order-0 flex-grow-0 text-[#6366F1]">
-                            <Send className="w-6 h-6" />
-                        </button>
-                    </div>
-                </div>
-                */
+
                 <div className={`box-border w-full min-h-[42px] border border-ds-border bg-transparent ${replyingTo && !editingComment ? 'rounded-b-[16px] border-t-0' : 'rounded-[16px]'} transition-all duration-300 relative`}>
 
 
