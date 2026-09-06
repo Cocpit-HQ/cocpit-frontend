@@ -837,7 +837,7 @@ const ProfilePostCard = ({
           <button onClick={handleBookmark} className="flex-shrink-0 cursor-pointer">
             <Icon
               icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
-              className={cn("w-5 h-5", isSaved ? "text-primary" : "text-foreground")}
+              className={cn("w-5 h-5", isSaved ? "text-[var(--ds-accent)]" : "text-foreground")}
             />
           </button>
         </div>

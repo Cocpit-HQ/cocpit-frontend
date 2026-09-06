@@ -8,7 +8,7 @@ export function CreatePostCardSkeleton() {
     <div className="feed-card-shell mb-6 w-full max-w-[560px] animate-pulse">
       <div className="flex gap-3 mb-3 items-center">
         {/* Avatar circle placeholder */}
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-[32px] h-[32px] rounded-full shrink-0 flex-none" />
         {/* Input area placeholder */}
         <Skeleton className="h-10 flex-1 rounded-full" />
       </div>

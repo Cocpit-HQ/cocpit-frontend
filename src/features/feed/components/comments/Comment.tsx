@@ -141,7 +141,6 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   };
 
   const isReply = variant === 'reply';
-  const avatarSize = "w-8 h-8";
 
   const baseCommentAuthorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}`;
   const authorLink = postId ? `${baseCommentAuthorLink}?sourcePostId=${postId}&commentId=${id}` : baseCommentAuthorLink;
@@ -153,14 +152,14 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
       className={`flex gap-3 relative group transition-all duration-300 font-dmsans ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {/* Avatar Column */}
-      <div className="flex-shrink-0">
-        <Link href={authorLink} className="block">
-          <div className={`w-[24px] h-[24px] ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-[100px]'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-xs font-dmsans select-none`}>
+      <div className="flex-shrink-0 shrink-0 flex-none">
+        <Link href={authorLink} className="block shrink-0 flex-none">
+          <div className={`w-[24px] h-[24px] ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] font-dmsans select-none shrink-0 flex-none`}>
             {author?.avatar && author.avatar !== '/assets/pngegg.png' ? (
               <img 
                 src={author.avatar} 
                 alt={author?.name || 'User'} 
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover rounded-full" 
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                   const parent = (e.target as HTMLImageElement).parentElement;

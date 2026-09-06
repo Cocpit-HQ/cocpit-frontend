@@ -497,11 +497,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           {/* Header */}
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-[12px]">
-              <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 border border-ds-border">
+              <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                 ) : (
-                  <span className="text-ds-text-primary text-xs font-medium">{initial}</span>
+                  <span className="text-ds-text-primary text-[11px] font-medium">{initial}</span>
                 )}
               </div>
               <span className="text-ds-text-primary text-[15px] font-medium">Poll post</span>
@@ -613,11 +613,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         <>
           <div className="flex flex-row items-start gap-[12px] w-full">
             {/* Avatar */}
-            <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 border border-ds-border">
+            <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
               ) : (
-                <span className="text-ds-text-primary text-xs font-medium">{initial}</span>
+                <span className="text-ds-text-primary text-[11px] font-medium">{initial}</span>
               )}
             </div>
 

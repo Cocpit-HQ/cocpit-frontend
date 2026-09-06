@@ -76,21 +76,22 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             disabled={isLoading}
             aria-label={isSaved ? "Remove from saved" : "Save post"}
             className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group",
-                isSaved ? "text-primary" : "text-foreground",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded",
+                isSaved ? "text-[var(--ds-accent)]" : "text-ds-text-primary hover:text-ds-text-secondary",
                 className
             )}
         >
-            <div className="flex items-center justify-center w-[24px] h-[24px]">
-                <div className="relative">
+            <div className="flex items-center justify-center w-[20px] h-[20px] m-auto shrink-0 flex-none">
+                <div className="relative w-[20px] h-[20px] flex items-center justify-center shrink-0 flex-none">
                     <Icon 
                         name={isSaved ? "save-filled" : "save"}
-                        className="w-6 h-6"
+                        size={20}
+                        className="w-[20px] h-[20px] shrink-0 flex-none"
                         aria-hidden="true"
                     />
                     {isLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-full">
-                            <svg className="animate-spin h-3 w-3 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin h-3 w-3 text-[var(--ds-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>

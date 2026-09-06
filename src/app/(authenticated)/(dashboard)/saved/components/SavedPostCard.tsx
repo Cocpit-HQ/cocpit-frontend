@@ -72,7 +72,7 @@ export function SavedPostCard({ post, folderId, onUnsave }: SavedPostCardProps) 
               for isSaved === true. Clicking it unsaves via handleUnsave. */}
           <Icon
             icon="solar:bookmark-bold"
-            className="w-6 h-6 text-primary transition-opacity group-hover:opacity-80"
+            className="w-6 h-6 text-[var(--ds-accent)] transition-opacity group-hover:opacity-80"
             aria-hidden="true"
           />
           

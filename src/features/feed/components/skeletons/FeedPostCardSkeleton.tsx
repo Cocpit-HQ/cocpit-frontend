@@ -11,7 +11,7 @@ export function FeedPostCardSkeleton() {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 overflow-hidden flex-1">
             {/* Avatar placeholder */}
-            <Skeleton className="w-11 h-11 rounded-full shrink-0" />
+            <Skeleton className="w-[32px] h-[32px] rounded-full shrink-0 flex-none" />
 
             {/* User details placeholder */}
             <div className="flex flex-col justify-center gap-2 flex-1 min-w-0">

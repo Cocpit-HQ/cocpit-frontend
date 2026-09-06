@@ -8,7 +8,7 @@ export function CommentItemSkeleton() {
     <div className="flex gap-3 relative group transition-all duration-300 font-dmsans">
       {/* Avatar Column */}
       <div className="flex-shrink-0">
-        <Skeleton className="w-8 h-8 rounded-full" />
+        <Skeleton className="w-[24px] h-[24px] rounded-full shrink-0 flex-none" />
       </div>
 
       {/* Content Column */}
