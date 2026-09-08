@@ -22,6 +22,10 @@ jobs:
             echo "DEST=C:\Users\Administrator\cocpit-frontend-prod" >> $env:GITHUB_ENV
             echo "PM2_NAME=cocpit-frontend-prod" >> $env:GITHUB_ENV
             echo "PORT=3000" >> $env:GITHUB_ENV
+          } elseif ("${{ github.ref }}" -like "refs/heads/release/*") {
+            echo "DEST=C:\Users\Administrator\Cocpit UAT\cocpit-frontend" >> $env:GITHUB_ENV
+            echo "PM2_NAME=cocpit-frontend-uat" >> $env:GITHUB_ENV
+            echo "PORT=3002" >> $env:GITHUB_ENV
           } else {
             echo "DEST=C:\Users\Administrator\cocpit-frontend-staging" >> $env:GITHUB_ENV
             echo "PM2_NAME=cocpit-frontend-staging" >> $env:GITHUB_ENV
