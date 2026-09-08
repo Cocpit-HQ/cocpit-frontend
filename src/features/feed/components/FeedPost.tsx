@@ -13,6 +13,7 @@ import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
 import { feedApi } from '../api/feed.api';
+import { hidePost, unhidePost, submitPostFeedback } from '@/services/api/feed';
 
 // New Parts
 import { PostHeader } from './parts/PostHeader';
@@ -24,8 +25,9 @@ import { PostActions } from './parts/PostActions';
 import { PostPoll } from './parts/PostPoll';
 import { PostOptionsMenu } from './parts/PostOptionsMenu';
 import SharedPreview from './create-post/SharedPreview';
-import { RepostIcon } from '@/components/icons';
+import { RepostIcon, NotInterestedIcon, InterestedIcon } from '@/components/icons';
 import { toast } from 'sonner';
+import { Check } from 'lucide-react';
 const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr: false });
 const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
@@ -42,9 +44,9 @@ export const FeedPost = (props: FeedPostProps) => {
   const currentUserId = (session?.user as any)?.id;
   const router = useRouter();
   const isArticlePost = category === 'Article' || post_type === 'article';
-  
+
   const { updatePostInFeed } = useFeed(false);
-  
+
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
   const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId } : props;
 
@@ -103,7 +105,73 @@ export const FeedPost = (props: FeedPostProps) => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  
+  // --- Report Flow State ---
+  // Tracks if the temporary 'Report submitted' UI is currently visible
+  const [isReportSubmitted, setIsReportSubmitted] = useState(false);
+  // Tracks if the post was reported during this session (used to show 'Reported' in the options menu if they click 'Show post')
+  const [hasBeenReported, setHasBeenReported] = useState(false);
+
+  const { removePostFromFeed } = useFeed(false);
+  // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Show post'
+  const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Triggered when the backend successfully saves the report
+  const handleReportSuccess = () => {
+    setIsReportSubmitted(true);
+    setHasBeenReported(true);
+    // Auto-remove the post from the feed entirely after 15 seconds
+    reportTimeoutRef.current = setTimeout(() => {
+      removePostFromFeed(id.toString());
+    }, 15000);
+  };
+
+  // Triggered when the user clicks 'Show post' on the success snackbar
+  const handleUndoReportUI = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Clear the auto-removal timer
+    if (reportTimeoutRef.current) {
+      clearTimeout(reportTimeoutRef.current);
+      reportTimeoutRef.current = null;
+    }
+    // Re-render the actual post UI (but it remains marked as reported in the DB)
+    setIsReportSubmitted(false);
+  };
+  // -------------------------
+
+
+  // --- Not Interested Flow State ---
+  // Tracks if the temporary 'Not interested' snackbar is currently visible replacing the post content
+  const [isNotInterested, setIsNotInterested] = useState(false);
+  // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Undo'
+  const notInterestedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // --- Interested Flow State ---
+  const [isInterested, setIsInterested] = useState(false);
+  const interestedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Triggered when the user clicks 'Undo' on the snackbar
+  const handleUndoNotInterested = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (notInterestedTimeoutRef.current) {
+      clearTimeout(notInterestedTimeoutRef.current);
+      notInterestedTimeoutRef.current = null;
+    }
+
+    try {
+      // Call the backend to reverse the hide action (removes from hiddenSet, seenSet, and reverses penalty)
+      await unhidePost({
+        item_id: id.toString(),
+        session_id: 'default',
+        position: 0,
+      });
+      // Re-render the actual post UI in its exact position
+      setIsNotInterested(false);
+    } catch (error) {
+      toast.error("Failed to undo");
+    }
+  };
+  // -------------------------
+
   const searchParams = useSearchParams();
   useEffect(() => {
     if (props.isFullContent || searchParams?.get("comments") === "true" || !!searchParams?.get("commentId") || props.initialShowComments) {
@@ -113,6 +181,7 @@ export const FeedPost = (props: FeedPostProps) => {
       }
     }
   }, [searchParams, props.isFullContent, props.initialShowComments]);
+
 
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -144,7 +213,7 @@ export const FeedPost = (props: FeedPostProps) => {
       console.error(err);
     }
   };
-  
+
   const handleRepostWithThoughts = () => {
     props.onRepostWithThoughts?.(props);
   };
@@ -162,10 +231,10 @@ export const FeedPost = (props: FeedPostProps) => {
   const currentUserName = isCompanyProfile
     ? activeProfile?.name
     : ((activeProfile as any)?.full_name || (session?.user as any)?.name || (session?.user as any)?.fullName);
-  
+
   const isMentioned = useMemo(() => {
     if (!targetContent) return false;
-    
+
     let isMatch = false;
 
     if (currentUserHandle) {
@@ -173,7 +242,7 @@ export const FeedPost = (props: FeedPostProps) => {
       const escapeHandle = currentUserHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const structuredMatch = new RegExp(`@\\[[^\\]]+\\]\\(${escapeHandle}\\)`, 'i');
       if (structuredMatch.test(targetContent)) isMatch = true;
-      
+
       // Check for legacy mentions e.g. @handle
       const legacyMatch = new RegExp(`(?:^|\\s)@${escapeHandle}(?:\\b|\\s|$)`, 'i');
       if (legacyMatch.test(targetContent)) isMatch = true;
@@ -236,8 +305,58 @@ export const FeedPost = (props: FeedPostProps) => {
     }
   };
 
+  if (isReportSubmitted) {
+    return (
+      <div className="w-full max-w-[442px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border relative">
+        <div className="flex flex-col items-center gap-[8px]">
+          <div className="w-[40px] h-[40px] rounded-full border-[2px] border-[var(--ds-success)] flex items-center justify-center shrink-0">
+            <Check className="w-[20px] h-[20px] text-[var(--ds-success)]" strokeWidth={3} />
+          </div>
+          <div className="flex flex-col items-center gap-[4px]">
+            <span className="ds-text-body text-ds-text-primary">
+              Report submitted
+            </span>
+            <span className="ds-text-small text-ds-text-primary">
+              Thanks for helping us keep Cocpit safe
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={handleUndoReportUI}
+          className="ds-text-small-1 text-ds-text-muted hover:underline cursor-pointer bg-transparent border-none p-0"
+        >
+          Show post
+        </button>
+      </div>
+    );
+  }
+
+
+
+  if (isNotInterested) {
+    return (
+      <div className="w-full max-w-[442px] h-[114px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">
+        <div className="w-[40px] h-[40px] flex items-center justify-center shrink-0">
+          <NotInterestedIcon className="w-[24px] h-[24px] text-ds-text-primary" />
+        </div>
+        <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-primary">
+          We'll show you fewer posts like this
+        </span>
+        <button
+          onClick={handleUndoNotInterested}
+          className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-ds-accent hover:opacity-80 cursor-pointer bg-transparent border-none p-0"
+        >
+          Undo
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full flex flex-col pt-[16px] pb-[8px] gap-[12px] bg-ds-bg border-b border-ds-border/40 max-w-[442px] mx-auto">
+    <>
+      <div
+        className={`w-full flex flex-col pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`}
+      >
       {isRepostWithoutThoughts && shared_post && (
         <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
           <RepostIcon size={12} className="w-[12px] h-[12px] shrink-0 flex-none text-ds-text-secondary" />
@@ -271,7 +390,7 @@ export const FeedPost = (props: FeedPostProps) => {
           setOptionsPos={setOptionsPos}
           content={targetContent}
           isExpanded={isExpanded}
-          onToggleExpand={() => router.push(`/post/${id}`)}
+          onToggleExpand={() => setIsExpanded(!isExpanded)}
         />
       ) : (
         <>
@@ -370,8 +489,8 @@ export const FeedPost = (props: FeedPostProps) => {
           </span>
           {targetLikedUsers && targetLikedUsers.length > 0 && (() => {
             const viewerUsername = (activeProfile as any)?.account_name || (session?.user as any)?.username;
-            const filteredLikedUsers = viewerUsername 
-              ? targetLikedUsers.filter((u: any) => u.username?.toLowerCase() !== viewerUsername.toLowerCase()) 
+            const filteredLikedUsers = viewerUsername
+              ? targetLikedUsers.filter((u: any) => u.username?.toLowerCase() !== viewerUsername.toLowerCase())
               : targetLikedUsers;
             if (filteredLikedUsers.length === 0) return null;
             return (
@@ -492,21 +611,74 @@ export const FeedPost = (props: FeedPostProps) => {
         onMakePrivate={handleToggleVisibility}
         onDelete={handleDelete}
         onReport={() => setIsReportModalOpen(true)}
-        onInterested={() => console.log('Interested clicked for post', id)}
-        onNotInterested={() => console.log('Not interested clicked for post', id)}
+        onInterested={async () => {
+          try {
+            await submitPostFeedback({
+              item_id: id.toString(),
+              type: 'INTERESTED',
+              session_id: 'default',
+              position: 0,
+            });
+            setIsInterested(true);
+            if (interestedTimeoutRef.current) {
+              clearTimeout(interestedTimeoutRef.current);
+            }
+            interestedTimeoutRef.current = setTimeout(() => {
+              setIsInterested(false);
+            }, 5000);
+          } catch (error) {
+            toast.error("Failed to submit feedback");
+            console.error(error);
+          }
+        }}
+        onNotInterested={async () => {
+          try {
+            // 1. Instantly hide the post on the backend to guarantee persistence if the user refreshes
+            await submitPostFeedback({
+              item_id: id.toString(),
+              type: 'NOT_INTERESTED',
+              session_id: 'default',
+              position: 0,
+            });
+            // 2. Hide the post content locally and show the temporary snackbar inline
+            setIsNotInterested(true);
+
+            // 3. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
+            notInterestedTimeoutRef.current = setTimeout(() => {
+              removePostFromFeed(id.toString());
+            }, 180000);
+
+          } catch (error) {
+            toast.error("Failed to hide post");
+            console.error(error);
+          }
+        }}
         isMentioned={isMentioned}
         onRemoveMention={handleRemoveMention}
+        isReported={hasBeenReported}
       />
 
       {isReportModalOpen && (
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
+          onSuccess={handleReportSuccess}
           targetType="POST"
           targetId={id.toString()}
         />
       )}
     </div>
+      {isInterested && (
+        <div className="w-full max-w-[442px] h-[86px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">
+          <div className="w-[40px] h-[40px] flex items-center justify-center shrink-0">
+            <InterestedIcon className="w-[24px] h-[24px] text-ds-text-primary" />
+          </div>
+          <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-primary">
+            We'll show you more posts like this
+          </span>
+        </div>
+      )}
+    </>
   );
 };
 

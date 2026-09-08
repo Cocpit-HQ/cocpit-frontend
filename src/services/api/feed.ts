@@ -302,6 +302,16 @@ export const hidePost = async (data: { item_id: string; session_id: string; posi
   return response.data;
 };
 
+export const unhidePost = async (data: { item_id: string; session_id: string; position: number }): Promise<{ ok: boolean; message: string }> => {
+  const response = await api.post<{ ok: boolean; message: string }>("/feed/unhide", data);
+  return response.data;
+};
+
+export const submitPostFeedback = async (data: { item_id: string; type: 'INTERESTED' | 'NOT_INTERESTED'; session_id: string; position: number }): Promise<{ ok: boolean; message: string }> => {
+  const response = await api.post<{ ok: boolean; message: string }>("/feed/postfeedback", data);
+  return response.data;
+};
+
 export const getAchievementImages = async (): Promise<{ id: number; key: string; title: string; url: string; }[]> => {
   const response = await api.get<{ success: boolean; data: { id: number; key: string; title: string; url: string; }[] }>("/achievement-images");
   return response.data.data;

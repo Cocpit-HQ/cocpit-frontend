@@ -53,8 +53,10 @@ export function LocationSelector({
   const [draftLocation, setDraftLocation] = useState<LocationSuggestion | StructuredLocation | null>(selectedLocation);
   const [loading, setLoading] = useState(false);
   const [selectingPlaceId, setSelectingPlaceId] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const debouncedQuery = useDebounce(query, 300);
   const sessionToken = useRef(uuidv4());
+  const listRef = useRef<HTMLDivElement>(null);
 
   const draftLabel = useMemo(() => getLocationLabel(draftLocation), [draftLocation]);
 
@@ -62,6 +64,7 @@ export function LocationSelector({
     setDraftLocation(selectedLocation);
     setQuery("");
     setSuggestions([]);
+    setHighlightedIndex(-1);
   }, [selectedLocation]);
 
   useEffect(() => {
@@ -89,6 +92,99 @@ export function LocationSelector({
     };
   }, [debouncedQuery]);
 
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [query, suggestions, draftLocation]);
+
+  // FIX: Manual keyboard scrolling calculation
+  // Replaced scrollIntoView() because it forces background ancestors to jump to the center.
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const listEl = listRef.current;
+      const highlightedEl = listEl.children[highlightedIndex] as HTMLElement;
+      if (highlightedEl) {
+        const itemTop = highlightedEl.offsetTop;
+        const itemBottom = itemTop + highlightedEl.offsetHeight;
+        const listScrollTop = listEl.scrollTop;
+        const listHeight = listEl.clientHeight;
+
+        if (itemTop < listScrollTop) {
+          listEl.scrollTop = itemTop;
+        } else if (itemBottom > listScrollTop + listHeight) {
+          listEl.scrollTop = itemBottom - listHeight;
+        }
+      }
+    }
+  }, [highlightedIndex]);
+
+  // Lock background scroll when the popup is open
+  useEffect(() => {
+    const getScrollParent = (node: HTMLElement | null): HTMLElement => {
+      if (!node) return document.documentElement;
+      if (node === document.body || node === document.documentElement) {
+        return document.documentElement;
+      }
+      const style = window.getComputedStyle(node);
+      const overflowY = style.overflowY;
+      const isScrollable = overflowY === 'auto' || overflowY === 'scroll';
+      if (isScrollable && node.scrollHeight > node.clientHeight) {
+        return node;
+      }
+      return getScrollParent(node.parentElement);
+    };
+
+    let scrollContainer: HTMLElement | null = null;
+    let originalOverflow = '';
+    let originalPaddingRight = '';
+
+    const lockTimer = setTimeout(() => {
+      if (listRef.current) {
+        // FIX: Start searching from parentElement to avoid locking the list itself
+        scrollContainer = getScrollParent(listRef.current.parentElement);
+        const targetToLock = scrollContainer === document.documentElement ? document.body : scrollContainer;
+        
+        originalOverflow = targetToLock.style.overflow;
+        originalPaddingRight = targetToLock.style.paddingRight;
+        
+        // FIX: Calculate scrollbar width and add padding to prevent layout shifts when overflow becomes hidden
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        
+        targetToLock.style.overflow = 'hidden';
+        if (scrollbarWidth > 0 && (targetToLock === document.body || targetToLock === document.documentElement)) {
+          targetToLock.style.paddingRight = `${scrollbarWidth}px`;
+        }
+      }
+    }, 0);
+
+    // FIX: Intercept wheel and touch events on the overlay so they don't scroll the background feed
+    const preventTouch = (e: TouchEvent) => {
+      if (listRef.current && !listRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('touchmove', preventTouch, { passive: false });
+    
+    const preventWheel = (e: WheelEvent) => {
+      if (listRef.current && !listRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('wheel', preventWheel, { passive: false });
+
+    return () => {
+      clearTimeout(lockTimer);
+      if (scrollContainer) {
+        const targetToLock = scrollContainer === document.documentElement ? document.body : scrollContainer;
+        targetToLock.style.overflow = originalOverflow;
+        targetToLock.style.paddingRight = originalPaddingRight;
+      }
+      document.removeEventListener('touchmove', preventTouch);
+      document.removeEventListener('wheel', preventWheel);
+    };
+  }, []);
+
   const visibleLocations = query.trim().length === 0 ? DEFAULT_LOCATIONS : suggestions;
 
   const handleSelect = async (location: PlacesSuggestion) => {
@@ -99,15 +195,17 @@ export function LocationSelector({
 
     if (isSelected) {
       setDraftLocation(null);
+      onLocationChange(null);
+      onConfirm();
       return;
     }
 
     setSelectingPlaceId(location.placeId);
-    
+
     // Check if it's a static location first
     const staticLoc = STATIC_LOCATIONS.find(loc => loc.id === location.placeId);
     if (staticLoc) {
-      setDraftLocation({
+      const locDetails = {
         placeId: staticLoc.id,
         country: staticLoc.country,
         state: staticLoc.state,
@@ -115,8 +213,11 @@ export function LocationSelector({
         formattedAddress: staticLoc.formattedAddress,
         latitude: staticLoc.latitude,
         longitude: staticLoc.longitude
-      });
+      };
+      setDraftLocation(locDetails);
       setSelectingPlaceId(null);
+      onLocationChange(locDetails);
+      onConfirm();
       return;
     }
 
@@ -124,13 +225,47 @@ export function LocationSelector({
     sessionToken.current = uuidv4();
     if (details) {
       setDraftLocation(details);
+      onLocationChange(details);
+      onConfirm();
     }
     setSelectingPlaceId(null);
   };
 
-  const handleSave = () => {
-    onLocationChange(draftLocation);
-    onConfirm();
+  const hasDraftItem = Boolean(draftLabel && query.trim().length > 0 && !visibleLocations.some((location) => getSuggestionLabel(location) === draftLabel));
+  const totalItems = (hasDraftItem ? 1 : 0) + visibleLocations.length;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      // FIX: Stop Tab and Arrow keys from bubbling up to prevent the parent Dialog's focus trap from hijacking it
+      e.stopPropagation();
+      setHighlightedIndex((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      e.stopPropagation();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.shiftKey) {
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
+      } else {
+        setHighlightedIndex((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (highlightedIndex >= 0 && highlightedIndex < totalItems) {
+        if (hasDraftItem && highlightedIndex === 0) {
+          setDraftLocation(null);
+          onLocationChange(null);
+          onConfirm();
+        } else {
+          const listIndex = hasDraftItem ? highlightedIndex - 1 : highlightedIndex;
+          handleSelect(visibleLocations[listIndex]);
+        }
+      }
+    }
   };
 
   return (
@@ -247,116 +382,101 @@ export function LocationSelector({
       ===== END OLD UI ===== */}
 
       {/* New UI aligned with Figma & AGENTS.md */}
-      <div className="relative w-[400px] max-w-[calc(100vw-32px)] h-[568px] max-h-[calc(100vh-32px)] bg-[var(--ds-bg)] text-ds-text-primary rounded-[16px] p-[24px] flex flex-col font-sans overflow-hidden border border-ds-border">
+      <div className="relative w-[400px] max-w-[calc(100vw-32px)] bg-[var(--ds-bg)] text-ds-text-primary rounded-[16px] p-3 flex flex-col items-center gap-3 font-sans overflow-hidden border border-ds-border">
         <DialogHeader className="sr-only">
           <DialogTitle>Add Location</DialogTitle>
           <DialogDescription>Search and select a location for your post.</DialogDescription>
         </DialogHeader>
 
-        {/* Header */}
-        <div className="flex justify-between items-center w-full mb-[32px]">
-          <div className="flex-1" />
-          <h2 className="ds-text-body-2 text-ds-text-primary flex-1 text-center">Location</h2>
-          <div className="flex-1 flex justify-end">
-            <button
-              onClick={onCancel}
-              className="text-ds-text-primary transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
-              aria-label="Close"
-            >
-              <X size={20} strokeWidth={1.5} />
-            </button>
-          </div>
+        {/* Header - Close Button */}
+        <div className="flex justify-end items-center w-full h-5 shrink-0 gap-2.5">
+          <button
+            onClick={onCancel}
+            className="w-5 h-5 flex items-center justify-center text-ds-text-primary transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
+            aria-label="Close"
+          >
+            <X size={16} strokeWidth={1.5} />
+          </button>
         </div>
 
-        {/* Search Input */}
-        <div className="w-full relative mb-[24px]">
+        {/* Location Title */}
+        <div className="flex items-center justify-center w-full h-6 shrink-0">
+          <h2 className="ds-text-body-1 text-ds-text-primary">Location</h2>
+        </div>
+
+        {/* Search Input Container */}
+        <div className="w-full h-9 flex items-center justify-between py-2 gap-2 border-b border-ds-border shrink-0">
           <input
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Search"
             autoFocus
-            className="w-full bg-transparent border-b border-ds-border pb-[8px] pr-[32px] ds-text-body text-ds-text-primary placeholder:text-ds-text-muted outline-none focus-visible:border-[var(--ds-accent)] transition-colors duration-[120ms]"
+            className="w-full bg-transparent ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted outline-none [&::-webkit-search-cancel-button]:appearance-none [&::-ms-clear]:hidden"
           />
-          <div className="absolute right-[4px] top-1/2 -translate-y-1/2 text-ds-text-muted">
+          <div className="shrink-0 flex items-center justify-center w-4 h-4 text-ds-text-muted">
             {loading ? (
-              <Loader2 className="w-[18px] h-[18px] animate-spin" strokeWidth={1.5} />
+              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
             ) : (
-              <Search className="w-[18px] h-[18px]" strokeWidth={1.5} />
+              <Search className="w-4 h-4" strokeWidth={1.5} />
             )}
           </div>
         </div>
 
         {/* List */}
-        <div className="w-full flex-1 overflow-y-auto space-y-[4px] min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {draftLabel && query.trim().length > 0 && !visibleLocations.some((location) => getSuggestionLabel(location) === draftLabel) && (
+        <div 
+          ref={listRef}
+          className="w-full h-[252px] flex flex-col items-start gap-2 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        >
+          {hasDraftItem && (
             <button
               type="button"
-              onClick={() => setDraftLocation(null)}
-              className="w-full flex items-center justify-between py-[12px] group text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
+              tabIndex={-1}
+              onClick={() => {
+                setDraftLocation(null);
+                onLocationChange(null);
+                onConfirm();
+              }}
+              className="w-full h-9 flex items-center justify-between group text-left outline-none shrink-0"
             >
-              <span className="ds-text-body text-ds-text-primary truncate pr-4">
+              <span className={`ds-text-secondary truncate pr-4 ${(highlightedIndex === -1 || highlightedIndex === 0) ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary'}`}>
                 {draftLabel}
               </span>
-              <div className="flex-shrink-0 w-[20px] h-[20px] rounded-[6px] border border-ds-border flex items-center justify-center transition-colors bg-ds-surface-1">
-                <div className="w-full h-full rounded-[6px] bg-[var(--ds-accent)] flex items-center justify-center">
-                  <Check className="w-[12px] h-[12px] text-white" strokeWidth={3} />
-                </div>
-              </div>
             </button>
           )}
 
-          {visibleLocations.map((location) => {
+          {visibleLocations.map((location, index) => {
             const label = getSuggestionLabel(location);
             const isSelected = draftLabel === label || (
               draftLocation && "placeId" in draftLocation && draftLocation.placeId === location.placeId
             );
             const isSelecting = selectingPlaceId === location.placeId;
+            const itemIndex = hasDraftItem ? index + 1 : index;
+            const isHighlighted = highlightedIndex === itemIndex;
+            const showOrange = highlightedIndex === -1 ? isSelected : isHighlighted;
 
             return (
               <button
                 key={`${location.placeId}-${label}`}
                 type="button"
+                tabIndex={-1}
                 onClick={() => handleSelect(location)}
-                className="w-full flex items-center justify-between py-[12px] group text-left outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
+                className="w-full h-9 flex items-center justify-between group text-left outline-none shrink-0"
               >
-                <span className="ds-text-body text-ds-text-primary truncate pr-4">
+                <span className={`ds-text-secondary truncate pr-4 ${showOrange ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary'}`}>
                   {label}
                 </span>
-                <div className="flex-shrink-0 w-[20px] h-[20px] rounded-[6px] border border-ds-border flex items-center justify-center transition-colors bg-ds-surface-1">
-                  {isSelecting ? (
-                    <Loader2 className="w-[14px] h-[14px] animate-spin text-[var(--ds-accent)]" />
-                  ) : isSelected ? (
-                    <div className="w-full h-full rounded-[6px] bg-[var(--ds-accent)] flex items-center justify-center border border-[var(--ds-accent)]">
-                      <Check className="w-[12px] h-[12px] text-white" strokeWidth={3} />
-                    </div>
-                  ) : null}
-                </div>
+                {isSelecting && (
+                  <div className="flex-shrink-0 flex items-center justify-center">
+                    <Loader2 className="w-[18px] h-[18px] animate-spin text-[var(--ds-accent)]" />
+                  </div>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Footer Actions */}
-        <div className="w-full pt-[24px] pb-[8px] flex justify-center items-center gap-[16px] shrink-0">
-          <button
-            onClick={handleSave}
-            disabled={!draftLocation}
-            className={`h-[36px] px-[24px] rounded-full ds-text-body-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${
-              draftLocation
-                ? 'bg-[var(--ds-accent)] text-white border-transparent hover:opacity-90 cursor-pointer'
-                : 'bg-ds-surface-1 text-ds-text-muted opacity-50 cursor-not-allowed border border-transparent'
-            }`}
-          >
-            Add
-          </button>
-          <button
-            onClick={onCancel}
-            className="h-[36px] px-[24px] rounded-full ds-text-body-1 border border-ds-border text-ds-text-primary transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] cursor-pointer"
-          >
-            Cancel
-          </button>
-        </div>
       </div>
     </>
   );

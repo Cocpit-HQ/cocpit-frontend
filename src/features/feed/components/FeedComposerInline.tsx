@@ -680,41 +680,35 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         </>
       )}
 
-      {/* ── Sticky Bottom Action Area: Add Location + Post Toolbar ─────── */}
-      <div className="sticky bottom-16 md:bottom-0 z-20 bg-ds-bg -mx-[16px] px-[16px] pt-2.5 pb-[16px] flex flex-col gap-2 w-[calc(100%+32px)] mt-auto">
-        {/* ── Section 2: Add Location ────────────────────────────────────── */}
-        {showLocationFeature && (
-          location ? (
-            <div className={`flex items-center gap-[8px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
-              <MapPin className="w-[16px] h-[16px] text-[var(--ds-accent)] shrink-0" />
-              <span className="bg-transparent ds-text-small text-ds-text-primary truncate">
-                {'formattedAddress' in location ? location.formattedAddress : location.name}
-              </span>
-              <button
-                type="button"
-                onClick={handleLocationToggle}
-                className="ds-text-small text-[var(--ds-accent)] hover:underline cursor-pointer shrink-0"
-              >
-                • Change
-              </button>
-              <button
-                onClick={handleLocationClear}
-                className="w-[20px] h-[20px] ml-auto flex items-center justify-center text-ds-text-muted hover:text-[var(--ds-error)] transition-colors duration-[120ms] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
-                aria-label="Clear location"
-              >
-                <X className="w-[16px] h-[16px]" />
-              </button>
-            </div>
-          ) : (
+      {/* ── Section 2: Add Location ────────────────────────────────────── */}
+      {showLocationFeature && (
+        location ? (
+          <div className={`flex items-center gap-[8px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
+            {/* FIX: Removed MapPin icon when a location is actively selected */}
+            {/* FIX: Removed clear 'X' icon so users must click Change instead */}
+            <span className="bg-transparent ds-text-small text-ds-text-primary truncate">
+              {'formattedAddress' in location ? location.formattedAddress : location.name}
+            </span>
             <button
+              type="button"
               onClick={handleLocationToggle}
-              className={`${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'} text-left text-[var(--ds-accent)] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit`}
-              aria-label="Add location"
+              // FIX: Replaced hardcoded #F95B14 hex with AGENTS.md compliant var(--ds-accent)
+              className="ds-text-small text-[var(--ds-accent)] hover:underline cursor-pointer shrink-0"
             >
-              Add location
+              <span className="text-ds-text-primary mr-1">•</span> Change
             </button>
-          )
-        )}
+          </div>
+        ) : (
+          <button
+            onClick={handleLocationToggle}
+            // FIX: Replaced hardcoded #F95B14 hex with AGENTS.md compliant var(--ds-accent)
+            className={`${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'} text-left text-[var(--ds-accent)] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit`}
+            aria-label="Add location"
+          >
+            Add location
+          </button>
+        )
+      )}
 
         {/* ── Section 3: Bottom Toolbar ──────────────────────────────────── */}
         <div className={`flex flex-row justify-between items-center w-full mt-1 ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
@@ -782,22 +776,21 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 </button>
               </div>
 
-              {/* Post Button */}
-              <button
-                onClick={handlePost}
-                disabled={!canPost || isSubmitting}
-                className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
-                  canPost && !isSubmitting
-                    ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
-                    : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
-                }`}
-                aria-label="Publish post"
-              >
-                {isSubmitting ? 'Publishing...' : 'Post'}
-              </button>
-            </>
-          )}
-        </div>
+            {/* Post Button */}
+            <button
+              onClick={handlePost}
+              disabled={!canPost || isSubmitting}
+              className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+                canPost && !isSubmitting
+                  ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
+                  : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
+              }`}
+              aria-label="Publish post"
+            >
+              {isSubmitting ? 'Publishing...' : 'Post'}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Location Selector Dialog */}

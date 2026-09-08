@@ -24,11 +24,12 @@ import { cn } from '@/lib/utils';
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   targetType: 'POST' | 'USER' | 'COMMENT' | 'COMPANY' | 'THOUGHT';
   targetId: string | number;
 }
 
-export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportModalProps) {
+export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }: ReportModalProps) {
 //   const [reasons, setReasons] = useState<ReportReason[]>([]);
 //   const [selectedReasonId, setSelectedReasonId] = useState<number | null>(null);
 //   const [isLoading, setIsLoading] = useState(false);
@@ -112,6 +113,7 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
         customReason: additionalInfo.trim() || undefined,
       });
       toast.success('Thank you for reporting. Our moderation team will review it.');
+      onSuccess?.();
       onClose();
     } catch (error: any) {
       console.error('Failed to submit report', error);

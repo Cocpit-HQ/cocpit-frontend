@@ -95,54 +95,61 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 28, stiffness: 350 }}
-                    className="relative w-full max-w-[300px] bg-ds-surface-2 border border-ds-border rounded-[var(--radius-card-new)] shadow-2xl z-20 flex flex-col p-[16px]"
+                    className="relative w-[300px] bg-ds-bg border border-ds-border rounded-[16px] shadow-2xl z-20 flex flex-col items-center p-[12px] gap-[12px]"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header: Title + Close */}
-                    <div className="flex items-center justify-between w-full mb-[16px]">
-                        <div className="w-[24px]" /> {/* Spacer for centering */}
-                        <h3 className="ds-text-body-1 text-ds-text-primary text-center">
-                            Save
-                        </h3>
+                    {/* Frame 2609536 */}
+                    <div className="w-full flex flex-row justify-end items-center p-0 gap-[10px] h-[20px] shrink-0">
                         <button
                             onClick={onClose}
                             aria-label="Close save modal"
-                            className="flex items-center justify-center w-[24px] h-[24px] rounded-full hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)]"
+                            className="flex items-center justify-center w-[20px] h-[20px] rounded-full hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)]"
                         >
-                            <X className="w-[16px] h-[16px] text-ds-text-secondary" strokeWidth={2} />
+                            <X className="w-[16px] h-[16px] text-ds-text-primary" strokeWidth={2} />
                         </button>
                     </div>
 
-                    {/* General row */}
-                    <button
-                        onClick={() => handleSaveToFolder(null)}
-                        disabled={!!savingToFolderId}
-                        className="w-full flex items-center gap-[12px] px-[8px] py-[8px] hover:bg-ds-surface-1 rounded-[var(--radius-card-new)] transition-colors duration-[var(--motion-quick)] disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                        <div className="w-[20px] h-[20px] flex items-center justify-center flex-shrink-0">
-                            <Icon icon="solar:folder-linear" className="w-[20px] h-[20px] text-ds-text-primary" />
-                        </div>
-                        <span className="ds-text-body text-ds-text-primary flex-1 text-left">General</span>
-                        {savingToFolderId === 'all' ? (
-                            <Loader2 className="w-[16px] h-[16px] text-ds-text-secondary animate-spin flex-shrink-0" />
-                        ) : (
-                            <div className="w-[20px] h-[20px] rounded-full border-[2px] border-ds-border flex-shrink-0" />
-                        )}
-                    </button>
+                    {/* Save */}
+                    <h3 className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary shrink-0 text-center w-[36px] h-[24px]">
+                        Save
+                    </h3>
 
-                    {/* Collection section — only shown when folders exist or are loading */}
-                    {(isLoading || folders.length > 0) && (
-                        <>
-                            {/* Collection label */}
-                            <span className="ds-text-small text-ds-text-muted px-[8px] mt-[12px] mb-[8px]">
-                                Collection
-                            </span>
+                    {/* Frame 2609538 */}
+                    <div className="w-full flex flex-col items-start p-0 gap-[8px] flex-1 overflow-y-auto custom-scrollbar">
+                        {/* Frame 2608718 - General */}
+                        <button
+                            onClick={() => handleSaveToFolder(null)}
+                            disabled={!!savingToFolderId}
+                            className="w-full flex flex-row justify-between items-center p-[8px_12px] gap-[8px] h-[40px] hover:bg-ds-surface-1 rounded-[8px] transition-colors duration-[var(--motion-quick)] disabled:opacity-40 disabled:pointer-events-none shrink-0"
+                        >
+                            {/* Frame 2609537 */}
+                            <div className="flex flex-row items-center p-0 gap-[8px] h-[24px]">
+                                <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
+                                    <Icon icon="solar:folder-linear" className="w-[20px] h-[20px] text-ds-text-primary" />
+                                </div>
+                                <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-ds-text-primary flex items-center">
+                                    General
+                                </span>
+                            </div>
+                            <div className="w-[20px] h-[20px] flex justify-center items-center shrink-0">
+                                {savingToFolderId === 'all' ? (
+                                    <Loader2 className="w-[16px] h-[16px] text-[var(--ds-accent)] animate-spin" />
+                                ) : (
+                                    <div className="w-[20px] h-[20px] border-[1.5px] border-ds-text-muted rounded-full box-border" />
+                                )}
+                            </div>
+                        </button>
 
-                            {/* Folders list */}
-                            <div className="w-full max-h-[160px] overflow-y-auto custom-scrollbar">
+                        {(isLoading || folders.length > 0) && (
+                            <>
+                                {/* Collection */}
+                                <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-secondary shrink-0">
+                                    Collection
+                                </span>
+
                                 {isLoading ? (
-                                    <div className="flex items-center justify-center py-[24px]">
-                                        <Loader2 className="w-[20px] h-[20px] text-ds-text-muted animate-spin" />
+                                    <div className="flex items-center justify-center py-[12px] w-full shrink-0">
+                                        <Loader2 className="w-[20px] h-[20px] text-ds-text-secondary animate-spin" />
                                     </div>
                                 ) : (
                                     folders.map((folder) => (
@@ -150,38 +157,39 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                                             key={folder.folder_id}
                                             onClick={() => handleSaveToFolder(folder.folder_id)}
                                             disabled={!!savingToFolderId}
-                                            className="w-full flex items-center gap-[12px] px-[8px] py-[8px] hover:bg-ds-surface-1 rounded-[var(--radius-card-new)] transition-colors duration-[var(--motion-quick)] disabled:opacity-40 disabled:pointer-events-none"
+                                            className="w-full flex flex-row justify-between items-center p-[8px_12px] gap-[8px] h-[40px] hover:bg-ds-surface-1 rounded-[8px] transition-colors duration-[var(--motion-quick)] disabled:opacity-40 disabled:pointer-events-none shrink-0"
                                         >
-                                            <div className="w-[20px] h-[20px] flex items-center justify-center flex-shrink-0">
-                                                <Icon icon="solar:folder-linear" className="w-[20px] h-[20px] text-ds-text-primary" />
-                                            </div>
-                                            <span className="ds-text-body text-ds-text-primary flex-1 text-left truncate">
-                                                {folder.name}
-                                            </span>
-                                            {savingToFolderId === folder.folder_id ? (
-                                                <Loader2 className="w-[16px] h-[16px] text-ds-text-secondary animate-spin flex-shrink-0" />
-                                            ) : (
-                                                /* Orange filled radio — allowed per AGENTS.md for radio selected */
-                                                <div className="w-[20px] h-[20px] rounded-full border-[2px] border-[var(--ds-accent)] flex items-center justify-center flex-shrink-0">
-                                                    <div className="w-[10px] h-[10px] rounded-full bg-[var(--ds-accent)]" />
+                                            <div className="flex flex-row items-center p-0 gap-[8px] h-[24px] overflow-hidden">
+                                                <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
+                                                    <Icon icon="solar:folder-linear" className="w-[20px] h-[20px] text-ds-text-primary" />
                                                 </div>
-                                            )}
+                                                <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-ds-text-primary flex items-center truncate">
+                                                    {folder.name}
+                                                </span>
+                                            </div>
+                                            <div className="w-[20px] h-[20px] flex justify-center items-center shrink-0">
+                                                {savingToFolderId === folder.folder_id ? (
+                                                    <Loader2 className="w-[16px] h-[16px] text-[var(--ds-accent)] animate-spin" />
+                                                ) : (
+                                                    <div className="w-[20px] h-[20px] border-[1.5px] border-ds-text-muted rounded-full box-border" />
+                                                )}
+                                            </div>
                                         </button>
                                     ))
                                 )}
-                            </div>
-                        </>
-                    )}
+                            </>
+                        )}
+                    </div>
 
-                    {/* + New collection */}
+                    {/* secndary button with icon */}
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="w-full flex items-center gap-[8px] px-[8px] py-[8px] mt-[8px] hover:bg-ds-surface-1 rounded-[var(--radius-card-new)] transition-colors duration-[var(--motion-quick)]"
+                        className="w-full h-[36px] flex flex-row justify-center items-center p-[6px_12px] gap-[10px] border border-ds-border rounded-[100px] hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)] shrink-0"
                     >
-                        <div className="w-[20px] h-[20px] flex items-center justify-center flex-shrink-0">
-                            <Plus className="w-[16px] h-[16px] text-ds-text-primary" strokeWidth={2} />
-                        </div>
-                        <span className="ds-text-secondary text-ds-text-primary">New collection</span>
+                        <Plus className="w-[16px] h-[16px] text-ds-text-primary" strokeWidth={2} />
+                        <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary">
+                            New collection
+                        </span>
                     </button>
                 </motion.div>
 

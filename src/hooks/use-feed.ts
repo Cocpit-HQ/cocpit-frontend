@@ -145,6 +145,19 @@ export const useFeed = (enableInitialFetch = true) => {
     });
   }, [feedQueryKey, queryClient]);
 
+  const removePostFromFeed = useCallback((id: string) => {
+    queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          posts: page.posts.filter((post: Post) => post.id !== id)
+        }))
+      };
+    });
+  }, [feedQueryKey, queryClient]);
+
   const resetSession = useCallback(async () => {
     try {
       await resetFeedSession();
@@ -179,6 +192,7 @@ export const useFeed = (enableInitialFetch = true) => {
     deletePost,
     togglePostVisibility,
     updatePostInFeed,
+    removePostFromFeed,
     resetSession,
     hasMore: !!hasNextPage,
     loading: isLoading || isFetchingNextPage,

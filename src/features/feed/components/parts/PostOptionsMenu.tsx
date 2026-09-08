@@ -16,6 +16,7 @@ interface PostOptionsMenuProps {
   onNotInterested?: () => void;
   isMentioned?: boolean;
   onRemoveMention?: () => void;
+  isReported?: boolean;
 }
 
 export const PostOptionsMenu = ({
@@ -31,6 +32,7 @@ export const PostOptionsMenu = ({
   onNotInterested,
   isMentioned,
   onRemoveMention,
+  isReported,
 }: PostOptionsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -81,39 +83,49 @@ export const PostOptionsMenu = ({
     <div
       ref={menuRef}
       style={menuStyle}
-      className="bg-[#222228] rounded-[8px] p-[12px] flex flex-col items-start gap-[16px] min-w-[107px] shadow-xl border border-[#2B2B36]"
+      className="bg-ds-bg rounded-[8px] p-[12px] flex flex-col items-start gap-[16px] min-w-[107px] shadow-xl border border-ds-border"
     >
       {isMe ? (
         <>
           {onEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); handleAction(onEdit); }}
-              className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
+              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
             >
               Edit post
             </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onMakePrivate); }}
-            className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
+            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
           >
             Make private
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onDelete); }}
-            className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#E5484D] hover:opacity-80 transition-opacity outline-none w-full text-left"
+            className="ds-text-secondary text-[var(--ds-error)] hover:opacity-80 transition-opacity outline-none w-full text-left"
           >
             Delete post
           </button>
         </>
       ) : (
         <>
-          <button
-            onClick={(e) => { e.stopPropagation(); handleAction(onReport); }}
-            className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
-          >
-            Report post
-          </button>
+          {/* Show the disabled 'Reported' text if the post was already reported this session */}
+          {isReported ? (
+            <button
+              disabled
+              className="ds-text-secondary text-ds-text-muted outline-none w-full text-left cursor-default"
+            >
+              Reported
+            </button>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleAction(onReport); }}
+              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
+            >
+              Report post
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onInterested); }}
             className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
