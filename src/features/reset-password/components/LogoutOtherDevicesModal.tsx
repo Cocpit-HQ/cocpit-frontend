@@ -55,7 +55,7 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
     >
       {/* Frame 2609473: Popover Box */}
       <div
-        className="box-border w-[302px] h-[150px] p-[12px] bg-[#030303] border border-[#2C2C33] rounded-[16px] flex flex-col items-center gap-[16px] shadow-2xl font-['DM_Sans',sans-serif]"
+        className="box-border w-[302px] h-[150px] p-[12px] bg-ds-bg border border-ds-border rounded-[16px] flex flex-col items-center gap-[16px] shadow-2xl font-['DM_Sans',sans-serif]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="logout-modal-title"
@@ -65,12 +65,12 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
           {/* Title: Log out of other devices? */}
           <h2
             id="logout-modal-title"
-            className="w-[199px] h-[24px] text-base font-medium font-['DM_Sans'] leading-[24px] text-[#FFECE6] text-center"
+            className="w-[199px] h-[24px] text-base font-medium font-['DM_Sans'] leading-[24px] text-ds-text-primary text-center"
           >
             Log out of other devices?
           </h2>
           {/* Subtitle: Your password has been updated. Would you like to log out of all other devices? */}
-          <p className="w-[276px] h-[40px] text-sm font-normal font-['DM_Sans'] leading-[20px] text-center text-[#B8ADA8]">
+          <p className="w-[276px] h-[40px] text-sm font-normal font-['DM_Sans'] leading-[20px] text-center text-ds-text-secondary">
             Your password will be updated. Would you like to log out of all other devices?
           </p>
         </div>
@@ -82,15 +82,15 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
             type="button"
             disabled={isLoading}
             onClick={() => handleAction(true)}
-            className="box-border w-[134px] h-[36px] px-3 py-1.5 bg-[#EC6229] hover:bg-[#D55825] rounded-[100px] transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+            className="box-border w-[134px] h-[36px] px-3 py-1.5 bg-ds-accent hover:opacity-90 rounded-[100px] transition-opacity flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
             {isLoading && clickedAction === "logout" ? (
               <LoadingIcon
-                className="w-5 h-5 animate-spin-smooth text-[#FFECE6] shrink-0"
+                className="w-5 h-5 animate-spin-smooth text-white shrink-0"
                 style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
               />
             ) : (
-              <span className="text-base font-medium font-['DM_Sans'] leading-[24px] text-[#FFECE6] text-center whitespace-nowrap">
+              <span className="text-base font-medium font-['DM_Sans'] leading-[24px] text-white text-center whitespace-nowrap">
                 Log out
               </span>
               
@@ -102,15 +102,15 @@ export const LogoutOtherDevicesModal: React.FC<LogoutOtherDevicesModalProps> = (
             type="button"
             disabled={isLoading}
             onClick={() => handleAction(false)}
-            className="box-border w-[134px] h-[36px] px-3 py-1.5 border border-[#2C2C33] rounded-[100px] bg-transparent hover:bg-[#1A1A1A] transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
+            className="box-border w-[134px] h-[36px] px-3 py-1.5 border border-ds-border rounded-[100px] bg-transparent hover:bg-ds-surface-1 transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
             {isLoading && clickedAction === "keep" ? (
               <LoadingIcon
-                className="w-5 h-5 animate-spin-smooth text-[#FFECE6] shrink-0"
+                className="w-5 h-5 animate-spin-smooth text-ds-text-primary shrink-0"
                 style={{ animation: "spinSmooth 1.2s ease-in-out infinite" }}
               />
             ) : (
-              <span className="text-base font-medium font-['DM_Sans'] leading-[24px] text-[#FFECE6] text-center whitespace-nowrap">
+              <span className="text-base font-medium font-['DM_Sans'] leading-[24px] text-ds-text-primary text-center whitespace-nowrap">
                 Keep signed in
               </span>
             )}
