@@ -477,7 +477,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full flex flex-col py-[16px] px-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px]">
+    <div className="w-full flex flex-col pt-[16px] px-[16px] pb-0 bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px] relative">
 
       {/* Hidden file input for uploading images & videos */}
       <input
@@ -502,7 +502,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   <span className="text-ds-text-primary text-[11px] font-medium">{initial}</span>
                 )}
               </div>
-              <span className="text-ds-text-primary text-[15px] font-medium">Poll post</span>
+              <span className="font-dmsans text-ds-text-secondary text-[14px] font-medium leading-[20px]">Poll post</span>
             </div>
             <button
               type="button"
@@ -562,7 +562,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
               <button
                 type="button"
                 onClick={poll.addPollOption}
-                className="w-full py-2.5 rounded-full border border-zinc-700/80 hover:bg-zinc-800/40 text-[14px] text-white font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer outline-none mt-1"
+                className="w-full py-2.5 rounded-full border border-ds-border hover:bg-ds-surface-1 font-dmsans text-[16px] leading-[24px] text-ds-text-primary font-medium flex items-center justify-center gap-[8px] transition-colors cursor-pointer outline-none mt-1"
               >
                 <Plus className="w-4 h-4" />
                 Add option
@@ -595,7 +595,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                     }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
                       poll.pollDuration === d
-                        ? 'bg-[#F95B14] text-white font-medium'
+                        ? 'bg-[var(--ds-accent)] text-white font-medium'
                         : 'text-ds-text-primary hover:bg-ds-surface-1'
                     }`}
                   >
@@ -680,121 +680,124 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         </>
       )}
 
-      {/* ── Section 2: Add Location ────────────────────────────────────── */}
-      {showLocationFeature && (
-        location ? (
-          <div className={`flex items-center gap-[8px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
-            <MapPin className="w-[16px] h-[16px] text-[#F95B14] shrink-0" />
-            <span className="bg-transparent ds-text-small text-ds-text-primary truncate">
-              {'formattedAddress' in location ? location.formattedAddress : location.name}
-            </span>
-            <button
-              type="button"
-              onClick={handleLocationToggle}
-              className="ds-text-small text-[#F95B14] hover:underline cursor-pointer shrink-0"
-            >
-              • Change
-            </button>
-            <button
-              onClick={handleLocationClear}
-              className="w-[20px] h-[20px] ml-auto flex items-center justify-center text-ds-text-muted hover:text-[var(--ds-error)] transition-colors duration-[120ms] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
-              aria-label="Clear location"
-            >
-              <X className="w-[16px] h-[16px]" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleLocationToggle}
-            className={`${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'} text-left text-[#F95B14] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#F95B14] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit`}
-            aria-label="Add location"
-          >
-            Add location
-          </button>
-        )
-      )}
-
-      {/* ── Section 3: Bottom Toolbar ──────────────────────────────────── */}
-      <div className={`flex flex-row justify-between items-center w-full mt-2 ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
-        {isEditMode ? (
-          <>
-            <span className="text-white text-[15px] font-medium font-['DM_Sans']">Edit post</span>
-            <div className="flex items-center gap-[12px]">
+      {/* ── Sticky Bottom Action Area: Add Location + Post Toolbar ─────── */}
+      <div className="sticky bottom-16 md:bottom-0 z-20 bg-ds-bg -mx-[16px] px-[16px] pt-2.5 pb-[16px] flex flex-col gap-2 w-[calc(100%+32px)] mt-auto">
+        {/* ── Section 2: Add Location ────────────────────────────────────── */}
+        {showLocationFeature && (
+          location ? (
+            <div className={`flex items-center gap-[8px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
+              <MapPin className="w-[16px] h-[16px] text-[var(--ds-accent)] shrink-0" />
+              <span className="bg-transparent ds-text-small text-ds-text-primary truncate">
+                {'formattedAddress' in location ? location.formattedAddress : location.name}
+              </span>
               <button
                 type="button"
+                onClick={handleLocationToggle}
+                className="ds-text-small text-[var(--ds-accent)] hover:underline cursor-pointer shrink-0"
+              >
+                • Change
+              </button>
+              <button
+                onClick={handleLocationClear}
+                className="w-[20px] h-[20px] ml-auto flex items-center justify-center text-ds-text-muted hover:text-[var(--ds-error)] transition-colors duration-[120ms] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded"
+                aria-label="Clear location"
+              >
+                <X className="w-[16px] h-[16px]" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleLocationToggle}
+              className={`${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'} text-left text-[var(--ds-accent)] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit`}
+              aria-label="Add location"
+            >
+              Add location
+            </button>
+          )
+        )}
+
+        {/* ── Section 3: Bottom Toolbar ──────────────────────────────────── */}
+        <div className={`flex flex-row justify-between items-center w-full mt-1 ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
+          {isEditMode ? (
+            <>
+              <span className="text-white text-[15px] font-medium font-['DM_Sans']">Edit post</span>
+              <div className="flex items-center gap-[12px]">
+                <button
+                  type="button"
+                  onClick={handlePost}
+                  disabled={!canPost || isSubmitting}
+                  className="h-[32px] px-[20px] rounded-full bg-[var(--ds-accent)] text-white text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center cursor-pointer outline-none"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetComposer}
+                  className="h-[32px] px-[16px] rounded-full border border-white/20 text-white text-[14px] font-medium hover:bg-white/5 transition-colors flex items-center justify-center cursor-pointer outline-none"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Media Icons */}
+              <div className="flex flex-row items-center gap-[16px]">
+                {/* Image / Photo */}
+                <button
+                  type="button"
+                  onClick={handleImageClick}
+                  disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
+                  className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
+                    selectedImages.length >= MAX_COMPOSER_IMAGES
+                      ? 'opacity-40 cursor-not-allowed text-ds-text-muted'
+                      : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                  }`}
+                  aria-label="Upload image"
+                  title={selectedImages.length >= MAX_COMPOSER_IMAGES ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})` : 'Add photos'}
+                >
+                  <Icon name="image" className="w-[20px] h-[20px]" />
+                </button>
+
+                {/* Poll */}
+                <button
+                  onClick={handlePollClick}
+                  className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer ${
+                    mode === 'poll' ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-[var(--ds-accent)]'
+                  }`}
+                  aria-label="Create poll"
+                  title="Create poll"
+                >
+                  <Icon name="poll" className="w-[20px] h-[20px]" />
+                </button>
+
+                {/* Article */}
+                <button
+                  onClick={handleArticleClick}
+                  className="w-[40px] h-[40px] flex items-center justify-center text-ds-text-primary hover:text-[var(--ds-accent)] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer"
+                  aria-label="Write article"
+                  title="Write article"
+                >
+                  <Icon name="articles" className="w-[20px] h-[20px]" />
+                </button>
+              </div>
+
+              {/* Post Button */}
+              <button
                 onClick={handlePost}
                 disabled={!canPost || isSubmitting}
-                className="h-[32px] px-[20px] rounded-full bg-[#F95B14] text-white text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center cursor-pointer outline-none"
-              >
-                {isSubmitting ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                type="button"
-                onClick={resetComposer}
-                className="h-[32px] px-[16px] rounded-full border border-white/20 text-white text-[14px] font-medium hover:bg-white/5 transition-colors flex items-center justify-center cursor-pointer outline-none"
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Media Icons */}
-            <div className="flex flex-row items-center gap-[16px]">
-              {/* Image / Photo */}
-              <button
-                type="button"
-                onClick={handleImageClick}
-                disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
-                className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
-                  selectedImages.length >= MAX_COMPOSER_IMAGES
-                    ? 'opacity-40 cursor-not-allowed text-ds-text-muted'
-                    : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+                  canPost && !isSubmitting
+                    ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
+                    : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
                 }`}
-                aria-label="Upload image"
-                title={selectedImages.length >= MAX_COMPOSER_IMAGES ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})` : 'Add photos'}
+                aria-label="Publish post"
               >
-                <Icon name="image" className="w-[20px] h-[20px]" />
+                {isSubmitting ? 'Publishing...' : 'Post'}
               </button>
-
-              {/* Poll */}
-              <button
-                onClick={handlePollClick}
-                className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer ${
-                  mode === 'poll' ? 'text-[#F95B14]' : 'text-ds-text-primary hover:text-[var(--ds-accent)]'
-                }`}
-                aria-label="Create poll"
-                title="Create poll"
-              >
-                <Icon name="poll" className="w-[20px] h-[20px]" />
-              </button>
-
-              {/* Article */}
-              <button
-                onClick={handleArticleClick}
-                className="w-[40px] h-[40px] flex items-center justify-center text-ds-text-primary hover:text-[var(--ds-accent)] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer"
-                aria-label="Write article"
-                title="Write article"
-              >
-                <Icon name="articles" className="w-[20px] h-[20px]" />
-              </button>
-            </div>
-
-            {/* Post Button */}
-            <button
-              onClick={handlePost}
-              disabled={!canPost || isSubmitting}
-              className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
-                canPost && !isSubmitting
-                  ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
-                  : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
-              }`}
-              aria-label="Publish post"
-            >
-              {isSubmitting ? 'Publishing...' : 'Post'}
-            </button>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Location Selector Dialog */}

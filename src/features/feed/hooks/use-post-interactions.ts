@@ -210,11 +210,16 @@ export const usePostInteractions = (props: FeedPostProps) => {
     }
   }, [isCompany, activeProfile?.id, session?.user?.id]);
 
+  const onShareUpdated = useCallback((data: { postId: string; externalShareCount: number }) => {
+    setExternalShareCount(data.externalShareCount);
+  }, []);
+
   usePostSync(
     id,
     {
       onLikeUpdated,
       onCommentAdded,
+      onShareUpdated,
     },
     true // manageRoom = true at the post level
   );

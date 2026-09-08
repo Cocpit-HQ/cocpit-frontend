@@ -97,14 +97,22 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         adjustHeight();
+
+        const currentText = e.target.value;
+        const remainingUsers = selectedUsers.filter(u => currentText.includes(u.full_name));
+        if (remainingUsers.length !== selectedUsers.length) {
+            setSelectedUsers(remainingUsers);
+            setMentionedNames(remainingUsers.map(u => u.full_name));
+            if (onMentionsChange) onMentionsChange(remainingUsers);
+        }
+
         onChange(e);
 
         const cursor = e.target.selectionStart;
-        const text = e.target.value;
-        const textBeforeCursor = text.substring(0, cursor);
+        const textBeforeCursor = currentText.substring(0, cursor);
 
-        const mentionMatch = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
-        const hashtagMatch = textBeforeCursor.match(/(?:^|\s)#([a-zA-Z0-9_]*)$/);
+        const mentionMatch = textBeforeCursor.match(/(?:^|[\s\u200B])@([a-zA-Z0-9_]*)$/);
+        const hashtagMatch = textBeforeCursor.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/);
 
         if (mentionMatch || hashtagMatch) {
             const coords = getCaretCoordinates(e.target, cursor);
@@ -128,6 +136,73 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const el = textareaRef.current;
+
+        // Atomic mention deletion on Backspace
+        if (e.key === 'Backspace' && el && el.selectionStart === el.selectionEnd) {
+            const cursor = el.selectionStart;
+            const textBefore = value.substring(0, cursor);
+
+            const lastMarkerIdx = textBefore.lastIndexOf('\u200B');
+            if (lastMarkerIdx !== -1) {
+                const mentionSegment = textBefore.substring(lastMarkerIdx);
+                if (!mentionSegment.includes('\n')) {
+                    const textFromMarker = value.substring(lastMarkerIdx);
+                    const allKnownNames = Array.from(new Set([
+                        ...mentionedNames,
+                        ...selectedUsers.map(u => u.full_name).filter(Boolean)
+                    ]));
+
+                    let mentionEndPos = -1;
+                    let matchedName = '';
+
+                    for (const name of allKnownNames) {
+                        if (textFromMarker.startsWith(`\u200B${name} `)) {
+                            mentionEndPos = lastMarkerIdx + name.length + 2;
+                            matchedName = name;
+                            break;
+                        } else if (textFromMarker.startsWith(`\u200B${name}`)) {
+                            mentionEndPos = lastMarkerIdx + name.length + 1;
+                            matchedName = name;
+                            break;
+                        }
+                    }
+
+                    if (mentionEndPos === -1) {
+                        const genericMatch = textFromMarker.match(/^\u200B[^\s\u200B]+ ?/);
+                        if (genericMatch) {
+                            mentionEndPos = lastMarkerIdx + genericMatch[0].length;
+                        } else {
+                            mentionEndPos = lastMarkerIdx + 1;
+                        }
+                    }
+
+                    if (cursor >= lastMarkerIdx && cursor <= mentionEndPos) {
+                        e.preventDefault();
+                        const newValue = value.substring(0, lastMarkerIdx) + value.substring(mentionEndPos);
+
+                        if (matchedName) {
+                            const nextUsers = selectedUsers.filter(u => u.full_name !== matchedName);
+                            setSelectedUsers(nextUsers);
+                            setMentionedNames(prev => prev.filter(n => n !== matchedName));
+                            if (onMentionsChange) onMentionsChange(nextUsers);
+                        }
+
+                        const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+                        onChange(event);
+
+                        setTimeout(() => {
+                            if (textareaRef.current) {
+                                textareaRef.current.setSelectionRange(lastMarkerIdx, lastMarkerIdx);
+                                textareaRef.current.focus();
+                            }
+                        }, 0);
+                        return;
+                    }
+                }
+            }
+        }
+
         const handled = mentionKeyDown(e, onSelect);
         if (!handled && props.onKeyDown) {
             props.onKeyDown(e);
@@ -143,7 +218,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         const textBefore = value.substring(0, cursor);
         const textAfter = value.substring(cursor);
         
-        const match = textBefore.match(/(?:^|\s)@([a-zA-Z0-9._ ]*)$/);
+        const match = textBefore.match(/(?:^|[\s\u200B])@([a-zA-Z0-9._ ]*)$/);
         if (match) {
             const baseLeft = textBefore.substring(0, match.index! + match[0].indexOf('@'));
             const content = format === 'full' ? user.full_name : user.full_name; // Force full name
@@ -184,7 +259,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         const textBefore = value.substring(0, cursor);
         const textAfter = value.substring(cursor);
         
-        const match = textBefore.match(/(?:^|\s)#([a-zA-Z0-9_]*)$/);
+        const match = textBefore.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/);
         if (match) {
             const baseLeft = textBefore.substring(0, match.index! + match[0].indexOf('#'));
             const injected = `#${tag.tag} `;
@@ -214,17 +289,17 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         ]));
         const escapedNames = allKnownNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
         const nameRegexPart = escapedNames.length > 0 ? `\u200B(?:${escapedNames.join('|')})|` : '';
-        const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\)|@[a-zA-Z0-9_.]+)`, 'g');
+        const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\))`, 'g');
 
         const parts = text.split(regex);
         return (
             <>
                 {parts.map((part, i) => {
-                    if (part.startsWith('@') || part.startsWith('\u200B')) {
+                    if (part.startsWith('\u200B') || part.startsWith('@[')) {
                         return (
                             <span 
                                 key={i} 
-                                className="mention-token text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
+                                className="mention-token text-[var(--ds-accent)] !text-[var(--ds-accent)]"
                                 style={{ color: 'var(--ds-accent)' }}
                             >
                                 {part}

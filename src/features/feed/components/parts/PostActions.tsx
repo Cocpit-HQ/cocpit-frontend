@@ -13,6 +13,7 @@ interface PostActionsProps {
   commentsCount: number;
   handleToggleCommentSection: () => void;
   shares: string | number;
+  externalShares?: string | number;
   handleShare: () => void;
   handleRepostWithThoughts: () => void;
   handleDirectRepost: () => void;
@@ -27,7 +28,7 @@ interface PostActionsProps {
 export const PostActions = ({
   id, isLiked, likeCount, handleLike,
   isCommentSectionOpen, isCommented, commentsCount, handleToggleCommentSection,
-  shares, handleShare, handleRepostWithThoughts, handleDirectRepost, isReposted, isSaved, setIsSaved, handleSaveToggle,
+  shares, externalShares, handleShare, handleRepostWithThoughts, handleDirectRepost, isReposted, isSaved, setIsSaved, handleSaveToggle,
   onShowLikes, isSharedPost
 }: PostActionsProps) => {
   return (
@@ -82,9 +83,13 @@ export const PostActions = ({
           <button
             onClick={(e) => { e.stopPropagation(); handleShare(); }}
             className="flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded text-ds-text-primary hover:text-ds-text-secondary"
+            aria-label="Share post"
           >
             <Icon name="share" className="w-[20px] h-[20px]" />
           </button>
+          <span className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-center text-ds-text-primary">
+            {externalShares}
+          </span>
         </div>
       </div>
 

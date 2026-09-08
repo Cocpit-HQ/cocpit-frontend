@@ -237,7 +237,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         sampleLikerUsername: ((sp as any).liked_users && (sp as any).liked_users.length > 0) ? (sp as any).liked_users[0].username : null,
         comments: (sp.comment_count || 0).toString(),
         shares: (sp.share_count || 0).toString(),
-        externalShares: sp.external_share_count || 0,
+        externalShares: sp.external_share_count,
         poll: spPoll,
         authorSlug: sp.author.author_slug,
         isCompanyPost: sp.author.is_organization_post,
@@ -289,7 +289,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     likedUsers: backendPost.liked_users || [],
     comments: (backendPost.comment_count || 0).toString(),
     shares: (backendPost.share_count || 0).toString(),
-    externalShares: backendPost.external_share_count || 0,
+    externalShares: backendPost.external_share_count,
     commentData: [], // Backend doesn't provide comments in feed list
     category: (backendPost.category_name as any) || undefined,
     visibility: backendPost.visibility,

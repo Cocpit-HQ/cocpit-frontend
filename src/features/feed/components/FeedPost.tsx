@@ -76,7 +76,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const {
     isLiked, likeCount, isCommented, isSaved, isReposted, pollData, commentCount, shareCount, externalShareCount,
     isVoting, handleLike, handleVote, setIsSaved, setIsCommented, handleRepostToggle, setShareCount,
-    repostId
+    repostId, incrementExternalShareCount
   } = usePostInteractions(interactionTargetProps as any);
 
   const {
@@ -154,16 +154,6 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   const isVideoFeedCard = !!videoSrc && !props.isFullContent;
-
-  const handlePostClick = (e: React.MouseEvent) => {
-    if (props.isFullContent) return;
-    
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
-      return;
-    }
-    router.push(`/post/${id}`);
-  };
 
   const isCompanyProfile = activeProfile?.type === 'COMPANY';
   const currentUserHandle = isCompanyProfile
@@ -247,10 +237,7 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   return (
-    <div 
-      className="w-full flex flex-col pt-[16px] pb-[8px] gap-[12px] bg-ds-bg border-b border-ds-border/40 max-w-[442px] mx-auto cursor-pointer"
-      onClick={handlePostClick}
-    >
+    <div className="w-full flex flex-col pt-[16px] pb-[8px] gap-[12px] bg-ds-bg border-b border-ds-border/40 max-w-[442px] mx-auto">
       {isRepostWithoutThoughts && shared_post && (
         <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
           <RepostIcon size={12} className="w-[12px] h-[12px] shrink-0 flex-none text-ds-text-secondary" />
@@ -284,7 +271,7 @@ export const FeedPost = (props: FeedPostProps) => {
           setOptionsPos={setOptionsPos}
           content={targetContent}
           isExpanded={isExpanded}
-          onToggleExpand={() => setIsExpanded(!isExpanded)}
+          onToggleExpand={() => router.push(`/post/${id}`)}
         />
       ) : (
         <>
@@ -307,14 +294,16 @@ export const FeedPost = (props: FeedPostProps) => {
             setOptionsPos={setOptionsPos}
           />
 
-          {/* Body */}
-          <PostBody
-            content={targetContent}
-            author={targetAuthor}
-            authorSlug={targetAuthorSlug}
-            isExpanded={isExpanded}
-            onToggleExpand={() => setIsExpanded(!isExpanded)}
-          />
+          {/* Body (for non-video posts, context sits above media) */}
+          {!targetVideoSrc && (
+            <PostBody
+              content={targetContent}
+              author={targetAuthor}
+              authorSlug={targetAuthorSlug}
+              isExpanded={isExpanded}
+              onToggleExpand={() => setIsExpanded(!isExpanded)}
+            />
+          )}
 
           {!isRepostWithoutThoughts && shared_post && (
             <div className="px-4 md:px-5">
@@ -342,6 +331,17 @@ export const FeedPost = (props: FeedPostProps) => {
               sampleLikerUsername={targetSampleLikerUsername ?? undefined}
               likedUsers={targetLikedUsers}
               viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+            />
+          )}
+
+          {/* Body (for video posts, context sits below video) */}
+          {!!targetVideoSrc && (
+            <PostBody
+              content={targetContent}
+              author={targetAuthor}
+              authorSlug={targetAuthorSlug}
+              isExpanded={isExpanded}
+              onToggleExpand={() => setIsExpanded(!isExpanded)}
             />
           )}
         </>
@@ -411,6 +411,7 @@ export const FeedPost = (props: FeedPostProps) => {
         commentsCount={commentCount}
         handleToggleCommentSection={handleToggleCommentSection}
         shares={shareCount}
+        externalShares={externalShareCount}
         handleShare={handleShare}
         handleRepostWithThoughts={handleRepostWithThoughts}
         handleDirectRepost={handleDirectRepost}
@@ -459,6 +460,11 @@ export const FeedPost = (props: FeedPostProps) => {
           postId={id.toString()}
           entityType={isArticlePost ? "article" : "post"}
           entityId={id.toString()}
+          onShare={(selectedIds) => {
+            if (selectedIds.length > 0) {
+              incrementExternalShareCount(selectedIds.length);
+            }
+          }}
         />
       )}
 

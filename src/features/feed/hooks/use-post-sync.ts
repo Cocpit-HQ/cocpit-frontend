@@ -7,6 +7,7 @@ export function usePostSync(
         onLikeUpdated?: (data: { postId: string; liked: boolean; likeCount: number; liker: any }) => void;
         onCommentAdded?: (data: { postId: string; comment: any }) => void;
         onCommentLikeUpdated?: (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => void;
+        onShareUpdated?: (data: { postId: string; externalShareCount: number }) => void;
     },
     manageRoom: boolean = false
 ) {
@@ -49,14 +50,22 @@ export function usePostSync(
             }
         };
 
+        const handleShareUpdated = (data: { postId: string; externalShareCount: number }) => {
+            if (data.postId === roomId) {
+                callbacksRef.current.onShareUpdated?.(data);
+            }
+        };
+
         socket.on('post_like_updated', handleLikeUpdated);
         socket.on('post_comment_added', handleCommentAdded);
         socket.on('post_comment_like_updated', handleCommentLikeUpdated);
+        socket.on('post_share_updated', handleShareUpdated);
 
         return () => {
             socket.off('post_like_updated', handleLikeUpdated);
             socket.off('post_comment_added', handleCommentAdded);
             socket.off('post_comment_like_updated', handleCommentLikeUpdated);
+            socket.off('post_share_updated', handleShareUpdated);
 
             if (manageRoom) {
                 socket.emit('leavePost', { postId: roomId });

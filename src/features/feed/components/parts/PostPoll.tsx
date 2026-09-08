@@ -52,7 +52,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
     <div className="w-full flex flex-col justify-start items-start gap-3 select-none" onClick={(e) => e.stopPropagation()}>
       {/* Poll Title / Question */}
       {title && (
-        <div className="w-full text-left text-ds-text-primary text-[15px] font-semibold leading-[22px] whitespace-pre-wrap">
+        <div className="w-full text-left text-ds-text-primary ds-text-secondary-1 text-[14px] leading-[20px] font-medium font-['DM_Sans'] whitespace-pre-wrap">
           {title}
         </div>
       )}
@@ -91,12 +91,12 @@ export const PostPoll: React.FC<PostPollProps> = ({
                 />
 
                 {/* Option Label */}
-                <span className="relative z-10 text-[14px] font-medium text-white truncate max-w-[80%]">
+                <span className="relative z-10 text-[12px] leading-[16px] ds-text-small text-ds-text-primary truncate max-w-[80%]">
                   {option.option_text}
                 </span>
 
                 {/* Percentage */}
-                <span className="relative z-10 text-[14px] font-medium text-zinc-300 shrink-0">
+                <span className="relative z-10 text-[12px] leading-[16px] ds-text-small text-ds-text-secondary shrink-0">
                   {percentage} %
                 </span>
               </button>
@@ -110,7 +110,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
               type="button"
               onClick={() => !isDisabled && handleVote(option.option_id)}
               disabled={isDisabled}
-              className={`w-full h-[46px] px-5 rounded-full border border-zinc-700/80 bg-transparent hover:bg-zinc-800/40 text-left text-[14px] text-white font-medium transition-all duration-150 flex items-center justify-start select-none outline-none ${
+              className={`w-full h-[46px] px-5 rounded-full border border-zinc-700/80 bg-transparent hover:bg-zinc-800/40 text-left ds-text-small text-ds-text-primary transition-all duration-150 flex items-center justify-start select-none outline-none ${
                 !isDisabled
                   ? 'cursor-pointer active:scale-[0.99]'
                   : 'cursor-default opacity-60'
@@ -123,12 +123,13 @@ export const PostPoll: React.FC<PostPollProps> = ({
       </div>
 
       {/* Footer Info: Vote Count • Duration • Show result / Undo */}
-      <div className="w-full flex items-center justify-start gap-1.5 text-ds-text-muted text-[13px] leading-[18px] pt-0.5">
+      <div className="w-full flex items-center justify-start gap-1.5 text-ds-text-secondary ds-text-small pt-0.5">
         {isOwner && postId ? (
           <button
             type="button"
             onClick={() => setIsVotersModalOpen(true)}
-            className="text-[#F95B14] no-underline hover:no-underline hover:opacity-80 cursor-pointer font-normal outline-none transition-opacity"
+            className="ds-text-small-1 text-[var(--ds-accent)] no-underline hover:no-underline hover:opacity-80 cursor-pointer outline-none focus-visible:underline transition-opacity"
+            aria-label="View poll voters"
           >
             {isEnded ? 'Ended' : `${pollData.total_votes || 0} votes`}
           </button>
@@ -146,7 +147,8 @@ export const PostPoll: React.FC<PostPollProps> = ({
             type="button"
             onClick={() => !isVoting && pollData.user_vote && handleVote(pollData.user_vote)}
             disabled={isVoting}
-            className="text-[#F95B14] no-underline hover:no-underline hover:opacity-80 cursor-pointer font-normal outline-none transition-opacity"
+            className="ds-text-small-1 text-[var(--ds-accent)] no-underline hover:no-underline hover:opacity-80 cursor-pointer outline-none focus-visible:underline transition-opacity"
+            aria-label="Undo vote"
           >
             Undo
           </button>
@@ -154,7 +156,8 @@ export const PostPoll: React.FC<PostPollProps> = ({
           <button
             type="button"
             onClick={() => setShowResult((prev) => !prev)}
-            className="text-[#F95B14] no-underline hover:no-underline hover:opacity-80 cursor-pointer font-normal outline-none transition-opacity"
+            className="ds-text-small-1 text-[var(--ds-accent)] no-underline hover:no-underline hover:opacity-80 cursor-pointer outline-none focus-visible:underline transition-opacity"
+            aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
           >
             {showResult ? 'Hide result' : 'Show result'}
           </button>
@@ -163,7 +166,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
         {isVoting && (
           <div className="ml-2 flex items-center">
             <svg
-              className="animate-spin h-3.5 w-3.5 text-[#F95B14]"
+              className="animate-spin h-3.5 w-3.5 text-[var(--ds-accent)]"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

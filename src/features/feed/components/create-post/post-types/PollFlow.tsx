@@ -36,7 +36,7 @@ const PollFlow = ({
     <div className={`space-y-5 ${isMobile ? '' : ''}`}>
       {/* Question / Title Field */}
       <div className="space-y-2">
-        <label className="text-[13.5px] font-normal text-foreground font-poppins">
+        <label className="text-ds-text-secondary text-[14px] font-medium leading-[20px]">
           Title
         </label>
         <input
@@ -44,13 +44,13 @@ const PollFlow = ({
           value={pollQuestion}
           onChange={(e) => onQuestionChange(e.target.value)}
           placeholder="What would you like to ask your network?"
-          className="w-full px-4 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-zinc-200 dark:border-zinc-700 backdrop-blur-md text-[14.5px] text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-poppins"
+          className="w-full px-4 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-ds-border backdrop-blur-md text-[14px] font-medium leading-[20px] text-ds-text-secondary placeholder:text-ds-text-muted focus:outline-none focus:ring-1 focus:ring-[var(--ds-accent)]/30 transition-all"
         />
       </div>
 
       {/* Options Fields */}
       <div className="space-y-3">
-        <label className="text-[13.5px] font-normal text-foreground font-poppins">
+        <label className="text-ds-text-secondary text-[14px] font-medium leading-[20px]">
           Options
         </label>
         <div className="space-y-2.5">
@@ -61,7 +61,7 @@ const PollFlow = ({
                 value={option.text}
                 onChange={(e) => onUpdateOption(option.id, e.target.value)}
                 placeholder={optionLetters[index] ? `Option ${optionLetters[index]}` : `Option ${index + 1}`}
-                className="w-full px-4 py-3 pr-12 rounded-2xl bg-white/10 dark:bg-white/5 border border-zinc-200 dark:border-zinc-700 backdrop-blur-md text-[14.5px] text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-poppins"
+                className="w-full px-4 py-3 pr-12 rounded-2xl bg-white/10 dark:bg-white/5 border border-ds-border backdrop-blur-md text-[14px] font-medium leading-[20px] text-ds-text-secondary placeholder:text-ds-text-muted focus:outline-none focus:ring-1 focus:ring-[var(--ds-accent)]/30 transition-all"
               />
               {!isEdit && pollOptions.length > 2 && (
                 <button 
@@ -81,7 +81,7 @@ const PollFlow = ({
           <button
             type="button"
             onClick={onAddOption}
-            className="flex items-center gap-1.5 text-sm font-semibold text-[#818CF8] hover:text-[#6366F1] px-4 py-2 border border-[#818CF8] rounded-full bg-card hover:bg-[#EEF2FF] dark:hover:bg-secondary transition-all w-fit font-poppins mt-1"
+            className="flex items-center gap-[8px] font-dmsans text-[16px] font-medium leading-[24px] text-ds-text-primary px-4 py-2 border border-ds-border rounded-full bg-transparent hover:bg-ds-surface-1 transition-all w-fit mt-1 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             Add option
@@ -91,14 +91,14 @@ const PollFlow = ({
 
       {/* Duration Dropdown Select */}
       <div className="space-y-2">
-        <label className="text-[13.5px] font-normal text-foreground font-poppins">
+        <label className="text-ds-text-secondary text-[14px] font-medium leading-[20px]">
           Poll duration
         </label>
         <div className="relative">
           <button
             type="button"
             onClick={() => setDurationOpen((open) => !open)}
-            className="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-transparent text-[14.5px] text-black dark:text-white focus:outline-none transition-all font-poppins flex items-center justify-between"
+            className="w-full px-4 py-3 rounded-2xl border border-ds-border bg-transparent text-[14px] font-medium leading-[20px] text-ds-text-secondary focus:outline-none transition-all flex items-center justify-between"
           >
             <span>{pollDuration}</span>
             <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-300" />

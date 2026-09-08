@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { X, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { CloseCrossIcon } from '@/components/icons';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { getPollAnalytics } from '@/services/api/posts';
 import { PollOptionItem } from '../parts/PostPoll';
@@ -15,6 +16,11 @@ interface VoterItem {
   full_name?: string;
   account_name?: string;
   avatar_url?: string;
+  profile_image?: string;
+  avatar?: string;
+  logo_url?: string;
+  image?: string;
+  company_logo?: string;
   headline?: string;
   option_id?: string;
   option_text?: string;
@@ -33,12 +39,12 @@ const VoterAvatar: React.FC<{ avatarUrl?: string; name: string }> = ({ avatarUrl
   const hasValidAvatar = !!avatarUrl && avatarUrl !== '/assets/pngegg.png' && !imgError;
 
   return (
-    <div className="relative w-9 h-9 rounded-full overflow-hidden bg-[#2D2E36] flex items-center justify-center text-white text-sm font-semibold shrink-0 border border-zinc-700/50 select-none">
+    <div className="relative w-[20px] h-[20px] rounded-[100px] overflow-hidden bg-ds-surface-1 flex items-center justify-center text-ds-text-primary text-[10px] font-medium shrink-0 flex-none select-none">
       {hasValidAvatar ? (
         <img
           src={avatarUrl}
           alt={name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-[100px]"
           onError={() => setImgError(true)}
         />
       ) : (
@@ -106,36 +112,40 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
 
         {/* Content */}
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[50%] z-[101] w-full max-w-[420px] translate-x-[-50%] translate-y-[-50%] rounded-[20px] border border-zinc-800 bg-[#212127] p-6 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-none"
+          className="fixed left-[50%] top-[50%] z-[101] w-full max-w-[420px] translate-x-[-50%] translate-y-[-50%] rounded-[20px] border border-ds-border bg-ds-surface-2 p-[12px] pb-[12px] shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-none font-dmsans flex flex-col gap-[12px]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="relative flex items-center justify-center pb-5 mb-2 border-b border-zinc-800/60">
-            <DialogPrimitive.Title className="text-[17px] font-semibold text-white tracking-wide">
+          <div className="flex flex-col gap-[12px]">
+            {/* Close row — right-aligned */}
+            <div className="flex flex-row justify-end items-center h-[20px]">
+              <DialogPrimitive.Close
+                onClick={onClose}
+                className="text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none focus:outline-none cursor-pointer"
+                aria-label="Close"
+              >
+                <CloseCrossIcon className="w-5 h-5" />
+              </DialogPrimitive.Close>
+            </div>
+            {/* Title — centered */}
+            <DialogPrimitive.Title className="font-dmsans text-[16px] font-medium leading-[24px] text-ds-text-primary text-center">
               Voters list
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close
-              onClick={onClose}
-              className="absolute right-0 top-0 p-1 text-zinc-400 hover:text-white rounded-full transition-colors outline-none focus:outline-none cursor-pointer"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </DialogPrimitive.Close>
           </div>
 
           {/* Body with hidden scrollbar */}
-          <div className="max-h-[360px] overflow-y-auto flex flex-col gap-3.5 pr-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="max-h-[360px] overflow-y-auto flex flex-col gap-[8px] pr-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12 text-zinc-400 gap-2.5">
-                <Loader2 className="w-6 h-6 animate-spin text-[#F95B14]" />
-                <span className="text-[13px] font-medium">Loading voters...</span>
+              <div className="flex flex-col items-center justify-center py-12 text-ds-text-muted gap-2.5">
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--ds-accent)]" />
+                <span className="font-dmsans text-[13px] font-medium">Loading voters...</span>
               </div>
             ) : error ? (
-              <div className="text-center py-8 text-zinc-400 text-sm">
+              <div className="text-center py-8 text-ds-text-muted text-sm font-dmsans">
                 {error}
               </div>
             ) : voters.length === 0 ? (
-              <div className="text-center py-10 text-zinc-400 text-sm">
+              <div className="text-center py-10 text-ds-text-muted text-sm font-dmsans">
                 No votes recorded yet.
               </div>
             ) : (
@@ -147,11 +157,18 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
                   ? `/organization/${profileSlug}`
                   : `/profile/${profileSlug}`;
                 const optionLabel = getOptionLabel(voter);
+                const avatarUrl =
+                  voter.avatar_url ||
+                  voter.profile_image ||
+                  voter.avatar ||
+                  voter.logo_url ||
+                  voter.image ||
+                  voter.company_logo;
 
                 return (
                   <div
                     key={voter.id || `${voter.user_id || voter.org_id}-${index}`}
-                    className="flex items-center justify-between gap-3 py-0.5"
+                    className="flex flex-row justify-between items-center gap-[8px] h-[36px] w-full self-stretch"
                   >
                     {/* User / Company Info (Avatar + Name) */}
                     <Link
@@ -160,18 +177,18 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
                         e.stopPropagation();
                         onClose();
                       }}
-                      className="flex items-center gap-3 min-w-0 group hover:opacity-90 transition-opacity"
+                      className="flex flex-row items-center gap-[8px] h-[20px] min-w-0 group hover:opacity-90 transition-opacity"
                     >
-                      <VoterAvatar avatarUrl={voter.avatar_url} name={name} />
+                      <VoterAvatar avatarUrl={avatarUrl} name={name} />
 
                       {/* Name */}
-                      <span className="text-[14px] font-medium text-white group-hover:text-zinc-200 truncate">
+                      <span className="font-dmsans text-[14px] font-normal leading-[20px] text-ds-text-primary group-hover:text-ds-text-secondary truncate">
                         {name}
                       </span>
                     </Link>
 
                     {/* Voted Option Label on Right */}
-                    <span className="text-[14px] font-medium text-zinc-300 shrink-0 select-none">
+                    <span className="font-dmsans text-[14px] font-normal leading-[20px] text-white shrink-0 select-none">
                       {optionLabel}
                     </span>
                   </div>

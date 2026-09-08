@@ -249,11 +249,17 @@ export default function CocpitShareModel({
   const shareOptions = useMemo(() => {
     const trackShare = () => {
       if (postId) {
-        universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" }).catch(() => {});
+        universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" })
+          .then(() => onShare?.(["share"]))
+          .catch(() => {});
       } else if (effectiveJobId) {
-        universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" }).catch(() => {});
+        universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" })
+          .then(() => onShare?.(["share"]))
+          .catch(() => {});
       } else if (effectiveEntityType && effectiveEntityId) {
-        universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId, shareMethod: "copy_link" }).catch(() => {});
+        universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId, shareMethod: "copy_link" })
+          .then(() => onShare?.(["share"]))
+          .catch(() => {});
       }
     };
 
@@ -413,7 +419,9 @@ export default function CocpitShareModel({
                    navigator.clipboard.writeText(shareUrl);
                    toast.success("Link copied!");
                    if (postId || effectiveJobId || (effectiveEntityType && effectiveEntityId)) {
-                     universalShare({ entityType: (postId ? 'post' : effectiveJobId ? 'job' : effectiveEntityType) as any, entityId: (postId || effectiveJobId || effectiveEntityId) as string, shareMethod: "copy_link" }).catch(() => {});
+                     universalShare({ entityType: (postId ? 'post' : effectiveJobId ? 'job' : effectiveEntityType) as any, entityId: (postId || effectiveJobId || effectiveEntityId) as string, shareMethod: "copy_link" })
+                       .then(() => onShare?.(["copy_link"]))
+                       .catch(() => {});
                    }
                 }}
               >

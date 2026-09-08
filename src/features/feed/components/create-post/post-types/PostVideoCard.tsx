@@ -66,15 +66,12 @@ export const PostVideoCard = ({
   const dummyBtnRef = React.useRef<HTMLButtonElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted] = useState(true);
 
-  const togglePlay = (e?: React.MouseEvent) => {
+  const handleVideoClick = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play().catch(() => {});
+    if (id && id !== 'preview') {
+      router.push(`/post/${id}`);
     }
   };
 
@@ -85,7 +82,7 @@ export const PostVideoCard = ({
         aspectRatio: finalAspectRatio || '4/5',
         maxHeight: '589px'
       }}
-      onClick={togglePlay}
+      onClick={handleVideoClick}
     >
       {/* Video Element */}
       <video
@@ -97,7 +94,7 @@ export const PostVideoCard = ({
         onLoadedMetadata={onLoad}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover cursor-pointer"
       />
 
       {/* Top Header Overlay */}
@@ -147,8 +144,15 @@ export const PostVideoCard = ({
 
       {/* Bottom Content & Controls Overlay */}
       <div 
-        className="absolute bottom-0 inset-x-0 pb-3 pt-10 px-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-20 pointer-events-auto flex flex-col gap-2"
-        onClick={(e) => e.stopPropagation()}
+        className="absolute bottom-0 inset-x-0 pb-3 pt-10 px-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-20 pointer-events-auto flex flex-col gap-2 cursor-pointer"
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('a') || target.closest('button') || target.closest('[role="button"]')) {
+            e.stopPropagation();
+            return;
+          }
+          handleVideoClick(e);
+        }}
       >
         {/* Caption */}
         {content && (
