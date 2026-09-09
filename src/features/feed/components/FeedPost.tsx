@@ -413,8 +413,8 @@ export const FeedPost = (props: FeedPostProps) => {
             setOptionsPos={setOptionsPos}
           />
 
-          {/* Body (for non-video posts, context sits above media) */}
-          {!targetVideoSrc && (
+          {/* Body (for non-video and non-poll posts, context sits above media) */}
+          {!targetVideoSrc && !pollData && (
             <PostBody
               content={targetContent}
               author={targetAuthor}
@@ -471,6 +471,7 @@ export const FeedPost = (props: FeedPostProps) => {
         <PostPoll
           pollData={pollData}
           postId={id}
+          title={props.title || targetTitle || targetContent || (pollData as any)?.question || (pollData as any)?.poll_question}
           isOwner={activeProfile?.type === 'COMPANY' ? Boolean(props.isCompanyPost && activeProfile?.id?.toString() === props.authorId?.toString()) : (currentUserId === props.authorId?.toString())}
           isVoting={isVoting}
           handleVote={(optionId) => handleVote(optionId, isCompany, activeProfile?.id)}
