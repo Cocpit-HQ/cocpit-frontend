@@ -21,7 +21,6 @@ const CreateStoryForm = dynamic(
   { ssr: false }
 )
 
-import { useScrollRestoration } from '@/hooks/use-scroll-restoration';
 import { useFeed } from '@/hooks/use-feed';
 import { useFeedUIStore } from '@/store/feed.store'
 import { useUIStore } from '@/store/ui.store';
@@ -31,9 +30,6 @@ import InlineArticleEditor from '@/features/feed/components/create-post/shared/I
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const { loading: isFeedLoading } = useFeed(true);
-
-  // Render control: Block scroll setting until Feed Data is verified and DOM is rendered (mounted)
-  useScrollRestoration(mounted && !isFeedLoading);
 
   const { activeTab, setActiveTab } = useFeedUIStore();
   const { isArticleMode } = useUIStore();

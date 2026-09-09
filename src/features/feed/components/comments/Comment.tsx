@@ -225,7 +225,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
             {/* ORIGINAL: <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span> */}
             <span className="ds-text-meta text-ds-text-secondary">{timeAgo}</span>
             {!isPending && (
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     aria-label="More options"

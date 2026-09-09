@@ -39,10 +39,10 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
   } finally {
     clearInMemorySession();
 
-    // 3. Clear all local storage auth-related artifacts
+    // 3. Clear all storage auth-related artifacts & scroll memories
     if (typeof window !== "undefined") {
+      sessionStorage.clear();
       localStorage.removeItem("nextauth.message");
-      sessionStorage.removeItem("hideTrendingNow");
       localStorage.removeItem("cocpit_recent_ai_prompts");
       // Add any other custom cache keys here (Query cache, etc. are cleared by full page reload normally)
     }

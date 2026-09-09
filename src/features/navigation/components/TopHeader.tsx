@@ -76,11 +76,8 @@ export function TopHeader({ className }: TopHeaderProps) {
 
   return (
     <header className={`w-full flex items-center justify-between pointer-events-none ${className || ''}`}>
-      {/* 
-        The top header wrapper itself just provides a positioning context.
-        We use pointer-events-none on the wrapper so we can click through empty space,
-        and pointer-events-auto on the actual interactive elements.
-      */}
+      {/* Full-width top background bar to seamlessly occlude scrolling feed across the entire screen */}
+      <div className="fixed top-0 left-0 md:left-[253px] right-0 h-[100px] bg-ds-bg z-40 pointer-events-none" />
 
       {/* Cocpit Logo (Bottom Right) */}
       <div className="fixed bottom-[40px] right-[40px] flex items-center h-[40px] pointer-events-auto z-50">
@@ -94,10 +91,7 @@ export function TopHeader({ className }: TopHeaderProps) {
         ref={dropdownRef}
         className="fixed top-[40px] left-1/2 -translate-x-1/2 w-[442px] pointer-events-auto z-50"
       >
-        {/* Solid background for the gap above the search bar to hide scrolling feed */}
-        <div className="absolute top-[-40px] left-0 w-full h-[40px] bg-ds-bg" />
-        
-        <div className="relative w-full h-[40px] flex flex-row items-center justify-between px-[12px] py-[6px] gap-[10px] border-b border-[#FFECE6] box-border bg-ds-bg">
+        <div className="box-border flex flex-row justify-between items-center px-3 py-1.5 gap-2.5 w-[442px] h-10 border-b border-ds-text-primary flex-none order-0 flex-grow-0 bg-transparent">
           <input
             type="text"
             placeholder="Search"
@@ -105,9 +99,9 @@ export function TopHeader({ className }: TopHeaderProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onKeyDown={handleSearch}
-            className="flex-grow bg-transparent outline-none font-['DM_Sans'] text-[16px] leading-[24px] text-[#726B67] placeholder:text-[#726B67]"
+            className="flex-grow bg-transparent outline-none font-['DM_Sans'] text-[16px] leading-[24px] text-ds-text-muted placeholder:text-ds-text-muted"
           />
-          <Icon name="search" className="w-[20px] h-[20px] text-[#FFECE6] shrink-0 cursor-pointer hover:text-[#EC6229] transition-colors" onClick={() => {
+          <Icon name="search" className="w-[20px] h-[20px] text-ds-text-primary shrink-0 cursor-pointer hover:text-ds-accent transition-colors" onClick={() => {
             if (searchQuery.trim()) {
               setIsFocused(false);
               router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
@@ -117,7 +111,7 @@ export function TopHeader({ className }: TopHeaderProps) {
 
         {/* Live Search Dropdown */}
         {isFocused && searchQuery.trim().length > 0 && (
-          <div className="absolute top-[40px] left-0 w-full mt-2 bg-[#1A1A20] border border-[#2B2B36] rounded-xl shadow-xl overflow-hidden flex flex-col">
+          <div className="absolute top-[40px] left-0 w-full mt-2 bg-ds-surface-1 border border-ds-border rounded-xl shadow-xl overflow-hidden flex flex-col">
             {isSearching ? (
               <div className="px-4 py-3 text-sm text-ds-text-muted">Searching...</div>
             ) : searchResults.length > 0 ? (
@@ -134,13 +128,13 @@ export function TopHeader({ className }: TopHeaderProps) {
                       key={user.id}
                       href={url}
                       onClick={() => setIsFocused(false)}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-[#2B2B36] transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-ds-surface-2 transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-full bg-[#2B2B36] flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-ds-surface-2 flex items-center justify-center overflow-hidden shrink-0 border border-ds-border">
                         {user.avatar_url || user.avatar ? (
                           <img src={user.avatar_url || user.avatar || ''} alt={user.full_name} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-white text-xs font-medium">{fallbackInitial}</span>
+                          <span className="text-ds-text-primary text-xs font-medium">{fallbackInitial}</span>
                         )}
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
@@ -161,7 +155,7 @@ export function TopHeader({ className }: TopHeaderProps) {
                     setIsFocused(false);
                     router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                   }}
-                  className="px-4 py-3 border-t border-[#2B2B36] text-xs font-medium text-[#EC6229] hover:bg-[#2B2B36] cursor-pointer text-center"
+                  className="px-4 py-3 border-t border-ds-border text-xs font-medium text-ds-accent hover:bg-ds-surface-2 cursor-pointer text-center"
                 >
                   See all results for "{searchQuery}"
                 </div>
@@ -177,13 +171,13 @@ export function TopHeader({ className }: TopHeaderProps) {
       <div className="fixed top-[40px] right-[40px] flex items-center gap-[12px] h-[40px] pointer-events-auto z-50">
         {/* Notification Bell */}
         <NotificationPopover 
-          className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent hover:bg-[#1A1A20] data-[state=open]:bg-[#1A1A20] rounded-[24px] transition-colors"
-          icon={<Icon name="notification" className="w-[20px] h-[20px] text-[#FFECE6] group-hover:text-[#EC6229] group-data-[state=open]:text-[#EC6229] transition-colors" />}
+          className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent hover:bg-ds-surface-1 data-[state=open]:bg-ds-surface-1 rounded-[24px] transition-colors"
+          icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary group-hover:text-ds-accent group-data-[state=open]:text-ds-accent transition-colors" />}
         />
 
         {/* User Avatar */}
         <Link href={profileHref} className="cursor-pointer block">
-          <div className="w-[24px] h-[24px] rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-[#2B2B36] text-white text-[10px] font-medium cursor-pointer">
+          <div className="w-[24px] h-[24px] rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-ds-surface-1 border border-ds-border text-ds-text-primary text-[10px] font-medium cursor-pointer">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
