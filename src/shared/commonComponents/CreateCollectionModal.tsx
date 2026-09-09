@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { Icon } from '@/components/icons'
 import { toast } from 'sonner'
 import { createSavedFolderWithFile } from '@/features/settings/api/savedPost'
 import { SavedFolder } from '@/types/entities'
@@ -78,50 +79,51 @@ export function CreateCollectionModal({ isOpen, onClose, onSuccess }: CreateColl
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 400 }}
-                    className="relative w-full max-w-[300px] bg-ds-bg border border-ds-border rounded-[var(--radius-card-new)] shadow-2xl z-10 flex flex-col p-[16px]"
+                    className="relative w-72 p-3 bg-ds-bg border border-ds-border rounded-2xl shadow-2xl z-10 flex flex-col items-center gap-3 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button
-                        onClick={onClose}
-                        aria-label="Close create collection modal"
-                        className="absolute top-[16px] right-[16px] flex items-center justify-center w-[24px] h-[24px] rounded-full hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)] z-10"
-                    >
-                        <X className="w-[16px] h-[16px] text-ds-text-secondary" strokeWidth={2} />
-                    </button>
-
-                    {/* Header: Title */}
-                    <div className="flex justify-center w-full mb-[16px]">
-                        <h3 className="ds-text-body-1 text-ds-text-primary text-center">
-                            New collection
-                        </h3>
+                    {/* Top Row: Close Button */}
+                    <div className="self-stretch flex justify-end items-center">
+                        <button
+                            onClick={onClose}
+                            aria-label="Close create collection modal"
+                            className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity"
+                        >
+                            <Icon name="cross" className="w-5 h-5 text-ds-text-primary" />
+                        </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]">
-                        {/* Input */}
-                        <div className="flex flex-col">
+                    {/* Title */}
+                    <h3 className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary text-center">
+                        New collection
+                    </h3>
+
+                    <form onSubmit={handleSubmit} className="self-stretch flex flex-col items-center gap-3">
+                        {/* Input Row */}
+                        <div className="self-stretch py-2 border-b border-ds-border flex items-center">
                             <input
                                 type="text"
                                 autoFocus
                                 value={collectionName}
                                 onChange={(e) => setCollectionName(e.target.value)}
                                 placeholder="Collection name"
-                                className="w-full h-[36px] bg-transparent border-b border-ds-border px-0 ds-text-small text-ds-text-primary focus:outline-none focus:border-b focus:border-[var(--ds-accent)] transition-colors duration-[var(--motion-quick)] placeholder:text-ds-text-muted"
+                                className="w-full bg-transparent border-none outline-none font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-primary placeholder:text-ds-text-muted p-0"
                             />
                         </div>
 
-                        {/* Buttons */}
-                        <div className="flex items-center gap-[12px]">
+                        {/* Buttons Row */}
+                        <div className="flex justify-center items-center gap-2 pt-1">
                             <button
                                 type="submit"
                                 disabled={!hasName || isLoading}
-                                className={`h-[36px] px-[16px] rounded-full ds-text-secondary-1 transition-colors duration-[var(--motion-quick)] ${
+                                className={`w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] transition-colors ${
                                     hasName
-                                        ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 active:scale-[0.98]'
-                                        : 'bg-ds-surface-1 text-ds-text-muted cursor-default'
+                                        ? 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-[0.98]'
+                                        : 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                                 }`}
                             >
                                 {isLoading ? (
-                                    <Loader2 className="w-[16px] h-[16px] animate-spin" />
+                                    <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
                                     'Create'
                                 )}
@@ -129,7 +131,7 @@ export function CreateCollectionModal({ isOpen, onClose, onSuccess }: CreateColl
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="h-[36px] px-[16px] rounded-full bg-transparent border border-ds-border text-ds-text-primary ds-text-secondary-1 hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)] active:scale-[0.98]"
+                                className="px-3 py-1.5 rounded-[100px] border border-ds-border flex justify-center items-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary hover:bg-ds-surface-1 transition-colors active:scale-[0.98]"
                             >
                                 Cancel
                             </button>
