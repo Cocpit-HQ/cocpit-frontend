@@ -19,13 +19,15 @@ export const usePostInteractions = (props: FeedPostProps) => {
     is_commented: initialIsCommented = false,
     poll,
     onSaveChange,
-    isReposted: initialIsReposted = false
+    isReposted: initialIsReposted = false,
+    isRepostedWithThoughts: initialIsRepostedWithThoughts = false
   } = props;
 
   const queryClient = useQueryClient();
 
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [isReposted, setIsReposted] = useState(initialIsReposted);
+  const [isRepostedWithThoughts, setIsRepostedWithThoughts] = useState(initialIsRepostedWithThoughts);
   const [repostId, setRepostId] = useState<string | null>(props.repostId || null);
   const [isCommented, setIsCommented] = useState(initialIsCommented);
   const [isSaved, setIsSaved] = useState(is_saved);
@@ -52,11 +54,12 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setIsCommented(initialIsCommented);
     setIsSaved(is_saved);
     setIsReposted(initialIsReposted);
+    setIsRepostedWithThoughts(initialIsRepostedWithThoughts);
     setRepostId(props.repostId || null);
     setPollData(poll);
     setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
     setExternalShareCount(typeof props.externalShares === 'string' ? parseInt(props.externalShares || '0') : (props.externalShares || 0));
-  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, poll, props.shares, props.externalShares, props.repostId]);
+  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, initialIsRepostedWithThoughts, poll, props.shares, props.externalShares, props.repostId]);
 
   // Sync likeCount from props when no local optimistic like is in flight.
   useEffect(() => {
@@ -176,6 +179,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
       const result = await createRepost(id.toString()) as any;
       if (result && result.reposted === false) {
         setIsReposted(false);
+        setIsRepostedWithThoughts(false);
         setRepostId(null);
         setShareCount(prev => Math.max(0, prev - 1));
       } else {
@@ -229,6 +233,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     isCommented,
     isSaved,
     isReposted,
+    isRepostedWithThoughts,
     likeCount,
     commentCount,
     shareCount,
@@ -239,6 +244,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setIsCommented,
     setIsSaved,
     setIsReposted,
+    setIsRepostedWithThoughts,
     setShareCount,
     repostId,
     setRepostId,

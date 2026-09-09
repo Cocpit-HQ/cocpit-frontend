@@ -49,6 +49,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
   const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId } : props;
+  const isTargetPostRepostWithThoughts = !!interactionTargetProps.shared_post && !!interactionTargetProps.content && interactionTargetProps.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() !== '';
 
   const {
     id: targetId,
@@ -75,10 +76,14 @@ export const FeedPost = (props: FeedPostProps) => {
   const targetIsCompanyPost = interactionTargetProps.isCompanyPost || false;
   const targetAuthorId = interactionTargetProps.authorId || (interactionTargetProps as any).author_id;
 
+  const isTargetAuthorMe = activeProfile?.type === 'COMPANY'
+    ? !!(targetIsCompanyPost && activeProfile?.id?.toString() === targetAuthorId?.toString())
+    : (currentUserId === targetAuthorId?.toString());
+
   const {
     isLiked, likeCount, isCommented, isSaved, isReposted, pollData, commentCount, shareCount, externalShareCount,
     isVoting, handleLike, handleVote, setIsSaved, setIsCommented, handleRepostToggle, setShareCount,
-    repostId, incrementExternalShareCount
+    repostId, incrementExternalShareCount, isRepostedWithThoughts
   } = usePostInteractions(interactionTargetProps as any);
 
   const {
@@ -164,6 +169,13 @@ export const FeedPost = (props: FeedPostProps) => {
         session_id: 'default',
         position: 0,
       });
+      if (isRepostWithoutThoughts && targetId && targetId !== id) {
+        await unhidePost({
+          item_id: targetId.toString(),
+          session_id: 'default',
+          position: 0,
+        }).catch(() => {});
+      }
       // Re-render the actual post UI in its exact position
       setIsNotInterested(false);
     } catch (error) {
@@ -207,6 +219,14 @@ export const FeedPost = (props: FeedPostProps) => {
           window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
         } catch (fetchErr) {
           console.error("Failed to fetch and add new repost to feed:", fetchErr);
+        }
+      } else if (result && result.reposted === false) {
+        // If we un-reposted, and the current FeedPost is OUR wrapper post, remove it instantly from the UI
+        const currentId = isCompany ? activeProfile?.id : currentUserId;
+        const isMyPost = (isCompany && props.isCompanyPost && props.authorId === currentId) || (!isCompany && !props.isCompanyPost && props.authorId === currentId);
+        
+        if (isRepostWithoutThoughts && isMyPost) {
+          removePostFromFeed(id.toString());
         }
       }
     } catch (err) {
@@ -382,7 +402,7 @@ export const FeedPost = (props: FeedPostProps) => {
           location={targetLocation}
           timeAgo={targetTimeAgo}
           visibility={targetVisibility}
-          isMe={activeProfile?.type === 'COMPANY' ? !!(targetIsCompanyPost && activeProfile?.id?.toString() === targetAuthorId?.toString()) : (currentUserId === targetAuthorId?.toString())}
+          isMe={isTargetAuthorMe}
           isCompanyPost={targetIsCompanyPost}
           optionsBtnRef={optionsBtnRef}
           showOptions={showOptions}
@@ -405,7 +425,7 @@ export const FeedPost = (props: FeedPostProps) => {
             location={targetLocation}
             timeAgo={targetTimeAgo}
             visibility={targetVisibility}
-            isMe={activeProfile?.type === 'COMPANY' ? !!(targetIsCompanyPost && activeProfile?.id?.toString() === targetAuthorId?.toString()) : (currentUserId === targetAuthorId?.toString())}
+            isMe={isTargetAuthorMe}
             isCompanyPost={targetIsCompanyPost}
             optionsBtnRef={optionsBtnRef}
             showOptions={showOptions}
@@ -424,11 +444,11 @@ export const FeedPost = (props: FeedPostProps) => {
             />
           )}
 
-          {!isRepostWithoutThoughts && shared_post && (
+          {!isRepostWithoutThoughts && interactionTargetProps.shared_post && (
             <div className="w-full">
               <SharedPreview 
-                sharedPost={shared_post} 
-                sharedPostId={shared_post.id?.toString() || (shared_post as any).post_id?.toString()}
+                sharedPost={interactionTargetProps.shared_post} 
+                sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
                 isMobile={typeof window !== 'undefined' && window.innerWidth < 768} 
               />
             </div>
@@ -540,11 +560,13 @@ export const FeedPost = (props: FeedPostProps) => {
         handleRepostWithThoughts={handleRepostWithThoughts}
         handleDirectRepost={handleDirectRepost}
         isReposted={isReposted}
+        isRepostedWithThoughts={isRepostedWithThoughts}
         isSaved={!!isSaved}
         setIsSaved={setIsSaved}
         handleSaveToggle={() => setIsSaveModalOpen(true)}
         onShowLikes={() => setIsLikesModalOpen(true)}
         isSharedPost={isRepostWithoutThoughts}
+        hideRepostWithThoughts={isTargetPostRepostWithThoughts}
       />
 
       {/* Expandable Sections */}
@@ -604,7 +626,7 @@ export const FeedPost = (props: FeedPostProps) => {
         isOpen={showOptions}
         onClose={() => setShowOptions(false)}
         position={optionsPos}
-        isMe={activeProfile?.type === 'COMPANY' ? Boolean(props.isCompanyPost && activeProfile?.id?.toString() === props.authorId?.toString()) : (currentUserId === props.authorId?.toString())}
+        isMe={isRepostWithoutThoughts ? false : isTargetAuthorMe}
         onEdit={() => {
           setShowOptions(false);
           if (isArticlePost) {
@@ -619,7 +641,7 @@ export const FeedPost = (props: FeedPostProps) => {
         onInterested={async () => {
           try {
             await submitPostFeedback({
-              item_id: id.toString(),
+              item_id: (isRepostWithoutThoughts && targetId ? targetId : id).toString(),
               type: 'INTERESTED',
               session_id: 'default',
               position: 0,
@@ -645,6 +667,14 @@ export const FeedPost = (props: FeedPostProps) => {
               session_id: 'default',
               position: 0,
             });
+            if (isRepostWithoutThoughts && targetId && targetId !== id) {
+              await submitPostFeedback({
+                item_id: targetId.toString(),
+                type: 'NOT_INTERESTED',
+                session_id: 'default',
+                position: 0,
+              }).catch(() => {});
+            }
             // 2. Hide the post content locally and show the temporary snackbar inline
             setIsNotInterested(true);
 
@@ -669,7 +699,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onClose={() => setIsReportModalOpen(false)}
           onSuccess={handleReportSuccess}
           targetType="POST"
-          targetId={id.toString()}
+          targetId={(isRepostWithoutThoughts && targetId ? targetId : id).toString()}
         />
       )}
     </div>

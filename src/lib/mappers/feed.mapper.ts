@@ -231,6 +231,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         likes: sp.like_count || 0,
         isLiked: (sp as any).is_liked, // New field from backend
         isReposted: (sp as any).is_reposted,
+        isRepostedWithThoughts: (sp as any).is_reposted_with_thoughts,
         is_commented: (sp as any).is_commented,
         is_saved: (sp as any).is_saved,
         likedUsers: (sp as any).liked_users || [],
@@ -244,7 +245,22 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         location: sp.location || undefined,
         title: sp.title || "",
         authorHeadline: sp.author.author_headline || undefined,
-        isAvailable: true
+        isAvailable: true,
+        shared_post: (sp as any).shared_post_data ? {
+          id: (sp as any).shared_post_data.post_id || (sp as any).shared_post_data.job_id,
+          author: (sp as any).shared_post_data.author?.full_name || (sp as any).shared_post_data.company_name,
+          authorId: (sp as any).shared_post_data.author?.user_id,
+          authorAvatar: (sp as any).shared_post_data.author?.avatar_url || (sp as any).shared_post_data.company_logo,
+          isCompanyPost: (sp as any).shared_post_data.author?.is_organization_post || false,
+          authorSlug: (sp as any).shared_post_data.author?.author_slug,
+          content: (sp as any).shared_post_data.content,
+          imageSrc: (sp as any).shared_post_data.media?.[0]?.url,
+          isJob: !!(sp as any).shared_post_data.job_id,
+          jobTitle: (sp as any).shared_post_data.title,
+          jobCompany: (sp as any).shared_post_data.company_name,
+          jobLocation: (sp as any).shared_post_data.location,
+          jobLogo: (sp as any).shared_post_data.company_logo
+        } as any : undefined
       } as Post & { isAvailable?: boolean };
     }
   }
@@ -283,6 +299,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     likes: backendPost.like_count,
     isLiked: backendPost.is_liked,
     isReposted: backendPost.is_reposted,
+    isRepostedWithThoughts: backendPost.is_reposted_with_thoughts,
     repostId: backendPost.repost_id,
     is_commented: backendPost.is_commented,
     is_saved: backendPost.is_saved,

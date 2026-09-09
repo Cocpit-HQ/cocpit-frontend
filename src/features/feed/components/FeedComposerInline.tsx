@@ -734,6 +734,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 sharedPostId={effectiveRepostData.id?.toString() || (effectiveRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
                 isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false} 
                 clickable={false} 
+                showFollow={false}
               />
             </div>
           )}

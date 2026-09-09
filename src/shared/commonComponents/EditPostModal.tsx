@@ -381,6 +381,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                         sharedPostId={(originalPost?.shared_post || (originalPost as any)?.sharedPost)?.id?.toString() || (originalPost?.shared_post || (originalPost as any)?.sharedPost)?.post_id?.toString() || (originalPost as any)?.shared_post_id?.toString()}
                         isMobile={false} 
                         clickable={false} 
+                        showFollow={false}
                       />
                     </div>
                   )}

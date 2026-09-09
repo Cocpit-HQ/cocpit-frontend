@@ -149,6 +149,7 @@ export interface Post {
   likes: number;
   isLiked?: boolean;
   isReposted?: boolean;
+  isRepostedWithThoughts?: boolean;
   repostId?: string | null;
   is_commented?: boolean;
   is_saved?: boolean;

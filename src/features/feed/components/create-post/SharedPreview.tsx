@@ -10,11 +10,14 @@ interface SharedPreviewProps {
   sharedJobId?: string;
   isMobile: boolean;
   clickable?: boolean;
+  showFollow?: boolean;
 }
 
-const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true }: SharedPreviewProps) => {
+const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow }: SharedPreviewProps) => {
   const router = useRouter();
   if (!sharedPost) return null;
+
+  const canShowFollow = showFollow !== undefined ? showFollow : clickable;
 
   // Job Preview
   if (sharedPost.isJob) {
@@ -128,6 +131,26 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
     || (typeof sharedPost?.video === 'string' ? sharedPost.video : null)
     || (Array.isArray(sharedPost?.media) ? sharedPost.media.find((m: any) => m?.media_type === 'video' || m?.type === 'video')?.url : null);
 
+  // Poll Data Extraction
+  const pollData = sharedPost?.poll || sharedPost?.pollData;
+  const rawPollOptions: any[] = (Array.isArray(pollData?.options) && pollData.options.length > 0)
+    ? pollData.options
+    : (Array.isArray(sharedPost?.poll_options) && sharedPost.poll_options.length > 0)
+      ? sharedPost.poll_options
+      : (Array.isArray(sharedPost?.pollOptions) && sharedPost.pollOptions.length > 0)
+        ? sharedPost.pollOptions
+        : (Array.isArray((sharedPost as any)?.options) && (sharedPost as any).options.length > 0)
+          ? (sharedPost as any).options
+          : [];
+
+  const contentText = sharedPost?.content 
+    || sharedPost?.description 
+    || sharedPost?.text 
+    || sharedPost?.title 
+    || sharedPost?.poll_question 
+    || pollData?.question 
+    || pollData?.poll_question;
+
   const { user: currentUser } = useAuth();
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const queryClient = useQueryClient();
@@ -236,8 +259,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
           </div>
           
           {/* Follow Action */}
-          <div className="flex flex-row items-center shrink-0 h-[24px] ml-auto">
-            {!isMe && (!isAuthorFollowing || hasInteracted) && (
+          {canShowFollow && !isMe && (!isAuthorFollowing || hasInteracted) && (
+            <div className="flex flex-row items-center shrink-0 h-[24px] ml-auto">
               <button 
                 onClick={handleToggleFollow}
                 disabled={isFollowActionLoading}
@@ -249,13 +272,100 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
               >
                 {isAuthorFollowing ? 'Unfollow' : 'Follow'}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         {/* Content */}
-        <p className="text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
-          {sharedPost?.content || sharedPost?.description || sharedPost?.text}
-        </p>
+        {contentText && (
+          <p className="text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
+            {contentText}
+          </p>
+        )}
+
+        {/* Poll Options Capsules (if poll) */}
+        {rawPollOptions.length > 0 && (
+          <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
+            {rawPollOptions.map((opt: any, index: number) => {
+              const optText = typeof opt === 'string'
+                ? opt
+                : (opt?.option_text || opt?.text || opt?.title || opt?.name || `Option ${index + 1}`);
+              const optionId = opt?.option_id || opt?.id || String(index);
+              const isSelected = pollData?.user_vote && pollData.user_vote === optionId;
+              const hasVotes = pollData && typeof pollData.total_votes === 'number' && pollData.total_votes > 0;
+              const voteCount = typeof opt?.vote_count === 'number' ? opt.vote_count : 0;
+              const percentage = hasVotes ? Math.round((voteCount / pollData.total_votes) * 100) : 0;
+              const showResult = Boolean(pollData?.user_vote || pollData?.is_active === false);
+
+              if (showResult && hasVotes) {
+                return (
+                  <div
+                    key={optionId}
+                    className="self-stretch inline-flex justify-start items-center gap-2 w-full"
+                  >
+                    <div
+                      className={`flex-1 px-3 py-1.5 rounded-[100px] border border-[#2C2C33] flex justify-start items-center gap-2.5 min-w-0 ${
+                        isSelected ? 'bg-neutral-800 border-neutral-700' : 'bg-transparent'
+                      }`}
+                    >
+                      <span className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+                        {optText}
+                      </span>
+                    </div>
+                    <div className="w-10 flex justify-end items-center gap-0.5 shrink-0">
+                      <span className="text-[#FFECE6] text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
+                        {percentage}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={optionId}
+                  className="self-stretch w-full px-3 py-1.5 rounded-[100px] border border-[#2C2C33] bg-transparent flex justify-start items-center gap-2.5 select-none"
+                >
+                  <span className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+                    {optText}
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* Poll Footer Info: Votes • Duration */}
+            {(pollData?.total_votes !== undefined || pollData?.duration) && (
+              <div className="inline-flex items-center gap-2 text-[11px] font-normal font-dmsans text-[#B8ADA8] mt-0.5">
+                <span>
+                  {pollData?.is_active === false
+                    ? 'Ended'
+                    : `${pollData?.total_votes || 0} ${pollData?.total_votes === 1 ? 'vote' : 'votes'}`}
+                </span>
+                {pollData?.duration && (
+                  <>
+                    <span className="w-1 h-1 bg-[#726B67] rounded-full shrink-0" />
+                    <span>
+                      {pollData.duration.toLowerCase().includes('left')
+                        ? pollData.duration
+                        : `${pollData.duration} left`}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nested Shared Post */}
+        {sharedPost.shared_post && (
+          <div className="w-full mt-2 pointer-events-none">
+            <SharedPreview
+              sharedPost={sharedPost.shared_post}
+              isMobile={isMobile}
+              clickable={false}
+              showFollow={false}
+            />
+          </div>
+        )}
 
         {/* Optional Media */}
         {mediaUrls.length > 0 ? (

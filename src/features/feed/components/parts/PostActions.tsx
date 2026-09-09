@@ -18,18 +18,20 @@ interface PostActionsProps {
   handleRepostWithThoughts: () => void;
   handleDirectRepost: () => void;
   isReposted: boolean;
+  isRepostedWithThoughts?: boolean;
   isSaved: boolean;
   setIsSaved: (val: boolean) => void;
   handleSaveToggle: () => void;
   onShowLikes?: () => void;
   isSharedPost?: boolean;
+  hideRepostWithThoughts?: boolean;
 }
 
 export const PostActions = ({
   id, isLiked, likeCount, handleLike,
   isCommentSectionOpen, isCommented, commentsCount, handleToggleCommentSection,
-  shares, externalShares, handleShare, handleRepostWithThoughts, handleDirectRepost, isReposted, isSaved, setIsSaved, handleSaveToggle,
-  onShowLikes, isSharedPost
+  shares, externalShares, handleShare, handleRepostWithThoughts, handleDirectRepost, isReposted, isRepostedWithThoughts, isSaved, setIsSaved, handleSaveToggle,
+  onShowLikes, isSharedPost, hideRepostWithThoughts
 }: PostActionsProps) => {
   return (
     <div className="flex flex-row justify-between items-center w-full py-[8px]">
@@ -68,13 +70,16 @@ export const PostActions = ({
         </div>
 
         {/* Repost */}
-        <div className="flex flex-row items-center gap-[16px]">
+        <div className="flex flex-row items-center">
+          {/* Repost button */}
           <RepostMenu
             onRepost={handleDirectRepost}
             onRepostWithThoughts={handleRepostWithThoughts}
-            isReposted={isReposted}
             shares={shares}
+            isReposted={isReposted}
+            isRepostedWithThoughts={isRepostedWithThoughts}
             isSharedPost={isSharedPost}
+            hideRepostWithThoughts={hideRepostWithThoughts}
           />
         </div>
 

@@ -321,7 +321,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
           <div className={cn(isMobile ? "" : ((state.postType === 'article' && !state.articleData) ? "p-0 flex-1 flex flex-col" : "p-6"))}>
             {renderPostFlow()}
 
-            <SharedPreview sharedPost={state.sharedPost} isMobile={isMobile} clickable={false} />
+            <SharedPreview sharedPost={state.sharedPost} isMobile={isMobile} clickable={false} showFollow={false} />
           </div>
         </div>
 

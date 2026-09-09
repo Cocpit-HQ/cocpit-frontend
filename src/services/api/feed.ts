@@ -91,6 +91,7 @@ export interface BackendPost {
   external_share_count?: number;
   is_liked: boolean;
   is_reposted?: boolean;
+  is_reposted_with_thoughts?: boolean;
   repost_id?: string | null;
   is_commented: boolean;
   is_saved: boolean;
@@ -119,6 +120,7 @@ export interface BackendPost {
     external_share_count?: number;
     is_liked?: boolean;
     is_reposted?: boolean;
+    is_reposted_with_thoughts?: boolean;
     is_commented?: boolean;
     is_saved?: boolean;
     liked_users?: { username: string; avatar_url: string | null }[];
