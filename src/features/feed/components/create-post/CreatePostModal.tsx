@@ -1,3 +1,4 @@
+/*
 import React, { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -224,7 +225,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
         className={cn(
           "p-0 border-none shadow-2xl overflow-hidden z-[101] bg-background",
           isMobile
-            ? "w-full h-full max-w-none rounded-none flex flex-col pt-0 pb-0"
+            ? "w-full h-full max-w-none rounded-none flex flex-col pt-0 pb-0 !top-0 !left-0 !translate-x-0 !translate-y-0 !data-[state=closed]:slide-out-to-bottom-[100%] !data-[state=open]:slide-in-from-bottom-[100%] !data-[state=open]:zoom-in-100 !data-[state=closed]:zoom-out-100 duration-300"
             : cn(
               "fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full rounded-2xl max-h-[90vh] flex flex-col transition-all duration-300",
               (state.postType === 'article' && !state.articleData) ? "max-w-4xl h-[85vh]" : "max-w-3xl"
@@ -365,3 +366,6 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
     </Dialog>
   );
 };
+*/
+
+export const CreatePostModal = (props: any) => null;

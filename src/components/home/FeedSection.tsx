@@ -18,6 +18,8 @@ import { StoryDetail, StoryGroup } from '@/types/showcase';
 import { ApplicantInsightCard, CompactJobRecommendation, JobMatchesCard } from './FeedInsights';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import dynamic from 'next/dynamic';
+import { usePostUpload } from '@/context/PostUploadContext';
+import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadProgressStrip';
 
 // Removed CreatePostModal
 
@@ -42,6 +44,7 @@ export const FeedSection = ({
 }: FeedSectionProps) => {
     const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading } = useFeed();
     const { activeProfile, isCompany, userCompanies } = useActiveProfile();
+    const { pendingPosts, cancelUpload } = usePostUpload();
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editingPostData, setEditingPostData] = useState<any | null>(null);
     const [repostingPostData, setRepostingPostData] = useState<any | null>(null);
@@ -97,6 +100,18 @@ export const FeedSection = ({
                     onClearRepost={() => setRepostingPostData(null)}
                 />
 
+                {/* Mobile Progress Strip (Hidden on Desktop) */}
+                <div className="w-full flex flex-col md:hidden px-4 pt-2">
+                    {pendingPosts.map(post => (
+                        <PostUploadProgressStrip
+                            key={post.id}
+                            progress={post.progress}
+                            phase={post.status as any}
+                            onCancel={() => cancelUpload(post.id)}
+                        />
+                    ))}
+                </div>
+
                 {/* Posts */}
                 <div className="w-full mt-[12px] flex flex-col">
                     {/* Skeletons appear when initial load is happening */}
@@ -134,8 +149,13 @@ export const FeedSection = ({
                                             window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                         onRepostWithThoughts={(post) => {
-                                            setRepostingPostData(post);
-                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                                                useUIStore.getState().setSharedPostData(post);
+                                                useUIStore.getState().setActiveModal('create-post');
+                                            } else {
+                                                setRepostingPostData(post);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }
                                         }}
                                     />
 

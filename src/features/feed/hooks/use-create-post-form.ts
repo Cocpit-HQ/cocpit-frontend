@@ -95,6 +95,15 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   }, [isOpen, activeProfile, propCompanyId]);
 
+  // Sync initial shared post when modal opens
+  useEffect(() => {
+    if (isOpen && initialSharedPost) {
+      setSharedPost(initialSharedPost);
+    } else if (isOpen && !initialSharedPost && !sharedPostId) {
+      // Don't clear it if we are just opening and already have a shared post
+    }
+  }, [isOpen, initialSharedPost]);
+
   // Sync with global article draft
   useEffect(() => {
     if (isOpen) {
@@ -241,6 +250,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               text: o.option_text
             })));
           }
+          if (post.shared_post) setSharedPost(post.shared_post);
         })
         .catch((error) => {
           console.error("Failed to load post for editing:", error);
@@ -369,7 +379,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           return;
         }
         payload.poll_options = poll.pollOptions.filter(o => o.text.trim()).map(o => sanitizeContent(o.text));
-        payload.poll_duration = poll.pollDuration;
+        payload.poll_duration = poll.pollDuration || '1 week';
       }
 
       const filesToUpload = await media.prepareFilesToUpload(articleData ? 'article' : postType, media.aspectRatio);
@@ -458,26 +468,19 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         return;
       }
 
-      if (isCompanyPost) {
-        const { mappedPost } = await postApi.create(payload, allFilesToUpload, activeTagUserIds);
-        addPost(mappedPost);
-        window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
-        queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
-        queryClient.invalidateQueries({ queryKey: ["orgPostsPreview"] });
-        queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
-        if (notifyEmployees) {
-          await postApi.notifyEmployees(postAsCompanyId!, mappedPost.id);
-          toast.success("Post created and employees notified!");
-        } else toast.success("Post published!");
-        if (onPostCreated) onPostCreated();
-        resetForm();
-        onClose();
-      } else {
-        await startUpload(payload, allFilesToUpload, activeTagUserIds);
-        if (onPostCreated) onPostCreated();
-        resetForm();
-        onClose();
-      }
+      const uploadPromise = startUpload(payload, allFilesToUpload, activeTagUserIds);
+      
+      uploadPromise.then((mappedPost) => {
+        if (isCompanyPost && notifyEmployees && mappedPost) {
+          postApi.notifyEmployees(postAsCompanyId!, mappedPost.id).then(() => {
+            toast.success("Employees notified!");
+          }).catch(console.error);
+        }
+      }).catch(console.error);
+
+      if (onPostCreated) onPostCreated();
+      resetForm();
+      onClose();
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to process post";
       console.error("Post creation failed:", errorMessage, err.response?.data);
@@ -532,7 +535,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       postAsCompanyId, setPostAsCompanyId,
       isLoadingPost, isSubmitting,
       isEditingMedia, setIsEditingMedia,
-      originalPost, sharedPost,
+      originalPost, sharedPost, setSharedPost,
       showContextWarning, setShowContextWarning,
       isCompanyPost, currentPoster, currentUser,
       userCompanies,

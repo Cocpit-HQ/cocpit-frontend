@@ -249,7 +249,17 @@ export const FeedPost = (props: FeedPostProps) => {
     setIsShareModalOpen(true);
   };
 
-  const isVideoFeedCard = !!videoSrc && !props.isFullContent;
+  const isVideoFeedCard = false; // Disabled full-screen video feed card per mobile responsive design
+
+  const handlePostClick = (e: React.MouseEvent) => {
+    if (props.isFullContent) return;
+    
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
+      return;
+    }
+    router.push(`/post/${id}`);
+  };
 
   const isCompanyProfile = activeProfile?.type === 'COMPANY';
   const currentUserHandle = isCompanyProfile
@@ -382,7 +392,7 @@ export const FeedPost = (props: FeedPostProps) => {
   return (
     <>
       <div
-        className={`w-full flex flex-col pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`}
+        className={`w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`}
       >
       {isRepostWithoutThoughts && shared_post && (
         <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
@@ -557,7 +567,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Actions */}
       <PostActions
-        id={id}
+        id={targetId}
         isLiked={isLiked}
         likeCount={likeCount}
         handleLike={() => handleLike(isCompany, activeProfile?.id)}
@@ -583,19 +593,19 @@ export const FeedPost = (props: FeedPostProps) => {
       {/* Expandable Sections */}
       {isCommentSectionOpen && (
         <CommentSection
-          postId={id}
+          postId={targetId.toString()}
         />
       )}
 
       <MobileCommentDrawer
         isOpen={isMobileDrawerOpen}
         onClose={() => setIsMobileDrawerOpen(false)}
-        postId={id.toString()}
+        postId={targetId.toString()}
       />
 
       {isSaveModalOpen && (
         <SavePostModal
-          postId={id.toString()}
+          postId={targetId.toString()}
           isOpen={isSaveModalOpen}
           onClose={() => setIsSaveModalOpen(false)}
           onSaved={() => setIsSaved(true)}
@@ -614,9 +624,9 @@ export const FeedPost = (props: FeedPostProps) => {
         <CocpitShareModel
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
-          postId={id.toString()}
+          postId={targetId.toString()}
           entityType={isArticlePost ? "article" : "post"}
-          entityId={id.toString()}
+          entityId={targetId.toString()}
           onShare={(selectedIds) => {
             if (selectedIds.length > 0) {
               incrementExternalShareCount(selectedIds.length);
@@ -643,7 +653,13 @@ export const FeedPost = (props: FeedPostProps) => {
           if (isArticlePost) {
             router.push(`/article/edit/${id}`);
           } else {
-            props.onEdit?.(props);
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              const { useUIStore } = require('@/store/ui.store');
+              useUIStore.getState().setEditMode(true, id.toString());
+              useUIStore.getState().setActiveModal('create-post');
+            } else {
+              props.onEdit?.(props);
+            }
           }
         }}
         onMakePrivate={handleToggleVisibility}

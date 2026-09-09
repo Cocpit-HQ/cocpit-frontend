@@ -243,8 +243,13 @@ export default function CommentInput({
     };
 
     useEffect(() => {
-        const handleScrollOrResize = () => {
+        const handleScrollOrResize = (e: Event) => {
             if (showEmojiPicker) {
+                // Don't close if scrolling inside the emoji picker
+                const target = e.target as HTMLElement;
+                if (target?.closest?.('.cocpit-emoji-picker') || target?.closest?.('.cocpit-emoji-picker-backdrop')) {
+                    return;
+                }
                 setShowEmojiPicker(false);
                 setEmojiPickerPos(null);
             }
@@ -274,7 +279,7 @@ export default function CommentInput({
         showMentionDropdown && (
             <div
                 ref={mentionDropdownRef}
-                className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-xl shadow-2xl z-50 overflow-hidden pointer-events-auto"
+                className="absolute bottom-full left-0 mb-2 w-64 bg-ds-surface-2 border border-ds-border rounded-xl shadow-2xl z-50 overflow-hidden pointer-events-auto"
             >
                 <div className="p-1 max-h-60 overflow-y-auto custom-scrollbar">
                     {mentions.map((user, index) => (
@@ -282,7 +287,7 @@ export default function CommentInput({
                             key={user.id}
                             onClick={() => insertMention(user)}
                             onMouseEnter={() => setMentionIndex(index)}
-                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${index === mentionIndex ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
+                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${index === mentionIndex ? 'bg-[var(--ds-accent)]/10 text-[var(--ds-accent)]' : 'hover:bg-ds-surface-1'}`}
                         >
                             <div className="relative w-8 h-8 rounded-full bg-ds-surface-1 text-ds-text-secondary flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 select-none">
                                 <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
@@ -296,7 +301,7 @@ export default function CommentInput({
                                 ) : null}
                             </div>
                             <div className="flex flex-col items-start min-w-0">
-                                <span className="ds-text-secondary-1 truncate w-full">{user.full_name}</span>
+                                <span className="ds-text-secondary-1 text-ds-text-primary truncate w-full">{user.full_name}</span>
                                 <span className="ds-text-meta text-ds-text-muted truncate w-full">@{user.account_name}</span>
                             </div>
                         </button>
@@ -311,13 +316,13 @@ export default function CommentInput({
     return (
         <div className={`bg-transparent font-dmsans ${className}`}>
             {replyingTo && variant !== 'reply' && (
-                <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-t border-x border-border rounded-t-lg mx-0.5 text-sm">
-                    <span className="text-muted-foreground">
-                        Replying to <span className="font-semibold text-primary">@{replyingTo.account_name || replyingTo.name}</span>
+                <div className="flex items-center justify-between px-4 py-2 bg-ds-surface-2 border-t border-x border-ds-border rounded-t-lg mx-0.5 ds-text-small">
+                    <span className="text-ds-text-secondary">
+                        Replying to <span className="font-semibold text-[var(--ds-accent)]">@{replyingTo.account_name || replyingTo.name}</span>
                     </span>
                     <button
                         onClick={onCancelReply}
-                        className="p-1 hover:bg-muted rounded-full transition-colors text-muted-foreground"
+                        className="p-1 hover:bg-ds-surface-1 rounded-full transition-colors text-ds-text-muted hover:text-ds-text-primary"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -365,7 +370,7 @@ export default function CommentInput({
                             type="button"
                             aria-label="Insert emoji"
                             onClick={handleToggleEmojiPicker}
-                            className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-white transition-colors bg-transparent"
+                            className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary transition-colors bg-transparent"
                         >
                             <Smile className="w-5 h-5" />
                         </button>
@@ -384,7 +389,7 @@ export default function CommentInput({
                             disabled={!commentText.trim()}
                             className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm
                                 ${commentText.trim().length > 0
-                                    ? 'bg-ds-accent text-ds-bg hover:opacity-80'
+                                    ? 'bg-ds-accent text-white'
                                     : 'bg-ds-border text-ds-text-muted cursor-not-allowed'
                                 }`}
                         >
@@ -436,7 +441,7 @@ export default function CommentInput({
                                     type="button"
                                     aria-label="Insert emoji"
                                     onClick={handleToggleEmojiPicker}
-                                    className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-white transition-colors"
+                                    className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary transition-colors"
                                 >
                                     <Smile className="w-5 h-5" />
                                 </button>
@@ -446,7 +451,7 @@ export default function CommentInput({
                                 disabled={!commentText.trim()}
                                 className={`px-3 py-1.5 rounded-[100px] font-dm-sans font-medium text-[12px] transition-all flex items-center justify-center
                                     ${commentText.trim().length > 0
-                                        ? 'bg-ds-accent text-ds-bg hover:opacity-80'
+                                        ? 'bg-ds-accent text-white'
                                         : 'bg-ds-border text-ds-text-muted cursor-not-allowed'
                                     }`}
                             >

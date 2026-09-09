@@ -4,7 +4,7 @@ import { PollOption } from '../types';
 export const usePostPoll = (initialOptions: PollOption[] = [{ id: '1', text: '' }, { id: '2', text: '' }]) => {
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState<PollOption[]>(initialOptions);
-  const [pollDuration, setPollDuration] = useState('1 week');
+  const [pollDuration, setPollDuration] = useState('');
 
   const addPollOption = useCallback(() => {
     if (pollOptions.length < 6) {

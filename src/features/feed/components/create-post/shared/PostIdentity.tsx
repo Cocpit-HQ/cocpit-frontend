@@ -25,9 +25,9 @@ const PostIdentity = ({
   const avatar = rawAvatar && rawAvatar !== '/assets/pngegg.png' ? rawAvatar : null;
 
   return (
-    <div className={`px-6 py-6 border-b border-border/50 ${className}`}>
+    <div className={`px-6 py-6 border-b border-ds-border ${className} font-dmsans`}>
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base overflow-hidden shrink-0 shadow-md font-['Poppins'] select-none relative">
+        <div className="w-12 h-12 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base overflow-hidden shrink-0 shadow-sm font-dmsans select-none relative">
           {avatar ? (
             <img
               src={avatar}
@@ -40,11 +40,11 @@ const PostIdentity = ({
           )}
         </div>
         <div className="flex flex-col">
-          <h3 className="text-foreground font-bold text-base">
+          <h3 className="ds-text-body-2 text-ds-text-primary">
             {name}
           </h3>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-xs text-muted-foreground font-medium">
+            <p className="ds-text-small text-ds-text-secondary">
               {isCompanyPost ? 'Organization Post' : 'Post to Anyone'}
             </p>
             {children}

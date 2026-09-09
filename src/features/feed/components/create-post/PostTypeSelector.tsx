@@ -29,7 +29,7 @@ const PostTypeSelector = ({
   if (isMobile) {
     return (
       <div className={`flex items-center gap-2 overflow-x-auto py-2 px-1 custom-scrollbar ${className}`}>
-        {types.map((type) => (
+        {types.filter(type => type.id !== 'article').map((type) => (
           <button
             key={type.id}
             onClick={() => !isEdit && onTypeChange(type.id as PostType)}

@@ -188,7 +188,7 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
                     </Link>
 
                     {/* Voted Option Label on Right */}
-                    <span className="font-dmsans text-[14px] font-normal leading-[20px] text-white shrink-0 select-none">
+                    <span className="font-dmsans text-[14px] font-normal leading-[20px] text-ds-text-primary shrink-0 select-none">
                       {optionLabel}
                     </span>
                   </div>

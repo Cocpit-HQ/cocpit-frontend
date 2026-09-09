@@ -126,7 +126,7 @@ export const ComposerImagePreview = ({
             {images.map((img) => (
               <div
                 key={img.id}
-                className="relative group flex-[0_0_178px] min-w-0 h-[223px] rounded-[16px] overflow-hidden bg-zinc-900 select-none flex-shrink-0 mr-[10px]"
+                className="relative group flex-[0_0_178px] min-w-0 h-[223px] rounded-[16px] overflow-hidden bg-ds-surface-2 select-none flex-shrink-0 mr-[10px]"
               >
                 <img
                   src={img.previewUrl}
@@ -146,7 +146,7 @@ export const ComposerImagePreview = ({
                       className="cursor-pointer outline-none transition-transform duration-200 ease-out hover:scale-110 active:scale-95 select-none py-1.5 px-3 rounded-full hover:bg-black/30"
                       title="Delete photo"
                     >
-                      <span className="text-[14px] font-semibold text-[#FF3B30] tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
+                      <span className="text-[14px] font-semibold text-[var(--ds-error)] tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
                         Delete
                       </span>
                     </button>
@@ -162,10 +162,10 @@ export const ComposerImagePreview = ({
           <button
             type="button"
             onClick={scrollPrev}
-            className="absolute -left-7 md:-left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center p-1 text-white/90 hover:text-white transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer outline-none"
+            className="absolute -left-7 md:-left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center p-1 text-ds-text-primary hover:opacity-80 transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer outline-none"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+            <ChevronLeft className="w-6 h-6 text-ds-text-primary" />
           </button>
         )}
 
@@ -174,17 +174,17 @@ export const ComposerImagePreview = ({
           <button
             type="button"
             onClick={scrollNext}
-            className="absolute -right-7 md:-right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center p-1 text-white/90 hover:text-white transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer outline-none"
+            className="absolute -right-7 md:-right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center p-1 text-ds-text-primary hover:opacity-80 transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer outline-none"
             aria-label="Scroll right"
           >
-            <ChevronRight className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+            <ChevronRight className="w-6 h-6 text-ds-text-primary" />
           </button>
         )}
       </div>
 
       {/* Limit Notice (Positioned directly below card 1) */}
       {isMaxReached && (
-        <p className="w-full text-left text-[12px] text-[#EF4444] font-medium pl-0.5 pt-1">
+        <p className="w-full text-left text-[12px] text-[var(--ds-error)] font-medium pl-0.5 pt-1">
           Attached media limit reached({MAX_COMPOSER_IMAGES}/{MAX_COMPOSER_IMAGES})
         </p>
       )}

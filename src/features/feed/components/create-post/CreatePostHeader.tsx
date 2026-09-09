@@ -76,7 +76,7 @@ const CreatePostHeader = ({
             onClick={() => !isEdit && setShowAccountSelector(!showAccountSelector)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted transition-colors border border-border/50 group"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden border border-border shadow-sm bg-white text-[#6366F1] flex items-center justify-center font-semibold text-xs relative">
+            <div className="w-6 h-6 rounded-full overflow-hidden border border-border shadow-sm bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs relative font-dmsans">
               {currentPosterLogo ? (
                 <>
                   <img src={currentPosterLogo} alt={currentPosterName} className="w-full h-full object-cover relative z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -99,7 +99,7 @@ const CreatePostHeader = ({
                      onClick={() => { onContextSwitch(null); setShowAccountSelector(false); }}
                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
                    >
-                     <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs border overflow-hidden shrink-0 font-['Poppins'] select-none">
+                     <div className="w-8 h-8 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-border overflow-hidden shrink-0 font-dmsans select-none">
                        {currentUser?.image && currentUser.image !== '/assets/pngegg.png' ? (
                          <img src={currentUser.image} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                        ) : (
@@ -121,7 +121,7 @@ const CreatePostHeader = ({
                          onClick={() => { onContextSwitch(cid); setShowAccountSelector(false); }}
                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
                        >
-                          <div className="w-8 h-8 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-xs border overflow-hidden shrink-0 font-['Poppins'] select-none">
+                          <div className="w-8 h-8 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-border overflow-hidden shrink-0 font-dmsans select-none">
                             {(c.logo_url || c.avatar_url) && (c.logo_url || c.avatar_url) !== '/assets/pngegg.png' ? (
                               <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                             ) : (
@@ -162,7 +162,7 @@ const AccountSelectorOverlay = ({ userCompanies, onSelect, currentUser, onClose,
           onClick={() => { onSelect(null); onClose(); }}
           className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-muted border border-transparent hover:border-border transition-all"
         >
-          <div className="w-12 h-12 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base border shadow-sm overflow-hidden shrink-0 font-['Poppins'] select-none">
+          <div className="w-12 h-12 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base border border-border shadow-sm overflow-hidden shrink-0 font-dmsans select-none">
             {currentUser?.image && currentUser.image !== '/assets/pngegg.png' ? (
               <img src={currentUser.image} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             ) : (
@@ -183,7 +183,7 @@ const AccountSelectorOverlay = ({ userCompanies, onSelect, currentUser, onClose,
               onClick={() => { onSelect(cid); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-muted border border-transparent hover:border-border transition-all"
             >
-              <div className="w-12 h-12 rounded-full bg-white text-[#6366F1] flex items-center justify-center font-semibold text-base border shadow-sm overflow-hidden shrink-0 font-['Poppins'] select-none">
+              <div className="w-12 h-12 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base border border-border shadow-sm overflow-hidden shrink-0 font-dmsans select-none">
                 {(c.logo_url || c.avatar_url) && (c.logo_url || c.avatar_url) !== '/assets/pngegg.png' ? (
                   <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 ) : (

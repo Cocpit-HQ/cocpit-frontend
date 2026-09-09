@@ -339,7 +339,7 @@ export default function CocpitShareModel({
             }}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className="fixed left-1/2 top-1/2 z-[9999] w-[400px] h-[468px] -translate-x-1/2 -translate-y-1/2 rounded-[16px] bg-ds-bg border border-ds-border p-[12px] shadow-2xl outline-none flex flex-col gap-[12px] box-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            className="fixed left-1/2 top-1/2 z-[9999] w-[calc(100vw-32px)] max-w-[400px] sm:w-[400px] h-[468px] -translate-x-1/2 -translate-y-1/2 rounded-[16px] bg-ds-bg border border-ds-border p-[12px] shadow-2xl outline-none flex flex-col gap-[12px] box-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           >
             {/* Header Area */}
             <div className="flex flex-col items-center w-full gap-[12px]">

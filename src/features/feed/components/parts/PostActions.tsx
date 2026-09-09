@@ -60,7 +60,8 @@ export const PostActions = ({
         <div className="flex flex-row items-center gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); handleToggleCommentSection(); }}
-            className={`flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${isCommented ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-ds-text-secondary'}`}
+            className="flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded text-ds-text-primary hover:text-ds-text-secondary"
+            aria-label="Toggle comments"
           >
             <Icon name="comment" className="w-[20px] h-[20px]" />
           </button>

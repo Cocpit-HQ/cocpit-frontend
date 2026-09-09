@@ -62,7 +62,7 @@ export function PostCarousel({
           {images.map((src, index) => (
             <div
               key={index}
-              className="relative flex-[0_0_80%] min-w-0 h-full rounded-[16px] overflow-hidden mr-2.5 select-none bg-zinc-900 transition-all duration-300 ease-in-out"
+              className="relative flex-[0_0_80%] min-w-0 h-full rounded-[16px] overflow-hidden mr-2.5 select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
             >
               <Image
                 src={src}
@@ -86,19 +86,19 @@ export function PostCarousel({
           {canScrollPrev && (
             <button
               onClick={scrollPrev}
-              className="absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-white/90 hover:text-white hover:bg-[#1A1A20] transition-all duration-150 cursor-pointer outline-none"
+              className="absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
               aria-label="Previous photo"
             >
-              <ChevronLeft className="w-5 h-5 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+              <ChevronLeft className="w-5 h-5 text-ds-text-primary" />
             </button>
           )}
           {canScrollNext && (
             <button
               onClick={scrollNext}
-              className="absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-white/90 hover:text-white hover:bg-[#1A1A20] transition-all duration-150 cursor-pointer outline-none"
+              className="absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
               aria-label="Next photo"
             >
-              <ChevronRight className="w-5 h-5 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+              <ChevronRight className="w-5 h-5 text-ds-text-primary" />
             </button>
           )}
         </>

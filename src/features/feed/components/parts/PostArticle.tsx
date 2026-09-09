@@ -39,11 +39,11 @@ export const PostArticle: React.FC<PostArticleProps> = ({
         }
       }}
       aria-label={`Read article: ${title || 'Untitled Article'}`}
-      className="w-full rounded-2xl overflow-hidden border border-zinc-800 bg-[#18181D] hover:border-zinc-700 transition-all cursor-pointer select-none group flex flex-col mt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#EC6229]"
+      className="w-full rounded-2xl overflow-hidden border border-ds-border bg-ds-surface-1 hover:border-ds-border transition-all cursor-pointer select-none group flex flex-col mt-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
     >
       {/* 16:9 Cover Image */}
       {coverImage && (
-        <div className="w-full aspect-[16/9] overflow-hidden bg-zinc-900 border-b border-zinc-800/60">
+        <div className="w-full aspect-[16/9] overflow-hidden bg-ds-surface-2 border-b border-ds-border">
           <img
             src={coverImage}
             alt={title || 'Article cover'}
@@ -57,8 +57,8 @@ export const PostArticle: React.FC<PostArticleProps> = ({
 
       {/* Title Bar */}
       {title && (
-        <div className="w-full px-4 py-3 bg-[#18181D] text-left">
-          <h3 className="text-[15px] font-semibold text-white tracking-tight leading-snug line-clamp-2 group-hover:text-zinc-200 transition-colors">
+        <div className="w-full px-4 py-3 bg-ds-surface-1 text-left">
+          <h3 className="text-[15px] font-semibold text-ds-text-primary tracking-tight leading-snug line-clamp-2 transition-colors">
             {title}
           </h3>
         </div>

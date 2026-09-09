@@ -133,7 +133,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
                 {leadingSpace}
                 <Link
                   href={`/hashtag/${tag}`}
-                  className="inline-block px-1 -mx-1 text-ds-text-primary font-semibold hover:bg-white/5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-md focus:outline-none"
+                  className="inline-block px-1 -mx-1 text-ds-text-primary font-semibold hover:bg-ds-surface-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-md focus:outline-none"
                   onClick={(e) => e.stopPropagation()}
                 >
                   #{hashtagMatch[2]}

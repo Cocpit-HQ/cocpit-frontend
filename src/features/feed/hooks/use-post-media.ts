@@ -113,7 +113,7 @@ export const usePostMedia = (
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const videoFiles = files.filter(f => f.type.startsWith('video/'));
-      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+      const imageFiles = files.filter(f => !f.type.startsWith('video/'));
 
       // 1. Size Check
       const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB

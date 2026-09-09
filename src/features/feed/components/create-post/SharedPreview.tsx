@@ -35,28 +35,28 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
             router.push(`/jobs/${jobId}`);
           }
         }}
-        className={`mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2 ${
-          effectiveClickable && jobId ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''
+        className={`mt-4 border border-ds-border rounded-xl overflow-hidden bg-ds-surface-1 p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2 ${
+          effectiveClickable && jobId ? 'cursor-pointer hover:bg-ds-surface-2 transition-colors' : ''
         }`}
       >
-        <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-background overflow-hidden flex items-center justify-center border border-border/50 shadow-sm">
+        <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-ds-surface-2 overflow-hidden flex items-center justify-center border border-ds-border shadow-sm">
           {sharedPost.jobLogo ? (
             <img src={sharedPost.jobLogo} alt={sharedPost.jobCompany || "Company"} className="w-full h-full object-contain p-1" />
           ) : (
-            <span className="text-2xl font-bold text-muted-foreground">{sharedPost.jobCompany?.charAt(0) || "J"}</span>
+            <span className="text-2xl font-bold text-ds-text-muted">{sharedPost.jobCompany?.charAt(0) || "J"}</span>
           )}
         </div>
         <div className="flex flex-col flex-1 min-w-0">
-          <h4 className="text-base font-semibold text-foreground truncate">{sharedPost.jobTitle}</h4>
-          <p className="text-sm text-foreground/90 truncate font-medium">{sharedPost.jobCompany}</p>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">
+          <h4 className="text-base font-semibold text-ds-text-primary truncate">{sharedPost.jobTitle}</h4>
+          <p className="text-sm text-ds-text-secondary truncate font-medium">{sharedPost.jobCompany}</p>
+          <p className="text-xs text-ds-text-muted truncate mt-0.5">
             {sharedPost.jobLocation}
             {sharedPost.jobWorkMode ? ` (${sharedPost.jobWorkMode})` : ''}
           </p>
         </div>
         {!isMobile && (
           <div className="shrink-0 ml-4 hidden sm:block">
-            <div className="px-4 py-1.5 rounded-full border border-primary text-primary text-sm font-medium shadow-sm">
+            <div className="px-4 py-1.5 rounded-full border border-[var(--ds-accent)] text-[var(--ds-accent)] text-sm font-medium shadow-sm">
               View job
             </div>
           </div>
@@ -225,8 +225,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
       {/* Card */}
       <div 
         onClick={handleCardClick}
-        className={`self-stretch py-[8px] px-[12px] rounded-[8px] border-[0.5px] border-[#2C2C33] flex flex-col gap-[12px] ${
-          effectiveClickable && targetPostId ? 'cursor-pointer hover:border-[#3E3E47] transition-colors' : ''
+        className={`self-stretch py-[8px] px-[12px] rounded-[8px] border-[0.5px] border-ds-border flex flex-col gap-[12px] ${
+          effectiveClickable && targetPostId ? 'cursor-pointer hover:border-ds-border transition-colors' : ''
         }`}
       >
         {/* Author row */}
@@ -244,17 +244,17 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
             )}
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-[#FFECE6] text-[16px] font-semibold font-dmsans leading-[24px] truncate">
+            <span className="text-ds-text-primary text-[16px] font-semibold font-dmsans leading-[24px] truncate">
               {sharedName || 'Unknown User'}
             </span>
             {sharedRole && (
-              <span className="text-[#B8ADA8] text-[10px] font-normal font-dmsans leading-[12px] truncate">
+              <span className="text-ds-text-secondary text-[10px] font-normal font-dmsans leading-[12px] truncate">
                 {sharedRole}
               </span>
             )}
             <div className="inline-flex items-center gap-[6px] mt-[2px]">
               {sharedLocation && (
-                <span className="text-[#B8ADA8] text-[10px] font-normal font-dmsans leading-[12px] truncate max-w-[120px]">
+                <span className="text-ds-text-secondary text-[10px] font-normal font-dmsans leading-[12px] truncate max-w-[120px]">
                   {sharedLocation}
                 </span>
               )}
@@ -269,8 +269,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
                 disabled={isFollowActionLoading}
                 className={
                   isAuthorFollowing
-                    ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-[#FFECE6]`
-                    : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[#EC6229] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
+                    ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-ds-text-primary`
+                    : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
                 }
               >
                 {isAuthorFollowing ? 'Unfollow' : 'Follow'}
@@ -280,7 +280,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
         </div>
         {/* Content */}
         {contentText && (
-          <p className="text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
+          <p className="text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
             {contentText}
           </p>
         )}
@@ -306,16 +306,16 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
                     className="self-stretch inline-flex justify-start items-center gap-2 w-full"
                   >
                     <div
-                      className={`flex-1 px-3 py-1.5 rounded-[100px] border border-[#2C2C33] flex justify-start items-center gap-2.5 min-w-0 ${
-                        isSelected ? 'bg-neutral-800 border-neutral-700' : 'bg-transparent'
+                      className={`flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border flex justify-start items-center gap-2.5 min-w-0 ${
+                        isSelected ? 'bg-ds-surface-2 border-ds-border' : 'bg-transparent'
                       }`}
                     >
-                      <span className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+                      <span className="justify-start text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] truncate">
                         {optText}
                       </span>
                     </div>
                     <div className="w-10 flex justify-end items-center gap-0.5 shrink-0">
-                      <span className="text-[#FFECE6] text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
+                      <span className="text-ds-text-primary text-[12px] font-medium font-dmsans leading-[16px]">
                         {percentage}%
                       </span>
                     </div>
@@ -326,9 +326,9 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
               return (
                 <div
                   key={optionId}
-                  className="self-stretch w-full px-3 py-1.5 rounded-[100px] border border-[#2C2C33] bg-transparent flex justify-start items-center gap-2.5 select-none"
+                  className="self-stretch w-full px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent flex justify-start items-center gap-2.5 select-none"
                 >
-                  <span className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+                  <span className="justify-start text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] truncate">
                     {optText}
                   </span>
                 </div>
@@ -337,7 +337,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
 
             {/* Poll Footer Info: Votes • Duration */}
             {(pollData?.total_votes !== undefined || pollData?.duration) && (
-              <div className="inline-flex items-center gap-2 text-[11px] font-normal font-dmsans text-[#B8ADA8] mt-0.5">
+              <div className="inline-flex items-center gap-2 text-[11px] font-normal font-dmsans text-ds-text-muted mt-0.5">
                 <span>
                   {pollData?.is_active === false
                     ? 'Ended'
@@ -345,7 +345,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
                 </span>
                 {pollData?.duration && (
                   <>
-                    <span className="w-1 h-1 bg-[#726B67] rounded-full shrink-0" />
+                    <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
                     <span>
                       {pollData.duration.toLowerCase().includes('left')
                         ? pollData.duration

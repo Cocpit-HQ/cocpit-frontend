@@ -65,11 +65,19 @@ export const PostOptionsMenu = ({
     return null;
   }
 
-  const menuStyle: React.CSSProperties = {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+  const menuStyle: React.CSSProperties = isMobile ? {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+  } : {
     position: 'fixed',
     top: `${position.top}px`,
     right: `${position.right}px`,
-    zIndex: 9999, // Ensure it sits on top of everything
+    zIndex: 9999,
   };
 
   const handleAction = (action?: () => void) => {
@@ -83,8 +91,13 @@ export const PostOptionsMenu = ({
     <div
       ref={menuRef}
       style={menuStyle}
-      className="bg-ds-bg rounded-[8px] p-[12px] flex flex-col items-start gap-[16px] min-w-[107px] shadow-xl border border-ds-border"
+      className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : 'min-w-[107px] rounded-[8px] p-[12px] gap-[16px]'}`}
     >
+      {isMobile && (
+        <div className="w-full flex justify-center mb-2">
+          <div className="w-[40px] h-[4px] bg-ds-border rounded-full" />
+        </div>
+      )}
       {isMe ? (
         <>
           {onEdit && (
@@ -128,20 +141,20 @@ export const PostOptionsMenu = ({
           )}
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onInterested); }}
-            className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
+            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
           >
             Interested
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onNotInterested); }}
-            className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
+            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
           >
             Not interested
           </button>
           {isMentioned && (
             <button
               onClick={(e) => { e.stopPropagation(); handleAction(onRemoveMention); }}
-              className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[#B8ADA8] hover:text-white transition-colors outline-none w-full text-left"
+              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
             >
               Remove mention
             </button>

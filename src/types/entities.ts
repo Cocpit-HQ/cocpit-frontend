@@ -102,6 +102,10 @@ export interface Comment {
   isPending?: boolean; // For optimistic UI
   reply_count?: number; // Added for UI display
   is_edited?: boolean; // Whether the comment has been edited
+  actionState?: {
+    type: 'hidden' | 'deleted' | 'reported';
+    toastId?: string | number;
+  };
 }
 
 export interface PollOption {

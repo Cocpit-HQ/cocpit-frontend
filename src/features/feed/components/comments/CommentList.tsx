@@ -16,6 +16,7 @@ interface CommentListProps {
   postId?: string | number;
   onReport?: (commentId: string | number) => void;
   onHide?: (commentId: string | number) => void;
+  onUndo?: (commentId: string | number) => void;
   replyingTo?: { name: string; id: string | number; account_name?: string } | null;
   onCancelReply?: () => void;
   onAddComment?: (text: string, replyToId?: string | number) => void;
@@ -33,6 +34,7 @@ export default function CommentList({
   postId, 
   onReport, 
   onHide,
+  onUndo,
   replyingTo,
   onCancelReply,
   onAddComment,
@@ -129,6 +131,7 @@ export default function CommentList({
             postId={postId}
             onReport={onReport}
             onHide={onHide}
+            onUndo={onUndo}
           />
           {replyingTo?.id === root.id && (
             <div className="pl-[32px]">
@@ -143,7 +146,7 @@ export default function CommentList({
             </div>
           )}
           {/* Render Replies if any */}
-          {replyMap.has(root.id) && (
+          {replyMap.has(root.id) && !root.actionState && (
             <ReplyGroup
               replies={replyMap.get(root.id)!}
               onReply={onReply}
@@ -155,6 +158,7 @@ export default function CommentList({
               postId={postId}
               onReport={onReport}
               onHide={onHide}
+              onUndo={onUndo}
               replyingTo={replyingTo}
               onCancelReply={onCancelReply}
               onAddComment={onAddComment}
@@ -168,7 +172,7 @@ export default function CommentList({
         <div className="flex justify-center w-full mt-4">
           <button
             onClick={() => setShowAllComments(true)}
-            className="ds-text-small-1 text-ds-text-secondary hover:underline cursor-pointer"
+            className="ds-text-small-1 text-ds-accent hover:underline cursor-pointer"
           >
             View more
           </button>
@@ -178,7 +182,7 @@ export default function CommentList({
         <div className="flex justify-center w-full mt-4">
           <button
             onClick={() => setShowAllComments(false)}
-            className="ds-text-small-1 text-ds-text-secondary hover:underline cursor-pointer"
+            className="ds-text-small-1 text-ds-accent hover:underline cursor-pointer"
           >
             Show less
           </button>

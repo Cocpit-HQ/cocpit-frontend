@@ -95,11 +95,14 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 28, stiffness: 350 }}
-                    className="relative w-[300px] bg-ds-bg border border-ds-border rounded-[16px] shadow-2xl z-20 flex flex-col items-center p-[12px] gap-[12px]"
+                    className="relative w-full max-w-none sm:max-w-[300px] bg-ds-surface-2 border border-ds-border rounded-t-[var(--radius-card-new)] rounded-b-none sm:rounded-[var(--radius-card-new)] shadow-2xl z-20 flex flex-col p-[16px]"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Frame 2609536 */}
-                    <div className="w-full flex flex-row justify-end items-center p-0 gap-[10px] h-[20px] shrink-0">
+                    {/* Header: Save Title and Close Button */}
+                    <div className="w-full flex flex-row justify-between items-center h-[24px] shrink-0 mb-[16px]">
+                        <h3 className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary">
+                            Save
+                        </h3>
                         <button
                             onClick={onClose}
                             aria-label="Close save modal"
@@ -108,11 +111,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                             <X className="w-[16px] h-[16px] text-ds-text-primary" strokeWidth={2} />
                         </button>
                     </div>
-
-                    {/* Save */}
-                    <h3 className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary shrink-0 text-center w-[36px] h-[24px]">
-                        Save
-                    </h3>
 
                     {/* Frame 2609538 */}
                     <div className="w-full flex flex-col items-start p-0 gap-[8px] flex-1 overflow-y-auto custom-scrollbar">
@@ -184,7 +182,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                     {/* secndary button with icon */}
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="w-full h-[36px] flex flex-row justify-center items-center p-[6px_12px] gap-[10px] border border-ds-border rounded-[100px] hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)] shrink-0"
+                        className="w-full h-[36px] mt-2 flex flex-row justify-center items-center p-[6px_12px] gap-[10px] border border-ds-border rounded-[100px] hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)] shrink-0"
                     >
                         <Plus className="w-[16px] h-[16px] text-ds-text-primary" strokeWidth={2} />
                         <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary">

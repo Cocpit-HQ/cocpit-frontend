@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { CommentActionSnackbar } from '@/features/feed/components/comments/CommentActionSnackbar';
 import { getReportReasons, createReport, ReportReason } from '@/services/api/report';
 import { cn } from '@/lib/utils';
 
@@ -112,7 +113,11 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
         reasonId: selectedReasonId,
         customReason: additionalInfo.trim() || undefined,
       });
-      toast.success('Thank you for reporting. Our moderation team will review it.');
+      if (targetType === 'COMMENT') {
+        // Handled by onSuccess callback inline
+      } else {
+        toast.success('Thank you for reporting. Our moderation team will review it.');
+      }
       onSuccess?.();
       onClose();
     } catch (error: any) {
@@ -196,7 +201,8 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
       </DialogContent>
       */}
       <BareDialogContent 
-        className="max-w-[400px] w-full border rounded-[16px] p-3 flex flex-col gap-3 font-sans shadow-lg bg-ds-bg border-ds-border"
+        className="max-w-none sm:max-w-[400px] w-full border rounded-t-[16px] rounded-b-none sm:rounded-[16px] p-4 flex flex-col gap-3 font-sans shadow-lg bg-ds-surface-2 border-ds-border !top-auto bottom-0 !translate-y-0 !translate-x-0 !left-0 sm:!top-[50%] sm:bottom-auto sm:!translate-y-[-50%] sm:!translate-x-[-50%] sm:!left-[50%]"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header Actions Row */}
         <div className={cn("flex flex-row items-center w-full min-h-[20px] p-0 m-0", step === 2 ? "justify-between" : "justify-end")}>
@@ -254,7 +260,7 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
               <Button
                 onClick={handleContinue}
                 disabled={!selectedReasonId || isFetchingReasons}
-                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:bg-[#D95624] text-ds-text-primary rounded-full transition-all disabled:!bg-[var(--ds-surface-1)] disabled:opacity-100 disabled:text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:opacity-90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
               >
                 Continue
               </Button>
@@ -274,7 +280,7 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:bg-[#D95624] text-ds-text-primary rounded-full transition-all disabled:!bg-[var(--ds-surface-1)] disabled:opacity-100 disabled:text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:opacity-90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Submit'}
               </Button>

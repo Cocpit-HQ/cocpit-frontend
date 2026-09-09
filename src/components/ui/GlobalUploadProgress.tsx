@@ -10,7 +10,7 @@ export const GlobalUploadProgress = () => {
     if (pendingPosts.length === 0) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        <div className="hidden md:flex fixed bottom-4 right-4 z-[100] flex-col gap-2 pointer-events-none">
             {pendingPosts.map(post => (
                 <div
                     key={post.id}

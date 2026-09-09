@@ -35,6 +35,8 @@ interface UIState {
   setArticleMode: (mode: boolean) => void;
   setArticleDraft: (draft: any) => void;
   setEditMode: (isEdit: boolean, postId?: string | null) => void;
+  sharedPostData: any | null;
+  setSharedPostData: (data: any | null) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -46,6 +48,7 @@ export const useUIStore = create<UIState>((set) => ({
   articleDraft: null,
   isEditMode: false,
   editingPostId: null,
+  sharedPostData: null,
   
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   setActiveModal: (modal, type = 'text') =>
@@ -62,4 +65,5 @@ export const useUIStore = create<UIState>((set) => ({
     })),
   setArticleDraft: (draft) => set({ articleDraft: draft }),
   setEditMode: (isEdit, postId = null) => set({ isEditMode: isEdit, editingPostId: postId }),
+  setSharedPostData: (data) => set({ sharedPostData: data }),
 }));

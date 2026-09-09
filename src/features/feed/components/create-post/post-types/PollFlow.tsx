@@ -44,7 +44,7 @@ const PollFlow = ({
           value={pollQuestion}
           onChange={(e) => onQuestionChange(e.target.value)}
           placeholder="What would you like to ask your network?"
-          className="w-full px-4 py-3 rounded-2xl bg-white/10 dark:bg-white/5 border border-ds-border backdrop-blur-md text-[14px] font-medium leading-[20px] text-ds-text-secondary placeholder:text-ds-text-muted focus:outline-none focus:ring-1 focus:ring-[var(--ds-accent)]/30 transition-all"
+          className="w-full px-4 py-3 rounded-2xl bg-ds-surface-1 border border-ds-border text-[14px] font-medium leading-[20px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:ring-1 focus:ring-[var(--ds-accent)]/30 transition-all"
         />
       </div>
 
@@ -61,12 +61,12 @@ const PollFlow = ({
                 value={option.text}
                 onChange={(e) => onUpdateOption(option.id, e.target.value)}
                 placeholder={optionLetters[index] ? `Option ${optionLetters[index]}` : `Option ${index + 1}`}
-                className="w-full px-4 py-3 pr-12 rounded-2xl bg-white/10 dark:bg-white/5 border border-ds-border backdrop-blur-md text-[14px] font-medium leading-[20px] text-ds-text-secondary placeholder:text-ds-text-muted focus:outline-none focus:ring-1 focus:ring-[var(--ds-accent)]/30 transition-all"
+                className="w-full px-4 py-3 pr-12 rounded-2xl bg-ds-surface-1 border border-ds-border text-[14px] font-medium leading-[20px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:ring-1 focus:ring-[var(--ds-accent)]/30 transition-all"
               />
               {!isEdit && pollOptions.length > 2 && (
                 <button 
                   onClick={() => onRemoveOption(option.id)} 
-                  className="absolute right-3.5 p-1 text-gray-400 hover:text-destructive hover:bg-gray-100 dark:hover:bg-secondary rounded-full transition-all"
+                  className="absolute right-3.5 p-1 text-ds-text-muted hover:text-[var(--ds-error)] hover:bg-ds-surface-2 rounded-full transition-all"
                   type="button"
                 >
                   <X className="w-4 h-4" />
@@ -101,19 +101,19 @@ const PollFlow = ({
             className="w-full px-4 py-3 rounded-2xl border border-ds-border bg-transparent text-[14px] font-medium leading-[20px] text-ds-text-secondary focus:outline-none transition-all flex items-center justify-between"
           >
             <span>{pollDuration}</span>
-            <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-300" />
+            <ChevronDown className="w-4 h-4 text-ds-text-secondary" />
           </button>
           {durationOpen && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] bg-card border border-border rounded-2xl shadow-md z-[200] p-1">
+            <div className="absolute left-0 right-0 top-[calc(100%+4px)] bg-ds-surface-2 border border-ds-border rounded-2xl shadow-md z-[200] p-1">
               {durations.map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => { onDurationChange(d); setDurationOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 rounded-xl text-[14px] font-poppins transition-colors
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-[14px] font-dmsans transition-colors
                     ${pollDuration === d
-                      ? 'bg-primary text-white'
-                      : 'text-foreground'
+                      ? 'bg-[var(--ds-accent)] text-white'
+                      : 'text-ds-text-primary hover:bg-ds-surface-1'
                     }`}
                 >
                   {d}

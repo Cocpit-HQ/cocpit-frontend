@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function FeedPostCardSkeleton() {
   return (
-    <div className="feed-card-shell flex w-full max-w-[560px] flex-col gap-4 overflow-hidden animate-pulse">
+    <div className="w-full max-w-[442px] mx-auto rounded-[8px] border border-ds-border bg-ds-surface-1 p-3 flex flex-col gap-4 overflow-hidden animate-pulse">
       {/* Header section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between">

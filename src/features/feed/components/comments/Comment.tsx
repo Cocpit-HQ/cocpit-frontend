@@ -16,6 +16,7 @@ import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { Icon } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { CommentActionSnackbar } from './CommentActionSnackbar';
 
 interface CommentProps {
   comment: CommentType;
@@ -30,6 +31,7 @@ interface CommentProps {
   onReport?: (commentId: string | number) => void;
   onEdit?: (commentId: string | number, currentText: string) => void;
   onHide?: (commentId: string | number) => void;
+  onUndo?: (commentId: string | number) => void;
 }
 
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
@@ -73,7 +75,7 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
   });
 };
 
-export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport, onHide }: CommentProps) {
+export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport, onHide, onUndo }: CommentProps) {
   const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending, is_edited } = comment;
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
@@ -145,6 +147,27 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const baseCommentAuthorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}`;
   const authorLink = postId ? `${baseCommentAuthorLink}?sourcePostId=${postId}&commentId=${id}` : baseCommentAuthorLink;
 
+  if (comment.actionState) {
+    const message = comment.actionState.type === 'reported' 
+      ? "Comment reported — Thanks for helping keep the community safe" 
+      : `Comment ${comment.actionState.type} successfully`;
+    
+    return (
+      <div id={`comment-${id}`} className="w-full">
+        <CommentActionSnackbar 
+          message={message} 
+          onUndo={comment.actionState.type !== 'reported' ? () => {
+            if (onUndo) {
+              onUndo(id);
+            }
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('undo-comment-action', { detail: { commentId: id } }));
+            }
+          } : undefined}
+        />
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -193,37 +216,17 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           </div>
           
           {/* ORIGINAL: <div className="flex items-center gap-4 pt-1"> */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-1 shrink-0">
             {is_edited && (
               <>
-                <span
-                  style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontStyle: 'normal',
-                    fontWeight: 400,
-                    fontSize: '10px',
-                    lineHeight: '12px',
-                    textAlign: 'center',
-                    color: '#B8ADA8',
-                    flexShrink: 0,
-                  }}
-                >
+                <span className="font-dmsans text-[10px] leading-[12px] font-normal text-ds-text-muted shrink-0 text-center">
                   Edited
                 </span>
-                <span
-                  style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: '#726B67',
-                    flexShrink: 0,
-                    display: 'inline-block',
-                  }}
-                />
+                <span className="w-1 h-1 rounded-full bg-ds-text-muted shrink-0 inline-block" />
               </>
             )}
             {/* ORIGINAL: <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span> */}
-            <span className="ds-text-meta text-ds-text-secondary">{timeAgo}</span>
+            <span className="ds-text-meta text-ds-text-secondary whitespace-nowrap">{timeAgo}</span>
             {!isPending && (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
@@ -237,9 +240,22 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
+                  sideOffset={4}
+                  collisionPadding={8}
                   onClick={(e) => e.stopPropagation()}
                   className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans"
                 >
+                  <style>{`
+                    [data-theme] [role="menuitem"].comment-menu-item:hover,
+                    [data-theme] [role="menuitem"].comment-menu-item[data-highlighted],
+                    [data-theme] [role="menuitem"].comment-menu-item:focus {
+                      background-color: transparent !important;
+                    }
+                    [data-theme] [role="menuitem"].comment-menu-item:hover *,
+                    [data-theme] [role="menuitem"].comment-menu-item[data-highlighted] * {
+                      color: inherit !important;
+                    }
+                  `}</style>
                   {isOwner && (
                     <DropdownMenuItem
                       onSelect={() => onEdit?.(id, text)}
@@ -247,7 +263,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                         e.stopPropagation();
                         onEdit?.(id, text);
                       }}
-                      className="cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary focus:bg-transparent focus:text-ds-text-primary p-0 bg-transparent data-[highlighted]:bg-transparent data-[highlighted]:text-ds-text-primary"
+                      className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
                     >
                       Edit comment
                     </DropdownMenuItem>
@@ -260,7 +276,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                         e.stopPropagation();
                         onDelete?.(id);
                       }}
-                      className="cursor-pointer outline-none w-full ds-text-secondary text-ds-error hover:opacity-80 focus:bg-transparent p-0 bg-transparent data-[highlighted]:bg-transparent"
+                      className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-error hover:!text-ds-error focus:!bg-transparent focus:!text-ds-error p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-error"
                     >
                       Delete comment
                     </DropdownMenuItem>
@@ -280,18 +296,15 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                             onReport?.(id);
                           }, 50);
                         }}
-                        className="cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary focus:bg-transparent focus:text-ds-text-primary p-0 bg-transparent data-[highlighted]:bg-transparent data-[highlighted]:text-ds-text-primary"
+                        className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
                       >
                         Report
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
                         onSelect={() => onHide?.(id)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onHide?.(id);
-                        }}
-                        className="cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary focus:bg-transparent focus:text-ds-text-primary p-0 bg-transparent data-[highlighted]:bg-transparent data-[highlighted]:text-ds-text-primary"
+                        onClick={(e) => e.stopPropagation()}
+                        className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
                       >
                         Hide comment
                       </DropdownMenuItem>
@@ -319,7 +332,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
             Like
           </button>
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">-</span> */}
-          <span className="font-normal text-ds-text-primary">-</span>
+          <span className="font-normal text-ds-text-secondary">-</span>
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span> */}
           <span className="font-normal text-ds-text-secondary">{likes} {likes === 1 ? 'like' : 'likes'}</span>
           
@@ -333,9 +346,9 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
             Reply
           </button>
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">-</span> */}
-          <span className="font-normal text-ds-text-primary">-</span>
+          <span className="font-normal text-ds-text-secondary">-</span>
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">{comment.reply_count || 0} reply</span> */}
-          <span className="font-normal text-ds-text-secondary">{comment.reply_count || 0} reply</span>
+          <span className="font-normal text-ds-text-secondary">{comment.reply_count || 0} {(comment.reply_count || 0) === 1 ? 'reply' : 'replies'}</span>
         </div>
       </div>
     </div>

@@ -43,9 +43,11 @@ export const usePostUpload = () => {
                 ));
             }, 800);
 
+            let mappedPostResult;
             try {
                 // 2. Use the centralized postApi for creation (handles media + post + fetch)
                 const { mappedPost } = await postApi.create(content, mediaFiles, tagUserIds);
+                mappedPostResult = mappedPost;
                 addPost(mappedPost);
                 window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
                 
@@ -57,8 +59,6 @@ export const usePostUpload = () => {
                 setPendingPosts(prev => prev.map(p =>
                     p.id === id ? { ...p, status: 'success', progress: 100 } : p
                 ));
-
-                toast.success("Post published successfully!");
             } finally {
                 clearInterval(progressInterval);
             }
@@ -67,6 +67,8 @@ export const usePostUpload = () => {
             setTimeout(() => {
                 setPendingPosts(prev => prev.filter(p => p.id !== id));
             }, 3000);
+
+            return mappedPostResult;
 
         } catch (error) {
             const message = error instanceof AxiosError
@@ -82,6 +84,7 @@ export const usePostUpload = () => {
                 p.id === id ? { ...p, status: 'error', error: message } : p
             ));
             toast.error(message || "Failed to publish post");
+            throw error;
         }
     }, [addPost, setPendingPosts]);
 

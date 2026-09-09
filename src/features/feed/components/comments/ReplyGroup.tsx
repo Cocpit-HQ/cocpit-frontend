@@ -15,6 +15,7 @@ interface ReplyGroupProps {
     onReport?: (commentId: string | number) => void;
     onEdit?: (commentId: string | number, currentText: string) => void;
     onHide?: (commentId: string | number) => void;
+    onUndo?: (commentId: string | number) => void;
     replyingTo?: { name: string; id: string | number; account_name?: string } | null;
     onCancelReply?: () => void;
     onAddComment?: (text: string, replyToId?: string | number) => void;
@@ -33,6 +34,7 @@ export default function ReplyGroup({
     postId, 
     onReport, 
     onHide,
+    onUndo,
     replyingTo,
     onCancelReply,
     onAddComment,
@@ -59,7 +61,7 @@ export default function ReplyGroup({
                     className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity"
                 >
                     <div className="w-[30px] border-t border-ds-border" />
-                    <span className="ds-text-small-1 text-ds-text-secondary">View {replies.length} more {replies.length === 1 ? 'reply' : 'replies'}</span>
+                    <span className="ds-text-small-1 text-ds-accent">View {replies.length} more {replies.length === 1 ? 'reply' : 'replies'}</span>
                 </button>
             ) : (
                 <div className="ml-8 md:ml-10  pl-3 md:pl-4 space-y-3 mt-2">
@@ -77,6 +79,7 @@ export default function ReplyGroup({
                                 postId={postId}
                                 onReport={onReport}
                                 onHide={onHide}
+                                onUndo={onUndo}
                             />
                             {replyingTo?.id === reply.id && (
                                 <div className="pl-[32px]">
@@ -99,7 +102,7 @@ export default function ReplyGroup({
                         className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity mt-2"
                     >
                         <div className="w-[30px] border-t border-ds-border" />
-                        <span className="ds-text-small-1 text-ds-text-secondary">Hide replies</span>
+                        <span className="ds-text-small-1 text-ds-accent">Hide replies</span>
                     </button>
                 </div>
             )}

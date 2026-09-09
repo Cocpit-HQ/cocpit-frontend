@@ -45,20 +45,20 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted,
 
       {/* Dropdown */}
       {open && !isReposted && (
-        <div className="absolute bottom-[calc(100%+6px)] left-0 w-[163px] bg-ds-surface-1 border border-ds-border rounded-[8px] z-50 animate-in fade-in slide-in-from-bottom-1 duration-100 shadow-sm flex flex-col overflow-hidden">
+        <div className="absolute bottom-[calc(100%+6px)] left-0 w-[163px] bg-ds-surface-2 border border-ds-border rounded-[8px] z-50 animate-in fade-in slide-in-from-bottom-1 duration-100 shadow-lg flex flex-col overflow-hidden">
           {!hideRepostWithThoughts && (
             <button
               onClick={(e) => { e.stopPropagation(); setOpen(false); onRepostWithThoughts?.(); }}
-              className="w-full pt-[12px] pb-[8px] px-[12px] hover:bg-ds-surface-1 transition-colors text-left flex items-center"
+              className="w-full pt-[12px] pb-[8px] px-[12px] hover:bg-ds-surface-1 group transition-colors text-left flex items-center"
             >
-              <span className="ds-text-secondary text-ds-text-secondary whitespace-nowrap">Repost with thoughts</span>
+              <span className="ds-text-secondary text-ds-text-secondary group-hover:text-ds-text-primary whitespace-nowrap">Repost with thoughts</span>
             </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); setOpen(false); onRepost?.(); }}
-            className="w-full pt-[8px] pb-[12px] px-[12px] hover:bg-ds-surface-1 transition-colors text-left flex items-center"
+            className="w-full pt-[8px] pb-[12px] px-[12px] hover:bg-ds-surface-1 group transition-colors text-left flex items-center"
           >
-            <span className="ds-text-secondary text-ds-text-secondary whitespace-nowrap">Repost</span>
+            <span className="ds-text-secondary text-ds-text-secondary group-hover:text-ds-text-primary whitespace-nowrap">Repost</span>
           </button>
         </div>
       )}

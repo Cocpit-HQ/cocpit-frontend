@@ -50,12 +50,12 @@ export const PostPoll: React.FC<PostPollProps> = ({
 
   return (
     <div
-      className="w-full max-w-[442px] p-[8px_12px] flex flex-col items-start gap-[12px] border-[0.5px] border-[#2C2C33] rounded-[8px] box-border select-none"
+      className="w-full max-w-[442px] p-[8px_12px] flex flex-col items-start gap-[12px] border-[0.5px] border-ds-border rounded-[8px] box-border select-none"
       onClick={(e) => e.stopPropagation()}
     >
       {/* 1. Poll Title / Question */}
       {title && (
-        <div className="self-stretch justify-start text-[#FFECE6] text-[14px] font-medium font-dmsans leading-[20px] line-clamp-2 text-left text-ds-text-primary">
+        <div className="self-stretch justify-start text-[14px] font-medium font-dmsans leading-[20px] line-clamp-2 text-left text-ds-text-primary">
           {title}
         </div>
       )}
@@ -81,20 +81,20 @@ export const PostPoll: React.FC<PostPollProps> = ({
                 {/* Option Pill */}
                 <div
                   className={`flex-1 px-3 py-1.5 rounded-[100px] flex justify-start items-center gap-2.5 min-w-0 ${
-                    isSelected ? 'bg-neutral-800' : ''
+                    isSelected ? 'bg-ds-surface-2' : ''
                   }`}
                 >
-                  <div className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+                  <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
                     {option.option_text}
                   </div>
                 </div>
 
                 {/* Percentage Area */}
                 <div className="w-10 flex justify-end items-center gap-1 shrink-0">
-                  <div className="justify-start text-[#FFECE6] text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
+                  <div className="justify-start text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
                     {percentage}
                   </div>
-                  <div className="justify-start text-[#FFECE6] text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
+                  <div className="justify-start text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
                     %
                   </div>
                 </div>
@@ -109,13 +109,13 @@ export const PostPoll: React.FC<PostPollProps> = ({
               type="button"
               onClick={() => !isDisabled && handleVote(option.option_id)}
               disabled={isDisabled}
-              className={`self-stretch px-3 py-1.5 rounded-[100px] border border-[#2C2C33] bg-transparent flex justify-start items-center gap-2.5 transition-colors outline-none text-left select-none ${
+              className={`self-stretch px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent flex justify-start items-center gap-2.5 transition-colors outline-none text-left select-none ${
                 !isDisabled
-                  ? 'cursor-pointer hover:bg-white/5 active:scale-[0.99]'
+                  ? 'cursor-pointer hover:bg-ds-surface-2 active:scale-[0.99]'
                   : 'cursor-default opacity-60'
               }`}
             >
-              <div className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+              <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
                 {option.option_text}
               </div>
             </button>
@@ -129,27 +129,27 @@ export const PostPoll: React.FC<PostPollProps> = ({
           <button
             type="button"
             onClick={() => setIsVotersModalOpen(true)}
-            className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
+            className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
             aria-label="View poll voters"
           >
             {isEnded ? 'Ended' : `${pollData.total_votes || 0} votes`}
           </button>
         ) : (
-          <div className="justify-start text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary line-clamp-2">
+          <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary line-clamp-2">
             {isEnded ? 'Ended' : `${pollData.total_votes || 0} votes`}
           </div>
         )}
 
         {/* Separator Dot */}
-        <div className="w-1 h-1 bg-[#726B67] rounded-full shrink-0" />
+        <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
 
         {/* Duration */}
-        <div className="justify-start text-[#B8ADA8] text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-secondary line-clamp-2">
+        <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-secondary line-clamp-2">
           {durationText}
         </div>
 
         {/* Separator Dot */}
-        <div className="w-1 h-1 bg-[#726B67] rounded-full shrink-0" />
+        <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
 
         {/* Show result / Undo */}
         {isVoted ? (
@@ -157,7 +157,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
             type="button"
             onClick={() => !isVoting && pollData.user_vote && handleVote(pollData.user_vote)}
             disabled={isVoting}
-            className="justify-start text-[#EC6229] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
+            className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
             aria-label="Undo vote"
           >
             Undo
@@ -166,7 +166,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
           <button
             type="button"
             onClick={() => setShowResult((prev) => !prev)}
-            className="justify-start text-[#EC6229] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
+            className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
             aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
           >
             {showResult ? 'Hide result' : 'Show result'}

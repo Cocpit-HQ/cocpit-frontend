@@ -17,7 +17,9 @@ interface CommentSectionViewProps {
   isPostOwner?: boolean;
   postId: string | number;
   onEditComment?: (commentId: string | number, newText: string) => void;
-  onHideComment?: (commentId: string | number) => void;
+  onHideComment: (commentId: string | number) => void;
+  handleReportComment: (commentId: string | number) => void;
+  onUndoComment?: (commentId: string | number) => void;
 }
 
 export default function CommentSectionView({
@@ -29,7 +31,9 @@ export default function CommentSectionView({
   isPostOwner,
   postId,
   onEditComment,
-  onHideComment
+  onHideComment,
+  handleReportComment,
+  onUndoComment
 }: CommentSectionViewProps) {
   const { activeProfile } = useActiveProfile();
   // Local UI State only
@@ -96,6 +100,7 @@ export default function CommentSectionView({
             onReply={handleReply}
             onReport={setReportTargetId}
             onHide={onHideComment}
+            onUndo={onUndoComment}
             isPostOwner={isPostOwner}
             postId={postId}
             replyingTo={replyingTo}
@@ -110,6 +115,10 @@ export default function CommentSectionView({
         <ReportModal
           isOpen={reportTargetId !== null}
           onClose={() => setReportTargetId(null)}
+          onSuccess={() => {
+            handleReportComment(reportTargetId);
+            setReportTargetId(null);
+          }}
           targetType="COMMENT"
           targetId={reportTargetId.toString()}
         />
