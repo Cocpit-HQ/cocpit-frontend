@@ -4,6 +4,7 @@ import { UserMention } from '@/services/api/users';
 import { HashtagSuggestion } from '@/services/api/hashtags';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CocpitMentionListCard } from '@/shared/commonComponents/CocpitMentionListCard';
 
 interface RichTextEditorProps {
   content: string;
@@ -163,85 +164,59 @@ const RichTextEditor = ({
 
       {showSuggestions && (
         <div 
-          className="absolute z-[100] w-72 bg-popover text-popover-foreground border rounded-lg shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95"
+          className={cn(
+            "absolute z-[100] bg-ds-surface-2 border border-ds-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95",
+            mode === 'mention' ? "w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3" : "w-72"
+          )}
           style={{ 
             top: suggestionPosition.top, 
-            left: Math.min(suggestionPosition.left, (editorRef.current?.clientWidth || 300) - 260),
+            left: Math.min(suggestionPosition.left, (editorRef.current?.clientWidth || 300) - (mode === 'mention' ? 300 : 260)),
           }}
         >
-          <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
-            {mode === 'mention' && users.map((user, index) => (
-              <div
-                key={user.id || user.full_name}
-                onMouseEnter={() => setActiveIndex(index)}
-                className={cn(
-                  "flex items-center justify-between px-3 py-2 rounded-md transition-all group",
-                  index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
-                )}
-              >
-                <div className="flex items-center gap-3 overflow-hidden flex-1">
-                  <Avatar className="h-7 w-7 border shrink-0">
-                    <AvatarImage src={user.avatar_url} />
-                    <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-semibold truncate">{highlightMatch(user.full_name, query)}</span>
-                    <span className="text-[10px] text-muted-foreground truncate">@{highlightMatch(user.account_name, query)}</span>
-                  </div>
+          {mode === 'mention' ? (
+            <CocpitMentionListCard
+              users={users}
+              activeIndex={activeIndex}
+              query={query}
+              isLoading={isLoading}
+              onSelect={(user) => onSelect(user, 'account')}
+              onHoverIndex={setActiveIndex}
+              onDismiss={() => setShowSuggestions(false)}
+              showNoResults={!isLoading && showSuggestions && users.length === 0 && !!query}
+            />
+          ) : (
+            <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
+              {hashtags.map((h, index) => (
+                <div
+                  key={h.tag}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onSelect(h);
+                  }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 cursor-pointer text-xs rounded-md transition-all",
+                    index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
+                  )}
+                >
+                  <span className="font-medium text-primary">#{highlightMatch(h.tag, query)}</span>
+                  <span className="text-[10px] text-muted-foreground">{h.usage_count} posts</span>
                 </div>
-                <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pr-1">
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onSelect(user, 'full');
-                    }}
-                    className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-1 rounded bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    Name
-                  </button>
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onSelect(user, 'account');
-                    }}
-                    className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-1 rounded bg-muted text-muted-foreground hover:bg-foreground hover:text-background transition-colors"
-                  >
-                    @
-                  </button>
+              ))}
+
+              {isLoading && (
+                <div className="px-3 py-3 text-[10px] text-muted-foreground animate-pulse text-center">
+                  Searching...
                 </div>
-              </div>
-            ))}
-
-            {mode === 'hashtag' && hashtags.map((h, index) => (
-              <div
-                key={h.tag}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onSelect(h);
-                }}
-                onMouseEnter={() => setActiveIndex(index)}
-                className={cn(
-                  "flex items-center justify-between px-3 py-2 cursor-pointer text-xs rounded-md transition-all",
-                  index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
-                )}
-              >
-                <span className="font-medium text-primary">#{highlightMatch(h.tag, query)}</span>
-                <span className="text-[10px] text-muted-foreground">{h.usage_count} posts</span>
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="px-3 py-3 text-[10px] text-muted-foreground animate-pulse text-center">
-                Searching...
-              </div>
-            )}
-            
-            {!isLoading && showSuggestions && ((mode === 'mention' && users.length === 0) || (mode === 'hashtag' && hashtags.length === 0)) && query && (
-              <div className="px-3 py-3 text-[10px] text-muted-foreground italic text-center">
-                No results found
-              </div>
-            )}
-          </div>
+              )}
+              
+              {!isLoading && showSuggestions && hashtags.length === 0 && query && (
+                <div className="px-3 py-3 text-[10px] text-muted-foreground italic text-center">
+                  No results found
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

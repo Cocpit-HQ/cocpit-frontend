@@ -114,63 +114,69 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
     }, [activeIndex]);
 
     return (
-        <div ref={listRef} className="box-border flex flex-col items-start p-2 gap-1 w-full animate-in fade-in-0 zoom-in-95">
+        <div 
+            ref={listRef} 
+            className="w-[274px] h-[256px] self-stretch flex flex-col items-start p-0 gap-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden box-border"
+        >
             {/* ── User rows ── */}
-            {users.map((user, index) => (
-                <div
-                    key={user.id}
-                    onMouseEnter={() => onHoverIndex(index)}
-                    onClick={() => onSelect(user)}
-                    className={cn(
-                        "flex flex-row items-center px-3 py-2 gap-3 h-14 rounded-lg cursor-pointer transition-colors duration-150 w-full box-border",
-                        index === activeIndex
-                            ? "bg-ds-surface-1 text-ds-text-primary"
-                            : "hover:bg-ds-surface-1/50 bg-transparent text-ds-text-secondary"
-                    )}
-                >
-                    {/* Avatar */}
-                    <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[12px] font-semibold">
-                        {/* Fallback Letter */}
-                        <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
-                        
-                        {/* Image overlay */}
-                        {user.avatar_url && (
-                            <img
-                                src={user.avatar_url}
-                                alt={user.full_name || "User"}
-                                onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                                }}
-                                className="absolute inset-0 w-full h-full object-cover"
-                            />
+            {users.map((user, index) => {
+                const isActive = index === activeIndex;
+                const displayName = user.full_name || user.account_name || "User";
+
+                return (
+                    <div
+                        key={user.id || index}
+                        onMouseEnter={() => onHoverIndex(index)}
+                        onClick={() => onSelect(user)}
+                        className={cn(
+                            "w-[274px] h-9 self-stretch shrink-0 flex flex-row justify-between items-center p-0 gap-2 cursor-pointer transition-colors duration-150 box-border group",
+                            isActive
+                                ? "text-ds-text-primary"
+                                : "text-ds-text-secondary hover:text-ds-text-primary"
                         )}
-                    </div>
+                    >
+                        {/* User Information Container */}
+                        <div className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1">
+                            {/* Avatar: 20px × 20px, rounded-[100px] */}
+                            <div className="relative w-5 h-5 rounded-[100px] shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[10px] font-medium">
+                                {/* Fallback Letter */}
+                                <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
+                                
+                                {/* Image overlay */}
+                                {user.avatar_url && (
+                                    <img
+                                        src={user.avatar_url}
+                                        alt={displayName}
+                                        onError={(e) => {
+                                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                                        }}
+                                        className="absolute inset-0 w-full h-full object-cover rounded-[100px]"
+                                    />
+                                )}
+                            </div>
 
-                    {/* Text column */}
-                    <div className="flex flex-col justify-center items-start p-0 min-w-0 overflow-hidden flex-1">
-                        {/* Full name */}
-                        <span className="font-['DM_Sans'] font-medium text-[14px] leading-5 text-ds-text-primary truncate w-full">
-                            {highlightMatch(user.full_name, query)}
-                        </span>
-
-                        {/* @account_name */}
-                        <span className="font-['DM_Sans'] font-normal text-[12px] leading-4 text-ds-text-secondary truncate w-full">
-                            @{highlightMatch(user.account_name, query)}
-                        </span>
+                            {/* User Name */}
+                            <span className={cn(
+                                "font-['DM_Sans'] font-normal text-[14px] leading-5 truncate",
+                                isActive ? "text-ds-text-primary" : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                            )}>
+                                {highlightMatch(displayName, query)}
+                            </span>
+                        </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
 
             {/* ── Loading state ── */}
             {isLoading && (
-                <div className="px-3 py-3 text-xs text-ds-text-muted animate-pulse text-center w-full">
+                <div className="w-full py-3 text-xs text-ds-text-muted animate-pulse text-center">
                     Searching...
                 </div>
             )}
 
             {/* ── No results ── */}
             {showNoResults && !isLoading && (
-                <div className="px-3 py-3 text-xs text-ds-text-muted italic text-center w-full">
+                <div className="w-full py-3 text-xs text-ds-text-muted italic text-center">
                     No results found
                 </div>
             )}

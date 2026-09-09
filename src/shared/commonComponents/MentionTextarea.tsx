@@ -413,7 +413,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                 <div 
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
-                    className="fixed z-[99999] pointer-events-auto shadow-2xl rounded-xl w-[280px] max-h-[260px] overflow-x-hidden overflow-y-auto custom-scrollbar bg-ds-surface-2 border border-ds-border"
+                    className="fixed z-[99999] pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
                     style={{
                         top: suggestionPosition.top 
                             ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
