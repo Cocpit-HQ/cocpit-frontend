@@ -57,6 +57,7 @@ export const toggleLike = async (postId: string, companyId?: string): Promise<To
   return response.data;
 };
 
+// Model representing a post liker returned from the backend (with organization/user relationship flags)
 export interface PostLikerInfo {
   likedAt: string;
   isOrganization: boolean;
@@ -66,6 +67,8 @@ export interface PostLikerInfo {
   username: string;
   fullName: string;
   avatar: string | null;
+  isFollowing?: boolean;
+  isSelf?: boolean;
 }
 
 export interface GetPostLikesResponse {
@@ -73,6 +76,7 @@ export interface GetPostLikesResponse {
   likes: PostLikerInfo[];
 }
 
+// Fetches the list of all users/organizations who liked the specified post
 export const getPostLikes = async (postId: string): Promise<GetPostLikesResponse> => {
   const response = await api.get<GetPostLikesResponse>(`/post/${postId}/likes`);
   return response.data;

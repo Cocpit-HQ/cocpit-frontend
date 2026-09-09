@@ -11,13 +11,16 @@ interface SharedPreviewProps {
   isMobile: boolean;
   clickable?: boolean;
   showFollow?: boolean;
+  disableNavigation?: boolean;
 }
 
-const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow }: SharedPreviewProps) => {
+const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation }: SharedPreviewProps) => {
   const router = useRouter();
   if (!sharedPost) return null;
 
-  const canShowFollow = showFollow !== undefined ? showFollow : clickable;
+  // disableNavigation is shorthand for clickable=false + showFollow=false (used in composer/edit contexts)
+  const effectiveClickable = disableNavigation ? false : clickable;
+  const canShowFollow = disableNavigation ? false : (showFollow !== undefined ? showFollow : clickable);
 
   // Job Preview
   if (sharedPost.isJob) {
@@ -25,7 +28,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
     return (
       <div 
         onClick={(e) => {
-          if (!clickable) return;
+          if (!effectiveClickable) return;
           if ((e.target as HTMLElement).closest('button, a')) return;
           if (jobId) {
             e.stopPropagation();
@@ -33,7 +36,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
           }
         }}
         className={`mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2 ${
-          clickable && jobId ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''
+          effectiveClickable && jobId ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''
         }`}
       >
         <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-background overflow-hidden flex items-center justify-center border border-border/50 shadow-sm">
@@ -207,7 +210,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
   const targetPostId = sharedPostId || sharedPost?.id || sharedPost?.post_id || sharedPost?._id || sharedPost?.postId;
 
   const handleCardClick = (e: React.MouseEvent) => {
-    if (!clickable) return;
+    if (!effectiveClickable) return;
     if ((e.target as HTMLElement).closest('button, a')) {
       return;
     }
@@ -223,7 +226,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
       <div 
         onClick={handleCardClick}
         className={`self-stretch py-[8px] px-[12px] rounded-[8px] border-[0.5px] border-[#2C2C33] flex flex-col gap-[12px] ${
-          clickable && targetPostId ? 'cursor-pointer hover:border-[#3E3E47] transition-colors' : ''
+          effectiveClickable && targetPostId ? 'cursor-pointer hover:border-[#3E3E47] transition-colors' : ''
         }`}
       >
         {/* Author row */}

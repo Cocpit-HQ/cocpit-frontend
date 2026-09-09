@@ -32,6 +32,12 @@ export interface PostVideoCardProps {
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   showHeader?: boolean;
+  likeCount?: number;
+  isLiked?: boolean;
+  sampleLikerUsername?: string;
+  likedUsers?: any[];
+  viewerUsername?: string;
+  onShowLikes?: () => void;
 }
 
 export const PostVideoCard = ({

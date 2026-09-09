@@ -48,7 +48,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const { updatePostInFeed } = useFeed(false);
 
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
-  const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId } : props;
+  const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId, shared_post: shared_post.shared_post } : props;
   const isTargetPostRepostWithThoughts = !!interactionTargetProps.shared_post && !!interactionTargetProps.content && interactionTargetProps.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() !== '';
 
   const {
@@ -109,7 +109,14 @@ export const FeedPost = (props: FeedPostProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+  const [selectedLikesPostId, setSelectedLikesPostId] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Opens the Likes modal for either the target post or an embedded shared post
+  const handleOpenLikesModal = (postIdToOpen?: string) => {
+    setSelectedLikesPostId(postIdToOpen || targetId.toString());
+    setIsLikesModalOpen(true);
+  };
   // --- Report Flow State ---
   // Tracks if the temporary 'Report submitted' UI is currently visible
   const [isReportSubmitted, setIsReportSubmitted] = useState(false);
@@ -444,7 +451,7 @@ export const FeedPost = (props: FeedPostProps) => {
             />
           )}
 
-          {!isRepostWithoutThoughts && interactionTargetProps.shared_post && (
+          {interactionTargetProps.shared_post && (
             <div className="w-full">
               <SharedPreview 
                 sharedPost={interactionTargetProps.shared_post} 
@@ -474,6 +481,7 @@ export const FeedPost = (props: FeedPostProps) => {
               sampleLikerUsername={targetSampleLikerUsername ?? undefined}
               likedUsers={targetLikedUsers}
               viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+              onShowLikes={() => handleOpenLikesModal()}
             />
           )}
 
@@ -504,10 +512,13 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Liked By (No Media) */}
       {(!((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc)) && likeCount > 0 && !(likeCount === 1 && isLiked) && targetSampleLikerUsername && (
-        <div className="flex flex-row items-center justify-start gap-[4px] pointer-events-auto px-[4px] mt-[4px]">
+        <div 
+          className="flex flex-row items-center justify-start gap-[4px] pointer-events-auto px-[4px] mt-[4px] cursor-pointer w-fit hover:opacity-80 transition-opacity"
+          onClick={() => handleOpenLikesModal()}
+        >
           <span className="text-[12px] font-normal leading-[16px] text-ds-text-secondary">
             Liked by{' '}
-            <span className="font-semibold text-ds-text-primary">
+            <span className="font-semibold text-ds-text-primary hover:underline">
               {targetSampleLikerUsername}
             </span>
             {likeCount > (isLiked ? 2 : 1) ? ` and ${likeCount - (isLiked ? 2 : 1)} others` : ''}
@@ -593,9 +604,9 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {isLikesModalOpen && (
         <LikesModal
-          postId={id.toString()}
+          postId={(selectedLikesPostId || id).toString()}
           isOpen={isLikesModalOpen}
-          onClose={() => setIsLikesModalOpen(false)}
+          onClose={() => { setIsLikesModalOpen(false); setSelectedLikesPostId(null); }}
         />
       )}
 

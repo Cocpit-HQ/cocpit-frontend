@@ -18,6 +18,11 @@ export const removeFollower = async (followerId: string) => {
     return response.data;
 };
 
+export const followCompany = async (orgId: string) => {
+    const response = await api.post(`/organizations/${orgId}/follow`);
+    return response.data;
+};
+
 export const getFollowers = async (userId: string, search?: string): Promise<Follower[]> => {
     const params = search ? { search } : {};
     const response = await api.get(`/users/${userId}/followers`, { params });

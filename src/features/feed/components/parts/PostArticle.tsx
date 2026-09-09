@@ -7,6 +7,12 @@ interface PostArticleProps {
   postId: string | number;
   title?: string | null;
   coverImage?: string | null;
+  likeCount?: number;
+  isLiked?: boolean;
+  sampleLikerUsername?: string;
+  likedUsers?: any[];
+  viewerUsername?: string;
+  onShowLikes?: () => void;
 }
 
 export const PostArticle: React.FC<PostArticleProps> = ({

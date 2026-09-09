@@ -508,6 +508,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
         {/* Tag People Dialog */}
         <Dialog open={showTagSelector} onOpenChange={(open) => { if (!open) setShowTagSelector(false); }}>
           <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden z-[301]">
+            <DialogTitle className="sr-only">Tag People</DialogTitle>
             <TagPeopleSelector
               taggedUsers={taggedUsers}
               onTaggedUsersChange={setTaggedUsers}
@@ -520,6 +521,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
         {/* Location Selector Dialog */}
         <Dialog open={showLocationSelector} onOpenChange={(open) => { if (!open) setShowLocationSelector(false); }}>
           <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden z-[301]">
+            <DialogTitle className="sr-only">Select Location</DialogTitle>
             <LocationSelector
               selectedLocation={selectedLocation}
               onLocationChange={setSelectedLocation}

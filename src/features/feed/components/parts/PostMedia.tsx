@@ -18,11 +18,12 @@ interface PostMediaProps {
   sampleLikerUsername?: string;
   likedUsers?: any[];
   viewerUsername?: string;
+  onShowLikes?: (e: React.MouseEvent) => void;
 }
 
 export const PostMedia = ({
   imageSrc, images = [], videoSrc, videoRef, onLoad, priority, onClick, tags = [],
-  likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername
+  likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
   const hasMultipleImages = validImages.length > 1;
@@ -96,7 +97,13 @@ export const PostMedia = ({
 
           {/* Liked By Overlay */}
           {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
-            <div className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-ds-surface-2/90 backdrop-blur-md border border-ds-border rounded-[16px] pointer-events-auto shadow-sm">
+            <div 
+              className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-ds-surface-2/90 backdrop-blur-md border border-ds-border rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2 transition-colors shadow-sm z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowLikes?.(e);
+              }}
+            >
               <span className="text-[12px] font-normal leading-[16px] text-ds-text-secondary text-center">
                 Liked by{' '}
                 <span className="font-semibold text-ds-text-primary">

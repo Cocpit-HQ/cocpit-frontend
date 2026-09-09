@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, BareDialogContent } from "@/components/ui/dialog";
+import { Dialog, BareDialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
@@ -23,12 +23,12 @@ export function DeleteConfirmationModal({
       <BareDialogContent className="w-[193px] h-[150px] p-[12px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center gap-[16px] shadow-xl outline-none">
         
         <div className="flex flex-col items-center justify-start gap-[8px] w-full">
-          <span className="font-['DM_Sans'] text-[16px] font-medium leading-[24px] text-[var(--ds-text-primary)] text-center w-full">
+          <DialogTitle className="font-['DM_Sans'] text-[16px] font-medium leading-[24px] text-[var(--ds-text-primary)] text-center w-full">
             {title}
-          </span>
-          <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[var(--ds-text-secondary)] text-center w-full">
+          </DialogTitle>
+          <DialogDescription className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[var(--ds-text-secondary)] text-center w-full">
             {description}
-          </span>
+          </DialogDescription>
         </div>
 
         <div className="flex flex-row justify-center items-start gap-[8px] w-full mt-auto">

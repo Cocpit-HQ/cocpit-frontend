@@ -14,7 +14,7 @@ import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { toast } from 'sonner';
 import { MapPin, X, Plus, ChevronDown } from 'lucide-react';
-import { Dialog, BareDialogContent } from '@/components/ui/dialog';
+import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 import { ComposerImagePreview, ComposerImage, MAX_COMPOSER_IMAGES } from '@/features/feed/components/create-post/ComposerImagePreview';
@@ -733,8 +733,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 sharedPost={effectiveRepostData} 
                 sharedPostId={effectiveRepostData.id?.toString() || (effectiveRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
                 isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false} 
-                clickable={false} 
-                showFollow={false}
+                disableNavigation
               />
             </div>
           )}
@@ -895,6 +894,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         }}
       >
         <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+          <DialogTitle className="sr-only">Select Location</DialogTitle>
           <LocationSelector
             selectedLocation={location}
             onLocationChange={setLocation}

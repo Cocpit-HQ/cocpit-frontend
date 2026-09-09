@@ -78,6 +78,7 @@ export default function CocpitShareModel({
   const [searchCursor, setSearchCursor] = useState<string | null>(null);
   const [hasMoreUsers, setHasMoreUsers] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -109,6 +110,7 @@ export default function CocpitShareModel({
         toast.error(msg);
       } finally {
         setIsSearchingApi(false);
+        setHasSearched(true);
       }
     },
     [toast]
@@ -117,7 +119,11 @@ export default function CocpitShareModel({
   useEffect(() => {
     if (propUsers) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!isOpen) return;
+    if (!isOpen) {
+      setHasSearched(false);
+      return;
+    }
+    setIsSearchingApi(true);
     debounceRef.current = setTimeout(() => {
       setSearchResults([]);
       setSearchCursor(null);
@@ -331,22 +337,26 @@ export default function CocpitShareModel({
                 e.preventDefault();
               }
             }}
-            className="fixed left-1/2 top-1/2 z-[9999] w-[400px] h-auto max-h-[470px] -translate-x-1/2 -translate-y-1/2 rounded-[16px] bg-ds-surface-2 border border-ds-border px-[12px] pb-[12px] pt-[44px] shadow-2xl outline-none flex flex-col gap-[12px] box-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="fixed left-1/2 top-1/2 z-[9999] w-[400px] h-[468px] -translate-x-1/2 -translate-y-1/2 rounded-[16px] bg-ds-bg border border-ds-border p-[12px] shadow-2xl outline-none flex flex-col gap-[12px] box-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           >
-            {/* Header */}
-            <div className="relative flex justify-center items-center w-full h-[20px]">
-              <DialogPrimitive.Title className="text-ds-text-primary ds-text-body-1">
+            {/* Header Area */}
+            <div className="flex flex-col items-center w-full gap-[12px]">
+              <div className="flex justify-end items-center w-full h-[20px]">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={isSending}
+                  className="h-[20px] w-[20px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity"
+                  aria-label="Close"
+                >
+                  <X className="h-[14px] w-[14px]" strokeWidth={2} />
+                </button>
+              </div>
+              <DialogPrimitive.Title className="text-ds-text-primary ds-text-body-1 flex items-center justify-center h-[24px]">
                 Share
               </DialogPrimitive.Title>
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isSending}
-                className="absolute right-0 h-[20px] w-[20px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" strokeWidth={2} />
-              </button>
               <DialogPrimitive.Description className="sr-only">
                 Share this with others
               </DialogPrimitive.Description>
@@ -354,19 +364,31 @@ export default function CocpitShareModel({
 
             <div className="flex-1 flex flex-col overflow-hidden w-full gap-[8px]">
               {/* Search */}
-              <div className="relative flex items-center justify-between w-full h-9 border-b border-ds-border py-[8px]">
+              <div className="relative flex items-center justify-between w-full h-9 border-b border-ds-text-primary py-[8px]">
                 <input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search"
-                  className="bg-transparent w-full outline-none text-ds-text-muted ds-text-secondary"
+                  className="bg-transparent w-full outline-none text-ds-text-primary placeholder:text-ds-text-muted ds-text-secondary"
                 />
                 <Search className="w-4 h-4 text-ds-text-primary" strokeWidth={2} />
               </div>
 
               {/* List */}
               <div onScroll={handleScroll} className="flex-1 overflow-y-auto overflow-x-hidden w-full flex flex-col gap-[8px] mt-2 pb-2 scrollbar-hide">
-                {(isSearching ? filteredUsers : users).length === 0 ? (
+                {(!propUsers && !hasSearched) || (isSearchingApi && (isSearching ? filteredUsers : users).length === 0) ? (
+                  <div className="flex flex-col w-full gap-[8px]">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between w-full h-[36px] shrink-0 gap-[8px]">
+                        <div className="flex items-center gap-[8px] flex-1">
+                          <div className="h-[20px] w-[20px] rounded-full ds-skeleton shrink-0" />
+                          <div className="h-[14px] w-[140px] rounded-[4px] ds-skeleton" />
+                        </div>
+                        <div className="w-[20px] h-[20px] rounded-[4px] ds-skeleton shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (isSearching ? filteredUsers : users).length === 0 ? (
                     <div className="py-8 text-center text-ds-text-muted ds-text-secondary">
                       No users found
                     </div>
@@ -441,7 +463,7 @@ export default function CocpitShareModel({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex justify-center items-center px-[12px] py-[6px] h-[36px] w-[77px] border border-ds-border rounded-[100px] text-ds-text-primary ds-text-body-1 cursor-pointer hover:bg-ds-border transition-colors"
+                  className="flex justify-center items-center px-[12px] py-[6px] h-[36px] w-[77px] border border-ds-border rounded-[100px] text-ds-text-primary bg-transparent ds-text-body-1 cursor-pointer hover:bg-ds-border transition-colors"
                 >
                   Cancel
                 </button>

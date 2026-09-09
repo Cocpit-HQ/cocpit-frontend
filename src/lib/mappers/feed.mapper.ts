@@ -246,7 +246,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         title: sp.title || "",
         authorHeadline: sp.author.author_headline || undefined,
         isAvailable: true,
-        shared_post: (sp as any).shared_post_data ? {
+        shared_post: (sp as any).shared_post || ((sp as any).shared_post_data ? {
           id: (sp as any).shared_post_data.post_id || (sp as any).shared_post_data.job_id,
           author: (sp as any).shared_post_data.author?.full_name || (sp as any).shared_post_data.company_name,
           authorId: (sp as any).shared_post_data.author?.user_id,
@@ -254,13 +254,15 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
           isCompanyPost: (sp as any).shared_post_data.author?.is_organization_post || false,
           authorSlug: (sp as any).shared_post_data.author?.author_slug,
           content: (sp as any).shared_post_data.content,
-          imageSrc: (sp as any).shared_post_data.media?.[0]?.url,
+          imageSrc: (sp as any).shared_post_data.media?.[0]?.url || (sp as any).shared_post_data.imageSrc,
+          images: (sp as any).shared_post_data.media ? (sp as any).shared_post_data.media.map((m: any) => m.url).filter(Boolean) : (sp as any).shared_post_data.images,
+          videoSrc: (sp as any).shared_post_data.media?.find((m: any) => m.media_type === 'video' || m.url?.includes('.mp4'))?.url || (sp as any).shared_post_data.videoSrc,
           isJob: !!(sp as any).shared_post_data.job_id,
           jobTitle: (sp as any).shared_post_data.title,
           jobCompany: (sp as any).shared_post_data.company_name,
           jobLocation: (sp as any).shared_post_data.location,
           jobLogo: (sp as any).shared_post_data.company_logo
-        } as any : undefined
+        } as any : undefined)
       } as Post & { isAvailable?: boolean };
     }
   }
