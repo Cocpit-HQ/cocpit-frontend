@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, BareDialogContent } from "@/components/ui/dialog";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
@@ -14,37 +14,46 @@ export function DeleteConfirmationModal({
   isOpen,
   onClose,
   onConfirm,
-  title = "Delete Post",
-  description = "Are you sure you want to delete this post?\nThis action cannot be undone.",
+  title = "Delete this post?",
+  description = "This post will be permanently deleted",
   isDeleting = false,
 }: DeleteConfirmationModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[300px] max-w-[300px] h-[158px] max-h-[158px] rounded-[24px] sm:rounded-[24px] p-[16px] gap-[8px] flex flex-col items-center justify-between text-center [&>button]:hidden">
-        <DialogTitle className="text-[16px] font-semibold text-[#1A1A1A] font-[family-name:var(--font-poppins)]">
-          {title}
-        </DialogTitle>
-        <p className="text-[12px] leading-[16px] text-[#6B7280] font-[family-name:var(--font-poppins)] whitespace-pre-line">
-          {description}
-        </p>
+      <BareDialogContent className="w-[193px] h-[150px] p-[12px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center gap-[16px] shadow-xl outline-none">
+        
+        <div className="flex flex-col items-center justify-start gap-[8px] w-full">
+          <span className="font-['DM_Sans'] text-[16px] font-medium leading-[24px] text-[var(--ds-text-primary)] text-center w-full">
+            {title}
+          </span>
+          <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[var(--ds-text-secondary)] text-center w-full">
+            {description}
+          </span>
+        </div>
 
-        <div className="flex items-center justify-center gap-[8px] w-full">
-          <button
-            onClick={onClose}
-            disabled={isDeleting}
-            className="flex-1 h-[36px] flex items-center justify-center rounded-[100px] border border-[#818CF8] text-[#818CF8] font-medium text-[13px] hover:bg-[#F5F7FF] transition-colors font-[family-name:var(--font-poppins)]"
-          >
-            Cancel
-          </button>
+        <div className="flex flex-row justify-center items-start gap-[8px] w-full mt-auto">
           <button
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex-1 h-[36px] flex items-center justify-center rounded-[100px] bg-[#FF6B6B] text-white font-medium text-[13px] hover:bg-[#FF5252] transition-colors font-[family-name:var(--font-poppins)]"
+            className="flex flex-row justify-center items-center px-[12px] py-[6px] w-[77px] h-[36px] bg-[var(--ds-accent)] rounded-[100px] outline-none cursor-pointer hover:brightness-90 transition-all"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)]">
+              {isDeleting ? "..." : "Delete"}
+            </span>
+          </button>
+          
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="flex flex-row justify-center items-center px-[12px] py-[6px] w-[77px] h-[36px] bg-transparent border border-[var(--ds-border)] rounded-[100px] outline-none cursor-pointer hover:bg-[var(--ds-surface-1)] transition-colors"
+          >
+            <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)]">
+              Cancel
+            </span>
           </button>
         </div>
-      </DialogContent>
+
+      </BareDialogContent>
     </Dialog>
   );
 }

@@ -8,8 +8,10 @@ import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { Icon } from '@/components/icons';
 import { postApi } from '@/features/feed/api/post.api';
 import { sanitizeContent } from '@/lib/contentSanitizer';
-import { formatMentionsForBackend } from '@/lib/mentions';
+import { formatMentionsForBackend, parseMentionsForFrontend } from '@/lib/mentions';
 import { UserMention } from '@/services/api/users';
+import { getPostById } from '@/services/api/posts';
+import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { toast } from 'sonner';
 import { MapPin, X, Plus, ChevronDown } from 'lucide-react';
 import { Dialog, BareDialogContent } from '@/components/ui/dialog';
@@ -20,6 +22,7 @@ import { getImageDimensions } from '@/features/feed/utils/imageBounds';
 import { usePostPoll } from '@/features/feed/hooks/use-post-poll';
 import PostVideoCard from '@/features/feed/components/create-post/post-types/PostVideoCard';
 import SharedPreview from './create-post/SharedPreview';
+import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadProgressStrip';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -44,7 +47,7 @@ interface FeedComposerInlineProps {
 const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPostData, onClearEdit, repostData, onClearRepost }: FeedComposerInlineProps) => {
   const { data: session } = useSession();
   const { activeProfile } = useActiveProfile();
-  const { addPost } = useFeed();
+  const { addPost, updatePostInFeed } = useFeed();
   const isEditMode = !!editPostId && !!editPostData;
 
   // ── Core State ────────────────────────────────────────────────────────────
@@ -69,23 +72,35 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // ── Upload Progress State ────────────────────────────────────────────────
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'processing' | 'error' | 'success'>('idle');
+
   // ── Derived ───────────────────────────────────────────────────────────────
   const avatarUrl = activeProfile?.avatar_url;
   const initial = activeProfile?.name ? activeProfile.name.charAt(0).toUpperCase() : 'U';
   const isCompanyPost = activeProfile?.type === 'COMPANY';
   const companyId = isCompanyPost ? activeProfile?.id : undefined;
 
+  // ── Repost State in Edit / Normal Mode ────────────────────────────────────
+  const [fetchedSharedPost, setFetchedSharedPost] = useState<any | null>(null);
+
   // Check if the Post button should be enabled
-  const isRepostMode = !!repostData;
+  const effectiveRepostData = repostData || (isEditMode ? (editPostData?.shared_post || editPostData?.sharedPost || fetchedSharedPost) : null);
+  const isRepostMode = !!effectiveRepostData;
 
   const canPost = mode === 'poll'
     ? poll.isPollValid()
-    : (text.trim().length > 0 || selectedImages.length > 0 || selectedVideo !== null || isRepostMode);
+    // Bug 4: In repost mode, Post button stays disabled until user adds thoughts (text/media)
+    : (text.trim().length > 0 || selectedImages.length > 0 || selectedVideo !== null);
   
   const hasContent = mode === 'poll'
     ? (poll.pollQuestion.trim().length > 0 || poll.pollOptions.some(o => o.text.trim().length > 0))
-    : (text.trim().length > 0 || inlineMentions.length > 0 || selectedImages.length > 0 || selectedVideo !== null || isRepostMode);
+    // Bug 6: Don't count isRepostMode alone as "hasContent" — user must actually type or add media
+    : (text.trim().length > 0 || inlineMentions.length > 0 || selectedImages.length > 0 || selectedVideo !== null);
 
+  const hasMedia = selectedImages.length > 0 || selectedVideo !== null;
   const showLocationFeature = hasContent || location !== null;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -121,6 +136,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
     setActiveImageIdx(0);
     setText('');
     setLocation(null);
+    setFetchedSharedPost(null);
     setInlineMentions([]);
     poll.clearPoll();
     setDurationOpen(false);
@@ -134,7 +150,25 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   React.useEffect(() => {
     if (isEditMode && editPostData) {
       setIsExpanded(true);
-      setText(editPostData.content || '');
+      const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(editPostData.content || '');
+      setText(parsedContent);
+      setInlineMentions(parsedMentions);
+
+      // Setup Repost Data if editing a repost
+      const existingShared = editPostData.shared_post || editPostData.sharedPost;
+      if (existingShared) {
+        setFetchedSharedPost(existingShared);
+      } else if (editPostData.shared_post_id) {
+        getPostById(editPostData.shared_post_id)
+          .then((backendPost) => {
+            if (backendPost) {
+              setFetchedSharedPost(mapBackendPostToFrontend(backendPost));
+            }
+          })
+          .catch((err) => console.error("Failed to load shared post for edit:", err));
+      } else {
+        setFetchedSharedPost(null);
+      }
       
       // Setup Location
       if (editPostData.location) {
@@ -181,7 +215,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         setMode('text');
       }
     }
-  }, [isEditMode, editPostData]);
+  }, [isEditMode, editPostId, editPostData]);
 
   // ── Media Handlers (Max 12 photos, or 1 video) ─────────────────────────────
   const handleImageClick = useCallback(() => {
@@ -344,11 +378,23 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
     setActiveImageIdx(toIdx);
   }, []);
 
+  const handleCancelUpload = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
+
   // ── Submit ────────────────────────────────────────────────────────────────
 
   const handlePost = useCallback(async () => {
-    if (isSubmitting || !canPost) return;
+    if (isSubmitting || !canPost || (uploadPhase !== 'idle' && uploadPhase !== 'error' && uploadPhase !== 'success')) return;
     setIsSubmitting(true);
+    setUploadProgress(0);
+    setUploadPhase('uploading');
+    abortControllerRef.current = new AbortController();
+
+    // Clear composer visually immediately for new posts
+    if (!isEditMode) {
+      resetComposer();
+    }
 
     try {
       const locationString = location 
@@ -379,8 +425,8 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         addPost(mappedPost);
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
 
-        toast.success('Poll published!');
-        resetComposer();
+        setUploadPhase('success');
+        setTimeout(() => setUploadPhase('idle'), 3000);
         if (onPostCreated) onPostCreated();
         return;
       }
@@ -402,13 +448,20 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         };
 
         const files = [selectedVideo.file];
-        const { mappedPost } = await postApi.create(payload, files);
+        const uploadConfig = {
+          signal: abortControllerRef.current.signal,
+          onUploadProgress: (percent: number) => {
+            setUploadProgress(percent);
+            if (percent === 100) setUploadPhase('processing');
+          }
+        };
+        const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
 
         addPost(mappedPost);
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
 
-        toast.success('Post published!');
-        resetComposer();
+        setUploadPhase('success');
+        setTimeout(() => setUploadPhase('idle'), 3000);
         if (onPostCreated) onPostCreated();
         return;
       }
@@ -416,6 +469,14 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       // ── Handle Standard / Photo Post ──
       let finalContent = sanitizeContent(text);
       finalContent = formatMentionsForBackend(finalContent, inlineMentions);
+
+      const sharedPostId = repostData?.id || (isEditMode ? (
+        editPostData?.shared_post_id ||
+        effectiveRepostData?.id ||
+        effectiveRepostData?.post_id ||
+        editPostData?.shared_post?.id ||
+        editPostData?.sharedPost?.id
+      ) : undefined);
 
       const payload: any = {
         title: '',
@@ -426,33 +487,54 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         location: locationString,
         companyId: companyId || undefined,
         media_urls: isEditMode ? selectedImages.map((img) => img.previewUrl) : undefined,
-        shared_post_id: repostData?.id || undefined,
+        shared_post_id: sharedPostId,
       };
 
       if (isEditMode && editPostId) {
         await postApi.update(editPostId, payload);
         toast.success('Post updated!');
-        // Ideally we'd update the specific post in the feed cache here. 
-        // addPost works for create, but for edit we might just let it be or fire an event.
+        updatePostInFeed(editPostId, {
+          content: finalContent,
+          location: locationString || undefined,
+          visibility: payload.visibility,
+          ...(effectiveRepostData ? { shared_post: effectiveRepostData } : {})
+        });
         window.dispatchEvent(new CustomEvent('postUpdated', { detail: { id: editPostId, ...payload } }));
+        resetComposer();
+        setUploadPhase('idle');
       } else {
         const files = selectedImages.map((img) => img.file);
-        const { mappedPost } = await postApi.create(payload, files);
+        const uploadConfig = {
+          signal: abortControllerRef.current.signal,
+          onUploadProgress: (percent: number) => {
+            setUploadProgress(percent);
+            if (percent === 100) setUploadPhase('processing');
+          }
+        };
+        const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
         addPost(mappedPost);
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
-        toast.success('Post published!');
+        
+        setUploadPhase('success');
+        setTimeout(() => setUploadPhase('idle'), 3000);
       }
 
-      resetComposer();
       if (onPostCreated) onPostCreated();
     } catch (err: any) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        console.log('Upload cancelled by user');
+        setUploadPhase('idle');
+        return;
+      }
+      setUploadPhase('error');
       const errorMessage = err.response?.data?.message || err.message || 'Failed to publish post';
       console.error('Post action failed:', errorMessage);
       toast.error(errorMessage);
+      setTimeout(() => setUploadPhase('idle'), 3000);
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, canPost, mode, poll, text, selectedImages, selectedVideo, inlineMentions, location, companyId, addPost, resetComposer, onPostCreated, isEditMode, editPostId, editPostData, repostData]);
+  }, [isSubmitting, canPost, mode, poll, text, selectedImages, selectedVideo, inlineMentions, location, companyId, addPost, resetComposer, onPostCreated, isEditMode, editPostId, editPostData, repostData, uploadPhase]);
 
   // ── Toolbar Actions ───────────────────────────────────────────────────────
   const handlePollClick = useCallback(() => {
@@ -477,9 +559,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full flex flex-col pt-[16px] px-[16px] pb-0 bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px] relative">
+    <>
+      <div className="w-full flex flex-col pt-[16px] px-[16px] pb-0 bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px] relative">
 
-      {/* Hidden file input for uploading images & videos */}
+        {/* Hidden file input for uploading images & videos */}
       <input
         ref={fileInputRef}
         type="file"
@@ -627,23 +710,31 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 onChange={handleTextChange}
                 onFocus={handleFocus}
                 onMentionsChange={handleMentionsChange}
+                initialMentions={inlineMentions}
                 placeholder="What would you like to share today?"
                 className="ds-text-body text-ds-text-primary placeholder:text-ds-text-muted bg-transparent"
               />
             </div>
           </div>
 
-          {/* ── Shared Preview (Repost Mode) ─ */}
-          {isRepostMode && repostData && (
-            <div className="relative mt-2">
-              <button
-                type="button"
-                onClick={() => onClearRepost?.()}
-                className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors z-10"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <SharedPreview sharedPost={repostData} isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false} />
+          {/* ── Shared Preview (Repost Mode or Edit Repost Mode) ─ */}
+          {isRepostMode && effectiveRepostData && (
+            <div className="relative w-full mt-[12px]">
+              {!isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => onClearRepost?.()}
+                  className="absolute bottom-full right-0 mb-[8px] p-1 text-[#B8ADA8] hover:text-white transition-colors z-10 cursor-pointer"
+                >
+                  <X className="w-[20px] h-[20px]" />
+                </button>
+              )}
+              <SharedPreview 
+                sharedPost={effectiveRepostData} 
+                sharedPostId={effectiveRepostData.id?.toString() || (effectiveRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
+                isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false} 
+                clickable={false} 
+              />
             </div>
           )}
 
@@ -735,52 +826,54 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             </>
           ) : (
             <>
-              {/* Media Icons */}
-              <div className="flex flex-row items-center gap-[16px]">
-                {/* Image / Photo */}
-                <button
-                  type="button"
-                  onClick={handleImageClick}
-                  disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
-                  className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
-                    selectedImages.length >= MAX_COMPOSER_IMAGES
-                      ? 'opacity-40 cursor-not-allowed text-ds-text-muted'
-                      : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
-                  }`}
-                  aria-label="Upload image"
-                  title={selectedImages.length >= MAX_COMPOSER_IMAGES ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})` : 'Add photos'}
-                >
-                  <Icon name="image" className="w-[20px] h-[20px]" />
-                </button>
+              {/* Bug 5: Hide image/poll/article icons in repost mode */}
+              {!isRepostMode && (
+                <div className="flex flex-row items-center gap-[16px]">
+                  {/* Image / Photo */}
+                  <button
+                    type="button"
+                    onClick={handleImageClick}
+                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
+                    className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
+                      selectedImages.length >= MAX_COMPOSER_IMAGES
+                        ? 'opacity-40 cursor-not-allowed text-ds-text-muted'
+                        : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                    }`}
+                    aria-label="Upload image"
+                    title={selectedImages.length >= MAX_COMPOSER_IMAGES ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})` : 'Add photos'}
+                  >
+                    <Icon name="image" className="w-[20px] h-[20px]" />
+                  </button>
 
-                {/* Poll */}
-                <button
-                  onClick={handlePollClick}
-                  className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer ${
-                    mode === 'poll' ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-[var(--ds-accent)]'
-                  }`}
-                  aria-label="Create poll"
-                  title="Create poll"
-                >
-                  <Icon name="poll" className="w-[20px] h-[20px]" />
-                </button>
+                  {/* Poll */}
+                  <button
+                    onClick={handlePollClick}
+                    className={`w-[40px] h-[40px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer ${
+                      mode === 'poll' ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-[var(--ds-accent)]'
+                    }`}
+                    aria-label="Create poll"
+                    title="Create poll"
+                  >
+                    <Icon name="poll" className="w-[20px] h-[20px]" />
+                  </button>
 
-                {/* Article */}
-                <button
-                  onClick={handleArticleClick}
-                  className="w-[40px] h-[40px] flex items-center justify-center text-ds-text-primary hover:text-[var(--ds-accent)] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer"
-                  aria-label="Write article"
-                  title="Write article"
-                >
-                  <Icon name="articles" className="w-[20px] h-[20px]" />
-                </button>
-              </div>
+                  {/* Article */}
+                  <button
+                    onClick={handleArticleClick}
+                    className="w-[40px] h-[40px] flex items-center justify-center text-ds-text-primary hover:text-[var(--ds-accent)] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer"
+                    aria-label="Write article"
+                    title="Write article"
+                  >
+                    <Icon name="articles" className="w-[20px] h-[20px]" />
+                  </button>
+                </div>
+              )}
 
             {/* Post Button */}
             <button
               onClick={handlePost}
               disabled={!canPost || isSubmitting}
-              className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+              className={`ml-auto h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
                 canPost && !isSubmitting
                   ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
                   : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
@@ -809,7 +902,19 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           />
         </BareDialogContent>
       </Dialog>
-    </div>
+      </div>
+
+      {/* ── Post Upload Progress Strip (Rendered outside composer box) ── */}
+      {uploadPhase !== 'idle' && (
+        <div className="w-full max-w-[442px] mx-auto px-4 lg:px-0">
+          <PostUploadProgressStrip 
+            progress={uploadProgress} 
+            phase={uploadPhase as any} 
+            onCancel={handleCancelUpload} 
+          />
+        </div>
+      )}
+    </>
   );
 };
 

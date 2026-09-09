@@ -86,19 +86,19 @@ export function PostCarousel({
           {canScrollPrev && (
             <button
               onClick={scrollPrev}
-              className="absolute -left-7 md:-left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center p-1 text-white/90 hover:text-white transition-all duration-150 hover:scale-110 cursor-pointer outline-none"
+              className="absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-white/90 hover:text-white hover:bg-[#1A1A20] transition-all duration-150 cursor-pointer outline-none"
               aria-label="Previous photo"
             >
-              <ChevronLeft className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+              <ChevronLeft className="w-5 h-5 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
             </button>
           )}
           {canScrollNext && (
             <button
               onClick={scrollNext}
-              className="absolute -right-7 md:-right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center p-1 text-white/90 hover:text-white transition-all duration-150 hover:scale-110 cursor-pointer outline-none"
+              className="absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-white/90 hover:text-white hover:bg-[#1A1A20] transition-all duration-150 cursor-pointer outline-none"
               aria-label="Next photo"
             >
-              <ChevronRight className="w-6 h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+              <ChevronRight className="w-5 h-5 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
             </button>
           )}
         </>

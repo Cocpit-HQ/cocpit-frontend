@@ -8,6 +8,8 @@ import { HashtagSuggestion } from '@/services/api/hashtags';
 import { useMentions } from '@/hooks/use-mentions';
 import { CocpitMentionListCard } from '@/shared/commonComponents/CocpitMentionListCard';
 
+import { parseMentionsForFrontend } from '@/lib/mentions';
+
 export interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -16,6 +18,7 @@ export interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLT
     searchUsersFn?: (query: string) => Promise<UserMention[]>;
     placeholder?: string;
     className?: string;
+    initialMentions?: UserMention[];
 }
 
 export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaProps>(({ 
@@ -25,12 +28,45 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
     onMentionsChange,
     searchUsersFn, 
     className, 
+    initialMentions,
     ...props 
 }, ref) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement);
     const [mentionedNames, setMentionedNames] = useState<string[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<UserMention[]>([]);
+    
+    useEffect(() => {
+        if (initialMentions && initialMentions.length > 0) {
+            setSelectedUsers(initialMentions);
+            setMentionedNames(initialMentions.map(u => u.full_name).filter(Boolean));
+        } else if (initialMentions && initialMentions.length === 0) {
+            setSelectedUsers([]);
+            setMentionedNames([]);
+        }
+    }, [initialMentions]);
+
+    // Safeguard: Automatically convert raw @[Name](account) into hidden marker format if passed in value
+    useEffect(() => {
+        if (value && /@\[([^\]]+)\]\(([^)]+)\)/.test(value)) {
+            const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(value);
+            setSelectedUsers(prev => {
+                const combined = [...prev];
+                parsedMentions.forEach(pm => {
+                    if (!combined.some(u => u.full_name === pm.full_name || u.account_name === pm.account_name)) {
+                        combined.push(pm);
+                    }
+                });
+                return combined;
+            });
+            setMentionedNames(prev => Array.from(new Set([...prev, ...parsedMentions.map(u => u.full_name)])));
+            if (onMentionsChange && parsedMentions.length > 0) {
+                onMentionsChange(parsedMentions);
+            }
+            const event = { target: { value: parsedContent } } as React.ChangeEvent<HTMLTextAreaElement>;
+            onChange(event);
+        }
+    }, [value, onChange, onMentionsChange]);
     
     const {
         query, setQuery,
@@ -99,10 +135,39 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         adjustHeight();
 
         const currentText = e.target.value;
-        const remainingUsers = selectedUsers.filter(u => currentText.includes(u.full_name));
+        
+        // Count how many times each user mention appears in currentText
+        const counts: Record<string, number> = {};
+        for (const user of selectedUsers) {
+            if (!user.full_name) continue;
+            if (counts[user.full_name] === undefined) {
+                const escaped = user.full_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const markerRegex = new RegExp(`\u200B${escaped}`, 'g');
+                const markerMatches = currentText.match(markerRegex);
+                if (markerMatches) {
+                    counts[user.full_name] = markerMatches.length;
+                } else {
+                    const fallbackRegex = new RegExp(escaped, 'g');
+                    const fallbackMatches = currentText.match(fallbackRegex);
+                    counts[user.full_name] = fallbackMatches ? fallbackMatches.length : 0;
+                }
+            }
+        }
+
+        const remainingUsers: UserMention[] = [];
+        const usedCounts: Record<string, number> = {};
+        for (const user of selectedUsers) {
+            const available = counts[user.full_name] || 0;
+            const used = usedCounts[user.full_name] || 0;
+            if (used < available) {
+                remainingUsers.push(user);
+                usedCounts[user.full_name] = used + 1;
+            }
+        }
+
         if (remainingUsers.length !== selectedUsers.length) {
             setSelectedUsers(remainingUsers);
-            setMentionedNames(remainingUsers.map(u => u.full_name));
+            setMentionedNames(Array.from(new Set(remainingUsers.map(u => u.full_name))));
             if (onMentionsChange) onMentionsChange(remainingUsers);
         }
 
@@ -182,9 +247,20 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                         const newValue = value.substring(0, lastMarkerIdx) + value.substring(mentionEndPos);
 
                         if (matchedName) {
-                            const nextUsers = selectedUsers.filter(u => u.full_name !== matchedName);
+                            // Remove only one occurrence of matchedName from selectedUsers
+                            const removeIdx = selectedUsers.findIndex(u => u.full_name === matchedName);
+                            const nextUsers = removeIdx !== -1
+                                ? selectedUsers.filter((_, idx) => idx !== removeIdx)
+                                : selectedUsers;
+
                             setSelectedUsers(nextUsers);
-                            setMentionedNames(prev => prev.filter(n => n !== matchedName));
+
+                            // Only remove from mentionedNames if NO other occurrences remain in nextUsers and not in newValue
+                            const stillHasName = nextUsers.some(u => u.full_name === matchedName) || newValue.includes(`\u200B${matchedName}`);
+                            if (!stillHasName) {
+                                setMentionedNames(prev => prev.filter(n => n !== matchedName));
+                            }
+
                             if (onMentionsChange) onMentionsChange(nextUsers);
                         }
 
@@ -282,12 +358,14 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
     const renderHighlightedText = (text: string) => {
         if (!text) return null;
         
-        // Escape names for regex
+        // Escape names for regex, sorted longest first to avoid partial prefix collisions
         const allKnownNames = Array.from(new Set([
             ...mentionedNames,
             ...selectedUsers.map(u => u.full_name).filter(Boolean)
         ]));
-        const escapedNames = allKnownNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        const escapedNames = allKnownNames
+            .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .sort((a, b) => b.length - a.length);
         const nameRegexPart = escapedNames.length > 0 ? `\u200B(?:${escapedNames.join('|')})|` : '';
         const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\))`, 'g');
 

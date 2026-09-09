@@ -1,21 +1,38 @@
-import React from 'react';
-import { Video } from 'lucide-react';
-import { Icon } from '@iconify/react';
-
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSocial } from '@/context/SocialContext';
+import { useAuth } from '@/hooks/use-auth';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
 interface SharedPreviewProps {
   sharedPost: any;
   sharedPostId?: string;
   sharedJobId?: string;
   isMobile: boolean;
+  clickable?: boolean;
 }
 
-const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
+const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true }: SharedPreviewProps) => {
+  const router = useRouter();
   if (!sharedPost) return null;
 
   // Job Preview
   if (sharedPost.isJob) {
+    const jobId = sharedJobId || sharedPost?.jobId || sharedPost?.job_id || sharedPost?.id;
     return (
-      <div className="mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2">
+      <div 
+        onClick={(e) => {
+          if (!clickable) return;
+          if ((e.target as HTMLElement).closest('button, a')) return;
+          if (jobId) {
+            e.stopPropagation();
+            router.push(`/jobs/${jobId}`);
+          }
+        }}
+        className={`mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2 ${
+          clickable && jobId ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''
+        }`}
+      >
         <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-background overflow-hidden flex items-center justify-center border border-border/50 shadow-sm">
           {sharedPost.jobLogo ? (
             <img src={sharedPost.jobLogo} alt={sharedPost.jobCompany || "Company"} className="w-full h-full object-contain p-1" />
@@ -80,13 +97,115 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
     || sharedPost?.created_at 
     || sharedPost?.createdAt;
 
+  // Normalize media
+  const rawMediaList = Array.isArray(sharedPost?.images) && sharedPost.images.length > 0
+    ? sharedPost.images
+    : Array.isArray(sharedPost?.media) && sharedPost.media.length > 0
+      ? sharedPost.media
+      : Array.isArray(sharedPost?.media_urls) && sharedPost.media_urls.length > 0
+        ? sharedPost.media_urls
+        : [];
+
+  const mediaUrls: string[] = rawMediaList
+    .map((item: any) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
+        if (item.media_type === 'video' || item.type === 'video') return null;
+        return item.url || item.src || null;
+      }
+      return null;
+    })
+    .filter(Boolean) as string[];
+
+  if (mediaUrls.length === 0) {
+    const singleImage = sharedPost?.imageSrc || sharedPost?.image || sharedPost?.achievement_image_url;
+    if (typeof singleImage === 'string') {
+      mediaUrls.push(singleImage);
+    }
+  }
+
+  const videoSrc = sharedPost?.videoSrc 
+    || (typeof sharedPost?.video === 'string' ? sharedPost.video : null)
+    || (Array.isArray(sharedPost?.media) ? sharedPost.media.find((m: any) => m?.media_type === 'video' || m?.type === 'video')?.url : null);
+
+  const { user: currentUser } = useAuth();
+  const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
+  const queryClient = useQueryClient();
+
+  const authorUserId = sharedUser?.id?.toString() 
+    || sharedPost?.author_id?.toString() 
+    || sharedPost?.authorId?.toString() 
+    || sharedPost?.orgId?.toString();
+    
+  const isMe = currentUser?.id?.toString() === authorUserId;
+  const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
+  const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
+  const isCompanyPost = sharedPost?.isCompanyPost || false;
+
+  const followCompanyMutation = useMutation({
+    mutationFn: ({ orgId, sourcePostId }: { orgId: string; sourcePostId?: string }) => companyProfileService.followOrganization(orgId, sourcePostId),
+    onSuccess: (_, { orgId }) => {
+      syncFollowStatus(orgId, true);
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+    }
+  });
+
+  const unfollowCompanyMutation = useMutation({
+    mutationFn: (orgId: string) => companyProfileService.unfollowOrganization(orgId),
+    onSuccess: (_, orgId) => {
+      syncFollowStatus(orgId, false);
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+    }
+  });
+
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const isFollowActionLoading = isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending;
+
+  const handleToggleFollow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authorUserId || isFollowActionLoading) return;
+    setHasInteracted(true);
+    if (isCompanyPost) {
+      if (isAuthorFollowing) unfollowCompanyMutation.mutate(authorUserId);
+      else followCompanyMutation.mutate({ orgId: authorUserId, sourcePostId: sharedPostId || sharedPost?.id?.toString() });
+    } else {
+      if (isAuthorFollowing) unfollowUser(authorUserId);
+      else followUser(authorUserId, sharedPostId || sharedPost?.id?.toString());
+    }
+  };
+
+  const targetPostId = sharedPostId || sharedPost?.id || sharedPost?.post_id || sharedPost?._id || sharedPost?.postId;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (!clickable) return;
+    if ((e.target as HTMLElement).closest('button, a')) {
+      return;
+    }
+    if (targetPostId) {
+      e.stopPropagation();
+      router.push(`/post/${targetPostId}`);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-2 w-full mt-2">
+    <div className="flex flex-col w-full">
       {/* Card */}
-      <div className="self-stretch p-4 bg-white rounded-3xl shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col gap-4">
+      <div 
+        onClick={handleCardClick}
+        className={`self-stretch py-[8px] px-[12px] rounded-[8px] border-[0.5px] border-[#2C2C33] flex flex-col gap-[12px] ${
+          clickable && targetPostId ? 'cursor-pointer hover:border-[#3E3E47] transition-colors' : ''
+        }`}
+      >
         {/* Author row */}
-        <div className="inline-flex items-center gap-2">
-          <div className="size-10 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-sm overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+        <div className="flex flex-row items-center gap-[8px] w-full">
+          <div className="w-[32px] h-[32px] rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-[14px] overflow-hidden flex-shrink-0 font-dmsans select-none">
             {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' ? (
               <img
                 className="w-full h-full object-cover"
@@ -94,61 +213,70 @@ const SharedPreview = ({ sharedPost, isMobile }: SharedPreviewProps) => {
                 alt={sharedName || 'avatar'}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
-            ) : null}
-            <span>{(sharedName || 'U').charAt(0).toUpperCase()}</span>
+            ) : (
+              <span>{(sharedName || 'U').charAt(0).toUpperCase()}</span>
+            )}
           </div>
-          <div className="flex flex-col">
-            <span className="text-black text-base font-normal font-['Poppins'] leading-6">
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-[#FFECE6] text-[16px] font-semibold font-dmsans leading-[24px] truncate">
               {sharedName || 'Unknown User'}
             </span>
             {sharedRole && (
-              <span className="text-gray-500 text-[10px] font-['Poppins'] leading-4">
+              <span className="text-[#B8ADA8] text-[10px] font-normal font-dmsans leading-[12px] truncate">
                 {sharedRole}
               </span>
             )}
-            <div className="inline-flex items-center gap-2">
+            <div className="inline-flex items-center gap-[6px] mt-[2px]">
               {sharedLocation && (
-                <>
-                  <span className="text-gray-500 text-[10px] font-['Poppins'] leading-4">
-                    {sharedLocation}
-                  </span>
-                  <div className="size-1.5 bg-gray-500 rounded-full" />
-                </>
-              )}
-              {sharedTime && (
-                <span className="text-gray-500 text-[10px] font-['Poppins'] leading-4">
-                  {sharedTime}
+                <span className="text-[#B8ADA8] text-[10px] font-normal font-dmsans leading-[12px] truncate max-w-[120px]">
+                  {sharedLocation}
                 </span>
               )}
             </div>
           </div>
+          
+          {/* Follow Action */}
+          <div className="flex flex-row items-center shrink-0 h-[24px] ml-auto">
+            {!isMe && (!isAuthorFollowing || hasInteracted) && (
+              <button 
+                onClick={handleToggleFollow}
+                disabled={isFollowActionLoading}
+                className={
+                  isAuthorFollowing
+                    ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-[#FFECE6]`
+                    : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[#EC6229] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
+                }
+              >
+                {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+              </button>
+            )}
+          </div>
         </div>
         {/* Content */}
-        <p className="text-black text-xs font-normal font-['Poppins'] leading-4 line-clamp-6">
+        <p className="text-[#FFECE6] text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
           {sharedPost?.content || sharedPost?.description || sharedPost?.text}
         </p>
 
-        {/* Optional Media in new card design if you want to keep them */}
-        {sharedPost?.images && sharedPost.images.length > 0 && (
-          <div className="rounded-lg overflow-hidden bg-black/5 relative flex justify-center items-center mt-2">
-            <img src={sharedPost.images[0]} className="w-full max-h-[400px] object-contain rounded-lg" alt="Shared Media" />
-            {sharedPost.images.length > 1 && (
-              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                +{sharedPost.images.length - 1}
+        {/* Optional Media */}
+        {mediaUrls.length > 0 ? (
+          <div className="rounded-[4px] overflow-hidden bg-black/5 relative flex justify-center items-center w-full h-[249px] shrink-0">
+            <img 
+              src={mediaUrls[0]} 
+              className="w-full h-full object-cover rounded-[4px]" 
+              alt="Shared Media"
+              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+            />
+            {mediaUrls.length > 1 && (
+              <div className="absolute bottom-[8px] right-[8px] bg-black/60 text-[#FFECE6] text-[12px] px-[8px] py-[4px] rounded-full font-dmsans">
+                +{mediaUrls.length - 1}
               </div>
             )}
           </div>
-        )}
-      </div>
-
-      {/* Eye + Delete icons */}
-      <div className="inline-flex justify-end items-center gap-3 pr-1">
-        <button type="button" className="p-1 text-ds-text-primary">
-          <Icon icon="fluent:eye-off-24-regular" className="w-6 h-6" />
-        </button>
-        <button type="button" className="p-1 text-ds-error hover:text-ds-error/80 transition-colors">
-          <Icon icon="fluent:delete-16-regular" className="w-6 h-6" />
-        </button>
+        ) : videoSrc ? (
+          <div className="rounded-[4px] overflow-hidden bg-black relative flex justify-center items-center w-full h-[249px] shrink-0">
+            <video src={videoSrc} className="w-full h-full object-cover rounded-[4px]" controls={false} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

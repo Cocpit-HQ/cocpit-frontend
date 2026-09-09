@@ -26,6 +26,7 @@ import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
 import { useUIStore } from '@/store/ui.store';
 import { ReportModal } from '@/components/shared/ReportModal';
+import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationModal';
 import { PostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 
 interface PostOptionsMenuProps {
@@ -159,37 +160,14 @@ export function PostOptionsMenu({
         </DropdownMenu>
       </div>
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent onClick={(e) => e.stopPropagation()}>
-          <DialogHeader>
-            <DialogTitle>Delete Post?</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this post? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDeleteDialogOpen(false);
-              }}
-              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onDelete) onDelete(postId);
-                setIsDeleteDialogOpen(false);
-              }}
-              className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-            >
-              Delete
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationModal
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          if (onDelete) onDelete(postId);
+          setIsDeleteDialogOpen(false);
+        }}
+      />
 
       {isEditModalOpen && (
         <EditPostModal

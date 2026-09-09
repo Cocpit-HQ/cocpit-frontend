@@ -5,10 +5,20 @@ import { companyService } from '@/services/organization.service';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
 export const postApi = {
-  create: async (payload: CreatePostRequest, files: File[], tagUserIds?: string[]) => {
+  create: async (
+    payload: CreatePostRequest, 
+    files: File[], 
+    tagUserIds?: string[],
+    uploadConfig?: {
+      onUploadProgress?: (percent: number) => void;
+      signal?: AbortSignal;
+    }
+  ) => {
     // 1. If there are no files, make a standard JSON POST request directly
     if (files.length === 0) {
-      const response = await api.post<{ postId: string }>("/post", payload);
+      const response = await api.post<{ postId: string }>("/post", payload, {
+        signal: uploadConfig?.signal
+      });
       if (tagUserIds && tagUserIds.length > 0) {
         try {
           await api.post(`/posts/tags/sync`, {
@@ -49,7 +59,14 @@ export const postApi = {
     const response = await api.post<{ postId: string }>("/post", formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      signal: uploadConfig?.signal,
+      onUploadProgress: uploadConfig?.onUploadProgress ? (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          uploadConfig.onUploadProgress!(percentCompleted);
+        }
+      } : undefined
     });
 
     if (tagUserIds && tagUserIds.length > 0) {

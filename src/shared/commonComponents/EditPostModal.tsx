@@ -17,6 +17,7 @@ import { PostCarousel } from '@/components/shared/PostCarousel';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import { MentionTextarea } from './MentionTextarea';
 import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
+import SharedPreview from '@/features/feed/components/create-post/SharedPreview';
 
 export interface EditPostModalProps {
   isOpen: boolean;
@@ -373,6 +374,17 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                     </div>
                   )}
 
+                  {Boolean(originalPost?.shared_post || (originalPost as any)?.sharedPost) && (
+                    <div className="w-full mt-2 mb-2">
+                      <SharedPreview 
+                        sharedPost={originalPost?.shared_post || (originalPost as any)?.sharedPost} 
+                        sharedPostId={(originalPost?.shared_post || (originalPost as any)?.sharedPost)?.id?.toString() || (originalPost?.shared_post || (originalPost as any)?.sharedPost)?.post_id?.toString() || (originalPost as any)?.shared_post_id?.toString()}
+                        isMobile={false} 
+                        clickable={false} 
+                      />
+                    </div>
+                  )}
+
                   {/* Textarea */}
                   <div className="flex flex-col w-full pr-3">
                     <MentionTextarea
@@ -382,6 +394,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                       value={description}
                       onChange={(e: any) => setDescription(e.target.value)}
                       onMentionsChange={setInlineMentions}
+                      initialMentions={inlineMentions}
                     />
                   </div>
                 </div>

@@ -425,8 +425,12 @@ export const FeedPost = (props: FeedPostProps) => {
           )}
 
           {!isRepostWithoutThoughts && shared_post && (
-            <div className="px-4 md:px-5">
-              <SharedPreview sharedPost={shared_post} isMobile={typeof window !== 'undefined' && window.innerWidth < 768} />
+            <div className="w-full">
+              <SharedPreview 
+                sharedPost={shared_post} 
+                sharedPostId={shared_post.id?.toString() || (shared_post as any).post_id?.toString()}
+                isMobile={typeof window !== 'undefined' && window.innerWidth < 768} 
+              />
             </div>
           )}
 

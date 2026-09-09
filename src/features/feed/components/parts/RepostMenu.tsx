@@ -43,7 +43,7 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted,
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute bottom-[calc(100%+6px)] left-0 w-[163px] bg-ds-surface-2 border border-ds-border rounded-[8px] z-50 animate-in fade-in slide-in-from-bottom-1 duration-100 shadow-sm flex flex-col overflow-hidden">
+        <div className="absolute bottom-[calc(100%+6px)] left-0 w-[163px] bg-ds-surface-1 border border-ds-border rounded-[8px] z-50 animate-in fade-in slide-in-from-bottom-1 duration-100 shadow-sm flex flex-col overflow-hidden">
           <button
             onClick={(e) => { e.stopPropagation(); setOpen(false); onRepostWithThoughts?.(); }}
             className="w-full pt-[12px] pb-[8px] px-[12px] hover:bg-ds-surface-1 transition-colors text-left flex items-center"
