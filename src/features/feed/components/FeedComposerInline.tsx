@@ -773,22 +773,20 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         </>
       )}
 
-      {/* ── Section 2: Add Location ────────────────────────────────────── */}
+      {/* ── Section 2: Add Location (Figma Frame 2609598: ds-text-body-1 16px/24px, 4px dot, ds-text-body-1 text-ds-accent) ── */}
       {showLocationFeature && (
         location ? (
-          <div className={`flex items-center gap-[8px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[44px]'}`}>
-            {/* FIX: Removed MapPin icon when a location is actively selected */}
-            {/* FIX: Removed clear 'X' icon so users must click Change instead */}
-            <span className="bg-transparent ds-text-small text-ds-text-primary truncate">
+          <div className={`flex items-center gap-[8px] h-[24px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
+            <span className="bg-transparent ds-text-body-1 text-ds-text-primary truncate">
               {'formattedAddress' in location ? location.formattedAddress : location.name}
             </span>
+            <span className="w-[4px] h-[4px] rounded-full bg-ds-text-muted shrink-0" />
             <button
               type="button"
               onClick={handleLocationToggle}
-              // FIX: Replaced hardcoded #F95B14 hex with AGENTS.md compliant var(--ds-accent)
-              className="ds-text-small text-[var(--ds-accent)] hover:underline cursor-pointer shrink-0"
+              className="ds-text-body-1 text-ds-accent hover:opacity-80 cursor-pointer shrink-0"
             >
-              <span className="text-ds-text-primary mr-1">•</span> Change
+              Change
             </button>
           </div>
         ) : (

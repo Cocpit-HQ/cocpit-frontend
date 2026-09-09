@@ -342,9 +342,11 @@ export const FeedPost = (props: FeedPostProps) => {
     }
   };
 
+  // Temporary 'Report submitted' inline snackbar after reporting a post
+  // Styled as per Figma: bg-ds-border (#2C2C33) background with ds-text-accent action CTA
   if (isReportSubmitted) {
     return (
-      <div className="w-full max-w-[442px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border relative">
+      <div className="w-full max-w-[442px] bg-ds-border border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border relative">
         <div className="flex flex-col items-center gap-[8px]">
           <div className="w-[40px] h-[40px] rounded-full border-[2px] border-[var(--ds-success)] flex items-center justify-center shrink-0">
             <Check className="w-[20px] h-[20px] text-[var(--ds-success)]" strokeWidth={3} />
@@ -360,7 +362,7 @@ export const FeedPost = (props: FeedPostProps) => {
         </div>
         <button
           onClick={handleUndoReportUI}
-          className="ds-text-small-1 text-ds-text-muted hover:underline cursor-pointer bg-transparent border-none p-0"
+          className="ds-text-small-1 text-ds-accent hover:opacity-80 cursor-pointer bg-transparent border-none p-0"
         >
           Show post
         </button>
@@ -368,13 +370,13 @@ export const FeedPost = (props: FeedPostProps) => {
     );
   }
 
-
-
+  // Temporary 'Not interested' inline snackbar
+  // Styled as per Figma: 40x40px thumb icon and ds-text-accent 'Undo' button
   if (isNotInterested) {
     return (
       <div className="w-full max-w-[442px] h-[114px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">
         <div className="w-[40px] h-[40px] flex items-center justify-center shrink-0">
-          <NotInterestedIcon className="w-[24px] h-[24px] text-ds-text-primary" />
+          <NotInterestedIcon className="w-[40px] h-[40px] text-ds-text-primary" />
         </div>
         <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-primary">
           We'll show you fewer posts like this
@@ -526,7 +528,7 @@ export const FeedPost = (props: FeedPostProps) => {
           className="flex flex-row items-center justify-start gap-[4px] pointer-events-auto px-[4px] mt-[4px] cursor-pointer w-fit hover:opacity-80 transition-opacity"
           onClick={() => handleOpenLikesModal()}
         >
-          <span className="text-[12px] font-normal leading-[16px] text-ds-text-secondary">
+          <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary">
             Liked by{' '}
             <span className="font-semibold text-ds-text-primary hover:underline">
               {targetSampleLikerUsername}
@@ -730,10 +732,11 @@ export const FeedPost = (props: FeedPostProps) => {
         />
       )}
     </div>
+      {/* Temporary 'Interested' inline snackbar (40x40px thumb icon as per Figma) */}
       {isInterested && (
         <div className="w-full max-w-[442px] h-[86px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">
           <div className="w-[40px] h-[40px] flex items-center justify-center shrink-0">
-            <InterestedIcon className="w-[24px] h-[24px] text-ds-text-primary" />
+            <InterestedIcon className="w-[40px] h-[40px] text-ds-text-primary" />
           </div>
           <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-primary">
             We'll show you more posts like this

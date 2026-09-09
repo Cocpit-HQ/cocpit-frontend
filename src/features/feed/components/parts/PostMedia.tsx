@@ -98,13 +98,13 @@ export const PostMedia = ({
           {/* Liked By Overlay */}
           {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
             <div 
-              className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-ds-surface-2/90 backdrop-blur-md border border-ds-border rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2 transition-colors shadow-sm z-10"
+              className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-ds-bg/40 backdrop-blur-md rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2 transition-colors shadow-sm z-10"
               onClick={(e) => {
                 e.stopPropagation();
                 onShowLikes?.(e);
               }}
             >
-              <span className="text-[12px] font-normal leading-[16px] text-ds-text-secondary text-center">
+              <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary text-center">
                 Liked by{' '}
                 <span className="font-semibold text-ds-text-primary">
                   {sampleLikerUsername}
