@@ -21,6 +21,7 @@ const CreateStoryForm = dynamic(
   { ssr: false }
 )
 
+import { useRouter } from 'next/navigation';
 import { useFeed } from '@/hooks/use-feed';
 import { useFeedUIStore } from '@/store/feed.store'
 import { useUIStore } from '@/store/ui.store';
@@ -28,11 +29,26 @@ import { useUIStore } from '@/store/ui.store';
 import InlineArticleEditor from '@/features/feed/components/create-post/shared/InlineArticleEditor';
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false)
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [sessionArticle, setSessionArticle] = useState(false);
   const { loading: isFeedLoading } = useFeed(true);
 
   const { activeTab, setActiveTab } = useFeedUIStore();
   const { isArticleMode } = useUIStore();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('cocpit_is_article_mode') === 'true') {
+      setSessionArticle(true);
+      router.replace('/article/create');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (isArticleMode) {
+      router.replace('/article/create');
+    }
+  }, [isArticleMode, router]);
 
   // UI State
   const [showCreateStory, setShowCreateStory] = useState(false)
@@ -52,10 +68,12 @@ export default function HomePage() {
     return () => cancelAnimationFrame(frame)
   }, [])
 
-
-
   if (!mounted) {
     return null
+  }
+
+  if (isArticleMode || sessionArticle) {
+    return <InlineArticleEditor />;
   }
 
   return (
@@ -63,19 +81,15 @@ export default function HomePage() {
       <div className="pb-4 md:pb-8">
         <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
           <div className="mx-auto max-w-[998px] w-full flex flex-col items-center">
-            {isArticleMode ? (
-              <InlineArticleEditor />
-            ) : (
-              <FeedSection
-                groups={groups}
-                storyLoading={storyLoading}
-                setShowCreateStory={setShowCreateStory}
-                setMobileSelectedGroupId={setMobileSelectedGroupId}
-                setSelectedStory={setSelectedStory}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
-            )}
+            <FeedSection
+              groups={groups}
+              storyLoading={storyLoading}
+              setShowCreateStory={setShowCreateStory}
+              setMobileSelectedGroupId={setMobileSelectedGroupId}
+              setSelectedStory={setSelectedStory}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
           </div>
         </div>
       </div>

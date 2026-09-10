@@ -34,7 +34,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
       const { setArticleMode, setActiveModal } = useUIStore.getState();
       setActiveModal(null);
       setArticleMode(true);
-      router.push('/feed');
+      router.push('/article/create');
     }
   }, [isOpen, state.postType, state.articleData, isEdit, router]);
 
@@ -161,6 +161,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
                             const { setArticleMode, setActiveModal } = useUIStore.getState();
                             setActiveModal(null);
                             setArticleMode(true);
+                            router.push('/article/create');
                           }
                         }}
                         className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
@@ -280,7 +281,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
                     const { setArticleMode } = useUIStore.getState();
                     onClose();
                     setArticleMode(true);
-                    router.push('/feed');
+                    router.push('/article/create');
                   } else {
                     state.setPostType(type);
                   }
@@ -299,7 +300,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
                   const { setArticleMode } = useUIStore.getState();
                   onClose();
                   setArticleMode(true);
-                  router.push('/feed');
+                  router.push('/article/create');
                 } else {
                   state.setPostType(type);
                 }

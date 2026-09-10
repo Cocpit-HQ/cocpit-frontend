@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
 import { PostType } from '@/features/feed/types'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
@@ -24,37 +25,45 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
 }
 
 export function CreatePost({ onOpenModal }: CreatePostProps) {
+  const router = useRouter();
   const { activeProfile, isCompany } = useActiveProfile();
   const { currentUser } = useFeed();
 
   const avatar = isCompany && activeProfile?.avatar_url
     ? activeProfile.avatar_url
-    : (currentUser?.image || "/assets/pngegg.png");
+    : currentUser?.image;
+  const initial = isCompany && activeProfile?.name
+    ? activeProfile.name[0]
+    : currentUser?.name?.[0] || 'U';
 
   return (
-    <div
-      className="feed-card-shell mb-6 w-full max-w-[560px] transition-shadow duration-300 hover:shadow-md"
-    >
-      <div className="flex gap-3 mb-3 items-center">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">
-          <img
-            src={avatar}
-            alt="profile"
-            className="w-full h-full object-cover"
-            onError={(e) => { e.currentTarget.src = "/assets/pngegg.png" }}
-          />
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              className="h-full w-full rounded-full object-cover"
+              onError={(e) => {
+                if (!isCompany) (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            initial
+          )}
         </div>
-        <input
-          type="text"
-          placeholder="Start a post"
+        <button
           onClick={() => onOpenModal('text')}
-          className="feed-card-input h-10 min-w-0 flex-1 cursor-pointer rounded-full border px-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-primary focus:outline-none"
-        />
+          className="flex-1 rounded-full bg-muted px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/80"
+        >
+          What's on your mind?
+        </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-1 px-1">
+      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
         <PostButton
-          icon={<Image className="w-4 h-4 text-primary" />}
+          icon={<Image className="w-4 h-4 text-blue-600" />}
           label="Photo"
           onClick={() => onOpenModal('photo')}
         />
@@ -70,6 +79,7 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
             const { setArticleMode, setActiveModal } = useUIStore.getState();
             setActiveModal(null);
             setArticleMode(true);
+            router.push('/article/create');
           }}
         />
         <PostButton

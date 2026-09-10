@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3, List, Link as LinkIcon,
-  Image as ImageIcon, X, ArrowLeft, ChevronLeft, ChevronDown, Loader2, Sparkles, Send
+  Image as ImageIcon, X, ArrowLeft, ChevronLeft, ChevronDown, Loader2, Sparkles, Send,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify
 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
@@ -18,18 +19,40 @@ import { DiscardConfirmOverlay } from '../shared/DiscardConfirmOverlay';
 // inherits the editor's own formatting instead of the source's (fixes ID-227: white/colored
 // text pasted from dark-mode sources like ChatGPT becoming invisible on our light editor).
 const ALLOWED_PASTE_TAGS = ['b', 'strong', 'i', 'em', 'u', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'a', 'span'];
-const ALLOWED_PASTE_ATTR = ['href'];
+const ALLOWED_PASTE_ATTR = ['href', 'class'];
+
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.hasAttribute('class')) {
+    const allowed = ['text-left', 'text-center', 'text-right', 'text-justify'];
+    const classes = (node.getAttribute('class') || '').split(' ').filter(c => allowed.includes(c));
+    if (classes.length) {
+      node.setAttribute('class', classes.join(' '));
+    } else {
+      node.removeAttribute('class');
+    }
+  }
+});
 
 const sanitizePastedHtml = (dirtyHtml: string) =>
   DOMPurify.sanitize(dirtyHtml, {
     ALLOWED_TAGS: ALLOWED_PASTE_TAGS,
     ALLOWED_ATTR: ALLOWED_PASTE_ATTR,
-    FORBID_ATTR: ['style', 'class', 'id'],
+    FORBID_ATTR: ['style', 'id'],
     // img/video are only ever inserted by our own toolbar (blob: URLs + control markup) -
     // a pasted <img>/<video> from an external source is never wanted here.
     FORBID_TAGS: ['img', 'video', 'iframe', 'style', 'script', 'object', 'embed', 'div'],
     ALLOW_DATA_ATTR: false,
   });
+
+import {
+  ALIGNMENT_CLASSES,
+  Alignment,
+  ToolbarFormattingState,
+  DEFAULT_TOOLBAR_STATE,
+  getSelectionToolbarState,
+  applyAlignmentToBlocks,
+  applyBlockStyle,
+} from './articleSelectionUtils';
 
 const createUniqueNamedFile = (file: File, uniqueId: string): File => {
   const parts = file.name.split('.');
@@ -115,6 +138,47 @@ const ArticleFlow = ({
   const inlineImageInputRef = useRef<HTMLInputElement>(null);
   const editImageInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLDivElement>(null);
+  const styleDropdownContainerRef = useRef<HTMLDivElement>(null);
+  const [toolbarState, setToolbarState] = useState<ToolbarFormattingState>(DEFAULT_TOOLBAR_STATE);
+
+  // Close style dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        styleDropdownContainerRef.current &&
+        !styleDropdownContainerRef.current.contains(e.target as Node)
+      ) {
+        setIsStyleDropdownOpen(false);
+      }
+    };
+    if (isStyleDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isStyleDropdownOpen]);
+
+  // Keep active toolbar formatting in sync with selection (debounced via rAF)
+  useEffect(() => {
+    let rafHandle: number | null = null;
+
+    const handleSelectionChange = () => {
+      if (rafHandle !== null) cancelAnimationFrame(rafHandle);
+
+      rafHandle = requestAnimationFrame(() => {
+        const editorEl = editorRef.current;
+        if (!editorEl) return;
+        setToolbarState(getSelectionToolbarState(editorEl));
+      });
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      if (rafHandle !== null) cancelAnimationFrame(rafHandle);
+    };
+  }, []);
 
   // Track initial state for edit mode to detect actual changes
   const initialDataRef = useRef({
@@ -207,7 +271,7 @@ const ArticleFlow = ({
         tools = document.createElement('div');
         wrapper.appendChild(tools);
       }
-      tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-ds-surface-2 rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+      tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-ds-surface-2 rounded-[12px] shadow-sm";
       tools.innerHTML = TOOLS_INNER_HTML;
     });
 
@@ -234,7 +298,7 @@ const ArticleFlow = ({
         tools = document.createElement('div');
         wrapper.appendChild(tools);
       }
-      tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-ds-surface-2 rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200";
+      tools.className = "img-tools absolute bottom-3 right-3 z-30 pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-ds-surface-2 rounded-[12px] shadow-sm";
       tools.innerHTML = TOOLS_INNER_HTML;
     });
   };
@@ -281,6 +345,14 @@ const ArticleFlow = ({
 
     // 2. Strip inline background/font styles that Chrome adds when backspacing list items
     const styledElements = container.querySelectorAll('[style]');
+    
+    const TEXT_ALIGN_TO_CLASS: Record<string, string> = {
+      center: 'text-center',
+      right: 'text-right',
+      justify: 'text-justify',
+      left: 'text-left',
+    };
+
     styledElements.forEach(el => {
       // Keep link capsules, image containers, or top-level editor ref
       if (
@@ -289,6 +361,12 @@ const ArticleFlow = ({
         el.closest('[contenteditable="false"]') ||
         el === container
       ) return;
+
+      const textAlign = (el as HTMLElement).style.textAlign;
+      if (textAlign && TEXT_ALIGN_TO_CLASS[textAlign]) {
+        ALIGNMENT_CLASSES.forEach(cls => el.classList.remove(cls));
+        el.classList.add(TEXT_ALIGN_TO_CLASS[textAlign]);
+      }
       el.removeAttribute('style');
     });
 
@@ -298,6 +376,7 @@ const ArticleFlow = ({
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     if (editorRef.current) {
       cleanStrayInlineStyles(editorRef.current);
+      setToolbarState(getSelectionToolbarState(editorRef.current));
     }
     onContentChange(e.currentTarget.innerHTML);
   };
@@ -397,48 +476,79 @@ const ArticleFlow = ({
   };
 
   const format = (command: string, value: string = '') => {
-    if (!isSelectionInsideEditor()) return;
+    if (!editorRef.current || !isSelectionInsideEditor()) return;
     document.execCommand(command, false, value);
-    if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
+    if (editorRef.current) {
+      cleanStrayInlineStyles(editorRef.current);
+      setToolbarState(getSelectionToolbarState(editorRef.current));
+    }
     onContentChange(editorRef.current?.innerHTML || '');
   };
 
-  // Unlike 'bold'/'italic', 'formatBlock' isn't a native toggle command - clicking H1 on text
-  // that's already H1 just re-applies H1 instead of reverting to a normal paragraph, so there
-  const getCurrentHeading = (): string | null => {
-    if (typeof window === 'undefined' || !isSelectionInsideEditor()) return null;
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return null;
+  const setAlignment = (align: Alignment) => {
+    if (!editorRef.current) return;
+    if (!isSelectionInsideEditor()) {
+      editorRef.current.focus();
+    }
+    applyAlignmentToBlocks(align, editorRef.current, toolbarState.alignment);
+    if (editorRef.current) {
+      cleanStrayInlineStyles(editorRef.current);
+      setToolbarState(getSelectionToolbarState(editorRef.current));
+    }
+    onContentChange(editorRef.current?.innerHTML || '');
+  };
 
-    const range = selection.getRangeAt(0);
-    let node: Node | null = range.commonAncestorContainer;
-    if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+  const applyStyle = (tag: 'NORMAL' | 'H1' | 'H2') => {
+    if (!editorRef.current) return;
 
-    let heading = (node as HTMLElement | null)?.closest?.('h1, h2, h3');
-    if (!heading && selection.anchorNode) {
-      let anchor: Node | null = selection.anchorNode;
-      if (anchor.nodeType === Node.TEXT_NODE) anchor = anchor.parentElement;
-      heading = (anchor as HTMLElement | null)?.closest?.('h1, h2, h3');
+    // 1. Ensure editor has focus before executing command
+    editorRef.current.focus();
+
+    // 2. Resolve range to use (saved range or current selection)
+    let rangeToUse = savedRange;
+    if (!rangeToUse || !editorRef.current.contains(rangeToUse.commonAncestorContainer)) {
+      if (isSelectionInsideEditor()) {
+        rangeToUse = saveSelection();
+      }
     }
 
-    return heading ? heading.tagName.toUpperCase() : null;
+    if (!rangeToUse) {
+      const firstBlock = editorRef.current.querySelector('p, h1, h2, h3, li');
+      const range = document.createRange();
+      if (firstBlock) {
+        range.selectNodeContents(firstBlock);
+        range.collapse(false);
+      } else {
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+      }
+      rangeToUse = range;
+    }
+
+    // 3. Apply style and re-establish selection
+    applyBlockStyle(tag, rangeToUse, editorRef.current);
+    setSavedRange(null);
+
+    // 4. Ensure focus remains on editor
+    editorRef.current.focus();
+
+    // 5. Clean stray styles & update toolbar state & sync content
+    cleanStrayInlineStyles(editorRef.current);
+    setToolbarState(getSelectionToolbarState(editorRef.current));
+    onContentChange(editorRef.current.innerHTML || '');
+    setIsStyleDropdownOpen(false);
   };
 
-  const toggleHeading = (tag: 'H1' | 'H2' | 'H3') => {
-    if (!isSelectionInsideEditor()) return;
-    const currentHeading = getCurrentHeading();
-    const isSameHeading = currentHeading === tag;
-    const targetBlock = isSameHeading ? '<p>' : `<${tag.toLowerCase()}>`;
-    document.execCommand('formatBlock', false, targetBlock);
-    if (editorRef.current) cleanStrayInlineStyles(editorRef.current);
-    onContentChange(editorRef.current?.innerHTML || '');
-  };
-
-  const saveSelection = () => {
+  const saveSelection = (): Range | null => {
     if (typeof window !== 'undefined') {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
-        return sel.getRangeAt(0);
+        const range = sel.getRangeAt(0);
+        let node: Node | null = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        if (editorRef.current && node && editorRef.current.contains(node)) {
+          return range.cloneRange();
+        }
       }
     }
     return null;
@@ -501,7 +611,7 @@ const ArticleFlow = ({
     const safeUrl = escapeHtml(formattedUrl);
     const safeTitle = escapeHtml(linkLabel);
 
-    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-ds-text-primary underline font-medium cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-between w-[301px] h-[40px] px-4 py-2 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute left-0 top-full mt-1.5 z-50 whitespace-nowrap pointer-events-auto"><span class="text-[14px] font-medium text-ds-text-primary max-w-[180px] min-w-0 truncate mr-2">${safeUrl}</span><span class="flex items-center gap-[10px] shrink-0"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">${DELETE_SVG}</button></span></span></span>&nbsp;`;
+    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-ds-text-primary underline font-medium cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-between w-[301px] h-[40px] px-4 py-2 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-all duration-200 absolute left-0 top-full mt-1.5 z-50 whitespace-nowrap before:absolute before:-top-2 before:left-0 before:w-full before:h-2 before:content-['']"><span class="text-[14px] font-medium text-ds-text-primary max-w-[180px] min-w-0 truncate mr-2">${safeUrl}</span><span class="flex items-center gap-[10px] shrink-0"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">${DELETE_SVG}</button></span></span></span>&nbsp;`;
 
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
@@ -903,217 +1013,329 @@ const ArticleFlow = ({
   }
 
   return (
-    <div className="relative flex flex-col flex-1 bg-ds-bg text-ds-text-primary select-none h-full overflow-hidden">
+    <div className="relative flex flex-col flex-1 bg-[#030303] text-ds-text-primary font-dm-sans select-none min-h-screen w-full">
       {/* Custom Styles */}
       <style>{`
         .article-title-editor[contenteditable]:empty:before {
           content: attr(placeholder);
-          color: var(--ds-text-muted);
+          color: #726B67;
           font-weight: 700;
           cursor: text;
         }
         [contenteditable]:not(.article-title-editor):empty:before {
           content: attr(placeholder);
-          color: var(--ds-text-muted);
+          color: #726B67;
           font-weight: 400;
-          font-size: 15px;
+          font-size: 16px;
           cursor: text;
         }
         .article-editor a {
-          color: var(--ds-text-primary) !important;
+          color: #FFECE6 !important;
           text-decoration: underline !important;
           font-weight: 500;
         }
       `}</style>
 
-      {/* Unified Header & Toolbar */}
-      <div className="flex-shrink-0 bg-ds-bg/95 backdrop-blur-md flex items-center justify-between px-5 sm:px-6 py-3 border-b border-ds-border z-30 select-none">
-        {/* Left: Author Profile & Toolbar */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          {/* Author Profile */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs overflow-hidden shrink-0 border border-ds-border">
+      {/* Standalone Cancel / Close Button - Right: 40px, Top: 40px, Size: 20px */}
+      <button
+        type="button"
+        onClick={() => handleOnClose()}
+        aria-label="Close"
+        className="fixed right-[40px] top-[40px] w-[20px] h-[20px] text-[#FFECE6] hover:opacity-75 transition-opacity z-50 flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded"
+      >
+        <X className="w-5 h-5" strokeWidth={1.5} />
+      </button>
+
+      {/* Frame 2609568: w-[688px] mx-auto flex flex-col gap-[20px] pt-[60px] pb-[80px] */}
+      <div className="mx-auto flex w-[688px] max-w-full flex-col gap-[20px] pt-[60px] pb-[80px] px-4 sm:px-0">
+        
+        {/* Frame 2609516: Author + Toolbar + Post button - h-[36px] w-[688px] flex items-center gap-[40px] */}
+        <div className="flex h-[36px] w-[688px] max-w-full items-center justify-between gap-[40px]">
+          
+          {/* Frame 2609563: Author (w-[119px] h-[32px] gap-[8px]) */}
+          <div className="flex w-[119px] h-[32px] items-center gap-[8px] shrink-0">
+            <div className="w-[32px] h-[32px] rounded-full overflow-hidden shrink-0 border border-[#2C2C33] bg-[#1A1A20]">
               {avatarSrc ? (
                 <img src={avatarSrc} alt={authorName} className="w-full h-full object-cover" onError={(e) => { if (!isCompanyPost) (e.target as HTMLImageElement).style.display = 'none'; }} />
               ) : (
-                <span>{(authorName || 'U').charAt(0).toUpperCase()}</span>
+                <div className="w-full h-full flex items-center justify-center font-normal text-[14px] text-[#FFECE6]">
+                  {(authorName || 'U').charAt(0).toUpperCase()}
+                </div>
               )}
             </div>
-            <span className="font-medium text-[14px] text-ds-text-primary truncate max-w-[120px] sm:max-w-[160px]">
+            <span className="w-[79px] h-[24px] font-dm-sans font-normal text-[16px] leading-[24px] text-[#FFECE6] truncate">
               {authorName}
             </span>
           </div>
 
-          {/* Style Dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsStyleDropdownOpen(prev => !prev)}
-              aria-label="Text style dropdown"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-ds-surface-2 hover:bg-zinc-800 text-ds-text-secondary hover:text-ds-text-primary text-[13px] font-medium transition-colors border border-ds-border cursor-pointer"
-            >
-              <span>{getCurrentHeading() || 'Style'}</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-            </button>
-
-            {isStyleDropdownOpen && (
-              <div 
-                className="absolute left-0 top-full mt-1.5 w-36 bg-ds-surface-2 border border-ds-border rounded-xl shadow-2xl py-1 z-50 flex flex-col"
-                onClick={() => setIsStyleDropdownOpen(false)}
+          {/* Frame 2609564: Tools (w-[421px] h-[32px] gap-[12px]) */}
+          <div className="flex w-[421px] h-[32px] items-center justify-center gap-[12px] shrink-0">
+            {/* Style Select: min-w-[69px] h-[32px] px-[8px] py-[6px] gap-[6px] bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-[8px] */}
+            <div ref={styleDropdownContainerRef} className="relative">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSavedRange(saveSelection() || null);
+                }}
+                onClick={() => setIsStyleDropdownOpen(prev => !prev)}
+                aria-label="Text style dropdown"
+                aria-expanded={isStyleDropdownOpen}
+                className="flex items-center justify-between min-w-[69px] w-fit h-[32px] px-[8px] py-[6px] gap-[6px] rounded-[8px] bg-[var(--ds-surface-1)] border border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] transition-colors cursor-pointer"
               >
-                <button
-                  type="button"
-                  onClick={() => format('formatBlock', '<p>')}
-                  className="px-3 py-1.5 text-left text-xs font-medium text-ds-text-secondary hover:text-ds-text-primary hover:bg-zinc-800 transition-colors"
-                >
-                  Paragraph
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleHeading('H1')}
-                  className="px-3 py-1.5 text-left text-xs font-semibold text-ds-text-secondary hover:text-ds-text-primary hover:bg-zinc-800 transition-colors"
-                >
-                  Heading 1
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleHeading('H2')}
-                  className="px-3 py-1.5 text-left text-xs font-medium text-ds-text-secondary hover:text-ds-text-primary hover:bg-zinc-800 transition-colors"
-                >
-                  Heading 2
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleHeading('H3')}
-                  className="px-3 py-1.5 text-left text-xs font-normal text-ds-text-secondary hover:text-ds-text-primary hover:bg-zinc-800 transition-colors"
-                >
-                  Heading 3
-                </button>
-              </div>
-            )}
-          </div>
+                <span className="font-dm-sans font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] whitespace-nowrap">
+                  {toolbarState.heading === 'H1' ? 'H1'
+                    : toolbarState.heading === 'H2' ? 'H2'
+                    : toolbarState.heading === 'NORMAL' ? 'Normal'
+                    : 'Style'}
+                </span>
+                <ChevronDown className={cn("w-[16px] h-[16px] text-[var(--ds-text-primary)] shrink-0 transition-transform duration-150", isStyleDropdownOpen && "rotate-180")} />
+              </button>
 
-          <div className="h-4 w-[1px] bg-ds-border shrink-0 hidden sm:block" />
+              {isStyleDropdownOpen && (
+                <div 
+                  className="absolute left-0 top-full mt-1.5 w-[90px] h-[100px] p-[12px] gap-[8px] bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-[8px] shadow-2xl z-50 flex flex-col items-start box-border select-none"
+                >
+                  {/* Normal: height 20px, font 14px, leading 20px */}
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyStyle('NORMAL')}
+                    className={cn(
+                      "w-full h-[20px] p-0 m-0 border-0 bg-transparent text-left font-dm-sans font-normal text-[14px] leading-[20px] cursor-pointer transition-colors shrink-0 whitespace-nowrap",
+                      toolbarState.heading === 'NORMAL'
+                        ? "text-[var(--ds-accent)]"
+                        : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
+                    )}
+                  >
+                    Normal
+                  </button>
 
-          {/* Quick Toolbar */}
-          <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto [scrollbar-width:none]">
+                  {/* Heading 1: height 20px, font 14px, leading 20px */}
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyStyle('H1')}
+                    className={cn(
+                      "w-full h-[20px] p-0 m-0 border-0 bg-transparent text-left font-dm-sans font-normal text-[14px] leading-[20px] cursor-pointer transition-colors shrink-0 whitespace-nowrap",
+                      toolbarState.heading === 'H1'
+                        ? "text-[var(--ds-accent)]"
+                        : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
+                    )}
+                  >
+                    Heading 1
+                  </button>
+
+                  {/* Heading 2: height 20px, font 14px, leading 20px */}
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyStyle('H2')}
+                    className={cn(
+                      "w-full h-[20px] p-0 m-0 border-0 bg-transparent text-left font-dm-sans font-normal text-[14px] leading-[20px] cursor-pointer transition-colors shrink-0 whitespace-nowrap",
+                      toolbarState.heading === 'H2'
+                        ? "text-[var(--ds-accent)]"
+                        : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
+                    )}
+                  >
+                    Heading 2
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 1. Bold: 20x20 */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('bold')}
               aria-label="Bold"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.isBold ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
               title="Bold"
             >
-              <Bold className="w-4 h-4" />
+              <Bold className="w-[20px] h-[20px]" />
             </button>
+
+            {/* 2. Italic: 20x20 */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('italic')}
               aria-label="Italic"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.isItalic ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
               title="Italic"
             >
-              <Italic className="w-4 h-4" />
+              <Italic className="w-[20px] h-[20px]" />
             </button>
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => format('strikeThrough')}
-              aria-label="Strikethrough"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer"
-              title="Strikethrough"
-            >
-              <Strikethrough className="w-4 h-4" />
-            </button>
+
+            {/* 3. Underline: 20x20 */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('underline')}
               aria-label="Underline"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.isUnderline ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
               title="Underline"
             >
-              <Underline className="w-4 h-4" />
+              <Underline className="w-[20px] h-[20px]" />
             </button>
+
+            {/* 4. Strike: 20x20 */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => format('strikeThrough')}
+              aria-label="Strikethrough"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.isStrike ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
+              title="Strikethrough"
+            >
+              <Strikethrough className="w-[20px] h-[20px]" />
+            </button>
+
+            {/* 5. List: 20x20 */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => format('insertUnorderedList')}
               aria-label="Unordered List"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.isBulletList ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
               title="Bullet List"
             >
-              <List className="w-4 h-4" />
+              <List className="w-[20px] h-[20px]" />
             </button>
+
+            {/* 6. Align left: 20x20 */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setAlignment('text-left')}
+              aria-label="Align Left"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.alignment === 'text-left' ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
+              title="Align Left"
+            >
+              <AlignLeft className="w-[20px] h-[20px]" />
+            </button>
+
+            {/* 7. Align center: 20x20 */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setAlignment('text-center')}
+              aria-label="Align Center"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.alignment === 'text-center' ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
+              title="Align Center"
+            >
+              <AlignCenter className="w-[20px] h-[20px]" />
+            </button>
+
+            {/* 8. Align right: 20x20 */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setAlignment('text-right')}
+              aria-label="Align Right"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.alignment === 'text-right' ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
+              title="Align Right"
+            >
+              <AlignRight className="w-[20px] h-[20px]" />
+            </button>
+
+            {/* 9. Align justify: 20x20 */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setAlignment('text-justify')}
+              aria-label="Align Justify"
+              className={cn(
+                "w-[20px] h-[20px] flex items-center justify-center transition-colors cursor-pointer",
+                toolbarState.alignment === 'text-justify' ? "text-[var(--ds-accent)]" : "text-[#FFECE6] hover:opacity-75"
+              )}
+              title="Justify"
+            >
+              <AlignJustify className="w-[20px] h-[20px]" />
+            </button>
+
+            {/* 10. Media: 20x20 */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={triggerInlineImage}
               disabled={isUploadingInline}
               aria-label="Insert Image"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-[20px] h-[20px] flex items-center justify-center text-[#FFECE6] hover:opacity-75 transition-opacity cursor-pointer disabled:opacity-50"
               title="Insert Image"
             >
               {isUploadingInline ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-[20px] h-[20px] animate-spin" />
               ) : (
-                <ImageIcon className="w-4 h-4" />
+                <ImageIcon className="w-[20px] h-[20px]" />
               )}
             </button>
+
+            {/* 11. Link: 20x20 */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={openLinkModal}
               aria-label="Insert Link"
-              className="p-1.5 rounded-lg text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer"
+              className="w-[20px] h-[20px] flex items-center justify-center text-[#FFECE6] hover:opacity-75 transition-opacity cursor-pointer"
               title="Insert Link"
             >
-              <LinkIcon className="w-4 h-4" />
+              <LinkIcon className="w-[20px] h-[20px]" />
             </button>
           </div>
-        </div>
 
-        {/* Right: Post Button & Close (X) */}
-        <div className="flex items-center gap-3 shrink-0">
+          {/* Primary emphasis button (Post): w-[68px] h-[36px] padding 6px 12px gap 10px bg-[#1A1A20] rounded-[100px] */}
           <button
             type="button"
             disabled={!isNextActive || isSubmitting}
             onClick={handleOnPost}
             aria-label="Post article"
             className={cn(
-              "px-5 py-1.5 rounded-full text-[13px] font-medium transition-all flex items-center gap-1.5",
+              "w-[68px] h-[36px] flex items-center justify-center px-[12px] py-[6px] gap-[10px] rounded-[100px] font-dm-sans font-medium text-[16px] leading-[24px] transition-all shrink-0",
               isNextActive
-                ? "bg-ds-accent text-white hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
-                : "bg-ds-surface-2 text-ds-text-muted cursor-not-allowed border border-ds-border"
+                ? "bg-[#1A1A20] text-[#FFECE6] border border-[#2C2C33] hover:border-[#FFECE6] cursor-pointer shadow-sm active:scale-95"
+                : "bg-[#1A1A20] text-[#726B67] cursor-not-allowed border border-[#2C2C33]"
             )}
           >
             {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             <span>{isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => handleOnClose()}
-            aria-label="Close"
-            className="p-1.5 text-ds-text-muted hover:text-ds-text-primary rounded-full hover:bg-ds-surface-2 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
-      </div>
 
-      {/* Editor Body Area */}
-      <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-6 sm:px-12 pt-8 pb-16 flex flex-col gap-6 max-w-[720px] mx-auto w-full">
-
-        {/* Cover Image (16:9 Dashed Dropzone / Preview) */}
-        <ArticleCoverEditor
-          coverImage={coverImage?.url ?? null}
-          onCoverChange={(url) => onCoverChange(url)}
-          onRemoveCover={onRemoveCover}
-          isEdit={isEdit}
-        />
+        {/* Frame 2609565: Cover image (688px x 338px) */}
+        <div className="w-[688px] max-w-full">
+          <ArticleCoverEditor
+            coverImage={coverImage?.url ?? null}
+            onCoverChange={(url) => onCoverChange(url)}
+            onRemoveCover={onRemoveCover}
+            isEdit={isEdit}
+          />
+        </div>
 
         {/* Hidden inputs & triggers */}
         <input
@@ -1131,7 +1353,7 @@ const ArticleFlow = ({
           className="hidden"
         />
 
-        {/* Title Input */}
+        {/* Title Input: text-[40px] font-bold leading-[48px] text-[#FFECE6] placeholder-[#726B67] */}
         <div
           ref={titleInputRef}
           contentEditable
@@ -1151,10 +1373,10 @@ const ArticleFlow = ({
             document.execCommand('insertText', false, text);
           }}
           {...{ placeholder: "Title" }}
-          className="article-title-editor w-full p-0 bg-transparent border-none outline-none focus:ring-0 text-ds-text-primary font-bold text-3xl sm:text-4xl block h-auto min-h-[48px] flex-shrink-0 overflow-visible"
+          className="article-title-editor w-[688px] max-w-full p-0 bg-transparent border-none outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-bold text-[40px] leading-[48px] block h-auto min-h-[48px] flex-shrink-0 overflow-visible cursor-text"
         />
 
-        {/* Rich contentEditable area */}
+        {/* Rich contentEditable area: text-[16px] font-normal leading-[24px] text-[#FFECE6] placeholder-[#726B67] */}
         <div
           ref={editorRef}
           contentEditable
@@ -1163,75 +1385,101 @@ const ArticleFlow = ({
           onPaste={handlePaste}
           onClick={handleEditorClick}
           {...{ placeholder: "Write your thoughts" }}
-          className="article-editor outline-none focus:ring-0 text-ds-text-primary text-[15px] leading-relaxed min-h-[300px] pb-16 h-auto flex-shrink-0 overflow-visible"
+          className="article-editor outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-normal text-[16px] leading-[24px] min-h-[300px] pb-16 h-auto w-[688px] max-w-full flex-shrink-0 overflow-visible cursor-text"
         />
       </div>
 
-      {/* Add Link Dialog Modal */}
+      {/* Add / Edit Link Modal */}
       {isLinkModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-          <div className="bg-ds-surface-1 border border-ds-border rounded-[20px] shadow-2xl p-6 flex flex-col relative animate-in zoom-in-95 duration-200 w-full max-w-[400px]">
-
-            <button
-              onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }}
-              className="absolute top-4 right-4 text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex flex-col items-center mb-5">
-              <h3 className="font-semibold text-[16px] text-ds-text-primary">
-                {editingLinkNode ? 'Edit link' : 'Add link'}
-              </h3>
-            </div>
-
-            <div className="flex flex-col gap-4 flex-1">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-ds-text-secondary">Title</label>
-                <input
-                  type="text"
-                  value={linkTitle}
-                  onChange={(e) => setLinkTitle(e.target.value)}
-                  placeholder="e.g. Cocpit"
-                  className="w-full px-3.5 py-2 border border-ds-border bg-ds-surface-2 outline-none rounded-xl text-sm text-ds-text-primary focus:border-ds-accent placeholder:text-ds-text-muted transition-colors"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-ds-text-secondary">Link</label>
-                <input
-                  type="url"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="e.g. https://cocpit.com"
-                  className="w-full px-3.5 py-2 border border-ds-border bg-ds-surface-2 outline-none rounded-xl text-sm text-ds-text-primary focus:border-ds-accent placeholder:text-ds-text-muted transition-colors"
-                />
-                {linkUrl.trim() && !isValidUrl(linkUrl) && (
-                  <span className="text-[11px] text-ds-error">Enter a valid URL.</span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-3 justify-center mt-6">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
+          onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }}
+        >
+          {/* Modal Container */}
+          <div 
+            className="relative flex h-[276px] w-[300px] flex-col items-center gap-[12px] rounded-[16px] border border-[#2C2C33] bg-[#030303] p-[12px] shadow-2xl font-dm-sans"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close row */}
+            <div className="flex h-[20px] w-[276px] items-center justify-end gap-[10px]">
               <button
                 type="button"
                 onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }}
-                className="flex items-center justify-center flex-1 py-2 border border-ds-border bg-ds-surface-2 text-ds-text-secondary hover:text-ds-text-primary rounded-xl text-sm font-medium transition-colors cursor-pointer"
+                className="flex h-[20px] w-[20px] items-center justify-center text-[#FFECE6] hover:opacity-75 transition-opacity cursor-pointer outline-none"
+                aria-label="Close"
               >
-                Cancel
+                <X className="w-5 h-5" strokeWidth={1.5} />
               </button>
+            </div>
+
+            {/* Heading */}
+            <div className="h-[24px] w-[61px] whitespace-nowrap text-center font-dm-sans text-[16px] font-medium leading-[24px] text-[#FFECE6]">
+              {editingLinkNode ? 'Edit link' : 'Add link'}
+            </div>
+
+            {/* Title input */}
+            <div className="box-border flex h-[62px] w-[260px] flex-col items-start justify-center gap-[10px] border-b border-[#2C2C33] py-[8px]">
+              <span className="h-[16px] w-[25px] text-center font-dm-sans text-[12px] font-medium leading-[16px] text-[#B8ADA8]">
+                Title
+              </span>
+              <input
+                type="text"
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && isLinkFormValid) {
+                    handleAddLink();
+                  }
+                }}
+                placeholder="e.g. cocpit"
+                autoFocus
+                className="h-[20px] w-full border-0 bg-transparent p-0 font-dm-sans text-[14px] font-normal leading-[20px] text-[#FFECE6] placeholder:text-[#726B67] outline-none"
+              />
+            </div>
+
+            {/* Link input */}
+            <div className="box-border flex h-[62px] w-[260px] flex-col items-start justify-center gap-[10px] border-b border-[#2C2C33] py-[8px]">
+              <span className="h-[16px] w-[23px] text-center font-dm-sans text-[12px] font-medium leading-[16px] text-[#B8ADA8]">
+                Link
+              </span>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && isLinkFormValid) {
+                    handleAddLink();
+                  }
+                }}
+                placeholder="e.g. www.link.com"
+                className="h-[20px] w-full border-0 bg-transparent p-0 font-dm-sans text-[14px] font-normal leading-[20px] text-[#FFECE6] placeholder:text-[#726B67] outline-none"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex h-[36px] w-[162px] items-start justify-center gap-[8px]">
+              {/* Add */}
               <button
                 type="button"
                 disabled={!isLinkFormValid}
                 onClick={handleAddLink}
                 className={cn(
-                  "flex items-center justify-center flex-1 py-2 rounded-xl text-sm font-medium transition-all",
+                  "flex h-[36px] w-[77px] items-center justify-center rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-all border-none outline-none",
                   isLinkFormValid
-                    ? "bg-ds-accent text-white hover:opacity-90 cursor-pointer shadow-md"
-                    : "bg-ds-surface-2 text-ds-text-muted cursor-not-allowed border border-ds-border"
+                    ? "bg-[#FF6422] text-[#FFECE6] hover:opacity-90 active:scale-95 cursor-pointer shadow-sm"
+                    : "bg-[#1A1A20] text-[#726B67] cursor-not-allowed"
                 )}
               >
                 {editingLinkNode ? 'Save' : 'Add'}
+              </button>
+
+              {/* Cancel */}
+              <button
+                type="button"
+                onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }}
+                className="flex h-[36px] w-[77px] items-center justify-center rounded-full border border-[#2C2C33] bg-transparent hover:bg-[#1A1A20] px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] text-[#FFECE6] transition-colors cursor-pointer outline-none active:scale-95"
+              >
+                Cancel
               </button>
             </div>
           </div>

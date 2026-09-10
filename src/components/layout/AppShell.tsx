@@ -29,28 +29,35 @@ export function AppShell({
   const searchParams = useSearchParams();
   const isCreateJobActive = searchParams?.get('view') === 'create-job';
 
-  // Automatically hide bottom nav on article pages or when create-post modal is open
+  // Automatically hide bottom nav and distraction-free elements on article pages or article mode
   const isArticlePage = pathname?.includes('/article/');
-  const { activeModal } = useUIStore();
-  const shouldHideBottomNav = hideBottomNav || isArticlePage || activeModal === 'create-post';
+  const { activeModal, isArticleMode } = useUIStore();
+  const isDistractionFreeArticle = isArticlePage || isArticleMode;
+  const shouldHideBottomNav = hideBottomNav || isDistractionFreeArticle || activeModal === 'create-post';
 
   return (
     <div className="relative flex min-h-screen bg-ds-bg text-foreground">
       {/* Desktop sidebar */}
-      <div className="hidden md:block fixed left-0 top-0 h-screen z-40">
-        <Sidebar />
-      </div>
+      {!isDistractionFreeArticle && (
+        <div className="hidden md:block fixed left-0 top-0 h-screen z-40">
+          <Sidebar />
+        </div>
+      )}
       
       {/* Top Header */}
-      <div className="hidden md:block">
-        <TopHeader />
-      </div>
-      <div className="md:hidden">
-        <MobileTopHeader />
-      </div>
+      {!isDistractionFreeArticle && (
+        <>
+          <div className="hidden md:block">
+            <TopHeader />
+          </div>
+          <div className="md:hidden">
+            <MobileTopHeader />
+          </div>
+        </>
+      )}
 
       {/* Main content */}
-      <main className={`min-w-0 flex-1 w-full md:ml-[253px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
+      <main className={isDistractionFreeArticle ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full md:ml-[253px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
         {children}
       </main>
 
@@ -63,7 +70,7 @@ export function AppShell({
           <MobileBottomNav />
         </>
       )}
-      <QuickChatWidget />
+      {!isDistractionFreeArticle && <QuickChatWidget />}
     </div>
   );
 }

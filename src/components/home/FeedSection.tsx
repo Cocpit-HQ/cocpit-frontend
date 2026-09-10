@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import FeedPost from '@/features/feed/components/FeedPost';
 {/* ===== OLD COMPOSER (commented out — replaced by FeedComposerInline) =====
 import FeedComposer from '@/features/feed/components/FeedComposer';
@@ -42,6 +43,7 @@ export const FeedSection = ({
     activeTab,
     setActiveTab
 }: FeedSectionProps) => {
+    const router = useRouter();
     const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading } = useFeed();
     const { activeProfile, isCompany, userCompanies } = useActiveProfile();
     const { pendingPosts, cancelUpload } = usePostUpload();
@@ -84,7 +86,7 @@ export const FeedSection = ({
                     onOpenArticle={() => {
                         const { setArticleMode } = useUIStore.getState();
                         setArticleMode(true);
-                        // Using window.history or router to ensure we're at /feed is handled by the state change in HomePage.
+                        router.push('/article/create');
                     }}
                     onPostCreated={() => {
                         resetSession();

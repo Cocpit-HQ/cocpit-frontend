@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ArticleFlow from '../post-types/ArticleFlow';
 import { useCreatePostForm } from '@/features/feed/hooks/use-create-post-form';
 import { useUIStore } from '@/store/ui.store';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
+import { CocpitLogoIcon } from '@/components/icons';
 
 interface InlineArticleEditorProps {
   editPostId?: string;
@@ -13,22 +15,41 @@ interface InlineArticleEditorProps {
 }
 
 export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: InlineArticleEditorProps) {
+  const router = useRouter();
   const { setArticleMode } = useUIStore();
   const isSavingRef = useRef(false);
   
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
   const isEdit = !!editPostId;
 
+  useEffect(() => {
+    setArticleMode(true);
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('cocpit_is_article_mode', 'true');
+      }
+    } catch (e) {}
+  }, [setArticleMode]);
+
   const handleClose = () => {
     if (isSavingRef.current) return; // Prevent double navigation when handlePost calls onClose
+
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('cocpit_article_draft');
+        sessionStorage.removeItem('cocpit_is_article_mode');
+      }
+    } catch (e) {}
+
+    const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
+    setArticleDraft(null);
+    setArticleMode(false);
+    setActiveModal(null);
 
     if (onClose) {
       onClose();
     } else {
-      const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
-      setArticleDraft(null);
-      setArticleMode(false);
-      setActiveModal(null);
+      router.push('/feed');
     }
   };
 
@@ -42,14 +63,19 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
 
   if (isEdit && state.isLoadingPost) {
     return (
-      <div className="w-full bg-ds-bg rounded-2xl min-h-[800px] flex items-center justify-center relative z-10 lg:col-span-12 xl:col-span-12 max-w-none">
+      <main className="min-h-screen w-full bg-ds-bg flex items-center justify-center relative z-10 font-dm-sans">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="w-full bg-ds-bg rounded-2xl h-[calc(100vh-80px)] max-h-[850px] flex flex-col relative z-10 lg:col-span-12 xl:col-span-12 max-w-none overflow-hidden">
+    <main className="relative min-h-screen w-full bg-ds-bg text-ds-text-primary font-dm-sans select-none overflow-x-hidden">
+      {/* Cocpit Brand Watermark - Right: 40px, Bottom: 40px */}
+      <div className="fixed right-[40px] bottom-[40px] pointer-events-none select-none z-10 opacity-90 text-ds-text-primary">
+        <CocpitLogoIcon className="w-[27px] h-[30px]" fill="currentColor" />
+      </div>
+
       <ArticleFlow
         title={state.articleTitle}
         onTitleChange={state.setArticleTitle}
@@ -71,10 +97,17 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
             isSavingRef.current = true;
             try {
               await actions.handlePost(inlineFiles);
+              try {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem('cocpit_article_draft');
+                  sessionStorage.removeItem('cocpit_is_article_mode');
+                }
+              } catch (e) {}
               if (onSuccess) {
                 onSuccess();
               } else {
                 setArticleMode(false);
+                router.push('/feed');
               }
             } finally {
               isSavingRef.current = false;
@@ -104,6 +137,6 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
         inlineFiles={state.inlineFiles}
         setInlineFiles={state.setInlineFiles}
       />
-    </div>
+    </main>
   );
 }

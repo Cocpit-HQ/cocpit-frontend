@@ -29,17 +29,19 @@ export default function EditArticlePage() {
     }
   };
 
+  const handleClose = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/feed');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="pt-4 md:pt-6 pb-4 md:pb-8">
-        <div className="mx-auto w-full max-w-[1128px] px-0 md:px-4 xl:px-0">
-          <InlineArticleEditor 
-            editPostId={id} 
-            onClose={() => router.back()} 
-            onSuccess={handleSuccess} 
-          />
-        </div>
-      </div>
-    </div>
+    <InlineArticleEditor 
+      editPostId={id} 
+      onClose={handleClose} 
+      onSuccess={handleSuccess} 
+    />
   );
 }

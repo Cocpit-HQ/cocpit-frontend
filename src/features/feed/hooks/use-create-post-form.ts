@@ -104,7 +104,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   }, [isOpen, initialSharedPost]);
 
-  // Sync with global article draft
+  // Sync with global article draft or sessionStorage
   useEffect(() => {
     if (isOpen) {
       const { articleDraft } = useUIStore.getState();
@@ -122,9 +122,42 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           setInlineFiles(articleDraft.localFiles);
         }
         setPostType('article');
+      } else if (!editPostId && typeof window !== 'undefined') {
+        try {
+          const raw = sessionStorage.getItem('cocpit_article_draft');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.title) setArticleTitle(parsed.title);
+            if (parsed.content) setArticleContent(parsed.content);
+            if (parsed.coverImage) {
+              media.setUploadedImages([parsed.coverImage]);
+            }
+            if (parsed.description) setDescription(parsed.description);
+            setPostType('article');
+          }
+        } catch (e) {
+          console.error("Failed to restore draft from sessionStorage", e);
+        }
       }
     }
-  }, [isOpen]);
+  }, [isOpen, editPostId]);
+
+  // Save article draft to sessionStorage as user types (only in create mode)
+  useEffect(() => {
+    if (!editPostId && postType === 'article' && typeof window !== 'undefined') {
+      const hasContent = articleTitle.trim() || articleContent.trim() || media.uploadedImages.length > 0;
+      if (hasContent) {
+        try {
+          sessionStorage.setItem('cocpit_article_draft', JSON.stringify({
+            title: articleTitle,
+            content: articleContent,
+            coverImage: media.uploadedImages[0] || null,
+            description,
+          }));
+        } catch (e) {}
+      }
+    }
+  }, [articleTitle, articleContent, media.uploadedImages, description, editPostId, postType]);
 
   // Clean form state on modal close
   useEffect(() => {

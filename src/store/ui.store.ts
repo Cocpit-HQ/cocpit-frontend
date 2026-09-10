@@ -44,25 +44,37 @@ export const useUIStore = create<UIState>((set) => ({
   activeModal: null,
   initialPostType: 'text',
   pendingPosts: [],
-  isArticleMode: false,
+  isArticleMode: typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_is_article_mode') === 'true' : false,
   articleDraft: null,
   isEditMode: false,
   editingPostId: null,
   sharedPostData: null,
   
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
-  setActiveModal: (modal, type = 'text') =>
+  setActiveModal: (modal, type = 'text') => {
+    if (modal && typeof window !== 'undefined') {
+      sessionStorage.removeItem('cocpit_is_article_mode');
+    }
     set((state) => ({
       activeModal: modal,
       initialPostType: type,
       isArticleMode: modal ? false : state.isArticleMode,
-    })),
+    }));
+  },
   setPendingPosts: (fn) => set((state) => ({ pendingPosts: fn(state.pendingPosts) })),
-  setArticleMode: (mode) =>
+  setArticleMode: (mode) => {
+    if (typeof window !== 'undefined') {
+      if (mode) {
+        sessionStorage.setItem('cocpit_is_article_mode', 'true');
+      } else {
+        sessionStorage.removeItem('cocpit_is_article_mode');
+      }
+    }
     set((state) => ({
       isArticleMode: mode,
       activeModal: mode ? null : state.activeModal,
-    })),
+    }));
+  },
   setArticleDraft: (draft) => set({ articleDraft: draft }),
   setEditMode: (isEdit, postId = null) => set({ isEditMode: isEdit, editingPostId: postId }),
   setSharedPostData: (data) => set({ sharedPostData: data }),

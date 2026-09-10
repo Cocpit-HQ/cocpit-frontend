@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X, Crop, RefreshCw } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { UploadIcon } from '@/components/icons';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/services/api/upload';
@@ -26,6 +24,7 @@ export default function ArticleCoverEditor({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAdjustActive, setIsAdjustActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [zoom, setZoom] = useState(0);
@@ -62,7 +61,20 @@ export default function ArticleCoverEditor({
     setPreviewUrl(null);
     setSelectedFile(null);
     resetTransforms();
+    setIsAdjustActive(false);
   };
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCancelPreview();
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
 
   useEffect(() => {
     if (!isDraggingImage) return;
@@ -104,9 +116,6 @@ export default function ArticleCoverEditor({
     };
     const onEnd = () => {
       setIsDraggingImage(false);
-      if (!hasMoved.current) {
-        fileInputRef.current?.click();
-      }
     };
 
     document.addEventListener("mousemove", onMouseMove);
@@ -161,8 +170,8 @@ export default function ArticleCoverEditor({
       toast.error("Invalid file type. Please upload an image.");
       return;
     }
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("File size exceeds 20MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size cannot exceed 5MB.");
       return;
     }
     const objectUrl = URL.createObjectURL(file);
@@ -221,51 +230,54 @@ export default function ArticleCoverEditor({
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
 
-      const imgAspect = img.width / img.height;
-      const canvasAspect = width / height; // 2
-      let drawWidth, drawHeight;
-
-      if (imgAspect > canvasAspect) {
-        drawHeight = height;
-        drawWidth = height * imgAspect;
-      } else {
-        drawWidth = width;
-        drawHeight = width / imgAspect;
+      const zoomScale = 1 + zoom / 100;
+      let containerWidth = 688;
+      let containerHeight = 338;
+      if (containerRef.current) {
+        containerWidth = containerRef.current.offsetWidth;
+        containerHeight = containerRef.current.offsetHeight;
       }
 
-      const zoomScale = 1 + (zoom / 100);
-      drawWidth *= zoomScale;
-      drawHeight *= zoomScale;
+      let renderedW = containerWidth;
+      let renderedH = containerHeight;
+      if (naturalImgSize.w > 0 && naturalImgSize.h > 0) {
+        const imgAspect = naturalImgSize.w / naturalImgSize.h;
+        renderedW = containerWidth;
+        renderedH = containerWidth / imgAspect;
+      }
 
-      const containerEl = containerRef.current;
-      const previewWidth = containerEl ? containerEl.offsetWidth : 600;
-      const scaleRatio = width / previewWidth;
-      const canvasPosX = positionX * scaleRatio;
-      const canvasPosY = positionY * scaleRatio;
+      const drawScale = width / containerWidth;
+      const drawW = renderedW * zoomScale * drawScale;
+      const drawH = renderedH * zoomScale * drawScale;
+      const drawX = -drawW / 2 + positionX * drawScale;
+      const drawY = -drawH / 2 + positionY * drawScale;
 
-      ctx.drawImage(img, -drawWidth / 2 + canvasPosX, -drawHeight / 2 + canvasPosY, drawWidth, drawHeight);
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
       ctx.restore();
 
       const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, "image/jpeg", 0.95);
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92);
       });
 
-      if (!blob) {
-        throw new Error("Canvas toBlob failed");
-      }
+      if (!blob) throw new Error("Canvas export failed");
 
-      const file = new File([blob], "article_cover.jpg", { type: "image/jpeg" });
-      const urls = await uploadMedia([file]);
+      const processedFile = new File([blob], "article-cover.jpg", {
+        type: "image/jpeg",
+      });
+
+      const urls = await uploadMedia([processedFile]);
       const raw = urls[0];
-      const resolvedUrl = typeof raw === 'object' && raw !== null ? (raw as any).url : raw;
+      const url = typeof raw === 'object' && raw !== null ? (raw as any).url : raw;
 
-      onCoverChange(resolvedUrl);
-      toast.success("Cover image updated successfully.");
+      if (!url) throw new Error("Upload response missing URL");
+
+      onCoverChange(url);
       handleCancelPreview();
       setIsModalOpen(false);
+      toast.success("Cover image updated successfully");
     } catch (error) {
-      console.error("Save error:", error);
-      toast.error("Failed to process and upload cover image.");
+      console.error("Cover image upload failed:", error);
+      toast.error("Failed to upload cover image. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -283,9 +295,9 @@ export default function ArticleCoverEditor({
       />
 
       {/* Article Cover Editor Page Trigger UI */}
-      <div className="w-full">
+      <div className="w-full flex justify-center">
         {coverImage ? (
-          <div className="relative aspect-[16/9] max-w-full w-full overflow-hidden group bg-ds-surface-2 mx-auto rounded-2xl border border-ds-border">
+          <div className="relative w-[688px] h-[338px] max-w-full overflow-hidden group bg-ds-surface-2 mx-auto rounded-[16px] border border-ds-border">
             <img src={coverImage} alt="Article cover" className="w-full h-full object-cover" />
             <div className="absolute bottom-3 right-3 z-10 pointer-events-auto flex items-center gap-2 p-1.5 bg-black/70 backdrop-blur-md rounded-xl border border-white/10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
@@ -325,125 +337,136 @@ export default function ArticleCoverEditor({
               }
             }}
             aria-label="Add cover image"
-            className="flex flex-col items-center justify-center border border-dashed border-zinc-700/70 bg-ds-surface-1/40 hover:bg-ds-surface-1/80 hover:border-zinc-500 rounded-2xl cursor-pointer p-8 text-center w-full aspect-[16/9] max-w-full mx-auto transition-all duration-200 select-none group"
+            className="relative flex h-[338px] w-[688px] max-w-full flex-col items-center justify-center gap-[12px] rounded-[16px] p-[10px] select-none cursor-pointer group"
           >
-            <div className="flex flex-col items-center gap-1.5 mb-5">
-              <h5 className="font-semibold text-[16px] leading-[24px] text-ds-text-primary text-center">
+            {/* SVG Dashed Border: style dashed 8, 8 1px with 16px border-radius */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="0.5"
+                y="0.5"
+                width="calc(100% - 1px)"
+                height="calc(100% - 1px)"
+                style={{ width: 'calc(100% - 1px)', height: 'calc(100% - 1px)' }}
+                rx="16"
+                stroke="#2C2C33"
+                strokeWidth="1"
+                strokeDasharray="8 8"
+                className="group-hover:stroke-[#726B67] transition-colors"
+              />
+            </svg>
+
+            {/* Frame 2609567: 215px x 52px, gap 8px */}
+            <div className="flex flex-col items-center gap-[8px] w-[215px] h-[52px]">
+              <h5 className="font-dm-sans font-normal text-[16px] leading-[24px] text-ds-text-primary text-center">
                 Cover image
               </h5>
-              <p className="font-normal text-[13px] leading-[18px] text-ds-text-muted text-center">
+              <p className="font-dm-sans font-normal text-[14px] leading-[20px] text-ds-text-secondary text-center">
                 Add a cover image to your article
               </p>
             </div>
 
-            <div className="flex flex-col items-center gap-3.5">
+            {/* Upload Icon: 80px x 80px */}
+            <div className="w-[80px] h-[80px] flex items-center justify-center">
               <UploadIcon
-                className="w-[80px] h-[80px] text-ds-text-secondary group-hover:text-ds-text-primary transition-colors"
+                className="w-[80px] h-[80px] text-ds-text-primary group-hover:scale-105 transition-transform"
+                fill="#FFECE6"
               />
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="font-normal text-[11px] leading-[16px] text-ds-text-muted text-center">
-                  JPG, PNG, max 10MB
-                </span>
-                <span className="font-normal text-[11px] leading-[16px] text-ds-text-muted text-center">
-                  Expected ratio 16:9
-                </span>
-              </div>
+            </div>
+
+            {/* Frame 2609569: 153px x 40px, gap 8px */}
+            <div className="flex flex-col items-center gap-[8px] w-[153px] h-[40px]">
+              <span className="font-dm-sans font-normal text-[12px] leading-[16px] text-ds-text-secondary text-center whitespace-nowrap">
+                JPG, PNG, WEBP (max 5Mb)
+              </span>
+              <span className="font-dm-sans font-normal text-[12px] leading-[16px] text-ds-text-secondary text-center whitespace-nowrap">
+                Expected ratio 16:9
+              </span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Cover Preview Modal */}
-      <Dialog open={isModalOpen} onOpenChange={(open) => {
-        setIsModalOpen(open);
-        if (!open) handleCancelPreview();
-      }}>
-        <DialogContent className="p-0 shadow-none max-w-[800px] sm:rounded-[24px] outline-none">
-          <div className="relative bg-card rounded-[24px] p-[16px] w-[800px] max-w-full flex flex-col outline-none">
-            <div className="text-center mb-6 relative px-4">
-              <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
-                Cover image
-              </DialogTitle>
-              <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                This will appear as your article&apos;s cover image
-              </p>
-            </div>
-
-            <div className="relative flex flex-col items-center justify-center w-full">
-              {/* Transform Toolbar */}
-              <div className="flex justify-center items-center gap-4 mb-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFlipV(!flipV);
-                    setFlipH(false);
-                  }}
-                  className={cn("p-1.5 rounded-md transition-colors cursor-pointer", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
-                  title="Flip vertical"
-                >
-                  <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFlipH(!flipH);
-                    setFlipV(false);
-                  }}
-                  className={cn("p-1.5 rounded-md transition-colors cursor-pointer", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
-                  title="Flip horizontal"
-                >
-                  <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                  className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors cursor-pointer"
-                  title="Rotate"
-                >
-                  <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={isDeleting || !hasImage}
-                  className="p-1.5 text-ds-error hover:bg-ds-error/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                  title="Delete"
-                >
-                  {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
-                </button>
+      {/* Add Banner Modal */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 select-none animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleCancelPreview();
+              setIsModalOpen(false);
+            }
+          }}
+        >
+          <div
+            className="relative box-border flex h-[592px] w-[700px] flex-col items-center justify-between rounded-[16px] border border-ds-border bg-ds-bg p-[12px] shadow-2xl font-dm-sans"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header: 674px x 44px */}
+            <div className="flex h-[44px] w-[674px] shrink-0 items-center justify-between gap-[16px]">
+              <div className="flex h-[44px] w-[199px] flex-col items-start justify-center gap-[4px]">
+                <span className="h-[24px] w-[89px] font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary">
+                  Add banner
+                </span>
+                <span className="h-[16px] w-[199px] font-dm-sans text-[12px] font-normal leading-[16px] text-ds-text-secondary">
+                  Double-click the image to change it
+                </span>
               </div>
 
-              {/* Image Preview with Drag-to-Reposition at 2:1 ratio */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleCancelPreview();
+                  setIsModalOpen(false);
+                }}
+                className="flex h-[20px] w-[20px] shrink-0 items-center justify-center text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer border-none bg-transparent p-0"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Image + controls: w-[600px] flex-col items-center */}
+            <div className="flex w-[600px] shrink-0 flex-col items-center gap-[16px]">
+              {/* Banner: 600px x 338px */}
               <div
                 ref={containerRef}
-                className={cn(
-                  "w-full max-w-[680px] aspect-[2/1] mx-auto relative overflow-hidden bg-secondary rounded-[24px] select-none group",
-                  isDraggingImage ? "cursor-grabbing" : "cursor-grab"
-                )}
-                onMouseDown={(e) => {
+                onDoubleClick={() => fileInputRef.current?.click()}
+                onMouseDown={isAdjustActive ? (e) => {
                   e.preventDefault();
                   handlePointerDown(e.clientX, e.clientY);
-                }}
-                onTouchStart={(e) => {
+                } : undefined}
+                onTouchStart={isAdjustActive ? (e) => {
                   const touch = e.touches[0];
                   if (touch) handlePointerDown(touch.clientX, touch.clientY);
-                }}
-                onWheel={(e) => {
+                } : undefined}
+                onWheel={isAdjustActive ? (e) => {
                   e.preventDefault();
                   const delta = e.deltaY > 0 ? -5 : 5;
                   setZoom(prev => Math.min(200, Math.max(0, prev + delta)));
-                }}
+                } : undefined}
+                className={cn(
+                  "h-[338px] w-[600px] shrink-0 overflow-hidden rounded-[16px] relative bg-ds-surface-1 select-none",
+                  isAdjustActive
+                    ? isDraggingImage
+                      ? "cursor-grabbing"
+                      : "cursor-grab"
+                    : "cursor-pointer"
+                )}
+                title={isAdjustActive ? "Drag to reposition, scroll to zoom" : "Double-click to change image"}
               >
-                {/* Width-fill: image spans full container width by default */}
                 <img
                   src={displayImage || "/assets/coverphoto.jpg"}
-                  alt="Current Cover"
+                  alt="Banner"
+                  draggable={false}
                   onLoad={(e) => {
                     const el = e.currentTarget;
                     setNaturalImgSize({ w: el.naturalWidth, h: el.naturalHeight });
                   }}
                   className="absolute pointer-events-none select-none w-full h-auto"
-                  draggable={false}
                   style={{
                     left: 0,
                     top: '50%',
@@ -452,57 +475,117 @@ export default function ArticleCoverEditor({
                   }}
                 />
 
-                {/* Hover Overlay (hidden while dragging) */}
-                {!isDraggingImage && (
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10 pointer-events-none">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                      <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
-                      Change image
+                {/* Optional visual indicator overlay on hover if not adjusting */}
+                {!isAdjustActive && (
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 pointer-events-none">
+                    <span className="text-white text-[12px] font-dm-sans bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm">
+                      Double-click to change
                     </span>
                   </div>
                 )}
               </div>
 
-              {/* Zoom Slider */}
-              <div className="mt-8 max-w-[400px] mx-auto w-full">
-                <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
-                <Slider
-                  value={[zoom]}
-                  onValueChange={(vals) => setZoom(vals[0])}
-                  max={200}
-                  step={1}
-                  className="w-full cursor-pointer"
-                />
+              {/* Remove photo */}
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting || !hasImage}
+                className="h-[24px] w-[109px] shrink-0 text-center font-dm-sans text-[16px] font-medium leading-[24px] text-ds-error hover:underline cursor-pointer border-none bg-transparent p-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? "Removing..." : "Remove photo"}
+              </button>
+
+              {/* Tools: 136px x 44px, gap: 8px */}
+              <div className="flex h-[44px] w-[136px] items-start justify-center gap-[8px]">
+                {/* Adjust */}
+                <button
+                  type="button"
+                  onClick={() => setIsAdjustActive(prev => !prev)}
+                  className={cn(
+                    "flex h-[44px] w-[40px] flex-col items-center justify-center gap-[4px] border-none bg-transparent p-0 cursor-pointer transition-colors",
+                    isAdjustActive ? "text-ds-accent" : "text-ds-text-primary hover:text-ds-accent"
+                  )}
+                  title="Adjust zoom and position"
+                >
+                  <div className="flex h-[20px] w-[20px] items-center justify-center">
+                    <Crop className="w-5 h-5" strokeWidth={1.5} />
+                  </div>
+                  <span className="h-[16px] w-[37px] text-center font-dm-sans text-[12px] font-medium leading-[16px]">
+                    Adjust
+                  </span>
+                </button>
+
+                {/* Flip */}
+                <button
+                  type="button"
+                  onClick={() => setFlipH(prev => !prev)}
+                  className="flex h-[44px] w-[40px] flex-col items-center justify-center gap-[4px] border-none bg-transparent p-0 text-ds-text-primary hover:text-ds-accent cursor-pointer transition-colors"
+                  title="Flip horizontally"
+                >
+                  <div className="flex h-[20px] w-[20px] items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M7 5L3.5 8.5M3.5 8.5L7 12M3.5 8.5H16.5" />
+                      <path d="M13 15L16.5 11.5M16.5 11.5L13 8M16.5 11.5H3.5" />
+                    </svg>
+                  </div>
+                  <span className="h-[16px] w-[20px] text-center font-dm-sans text-[12px] font-medium leading-[16px]">
+                    Flip
+                  </span>
+                </button>
+
+                {/* Rotate */}
+                <button
+                  type="button"
+                  onClick={() => setRotation(prev => (prev + 90) % 360)}
+                  className="flex h-[44px] w-[40px] flex-col items-center justify-center gap-[4px] border-none bg-transparent p-0 text-ds-text-primary hover:text-ds-accent cursor-pointer transition-colors"
+                  title="Rotate 90 degrees"
+                >
+                  <div className="flex h-[20px] w-[20px] items-center justify-center">
+                    <RefreshCw className="w-4 h-4" strokeWidth={1.8} />
+                  </div>
+                  <span className="h-[16px] w-[37px] text-center font-dm-sans text-[12px] font-medium leading-[16px]">
+                    Rotate
+                  </span>
+                </button>
               </div>
+
+              {/* If adjust is active, show zoom slider right below tools */}
+              {isAdjustActive && (
+                <div className="flex items-center gap-3 w-[260px] animate-in fade-in slide-in-from-top-1 duration-150">
+                  <span className="text-[11px] font-dm-sans text-ds-text-secondary whitespace-nowrap">Zoom</span>
+                  <Slider
+                    value={[zoom]}
+                    onValueChange={(vals) => setZoom(vals[0])}
+                    min={0}
+                    max={200}
+                    step={1}
+                    className="w-full cursor-pointer"
+                  />
+                  <span className="text-[11px] font-dm-sans text-ds-text-secondary w-[30px] text-right">
+                    {zoom}%
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Footer Buttons */}
-            <div className="flex justify-center gap-4 mt-10">
-              <Button
+            {/* Save: flex h-[36px] w-[674px] shrink-0 flex-col items-end justify-center gap-[10px] */}
+            <div className="flex h-[36px] w-[674px] shrink-0 flex-col items-end justify-center gap-[10px]">
+              <button
                 type="button"
-                variant="outline"
-                onClick={() => {
-                  handleCancelPreview();
-                  setIsModalOpen(false);
-                }}
-                disabled={isUploading || isDeleting}
-                className="w-[160px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-primary/5 bg-transparent text-[14px] cursor-pointer"
-              >
-                Cancel
-              </Button>
-              <Button
                 onClick={handleSave}
                 disabled={isUploading || isDeleting || !hasImage}
-                className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-primary shadow-sm cursor-pointer"
+                className="flex h-[36px] w-[68px] items-center justify-center gap-[10px] rounded-full bg-ds-accent hover:opacity-90 active:scale-95 px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary border-none outline-none cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                {isUploading ? "Saving..." : "Save"}
-              </Button>
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  "Save"
+                )}
+              </button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
