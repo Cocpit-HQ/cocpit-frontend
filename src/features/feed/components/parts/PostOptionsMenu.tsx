@@ -17,6 +17,7 @@ interface PostOptionsMenuProps {
   isMentioned?: boolean;
   onRemoveMention?: () => void;
   isReported?: boolean;
+  isPollPost?: boolean;
 }
 
 export const PostOptionsMenu = ({
@@ -33,6 +34,7 @@ export const PostOptionsMenu = ({
   isMentioned,
   onRemoveMention,
   isReported,
+  isPollPost,
 }: PostOptionsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -100,7 +102,7 @@ export const PostOptionsMenu = ({
       )}
       {isMe ? (
         <>
-          {onEdit && (
+          {onEdit && !isPollPost && (
             <button
               onClick={(e) => { e.stopPropagation(); handleAction(onEdit); }}
               className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"

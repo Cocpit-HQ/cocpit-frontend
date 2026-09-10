@@ -619,6 +619,7 @@ export const FeedPost = (props: FeedPostProps) => {
         onClose={() => setShowOptions(false)}
         position={optionsPos}
         isMe={isRepostWithoutThoughts ? false : isTargetAuthorMe}
+        isPollPost={!!pollData}
         onEdit={() => {
           setShowOptions(false);
           if (isArticlePost) {

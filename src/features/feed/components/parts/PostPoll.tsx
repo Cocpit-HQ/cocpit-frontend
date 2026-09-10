@@ -50,7 +50,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
 
   return (
     <div
-      className="w-full max-w-[442px] p-[8px_12px] flex flex-col items-start gap-[12px] border-[0.5px] border-ds-border rounded-[8px] box-border select-none"
+      className="w-full max-w-[442px] p-[8px_12px] flex flex-col items-start gap-[12px] rounded-[8px] box-border select-none"
       onClick={(e) => e.stopPropagation()}
     >
       {/* 1. Poll Title / Question */}

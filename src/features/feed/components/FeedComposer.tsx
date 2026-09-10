@@ -26,7 +26,7 @@ export const FeedComposer = ({ onOpenComposer }: { onOpenComposer: () => void })
         {/* Input Placeholder */}
         <div 
           onClick={onOpenComposer}
-          className="flex-grow cursor-text py-[8px]"
+          className="flex-grow cursor-text flex items-center"
         >
           <span className="ds-text-body text-ds-text-muted">
             What would you like to share today?
