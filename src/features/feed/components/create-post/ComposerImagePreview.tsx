@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT } from '@/features/feed/utils/imageBounds';
 
 export interface ComposerImage {
@@ -12,6 +13,7 @@ export interface ComposerImage {
   naturalWidth: number;
   naturalHeight: number;
   aspectRatio: number;
+
 }
 
 interface ComposerImagePreviewProps {
@@ -92,23 +94,20 @@ export const ComposerImagePreview = ({
               }}
             />
 
-            {/* Hover Action Overlay (Delete text only, zero blur, crisp image) */}
+            {/* Changed: Replaced full hover overlay 'Delete' text with a clean top-right circular cross button (Icon name="cancel") */}
             {!isEditMode && (
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out flex items-center justify-center z-10 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveImage(singleImage.id);
-                  }}
-                  className="cursor-pointer outline-none transition-transform duration-200 ease-out hover:scale-110 active:scale-95 select-none py-1.5 px-3 rounded-full hover:bg-black/30"
-                  title="Delete photo"
-                >
-                  <span className="text-[14px] font-semibold text-[#FF3B30] tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
-                    Delete
-                  </span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveImage(singleImage.id);
+                }}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-ds-surface-2/90 hover:bg-ds-surface-2 border border-ds-border/40 text-[var(--ds-error)] flex items-center justify-center z-10 transition-all duration-150 hover:scale-105 active:scale-95 shadow-md cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                aria-label="Remove photo"
+                title="Remove photo"
+              >
+                <Icon name="cancel" className="w-4 h-4 text-[var(--ds-error)]" />
+              </button>
             )}
           </div>
         </div>
@@ -134,23 +133,20 @@ export const ComposerImagePreview = ({
                   className="w-full h-full object-cover rounded-[16px] block"
                 />
 
-                {/* Hover Action Overlay (Crisp image, smooth fade delete text) */}
+                {/* Remove photo button (Top-right circular cross) */}
                 {!isEditMode && (
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out flex items-center justify-center z-10 rounded-[16px]">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveImage(img.id);
-                      }}
-                      className="cursor-pointer outline-none transition-transform duration-200 ease-out hover:scale-110 active:scale-95 select-none py-1.5 px-3 rounded-full hover:bg-black/30"
-                      title="Delete photo"
-                    >
-                      <span className="text-[14px] font-semibold text-[var(--ds-error)] tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
-                        Delete
-                      </span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveImage(img.id);
+                    }}
+                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-ds-surface-2/90 hover:bg-ds-surface-2 border border-ds-border/40 text-[var(--ds-error)] flex items-center justify-center z-10 transition-all duration-150 hover:scale-105 active:scale-95 shadow-md cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                    aria-label="Remove photo"
+                    title="Remove photo"
+                  >
+                    <Icon name="cancel" className="w-3.5 h-3.5 text-[var(--ds-error)]" />
+                  </button>
                 )}
               </div>
             ))}

@@ -131,6 +131,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   const resetComposer = useCallback(() => {
     selectedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
     if (selectedVideo) URL.revokeObjectURL(selectedVideo.previewUrl);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setSelectedImages([]);
     setSelectedVideo(null);
     setActiveImageIdx(0);
@@ -336,7 +337,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       const target = prev.find((img) => img.id === id);
       if (target) URL.revokeObjectURL(target.previewUrl);
       const next = prev.filter((img) => img.id !== id);
-      if (next.length === 0) setMode('text');
+      if (next.length === 0) {
+        setMode('text');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
       return next;
     });
     setActiveImageIdx((prev) => Math.max(0, Math.min(prev, selectedImages.length - 2)));
@@ -548,6 +552,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       setSelectedImages([]);
       setSelectedVideo(null);
       setMode('poll');
+      poll.setPollDuration('1 week');
       setIsExpanded(true);
     }
   }, [mode, poll, selectedImages, selectedVideo]);
@@ -587,106 +592,97 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
               </div>
               <span className="font-dmsans text-ds-text-secondary text-[14px] font-medium leading-[20px]">Poll post</span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                poll.clearPoll();
-                setMode('text');
-              }}
-              className="text-ds-text-muted hover:text-ds-text-primary p-1 cursor-pointer rounded-full transition-colors outline-none"
-              title="Cancel poll"
-              aria-label="Cancel poll"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
 
-          {/* Question Input */}
-          <div className="w-full">
-            <input
-              type="text"
-              value={poll.pollQuestion}
-              onChange={(e) => poll.setPollQuestion(e.target.value)}
-              placeholder="Ask your network..."
-              className="w-full bg-transparent border-b border-ds-border focus:border-[var(--ds-accent)] pb-2.5 text-[15px] text-ds-text-primary placeholder:text-ds-text-muted outline-none transition-colors"
-            />
-          </div>
+          {/* Form Content aligned at pl-[44px] */}
+          <div className="w-full flex flex-col gap-4 pl-[44px]">
+            {/* Question Input */}
+            <div className="w-full">
+              <input
+                type="text"
+                value={poll.pollQuestion}
+                onChange={(e) => poll.setPollQuestion(e.target.value)}
+                placeholder="Ask your network..."
+                className="w-full bg-transparent border-b border-ds-border focus:border-[var(--ds-accent)] pb-2.5 text-[15px] text-ds-text-primary placeholder:text-ds-text-muted outline-none transition-colors"
+              />
+            </div>
 
-          {/* Options List */}
-          <div className="w-full flex flex-col gap-3">
-            {poll.pollOptions.map((opt, index) => {
-              const letter = ['A', 'B', 'C', 'D', 'E', 'F'][index] || `${index + 1}`;
-              return (
-                <div key={opt.id} className="relative flex items-center w-full">
-                  <input
-                    type="text"
-                    value={opt.text}
-                    onChange={(e) => poll.updatePollOption(opt.id, e.target.value)}
-                    placeholder={`Option ${letter}`}
-                    className="w-full bg-transparent border-b border-ds-border focus:border-[var(--ds-accent)] pb-2.5 pr-8 text-[14px] text-ds-text-primary placeholder:text-ds-text-muted outline-none transition-colors"
-                  />
-                  {poll.pollOptions.length > 2 && index >= 2 && (
-                    <button
-                      type="button"
-                      onClick={() => poll.removePollOption(opt.id)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-ds-text-muted hover:text-red-400 cursor-pointer transition-colors outline-none"
-                      title="Remove option"
-                      aria-label="Remove option"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+            {/* Options List */}
+            <div className="w-full flex flex-col gap-3">
+              {poll.pollOptions.map((opt, index) => {
+                const letter = ['A', 'B', 'C', 'D', 'E', 'F'][index] || `${index + 1}`;
+                return (
+                  <div key={opt.id} className="relative flex items-center w-full">
+                    <input
+                      type="text"
+                      value={opt.text}
+                      onChange={(e) => poll.updatePollOption(opt.id, e.target.value)}
+                      placeholder={`Option ${letter}`}
+                      className="w-full bg-transparent border-b border-ds-border focus:border-[var(--ds-accent)] pb-2.5 pr-8 text-[14px] text-ds-text-primary placeholder:text-ds-text-muted outline-none transition-colors"
+                    />
+                    {poll.pollOptions.length > 2 && index >= 2 && (
+                      <button
+                        type="button"
+                        onClick={() => poll.removePollOption(opt.id)}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-ds-text-muted hover:text-[var(--ds-error)] cursor-pointer transition-colors outline-none"
+                        title="Remove option"
+                        aria-label="Remove option"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
-            {/* Add Option Button (Capsule) */}
-            {poll.pollOptions.length < 6 && (
+              {/* Add Option Button (Capsule) */}
+              {poll.pollOptions.length < 6 && (
+                <button
+                  type="button"
+                  onClick={poll.addPollOption}
+                  className="w-full py-2.5 rounded-full border border-ds-border hover:bg-ds-surface-1 font-dmsans text-[16px] leading-[24px] text-ds-text-primary font-medium flex items-center justify-center gap-[8px] transition-colors cursor-pointer outline-none mt-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add option
+                </button>
+              )}
+            </div>
+
+            {/* Poll Duration Dropdown */}
+            <div className="relative w-full">
               <button
                 type="button"
-                onClick={poll.addPollOption}
-                className="w-full py-2.5 rounded-full border border-ds-border hover:bg-ds-surface-1 font-dmsans text-[16px] leading-[24px] text-ds-text-primary font-medium flex items-center justify-center gap-[8px] transition-colors cursor-pointer outline-none mt-1"
+                onClick={() => setDurationOpen((prev) => !prev)}
+                className="w-full flex items-center justify-between pb-2 text-[14px] text-ds-text-primary cursor-pointer border-b border-ds-border focus:border-[var(--ds-accent)] outline-none"
               >
-                <Plus className="w-4 h-4" />
-                Add option
+                <span className={poll.pollDuration ? 'text-ds-text-primary' : 'text-ds-text-muted'}>
+                  {poll.pollDuration || 'Poll duration'}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-ds-text-muted transition-transform duration-200 ${durationOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
-          </div>
 
-          {/* Poll Duration Dropdown */}
-          <div className="relative w-full">
-            <button
-              type="button"
-              onClick={() => setDurationOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between pb-2 text-[14px] text-ds-text-primary cursor-pointer border-b border-ds-border focus:border-[var(--ds-accent)] outline-none"
-            >
-              <span className={poll.pollDuration ? 'text-ds-text-primary' : 'text-ds-text-muted'}>
-                {poll.pollDuration || 'Poll duration'}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-ds-text-muted transition-transform duration-200 ${durationOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {durationOpen && (
-              <div className="absolute left-0 right-0 top-[calc(100%+4px)] bg-ds-surface-2 border border-ds-border rounded-xl shadow-lg z-30 p-1">
-                {['1 day', '3 days', '1 week', '2 weeks'].map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => {
-                      poll.setPollDuration(d);
-                      setDurationOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
-                      poll.pollDuration === d
-                        ? 'bg-[var(--ds-accent)] text-white font-medium'
-                        : 'text-ds-text-primary hover:bg-ds-surface-1'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            )}
+              {durationOpen && (
+                <div className="absolute left-0 right-0 top-[calc(100%+4px)] bg-ds-surface-2 border border-ds-border rounded-xl shadow-lg z-30 p-1">
+                  {['1 day', '3 days', '1 week', '2 weeks'].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => {
+                        poll.setPollDuration(d);
+                        setDurationOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                        poll.pollDuration === d
+                          ? 'bg-[var(--ds-accent)] text-white font-medium'
+                          : 'text-ds-text-primary hover:bg-ds-surface-1'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : (
@@ -776,7 +772,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       {/* ── Section 2: Add Location (Figma Frame 2609598: ds-text-body-1 16px/24px, 4px dot, ds-text-body-1 text-ds-accent) ── */}
       {showLocationFeature && (
         location ? (
-          <div className={`flex items-center gap-[8px] h-[24px] ${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[52px]'}`}>
+          <div className="flex items-center gap-[8px] h-[24px] pl-[44px]">
             <span className="bg-transparent ds-text-body-1 text-ds-text-primary truncate">
               {'formattedAddress' in location ? location.formattedAddress : location.name}
             </span>
@@ -792,8 +788,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         ) : (
           <button
             onClick={handleLocationToggle}
-            // FIX: Replaced hardcoded #F95B14 hex with AGENTS.md compliant var(--ds-accent)
-            className={`${selectedImages.length > 0 || selectedVideo !== null || mode === 'poll' ? '' : 'pl-[44px]'} text-left text-[var(--ds-accent)] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit`}
+            className="pl-[44px] text-left text-[var(--ds-accent)] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit"
             aria-label="Add location"
           >
             Add location
@@ -818,7 +813,8 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 <button
                   type="button"
                   onClick={resetComposer}
-                  className="h-[32px] px-[16px] rounded-full border border-ds-border text-ds-text-primary text-[14px] font-medium hover:bg-ds-surface-2 transition-colors flex items-center justify-center cursor-pointer outline-none"
+                  className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                  aria-label="Cancel edit"
                 >
                   Cancel
                 </button>
@@ -826,62 +822,97 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             </>
           ) : (
             <>
-              {/* Bug 5: Hide image/poll/article icons in repost mode */}
+              {/* Hide image/poll/article icons in repost mode. Also enforce mutual exclusion between media attachments and polls/articles */}
               {!isRepostMode && (
                 <div className="flex flex-row items-center gap-[16px]">
                   {/* Image / Photo */}
                   <button
                     type="button"
                     onClick={handleImageClick}
-                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES}
+                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null || mode === 'poll'}
                     className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
-                      selectedImages.length >= MAX_COMPOSER_IMAGES
-                        ? 'opacity-40 cursor-not-allowed text-ds-text-muted'
+                      selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null || mode === 'poll'
+                        ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
                         : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
                     }`}
                     aria-label="Upload image"
-                    title={selectedImages.length >= MAX_COMPOSER_IMAGES ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})` : 'Add photos'}
+                    title={
+                      mode === 'poll'
+                        ? 'Cannot attach media while creating a poll'
+                        : selectedImages.length >= MAX_COMPOSER_IMAGES
+                        ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
+                        : 'Add photos'
+                    }
                   >
                     <Icon name="image" className="w-[20px] h-[20px]" />
                   </button>
 
                   {/* Poll */}
                   <button
+                    type="button"
                     onClick={handlePollClick}
-                    className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer ${
-                      mode === 'poll' ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-[var(--ds-accent)]'
+                    disabled={hasMedia}
+                    className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
+                      hasMedia
+                        ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
+                        : mode === 'poll'
+                        ? 'text-[var(--ds-accent)] cursor-pointer'
+                        : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
                     }`}
                     aria-label="Create poll"
-                    title="Create poll"
+                    title={hasMedia ? 'Cannot create a poll while media is attached' : 'Create poll'}
                   >
                     <Icon name="poll" className="w-[20px] h-[20px]" />
                   </button>
 
                   {/* Article */}
                   <button
+                    type="button"
                     onClick={handleArticleClick}
-                    className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-primary hover:text-[var(--ds-accent)] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] cursor-pointer"
+                    disabled={hasMedia || mode === 'poll'}
+                    className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
+                      hasMedia || mode === 'poll'
+                        ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
+                        : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                    }`}
                     aria-label="Write article"
-                    title="Write article"
+                    title={
+                      hasMedia || mode === 'poll'
+                        ? 'Cannot write article while media or poll is active'
+                        : 'Write article'
+                    }
                   >
                     <Icon name="articles" className="w-[20px] h-[20px]" />
                   </button>
                 </div>
               )}
 
-            {/* Post Button */}
-            <button
-              onClick={handlePost}
-              disabled={!canPost || isSubmitting}
-              className={`ml-auto h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
-                canPost && !isSubmitting
-                  ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
-                  : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
-              }`}
-              aria-label="Publish post"
-            >
-              {isSubmitting ? 'Publishing...' : 'Post'}
-            </button>
+              {/* Action Buttons: Post + Cancel */}
+              <div className="flex items-center gap-[12px] ml-auto">
+                <button
+                  onClick={handlePost}
+                  disabled={!canPost || isSubmitting}
+                  className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+                    canPost && !isSubmitting
+                      ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
+                      : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
+                  }`}
+                  aria-label="Publish post"
+                >
+                  {isSubmitting ? 'Publishing...' : 'Post'}
+                </button>
+
+                {(hasContent || location !== null || isExpanded) && (
+                  <button
+                    type="button"
+                    onClick={resetComposer}
+                    className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                    aria-label="Cancel post"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
           </>
         )}
       </div>

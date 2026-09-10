@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSocial } from '@/context/SocialContext';
 import { useAuth } from '@/hooks/use-auth';
@@ -13,6 +13,45 @@ interface SharedPreviewProps {
   showFollow?: boolean;
   disableNavigation?: boolean;
 }
+
+/** Changed: Added SharedVideoPreview component with IntersectionObserver for auto-playing shared post videos when in viewport */
+const SharedVideoPreview = ({ src }: { src: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !src) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            el.play().catch(() => {});
+          } else {
+            el.pause();
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [src]);
+
+  return (
+    <div className="rounded-[4px] overflow-hidden bg-black relative flex justify-center items-center w-full h-[249px] shrink-0">
+      <video
+        ref={videoRef}
+        src={src}
+        muted
+        playsInline
+        loop
+        className="w-full h-full object-cover rounded-[4px]"
+      />
+    </div>
+  );
+};
 
 const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation }: SharedPreviewProps) => {
   const router = useRouter();
@@ -386,9 +425,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
             )}
           </div>
         ) : videoSrc ? (
-          <div className="rounded-[4px] overflow-hidden bg-black relative flex justify-center items-center w-full h-[249px] shrink-0">
-            <video src={videoSrc} className="w-full h-full object-cover rounded-[4px]" controls={false} />
-          </div>
+          <SharedVideoPreview src={videoSrc} />
         ) : null}
       </div>
     </div>

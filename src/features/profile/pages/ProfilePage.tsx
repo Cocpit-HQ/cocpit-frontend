@@ -538,7 +538,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
         </div>
       )}
 
-      {/* Liked by Section (Frame 2608573) */}
+      {/* Liked by Section (Frame 2608573) - Changed: Standardized liker avatars to 16px, added fallback initial letter when image missing, sanitized username to first name */}
       {likesCount > 0 && (
         <div className="w-full px-4 mb-4 flex items-center gap-2">
           {localPost.likedUsers && localPost.likedUsers.length > 0 && (() => {
@@ -546,9 +546,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             const filteredLikedUsers = localPost.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
             if (filteredLikedUsers.length === 0) return null;
             return (
-              <div className="flex -space-x-1.5 overflow-hidden">
+              <div className="flex -space-x-1.5 overflow-hidden flex-shrink-0">
                 {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                  <div key={idx} className="inline-flex h-5 w-5 rounded-full ring-2 ring-background bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[10px] flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                  <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[8px] flex-shrink-0 overflow-hidden select-none">
                     {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
                       <img
                         src={user.avatar_url}
@@ -558,19 +558,20 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
                       />
-                    ) : null}
-                    <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                    ) : (
+                      <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
                 ))}
               </div>
             );
           })()}
-          <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
+          <p className="text-[12px] leading-[16px] text-foreground truncate">
             {likesCount === 1 && isLiked ? (
               `${likesCount} like`
             ) : (
               <>
-                Liked by <span className="font-semibold hover:underline cursor-pointer">@{localPost.sampleLikerUsername || 'someone'}</span>
+                Liked by <span className="font-semibold hover:underline cursor-pointer">@{localPost.sampleLikerUsername ? (localPost.sampleLikerUsername.trim().split(/\s+/)[0] || localPost.sampleLikerUsername) : 'someone'}</span>
                 {likesCount > 1 && (
                   <> and <span className="font-semibold hover:underline cursor-pointer">{likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</span></>
                 )}

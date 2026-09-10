@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { PostCarousel } from './PostCarousel';
 import { Icon } from '@/components/icons';
 import { calculateDisplayDimensions, ImageDimensions, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT } from '@/features/feed/utils/imageBounds';
+import { LikeBar } from './LikeBar';
 
 interface PostMediaProps {
   imageSrc?: string;
@@ -95,52 +96,16 @@ export const PostMedia = ({
             />
           ) : null}
 
-          {/* Liked By Overlay */}
-          {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
-            <div 
-              className="absolute bottom-[12px] left-[12px] flex flex-row items-center justify-center px-[8px] py-[4px] gap-[4px] bg-ds-bg/40 backdrop-blur-md rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2 transition-colors shadow-sm z-10"
-              onClick={(e) => {
-                e.stopPropagation();
-                onShowLikes?.(e);
-              }}
-            >
-              <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary text-center">
-                Liked by{' '}
-                <span className="font-semibold text-ds-text-primary">
-                  {sampleLikerUsername}
-                </span>
-                {likeCount > (isLiked ? 2 : 1) ? ` and ${likeCount - (isLiked ? 2 : 1)} others` : ''}
-              </span>
-              {likedUsers && likedUsers.length > 0 && (() => {
-                const filteredLikedUsers = viewerUsername 
-                  ? likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername.toLowerCase()) 
-                  : likedUsers;
-                if (filteredLikedUsers.length === 0) return null;
-                return (
-                  <div className="flex -space-x-1">
-                    {filteredLikedUsers.slice(0, 3).map((user, idx) => {
-                      const hasAvatar = user.avatar_url && user.avatar_url !== '/assets/pngegg.png';
-                      return hasAvatar ? (
-                        <img
-                          key={idx}
-                          src={user.avatar_url || undefined}
-                          alt={user.username || "user"}
-                          className="inline-block h-[16px] w-[16px] rounded-full border border-ds-surface-2 object-cover flex-shrink-0"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-ds-surface-1 text-ds-text-primary font-medium text-[8px] items-center justify-center flex-shrink-0 select-none">
-                          {(user.username || '?').charAt(0).toUpperCase()}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
+          {/* Liked By Overlay - Changed: Replaced inline liker badge with modular overlay LikeBar component */}
+          <LikeBar
+            likeCount={likeCount}
+            isLiked={isLiked}
+            sampleLikerUsername={sampleLikerUsername}
+            likedUsers={likedUsers}
+            viewerUsername={viewerUsername}
+            onShowLikes={onShowLikes}
+            variant="overlay"
+          />
 
           {/* Tagged People Badge Overlay */}
           {showTagBadge && (

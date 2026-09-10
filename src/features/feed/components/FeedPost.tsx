@@ -24,6 +24,7 @@ import { PostArticle } from './parts/PostArticle';
 import { PostActions } from './parts/PostActions';
 import { PostPoll } from './parts/PostPoll';
 import { PostOptionsMenu } from './parts/PostOptionsMenu';
+import { LikeBar } from './parts/LikeBar';
 import SharedPreview from './create-post/SharedPreview';
 import { RepostIcon, NotInterestedIcon, InterestedIcon } from '@/components/icons';
 import { toast } from 'sonner';
@@ -522,49 +523,17 @@ export const FeedPost = (props: FeedPostProps) => {
         />
       )}
 
-      {/* Liked By (No Media) */}
-      {(!((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc)) && likeCount > 0 && !(likeCount === 1 && isLiked) && targetSampleLikerUsername && (
-        <div 
-          className="flex flex-row items-center justify-start gap-[4px] pointer-events-auto px-[4px] mt-[4px] cursor-pointer w-fit hover:opacity-80 transition-opacity"
-          onClick={() => handleOpenLikesModal()}
-        >
-          <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary">
-            Liked by{' '}
-            <span className="font-semibold text-ds-text-primary hover:underline">
-              {targetSampleLikerUsername}
-            </span>
-            {likeCount > (isLiked ? 2 : 1) ? ` and ${likeCount - (isLiked ? 2 : 1)} others` : ''}
-          </span>
-          {targetLikedUsers && targetLikedUsers.length > 0 && (() => {
-            const viewerUsername = (activeProfile as any)?.account_name || (session?.user as any)?.username;
-            const filteredLikedUsers = viewerUsername
-              ? targetLikedUsers.filter((u: any) => u.username?.toLowerCase() !== viewerUsername.toLowerCase())
-              : targetLikedUsers;
-            if (filteredLikedUsers.length === 0) return null;
-            return (
-              <div className="flex -space-x-1 ml-1">
-                {filteredLikedUsers.slice(0, 3).map((user: any, idx: number) => {
-                  const hasAvatar = user.avatar_url && user.avatar_url !== '/assets/pngegg.png';
-                  return hasAvatar ? (
-                    <img
-                      key={idx}
-                      src={user.avatar_url || undefined}
-                      alt={user.username || "user"}
-                      className="inline-block h-[16px] w-[16px] rounded-full border border-ds-bg object-cover flex-shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-bg bg-ds-surface-2 text-ds-text-primary font-medium text-[8px] items-center justify-center flex-shrink-0 select-none">
-                      {(user.username || '?').charAt(0).toUpperCase()}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </div>
+      {/* Liked By (No Media) - Changed: Replaced duplicate liker rendering with unified inline LikeBar component */}
+      {!((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc) && (
+        <LikeBar
+          likeCount={likeCount}
+          isLiked={isLiked}
+          sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+          likedUsers={targetLikedUsers}
+          viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+          onShowLikes={() => handleOpenLikesModal()}
+          variant="inline"
+        />
       )}
 
       {/* Actions */}

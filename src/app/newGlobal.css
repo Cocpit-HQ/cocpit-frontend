@@ -1,3 +1,4 @@
+
 /* stylelint-disable at-rule-no-unknown */
 /* ============================================================
    newGlobal.css — Cocpit Frontend New Design System
@@ -35,6 +36,18 @@
   body {
     --font-dm-sans: "Twemoji Country Flags", var(--font-dm-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
+  }
+
+  /* Hide scrollbars globally on root viewport while preserving scroll functionality */
+  html,
+  body {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox and modern Chrome/Edge */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
   }
 }
 
@@ -1260,11 +1273,13 @@
     box-shadow: var(--shadow-glow);
   }
 
-  .scrollbar-hide::-webkit-scrollbar {
+  .scrollbar-hide::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
 
-  .scrollbar-hide {
+  .scrollbar-hide,
+  .no-scrollbar {
     -ms-overflow-style: none;
     /* IE and Edge */
     scrollbar-width: none;

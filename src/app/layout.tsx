@@ -52,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning className="scrollbar-hide">
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -93,7 +93,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden`}
+        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide`}
       >
         <Providers>
           {children}

@@ -29,6 +29,7 @@ export type IconName =
   | "close"
   | "cross"
   | "close-cross"
+  | "cancel"
   | "upload"
   | "text-formatting"
   | "manual-setup"
@@ -418,6 +419,7 @@ export const CloseCrossIcon: React.FC<IconProps> = ({
 export const CloseIcon = CloseCrossIcon;
 export const CrossIcon = CloseCrossIcon;
 export const XIcon = CloseCrossIcon;
+export const CancelIcon = CloseCrossIcon;
 
 export const UploadIcon: React.FC<IconProps> = ({
   className = "w-5 h-5",
@@ -893,6 +895,7 @@ export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   close: CloseCrossIcon,
   cross: CloseCrossIcon,
   "close-cross": CloseCrossIcon,
+  cancel: CloseCrossIcon, // Added alias for cancel / delete cross icon
   upload: UploadIcon,
   "text-formatting": TextFormattingIcon,
   "manual-setup": TextFormattingIcon,

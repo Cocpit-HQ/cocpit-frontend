@@ -758,7 +758,7 @@ const ProfilePostCard = ({
         </div>
       )}
 
-      {/* Liked by Section */}
+      {/* Liked by Section - Changed: 16px avatar size design rule, flex-shrink-0 to prevent layout collapse, sanitized liker username to first name */}
       {likesCount > 0 && (
         <div className="w-full px-4 mb-4 flex items-center gap-2">
           {mainPost.likedUsers && mainPost.likedUsers.length > 0 && (() => {
@@ -766,9 +766,9 @@ const ProfilePostCard = ({
             const filteredLikedUsers = mainPost.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
             if (filteredLikedUsers.length === 0) return null;
             return (
-              <div className="flex -space-x-1.5 overflow-hidden">
+              <div className="flex -space-x-1.5 overflow-hidden flex-shrink-0">
                 {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                  <div key={idx} className="inline-flex h-5 w-5 rounded-full ring-2 ring-background bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[10px] flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                  <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[8px] flex-shrink-0 overflow-hidden select-none">
                     {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
                       <img
                         src={user.avatar_url}
@@ -786,12 +786,12 @@ const ProfilePostCard = ({
               </div>
             );
           })()}
-          <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
+          <p className="text-[12px] leading-[16px] text-foreground truncate">
             {likesCount === 1 && isLiked ? (
               `${likesCount} like`
             ) : (
               <>
-                Liked by <span className="font-semibold hover:underline cursor-pointer">@{mainPost.sampleLikerUsername || 'someone'}</span>
+                Liked by <span className="font-semibold hover:underline cursor-pointer">@{mainPost.sampleLikerUsername ? (mainPost.sampleLikerUsername.trim().split(/\s+/)[0] || mainPost.sampleLikerUsername) : 'someone'}</span>
                 {likesCount > 1 && (
                   <> and <span className="font-semibold hover:underline cursor-pointer">{likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</span></>
                 )}
