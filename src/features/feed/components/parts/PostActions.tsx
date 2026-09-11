@@ -34,7 +34,7 @@ export const PostActions = ({
   onShowLikes, isSharedPost, hideRepostWithThoughts
 }: PostActionsProps) => {
   return (
-    <div className="flex flex-row justify-between items-center w-full py-[8px]">
+    <div className="flex flex-row justify-between items-center w-full pb-[8px]">
       {/* Left Aligned Action Group */}
       <div className="flex flex-row items-center gap-[16px]">
         {/* Like */}

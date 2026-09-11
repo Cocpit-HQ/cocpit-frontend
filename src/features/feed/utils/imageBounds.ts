@@ -13,38 +13,44 @@ export interface ImageDimensions {
 
 export const MAX_MEDIA_WIDTH = 442;
 export const MAX_MEDIA_HEIGHT = 589;
-const MAX_BOUNDS_RATIO = MAX_MEDIA_WIDTH / MAX_MEDIA_HEIGHT; // ~0.7504 (approx 3:4)
+export const MIN_MEDIA_WIDTH = 320;
+export const MIN_MEDIA_HEIGHT = 320;
 
 export function calculateDisplayDimensions(
   naturalWidth: number,
   naturalHeight: number,
   maxWidth = MAX_MEDIA_WIDTH,
-  maxHeight = MAX_MEDIA_HEIGHT
+  maxHeight = MAX_MEDIA_HEIGHT,
+  minWidth = MIN_MEDIA_WIDTH,
+  minHeight = MIN_MEDIA_HEIGHT
 ): { width: number; height: number; aspectRatio: number } {
   if (!naturalWidth || !naturalHeight || naturalWidth <= 0 || naturalHeight <= 0) {
     return { width: maxWidth, height: Math.round(maxWidth * (4 / 5)), aspectRatio: 5 / 4 };
   }
 
-  const aspectRatio = naturalWidth / naturalHeight;
-  const boundsRatio = maxWidth / maxHeight;
+  let width = naturalWidth;
+  let height = naturalHeight;
 
-  let width: number;
-  let height: number;
-
-  if (aspectRatio >= boundsRatio) {
-    // Width-constrained: wider than or equal to 3:4 (e.g. 16:9, 1:1, 4:5, 3:4)
-    width = maxWidth;
-    height = Math.round(maxWidth / aspectRatio);
-  } else {
-    // Height-constrained: taller than 3:4 (e.g. 1:2 portrait)
-    height = maxHeight;
-    width = Math.round(maxHeight * aspectRatio);
+  // 1. SCALE DOWN if exceeding max bounds
+  if (width > maxWidth || height > maxHeight) {
+    const scale = Math.min(maxWidth / width, maxHeight / height);
+    width *= scale;
+    height *= scale;
+  }
+  // 2. SCALE UP if below min bounds
+  else if (width < minWidth || height < minHeight) {
+    const scaleToMin = Math.max(minWidth / width, minHeight / height);
+    const maxAllowedScale = Math.min(maxWidth / width, maxHeight / height);
+    const finalScale = Math.min(scaleToMin, maxAllowedScale);
+    
+    width *= finalScale;
+    height *= finalScale;
   }
 
   return {
-    width: Math.min(width, maxWidth),
-    height: Math.min(height, maxHeight),
-    aspectRatio,
+    width: Math.round(width),
+    height: Math.round(height),
+    aspectRatio: naturalWidth / naturalHeight,
   };
 }
 

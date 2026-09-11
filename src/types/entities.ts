@@ -148,6 +148,8 @@ export interface Post {
   content: string;
   imageSrc?: string;
   images?: string[];
+  mediaWidth?: number;
+  mediaHeight?: number;
   videoSrc?: string;
   aspectRatio?: string;
   likes: number;

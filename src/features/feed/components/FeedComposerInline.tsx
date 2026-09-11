@@ -491,6 +491,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         location: locationString,
         companyId: companyId || undefined,
         media_urls: isEditMode ? selectedImages.map((img) => img.previewUrl) : undefined,
+        media_metadata: selectedImages.length > 0 ? selectedImages.map(img => ({ width: img.naturalWidth, height: img.naturalHeight })) : undefined,
         shared_post_id: sharedPostId,
       };
 

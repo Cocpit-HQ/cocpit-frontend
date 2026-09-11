@@ -34,7 +34,8 @@ export const useFeed = (enableInitialFetch = true) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading
+    isLoading,
+    isError
   } = useInfiniteQuery({
     queryKey: feedQueryKey,
     queryFn: async ({ pageParam }) => {
@@ -196,5 +197,6 @@ export const useFeed = (enableInitialFetch = true) => {
     resetSession,
     hasMore: !!hasNextPage,
     loading: isLoading || isFetchingNextPage,
+    isError,
   };
 };

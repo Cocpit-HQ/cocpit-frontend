@@ -45,38 +45,54 @@ export const PostHeader = ({
   
   if (authorRole) {
     subtitleItems.push(
-      <span key="headline" title={authorRole} className="truncate">
+      <span key="headline" title={authorRole} className="block w-full truncate">
         {authorRole}
       </span>
     );
   }
   if (location) {
     const displayLocation = location.split(',')[0].trim();
-    const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
     subtitleItems.push(
-      <span key="location" title={location} className="truncate">
-        {truncatedLocation}
+      <span key="location" title={location} className="block w-full truncate">
+        {displayLocation}
       </span>
     );
   }
   if (timeAgo) {
     subtitleItems.push(
-      <span key="time" className="truncate">
+      <span key="time" className="block w-full truncate">
         {timeAgo}
       </span>
     );
   }
 
   const shouldAnimate = subtitleItems.length > 1;
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [shiftCount, setShiftCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (!shouldAnimate) return;
+    let timeout: NodeJS.Timeout;
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % subtitleItems.length);
-    }, 3000); // Wait 3s before swapping
-    return () => clearInterval(interval);
+      setIsAnimating(true);
+      timeout = setTimeout(() => {
+        setIsAnimating(false);
+        setShiftCount((prev) => prev + 1);
+      }, 1000); // Exactly match the CSS transition duration
+    }, 3000); // 3 seconds per cycle
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, [shouldAnimate, subtitleItems.length]);
+
+  const actualShift = shiftCount % subtitleItems.length;
+  const displayItems = shouldAnimate
+    ? [
+        ...subtitleItems.slice(actualShift),
+        ...subtitleItems.slice(0, actualShift),
+      ]
+    : subtitleItems;
 
   const followCompanyMutation = useMutation({
     mutationFn: ({ orgId, sourcePostId }: { orgId: string; sourcePostId?: string }) => companyProfileService.followOrganization(orgId, sourcePostId),
@@ -136,7 +152,7 @@ export const PostHeader = ({
 
   return (
     <div className="flex flex-row justify-between items-center w-full min-h-[40px]">
-      <div className="flex flex-row items-center gap-2 flex-grow pr-2">
+      <div className="flex flex-row items-center gap-2 flex-grow min-w-0 pr-2">
         {/* Avatar */}
         <Link href={profileHref} className="shrink-0 flex-none block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-full">
           <div className={`w-[32px] h-[32px] rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none ${
@@ -156,7 +172,7 @@ export const PostHeader = ({
         </Link>
         
         {/* Name and Subtitle */}
-        <div className="flex flex-col items-start min-w-0">
+        <div className="flex flex-col items-start min-w-0 flex-1">
           <Link href={profileHref} className="block w-full outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded">
             <span className={`block w-full font-['DM_Sans'] font-semibold text-[16px] leading-[24px] truncate ${
               variant === 'overlay' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-primary'
@@ -168,18 +184,35 @@ export const PostHeader = ({
           {/* Subtitle Area (Animated) */}
           {subtitleItems.length > 0 && (
             <div className="relative w-full h-[14px] mt-[2px] overflow-hidden">
-              {subtitleItems.map((item, index) => (
-                <div 
-                  key={index}
-                  className={`absolute inset-0 w-full flex items-center font-['DM_Sans'] font-normal text-[10px] leading-[14px] truncate transition-all duration-[800ms] ease-in-out ${
-                    variant === 'overlay' ? 'text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-secondary'
-                  } ${
-                    !shouldAnimate || activeIndex === index ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'
-                  }`}
-                >
-                  {item}
-                </div>
-              ))}
+              <div 
+                className="w-full flex flex-col transition-transform ease-in-out"
+                style={{
+                  transform: isAnimating ? 'translateY(-14px)' : 'translateY(0)',
+                  transitionDuration: isAnimating ? '1000ms' : '0ms'
+                }}
+              >
+                {displayItems.map((item, index) => {
+                  let opacityClass = 'opacity-100';
+                  if (shouldAnimate) {
+                    if (isAnimating && index === 0) opacityClass = 'opacity-0';
+                    else if (isAnimating && index === 1) opacityClass = 'opacity-100';
+                    else if (!isAnimating && index === 0) opacityClass = 'opacity-100';
+                    else opacityClass = 'opacity-0';
+                  }
+
+                  return (
+                    <div 
+                      key={index}
+                      className={`w-full h-[14px] flex items-center font-['DM_Sans'] font-normal text-[10px] leading-[14px] shrink-0 transition-opacity ease-in-out ${opacityClass} ${
+                        variant === 'overlay' ? 'text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-secondary'
+                      }`}
+                      style={{ transitionDuration: isAnimating ? '1000ms' : '0ms' }}
+                    >
+                      {item}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

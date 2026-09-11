@@ -485,6 +485,8 @@ export const FeedPost = (props: FeedPostProps) => {
             <PostMedia
               imageSrc={targetImageSrc}
               images={targetImages}
+              mediaWidth={interactionTargetProps.mediaWidth}
+              mediaHeight={interactionTargetProps.mediaHeight}
               videoSrc={targetVideoSrc}
               videoRef={videoRef}
               onLoad={handleMediaLoad}

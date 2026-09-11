@@ -33,15 +33,22 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   // Ensure media is an array before iterating
   const mediaList = Array.isArray(backendPost.media) ? backendPost.media : [];
 
+  let mediaWidth: number | undefined;
+  let mediaHeight: number | undefined;
+
   mediaList.forEach((item) => {
     // Robust video/image detection fallback
-    const isActuallyVideo = item.url.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/);
+    const isActuallyVideo = item.url?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|#|$)/);
     const mediaType = isActuallyVideo ? "video" : item.media_type;
 
     if (mediaType === "image") {
       images.push(item.url);
+      if (!mediaWidth && item.width) mediaWidth = item.width;
+      if (!mediaHeight && item.height) mediaHeight = item.height;
     } else if (mediaType === "video") {
       videoSrc = item.url;
+      if (!mediaWidth && item.width) mediaWidth = item.width;
+      if (!mediaHeight && item.height) mediaHeight = item.height;
     }
   });
 
@@ -151,7 +158,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       // Process shared post media
       if (Array.isArray(sp.media)) {
         sp.media.forEach((item) => {
-          const isActuallyVideo = item.url.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/);
+          const isActuallyVideo = item.url?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|#|$)/);
           const mediaType = isActuallyVideo ? "video" : item.media_type;
 
           if (mediaType === "image") {
@@ -295,6 +302,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     articleBody: articleBody,
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
+    mediaWidth: mediaWidth,
+    mediaHeight: mediaHeight,
     videoSrc: videoSrc,
     //aspectRatio: primaryMediaAspectRatio,
     // Backend doesn't return likes/comments/shares counts in the list view provided

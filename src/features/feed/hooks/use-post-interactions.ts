@@ -47,6 +47,8 @@ export const usePostInteractions = (props: FeedPostProps) => {
   // Prevents the props-sync effect from overwriting an optimistic update.
   const hasLocalCountChange = useRef(false);
   const hasLocalLikeChange = useRef(false);
+  const hasLocalShareChange = useRef(false);
+  const hasLocalExternalShareChange = useRef(false);
 
   // Sync non-count state with props (safe — these are not locally mutated)
   useEffect(() => {
@@ -57,9 +59,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setIsRepostedWithThoughts(initialIsRepostedWithThoughts);
     setRepostId(props.repostId || null);
     setPollData(poll);
-    setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
-    setExternalShareCount(typeof props.externalShares === 'string' ? parseInt(props.externalShares || '0') : (props.externalShares || 0));
-  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, initialIsRepostedWithThoughts, poll, props.shares, props.externalShares, props.repostId]);
+  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, initialIsRepostedWithThoughts, poll, props.repostId]);
 
   // Sync likeCount from props when no local optimistic like is in flight.
   useEffect(() => {
@@ -76,10 +76,26 @@ export const usePostInteractions = (props: FeedPostProps) => {
     }
   }, [props.comments]);
 
+  // Sync shareCount only when not locally modified.
+  useEffect(() => {
+    if (!hasLocalShareChange.current) {
+      setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
+    }
+  }, [props.shares]);
+
+  // Sync externalShareCount only when not locally modified.
+  useEffect(() => {
+    if (!hasLocalExternalShareChange.current) {
+      setExternalShareCount(typeof props.externalShares === 'string' ? parseInt(props.externalShares || '0') : (props.externalShares || 0));
+    }
+  }, [props.externalShares]);
+
   // Reset dirty flags when the post ID changes (component recycled for a new post)
   useEffect(() => {
     hasLocalCountChange.current = false;
     hasLocalLikeChange.current = false;
+    hasLocalShareChange.current = false;
+    hasLocalExternalShareChange.current = false;
   }, [id]);
 
   const handleLike = async (isCompany: boolean, activeProfileId?: string) => {
@@ -160,10 +176,12 @@ export const usePostInteractions = (props: FeedPostProps) => {
   };
 
   const incrementShareCount = () => {
+    hasLocalShareChange.current = true;
     setShareCount(prev => prev + 1);
   };
 
   const incrementExternalShareCount = (count: number = 1) => {
+    hasLocalExternalShareChange.current = true;
     setExternalShareCount(prev => prev + count);
   };
 
@@ -172,6 +190,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     const prevCount = shareCount;
     const prevRepostId = repostId;
 
+    hasLocalShareChange.current = true;
     setIsReposted(!isReposted);
     setShareCount(prev => isReposted ? Math.max(0, prev - 1) : prev + 1);
 

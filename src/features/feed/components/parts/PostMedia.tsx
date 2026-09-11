@@ -8,6 +8,8 @@ import { LikeBar } from './LikeBar';
 interface PostMediaProps {
   imageSrc?: string;
   images?: string[];
+  mediaWidth?: number;
+  mediaHeight?: number;
   videoSrc?: string;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   onLoad: (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => void;
@@ -23,14 +25,23 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], videoSrc, videoRef, onLoad, priority, onClick, tags = [],
+  imageSrc, images = [], mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
   const hasMultipleImages = validImages.length > 1;
   const contentImgSrc = validImages[0];
 
+  const fastDims = React.useMemo(() => {
+    if (mediaWidth && mediaHeight) {
+      return calculateDisplayDimensions(mediaWidth, mediaHeight, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT);
+    }
+    return null;
+  }, [mediaWidth, mediaHeight]);
+
   const [imgDims, setImgDims] = useState<ImageDimensions | null>(null);
+  
+  const activeDims = fastDims || imgDims;
 
   if (validImages.length === 0 && !videoSrc) return null;
 
@@ -38,15 +49,24 @@ export const PostMedia = ({
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
-    if (img.naturalWidth && img.naturalHeight) {
+    if (!fastDims && img.naturalWidth && img.naturalHeight) {
       const dims = calculateDisplayDimensions(img.naturalWidth, img.naturalHeight, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT);
       setImgDims(dims);
     }
     onLoad(e);
   };
 
+  const handleVideoLoad = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    if (!fastDims && video.videoWidth && video.videoHeight) {
+      const dims = calculateDisplayDimensions(video.videoWidth, video.videoHeight, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT);
+      setImgDims(dims);
+    }
+    onLoad(e);
+  };
+
   return (
-    <div className="w-full flex justify-center items-center overflow-visible">
+    <div className="w-full flex justify-start items-center overflow-visible">
       {hasMultipleImages ? (
         <div
           onClick={onClick}
@@ -69,12 +89,12 @@ export const PostMedia = ({
       ) : (
         <div
           onClick={onClick}
-          className={`relative overflow-hidden rounded-2xl bg-black/5 dark:bg-white/5 flex flex-col justify-center items-center transition-all duration-200 ${onClick ? 'cursor-pointer' : ''}`}
+          className={`relative overflow-hidden rounded-2xl bg-black/5 dark:bg-white/5 flex flex-col justify-center items-center transition-none ${onClick ? 'cursor-pointer' : ''}`}
           style={{
-            width: imgDims ? `${imgDims.width}px` : '100%',
+            width: activeDims ? `${activeDims.width}px` : '100%',
             maxWidth: `${MAX_MEDIA_WIDTH}px`,
             maxHeight: `${MAX_MEDIA_HEIGHT}px`,
-            aspectRatio: imgDims ? `${imgDims.aspectRatio}` : undefined,
+            aspectRatio: activeDims ? `${activeDims.aspectRatio}` : undefined,
           }}
         >
           {videoSrc ? (
@@ -84,14 +104,14 @@ export const PostMedia = ({
               controls
               muted
               playsInline
-              onLoadedMetadata={onLoad}
-              className="w-full h-full object-contain max-h-[589px] rounded-2xl"
+              onLoadedMetadata={handleVideoLoad}
+              className="w-full h-full object-contain object-left max-h-[589px] rounded-2xl"
             />
           ) : contentImgSrc ? (
             <img
               src={contentImgSrc}
               alt="Post content"
-              className="w-full h-full object-contain rounded-2xl max-w-[442px] max-h-[589px]"
+              className="w-full h-full object-contain object-left rounded-2xl max-w-[442px] max-h-[589px]"
               onLoad={handleImageLoad}
             />
           ) : null}

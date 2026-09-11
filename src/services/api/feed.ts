@@ -162,6 +162,8 @@ export interface BackendMedia {
   post_id: string;
   url: string;
   media_type: 'image' | 'video';
+  width?: number;
+  height?: number;
   aspect_ratio: string | null;
 }
 

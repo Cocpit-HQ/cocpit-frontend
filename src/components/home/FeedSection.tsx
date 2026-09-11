@@ -44,7 +44,7 @@ export const FeedSection = ({
     setActiveTab
 }: FeedSectionProps) => {
     const router = useRouter();
-    const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading } = useFeed();
+    const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading, isError } = useFeed();
     const { activeProfile, isCompany, userCompanies } = useActiveProfile();
     const { pendingPosts, cancelUpload } = usePostUpload();
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -63,10 +63,10 @@ export const FeedSection = ({
     });
 
     useEffect(() => {
-        if (inView && hasMore && !feedLoading) {
+        if (inView && hasMore && !feedLoading && !isError) {
             loadMorePosts();
         }
-    }, [inView, hasMore, feedLoading, loadMorePosts]);
+    }, [inView, hasMore, feedLoading, isError, loadMorePosts]);
 
     const sortedPosts = useMemo(() => {
         const sorted = [...posts];

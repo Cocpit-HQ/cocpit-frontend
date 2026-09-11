@@ -15,7 +15,7 @@ export const PostBody = ({
 }: PostBodyProps) => {
   if (!content) return null;
 
-  const truncateLength = 145;
+  const truncateLength = 115;
   const maxLines = 2;
   const trimmedContent = content.trimEnd();
   const lines = trimmedContent.split('\n');
