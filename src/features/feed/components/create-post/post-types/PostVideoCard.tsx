@@ -170,6 +170,7 @@ export const PostVideoCard = ({
               isExpanded={isExpanded}
               onToggleExpand={onToggleExpand}
               variant="overlay"
+              hasMedia={true}
             />
           </div>
         )}

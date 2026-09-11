@@ -102,6 +102,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
   const hasMedia = selectedImages.length > 0 || selectedVideo !== null;
   const showLocationFeature = hasContent || location !== null;
+  const canCancel = hasContent || location !== null;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -414,6 +415,38 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
     abortControllerRef.current?.abort();
   }, []);
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFilesChosen(e.dataTransfer.files);
+    }
+  }, [handleFilesChosen]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      const dt = new DataTransfer();
+      imageFiles.forEach((f) => dt.items.add(f));
+      handleFilesChosen(dt.files);
+    }
+  }, [handleFilesChosen]);
+
   // ── Submit ────────────────────────────────────────────────────────────────
 
   const handlePost = useCallback(async () => {
@@ -630,7 +663,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
   return (
     <>
-      <div className="hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px] relative">
+      <div 
+        className="hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px] relative"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      >
 
         {/* Hidden file input for uploading images & videos */}
       <input
@@ -648,11 +685,17 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           {/* Header */}
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-[12px]">
-              <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none">
+              <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none select-none">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                  <img 
+                    src={avatarUrl} 
+                    alt="Avatar" 
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                    className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
+                  />
                 ) : (
-                  <span className="text-ds-text-primary text-[11px] font-medium">{initial}</span>
+                  <span className="text-ds-text-primary text-[11px] font-medium select-none">{initial}</span>
                 )}
               </div>
               <span className="font-dmsans text-ds-text-secondary text-[14px] font-medium leading-[20px]">Poll post</span>
@@ -755,11 +798,20 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         <>
           <div className="flex flex-row items-start gap-[12px] w-full">
             {/* Avatar */}
-            <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none">
+            <div 
+              className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none cursor-pointer select-none"
+              onClick={() => textareaRef.current?.focus()}
+            >
               {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                <img 
+                  src={avatarUrl} 
+                  alt="Avatar" 
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
+                />
               ) : (
-                <span className="text-ds-text-primary text-[11px] font-medium">{initial}</span>
+                <span className="text-ds-text-primary text-[11px] font-medium select-none">{initial}</span>
               )}
             </div>
 
@@ -771,6 +823,9 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 onChange={handleTextChange}
                 onFocus={handleFocus}
                 onMentionsChange={handleMentionsChange}
+                onPaste={handlePaste}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
                 initialMentions={inlineMentions}
                 placeholder="What would you like to share today?"
                 className="ds-text-body text-ds-text-primary placeholder:text-ds-text-muted bg-transparent"
@@ -967,10 +1022,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   {isSubmitting ? 'Publishing...' : 'Post'}
                 </button>
 
-                {(hasContent || location !== null || isExpanded) && (
+                {canCancel && (
                   <button
                     type="button"
                     onClick={resetComposer}
+                    disabled={isSubmitting}
                     className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
                     aria-label="Cancel post"
                   >

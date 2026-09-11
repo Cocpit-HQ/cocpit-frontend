@@ -17,7 +17,8 @@ export const sanitizeArticleHtmlForDisplay = (html: string) => {
     ADD_ATTR: [
       'viewBox', 'viewbox', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
       'd', 'fill', 'stroke', 'contenteditable', 'title', 'target', 'controls',
-      'xmlns', 'width', 'height', 'class', 'type'
+      'xmlns', 'width', 'height', 'class', 'type',
+      'data-natural-w', 'data-natural-h'
     ],
     FORBID_ATTR: ['style', 'id'],
     ALLOW_DATA_ATTR: false,

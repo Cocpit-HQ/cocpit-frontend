@@ -98,11 +98,13 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4 flex flex-col gap-4 no-scrollbar">
           <div className="flex gap-3">
             {/* Avatar */}
-            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-ds-surface-1">
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-ds-surface-1 select-none">
               <img 
                 src={posterImage || "/assets/pngegg.png"} 
                 alt="Profile" 
-                className="w-full h-full object-cover" 
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                className="w-full h-full object-cover select-none pointer-events-none" 
               />
             </div>
             

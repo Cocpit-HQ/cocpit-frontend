@@ -15,11 +15,17 @@ export const FeedComposer = ({ onOpenComposer }: { onOpenComposer: () => void })
     <div className="w-full flex flex-col py-[16px] px-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px]">
       <div className="flex flex-row items-center gap-[12px] w-full">
         {/* Avatar */}
-        <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none">
+        <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none select-none">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+            <img 
+              src={avatarUrl} 
+              alt="Avatar" 
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+              className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
+            />
           ) : (
-            <span className="text-ds-text-primary text-[11px] font-medium">{initial}</span>
+            <span className="text-ds-text-primary text-[11px] font-medium select-none">{initial}</span>
           )}
         </div>
 

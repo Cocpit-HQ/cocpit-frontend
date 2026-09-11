@@ -399,11 +399,17 @@ export default function CommentInput({
                 </div>
             ) : (
                 <div className="flex flex-row items-start gap-[8px] w-full mt-2 relative">
-                    <div className="w-[24px] h-[24px] rounded-full bg-ds-surface-1 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <div className="w-[24px] h-[24px] rounded-full bg-ds-surface-1 overflow-hidden flex items-center justify-center flex-shrink-0 select-none">
                         {currentUserAvatar && currentUserAvatar !== '/assets/pngegg.png' ? (
-                            <img src={currentUserAvatar} alt="User avatar" className="w-full h-full object-cover" />
+                            <img 
+                                src={currentUserAvatar} 
+                                alt="User avatar" 
+                                draggable={false}
+                                onDragStart={(e) => e.preventDefault()}
+                                className="w-full h-full object-cover select-none pointer-events-none" 
+                            />
                         ) : (
-                            <span className="text-xs font-semibold text-ds-text-secondary">{(activeProfile?.name || 'U').charAt(0).toUpperCase()}</span>
+                            <span className="text-xs font-semibold text-ds-text-secondary select-none">{(activeProfile?.name || 'U').charAt(0).toUpperCase()}</span>
                         )}
                     </div>
 

@@ -74,6 +74,13 @@ export const FeedPost = (props: FeedPostProps) => {
     likedUsers: targetLikedUsers
   } = interactionTargetProps as any;
 
+  const hasImages = Boolean(
+    (targetImageSrc && typeof targetImageSrc === 'string' && targetImageSrc.trim() !== '') ||
+    (Array.isArray(targetImages) && targetImages.length > 0)
+  );
+  const hasVideo = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
+  const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video';
+
   const targetIsCompanyPost = interactionTargetProps.isCompanyPost || false;
   const targetAuthorId = interactionTargetProps.authorId || (interactionTargetProps as any).author_id;
 
@@ -461,6 +468,7 @@ export const FeedPost = (props: FeedPostProps) => {
               authorSlug={targetAuthorSlug}
               isExpanded={isExpanded}
               onToggleExpand={() => setIsExpanded(!isExpanded)}
+              hasMedia={hasMedia}
             />
           )}
 
@@ -508,6 +516,7 @@ export const FeedPost = (props: FeedPostProps) => {
               authorSlug={targetAuthorSlug}
               isExpanded={isExpanded}
               onToggleExpand={() => setIsExpanded(!isExpanded)}
+              hasMedia={true}
             />
           )}
         </>

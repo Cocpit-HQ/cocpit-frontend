@@ -1,9 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3, List, Link as LinkIcon,
-  Image as ImageIcon, X, ArrowLeft, ChevronLeft, ChevronDown, Loader2, Sparkles, Send,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify
+  X, ArrowLeft, ChevronLeft, ChevronDown, Loader2, Sparkles, Send
 } from 'lucide-react';
+import {
+  BoldIcon,
+  ItalicIcon,
+  UnderlineIcon,
+  StrikethroughIcon,
+  ListIcon,
+  AlignLeftIcon,
+  AlignCenterIcon,
+  AlignRightIcon,
+  AlignJustifyIcon,
+  ImageIcon,
+  LinkIcon,
+} from '@/components/icons';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
@@ -13,6 +24,7 @@ import { uploadMedia } from '@/services/api/upload';
 import { sanitizeArticleHtmlForDisplay } from '@/lib/sanitizeArticleHtml';
 import ArticleCoverEditor from './ArticleCoverEditor';
 import { DiscardConfirmOverlay } from '../shared/DiscardConfirmOverlay';
+import { constrainImageToBox } from '@/features/feed/utils/constrainArticleImage';
 
 // Allowed structure for pasted content: matches what the toolbar itself can produce
 // (bold/italic/headings/lists/links). style/class/id are stripped so pasted text always
@@ -239,7 +251,7 @@ const ArticleFlow = ({
 
       if (!wrapper) {
         wrapper = document.createElement('div');
-        wrapper.className = "relative my-4 w-full overflow-hidden group bg-transparent mx-auto rounded-[24px]";
+        wrapper.className = "relative my-4 overflow-hidden group bg-transparent rounded-[24px]";
         wrapper.setAttribute('contenteditable', 'false');
 
         const parent = img.parentNode;
@@ -248,22 +260,70 @@ const ArticleFlow = ({
           wrapper.appendChild(img);
         }
       } else {
-        wrapper.classList.remove('w-fit', 'max-w-full');
-        wrapper.classList.add('relative', 'group', 'overflow-hidden', 'my-4', 'w-full', 'rounded-[24px]');
+        wrapper.classList.remove('w-fit', 'max-w-full', 'w-full');
+        wrapper.classList.add('relative', 'group', 'overflow-hidden', 'my-4', 'rounded-[24px]');
         wrapper.setAttribute('contenteditable', 'false');
       }
 
-      // Force width via direct DOM style — CSS classes alone don't override the
-      // image's intrinsic dimensions, and DOMPurify strips style attributes from
-      // the HTML string.  Direct .style assignment survives both because
-      // cleanStrayInlineStyles skips elements inside [contenteditable="false"].
-      wrapper.style.width = '100%';
-      wrapper.style.display = 'block';
+      // Apply constrained dimensions from data attributes.
+      // data-natural-w / data-natural-h store the original image dimensions
+      // so we can re-compute the bounding-box constraint after the sanitizer
+      // strips inline styles.
+      let natW = parseInt(img.getAttribute('data-natural-w') || '0', 10);
+      let natH = parseInt(img.getAttribute('data-natural-h') || '0', 10);
 
-      img.className = "w-full h-auto object-cover block mx-auto";
-      img.style.width = '100%';
-      img.style.height = 'auto';
-      img.style.objectFit = 'cover';
+      // For images without data attributes, try to read natural dimensions directly
+      if ((natW <= 0 || natH <= 0) && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        natW = img.naturalWidth;
+        natH = img.naturalHeight;
+        img.setAttribute('data-natural-w', String(natW));
+        img.setAttribute('data-natural-h', String(natH));
+      }
+
+      if (natW > 0 && natH > 0) {
+        // We have dimensions — apply bounding-box constraint
+        const { width, height } = constrainImageToBox(natW, natH);
+        console.log('[ARTICLE-IMG] Constraint applied:', { natW, natH, constrainedW: width, constrainedH: height, imgSrc: img.src.substring(0, 60) });
+        wrapper.style.setProperty('width', `${width}px`, 'important');
+        wrapper.style.display = 'block';
+
+        img.className = "block rounded-[24px]";
+        img.style.setProperty('width', `${width}px`, 'important');
+        img.style.setProperty('height', `${height}px`, 'important');
+        img.setAttribute('width', String(width));
+        img.setAttribute('height', String(height));
+        img.style.display = 'block';
+      } else {
+        // Dimensions not yet known — only cap width, let height be auto
+        // until onload fires and we can apply the proper constraint.
+        wrapper.style.maxWidth = '688px';
+        wrapper.style.display = 'block';
+
+        img.className = "block rounded-[24px]";
+        img.style.maxWidth = '688px';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+
+        if (!img.complete) {
+          img.addEventListener('load', function onLoad() {
+            img.removeEventListener('load', onLoad);
+            const nw = img.naturalWidth;
+            const nh = img.naturalHeight;
+            if (nw > 0 && nh > 0) {
+              img.setAttribute('data-natural-w', String(nw));
+              img.setAttribute('data-natural-h', String(nh));
+              const dims = constrainImageToBox(nw, nh);
+              wrapper!.style.setProperty('width', `${dims.width}px`, 'important');
+              img.style.setProperty('width', `${dims.width}px`, 'important');
+              img.style.setProperty('height', `${dims.height}px`, 'important');
+              img.setAttribute('width', String(dims.width));
+              img.setAttribute('height', String(dims.height));
+              img.className = "block rounded-[24px]";
+            }
+          });
+        }
+      }
 
       // Ensure overlay container with full action buttons exists
       let tools = wrapper.querySelector('.img-tools') as HTMLElement | null;
@@ -754,11 +814,23 @@ const ArticleFlow = ({
           const uniqueId = imageUrl.split('/').pop() || Date.now().toString();
           const namedFile = createUniqueNamedFile(file, uniqueId);
           setLocalFiles(prev => [...prev, { id: imageUrl, file: namedFile }]);
-          
+
+          // Load the image to get its natural dimensions before inserting
+          const tempImg = new Image();
+          tempImg.src = imageUrl;
+          await new Promise<void>((resolve) => {
+            tempImg.onload = () => resolve();
+            tempImg.onerror = () => resolve(); // fallback on error
+          });
+
+          const natW = tempImg.naturalWidth || tempImg.width;
+          const natH = tempImg.naturalHeight || tempImg.height;
+          const { width, height } = constrainImageToBox(natW, natH);
+
           const pId = 'p-' + Date.now();
           const imageHtml = `
-            <div class="relative my-4 w-full overflow-hidden group bg-transparent rounded-[24px]" style="width:100%;display:block" contenteditable="false">
-              <img src="${imageUrl}" class="w-full h-auto object-cover block mx-auto" style="width:100%;height:auto;object-fit:cover;display:block" />
+            <div class="relative my-4 overflow-hidden group bg-transparent rounded-[24px]" style="width:${width}px !important;display:block" contenteditable="false">
+              <img src="${imageUrl}" class="block rounded-[24px]" style="width:${width}px !important;height:${height}px !important;display:block" width="${width}" height="${height}" data-natural-w="${natW}" data-natural-h="${natH}" />
               <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-ds-surface-2 rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">
                   ${EDIT_SVG}
@@ -807,15 +879,46 @@ const ArticleFlow = ({
         const uniqueId = imageUrl.split('/').pop() || Date.now().toString();
         const namedFile = createUniqueNamedFile(file, uniqueId);
         setLocalFiles(prev => [...prev, { id: imageUrl, file: namedFile }]);
-        
+
+        // Load the replacement image to get its natural dimensions
+        const tempImg = new Image();
+        tempImg.src = imageUrl;
+        await new Promise<void>((resolve) => {
+          tempImg.onload = () => resolve();
+          tempImg.onerror = () => resolve();
+        });
+
+        const natW = tempImg.naturalWidth || tempImg.width;
+        const natH = tempImg.naturalHeight || tempImg.height;
+        const { width, height } = constrainImageToBox(natW, natH);
+
         // Replace the old src with the new local blobUrl in the content HTML string
-        const newContent = content.replace(editingImgSrc, imageUrl);
-        
-        // Synchronously update the DOM ref to prevent the useEffect overwrite race condition
+        let newContent = content.replace(editingImgSrc, imageUrl);
+
+        // Update data-natural-w/h and dimensions in the HTML for the replaced image
+        // Find the img tag with the new src and update its attributes
         if (editorRef.current) {
           editorRef.current.innerHTML = newContent;
+          const replacedImg = editorRef.current.querySelector(`img[src="${imageUrl}"]`) as HTMLImageElement | null;
+          if (replacedImg) {
+            replacedImg.setAttribute('data-natural-w', String(natW));
+            replacedImg.setAttribute('data-natural-h', String(natH));
+            replacedImg.style.setProperty('width', `${width}px`, 'important');
+            replacedImg.style.setProperty('height', `${height}px`, 'important');
+            replacedImg.setAttribute('width', String(width));
+            replacedImg.setAttribute('height', String(height));
+            replacedImg.className = 'block rounded-[24px]';
+
+            const wrapper = replacedImg.closest('[contenteditable="false"]') as HTMLElement | null;
+            if (wrapper) {
+              wrapper.style.setProperty('width', `${width}px`, 'important');
+              wrapper.style.margin = '';
+              wrapper.classList.remove('w-full', 'mx-auto');
+            }
+          }
+          newContent = editorRef.current.innerHTML;
         }
-        
+
         onContentChange(newContent);
         toast.success("Image updated successfully");
       } catch (err) {
@@ -1156,7 +1259,7 @@ const ArticleFlow = ({
               )}
               title="Bold"
             >
-              <Bold className="w-[20px] h-[20px]" />
+              <BoldIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 2. Italic: 20x20 */}
@@ -1171,7 +1274,7 @@ const ArticleFlow = ({
               )}
               title="Italic"
             >
-              <Italic className="w-[20px] h-[20px]" />
+              <ItalicIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 3. Underline: 20x20 */}
@@ -1186,7 +1289,7 @@ const ArticleFlow = ({
               )}
               title="Underline"
             >
-              <Underline className="w-[20px] h-[20px]" />
+              <UnderlineIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 4. Strike: 20x20 */}
@@ -1201,7 +1304,7 @@ const ArticleFlow = ({
               )}
               title="Strikethrough"
             >
-              <Strikethrough className="w-[20px] h-[20px]" />
+              <StrikethroughIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 5. List: 20x20 */}
@@ -1216,7 +1319,7 @@ const ArticleFlow = ({
               )}
               title="Bullet List"
             >
-              <List className="w-[20px] h-[20px]" />
+              <ListIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 6. Align left: 20x20 */}
@@ -1231,7 +1334,7 @@ const ArticleFlow = ({
               )}
               title="Align Left"
             >
-              <AlignLeft className="w-[20px] h-[20px]" />
+              <AlignLeftIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 7. Align center: 20x20 */}
@@ -1246,7 +1349,7 @@ const ArticleFlow = ({
               )}
               title="Align Center"
             >
-              <AlignCenter className="w-[20px] h-[20px]" />
+              <AlignCenterIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 8. Align right: 20x20 */}
@@ -1261,7 +1364,7 @@ const ArticleFlow = ({
               )}
               title="Align Right"
             >
-              <AlignRight className="w-[20px] h-[20px]" />
+              <AlignRightIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 9. Align justify: 20x20 */}
@@ -1276,7 +1379,7 @@ const ArticleFlow = ({
               )}
               title="Justify"
             >
-              <AlignJustify className="w-[20px] h-[20px]" />
+              <AlignJustifyIcon className="w-[20px] h-[20px]" />
             </button>
 
             {/* 10. Media: 20x20 */}

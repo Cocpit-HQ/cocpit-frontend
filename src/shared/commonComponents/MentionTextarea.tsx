@@ -510,6 +510,26 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     onClick={handleScroll}
                     onSelect={handleScroll}
                     {...props}
+                    onDrop={(e) => {
+                        if (props.onDrop) {
+                            props.onDrop(e);
+                            return;
+                        }
+                        const hasFiles = e.dataTransfer.files && e.dataTransfer.files.length > 0;
+                        const types = Array.from(e.dataTransfer.types || []);
+                        if (hasFiles || types.includes('text/uri-list') || types.includes('text/html')) {
+                            const uri = e.dataTransfer.getData('text/uri-list');
+                            const html = e.dataTransfer.getData('text/html');
+                            if (hasFiles || uri || (html && html.includes('<img'))) {
+                                e.preventDefault();
+                            }
+                        }
+                    }}
+                    onDragOver={(e) => {
+                        if (props.onDragOver) {
+                            props.onDragOver(e);
+                        }
+                    }}
                     onKeyDown={handleKeyDown}
                     className={cn(
                         "w-full resize-none overflow-hidden bg-transparent outline-none relative z-10 selection:bg-[var(--primary)] selection:text-white dark:selection:text-white mention-textarea-input",
