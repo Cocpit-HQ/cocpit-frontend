@@ -90,6 +90,12 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   const effectiveRepostData = repostData || (isEditMode ? (editPostData?.shared_post || editPostData?.sharedPost || fetchedSharedPost) : null);
   const isRepostMode = !!effectiveRepostData;
 
+  // If repostData is a repost-without-thoughts wrapper (empty content + has shared_post), unwrap to the original post
+  const isContentEmpty = (text?: string) => !text || text.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '';
+  const resolvedRepostData = (effectiveRepostData && isContentEmpty(effectiveRepostData.content) && effectiveRepostData.shared_post)
+    ? effectiveRepostData.shared_post
+    : effectiveRepostData;
+
   const canPost = mode === 'poll'
     ? poll.isPollValid()
     // Bug 4: In repost mode, Post button stays disabled until user adds thoughts (text/media)
@@ -469,10 +475,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       let finalContent = sanitizeContent(text);
       finalContent = formatMentionsForBackend(finalContent, inlineMentions);
 
-      const sharedPostId = repostData?.id || (isEditMode ? (
+      const sharedPostId = resolvedRepostData?.id || (isEditMode ? (
         editPostData?.shared_post_id ||
-        effectiveRepostData?.id ||
-        effectiveRepostData?.post_id ||
+        resolvedRepostData?.id ||
+        resolvedRepostData?.post_id ||
         editPostData?.shared_post?.id ||
         editPostData?.sharedPost?.id
       ) : undefined);
@@ -570,7 +576,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           visibility: 'public',
           location: locationString,
           companyId: companyId || undefined,
-          shared_post_id: repostData?.id || undefined,
+          shared_post_id: resolvedRepostData?.id || undefined,
         };
 
         const files = (selectedVideo.file && selectedVideo.file.size > 0) ? [selectedVideo.file] : [];
@@ -592,7 +598,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         return;
       }
 
-      // 3. Standard / Photo Post
+      // ── Handle Standard / Photo Post ──
       const payload: any = {
         title: '',
         content: finalContent,
@@ -619,8 +625,6 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       
       setUploadPhase('success');
       setTimeout(() => setUploadPhase('idle'), 3000);
-      if (onPostCreated) onPostCreated();
-
       if (onPostCreated) onPostCreated();
     } catch (err: any) {
       if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
@@ -834,7 +838,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           </div>
 
           {/* ── Shared Preview (Repost Mode or Edit Repost Mode) ─ */}
-          {isRepostMode && effectiveRepostData && (
+          {isRepostMode && resolvedRepostData && (
             <div className="relative w-full mt-[12px] pl-[44px]">
               {!isEditMode && (
                 <button
@@ -846,8 +850,8 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 </button>
               )}
               <SharedPreview 
-                sharedPost={effectiveRepostData} 
-                sharedPostId={effectiveRepostData.id?.toString() || (effectiveRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
+                sharedPost={resolvedRepostData} 
+                sharedPostId={resolvedRepostData.id?.toString() || (resolvedRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
                 isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false} 
                 disableNavigation
               />
@@ -860,6 +864,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
               <ComposerImagePreview
                 images={selectedImages}
                 onRemoveImage={handleRemoveImage}
+                onReorderImages={setSelectedImages}
                 isEditMode={isEditMode}
               />
             </div>
@@ -1012,14 +1017,14 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 <button
                   onClick={handlePost}
                   disabled={!canPost || isSubmitting}
-                  className={`h-[36px] px-[16px] rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+                  className={`w-[68px] h-[36px] flex items-center justify-center rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
                     canPost && !isSubmitting
                       ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
                       : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
                   }`}
                   aria-label="Publish post"
                 >
-                  {isSubmitting ? 'Publishing...' : 'Post'}
+                  {isSubmitting ? 'Posting...' : 'Post'}
                 </button>
 
                 {canCancel && (

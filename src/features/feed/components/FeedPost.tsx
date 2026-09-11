@@ -91,8 +91,35 @@ export const FeedPost = (props: FeedPostProps) => {
   const {
     isLiked, likeCount, isCommented, isSaved, isReposted, pollData, commentCount, shareCount, externalShareCount,
     isVoting, handleLike, handleVote, setIsSaved, setIsCommented, handleRepostToggle, setShareCount,
-    repostId, incrementExternalShareCount, isRepostedWithThoughts
+    repostId, incrementExternalShareCount, isRepostedWithThoughts,
+    incrementCommentCount, decrementCommentCount
   } = usePostInteractions(interactionTargetProps as any);
+
+  const handleIncrementCommentCount = () => {
+    incrementCommentCount();
+    const currentComments = typeof props.comments === 'string' ? parseInt(props.comments || '0') : (props.comments || 0);
+    const newComments = (Math.max(currentComments, commentCount) + 1).toString();
+    if (isRepostWithoutThoughts && shared_post) {
+      updatePostInFeed(id.toString(), {
+        shared_post: { ...shared_post, comments: newComments }
+      });
+    } else {
+      updatePostInFeed(id.toString(), { comments: newComments });
+    }
+  };
+
+  const handleDecrementCommentCount = () => {
+    decrementCommentCount();
+    const currentComments = typeof props.comments === 'string' ? parseInt(props.comments || '0') : (props.comments || 0);
+    const newComments = Math.max(0, Math.min(currentComments, commentCount) - 1).toString();
+    if (isRepostWithoutThoughts && shared_post) {
+      updatePostInFeed(id.toString(), {
+        shared_post: { ...shared_post, comments: newComments }
+      });
+    } else {
+      updatePostInFeed(id.toString(), { comments: newComments });
+    }
+  };
 
   const {
     showOptions, setShowOptions, optionsPos, setOptionsPos,
@@ -250,7 +277,8 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   const handleRepostWithThoughts = () => {
-    props.onRepostWithThoughts?.(props);
+    const postToQuote = (isRepostWithoutThoughts && shared_post) ? shared_post : props;
+    props.onRepostWithThoughts?.(postToQuote);
   };
 
   const handleShare = () => {
@@ -576,6 +604,9 @@ export const FeedPost = (props: FeedPostProps) => {
       {isCommentSectionOpen && (
         <CommentSection
           postId={targetId.toString()}
+          isPostOwner={isTargetAuthorMe}
+          incrementCommentCount={handleIncrementCommentCount}
+          decrementCommentCount={handleDecrementCommentCount}
         />
       )}
 
@@ -583,6 +614,9 @@ export const FeedPost = (props: FeedPostProps) => {
         isOpen={isMobileDrawerOpen}
         onClose={() => setIsMobileDrawerOpen(false)}
         postId={targetId.toString()}
+        isPostOwner={isTargetAuthorMe}
+        incrementCommentCount={handleIncrementCommentCount}
+        decrementCommentCount={handleDecrementCommentCount}
       />
 
       {isSaveModalOpen && (

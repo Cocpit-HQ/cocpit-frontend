@@ -4,6 +4,7 @@ import { X, Image as ImageIcon, BarChart3, Loader2, ChevronDown } from 'lucide-r
 import { useCreatePostForm } from '../../hooks/use-create-post-form';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
+import RichTextRenderer from '../parts/RichTextRenderer';
 
 interface MobileCreatePostModalProps {
   isOpen: boolean;
@@ -160,9 +161,13 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
 
                 {/* Repost Content */}
                 {sharedContent && (
-                  <p className="text-[12px] text-ds-text-primary line-clamp-3 mb-2">
-                    {sharedContent}
-                  </p>
+                  <div className="text-[12px] text-ds-text-primary line-clamp-3 mb-2">
+                    <RichTextRenderer
+                      content={sharedContent}
+                      authorName={sharedName}
+                      disableLinks={true}
+                    />
+                  </div>
                 )}
 
                 {/* Repost Media */}

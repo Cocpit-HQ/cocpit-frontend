@@ -6,7 +6,6 @@ import { ArrowLeft, Loader2, Search, Edit2, Trash2, MoreHorizontal } from "lucid
 import { FeedPost } from "@/features/feed/components/FeedPost";
 import { getUserPosts } from "@/services/api/profile";
 import { getSavedPosts } from "@/features/settings/api/savedPost";
-import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";
 import { useFeed } from "@/hooks/use-feed";
@@ -101,15 +100,8 @@ export default function ProfilePostsPage() {
     }
   }, []);
 
-  const handleDeletePost = async (id: string) => {
-    const previousPosts = [...posts];
+  const handleDeletePost = (id: string) => {
     setPosts((prev) => prev.filter((post) => post.id !== id));
-    try {
-      await apiDeletePost(id);
-    } catch (error) {
-      console.error("Failed to delete post", error);
-      setPosts(previousPosts);
-    }
   };
 
   const handleToggleVisibility = (id: string) => {

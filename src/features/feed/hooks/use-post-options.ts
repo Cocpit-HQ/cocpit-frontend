@@ -49,7 +49,8 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
     // Always call the API to actually delete the post
     await deletePost(id.toString(), companyId);
     // Also invoke the parent callback if provided (e.g. for profile-page list updates)
-    if (onDelete) {
+    // Avoid double-calling if parent passed deletePost itself
+    if (onDelete && onDelete !== deletePost) {
       onDelete(id.toString());
     }
     setIsDeleteDialogOpen(false);

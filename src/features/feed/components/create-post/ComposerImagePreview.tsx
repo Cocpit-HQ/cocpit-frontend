@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Reorder } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT } from '@/features/feed/utils/imageBounds';
@@ -13,7 +13,6 @@ export interface ComposerImage {
   naturalWidth: number;
   naturalHeight: number;
   aspectRatio: number;
-
 }
 
 interface ComposerImagePreviewProps {
@@ -21,6 +20,7 @@ interface ComposerImagePreviewProps {
   activeIdx?: number;
   onSelectIdx?: (idx: number) => void;
   onRemoveImage: (id: string) => void;
+  onReorderImages?: (newImages: ComposerImage[]) => void;
   onReplaceImage?: (id: string, file: File) => void;
   avatarUrl?: string | null;
   initial?: string;
@@ -32,40 +32,60 @@ export const MAX_COMPOSER_IMAGES = 12;
 export const ComposerImagePreview = ({
   images,
   onRemoveImage,
+  onReorderImages,
   isEditMode,
 }: ComposerImagePreviewProps) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false,
-    align: 'start',
-    containScroll: 'trimSnaps',
-    dragFree: false,
-  });
-
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
+  const checkScrollability = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollPrev(scrollLeft > 4);
+    setCanScrollNext(scrollLeft < scrollWidth - clientWidth - 4);
+  }, []);
 
   useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-  }, [emblaApi, onSelect, images.length]);
+    checkScrollability();
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const resizeObserver = new ResizeObserver(checkScrollability);
+    resizeObserver.observe(el);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [checkScrollability, images.length]);
 
   const scrollPrev = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollBy({ left: -188, behavior: 'smooth' });
+    }
+  }, []);
 
   const scrollNext = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollBy({ left: 188, behavior: 'smooth' });
+    }
+  }, []);
+
+  // Handle trackpad/mouse wheel vertical scroll as horizontal scroll
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.deltaY !== 0) {
+      const el = scrollContainerRef.current;
+      if (el) {
+        el.scrollLeft += e.deltaY;
+        checkScrollability();
+      }
+    }
+  }, [checkScrollability]);
 
   if (!images || images.length === 0) return null;
 
@@ -94,7 +114,6 @@ export const ComposerImagePreview = ({
               }}
             />
 
-            {/* Changed: Replaced full hover overlay 'Delete' text with a clean top-right circular cross button (Icon name="cancel") */}
             {!isEditMode && (
               <button
                 type="button"
@@ -115,28 +134,52 @@ export const ComposerImagePreview = ({
     );
   }
 
-  // ── Multiple Images: Side-by-Side Cards (2 Full Cards + 3rd Peeking) ───────
+  // ── Multiple Images: Reorderable Side-by-Side Cards (Drag & Reorder with Slidethrough) ───────
   return (
     <div className="w-full flex flex-col items-start gap-1 select-none">
       <div className="relative w-full max-w-[442px] overflow-visible">
-        {/* Embla Viewport for Side-by-Side Cards with Smooth Dragging/Physics */}
-        <div className="w-full overflow-hidden" ref={emblaRef}>
-          <div className="flex py-0.5">
+        {/* Scrollable Viewport with Reorder.Group */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={checkScrollability}
+          onWheel={handleWheel}
+          className="w-full overflow-x-auto scrollbar-hide py-1"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          <Reorder.Group
+            axis="x"
+            values={images}
+            onReorder={(newOrder) => onReorderImages?.(newOrder)}
+            className="flex flex-row"
+            style={{ display: 'flex', flexDirection: 'row' }}
+          >
             {images.map((img) => (
-              <div
+              <Reorder.Item
                 key={img.id}
-                className="relative group flex-[0_0_178px] min-w-0 h-[223px] rounded-[16px] overflow-hidden bg-ds-surface-2 select-none flex-shrink-0 mr-[10px]"
+                value={img}
+                className="relative group flex-[0_0_178px] min-w-0 h-[223px] rounded-[16px] overflow-hidden bg-ds-surface-2 select-none flex-shrink-0 mr-[10px] cursor-grab active:cursor-grabbing will-change-transform"
+                whileDrag={{
+                  scale: 1.05,
+                  zIndex: 50,
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+                }}
+                transition={{ type: 'spring', stiffness: 450, damping: 35 }}
               >
                 <img
                   src={img.previewUrl}
                   alt="Selected photo"
-                  className="w-full h-full object-cover rounded-[16px] block"
+                  className="w-full h-full object-cover rounded-[16px] block pointer-events-none select-none"
+                  draggable={false}
                 />
 
                 {/* Remove photo button (Top-right circular cross) */}
                 {!isEditMode && (
                   <button
                     type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveImage(img.id);
@@ -148,9 +191,9 @@ export const ComposerImagePreview = ({
                     <Icon name="cancel" className="w-3.5 h-3.5 text-[var(--ds-error)]" />
                   </button>
                 )}
-              </div>
+              </Reorder.Item>
             ))}
-          </div>
+          </Reorder.Group>
         </div>
 
         {/* Scroll Left Chevron (Positioned outside on left in margin) */}

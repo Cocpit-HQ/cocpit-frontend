@@ -4,6 +4,7 @@ import { useSocial } from '@/context/SocialContext';
 import { useAuth } from '@/hooks/use-auth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
+import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
 interface SharedPreviewProps {
   sharedPost: any;
   sharedPostId?: string;
@@ -137,6 +138,11 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
 
   const sharedLocation = sharedUser?.location 
     || sharedPost?.location;
+
+  const sharedSlug = sharedUser?.slug 
+    || sharedUser?.user_name 
+    || sharedUser?.username 
+    || sharedPost?.authorSlug;
 
   const sharedTime = sharedPost?.timeAgo 
     || sharedPost?.created_at 
@@ -319,9 +325,14 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
         </div>
         {/* Content */}
         {contentText && (
-          <p className="text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
-            {contentText}
-          </p>
+          <div className="text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
+            <RichTextRenderer
+              content={contentText}
+              authorName={sharedName}
+              authorSlug={sharedSlug}
+              disableLinks={disableNavigation}
+            />
+          </div>
         )}
 
         {/* Poll Options Capsules (if poll) */}

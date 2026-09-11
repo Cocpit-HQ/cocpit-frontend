@@ -44,7 +44,7 @@ export const FeedSection = ({
     setActiveTab
 }: FeedSectionProps) => {
     const router = useRouter();
-    const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading, isError } = useFeed();
+    const { posts, sessionId, currentUser, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading, isError } = useFeed();
     const { activeProfile, isCompany, userCompanies } = useActiveProfile();
     const { pendingPosts, cancelUpload } = usePostUpload();
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -142,7 +142,6 @@ export const FeedSection = ({
                                             userCompanies,
                                             activeProfile,
                                         })}
-                                        onDelete={deletePost}
                                         onToggleVisibility={togglePostVisibility}
                                         priority={index < 4}
                                         onEdit={(post) => {

@@ -60,7 +60,7 @@ export default function ReplyGroup({
                     onClick={() => setIsOpen(true)}
                     className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity"
                 >
-                    <div className="w-[30px] border-t border-ds-border" />
+                    <div className="w-[30px] border-t border-[#EC6229]" style={{ borderColor: 'var(--ds-accent, #EC6229)' }} />
                     <span className="ds-text-small-1 text-ds-accent">View {replies.length} more {replies.length === 1 ? 'reply' : 'replies'}</span>
                 </button>
             ) : (
@@ -101,7 +101,7 @@ export default function ReplyGroup({
                         onClick={() => setIsOpen(false)}
                         className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity mt-2"
                     >
-                        <div className="w-[30px] border-t border-ds-border" />
+                        <div className="w-[30px] border-t border-[#EC6229]" style={{ borderColor: 'var(--ds-accent, #EC6229)' }} />
                         <span className="ds-text-small-1 text-ds-accent">Hide replies</span>
                     </button>
                 </div>

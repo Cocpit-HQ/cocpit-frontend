@@ -70,21 +70,23 @@ export const PostMedia = ({
       {hasMultipleImages ? (
         <div
           onClick={onClick}
-          className={`relative w-full max-w-[442px] h-[430px] flex items-center select-none overflow-visible ${onClick ? 'cursor-pointer' : ''}`}
+          className={`relative w-full max-w-[442px] flex flex-col items-center select-none overflow-visible ${onClick ? 'cursor-pointer' : ''}`}
         >
           <PostCarousel
             images={validImages}
             priority={priority}
             onImageLoad={onLoad}
             imageFit="cover"
+            viewportHeight="h-[430px]"
+            showDots={true}
+            overlay={
+              showTagBadge && (
+                <div className="absolute bottom-3 right-3 w-[32px] h-[32px] rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm pointer-events-auto hover:bg-black/80 transition-colors z-20">
+                  <Icon name="user" className="w-[16px] h-[16px] text-white" />
+                </div>
+              )
+            }
           />
-
-          {/* Tagged People Badge Overlay */}
-          {showTagBadge && (
-            <div className="absolute bottom-3 right-3 w-[32px] h-[32px] rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm pointer-events-auto hover:bg-black/80 transition-colors z-20">
-              <Icon name="user" className="w-[16px] h-[16px] text-white" />
-            </div>
-          )}
         </div>
       ) : (
         <div

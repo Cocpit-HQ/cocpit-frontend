@@ -36,6 +36,7 @@ import { ProfilePostCardSkeleton } from "../components/skeletons/ProfilePostCard
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import type { Post } from "@/types/entities";
 import { createRepost, toggleLike, toggleSavePost, updatePost, deletePost } from "../services/profile.service";
+import RichTextRenderer from "@/features/feed/components/parts/RichTextRenderer";
 
 const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then(m => m.ReportModal), { ssr: false });
@@ -617,7 +618,14 @@ const ProfilePostCard = ({
               </div>
               <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}</span>
             </div>
-            <p className="text-[10px] leading-[14px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2">{localPost.shared_post.content}</p>
+            <div className="text-[10px] leading-[14px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2">
+              <RichTextRenderer
+                content={localPost.shared_post.content}
+                authorName={localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}
+                authorSlug={localPost.shared_post.authorSlug}
+                disableLinks={false}
+              />
+            </div>
             {localPost.shared_post.poll ? (
               <div className="mt-1 space-y-1.5 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-grow">
                 {localPost.shared_post.poll.options?.slice(0, 3).map((option, index) => (

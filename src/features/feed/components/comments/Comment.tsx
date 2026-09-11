@@ -336,8 +336,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span> */}
           <span className="font-normal text-ds-text-secondary">{likes} {likes === 1 ? 'like' : 'likes'}</span>
           
-          {/* ORIGINAL: <span className="font-normal text-[#DADADA] mx-1">|</span> */}
-          <div className="w-[1px] h-[16px] bg-ds-border mx-[4px]" />
+          {/* Divider between likes and reply styled with theme border from newGlobal.css */}
+          <div className="h-[14px] border-l border-ds-border mx-[4px] self-center" style={{ borderColor: 'var(--ds-border)' }} />
 
           <button
             onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}

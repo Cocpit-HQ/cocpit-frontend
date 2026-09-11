@@ -7,6 +7,7 @@ export interface RichTextRendererProps {
   content: string;
   authorName?: string;
   authorSlug?: string;
+  disableLinks?: boolean;
 }
 
 /**
@@ -36,7 +37,7 @@ const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
 };
 
-export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichTextRendererProps) => {
+export const RichTextRenderer = memo(({ content, authorName, authorSlug, disableLinks = false }: RichTextRendererProps) => {
   if (!content) return null;
 
   // Dynamically build regex based on whether authorName is provided
@@ -68,6 +69,17 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
 
         // 1. Handle Author Name Highlight (Smart Link)
         if (authorName && authorSlug && part.toLowerCase() === authorName.toLowerCase()) {
+          if (disableLinks) {
+            return (
+              <span
+                key={i}
+                className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
+                style={{ color: 'var(--ds-accent)' }}
+              >
+                {part}
+              </span>
+            );
+          }
           return (
             <Link
               key={i}
@@ -87,6 +99,18 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
           const displayName = structuredMatch[1];
           const handle = structuredMatch[2];
 
+          if (disableLinks) {
+            return (
+              <span
+                key={i}
+                className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
+                style={{ color: 'var(--ds-accent)' }}
+              >
+                {displayName}
+              </span>
+            );
+          }
+
           return (
             <Link
               key={i}
@@ -105,6 +129,20 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
         if (legacyMatch) {
           const leadingSpace = legacyMatch[1];
           const handle = legacyMatch[2];
+
+          if (disableLinks) {
+            return (
+              <Fragment key={i}>
+                {leadingSpace}
+                <span
+                  className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
+                  style={{ color: 'var(--ds-accent)' }}
+                >
+                  @{handle}
+                </span>
+              </Fragment>
+            );
+          }
 
           return (
             <Fragment key={i}>
@@ -128,6 +166,17 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
           const tag = hashtagMatch[2].toLowerCase();
 
           if (tag.length >= 2 && tag.length <= 30) {
+            if (disableLinks) {
+              return (
+                <Fragment key={i}>
+                  {leadingSpace}
+                  <span className="inline-block px-1 -mx-1 text-ds-text-primary font-semibold">
+                    #{hashtagMatch[2]}
+                  </span>
+                </Fragment>
+              );
+            }
+
             return (
               <Fragment key={i}>
                 {leadingSpace}
@@ -145,6 +194,14 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
 
         // 5. Handle Emails
         if (part.includes('@') && new RegExp(`^${EMAIL_PATTERN}$`, 'i').test(part)) {
+          if (disableLinks) {
+            return (
+              <span key={i} className="text-ds-text-primary font-medium">
+                {part}
+              </span>
+            );
+          }
+
           return (
             <a
               key={i}
@@ -162,6 +219,14 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
           new RegExp(`^${NAKED_DOMAIN_PATTERN}$`, 'i').test(part);
 
         if (isUrl) {
+          if (disableLinks) {
+            return (
+              <span key={i} className="text-[#5B7CFF] font-medium break-all">
+                {part}
+              </span>
+            );
+          }
+
           let href = part;
           if (!/^https?:\/\//i.test(part)) {
             href = `https://${part}`;

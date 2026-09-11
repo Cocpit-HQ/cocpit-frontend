@@ -9,8 +9,6 @@ import { FeedPostProps } from "../../../../feed/types";
 import { formatTimeAgo } from "@/lib/timeFormatter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
-import { deletePost as apiDeletePost } from "@/services/api/posts";
-import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/store/ui.store";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -28,7 +26,6 @@ interface PostsSectionProps {
 /* ─── Posts Section ──────────────────────────────────────────────────────── */
 export default function PostsSection({ data, showAll = false, isOwnProfile = false, onSeeAllClick, currentUserId, canManageOwnPosts, viewerPermissions }: PostsSectionProps) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { setActiveModal } = useUIStore();
   const router = useRouter();
   const { activeProfile } = useActiveProfile();
@@ -38,32 +35,21 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
     queryFn: () => companyProfileService.getOrganizationPosts(data.id, { limit: 3 }),
   });
 
-  const handleDeletePost = async (postId: string) => {
-    try {
-      // Only pass companyId when the viewer is a company owner/member.
-      // External users undoing their own personal reposts must NOT send the org id,
-      // as they are not members and the backend will reject it with 403.
-      await apiDeletePost(postId, isOwnProfile ? data.id : undefined);
-      toast({ title: "Post deleted successfully" });
-      
-      queryClient.setQueryData(["orgPostsPreview", data.id], (oldData: any) => {
-        if (!oldData) return oldData;
-        const postsArray = oldData.posts || oldData.data || oldData;
-        if (Array.isArray(postsArray)) {
-          const newPosts = postsArray.filter((p: any) => String(p.post_id || p.id || p._id) !== String(postId));
-          if (oldData.posts) return { ...oldData, posts: newPosts };
-          if (oldData.data) return { ...oldData, data: newPosts };
-          return newPosts;
-        }
-        return oldData;
-      });
-      queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-      toast({ title: "Failed to delete post", variant: "destructive" });
-    }
+  const handleDeletePost = (postId: string) => {
+    queryClient.setQueryData(["orgPostsPreview", data.id], (oldData: any) => {
+      if (!oldData) return oldData;
+      const postsArray = oldData.posts || oldData.data || oldData;
+      if (Array.isArray(postsArray)) {
+        const newPosts = postsArray.filter((p: any) => String(p.post_id || p.id || p._id) !== String(postId));
+        if (oldData.posts) return { ...oldData, posts: newPosts };
+        if (oldData.data) return { ...oldData, data: newPosts };
+        return newPosts;
+      }
+      return oldData;
+    });
+    queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+    queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
+    queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
   };
 
   const allRawPosts = postsData?.posts || postsData?.data || data.posts || [];

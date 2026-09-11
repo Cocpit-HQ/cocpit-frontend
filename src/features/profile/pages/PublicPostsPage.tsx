@@ -42,6 +42,7 @@ import { useMyProfile } from "@/hooks/use-my-profile"
 import { useUIStore } from "@/store/ui.store"
 import { EditPostModal } from "@/shared/commonComponents/EditPostModal"
 import { PostCarousel } from "@/components/shared/PostCarousel"
+import RichTextRenderer from "@/features/feed/components/parts/RichTextRenderer"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -376,9 +377,14 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 </span>
               </div>
             </div>
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground break-words line-clamp-3">
-              {post.shared_post.content}
-            </p>
+            <div className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground break-words line-clamp-3">
+              <RichTextRenderer
+                content={post.shared_post.content}
+                authorName={post.shared_post.isCompanyPost ? formatCompanyName(post.shared_post.author) : post.shared_post.author}
+                authorSlug={post.shared_post.authorSlug}
+                disableLinks={false}
+              />
+            </div>
             {post.shared_post.poll ? (
               <div className="mb-4 mt-3 rounded-[20px] border border-[#E3E9FF] bg-[#F8FAFF] p-4">
                 <div className="flex items-center justify-between gap-2 mb-4">
