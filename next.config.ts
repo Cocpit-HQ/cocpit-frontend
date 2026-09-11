@@ -26,6 +26,11 @@ const EXPRESS_AUTH_ROUTES = [
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  experimental: {
+    // Increase Next.js proxy request body limit from 10MB default to 100MB
+    // to allow multi-image post uploads (up to 100MB total) to pass through rewrites to Express backend.
+    proxyClientMaxBodySize: '100mb',
+  },
   images: {
     remotePatterns: [
       {

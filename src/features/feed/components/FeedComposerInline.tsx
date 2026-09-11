@@ -239,16 +239,44 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
     if (!files || files.length === 0) return;
     const fileArray = Array.from(files);
 
-    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-    const hasOversized = fileArray.some(file => file.size > MAX_FILE_SIZE);
-    if (hasOversized) {
-      toast.error("File size cannot exceed 100MB");
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
+    // Media upload size constraints:
+    // - Per image limit: 10MB maximum (reject individual file > 10MB)
+    // - Total image upload limit: 100MB maximum (reject cumulative size > 100MB)
+    // - Video limit: 100MB maximum
+    const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
+    const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100MB total images limit
+    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB video limit
 
     const videoFiles = fileArray.filter(f => f.type.startsWith('video/'));
     const imageFiles = fileArray.filter(f => f.type.startsWith('image/'));
+
+    // Validate video file size limit (100MB)
+    if (videoFiles.length > 0) {
+      const oversizedVideo = videoFiles.find(f => f.size > MAX_VIDEO_SIZE);
+      if (oversizedVideo) {
+        toast.error(`Video "${oversizedVideo.name}" exceeds the 100MB limit.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+    }
+
+    // Validate image file size limits (10MB per image, 100MB total post images)
+    if (imageFiles.length > 0) {
+      const oversizedImage = imageFiles.find(f => f.size > MAX_SINGLE_IMAGE_SIZE);
+      if (oversizedImage) {
+        toast.error(`Image "${oversizedImage.name}" exceeds the 10MB limit.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      const currentTotalSize = selectedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+      const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
+      if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
+        toast.error("Total image upload size cannot exceed 100MB.");
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+    }
 
     // Mixed check in selection
     if (videoFiles.length > 0 && imageFiles.length > 0) {
@@ -405,10 +433,74 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         ? ('formattedAddress' in location ? location.formattedAddress : location.name)
         : null;
 
-      // ── Handle Poll Post ──
+      let finalContent = sanitizeContent(text);
+      finalContent = formatMentionsForBackend(finalContent, inlineMentions);
+
+      const sharedPostId = repostData?.id || (isEditMode ? (
+        editPostData?.shared_post_id ||
+        effectiveRepostData?.id ||
+        effectiveRepostData?.post_id ||
+        editPostData?.shared_post?.id ||
+        editPostData?.sharedPost?.id
+      ) : undefined);
+
+      // ── Handle Edit Post Mode ──
+      if (isEditMode && editPostId) {
+        if (mode === 'poll' && !poll.isPollValid()) {
+          setIsSubmitting(false);
+          setUploadPhase('idle');
+          return;
+        }
+
+        const newFilesToUpload: File[] = [];
+        if (mode === 'video' && selectedVideo?.file && selectedVideo.file.size > 0) {
+          newFilesToUpload.push(selectedVideo.file);
+        } else if (mode === 'photo' || selectedImages.length > 0) {
+          selectedImages.forEach(img => {
+            if (img.file && img.file.size > 0) {
+              newFilesToUpload.push(img.file);
+            }
+          });
+        }
+
+        const updatePayload: any = {
+          title: mode === 'poll' ? poll.pollQuestion.trim() : (editPostData?.title || ''),
+          content: finalContent,
+          post_type: mode === 'poll' ? 'poll' : (selectedVideo ? 'video' : (selectedImages.length > 0 ? 'image' : (editPostData?.post_type || 'text'))),
+          category: editPostData?.category || 'Professional',
+          visibility: editPostData?.visibility || 'public',
+          location: locationString,
+          companyId: companyId || undefined,
+          shared_post_id: sharedPostId,
+        };
+
+        if (selectedImages.length > 0) {
+          updatePayload.media_urls = selectedImages.map(img => img.previewUrl);
+        } else if (selectedVideo) {
+          updatePayload.media_urls = [selectedVideo.previewUrl];
+        }
+
+        await postApi.update(editPostId, updatePayload, newFilesToUpload);
+        toast.success('Post updated!');
+        updatePostInFeed(editPostId, {
+          content: finalContent,
+          location: locationString || undefined,
+          visibility: updatePayload.visibility,
+          ...(effectiveRepostData ? { shared_post: effectiveRepostData } : {})
+        });
+        window.dispatchEvent(new CustomEvent('postUpdated', { detail: { id: editPostId, ...updatePayload } }));
+        resetComposer();
+        setUploadPhase('idle');
+        if (onPostCreated) onPostCreated();
+        return;
+      }
+
+      // ── Handle Create Post Mode ──
+      // 1. Poll Post
       if (mode === 'poll') {
         if (!poll.isPollValid()) {
           setIsSubmitting(false);
+          setUploadPhase('idle');
           return;
         }
 
@@ -435,11 +527,8 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         return;
       }
 
-      // ── Handle Video Post ──
+      // 2. Video Post
       if (mode === 'video' && selectedVideo) {
-        let finalContent = sanitizeContent(text);
-        finalContent = formatMentionsForBackend(finalContent, inlineMentions);
-
         const payload: any = {
           title: '',
           content: finalContent,
@@ -451,7 +540,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           shared_post_id: repostData?.id || undefined,
         };
 
-        const files = [selectedVideo.file];
+        const files = (selectedVideo.file && selectedVideo.file.size > 0) ? [selectedVideo.file] : [];
         const uploadConfig = {
           signal: abortControllerRef.current.signal,
           onUploadProgress: (percent: number) => {
@@ -470,59 +559,34 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         return;
       }
 
-      // ── Handle Standard / Photo Post ──
-      let finalContent = sanitizeContent(text);
-      finalContent = formatMentionsForBackend(finalContent, inlineMentions);
-
-      const sharedPostId = repostData?.id || (isEditMode ? (
-        editPostData?.shared_post_id ||
-        effectiveRepostData?.id ||
-        effectiveRepostData?.post_id ||
-        editPostData?.shared_post?.id ||
-        editPostData?.sharedPost?.id
-      ) : undefined);
-
+      // 3. Standard / Photo Post
       const payload: any = {
         title: '',
         content: finalContent,
-        post_type: selectedImages.length > 0 ? 'image' : (editPostData?.post_type || 'text'),
-        category: editPostData?.category || 'Professional',
-        visibility: editPostData?.visibility || 'public',
+        post_type: selectedImages.length > 0 ? 'image' : 'text',
+        category: 'Professional',
+        visibility: 'public',
         location: locationString,
         companyId: companyId || undefined,
-        media_urls: isEditMode ? selectedImages.map((img) => img.previewUrl) : undefined,
         media_metadata: selectedImages.length > 0 ? selectedImages.map(img => ({ width: img.naturalWidth, height: img.naturalHeight })) : undefined,
         shared_post_id: sharedPostId,
       };
 
-      if (isEditMode && editPostId) {
-        await postApi.update(editPostId, payload);
-        toast.success('Post updated!');
-        updatePostInFeed(editPostId, {
-          content: finalContent,
-          location: locationString || undefined,
-          visibility: payload.visibility,
-          ...(effectiveRepostData ? { shared_post: effectiveRepostData } : {})
-        });
-        window.dispatchEvent(new CustomEvent('postUpdated', { detail: { id: editPostId, ...payload } }));
-        resetComposer();
-        setUploadPhase('idle');
-      } else {
-        const files = selectedImages.map((img) => img.file);
-        const uploadConfig = {
-          signal: abortControllerRef.current.signal,
-          onUploadProgress: (percent: number) => {
-            setUploadProgress(percent);
-            if (percent === 100) setUploadPhase('processing');
-          }
-        };
-        const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
-        addPost(mappedPost);
-        window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
-        
-        setUploadPhase('success');
-        setTimeout(() => setUploadPhase('idle'), 3000);
-      }
+      const files = selectedImages.filter((img) => img.file && img.file.size > 0).map((img) => img.file);
+      const uploadConfig = {
+        signal: abortControllerRef.current.signal,
+        onUploadProgress: (percent: number) => {
+          setUploadProgress(percent);
+          if (percent === 100) setUploadPhase('processing');
+        }
+      };
+      const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
+      addPost(mappedPost);
+      window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+      
+      setUploadPhase('success');
+      setTimeout(() => setUploadPhase('idle'), 3000);
+      if (onPostCreated) onPostCreated();
 
       if (onPostCreated) onPostCreated();
     } catch (err: any) {

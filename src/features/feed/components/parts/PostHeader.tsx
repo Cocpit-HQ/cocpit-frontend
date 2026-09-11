@@ -183,7 +183,7 @@ export const PostHeader = ({
           
           {/* Subtitle Area (Animated) */}
           {subtitleItems.length > 0 && (
-            <div className="relative w-full h-[14px] mt-[2px] overflow-hidden">
+            <div className="relative w-[50vw] md:w-[50%] h-[14px] mt-[2px] overflow-hidden">
               <div 
                 className="w-full flex flex-col transition-transform ease-in-out"
                 style={{

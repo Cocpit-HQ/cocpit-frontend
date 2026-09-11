@@ -61,18 +61,24 @@ export const usePostMedia = (
     previewMediaUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
   }, []);
 
+  // Media Size Constraints for Posts:
+  // - Single Image Limit: 10 MB max per individual image.
+  // - Total Image Upload Limit: 100 MB max cumulative size across all attached images in a post.
+  // - Single Video Limit: 100 MB max for video uploads.
+  const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB per individual image limit
+  const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100 MB cumulative total limit for all images in post
+  const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB video size limit
+
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
     const file: File | undefined = e instanceof File ? e : e.target.files?.[0];
 
     if (file) {
-      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error("File size cannot exceed 100MB");
-        if (!(e instanceof File) && e.target) e.target.value = '';
-        return;
-      }
-
       if (file.type.startsWith('video/')) {
+        if (file.size > MAX_VIDEO_SIZE) {
+          toast.error("Video file size cannot exceed 100MB");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
         if (uploadedImagesRef.current.length > 0) {
           toast.error("Cannot upload video and images together");
           if (!(e instanceof File) && e.target) e.target.value = '';
@@ -89,6 +95,17 @@ export const usePostMedia = (
         setActiveImageIndex(0);
         onTypeChange?.('video');
       } else {
+        if (file.size > MAX_SINGLE_IMAGE_SIZE) {
+          toast.error(`Image "${file.name}" exceeds the 10MB limit.`);
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
+        const currentTotalSize = uploadedImagesRef.current.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+        if (currentTotalSize + file.size > MAX_TOTAL_IMAGE_SIZE) {
+          toast.error("Total image upload size cannot exceed 100MB.");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
         if (uploadedVideosRef.current.length > 0) {
           toast.error("Cannot upload video and images together");
           if (!(e instanceof File) && e.target) e.target.value = '';
@@ -115,13 +132,31 @@ export const usePostMedia = (
       const videoFiles = files.filter(f => f.type.startsWith('video/'));
       const imageFiles = files.filter(f => !f.type.startsWith('video/'));
 
-      // 1. Size Check
-      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-      const hasOversized = files.some(file => file.size > MAX_FILE_SIZE);
-      if (hasOversized) {
-        toast.error("File size cannot exceed 100MB");
-        e.target.value = '';
-        return;
+      // 1. Size Check (Per image 10MB, total images 100MB, video 100MB)
+      if (videoFiles.length > 0) {
+        const oversizedVideo = videoFiles.find(file => file.size > MAX_VIDEO_SIZE);
+        if (oversizedVideo) {
+          toast.error(`Video "${oversizedVideo.name}" exceeds the 100MB limit.`);
+          e.target.value = '';
+          return;
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        const oversizedImage = imageFiles.find(file => file.size > MAX_SINGLE_IMAGE_SIZE);
+        if (oversizedImage) {
+          toast.error(`Image "${oversizedImage.name}" exceeds the 10MB limit.`);
+          e.target.value = '';
+          return;
+        }
+
+        const currentTotalSize = uploadedImagesRef.current.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+        const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
+        if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
+          toast.error("Total image upload size cannot exceed 100MB.");
+          e.target.value = '';
+          return;
+        }
       }
 
       // 2. Mixed Check in selection
@@ -206,13 +241,31 @@ export const usePostMedia = (
       const videoFiles = files.filter(f => f.type.startsWith('video/'));
       const imageFiles = files.filter(f => f.type.startsWith('image/'));
 
-      // 1. Size Check
-      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-      const hasOversized = files.some(file => file.size > MAX_FILE_SIZE);
-      if (hasOversized) {
-        toast.error("File size cannot exceed 100MB");
-        e.target.value = '';
-        return;
+      // 1. Size Check (Per image 10MB, total images 100MB, video 100MB)
+      if (videoFiles.length > 0) {
+        const oversizedVideo = videoFiles.find(file => file.size > MAX_VIDEO_SIZE);
+        if (oversizedVideo) {
+          toast.error(`Video "${oversizedVideo.name}" exceeds the 100MB limit.`);
+          e.target.value = '';
+          return;
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        const oversizedImage = imageFiles.find(file => file.size > MAX_SINGLE_IMAGE_SIZE);
+        if (oversizedImage) {
+          toast.error(`Image "${oversizedImage.name}" exceeds the 10MB limit.`);
+          e.target.value = '';
+          return;
+        }
+
+        const currentTotalSize = uploadedImagesRef.current.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+        const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
+        if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
+          toast.error("Total image upload size cannot exceed 100MB.");
+          e.target.value = '';
+          return;
+        }
       }
 
       // 2. Mixed Check in selection

@@ -340,18 +340,34 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         return;
       }
 
-      // 4. File Size Limit (100MB per file)
-      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-      const oversizedImage = media.uploadedImages.find(img => img.file && img.file.size > MAX_FILE_SIZE);
+      // 4. File Size Limits & Validations:
+      // - Per image limit: 10MB maximum (reject any individual image > 10MB).
+      // - Total post upload limit: 100MB maximum (reject cumulative image size > 100MB).
+      // - Video limit: 100MB maximum.
+      const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB limit per single image
+      const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100 MB total post images limit
+      const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB video size limit
+
+      // Check per-image limit (10MB max per file)
+      const oversizedImage = media.uploadedImages.find(img => img.file && img.file.size > MAX_SINGLE_IMAGE_SIZE);
       if (oversizedImage) {
-        toast.error(`Image "${oversizedImage.file?.name || 'file'}" exceeds the 100MB size limit.`);
+        toast.error(`Image "${oversizedImage.file?.name || 'file'}" exceeds the 10MB limit.`);
         setIsSubmitting(false);
         return;
       }
 
-      const oversizedVideo = media.uploadedVideos.find(v => v.file && v.file.size > MAX_FILE_SIZE);
+      // Check total post upload limit (100MB max across all images combined)
+      const totalImageSize = media.uploadedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
+      if (totalImageSize > MAX_TOTAL_IMAGE_SIZE) {
+        toast.error("Total image upload size cannot exceed 100MB.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check video size limit (100MB max)
+      const oversizedVideo = media.uploadedVideos.find(v => v.file && v.file.size > MAX_VIDEO_SIZE);
       if (oversizedVideo) {
-        toast.error(`Video "${oversizedVideo.file?.name || 'file'}" exceeds the 100MB size limit.`);
+        toast.error(`Video "${oversizedVideo.file?.name || 'file'}" exceeds the 100MB limit.`);
         setIsSubmitting(false);
         return;
       }
