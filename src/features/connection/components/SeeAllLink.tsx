@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 
 interface SeeAllLinkProps {
@@ -9,11 +10,17 @@ interface SeeAllLinkProps {
 
 export function SeeAllLink({ count, href }: SeeAllLinkProps) {
   if (count <= 3) return null;
+
   return (
-    <div className="flex items-center justify-center w-full h-[52px] bg-card shrink-0">
-      <Link href={href} className="text-sm font-medium text-primary hover:text-[#4F46E5] transition">
+    <div className="flex items-center justify-center w-full py-4 mt-1 select-none">
+      <Link
+        href={href}
+        className="font-dm-sans text-[12px] sm:text-[13px] font-normal text-ds-accent hover:underline transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm cursor-pointer"
+      >
         See all
       </Link>
     </div>
   );
 }
+
+export default SeeAllLink;

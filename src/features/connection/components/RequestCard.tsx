@@ -1,17 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import type { ConnectionRequest } from '../types';
 
 interface RequestCardProps {
-  request:   ConnectionRequest;
-  mode:      'received' | 'sent' | 'invitations';
+  request: ConnectionRequest;
+  mode: 'received' | 'sent' | 'invitations';
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
-  onUndo?:   (id: string) => void;
-  isActing?: boolean;   // true while any mutation for this card is in-flight
+  onUndo?: (id: string) => void;
+  isActing?: boolean;
 }
 
 function getInitials(name: string) {
@@ -35,7 +36,7 @@ export function RequestCard({
   const [imgError, setImgError] = useState(false);
 
   const showAvatar = !!user.avatar && !imgError;
-  const hasMutuals = mutuals.count > 0;
+  const hasMutuals = mutuals && mutuals.count > 0;
   const isCompany = request.isCompanyRequest || mode === 'invitations';
   const profileId = mode === 'received' ? request.sender_id : request.receiver_id;
   const targetHref = isCompany
@@ -43,94 +44,141 @@ export function RequestCard({
     : `/profile/${profileId}`;
 
   return (
-    <article className="flex flex-col sm:flex-row sm:items-center justify-between py-4 sm:py-2 px-4 bg-card min-h-[92px] rounded-xl transition-all hover:bg-[var(--primary-tint)] border-b border-border last:border-b-0 gap-3 sm:gap-0" aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}>
-      <div className="flex items-start sm:items-center gap-3 w-full sm:w-[calc(100%-230px)]">
-        <Link href={targetHref} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary mt-1 sm:mt-0" tabIndex={-1}>
+    <article
+      className="w-full min-h-[68px] flex flex-col sm:flex-row sm:items-center justify-between py-2 px-0 sm:px-2 border-b border-ds-border last:border-b-0 hover:bg-ds-surface-1/30 transition-colors gap-2 rounded-2xl font-dm-sans"
+      aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}
+    >
+      {/* Left: Avatar + Details */}
+      <div className="w-full flex-1 min-w-0 min-h-[52px] flex items-center gap-2">
+        <Link
+          href={targetHref}
+          className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
           {showAvatar ? (
             <Image
               src={user.avatar}
               alt={user.name}
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full object-cover bg-primary/10"
+              width={32}
+              height={32}
+              className={`w-8 h-8 object-cover shrink-0 bg-ds-surface-1 border border-ds-border ${
+                isCompany ? 'rounded-[8px]' : 'rounded-full'
+              }`}
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-[15px] font-medium tracking-wide" aria-hidden="true">
-              {getInitials(user.name)}
+            <div
+              className={`flex items-center justify-center w-8 h-8 shrink-0 bg-ds-surface-1 text-ds-text-primary text-[12px] font-medium tracking-wide border border-ds-border ${
+                isCompany ? 'rounded-[8px]' : 'rounded-full'
+              }`}
+              aria-hidden="true"
+            >
+              {getInitials(user.name || 'User')}
             </div>
           )}
         </Link>
 
-        {/* Body */}
-        <div className="flex flex-col min-w-0 flex-1 justify-center">
-          <Link href={targetHref} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group">
-            <p className="text-base font-medium text-foreground leading-6 truncate group-hover:text-primary transition-colors">{user.name}</p>
-          </Link>
-          <p className="text-sm text-muted-foreground leading-5 truncate">{user.headline}</p>
+        {/* Text stack */}
+        <div className="flex flex-col justify-center items-start gap-1 min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 min-w-0 w-full">
+            <Link
+              href={targetHref}
+              className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group shrink-0"
+            >
+              <span className="font-dm-sans font-normal text-[14px] leading-5 text-ds-text-primary group-hover:text-ds-accent transition-colors whitespace-nowrap">
+                {user.name}
+              </span>
+            </Link>
+            {user.headline && (
+              <>
+                <span className="text-ds-text-muted text-[13px] shrink-0" aria-hidden="true">•</span>
+                <span className="text-ds-text-secondary text-xs leading-4 font-normal truncate min-w-0 max-w-[160px] sm:max-w-[180px]">
+                  {user.headline}
+                </span>
+              </>
+            )}
+          </div>
 
-          {/* Contextual Signal (Priority: 1. Mutuals, 2. Reason Tag) */}
+          {/* Contextual Capsule Badge Pill (adaptive content-driven width) */}
           {hasMutuals ? (
-            <div className="flex items-center gap-1.5 mt-1">
-              {mutuals.avatars.length > 0 && (
-                <div className="flex items-center -space-x-1.5" aria-hidden="true">
-                  {mutuals.avatars.map((src, i) => (
+            <div className="w-fit max-w-full h-6 inline-flex items-center px-2.5 py-1 gap-2 bg-ds-surface-2 rounded-xl text-[12px] leading-4 font-normal text-ds-text-primary">
+              {mutuals.avatars && mutuals.avatars.length > 0 && (
+                <div className="flex items-center -space-x-1.5 shrink-0" aria-hidden="true">
+                  {mutuals.avatars.slice(0, 3).map((src, i) => (
                     <img
                       key={i}
                       src={src}
                       alt=""
-                      className="w-4 h-4 rounded-full border border-card object-cover"
-                      style={{ zIndex: mutuals.avatars.length - i }}
+                      className="w-4 h-4 rounded-full border border-ds-bg object-cover"
+                      style={{ zIndex: 10 - i }}
                     />
                   ))}
                 </div>
               )}
-              <span className="text-xs text-muted-foreground">
+              <span className="truncate">
                 {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
               </span>
             </div>
           ) : reason_tag ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 h-6 rounded-xl bg-primary/5 text-primary dark:bg-[#2A3150] dark:!text-[#818CF8] text-xs max-w-[260px] truncate mt-2 w-max" title={reason_tag}>
-              {reason_tag}
-            </span>
+            <div className="w-fit max-w-full h-6 inline-flex items-center px-2.5 py-1 gap-2 bg-ds-surface-2 rounded-xl text-[12px] leading-4 font-normal text-ds-text-primary">
+              <span className="truncate">{reason_tag}</span>
+            </div>
           ) : null}
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3 w-full sm:w-auto sm:shrink-0 mt-2 sm:mt-0">
+      {/* Right: Actions */}
+      <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end mt-1 sm:mt-0">
         {(mode === 'received' || mode === 'invitations') && (
           <>
             <button
-              className="flex-1 sm:flex-none inline-flex items-center justify-center h-10 sm:w-[100px] rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
-              disabled={isActing}
-              onClick={() => onDecline?.(request.id)}
-              aria-label={`Decline request from ${user.name}`}
-            >
-              {isActing ? <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> : 'Decline'}
-            </button>
-            <button
-              className="flex-1 sm:flex-none inline-flex items-center justify-center h-10 sm:w-[100px] rounded-[24px] text-sm font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-[1px] shadow-[0_1px_2px_rgba(99,102,241,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
+              type="button"
               disabled={isActing}
               onClick={() => onAccept?.(request.id)}
               aria-label={`Accept request from ${user.name}`}
+              className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isActing ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Accept'}
+              {isActing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+              ) : (
+                'Accept'
+              )}
+            </button>
+
+            <button
+              type="button"
+              disabled={isActing}
+              onClick={() => onDecline?.(request.id)}
+              aria-label={`Decline request from ${user.name}`}
+              className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isActing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+              ) : (
+                'Decline'
+              )}
             </button>
           </>
         )}
 
         {mode === 'sent' && (
           <button
-            className="w-1/2 sm:w-[100px] sm:flex-none inline-flex items-center justify-center h-10 rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
+            type="button"
             disabled={isActing}
             onClick={() => onUndo?.(request.id)}
             aria-label={`Withdraw request to ${user.name}`}
+            className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isActing ? <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> : 'Undo'}
+            {isActing ? (
+              <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+            ) : (
+              'Withdraw'
+            )}
           </button>
         )}
       </div>
     </article>
   );
 }
+export default RequestCard;

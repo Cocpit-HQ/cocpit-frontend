@@ -17,14 +17,18 @@ interface ConnectionUIState {
   // immediately. On error, we remove the id to restore the card.
   removedRequestIds: string[];
   removeRequest:     (id: string) => void;
+  removeRequests:    (ids: string[]) => void;
   restoreRequest:    (id: string) => void;
+  restoreRequests:   (ids: string[]) => void;
   clearRemovedRequests: () => void;
 
-  // ─── Followed suggestions ─────────────────────────────────────────────────
+  // ─── Followed & Dismissed suggestions ──────────────────────────────────────
   // Track followed user IDs for instant Follow → Following UI toggle
   followedUserIds: Set<string>;
   setFollowed:     (userId: string) => void;
   clearFollowed:   () => void;
+  dismissedSuggestionIds: Set<string>;
+  dismissSuggestion:      (userId: string) => void;
 }
 
 export const useConnectionStore = create<ConnectionUIState>((set) => ({
@@ -42,13 +46,20 @@ export const useConnectionStore = create<ConnectionUIState>((set) => ({
   removedRequestIds: [],
   removeRequest:  (id) =>
     set((s) => ({ removedRequestIds: [...s.removedRequestIds, id] })),
+  removeRequests: (ids) =>
+    set((s) => ({ removedRequestIds: Array.from(new Set([...s.removedRequestIds, ...ids])) })),
   restoreRequest: (id) =>
     set((s) => ({ removedRequestIds: s.removedRequestIds.filter((r) => r !== id) })),
+  restoreRequests: (ids) =>
+    set((s) => ({ removedRequestIds: s.removedRequestIds.filter((r) => !ids.includes(r)) })),
   clearRemovedRequests: () => set({ removedRequestIds: [] }),
 
-  // Followed users
+  // Followed & Dismissed users
   followedUserIds: new Set(),
   setFollowed:  (userId) =>
     set((s) => ({ followedUserIds: new Set([...s.followedUserIds, userId]) })),
   clearFollowed: () => set({ followedUserIds: new Set() }),
+  dismissedSuggestionIds: new Set(),
+  dismissSuggestion: (userId) =>
+    set((s) => ({ dismissedSuggestionIds: new Set([...s.dismissedSuggestionIds, userId]) })),
 }));

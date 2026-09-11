@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { X, Loader2 } from 'lucide-react';
 import { useConnectionActions } from '../hooks/useConnectionActions';
 import { useConnectionStore } from '@/store/connection.store';
-import { Icon } from '@iconify/react';
 import type { SuggestedUser } from '../types';
 
 interface SuggestionCardProps {
@@ -21,129 +21,162 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
-// ── Inline SVG icons ─────────────────────────────────────────────────────────
-
-const GraduationIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
-  </svg>
-);
-
-// ── MetaRow — contextual info below headline ──────────────────────────────────
+// ── MetaRow — contextual pill badge below headline ──────────────────────────
 function MetaRow({ user }: { user: SuggestedUser }) {
-  const { reasonSignal, mutuals, worksAt, studiedAt, sharedSkills } = user;
+  const { reasonSignal, mutuals, studiedAt, worksAt, sharedSkills } = user;
 
-  // 1. Mutuals
-  if (mutuals.count > 0) {
+  // 1. Mutuals (Priority 1)
+  if (reasonSignal === 'mutual' || (mutuals && mutuals.count > 0)) {
     return (
-      <div className="flex items-center gap-1.5 mt-2 justify-center">
-        {mutuals.avatars.length > 0 && (
-          <div className="flex items-center -space-x-1.5" aria-hidden="true">
-            {mutuals.avatars.map((src, i) => (
+      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+        {mutuals.avatars && mutuals.avatars.length > 0 && (
+          <div className="flex items-center -space-x-1.5 shrink-0" aria-hidden="true">
+            {mutuals.avatars.slice(0, 3).map((src, i) => (
               <img
                 key={i}
                 src={src}
                 alt=""
-                className="w-4 h-4 rounded-full border border-card object-cover"
-                style={{ zIndex: mutuals.avatars.length - i }}
+                className="w-3.5 h-3.5 rounded-full border border-ds-bg object-cover"
+                style={{ zIndex: 10 - i }}
               />
             ))}
           </div>
         )}
-        <p className="text-xs text-foreground">
+        <span className="truncate">
           {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
-        </p>
+        </span>
       </div>
     );
   }
 
-  // 2. Company / Workplace
-  if (worksAt) {
+  // 2. Education (Priority 2)
+  if (reasonSignal === 'education' || studiedAt) {
+    if (studiedAt) {
+      return (
+        <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+          <span className="truncate">Studied at {studiedAt}</span>
+        </div>
+      );
+    }
+  }
+
+  // 3. Company / Workplace (Priority 3)
+  if (reasonSignal === 'company' || worksAt) {
+    if (worksAt) {
+      return (
+        <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+          <span className="truncate">Works at {worksAt}</span>
+        </div>
+      );
+    }
+  }
+
+  // 4. Shared skills / Interests (Priority 4)
+  if (sharedSkills && sharedSkills.length > 0) {
     return (
-      <div className="flex items-center justify-center gap-1 mt-2 text-xs text-foreground">
-        <Icon icon="hugeicons:job-search" className="w-3.5 h-3.5" />
-        <p className="truncate max-w-[120px]">Works at {worksAt}</p>
+      <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+        <span className="truncate">{sharedSkills.join(' • ')}</span>
       </div>
     );
   }
 
-  // 3. Shared skills / Interests
-  if (sharedSkills.length > 0) {
-    return (
-      <p className="text-xs text-foreground mt-2 truncate w-full px-2">
-        {sharedSkills.join(' • ')}
-      </p>
-    );
-  }
-
-  // 4. Education / School
-  if (studiedAt) {
-    return (
-      <p className="flex items-center justify-center gap-1 mt-2 text-xs text-foreground truncate w-full px-2">
-        <GraduationIcon />
-        {studiedAt}
-      </p>
-    );
-  }
-
-  return null;
+  return (
+    <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+      <span className="truncate">Active network</span>
+    </div>
+  );
 }
 
 // ── SuggestionCard ────────────────────────────────────────────────────────────
 export function SuggestionCard({ user }: SuggestionCardProps) {
   const [imgError, setImgError] = useState(false);
-  const { connect } = useConnectionActions();
+  const { connect, dismiss } = useConnectionActions();
   const { followedUserIds } = useConnectionStore();
 
   const isRequested = followedUserIds.has(user.id);
-  const isLoading   = connect.isPending && connect.variables === user.id;
-  const showAvatar  = !!user.avatarUrl && !imgError;
+  const isLoading = connect.isPending && connect.variables === user.id;
+  const showAvatar = !!user.avatarUrl && !imgError;
 
   return (
-    <div className="flex flex-col items-center text-center gap-2 p-3 sm:p-4 h-full bg-card rounded-[24px] border border-border shadow-sm transition hover:shadow-md">
+    <div className="relative flex flex-col items-center text-center p-3 h-full rounded-[16px] border border-ds-border bg-ds-surface-1/40 hover:border-ds-border/80 transition-all font-dm-sans group select-none">
+      {/* Top-Right Dismiss Button */}
+      <button
+        type="button"
+        onClick={() => dismiss(user.id)}
+        aria-label={`Dismiss suggestion for ${user.name}`}
+        className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+      >
+        <X className="w-5 h-5" strokeWidth={2} />
+      </button>
+
       {/* Avatar */}
-      <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary" tabIndex={-1}>
+      <Link
+        href={`/profile/${user.id}`}
+        className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent mb-2 mt-1"
+        tabIndex={-1}
+        aria-hidden="true"
+      >
         {showAvatar ? (
           <Image
             src={user.avatarUrl}
             alt={user.name}
-            width={80}
-            height={80}
-            className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-full object-cover bg-primary/10"
+            width={56}
+            height={56}
+            className="w-14 h-14 rounded-full object-cover bg-ds-surface-1 border border-ds-border group-hover:scale-105 transition-transform"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="flex items-center justify-center w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-full bg-primary/10 text-primary text-2xl sm:text-3xl font-medium tracking-wide" aria-hidden="true">
-            {getInitials(user.name)}
+          <div
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-ds-surface-1 text-ds-text-primary text-lg font-medium tracking-wide border border-ds-border group-hover:scale-105 transition-transform"
+            aria-hidden="true"
+          >
+            {getInitials(user.name || 'User')}
           </div>
         )}
       </Link>
 
-      <div className="flex flex-col w-full flex-1">
-        <div className="flex flex-col items-center min-h-[40px]">
-          <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group max-w-[95%] sm:max-w-[90%]">
-            <p className="text-[15px] sm:text-base font-medium text-foreground leading-[20px] sm:leading-6 truncate w-full group-hover:text-primary transition-colors">{user.name}</p>
-          </Link>
-          <p className="text-xs sm:text-[13px] text-muted-foreground leading-[18px] sm:leading-4 line-clamp-2 mt-1 w-full">{user.headline}</p>
-        </div>
+      {/* User Info */}
+      <div className="flex flex-col items-center w-full min-h-[44px] mb-3">
+        <Link
+          href={`/profile/${user.id}`}
+          className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group-hover:text-ds-accent transition-colors max-w-full"
+        >
+          <p className="text-[16px] font-normal text-ds-text-primary leading-[24px] truncate w-full">
+            {user.name}
+          </p>
+        </Link>
+        <p className="text-[12px] text-ds-text-secondary leading-[16px] truncate w-full mt-0.5">
+          {user.headline || 'Member'}
+        </p>
+      </div>
+
+      {/* Contextual Capsule Badge */}
+      <div className="w-full flex justify-center mb-4">
         <MetaRow user={user} />
       </div>
 
+      {/* Connect Action Button */}
       <button
-        className={`inline-flex items-center justify-center h-10 w-full rounded-full text-sm font-medium transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none mt-auto ${
-          isRequested 
-            ? 'bg-muted text-foreground border border-border' 
-            : 'bg-transparent text-primary border border-primary hover:bg-[var(--primary-tint)]'
-        }`}
+        type="button"
         disabled={isLoading || isRequested}
         onClick={() => !isRequested && connect.mutate(user.id)}
         aria-label={isRequested ? `Request sent to ${user.name}` : `Connect with ${user.name}`}
         aria-pressed={isRequested}
+        className={`w-24 h-[36px] px-3 py-1.5 rounded-full text-[16px] leading-[24px] font-medium font-dm-sans transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent flex items-center justify-center gap-2.5 mt-auto ${
+          isRequested
+            ? 'bg-ds-surface-1 text-ds-text-secondary border border-ds-border cursor-default opacity-80'
+            : 'bg-transparent text-ds-text-primary border border-ds-border hover:border-ds-accent hover:text-ds-accent active:scale-95'
+        }`}
       >
-        {isLoading
-          ? <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-          : isRequested ? 'Requested' : 'Connect'}
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+        ) : isRequested ? (
+          'Requested'
+        ) : (
+          'Connect'
+        )}
       </button>
     </div>
   );
 }
+export default SuggestionCard;

@@ -71,14 +71,24 @@ export const cancelConnectionRequest = async (requestId: string) => {
 // ─── Suggestions ──────────────────────────────────────────────────────────────
 
 /**
- * Fetch "People You May Know" suggestions using the 4-signal algorithm
- * (2nd-degree connections, same company, shared skills, same city).
- * @param limit  Max items to return (default 8, max 20)
+ * Fetch "People You May Know" suggestions using the 4-tier priority algorithm
+ * (Mutual connections > Same Education > Same Experience > Shared Skills/Interests).
+ * @param limit   Max items to return (default 12, max 30)
+ * @param offset  Pagination offset (default 0)
+ * @param exclude Optional array of user IDs to exclude from suggestions
  */
 export const getConnectionSuggestions = async (
-  limit = 8,
+  limit = 12,
+  offset = 0,
+  exclude: string[] = [],
 ): Promise<SuggestionsResponse> => {
-  const { data } = await api.get('/connections/suggestions', { params: { limit } });
+  const { data } = await api.get('/connections/suggestions', {
+    params: {
+      limit,
+      offset,
+      exclude: exclude.join(','),
+    },
+  });
   return data;
 };
 

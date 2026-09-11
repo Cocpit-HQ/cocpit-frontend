@@ -1,31 +1,35 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { useConnectionStore } from '@/store/connection.store';
-import { useConnectionRequests }   from './hooks/useConnectionRequests';
-import { useConnectionCounts }     from './hooks/useConnectionCounts';
+import { useConnectionRequests } from './hooks/useConnectionRequests';
+import { useConnectionCounts } from './hooks/useConnectionCounts';
+import { useConnectionActions } from './hooks/useConnectionActions';
 import type { ConnectionTab, InvitationSubTab } from './types';
 
-import { ConnectionHeader }   from './components/ConnectionHeader';
-import { ConnectionTabs }     from './components/ConnectionTabs';
-import { InboxCounter }       from './components/InboxCounter';
-import { RequestList }        from './components/RequestList';
-import { SeeAllLink }         from './components/SeeAllLink';
-import { SuggestionsGrid }    from './components/SuggestionsGrid';
-import { EmptyState }         from './components/EmptyState';
-import { ErrorState }         from './components/ErrorState';
+import { ConnectionHeader } from './components/ConnectionHeader';
+import { ConnectionTabs } from './components/ConnectionTabs';
+import { RequestList } from './components/RequestList';
+import { SeeAllLink } from './components/SeeAllLink';
+import { SuggestionsGrid } from './components/SuggestionsGrid';
+import { EmptyState } from './components/EmptyState';
+import { ErrorState } from './components/ErrorState';
 import { RequestCardSkeleton } from './components/skeletons/RequestCardSkeleton';
+import {
+  ConnectionConfirmModal,
+  ConnectionConfirmType,
+} from './components/ConnectionConfirmModal';
 
 // ── Empty state text per tab ──────────────────────────────────────────────────
 const EMPTY_STATE = {
   received: {
-    title:    'No Incoming Requests',
+    title: 'No Incoming Requests',
     subtitle: 'When someone sends you a connection request, it will appear here.',
   },
   sent: {
-    title:    'No Sent Requests',
+    title: 'No Sent Requests',
     subtitle: 'Connect with people you know to grow your network.',
   },
 } as const;
@@ -33,21 +37,26 @@ const EMPTY_STATE = {
 type ConnectionPageView = 'main' | 'expanded';
 
 interface ConnectionPageProps {
-  /** 
+  /**
    * main     → shows first 3 cards + See All link + Suggestions section
    * expanded → shows all cards + back header, no suggestions
    */
   view?: ConnectionPageView;
-  initialTab?: 'received' | 'sent';
+  initialTab?: 'received' | 'sent' | 'invitations';
 }
 
 export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProps) {
-  const { activeTab, setActiveTab, invitationSubTab, setInvitationSubTab, removedRequestIds } = useConnectionStore();
-  const isExpanded    = view === 'expanded';
+  const {
+    activeTab,
+    setActiveTab,
+    invitationSubTab,
+    setInvitationSubTab,
+    removedRequestIds,
+  } = useConnectionStore();
+  const isExpanded = view === 'expanded';
 
-  // Read URL search params on mount (e.g. /connections?tab=invitations&sub=channels
-  // emitted by notification click) and activate the corresponding tab/sub-tab.
-  // Only runs once on mount — subsequent tab switches use the store directly.
+  const [confirmModalType, setConfirmModalType] = useState<ConnectionConfirmType | null>(null);
+
   const searchParams = useSearchParams();
   useEffect(() => {
     const urlTab = searchParams.get('tab') as ConnectionTab | null;
@@ -59,7 +68,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
       setInvitationSubTab(urlSub);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally runs once on mount only
+  }, []);
 
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
@@ -67,37 +76,42 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
     }
   }, [initialTab, activeTab, setActiveTab]);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = useConnectionRequests(activeTab, invitationSubTab);
+  const { data, isLoading, isError, refetch } = useConnectionRequests(
+    activeTab,
+    invitationSubTab
+  );
 
   const { data: counts } = useConnectionCounts();
+  const {
+    batchAccept,
+    batchDecline,
+    batchWithdraw,
+    batchDeclineInvitations,
+  } = useConnectionActions();
 
-  const rawRequests     = data?.data ?? [];
-  const allRequests     = rawRequests.filter((r) => !removedRequestIds.includes(r.id));
-  const totalCount      = Math.max(0, (data?.totalCount ?? 0) - removedRequestIds.length);
-  const previewLimit    = isExpanded ? allRequests.length : 3;
+  const rawRequests = data?.data ?? [];
+  const allRequests = rawRequests.filter((r) => !removedRequestIds.includes(r.id));
+  const totalCount = Math.max(0, (data?.totalCount ?? 0) - removedRequestIds.length);
+  const previewLimit = isExpanded ? allRequests.length : 3;
   const displayRequests = allRequests.slice(0, previewLimit);
 
-  // Which inbox count to show for active tab — prioritize actual fetched list totalCount when data is ready
-  const activeTabCount = activeTab === 'received'
-    ? (counts?.received ?? 0)
-    : activeTab === 'sent'
-      ? (counts?.sent ?? 0)
-      : (counts?.invitations ?? 0);
+  // Which inbox count to show for active tab
+  const activeTabCount =
+    activeTab === 'received'
+      ? counts?.received ?? 0
+      : activeTab === 'sent'
+      ? counts?.sent ?? 0
+      : counts?.invitations ?? 0;
 
   const inboxCount = data ? totalCount : activeTabCount;
 
-  // Render decision
-  const showSkeleton  = isLoading;
-  const showError     = !isLoading && isError;
-  const showEmpty     = !isLoading && !isError && allRequests.length === 0;
-  const showContent   = !isLoading && !isError && allRequests.length > 0;
+  // Render decisions
+  const showSkeleton = isLoading;
+  const showError = !isLoading && isError;
+  const showEmpty = !isLoading && !isError && allRequests.length === 0;
+  const showContent = !isLoading && !isError && allRequests.length > 0;
 
-  // Suggestions: shown on both tabs in main view, but hidden on invitations
+  // Suggestions: shown on received and sent in main view, hidden on invitations
   const showSuggestions = !isExpanded && activeTab !== 'invitations';
 
   let emptyTitle = '';
@@ -116,48 +130,116 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
     emptySubtitle = EMPTY_STATE[validTab].subtitle;
   }
 
-  return (
-    <main className="min-h-screen bg-background px-4 sm:px-5 py-4 sm:py-6">
-      <div className="mx-auto max-w-[960px]">
+  // Handle batch confirmation
+  const isBatchLoading =
+    batchAccept.isPending ||
+    batchDecline.isPending ||
+    batchWithdraw.isPending ||
+    batchDeclineInvitations.isPending;
 
+  const handleConfirmBatchAction = async () => {
+    const requestIds = allRequests.map((r) => r.id);
+    if (!requestIds.length) {
+      setConfirmModalType(null);
+      return;
+    }
+
+    try {
+      if (confirmModalType === 'withdraw-all') {
+        await batchWithdraw.mutateAsync(requestIds);
+      } else if (confirmModalType === 'decline-invitations') {
+        await batchDeclineInvitations.mutateAsync({
+          inviteIds: requestIds,
+          subTab: invitationSubTab,
+        });
+      } else if (confirmModalType === 'decline-requests' || confirmModalType === 'decline-all') {
+        await batchDecline.mutateAsync(requestIds);
+      } else if (confirmModalType === 'accept-all') {
+        await batchAccept.mutateAsync(requestIds);
+      }
+    } finally {
+      setConfirmModalType(null);
+    }
+  };
+
+  return (
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary py-6 sm:py-8 md:py-10 font-dm-sans md:-ml-[220px] md:w-[calc(100%+220px)] px-4 sm:px-6 md:px-8">
+      <div className="w-full max-w-[800px] mx-auto">
         {/* Back header — only in expanded view */}
         {isExpanded && <ConnectionHeader />}
 
-        {/* Tabs + Inbox counter */}
-        {!isExpanded && <ConnectionTabs />}
+        {/* Page Header (Main & Expanded Views) */}
+        <div className="w-full min-h-[52px] flex flex-col items-start gap-2 mb-5 select-none">
+          <h1 className="font-dm-sans text-[16px] leading-6 font-semibold text-ds-text-primary">
+            Connection
+          </h1>
+          <p className="font-dm-sans text-[14px] leading-5 font-normal text-ds-text-secondary">
+            Manage inbound connection requests and expand your trusted network
+          </p>
+        </div>
 
-        {!isExpanded && activeTab === 'invitations' && (
-          <div className="flex gap-6 mb-5">
-            <button
-              onClick={() => setInvitationSubTab('teams')}
-              className={`pb-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5 ${
-                invitationSubTab === 'teams'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-foreground/70 hover:text-foreground'
-              }`}
-            >
-              <span>Teams</span>
-              {(counts?.teamsInvitations ?? 0) > 0 && (
-                <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] shadow-[0_0_6px_rgba(99,102,241,0.8)] shrink-0 inline-block" />
-              )}
-            </button>
-            <button
-              onClick={() => setInvitationSubTab('channels')}
-              className={`pb-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5 ${
-                invitationSubTab === 'channels'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-foreground/70 hover:text-foreground'
-              }`}
-            >
-              <span>Channels</span>
-              {(counts?.channelsInvitations ?? 0) > 0 && (
-                <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] shadow-[0_0_6px_rgba(99,102,241,0.8)] shrink-0 inline-block" />
-              )}
-            </button>
+        {/* 3 Tabs: Received, Sent, Invitation — only in main view */}
+        {!isExpanded && <ConnectionTabs activeCount={totalCount} />}
+
+        {/* Subheader Row: Count on Left, Batch Actions on Right */}
+        <div className="w-full h-6 flex items-center justify-between gap-2 mb-2 select-none">
+          <div className="flex items-center gap-2">
+            <h2 className="font-dm-sans font-medium text-[16px] leading-6 text-ds-text-primary">
+              {activeTab === 'received'
+                ? 'Pending Invitations'
+                : activeTab === 'sent'
+                ? 'Sent invitations'
+                : 'Page invitations'}
+            </h2>
+            <span className="w-1 h-1 rounded-full bg-ds-text-muted shrink-0 inline-block" aria-hidden="true" />
+            <span className="font-dm-sans text-[14px] leading-5 font-normal text-ds-text-secondary">
+              {isLoading ? 'Loading...' : `${inboxCount} waiting`}
+            </span>
           </div>
-        )}
 
-        <InboxCounter count={isLoading ? 0 : inboxCount} />
+          {/* Batch Actions on Right — Aligned with card action button columns */}
+          {allRequests.length > 0 && !isLoading && activeTab !== 'invitations' && (
+            <div className="flex items-center gap-2.5 shrink-0 sm:pr-2 font-dm-sans">
+              {activeTab === 'received' && (
+                <>
+                  <div className="w-[89px] flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmModalType('accept-all')}
+                      className="text-ds-accent font-medium text-[13px] sm:text-[14px] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm hover:opacity-80"
+                    >
+                      Accept all
+                    </button>
+                  </div>
+                  <span className="text-ds-border" aria-hidden="true">
+                    |
+                  </span>
+                  <div className="w-[89px] flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmModalType('decline-requests')}
+                      className="text-ds-text-secondary hover:text-ds-text-primary text-[13px] sm:text-[14px] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm"
+                    >
+                      Decline all
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'sent' && (
+                <div className="w-[89px] flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmModalType('withdraw-all')}
+                    className="text-ds-accent font-medium text-[13px] sm:text-[14px] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm hover:opacity-80"
+                  >
+                    Withdraw all
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── Content area ── */}
         <div
@@ -186,22 +268,19 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
 
           {/* Empty */}
           {showEmpty && (
-            <EmptyState
-              title={emptyTitle}
-              subtitle={emptySubtitle}
-            />
+            <EmptyState title={emptyTitle} subtitle={emptySubtitle} />
           )}
 
           {/* Request cards */}
           {showContent && (
-            <div className="flex flex-col bg-card">
+            <div className="flex flex-col bg-transparent">
               <RequestList
                 requests={displayRequests}
                 mode={activeTab}
                 subTab={invitationSubTab}
               />
 
-              {/* See All — full-width bottom bar, only in main view when we have > 3 */}
+              {/* See All link below requests in main view when count > 3 */}
               {!isExpanded && (
                 <SeeAllLink count={totalCount} href={`/connections/${activeTab}`} />
               )}
@@ -209,10 +288,19 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
           )}
         </div>
 
-        {/* ── Suggestions section ── */}
+        {/* ── Suggestions section ("People you may know") ── */}
         <SuggestionsGrid enabled={showSuggestions} />
 
+        {/* ── Batch Confirmation Modal ── */}
+        <ConnectionConfirmModal
+          isOpen={!!confirmModalType}
+          type={confirmModalType}
+          isLoading={isBatchLoading}
+          onConfirm={handleConfirmBatchAction}
+          onCancel={() => setConfirmModalType(null)}
+        />
       </div>
-    </main>
+    </div>
   );
 }
+export default ConnectionPage;

@@ -74,7 +74,7 @@ export default function SinglePostPage({ params }: PageProps) {
     })
 
     return (
-        <div className="min-h-screen bg-transparent text-foreground md:pr-[253px]">
+        <div className="min-h-screen bg-transparent text-foreground md:pr-[220px]">
             <div className="pt-4 md:pt-6 pb-4 md:pb-8">
                 <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
                     <div className="mx-auto max-w-[998px] w-full flex flex-col items-center">

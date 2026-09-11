@@ -77,7 +77,7 @@ export function TopHeader({ className }: TopHeaderProps) {
   return (
     <header className={`w-full flex items-center justify-between pointer-events-none ${className || ''}`}>
       {/* Full-width top background bar to seamlessly occlude scrolling feed across the entire screen */}
-      <div className="fixed top-0 left-0 md:left-[253px] right-0 h-[100px] bg-ds-bg z-40 pointer-events-none" />
+      <div className="fixed top-0 left-0 md:left-[220px] right-0 h-[100px] bg-ds-bg z-40 pointer-events-none" />
 
       {/* Cocpit Logo (Bottom Right) */}
       <div className="fixed bottom-[40px] right-[40px] flex items-center h-[40px] pointer-events-auto z-50">

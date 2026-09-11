@@ -36,7 +36,7 @@ export function AppShell({
   const shouldHideBottomNav = hideBottomNav || isDistractionFreeArticle || activeModal === 'create-post';
 
   return (
-    <div className="relative flex min-h-screen bg-ds-bg text-foreground">
+    <div className="relative flex flex-col min-h-screen bg-ds-bg text-foreground overflow-x-hidden">
       {/* Desktop sidebar */}
       {!isDistractionFreeArticle && (
         <div className="hidden md:block fixed left-0 top-0 h-screen z-40">
@@ -57,7 +57,7 @@ export function AppShell({
       )}
 
       {/* Main content */}
-      <main className={isDistractionFreeArticle ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full md:ml-[253px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
+      <main className={isDistractionFreeArticle ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full md:pl-[220px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
         {children}
       </main>
 

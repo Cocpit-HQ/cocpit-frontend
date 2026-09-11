@@ -43,7 +43,7 @@ export interface ConnectionCounts {
   channelsInvitations?: number;
 }
 
-export type SuggestionReasonSignal = 'mutual' | 'company' | 'skill' | 'city' | null;
+export type SuggestionReasonSignal = 'mutual' | 'education' | 'company' | 'skill' | 'city' | null;
 
 export interface SuggestedUser {
   id:            string;
@@ -51,6 +51,7 @@ export interface SuggestedUser {
   avatarUrl:     string;
   headline:      string;
   reasonSignal:  SuggestionReasonSignal;
+  priorityGroup?: number;
   mutuals:       MutualInfo;
   worksAt:       string | null;
   studiedAt:     string | null;
@@ -59,4 +60,11 @@ export interface SuggestedUser {
 
 export interface SuggestionsResponse {
   data: SuggestedUser[];
+  pagination?: {
+    offset: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+  };
 }
+

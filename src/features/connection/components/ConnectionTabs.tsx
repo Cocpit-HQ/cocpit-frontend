@@ -1,26 +1,55 @@
 'use client';
 
+import React from 'react';
 import { useConnectionStore } from '@/store/connection.store';
 import { useConnectionCounts } from '../hooks/useConnectionCounts';
 import type { ConnectionTab } from '../types';
 
 const TABS: { key: ConnectionTab; label: string }[] = [
   { key: 'received', label: 'Received' },
-  { key: 'sent',     label: 'Sent' },
+  { key: 'sent', label: 'Sent' },
+  { key: 'invitations', label: 'Invitation' },
 ];
 
-export function ConnectionTabs() {
+interface ConnectionTabsProps {
+  activeCount?: number;
+}
+
+export function ConnectionTabs({ activeCount }: ConnectionTabsProps) {
   const { activeTab, setActiveTab } = useConnectionStore();
   const { data: counts } = useConnectionCounts();
 
-  const invitationsCount = counts?.invitations ?? 0;
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextIndex = (index + 1) % TABS.length;
+      setActiveTab(TABS[nextIndex].key);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevIndex = (index - 1 + TABS.length) % TABS.length;
+      setActiveTab(TABS[prevIndex].key);
+    }
+  };
 
   return (
-    <div className="flex items-center justify-between mb-5">
-      <div className="flex gap-2" role="tablist" aria-label="Connection request tabs">
-        {TABS.map(({ key, label }) => {
+    <div className="w-full h-9 flex items-center gap-3 border-b border-ds-border/60 pb-0 mb-5 select-none font-dm-sans">
+      <div
+        role="tablist"
+        aria-label="Connection request tabs"
+        className="w-full h-9 flex items-center gap-3"
+      >
+        {TABS.map(({ key, label }, index) => {
           const isActive = activeTab === key;
-          const count = key === 'received' ? counts?.received ?? 0 : counts?.sent ?? 0;
+          const fallbackCount =
+            key === 'received'
+              ? counts?.received ?? 0
+              : key === 'sent'
+              ? counts?.sent ?? 0
+              : counts?.invitations ?? 0;
+
+          const count = isActive && typeof activeCount === 'number' ? activeCount : fallbackCount;
+          const hasPending = count > 0;
+
           return (
             <button
               key={key}
@@ -28,36 +57,39 @@ export function ConnectionTabs() {
               id={`conn-tab-${key}`}
               aria-selected={isActive}
               aria-controls={`conn-tabpanel-${key}`}
-              className={`inline-flex items-center justify-center px-5 py-2 rounded-[20px] text-sm font-medium transition-all select-none outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                isActive
-                  ? 'bg-[var(--primary-tint)] text-primary border border-transparent'
-                : 'bg-card text-primary/70 border border-[#818CF8] hover:bg-[var(--primary-tint)] hover:text-primary'
-              }`}
+              tabIndex={isActive ? 0 : -1}
+              onKeyDown={(e) => handleKeyDown(e, index)}
               onClick={() => setActiveTab(key)}
+              className={`relative h-9 px-3 py-1.5 flex flex-col items-center justify-center text-[16px] leading-6 font-medium transition-colors outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm ${
+                isActive
+                  ? 'text-ds-text-primary'
+                  : 'text-ds-text-secondary hover:text-ds-text-primary'
+              }`}
             >
-              <span>{label}</span>
-              {count > 0 && (
-                <span className="ml-2 w-[6px] h-[6px] rounded-full bg-[#6366F1] shadow-[0_0_6px_rgba(99,102,241,0.8)] shrink-0 inline-block" />
+              <div className="flex items-center gap-1.5">
+                {hasPending && (
+                  <span
+                    className="w-[4px] h-[4px] rounded-full bg-ds-accent shrink-0 inline-block"
+                    style={{
+                      boxShadow:
+                        '-1px -1px 4px rgba(255, 236, 230, 0.4), 1px 1px 4px rgba(255, 236, 230, 0.4)',
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+                <span>{label}</span>
+              </div>
+              {isActive && (
+                <span
+                  className="absolute bottom-0 left-0 right-0 w-full border-t-[1.5px] border-ds-accent"
+                  aria-hidden="true"
+                />
               )}
             </button>
           );
         })}
       </div>
-      <button
-        role="tab"
-        aria-selected={activeTab === 'invitations'}
-        onClick={() => setActiveTab('invitations')}
-        className={`inline-flex items-center justify-center px-5 py-2 rounded-[20px] text-sm font-medium transition-all select-none outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-          activeTab === 'invitations'
-            ? 'bg-[var(--primary-tint)] text-primary border border-transparent'
-          : 'bg-card text-primary/70 border border-[#818CF8] hover:bg-[var(--primary-tint)] hover:text-primary'
-        }`}
-      >
-        <span>Invitations</span>
-        {invitationsCount > 0 && (
-          <span className="ml-2 w-[6px] h-[6px] rounded-full bg-[#6366F1] shadow-[0_0_6px_rgba(99,102,241,0.8)] shrink-0 inline-block" />
-        )}
-      </button>
     </div>
   );
 }
+export default ConnectionTabs;

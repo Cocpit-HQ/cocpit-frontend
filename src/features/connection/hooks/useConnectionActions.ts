@@ -18,7 +18,14 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const useConnectionActions = () => {
   const queryClient = useQueryClient();
-  const { removeRequest, restoreRequest, setFollowed } = useConnectionStore();
+  const {
+    removeRequest,
+    removeRequests,
+    restoreRequest,
+    restoreRequests,
+    setFollowed,
+    dismissSuggestion,
+  } = useConnectionStore();
   const { refreshCompanies } = useActiveProfile();
 
   /** Optimistically update the badge counts in cache for instant UI feedback */
@@ -188,5 +195,116 @@ export const useConnectionActions = () => {
     },
   });
 
-  return { accept, decline, undo, connect, acceptInvitation, declineInvitation, acceptTeamInvitation, declineTeamInvitation };
+  // ─── Batch Actions ────────────────────────────────────────────────────────
+  const batchAccept = useMutation({
+    mutationFn: async (requestIds: string[]) => {
+      removeRequests(requestIds);
+      updateCountsOptimistically('received', -requestIds.length);
+      const results = await Promise.allSettled(
+        requestIds.map((id) => acceptConnectionRequest(id))
+      );
+      const failed = results.filter((r) => r.status === 'rejected');
+      if (failed.length > 0) {
+        throw new Error(`${failed.length} requests failed to accept`);
+      }
+      return results;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('Accepted all connection requests!');
+    },
+    onError: (_err, requestIds) => {
+      restoreRequests(requestIds);
+      updateCountsOptimistically('received', +requestIds.length);
+      toast.error('Failed to accept some requests.');
+    },
+  });
+
+  const batchDecline = useMutation({
+    mutationFn: async (requestIds: string[]) => {
+      removeRequests(requestIds);
+      updateCountsOptimistically('received', -requestIds.length);
+      const results = await Promise.allSettled(
+        requestIds.map((id) => declineConnectionRequest(id))
+      );
+      return results;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('Declined all requests.');
+    },
+    onError: (_err, requestIds) => {
+      restoreRequests(requestIds);
+      updateCountsOptimistically('received', +requestIds.length);
+      toast.error('Failed to decline some requests.');
+    },
+  });
+
+  const batchWithdraw = useMutation({
+    mutationFn: async (requestIds: string[]) => {
+      removeRequests(requestIds);
+      updateCountsOptimistically('sent', -requestIds.length);
+      const results = await Promise.allSettled(
+        requestIds.map((id) => cancelConnectionRequest(id))
+      );
+      return results;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('All sent invitations withdrawn.');
+    },
+    onError: (_err, requestIds) => {
+      restoreRequests(requestIds);
+      updateCountsOptimistically('sent', +requestIds.length);
+      toast.error('Failed to withdraw some invitations.');
+    },
+  });
+
+  const batchDeclineInvitations = useMutation({
+    mutationFn: async ({
+      inviteIds,
+      subTab,
+    }: {
+      inviteIds: string[];
+      subTab: 'teams' | 'channels';
+    }) => {
+      removeRequests(inviteIds);
+      updateCountsOptimistically('invitations', -inviteIds.length);
+      const results = await Promise.allSettled(
+        inviteIds.map((id) =>
+          subTab === 'teams' ? declineTeamInvite(id) : declineChannelInvitation(id)
+        )
+      );
+      return results;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('Declined all page invitations.');
+    },
+    onError: (_err, { inviteIds }) => {
+      restoreRequests(inviteIds);
+      updateCountsOptimistically('invitations', +inviteIds.length);
+      toast.error('Failed to decline some invitations.');
+    },
+  });
+
+  const dismiss = (userId: string) => {
+    dismissSuggestion(userId);
+  };
+
+  return {
+    accept,
+    decline,
+    undo,
+    connect,
+    dismiss,
+    acceptInvitation,
+    declineInvitation,
+    acceptTeamInvitation,
+    declineTeamInvitation,
+    batchAccept,
+    batchDecline,
+    batchWithdraw,
+    batchDeclineInvitations,
+  };
 };
