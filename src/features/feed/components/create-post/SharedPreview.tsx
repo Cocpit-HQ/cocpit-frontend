@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 interface SharedPreviewProps {
   sharedPost: any;
   sharedPostId?: string;
@@ -261,6 +262,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
     }
     if (targetPostId) {
       e.stopPropagation();
+      // Purpose of Bug Fix: Save current scroll position before navigating to original post from repost
+      saveScrollPosition("post");
       router.push(`/post/${targetPostId}`);
     }
   };

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PollCard } from '@/components/home/PollCard';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 
 const formatCompanyName = (name?: string): string => {
   if (!name) return "";
@@ -80,7 +81,14 @@ export const PostSharedContent = ({
           </div>
         </Link>
       ) : (
-        <Link href={`/post/${shared_post.id}`} className="block">
+        <Link 
+          href={`/post/${shared_post.id}`} 
+          className="block"
+          onClick={() => {
+            // Purpose of Bug Fix: Save scroll position before navigating to original post from repost
+            saveScrollPosition("post");
+          }}
+        >
           <div className="feed-card-shell box-border flex flex-row items-start p-[16px] gap-[16px] w-full border border-transparent border-l-[1px] border-l-[#000000] bg-[#F3F5F7] dark:bg-zinc-800/50 rounded-[24px] rounded-tl-none mt-[8px] overflow-hidden transition-all hover:bg-gray-100 dark:hover:bg-zinc-800">
             
             {/* Left Column: Author Info & Text Content */}

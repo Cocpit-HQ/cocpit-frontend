@@ -185,7 +185,55 @@ export function LocationSelector({
     };
   }, []);
 
-  const visibleLocations = query.trim().length === 0 ? DEFAULT_LOCATIONS : suggestions;
+  //Convert selectedLocation into a PlacesSuggestion object for list sorting
+  const selectedSuggestion = useMemo<PlacesSuggestion | null>(() => {
+    if (!draftLocation) return null;
+    const label = getLocationLabel(draftLocation);
+    if (!label) return null;
+    const placeId =
+      "placeId" in draftLocation && draftLocation.placeId
+        ? draftLocation.placeId
+        : "id" in draftLocation && draftLocation.id
+        ? String(draftLocation.id)
+        : label;
+
+    return {
+      placeId,
+      displayName: label,
+      description: label,
+    };
+  }, [draftLocation]);
+
+  // Bug Fix (SCRUM-385): Ensure previously selected location (whether from static defaults or search) is displayed first in the location list
+  const visibleLocations = useMemo(() => {
+    const rawList = query.trim().length === 0 ? DEFAULT_LOCATIONS : suggestions;
+
+    if (!selectedSuggestion) return rawList;
+
+    const selectedLabel = getSuggestionLabel(selectedSuggestion).toLowerCase();
+
+    // Check if the selected location is already present in rawList
+    const existingIndex = rawList.findIndex(
+      (loc) =>
+        (selectedSuggestion.placeId && loc.placeId === selectedSuggestion.placeId) ||
+        getSuggestionLabel(loc).toLowerCase() === selectedLabel
+    );
+
+    if (existingIndex !== -1) {
+      // Move existing selected location to top of the list
+      const item = rawList[existingIndex];
+      const remaining = rawList.filter((_, idx) => idx !== existingIndex);
+      return [item, ...remaining];
+    } else if (query.trim().length === 0) {
+      // If no search query and selected location was added via search (not in DEFAULT_LOCATIONS), display it first
+      return [selectedSuggestion, ...rawList];
+    } else if (selectedLabel.includes(query.trim().toLowerCase())) {
+      // If searching and selected location matches search query, display it first
+      return [selectedSuggestion, ...rawList];
+    }
+
+    return rawList;
+  }, [query, suggestions, selectedSuggestion]);
 
   const handleSelect = async (location: PlacesSuggestion) => {
     const label = getSuggestionLabel(location);

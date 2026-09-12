@@ -53,6 +53,7 @@ export default function CocpitShareModel({
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUserMap, setSelectedUserMap] = useState<Map<string, ShareUser>>(new Map());
   const [isSending, setIsSending] = useState(false);
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -171,19 +172,47 @@ export default function CocpitShareModel({
     );
   }, [users, isSearching, searchTerm]);
 
+  // Display users with selected users sorted to the top
+  const displayUsers = useMemo(() => {
+    const baseList = isSearching ? filteredUsers : users;
+
+    const selectedList = selectedUsers
+      .map((id) => {
+        return baseList.find((u) => u.id === id) || users.find((u) => u.id === id) || selectedUserMap.get(id);
+      })
+      .filter((u): u is ShareUser => Boolean(u));
+
+    const selectedIdsSet = new Set(selectedUsers);
+
+    const unselectedList = baseList.filter((u) => !selectedIdsSet.has(u.id));
+
+    return [...selectedList, ...unselectedList];
+  }, [isSearching, filteredUsers, users, selectedUsers, selectedUserMap]);
+
   const handleClose = () => {
     setSearchTerm("");
     setSelectedUsers([]);
+    setSelectedUserMap(new Map());
     onClose();
   };
 
-  const toggleSelected = (id: string) => {
+  const toggleSelected = (userToToggle: ShareUser) => {
+    const id = userToToggle.id;
     setSelectedUsers((prev) => {
       if (prev.includes(id)) {
         return prev.filter((uId) => uId !== id);
       } else {
         return [...prev, id];
       }
+    });
+    setSelectedUserMap((prev) => {
+      const next = new Map(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.set(id, userToToggle);
+      }
+      return next;
     });
   };
 
@@ -204,7 +233,7 @@ export default function CocpitShareModel({
 
       const responses = await Promise.all(
         selectedUsers.map((targetUserId) => {
-          const target = users.find((u) => u.id === targetUserId);
+          const target = displayUsers.find((u) => u.id === targetUserId) || users.find((u) => u.id === targetUserId);
           if (target && target.type === "GROUP") {
             return sendGroupMessage(
               targetUserId,
@@ -376,7 +405,7 @@ export default function CocpitShareModel({
 
               {/* List */}
               <div onScroll={handleScroll} className="flex-1 overflow-y-auto overflow-x-hidden w-full flex flex-col gap-[8px] mt-2 pb-2 scrollbar-hide">
-                {(!propUsers && !hasSearched) || (isSearchingApi && (isSearching ? filteredUsers : users).length === 0) ? (
+                {(!propUsers && !hasSearched) || (isSearchingApi && displayUsers.length === 0) ? (
                   <div className="flex flex-col w-full gap-[8px]">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <div key={i} className="flex items-center justify-between w-full h-[36px] shrink-0 gap-[8px]">
@@ -388,18 +417,18 @@ export default function CocpitShareModel({
                       </div>
                     ))}
                   </div>
-                ) : (isSearching ? filteredUsers : users).length === 0 ? (
+                ) : displayUsers.length === 0 ? (
                     <div className="py-8 text-center text-ds-text-muted ds-text-secondary">
                       No users found
                     </div>
                 ) : (
-                  (isSearching ? filteredUsers : users).map((u, index) => {
+                  displayUsers.map((u, index) => {
                     const checked = selectedUsers.includes(u.id);
                     return (
                       <div
                         key={`${u.id}-${index}`}
                         className="flex items-center justify-between w-full h-[36px] shrink-0 gap-[8px] cursor-pointer group"
-                        onClick={() => toggleSelected(u.id)}
+                        onClick={() => toggleSelected(u)}
                       >
                         <div className="flex items-center gap-[8px]">
                           <div className="relative h-[20px] w-[20px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center text-[10px] text-ds-text-primary shrink-0">

@@ -5,6 +5,35 @@ import { usePathname } from 'next/navigation';
 
 export const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
+/**
+ Helper to save current scroll position before navigating away (e.g. to a post or original post in repost),
+ * ensuring the user returns to their exact scroll position when navigating back.
+ */
+export const saveScrollPosition = (source = "post") => {
+  if (typeof window === "undefined") return;
+  const currentScroll = window.scrollY;
+  const currentPath = window.location.pathname;
+
+  sessionStorage.setItem(`scroll-${currentPath}`, currentScroll.toString());
+  sessionStorage.setItem("cocpit_scroll_y", currentScroll.toString());
+  sessionStorage.setItem("cocpit_scroll_source", source);
+  sessionStorage.setItem("cocpit_scroll_path", currentPath);
+  sessionStorage.setItem("cocpit_profile_scroll_y", currentScroll.toString());
+  sessionStorage.setItem("cocpit_profile_scroll_source", source);
+  sessionStorage.setItem("cocpit_profile_scroll_path", currentPath);
+
+  try {
+    const currentState = { ...window.history.state };
+    currentState.cocpit_scroll_y = currentScroll;
+    currentState.cocpit_scroll_source = source;
+    currentState.cocpit_scroll_path = currentPath;
+    currentState.cocpit_popstate_occurred = true;
+    window.history.replaceState(currentState, "", window.location.href);
+  } catch (err) {
+    console.error("Failed to update history state:", err);
+  }
+};
+
 export function useScrollRestoration(isReady: boolean, containerId?: string) {
   const pathname = usePathname();
   const restoredRef = useRef(false);

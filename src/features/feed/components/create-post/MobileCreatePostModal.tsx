@@ -128,14 +128,6 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           {/* Repost Preview */}
           {state.sharedPost && (
             <div className="ml-11 relative flex flex-col mt-2 animate-in fade-in duration-200">
-              <div className="flex justify-end mb-2">
-                <button 
-                  onClick={() => state.setSharedPost(null)}
-                  className="text-ds-text-secondary hover:text-ds-text-primary transition-colors -mr-2 p-1"
-                >
-                  <X className="w-5 h-5 ds-icon-20" />
-                </button>
-              </div>
               <div className="w-full border border-ds-border rounded-xl p-3 bg-transparent">
                 {/* Original Author */}
                 <div className="flex items-center gap-2 mb-2">
@@ -344,7 +336,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
             <div className="mb-3 ml-11">
               {state.selectedLocation ? (
                 <span className="text-[12px] text-ds-text-muted">
-                  {"formattedAddress" in state.selectedLocation ? state.selectedLocation.formattedAddress : state.selectedLocation.name} • <button onClick={() => setIsSettingLocation(true)} className="text-[var(--ds-accent)] font-medium hover:underline ml-1">Change</button>
+                  {"formattedAddress" in state.selectedLocation ? state.selectedLocation.formattedAddress : state.selectedLocation.name} • <button onClick={() => state.setSelectedLocation(null)} className="text-ds-error font-medium hover:underline ml-1">Remove</button>
                 </span>
               ) : (
                 <button onClick={() => setIsSettingLocation(true)} className="text-[12px] text-[var(--ds-accent)] font-medium hover:underline">Add location</button>
@@ -375,14 +367,23 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
               )}
             </div>
             
-            <button 
-              onClick={() => actions.handlePost()}
-              disabled={!isPostEnabled || state.isSubmitting}
-              className={`ds-btn h-[36px] ${isPostEnabled ? 'bg-[var(--ds-accent)] hover:opacity-90 text-white' : 'bg-ds-surface-2 text-ds-text-muted opacity-50 cursor-not-allowed'} rounded-full px-5 py-1.5 font-medium flex items-center gap-2 transition-all ml-auto`}
-            >
-              {state.isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {editPostId ? 'Save' : 'Post'}
-            </button>
+            <div className="flex items-center gap-[12px] ml-auto">
+              <button 
+                onClick={() => onClose()}
+                disabled={state.isSubmitting}
+                className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => actions.handlePost()}
+                disabled={!isPostEnabled || state.isSubmitting}
+                className={`ds-btn h-[36px] ${isPostEnabled ? 'bg-[var(--ds-accent)] hover:opacity-90 text-white' : 'bg-ds-surface-2 text-ds-text-muted opacity-50 cursor-not-allowed'} rounded-full px-5 py-1.5 font-medium flex items-center gap-2 transition-all`}
+              >
+                {state.isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {editPostId ? 'Save' : 'Post'}
+              </button>
+            </div>
           </div>
         </div>
 

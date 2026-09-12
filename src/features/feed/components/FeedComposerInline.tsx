@@ -108,7 +108,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
   const hasMedia = selectedImages.length > 0 || selectedVideo !== null;
   const showLocationFeature = hasContent || location !== null;
-  const canCancel = hasContent || location !== null;
+  const canCancel = hasContent || location !== null || isRepostMode;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -840,15 +840,6 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           {/* ── Shared Preview (Repost Mode or Edit Repost Mode) ─ */}
           {isRepostMode && resolvedRepostData && (
             <div className="relative w-full mt-[12px] pl-[44px]">
-              {!isEditMode && (
-                <button
-                  type="button"
-                  onClick={() => onClearRepost?.()}
-                  className="absolute bottom-full right-0 mb-[8px] p-1 text-ds-text-secondary hover:text-ds-text-primary transition-colors z-10 cursor-pointer"
-                >
-                  <X className="w-[20px] h-[20px]" />
-                </button>
-              )}
               <SharedPreview 
                 sharedPost={resolvedRepostData} 
                 sharedPostId={resolvedRepostData.id?.toString() || (resolvedRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
@@ -904,10 +895,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             <span className="w-[4px] h-[4px] rounded-full bg-ds-text-muted shrink-0" />
             <button
               type="button"
-              onClick={handleLocationToggle}
-              className="ds-text-body-1 text-ds-accent hover:opacity-80 cursor-pointer shrink-0"
+              onClick={handleLocationClear}
+              className="ds-text-body-1 text-ds-error hover:opacity-80 cursor-pointer shrink-0"
             >
-              Change
+              Remove
             </button>
           </div>
         ) : (
@@ -1017,7 +1008,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 <button
                   onClick={handlePost}
                   disabled={!canPost || isSubmitting}
-                  className={`w-[68px] h-[36px] flex items-center justify-center rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+                  className={`w-[77px] h-[36px] flex items-center justify-center rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
                     canPost && !isSubmitting
                       ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
                       : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'

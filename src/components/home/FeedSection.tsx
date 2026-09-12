@@ -24,6 +24,8 @@ import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadPr
 
 // Removed CreatePostModal
 
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration';
+
 interface FeedSectionProps {
     groups: StoryGroup[];
     storyLoading: boolean;
@@ -46,6 +48,9 @@ export const FeedSection = ({
     const router = useRouter();
     const { posts, sessionId, currentUser, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading, isError } = useFeed();
     const { activeProfile, isCompany, userCompanies } = useActiveProfile();
+
+    // Restore page scroll position when returning to feed after viewing a post or repost
+    useScrollRestoration(!feedLoading && posts.length > 0);
     const { pendingPosts, cancelUpload } = usePostUpload();
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editingPostData, setEditingPostData] = useState<any | null>(null);
