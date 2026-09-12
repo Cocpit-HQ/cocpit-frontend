@@ -63,10 +63,10 @@ export const usePostUpload = () => {
                 clearInterval(progressInterval);
             }
 
-            // Auto-clear after 3 seconds
+            // Auto-clear after a short delay (act as progress indicator, not a toast)
             setTimeout(() => {
                 setPendingPosts(prev => prev.filter(p => p.id !== id));
-            }, 3000);
+            }, 500);
 
             return mappedPostResult;
 
@@ -77,8 +77,10 @@ export const usePostUpload = () => {
                     error.message)
                 : 'Failed to upload';
 
-            const errObj = error as any;
-            const errMsg = errObj?.response?.data?.message || errObj?.message || "Unknown error";
+            const errObj = error as Record<string, unknown>;
+            const response = errObj?.response as Record<string, unknown> | undefined;
+            const data = response?.data as Record<string, unknown> | undefined;
+            const errMsg = data?.message || errObj?.message || "Unknown error";
             console.error("Upload failed specifically because:", errMsg);
             setPendingPosts(prev => prev.map(p =>
                 p.id === id ? { ...p, status: 'error', error: message } : p
@@ -86,7 +88,7 @@ export const usePostUpload = () => {
             toast.error(message || "Failed to publish post");
             throw error;
         }
-    }, [addPost, setPendingPosts]);
+    }, [addPost, setPendingPosts, queryClient]);
 
     return {
         pendingPosts,

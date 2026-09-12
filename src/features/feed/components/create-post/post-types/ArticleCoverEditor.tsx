@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Loader2, X, Crop, RefreshCw } from 'lucide-react';
+import { Loader2, X, Crop, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 import { Icon } from '@iconify/react';
-import { UploadIcon } from '@/components/icons';
+import { UploadIcon, EditIcon, DeleteIcon } from '@/components/icons';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/services/api/upload';
@@ -312,7 +312,7 @@ export default function ArticleCoverEditor({
                 className="flex items-center justify-center w-8 h-8 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 title="Edit"
               >
-                <Icon icon="lucide:pencil" className="w-4 h-4" />
+                <EditIcon className="w-4 h-4" />
               </button>
               <button
                 type="button"
@@ -321,7 +321,7 @@ export default function ArticleCoverEditor({
                 className="flex items-center justify-center w-8 h-8 rounded-lg text-ds-error hover:bg-white/10 transition-colors cursor-pointer"
                 title="Remove"
               >
-                <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                <DeleteIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -430,8 +430,9 @@ export default function ArticleCoverEditor({
             </div>
 
             {/* Image + controls: w-[600px] flex-col items-center */}
-            <div className="flex w-[600px] shrink-0 flex-col items-center gap-[16px]">
+            <div className="flex w-[600px] shrink-0 flex-col items-center gap-[24px]">
               {/* Banner: 600px x 338px */}
+              <div className="relative rounded-[16px]">
               <div
                 ref={containerRef}
                 onDoubleClick={() => fileInputRef.current?.click()}
@@ -475,12 +476,35 @@ export default function ArticleCoverEditor({
                   }}
                 />
 
-                {/* Optional visual indicator overlay on hover if not adjusting */}
-                {!isAdjustActive && (
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 pointer-events-none">
-                    <span className="text-white text-[12px] font-dm-sans bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm">
-                      Double-click to change
-                    </span>
+                  {/* Optional visual indicator overlay on hover if not adjusting */}
+                  {!isAdjustActive && (
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100 pointer-events-none">
+                      <span className="text-white text-[12px] font-dm-sans bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm">
+                        Double-click to change
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Adjust Overlay (Copied from CocpitUserProfileImageEditor) */}
+                {isAdjustActive && (
+                  <div className="absolute inset-0 pointer-events-none z-20 border border-dashed border-[var(--ds-accent)]">
+                    {/* 4 Corner Handles */}
+                    <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
+                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
+                    <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
+                    <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
+                    
+                    {/* 4 Edge Center Handles */}
+                    <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-3.5 h-1 bg-[var(--ds-accent)]" />
+                    <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-3.5 h-1 bg-[var(--ds-accent)]" />
+                    <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-3.5 bg-[var(--ds-accent)]" />
+                    <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-3.5 bg-[var(--ds-accent)]" />
+                    
+                    {/* Dimension Badge */}
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-[var(--ds-accent)] text-white text-[10px] font-semibold font-['DM_Sans'] rounded shadow-md pointer-events-none select-none tracking-tight whitespace-nowrap">
+                      1200 × 300
+                    </div>
                   </div>
                 )}
               </div>
@@ -548,24 +572,6 @@ export default function ArticleCoverEditor({
                   </span>
                 </button>
               </div>
-
-              {/* If adjust is active, show zoom slider right below tools */}
-              {isAdjustActive && (
-                <div className="flex items-center gap-3 w-[260px] animate-in fade-in slide-in-from-top-1 duration-150">
-                  <span className="text-[11px] font-dm-sans text-ds-text-secondary whitespace-nowrap">Zoom</span>
-                  <Slider
-                    value={[zoom]}
-                    onValueChange={(vals) => setZoom(vals[0])}
-                    min={0}
-                    max={200}
-                    step={1}
-                    className="w-full cursor-pointer"
-                  />
-                  <span className="text-[11px] font-dm-sans text-ds-text-secondary w-[30px] text-right">
-                    {zoom}%
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Save: flex h-[36px] w-[674px] shrink-0 flex-col items-end justify-center gap-[10px] */}

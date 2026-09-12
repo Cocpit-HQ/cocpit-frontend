@@ -302,12 +302,24 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   }, [isOpen, editPostId, sharedPostId]);
 
-  const handlePost = async (inlineFilesOrTagUserIds?: File[] | string[], tagUserIds?: string[], inlineMentionsParam?: any[]) => {
+  const handlePost = async (
+    inlineFilesOrTagUserIds?: File[] | string[],
+    tagUserIdsOrOverrideContent?: string[] | string,
+    inlineMentionsParam?: any[],
+    explicitOverrideContent?: string
+  ) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     let inlineFilesParam: File[] = [];
-    let activeTagUserIds: string[] | undefined = tagUserIds;
+    let activeTagUserIds: string[] | undefined = undefined;
+    let overrideContent: string | undefined = explicitOverrideContent;
+
+    if (typeof tagUserIdsOrOverrideContent === 'string') {
+      overrideContent = tagUserIdsOrOverrideContent;
+    } else if (Array.isArray(tagUserIdsOrOverrideContent)) {
+      activeTagUserIds = tagUserIdsOrOverrideContent;
+    }
 
     if (inlineFilesOrTagUserIds && inlineFilesOrTagUserIds.length > 0) {
       if (inlineFilesOrTagUserIds[0] instanceof File) {
@@ -374,7 +386,10 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       let finalContent = "";
       if (postType === 'article') {
-        finalContent = `${description.trim()}<!-- article_divider -->${articleData ? articleData.content : articleContent}`;
+        const bodyContent = overrideContent !== undefined 
+          ? overrideContent 
+          : (articleContent || (articleData ? articleData.content : ''));
+        finalContent = `${description.trim()}<!-- article_divider -->${bodyContent}`;
       } else {
         finalContent = sanitizeContent(description);
       }
@@ -433,8 +448,16 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       const filesToUpload = await media.prepareFilesToUpload(articleData ? 'article' : postType, media.aspectRatio);
 
-      // Combine cover/post files and inline article files
-      let combinedInlineFiles = [...(inlineFilesParam || []), ...actualInlineFiles];
+      // Combine cover/post files and inline article files without duplicate files
+      const rawInlineFiles = [...(inlineFilesParam || []), ...actualInlineFiles];
+      const seenInlineNames = new Set<string>();
+      const combinedInlineFiles: File[] = [];
+      for (const f of rawInlineFiles) {
+        if (!seenInlineNames.has(f.name)) {
+          seenInlineNames.add(f.name);
+          combinedInlineFiles.push(f);
+        }
+      }
       const allFilesToUpload = [...filesToUpload, ...combinedInlineFiles];
 
       if (editPostId) {
@@ -472,6 +495,19 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               }
               return v.url;
             });
+          } else if (postType === 'article') {
+            if (media.uploadedImages.length > 0) {
+              const coverImg = media.uploadedImages[0];
+              if (coverImg.file) {
+                const item = uploadedImageUrls[0];
+                const resolvedUrl = typeof item === 'object' && item !== null ? (item as any).url : item;
+                if (resolvedUrl) media_urls = [resolvedUrl];
+              } else if (coverImg.url) {
+                media_urls = [coverImg.url];
+              }
+            } else {
+              media_urls = [];
+            }
           }
 
 
@@ -482,7 +518,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
             post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)
           };
-          if (postType === 'article') updatePayload.title = articleTitle;
+          if (postType === 'article') updatePayload.title = articleTitle.trim();
           if (postType === 'poll') updatePayload.title = poll.pollQuestion;
           if (media_urls !== undefined) {
             updatePayload.media_urls = media_urls;
@@ -497,6 +533,10 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               ...updatePayload,
               category: postCategory,
             };
+            if (postType === 'article') {
+              updatedPost.articleBody = overrideContent !== undefined ? overrideContent : articleContent;
+              updatedPost.title = articleTitle.trim();
+            }
             if (media_urls !== undefined) {
               const images = media_urls.filter(url => !url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
               const video = media_urls.find(url => url.match(/\.(mp4|webm|mov)(\?|#|$)/i));

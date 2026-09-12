@@ -4,7 +4,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { SocketProvider } from "@/context/SocketContext";
 import { SocialProvider } from "@/context/SocialContext";
 import { StoriesProvider } from "@/context/StoriesContext";
-import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
 import { usePathname } from "next/navigation";
 import { useUIStore } from "@/store/ui.store";
 import { MobileCreatePostModal } from "@/features/feed/components/create-post";
@@ -31,7 +30,6 @@ export default function DashboardLayout({
             <SocialProvider>
                 <StoriesProvider enabled={isFeedRoute}>
                     <AppShell>{children}</AppShell>
-                    <GlobalUploadProgress />
                     
                     <MobileCreatePostModal 
                         isOpen={activeModal === 'create-post'} 

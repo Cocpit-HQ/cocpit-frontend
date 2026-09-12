@@ -1481,21 +1481,21 @@
   text-decoration: underline;
 }
 .article-content img, .article-editor img {
-  width: 100% !important;
-  height: auto !important;
-  object-fit: cover !important;
-  display: block !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  max-width: 100%;
+  height: auto;
+  border-radius: 24px;
+  display: block;
 }
 .article-content video, .article-editor video {
   width: 100% !important;
   border-radius: 8px;
 }
 .article-content div[contenteditable="false"], .article-editor div[contenteditable="false"] {
-  width: 100% !important;
-  height: auto !important;
-  display: block !important;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
+  overflow: hidden;
 }
 /* Hide leftover editor-only controls when article HTML is rendered on a read view.
    Scoped to .article-content only — the live editor (.article-editor) still needs these

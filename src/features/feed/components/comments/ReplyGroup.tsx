@@ -53,18 +53,18 @@ export default function ReplyGroup({
     if (!replies || replies.length === 0) return null;
 
     return (
-        <div className="mt-1 ml-2 md:ml-2 font-dmsans">
+        <div className="mt-1 font-dmsans pl-[32px]">
             {!isOpen ? (
                 /* ORIGINAL VIEW REPLIES BUTTON: <button onClick={() => setIsOpen(true)} className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-2 py-1 pl-9">View replies</button> */
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity"
+                    className="flex flex-row items-center gap-1 hover:opacity-80 transition-opacity"
                 >
                     <div className="w-[30px] border-t border-[#EC6229]" style={{ borderColor: 'var(--ds-accent, #EC6229)' }} />
                     <span className="ds-text-small-1 text-ds-accent">View {replies.length} more {replies.length === 1 ? 'reply' : 'replies'}</span>
                 </button>
             ) : (
-                <div className="ml-8 md:ml-10  pl-3 md:pl-4 space-y-3 mt-2">
+                <div className="space-y-3 mt-2">
                     {replies.map((reply) => (
                         /* ORIGINAL: <Comment key={reply.id} comment={reply} variant="reply" onReply={onReply} onDelete={onDelete} onEdit={onEdit} currentUserId={currentUserId} isPostOwner={isPostOwner} postId={postId} onReport={onReport} onHide={onHide} /> */
                         <React.Fragment key={reply.id}>
@@ -99,7 +99,7 @@ export default function ReplyGroup({
                     {/* ORIGINAL HIDE REPLIES BUTTON: <button onClick={() => setIsOpen(false)} className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2 pl-11">Hide replies</button> */}
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="flex flex-row items-center gap-1 pl-8 hover:opacity-80 transition-opacity mt-2"
+                        className="flex flex-row items-center gap-1 hover:opacity-80 transition-opacity mt-2"
                     >
                         <div className="w-[30px] border-t border-[#EC6229]" style={{ borderColor: 'var(--ds-accent, #EC6229)' }} />
                         <span className="ds-text-small-1 text-ds-accent">Hide replies</span>

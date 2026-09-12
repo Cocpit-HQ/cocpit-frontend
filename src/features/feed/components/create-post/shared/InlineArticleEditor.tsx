@@ -93,10 +93,10 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
         isEdit={isEdit}
         caption={state.description}
         onCaptionChange={state.setDescription}
-        onPost={async (inlineFiles) => {
+        onPost={async (inlineFiles, cleanContent) => {
             isSavingRef.current = true;
             try {
-              await actions.handlePost(inlineFiles);
+              await actions.handlePost(inlineFiles, cleanContent);
               try {
                 if (typeof window !== 'undefined') {
                   sessionStorage.removeItem('cocpit_article_draft');

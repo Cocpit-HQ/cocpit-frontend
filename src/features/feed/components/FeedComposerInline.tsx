@@ -830,7 +830,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             </div>
 
             {/* MentionTextarea — active, editable inline */}
-            <div className="flex-grow min-h-[36px]">
+            <div className="flex-grow min-h-[36px] mt-[6px]">
               <MentionTextarea
                 ref={textareaRef}
                 value={text}

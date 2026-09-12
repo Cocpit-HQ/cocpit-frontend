@@ -300,7 +300,7 @@ export const FeedPost = (props: FeedPostProps) => {
     if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
       return;
     }
-    router.push(`/post/${id}`);
+    router.push(isArticlePost ? `/article/${id}` : `/post/${id}`);
   };
 
   const isCompanyProfile = activeProfile?.type === 'COMPANY';

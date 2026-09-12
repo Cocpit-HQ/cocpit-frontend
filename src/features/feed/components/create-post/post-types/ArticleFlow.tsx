@@ -14,8 +14,11 @@ import {
   AlignJustifyIcon,
   ImageIcon,
   LinkIcon,
+  EditIcon,
+  DeleteIcon,
 } from '@/components/icons';
 import { Icon } from '@iconify/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { MediaItem } from '../types';
@@ -96,9 +99,9 @@ interface ArticleFlowProps {
   isEdit: boolean;
   caption: string;
   onCaptionChange: (value: string) => void;
-  onPost: (inlineFiles?: File[]) => Promise<void>;
+  onPost: (inlineFiles?: File[], currentContent?: string) => Promise<void>;
   isSubmitting: boolean;
-  onClose: (inlineFiles?: File[]) => Promise<void> | void;
+  onClose: (inlineFiles?: File[], currentContent?: string) => Promise<void> | void;
   currentUser: ArticleIdentity;
   currentPoster: ArticleIdentity;
   isCompanyPost: boolean;
@@ -193,28 +196,21 @@ const ArticleFlow = ({
   }, []);
 
   // Track initial state for edit mode to detect actual changes
-  const initialDataRef = useRef({
+  const initialDataRef = useRef<{
+    title: string;
+    content: string;
+    coverImage: string | null;
+  }>({
     title: '',
     content: '',
-    coverImage: null as string | null
+    coverImage: null
   });
 
-  useEffect(() => {
-    if (isEdit && title && initialDataRef.current.title === '') {
-      // Normalize the incoming content exactly how the editor does so we can do a fair equality check later
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = sanitizeArticleHtmlForDisplay(content);
-      // We must call initializeArticleImageNodes on the temp div because the editor will do the same,
-      // adding wrapper divs that would otherwise make the HTML strings look different.
-      initializeArticleImageNodes(tempDiv);
-
-      initialDataRef.current = {
-        title,
-        content: stripEditorControls(tempDiv.innerHTML),
-        coverImage: coverImage?.url || null
-      };
-    }
-  }, [isEdit, title, content, coverImage]);
+  const [initialData, setInitialData] = useState<{
+    title: string;
+    content: string;
+    coverImage: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (titleInputRef.current && title !== undefined) {
@@ -228,14 +224,14 @@ const ArticleFlow = ({
   // before write-time sanitization existed, or containing inline styles from any other source)
   // renders using the editor's own default formatting instead of whatever styling it carries -
   // otherwise the editor can visually diverge from how the same content renders once published.
-  const EDIT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>`;
-  const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="var(--ds-error)" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>`;
+  const EDIT_SVG = renderToStaticMarkup(<EditIcon size={20} />);
+  const DELETE_SVG = renderToStaticMarkup(<DeleteIcon size={20} />);
 
   const TOOLS_INNER_HTML = `
-    <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">
+    <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-text-primary hover:opacity-80" title="Edit">
       ${EDIT_SVG}
     </button>
-    <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">
+    <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-error hover:opacity-80" title="Delete">
       ${DELETE_SVG}
     </button>
   `;
@@ -363,22 +359,125 @@ const ArticleFlow = ({
     });
   };
 
+  const initializeArticleLinkNodes = (container: HTMLElement) => {
+    if (!container) return;
+    const aTags = Array.from(container.querySelectorAll('a'));
+    aTags.forEach(aTag => {
+      let wrapper = (aTag.closest('span.group') || aTag.closest('span[contenteditable="false"]')) as HTMLElement | null;
+      if (!wrapper) {
+        wrapper = document.createElement('span');
+        wrapper.className = "inline-block group relative font-poppins z-20 hover:z-50";
+        wrapper.setAttribute('contenteditable', 'false');
+        aTag.parentNode?.insertBefore(wrapper, aTag);
+        wrapper.appendChild(aTag);
+      }
+
+      let capsule = wrapper.querySelector('.link-preview-capsule') as HTMLElement | null;
+      if (!capsule) {
+        const href = aTag.getAttribute('href') || '';
+        const safeUrl = escapeHtml(href);
+        capsule = document.createElement('span');
+        capsule.className = "link-preview-capsule inline-flex items-center justify-center gap-[10px] h-[40px] px-3 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-all duration-200 absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap before:absolute before:top-0 before:-left-2 before:w-2 before:h-full before:content-['']";
+        capsule.innerHTML = `<button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-text-primary hover:opacity-80" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-error hover:opacity-80" title="Delete">${DELETE_SVG}</button>`;
+        wrapper.appendChild(capsule);
+      }
+    });
+  };
+
   const stripEditorControls = (html: string): string => {
     if (!html) return '';
     if (typeof window === 'undefined') return html;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
+    
+    // 1. Remove image tools
     const tools = tempDiv.querySelectorAll('.img-tools');
     tools.forEach(t => t.remove());
+
+    // 2. Remove link preview capsules
+    const capsules = tempDiv.querySelectorAll('.link-preview-capsule');
+    capsules.forEach(c => c.remove());
+
+    // 3. Unwrap link wrapper spans
+    const linkWrappers = tempDiv.querySelectorAll('span[contenteditable="false"]');
+    linkWrappers.forEach(w => {
+      const a = w.querySelector('a');
+      if (a) {
+        w.replaceWith(a);
+      }
+    });
+
     return tempDiv.innerHTML;
+  };
+
+  const normalizeContentForComparison = (html: string): string => {
+    if (!html) return '';
+    if (typeof window === 'undefined') return html.trim();
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = stripEditorControls(html);
+
+    // Only normalize media elements and wrapper divs where dimensions/attributes are dynamically computed
+    // Crucially, user formatting and alignment classes (e.g. text-center, text-right) on headings/paragraphs are preserved
+    const mediaWrappers = tempDiv.querySelectorAll('[contenteditable="false"]');
+    mediaWrappers.forEach(el => {
+      el.removeAttribute('style');
+      el.removeAttribute('class');
+      el.removeAttribute('contenteditable');
+    });
+
+    const mediaElements = tempDiv.querySelectorAll('img, video');
+    mediaElements.forEach(el => {
+      el.removeAttribute('style');
+      el.removeAttribute('class');
+      el.removeAttribute('data-natural-w');
+      el.removeAttribute('data-natural-h');
+      el.removeAttribute('width');
+      el.removeAttribute('height');
+    });
+
+    // Remove any empty class attributes or temporary IDs
+    const allElements = tempDiv.querySelectorAll('*');
+    allElements.forEach(el => {
+      if (el.getAttribute('class') === '') {
+        el.removeAttribute('class');
+      }
+      if (el.hasAttribute('id')) {
+        el.removeAttribute('id');
+      }
+    });
+
+    return tempDiv.innerHTML.replace(/\s+/g, ' ').trim();
   };
 
   useEffect(() => {
     if (editorRef.current) {
       editorRef.current.innerHTML = sanitizeArticleHtmlForDisplay(content);
       initializeArticleImageNodes(editorRef.current);
+      initializeArticleLinkNodes(editorRef.current);
+
+      if (isEdit) {
+        const snap = {
+          title: (title || '').trim(),
+          content: normalizeContentForComparison(editorRef.current.innerHTML),
+          coverImage: coverImage?.url || null
+        };
+        initialDataRef.current = snap;
+        setInitialData(snap);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    if (isEdit && !initialData && editorRef.current && (title || content)) {
+      const snap = {
+        title: (title || '').trim(),
+        content: normalizeContentForComparison(editorRef.current.innerHTML),
+        coverImage: coverImage?.url || null
+      };
+      initialDataRef.current = snap;
+      setInitialData(snap);
+    }
+  }, [isEdit, initialData, title, content, coverImage]);
 
   // Update innerHTML from parent if it diverges and editor is not focused
   useEffect(() => {
@@ -389,6 +488,7 @@ const ArticleFlow = ({
       if (currentClean !== incomingClean) {
         editorRef.current.innerHTML = sanitizeArticleHtmlForDisplay(content);
         initializeArticleImageNodes(editorRef.current);
+        initializeArticleLinkNodes(editorRef.current);
       }
     }
   }, [content]);
@@ -671,7 +771,7 @@ const ArticleFlow = ({
     const safeUrl = escapeHtml(formattedUrl);
     const safeTitle = escapeHtml(linkLabel);
 
-    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-ds-text-primary underline font-medium cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-between w-[301px] h-[40px] px-4 py-2 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-all duration-200 absolute left-0 top-full mt-1.5 z-50 whitespace-nowrap before:absolute before:-top-2 before:left-0 before:w-full before:h-2 before:content-['']"><span class="text-[14px] font-medium text-ds-text-primary max-w-[180px] min-w-0 truncate mr-2">${safeUrl}</span><span class="flex items-center gap-[10px] shrink-0"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">${DELETE_SVG}</button></span></span></span>&nbsp;`;
+    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-ds-accent text-[#EC6229] no-underline hover:opacity-80 font-medium cursor-pointer" style="color: #EC6229 !important; text-decoration: none !important;">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-center gap-[10px] h-[40px] px-3 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-all duration-200 absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap before:absolute before:top-0 before:-left-2 before:w-2 before:h-full before:content-['']"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-text-primary hover:opacity-80" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-error hover:opacity-80" title="Delete">${DELETE_SVG}</button></span></span>&nbsp;`;
 
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
@@ -832,10 +932,10 @@ const ArticleFlow = ({
             <div class="relative my-4 overflow-hidden group bg-transparent rounded-[24px]" style="width:${width}px !important;display:block" contenteditable="false">
               <img src="${imageUrl}" class="block rounded-[24px]" style="width:${width}px !important;height:${height}px !important;display:block" width="${width}" height="${height}" data-natural-w="${natW}" data-natural-h="${natH}" />
               <div class="img-tools absolute bottom-3 right-3 z-30 pointer-events-auto flex items-center gap-[10px] p-[8px] w-[78px] h-[40px] bg-ds-surface-2 rounded-[12px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Edit">
+                <button type="button" class="edit-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-text-primary hover:opacity-80" title="Edit">
                   ${EDIT_SVG}
                 </button>
-                <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer" title="Delete">
+                <button type="button" class="delete-img-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-error hover:opacity-80" title="Delete">
                   ${DELETE_SVG}
                 </button>
               </div>
@@ -937,9 +1037,11 @@ const ArticleFlow = ({
     const blobUrls = Array.from(currentContent.matchAll(/src="(blob:[^"]+)"/g)).map(m => m[1]);
     
     const filesToUpload: File[] = [];
+    const seen = new Set<string>();
     blobUrls.forEach(url => {
       const match = localFiles.find(f => f.id === url);
-      if (match) {
+      if (match && !seen.has(match.id)) {
+        seen.add(match.id);
         filesToUpload.push(match.file);
       }
     });
@@ -950,25 +1052,28 @@ const ArticleFlow = ({
 
 
   const handleOnPost = async () => {
+    let cleanContent = content;
     if (editorRef.current) {
-      const cleanContent = stripEditorControls(editorRef.current.innerHTML);
+      cleanContent = stripEditorControls(editorRef.current.innerHTML);
       onContentChange(cleanContent);
     }
     const files = getFilesToUpload();
-    await onPost(files);
+    await onPost(files, cleanContent);
+    
+    if (isEdit && editorRef.current) {
+      const snap = {
+        title: (title || '').trim(),
+        content: normalizeContentForComparison(editorRef.current.innerHTML),
+        coverImage: coverImage?.url || null
+      };
+      setInitialData(snap);
+      initialDataRef.current = snap;
+    }
   };
 
-  const hasUnsavedChanges = () => {
-    const cleanContent = editorRef.current ? stripEditorControls(editorRef.current.innerHTML) : content;
-    
-    if (isEdit) {
-      const titleChanged = title.trim() !== initialDataRef.current.title.trim();
-      const contentChanged = cleanContent !== initialDataRef.current.content;
-      const coverChanged = (coverImage?.url || null) !== initialDataRef.current.coverImage;
-      const hasLocalFiles = localFiles.length > 0;
-      
-      return titleChanged || contentChanged || coverChanged || hasLocalFiles;
-    } else {
+  const hasUnsavedChanges = (): boolean => {
+    if (!isEdit) {
+      const cleanContent = editorRef.current ? stripEditorControls(editorRef.current.innerHTML) : content;
       const textContent = cleanContent.replace(/<[^>]*>/g, '').trim();
       return (
         title.trim().length > 0 ||
@@ -978,6 +1083,16 @@ const ArticleFlow = ({
         localFiles.length > 0
       );
     }
+
+    if (!initialData) return false;
+
+    const currentClean = normalizeContentForComparison(editorRef.current ? editorRef.current.innerHTML : content);
+    const titleChanged = title.trim() !== initialData.title.trim();
+    const contentChanged = currentClean !== initialData.content;
+    const coverChanged = (coverImage?.url || null) !== initialData.coverImage;
+    const hasLocalFiles = localFiles.length > 0;
+
+    return titleChanged || contentChanged || coverChanged || hasLocalFiles;
   };
 
   const handleOnClose = async (skipConfirm?: boolean | React.MouseEvent) => {
@@ -985,16 +1100,18 @@ const ArticleFlow = ({
       setShowDiscardConfirm(true);
       return;
     }
+    let cleanContent = content;
     if (editorRef.current) {
-      const cleanContent = stripEditorControls(editorRef.current.innerHTML);
+      cleanContent = stripEditorControls(editorRef.current.innerHTML);
       onContentChange(cleanContent);
     }
     const files = getFilesToUpload();
-    await onClose(files);
+    await onClose(files, cleanContent);
   };
 
-  const hasContent = content.replace(/<[^>]*>/g, '').trim().length > 0 || content.includes('<img');
-  const isNextActive = title.trim().length > 0 && hasContent && coverImage !== null;
+  const hasContent = content.replace(/<[^>]*>/g, '').trim().length > 0 || content.includes('<img') || content.includes('<video');
+  const hasBasicFields = title.trim().length > 0 && hasContent && coverImage !== null;
+  const isNextActive = isEdit ? (hasBasicFields && hasUnsavedChanges()) : hasBasicFields;
 
   const authorName = isCompanyPost ? (currentPoster?.name || 'Company') : (currentUser?.name || 'User');
   const subtitleText = isCompanyPost 
@@ -1100,7 +1217,7 @@ const ArticleFlow = ({
             Enhance with AI
           </button>
           <button
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isNextActive}
             onClick={handleOnPost}
             className={cn(
               "ds-btn ml-auto",
@@ -1412,17 +1529,19 @@ const ArticleFlow = ({
             </button>
           </div>
 
-          {/* Primary emphasis button (Post): w-[68px] h-[36px] padding 6px 12px gap 10px bg-[#1A1A20] rounded-[100px] */}
+          {/* Primary emphasis button (Save / Post): w-[77px] h-[36px] padding 6px 12px gap 10px rounded-[100px] */}
           <button
             type="button"
             disabled={!isNextActive || isSubmitting}
             onClick={handleOnPost}
-            aria-label="Post article"
+            aria-label={isEdit ? "Save article" : "Post article"}
             className={cn(
-              "w-[68px] h-[36px] flex items-center justify-center px-[12px] py-[6px] gap-[10px] rounded-[100px] font-dm-sans font-medium text-[16px] leading-[24px] transition-all shrink-0",
-              isNextActive
-                ? "bg-[#1A1A20] text-[#FFECE6] border border-[#2C2C33] hover:border-[#FFECE6] cursor-pointer shadow-sm active:scale-95"
-                : "bg-[#1A1A20] text-[#726B67] cursor-not-allowed border border-[#2C2C33]"
+              "w-[77px] h-[36px] flex items-center justify-center px-[12px] py-[6px] gap-[10px] rounded-[100px] font-dm-sans font-medium text-[16px] leading-[24px] transition-all shrink-0 select-none outline-none",
+              isSubmitting
+                ? "bg-[var(--ds-accent)] text-white border border-transparent opacity-80 cursor-wait shadow-sm"
+                : isNextActive
+                  ? "bg-[var(--ds-accent)] text-white border border-transparent hover:opacity-90 active:scale-95 cursor-pointer shadow-sm"
+                  : "bg-[#1A1A20] text-[#726B67] cursor-not-allowed border border-[#2C2C33]"
             )}
           >
             {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -1488,7 +1607,7 @@ const ArticleFlow = ({
           onPaste={handlePaste}
           onClick={handleEditorClick}
           {...{ placeholder: "Write your thoughts" }}
-          className="article-editor outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-normal text-[16px] leading-[24px] min-h-[300px] pb-16 h-auto w-[688px] max-w-full flex-shrink-0 overflow-visible cursor-text"
+          className="article-editor outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-normal text-[16px] leading-[24px] min-h-[300px] pb-16 h-auto w-[688px] max-w-full flex-shrink-0 overflow-visible cursor-text [&_a]:!text-[#EC6229] [&_a]:!no-underline"
         />
       </div>
 

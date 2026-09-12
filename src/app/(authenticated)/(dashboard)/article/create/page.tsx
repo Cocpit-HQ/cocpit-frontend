@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import InlineArticleEditor from '@/features/feed/components/create-post/shared/InlineArticleEditor';
 
+import { useUIStore } from '@/store/ui.store';
+
 export default function CreateArticlePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -15,14 +17,17 @@ export default function CreateArticlePage() {
     queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
     queryClient.invalidateQueries({ queryKey: ['posts'] });
 
+    useUIStore.getState().setArticleMode(false);
+    
     if (window.history.length > 1) {
-      router.back();
+      router.push('/feed');
     } else {
       router.push('/feed');
     }
   };
 
   const handleClose = () => {
+    useUIStore.getState().setArticleMode(false);
     router.push('/feed');
   };
 

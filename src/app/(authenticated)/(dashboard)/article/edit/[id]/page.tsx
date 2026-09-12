@@ -20,13 +20,10 @@ export default function EditArticlePage() {
     queryClient.invalidateQueries({ queryKey: ['profile'] });
     queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
     queryClient.invalidateQueries({ queryKey: ['posts'] });
+    queryClient.invalidateQueries({ queryKey: ['post', id] });
+    queryClient.invalidateQueries({ queryKey: ['article', id] });
     
-    // Navigate back to where the user came from, falling back to feed
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/feed');
-    }
+    // We intentionally do not redirect here so the user stays in the editor after saving.
   };
 
   const handleClose = () => {

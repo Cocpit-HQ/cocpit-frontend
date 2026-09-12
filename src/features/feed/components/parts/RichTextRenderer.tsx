@@ -165,7 +165,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
         if (part.includes('@') && new RegExp(`^${EMAIL_PATTERN}$`, 'i').test(part)) {
           if (disableLinks) {
             return (
-              <span key={i} className="text-ds-text-primary font-medium">
+              <span key={i} className="text-[#EC6229] font-medium">
                 {part}
               </span>
             );
@@ -175,7 +175,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
             <a
               key={i}
               href={`mailto:${part}`}
-              className="text-ds-text-primary font-medium hover:underline decoration-1 underline-offset-2 transition-all"
+              className="text-[#EC6229] font-medium no-underline hover:opacity-80 transition-all"
               onClick={(e) => e.stopPropagation()}
             >
               {part}
@@ -190,7 +190,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
         if (isUrl) {
           if (disableLinks) {
             return (
-              <span key={i} className="text-[#5B7CFF] font-medium break-all">
+              <span key={i} className="text-[#EC6229] font-medium break-all">
                 {part}
               </span>
             );
@@ -207,7 +207,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#5B7CFF] font-medium hover:underline decoration-1 underline-offset-2 transition-all break-all"
+              className="text-[#EC6229] font-medium no-underline hover:opacity-80 transition-all break-all"
               onClick={(e) => e.stopPropagation()}
             >
               {part}

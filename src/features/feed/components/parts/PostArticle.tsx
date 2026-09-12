@@ -24,7 +24,7 @@ export const PostArticle: React.FC<PostArticleProps> = ({
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/post/${postId}`);
+    router.push(`/article/${postId}`);
   };
 
   return (
@@ -35,7 +35,7 @@ export const PostArticle: React.FC<PostArticleProps> = ({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          router.push(`/post/${postId}`);
+          router.push(`/article/${postId}`);
         }
       }}
       aria-label={`Read article: ${title || 'Untitled Article'}`}

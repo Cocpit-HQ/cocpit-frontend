@@ -169,7 +169,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   return (
     <div 
       id={`comment-${id}`} 
-      className={`flex gap-3 relative group transition-all duration-300 font-dmsans ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
+      className={`flex gap-[8px] relative group transition-all duration-300 font-dmsans ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {/* Avatar Column */}
       <div className="flex-shrink-0 shrink-0 flex-none">
@@ -199,14 +199,14 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
       <div className="flex-1 min-w-0">
         {/* Top Info Row */}
         <div className="flex justify-between items-start mb-1">
-          <div className="flex flex-col">
-            <Link href={authorLink} className="hover:underline leading-tight flex items-baseline gap-1.5 flex-wrap">
+          <div className="flex flex-col min-w-0 mr-2">
+            <Link href={authorLink} className="leading-tight flex items-baseline gap-1.5 flex-wrap">
               {/* ORIGINAL: <span className="text-sm font-bold text-black">{author?.name || 'Anonymous'}</span> */}
-              <span className="ds-text-body text-ds-text-primary">{author?.name || 'Anonymous'}</span>
+              <span className="ds-text-body text-ds-text-primary truncate max-w-full">{author?.name || 'Anonymous'}</span>
             </Link>
             {author?.headline && (
               /* ORIGINAL: <span className="text-[12px] text-muted-foreground font-normal leading-tight mt-0.5">{author.headline}</span> */
-              <span className="ds-text-meta text-ds-text-secondary mt-0.5">
+              <span className="ds-text-meta text-ds-text-secondary mt-0.5 truncate max-w-full">
                 {author.headline}
               </span>
             )}

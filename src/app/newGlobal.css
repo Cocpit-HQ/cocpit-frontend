@@ -1938,10 +1938,11 @@ textarea.mention-textarea-input:not(:placeholder-shown) {
 .article-content li p, .article-editor li p,
 .article-content li div:not([contenteditable="false"]), .article-editor li div:not([contenteditable="false"]) { margin: 0 !important; padding: 0 !important; display: inline !important; }
 .article-content strong, .article-editor strong { font-weight: 700 !important; }
-.article-content a, .article-editor a { color: #4f46e5; text-decoration: underline; }
-.article-content img, .article-editor img { width: 100% !important; height: auto !important; object-fit: cover !important; display: block !important; margin-left: auto !important; margin-right: auto !important; }
+.article-content a, .article-editor a { color: #EC6229 !important; text-decoration: none !important; }
+.article-content img, .article-editor img { max-width: 100%; height: auto; border-radius: 24px; display: block; }
 .article-content video, .article-editor video { width: 100% !important; border-radius: 8px; }
-.article-content div[contenteditable="false"], .article-editor div[contenteditable="false"] { width: 100% !important; height: auto !important; display: block !important; }
+.article-content div[contenteditable="false"] { width: fit-content; max-width: 100%; height: auto; display: block; border-radius: 24px; overflow: hidden; }
+.article-editor div[contenteditable="false"] { max-width: 100%; height: auto; display: block; border-radius: 24px; overflow: hidden; }
 .article-content .edit-link-btn, .article-content .delete-link-btn, .article-content .link-preview-capsule, .article-content .img-tools { display: none !important; }
 
 /* Link preview capsule & action buttons: only active and visible when link is hovered */

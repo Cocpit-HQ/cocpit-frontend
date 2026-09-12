@@ -9,9 +9,76 @@ import DOMPurify from 'dompurify';
 // URLs the editor uses before upload substitution (mirrors the backend allowlist) aren't stripped.
 const ALLOWED_URI_REGEXP = /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i;
 
+const cleanEditorArtifacts = (html: string): string => {
+  if (typeof window === 'undefined' || !html) return html;
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // 1. Remove editor tools and link preview capsules by class
+    doc.querySelectorAll('.link-preview-capsule, .img-tools, .edit-link-btn, .delete-link-btn, .edit-img-btn, .delete-img-btn').forEach(el => el.remove());
+
+    // 2. Unwrap span[contenteditable="false"] wrapping an <a> tag and drop internal editor artifacts
+    doc.querySelectorAll('span[contenteditable="false"]').forEach(wrapper => {
+      const a = wrapper.querySelector('a');
+      if (a) {
+        wrapper.replaceWith(a);
+      }
+    });
+
+    // 3. Remove leaked link preview spans right next to or inside the same parent as an <a> tag
+    // (This handles posts stored where the backend stripped the .link-preview-capsule class)
+    doc.querySelectorAll('a').forEach(a => {
+      const href = a.getAttribute('href')?.trim() || '';
+
+      // Check immediate sibling
+      let next = a.nextSibling;
+      while (next && next.nodeType === Node.TEXT_NODE && !next.textContent?.trim()) {
+        next = next.nextSibling;
+      }
+      if (next && next.nodeType === Node.ELEMENT_NODE && (next as Element).tagName === 'SPAN') {
+        const nextEl = next as HTMLElement;
+        const text = nextEl.textContent?.trim() || '';
+        if (
+          (href && text === href) ||
+          (href && text.includes(href)) ||
+          text.startsWith('http://') ||
+          text.startsWith('https://') ||
+          nextEl.querySelector('.edit-link-btn, .delete-link-btn')
+        ) {
+          nextEl.remove();
+        }
+      }
+
+      // Check any sibling spans inside the same parent span
+      const parent = a.parentElement;
+      if (parent && parent.tagName === 'SPAN') {
+        parent.querySelectorAll('span').forEach(childSpan => {
+          if (!childSpan.contains(a)) {
+            const childText = childSpan.textContent?.trim() || '';
+            if (
+              (href && childText === href) ||
+              (href && childText.includes(href)) ||
+              childText.startsWith('http://') ||
+              childText.startsWith('https://')
+            ) {
+              childSpan.remove();
+            }
+          }
+        });
+      }
+    });
+
+    return doc.body.innerHTML;
+  } catch (e) {
+    return html;
+  }
+};
+
 export const sanitizeArticleHtmlForDisplay = (html: string) => {
   if (typeof window === 'undefined' || !html) return html;
-  return DOMPurify.sanitize(html, {
+  const preCleaned = cleanEditorArtifacts(html);
+  return DOMPurify.sanitize(preCleaned, {
     USE_PROFILES: { html: true, svg: true, svgFilters: true },
     ADD_TAGS: ['svg', 'path', 'line', 'circle', 'rect', 'g'],
     ADD_ATTR: [
@@ -21,7 +88,7 @@ export const sanitizeArticleHtmlForDisplay = (html: string) => {
       'data-natural-w', 'data-natural-h'
     ],
     FORBID_ATTR: ['style', 'id'],
-    ALLOW_DATA_ATTR: false,
+    ALLOW_DATA_ATTR: true,
     ALLOWED_URI_REGEXP,
   });
 };

@@ -114,13 +114,13 @@ export const FeedSection = ({
                     }}
                 />
 
-                {/* Mobile Progress Strip (Hidden on Desktop) */}
-                <div className="w-full flex flex-col md:hidden px-4 pt-2">
+                {/* Global Progress Strip (for articles, etc) */}
+                <div className="w-full flex flex-col px-4 pt-2 max-w-[442px] mx-auto">
                     {pendingPosts.map(post => (
                         <PostUploadProgressStrip
                             key={post.id}
                             progress={post.progress}
-                            phase={post.status as any}
+                            phase={post.status as 'uploading' | 'processing' | 'error' | 'success'}
                             onCancel={() => cancelUpload(post.id)}
                         />
                     ))}
