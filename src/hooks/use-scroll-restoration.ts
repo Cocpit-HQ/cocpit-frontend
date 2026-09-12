@@ -48,7 +48,10 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
   useIsomorphicLayoutEffect(() => {
     if (isReady && !restoredRef.current) {
-      const saved = sessionStorage.getItem(`scroll-${pathname}`);
+      const { useUIStore } = require('@/store/ui.store');
+      const isEditing = !!useUIStore.getState().editingPostId;
+      
+      const saved = !isEditing ? sessionStorage.getItem(`scroll-${pathname}`) : null;
       
       const getScrollElement = () => containerId ? document.getElementById(containerId) : null;
 

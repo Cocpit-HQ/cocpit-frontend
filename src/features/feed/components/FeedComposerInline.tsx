@@ -157,6 +157,9 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   // ── Edit Mode Initialization ──────────────────────────────────────────────
   React.useEffect(() => {
     if (isEditMode && editPostData) {
+      // Scroll to top is now handled natively and instantly by useScrollRestoration.ts
+      // bypassing the aggressive scroll-restoration lock.
+      
       setIsExpanded(true);
       const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(editPostData.content || '');
       setText(parsedContent);
