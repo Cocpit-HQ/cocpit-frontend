@@ -1526,9 +1526,9 @@ const MessageText = ({
   const renderTextWithMentions = (text: string) => {
     if (!text) return null;
 
-    // Support structured mentions, legacy mentions, AND Job URLs
+    // Only match structured mentions @[Name](account) for registered platform users and Job URLs
     const combinedRegex =
-      /(https?:\/\/[^\s]+\/jobs\/[a-zA-Z0-9-]+(?:\?[^\s]*)?)|(@\[[^\]]+\]\([^)]+\)|@[a-zA-Z0-9_.\-]+)/g;
+      /(https?:\/\/[^\s]+\/jobs\/[a-zA-Z0-9-]+(?:\?[^\s]*)?)|(@\[[^\]]+\]\([^)]+\))/g;
     const parts = text.split(combinedRegex);
 
     if (parts.length <= 1) return text;
@@ -1571,26 +1571,7 @@ const MessageText = ({
         );
       }
 
-      // 3. Handle Simple Mentions (@username)
-      const simpleMatch = part.match(/^@([a-zA-Z0-9_.\-]+)$/);
-      if (simpleMatch) {
-        const username = simpleMatch[1];
-        return (
-          <Mention key={i} username={username} isMe={isMe}>
-            <span
-              className={cn(
-                "hover:underline cursor-pointer font-['Poppins'] font-medium text-[12px]",
-                isMe
-                  ? "text-[var(--primary-foreground)]"
-                  : "text-[var(--primary)]",
-              )}
-            >
-              {part}
-            </span>
-          </Mention>
-        );
-      }
-
+      // Unregistered @usernames fall through to plain text rendering below without link styling
       return <span key={i}>{part}</span>;
     });
   };

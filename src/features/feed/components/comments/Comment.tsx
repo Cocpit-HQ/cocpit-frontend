@@ -36,8 +36,8 @@ interface CommentProps {
 
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
   if (!text) return null;
-  // Match both structured mentions @[Name](account) and legacy mentions @account
-  const parts = text.split(/(@\[[^\]]+\]\([^)]+\)|@\w+)/g);
+  // Only match structured mentions @[Name](account) for registered platform users
+  const parts = text.split(/(@\[[^\]]+\]\([^)]+\))/g);
   
   return parts.map((part, index) => {
     let accountName = '';
@@ -47,9 +47,6 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
     if (structuredMatch) {
       displayName = structuredMatch[1];
       accountName = structuredMatch[2];
-    } else if (part.startsWith('@')) {
-      accountName = part.substring(1);
-      displayName = accountName; // Legacy fallback
     }
 
     if (accountName) {

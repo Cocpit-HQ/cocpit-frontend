@@ -367,7 +367,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
             .sort((a, b) => b.length - a.length);
         const nameRegexPart = escapedNames.length > 0 ? `\u200B(?:${escapedNames.join('|')})|` : '';
-        const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\))`, 'g');
+        const regex = new RegExp(`(${nameRegexPart}\u200B[^\\s\u200B]+|@\\[[^\\]]+\\]\\([^)]+\\)|(?:^|\\s)#[a-zA-Z0-9_]+)`, 'g');
 
         const parts = text.split(regex);
         return (
@@ -379,6 +379,17 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                                 key={i} 
                                 className="mention-token text-[var(--ds-accent)] !text-[var(--ds-accent)]"
                                 style={{ color: 'var(--ds-accent)' }}
+                            >
+                                {part}
+                            </span>
+                        );
+                    }
+                    if (/(?:^|\s)#[a-zA-Z0-9_]+/.test(part)) {
+                        return (
+                            <span 
+                                key={i} 
+                                className="hashtag-token text-[var(--ds-text-primary)] !text-[var(--ds-text-primary)] font-semibold"
+                                style={{ color: 'var(--ds-text-primary)' }}
                             >
                                 {part}
                             </span>

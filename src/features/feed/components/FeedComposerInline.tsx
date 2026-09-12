@@ -154,6 +154,13 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
     if (onClearRepost) onClearRepost();
   }, [selectedImages, selectedVideo, poll, onClearEdit, onClearRepost]);
 
+  // Purpose of Bug Fix: Auto-expand inline composer when repostData (quoted post) is provided
+  React.useEffect(() => {
+    if (repostData) {
+      setIsExpanded(true);
+    }
+  }, [repostData]);
+
   // ── Edit Mode Initialization ──────────────────────────────────────────────
   React.useEffect(() => {
     if (isEditMode && editPostData) {

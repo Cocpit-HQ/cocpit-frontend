@@ -25,12 +25,10 @@ const EMAIL_PATTERN = '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}';
 const FULL_URL_PATTERN = '(?:https?://|www\\.)[^\\s/$.?#].[^\\s]*';
 const NAKED_DOMAIN_PATTERN = '\\b[a-zA-Z0-9-]+\\.(?:com|net|org|in|io|me|ai|app|dev|site|page|biz|info)\\b';
 
-// Structured mentions: @[Display Name](handle)
+// Structured mentions: @[Display Name](handle) - Only registered platform users selected from autocomplete generate structured mentions
 const STRUCTURED_MENTION_PATTERN = '@\\[[^\\]]+\\]\\([^)]+\\)';
-// Legacy mentions: @handle (No spaces allowed to prevent greedy matching)
-const LEGACY_MENTION_PATTERN = '(?:^|\\s)@[a-zA-Z0-9._]+';
-
-const MENTION_PATTERN = `(?:${STRUCTURED_MENTION_PATTERN})|(?:${LEGACY_MENTION_PATTERN})`;
+// Only highlight valid registered mentions in orange accent colour; unregistered raw @usernames are left as plain text
+const MENTION_PATTERN = STRUCTURED_MENTION_PATTERN;
 
 // Helper to escape special characters for regex
 const escapeRegExp = (string: string) => {
@@ -124,40 +122,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
           );
         }
 
-        // 3. Handle Legacy Mentions (@username)
-        const legacyMatch = part.match(/(^|\s)@([a-zA-Z0-9._]+)$/i);
-        if (legacyMatch) {
-          const leadingSpace = legacyMatch[1];
-          const handle = legacyMatch[2];
-
-          if (disableLinks) {
-            return (
-              <Fragment key={i}>
-                {leadingSpace}
-                <span
-                  className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
-                  style={{ color: 'var(--ds-accent)' }}
-                >
-                  @{handle}
-                </span>
-              </Fragment>
-            );
-          }
-
-          return (
-            <Fragment key={i}>
-              {leadingSpace}
-              <Link
-                href={`/profile/${handle.toLowerCase()}`}
-                className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold no-underline hover:no-underline cursor-pointer transition-opacity hover:opacity-80"
-                style={{ color: 'var(--ds-accent)' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                @{handle}
-              </Link>
-            </Fragment>
-          );
-        }
+        // Note: Unregistered @usernames are not structured mentions and will fall through to plain text rendering below without orange styling.
 
         // 4. Handle Hashtags (#tag)
         const hashtagMatch = part.match(/(^|\s)#([a-zA-Z0-9_]+)/i);
@@ -170,7 +135,10 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
               return (
                 <Fragment key={i}>
                   {leadingSpace}
-                  <span className="inline-block px-1 -mx-1 text-ds-text-primary font-semibold">
+                  <span
+                    className="inline-block px-1 -mx-1 text-ds-text-primary text-[var(--ds-text-primary)] !text-[var(--ds-text-primary)] font-semibold"
+                    style={{ color: 'var(--ds-text-primary)' }}
+                  >
                     #{hashtagMatch[2]}
                   </span>
                 </Fragment>
@@ -182,7 +150,8 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
                 {leadingSpace}
                 <Link
                   href={`/hashtag/${tag}`}
-                  className="inline-block px-1 -mx-1 text-ds-text-primary font-semibold hover:bg-ds-surface-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-md focus:outline-none"
+                  className="inline-block px-1 -mx-1 text-ds-text-primary text-[var(--ds-text-primary)] !text-[var(--ds-text-primary)] font-semibold hover:bg-ds-surface-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-md focus:outline-none"
+                  style={{ color: 'var(--ds-text-primary)' }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   #{hashtagMatch[2]}

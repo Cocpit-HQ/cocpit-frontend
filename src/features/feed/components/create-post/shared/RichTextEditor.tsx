@@ -199,7 +199,7 @@ const RichTextEditor = ({
                     index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
                   )}
                 >
-                  <span className="font-medium text-primary">#{highlightMatch(h.tag, query)}</span>
+                  <span className="font-medium text-ds-text-primary text-[var(--ds-text-primary)]" style={{ color: 'var(--ds-text-primary)' }}>#{highlightMatch(h.tag, query)}</span>
                   <span className="text-[10px] text-muted-foreground">{h.usage_count} posts</span>
                 </div>
               ))}

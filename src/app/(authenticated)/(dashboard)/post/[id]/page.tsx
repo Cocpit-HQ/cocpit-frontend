@@ -11,6 +11,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 import { ChevronLeft, X } from "lucide-react";
 import api from "@/lib/axios";
+import { useUIStore } from "@/store/ui.store";
 
 interface PageProps {
   params: Promise<{
@@ -85,31 +86,29 @@ export default function SinglePostPage({ params }: PageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-ds-bg text-ds-text-primary flex flex-col items-center pb-16 select-none">
-      {/* ── Top Navigation Bar: < Back on left, ✕ on right ── */}
-      <div className="w-full max-w-[442px] mx-auto flex items-center justify-between py-4 px-4 sm:px-0">
-        <button
-          type="button"
-          onClick={handleBack}
-          aria-label="Go back"
-          className="group flex items-center gap-1.5 py-1.5 px-2 -ml-2 rounded-[6px] text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
-        >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
-          <span className="font-['DM_Sans'] font-medium text-[14px] leading-[20px]">Back</span>
-        </button>
+    <div className="min-h-screen bg-ds-bg text-ds-text-primary flex flex-col items-center pb-16 select-none relative">
+      {/* Post detail navigation header: Back button (top: 40px, left: 40px) and Cancel icon (top: 40px, right: 40px) */}
+      <button
+        type="button"
+        onClick={handleBack}
+        aria-label="Go back"
+        className="absolute left-4 sm:left-10 top-4 sm:top-10 flex items-center gap-2 h-6 rounded-[6px] text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-10"
+      >
+        <ChevronLeft className="w-5 h-5 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors shrink-0" />
+        <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px]">Back</span>
+      </button>
 
-        <button
-          type="button"
-          onClick={handleClose}
-          aria-label="Close post"
-          className="flex items-center justify-center w-8 h-8 -mr-1.5 rounded-[6px] text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleClose}
+        aria-label="Close post"
+        className="absolute right-4 sm:right-10 top-4 sm:top-10 flex items-center justify-center w-5 h-5 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-10"
+      >
+        <X className="w-5 h-5" />
+      </button>
 
-      {/* ── Main Post View Container ── */}
-      <div className="w-full max-w-[442px] px-4 sm:px-0 mx-auto">
+      {/* ── Main Post View Container (Figma top: 60px) ── */}
+      <div className="w-full max-w-[442px] px-4 sm:px-0 mx-auto pt-4 sm:pt-[60px]">
         {loading ? (
           <div className="w-full bg-ds-bg rounded-[8px] p-6 flex flex-col gap-4 animate-pulse">
             {/* Author header skeleton */}
@@ -152,6 +151,14 @@ export default function SinglePostPage({ params }: PageProps) {
             menuAccess={menuAccess}
             isFullContent={true}
             initialShowComments={showComments}
+            // Purpose of Bug Fix: Enable Repost with Thoughts on post detail page to populate quoted post into UI store and navigate to feed composer
+            onRepostWithThoughts={(postToQuote) => {
+              useUIStore.getState().setSharedPostData(postToQuote);
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                useUIStore.getState().setActiveModal('create-post');
+              }
+              router.push('/feed');
+            }}
           />
         ) : null}
       </div>

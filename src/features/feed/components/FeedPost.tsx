@@ -137,8 +137,9 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const { videoRef, finalAspectRatio, handleMediaLoad } = usePostMediaObserver(targetId, targetVideoSrc, props.aspectRatio);
 
+  // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(
-    props.initialShowComments || props.isFullContent || false
+    Boolean(props.initialShowComments)
   );
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(Boolean(props.isFullContent));
@@ -228,17 +229,14 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const searchParams = useSearchParams();
   useEffect(() => {
-    if (props.isFullContent) {
-      setIsCommentSectionOpen(true);
-      return;
-    }
+    // Purpose of Bug Fix: Do not auto-expand comments on post detail view unless comments flag or commentId is present in URL
     if (searchParams?.get("comments") === "true" || !!searchParams?.get("commentId") || props.initialShowComments) {
       setIsCommentSectionOpen(true);
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         setIsMobileDrawerOpen(true);
       }
     }
-  }, [searchParams, props.isFullContent, props.initialShowComments]);
+  }, [searchParams, props.initialShowComments]);
 
 
   const optionsBtnRef = useRef<HTMLButtonElement>(null);

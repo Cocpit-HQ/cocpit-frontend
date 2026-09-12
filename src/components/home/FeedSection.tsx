@@ -55,7 +55,10 @@ export const FeedSection = ({
     const editingPostId = useUIStore(state => state.editingPostId);
     const editingPostData = useUIStore(state => state.editingPostData);
     const setEditMode = useUIStore(state => state.setEditMode);
+    const storeSharedPostData = useUIStore(state => state.sharedPostData);
     const [repostingPostData, setRepostingPostData] = useState<any | null>(null);
+    // Purpose of Bug Fix: Combine local repost state with UI store sharedPostData for post detail page redirect
+    const activeRepostData = repostingPostData || storeSharedPostData;
 
     const activeAccount = useMemo(() => (
         isCompany && activeProfile
@@ -97,14 +100,18 @@ export const FeedSection = ({
                     onPostCreated={() => {
                         resetSession();
                         setRepostingPostData(null);
+                        useUIStore.getState().setSharedPostData(null);
                     }}
                     editPostId={editingPostId}
                     editPostData={editingPostData}
                     onClearEdit={() => {
                         setEditMode(false, null, null);
                     }}
-                    repostData={repostingPostData}
-                    onClearRepost={() => setRepostingPostData(null)}
+                    repostData={activeRepostData}
+                    onClearRepost={() => {
+                        setRepostingPostData(null);
+                        useUIStore.getState().setSharedPostData(null);
+                    }}
                 />
 
                 {/* Mobile Progress Strip (Hidden on Desktop) */}
