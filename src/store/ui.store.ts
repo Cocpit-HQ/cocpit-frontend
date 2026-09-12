@@ -28,13 +28,14 @@ interface UIState {
   } | null;
   isEditMode: boolean;
   editingPostId: string | null;
+  editingPostData: any | null;
   
   setSidebarOpen: (open: boolean) => void;
   setActiveModal: (modal: string | null, type?: PostType) => void;
   setPendingPosts: (fn: (prev: PendingPost[]) => PendingPost[]) => void;
   setArticleMode: (mode: boolean) => void;
   setArticleDraft: (draft: any) => void;
-  setEditMode: (isEdit: boolean, postId?: string | null) => void;
+  setEditMode: (isEdit: boolean, postId?: string | null, postData?: any | null) => void;
   sharedPostData: any | null;
   setSharedPostData: (data: any | null) => void;
 }
@@ -48,6 +49,7 @@ export const useUIStore = create<UIState>((set) => ({
   articleDraft: null,
   isEditMode: false,
   editingPostId: null,
+  editingPostData: null,
   sharedPostData: null,
   
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
@@ -76,6 +78,6 @@ export const useUIStore = create<UIState>((set) => ({
     }));
   },
   setArticleDraft: (draft) => set({ articleDraft: draft }),
-  setEditMode: (isEdit, postId = null) => set({ isEditMode: isEdit, editingPostId: postId }),
+  setEditMode: (isEdit, postId = null, postData = null) => set({ isEditMode: isEdit, editingPostId: postId, editingPostData: postData }),
   setSharedPostData: (data) => set({ sharedPostData: data }),
 }));

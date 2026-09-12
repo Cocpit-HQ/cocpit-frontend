@@ -29,23 +29,24 @@ export function AppShell({
   const searchParams = useSearchParams();
   const isCreateJobActive = searchParams?.get('view') === 'create-job';
 
-  // Automatically hide bottom nav and distraction-free elements on article pages or article mode
+  // Automatically hide bottom nav and distraction-free elements on article pages, article mode, or post detail full view
   const isArticlePage = pathname?.includes('/article/');
+  const isPostDetailPage = pathname?.startsWith('/post/');
   const { activeModal, isArticleMode } = useUIStore();
-  const isDistractionFreeArticle = isArticlePage || isArticleMode;
-  const shouldHideBottomNav = hideBottomNav || isDistractionFreeArticle || activeModal === 'create-post';
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage;
+  const shouldHideBottomNav = hideBottomNav || isDistractionFree || activeModal === 'create-post';
 
   return (
     <div className="relative flex flex-col min-h-screen bg-ds-bg text-foreground overflow-x-hidden">
       {/* Desktop sidebar */}
-      {!isDistractionFreeArticle && (
+      {!isDistractionFree && (
         <div className="hidden md:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />
         </div>
       )}
       
       {/* Top Header */}
-      {!isDistractionFreeArticle && (
+      {!isDistractionFree && (
         <>
           <div className="hidden md:block">
             <TopHeader />
@@ -57,7 +58,7 @@ export function AppShell({
       )}
 
       {/* Main content */}
-      <main className={isDistractionFreeArticle ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full md:pl-[220px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
+      <main className={isDistractionFree ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full md:pl-[220px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
         {children}
       </main>
 
@@ -70,7 +71,7 @@ export function AppShell({
           <MobileBottomNav />
         </>
       )}
-      {!isDistractionFreeArticle && <QuickChatWidget />}
+      {!isDistractionFree && <QuickChatWidget />}
     </div>
   );
 }

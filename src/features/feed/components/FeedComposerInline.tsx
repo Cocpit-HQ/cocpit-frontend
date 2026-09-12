@@ -864,16 +864,25 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           {/* ── Attached Video Preview ─ */}
           {selectedVideo && mode === 'video' && (
             <div className="w-full pl-[44px]">
-              <div className="relative w-full rounded-2xl overflow-hidden group">
+              <div className="relative w-full max-w-[442px] rounded-2xl overflow-hidden group">
                 <PostVideoCard
                   videoSrc={selectedVideo.previewUrl}
-                  showHeader={false}
+                  author={activeProfile?.name || 'Marcus avery'}
+                  authorId={(activeProfile as any)?.id}
+                  authorAvatar={avatarUrl}
+                  authorRole={(activeProfile as any)?.headline || (activeProfile as any)?.role || 'Senior product designer'}
+                  content={text}
+                  showHeader={true}
+                  showFooter={true}
+                  isPreview={true}
+                  isMe={true}
+                  isCompanyPost={isCompanyPost}
                 />
                 {!isEditMode && (
                   <button
                     type="button"
                     onClick={handleRemoveVideo}
-                    className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
+                    className="absolute top-3 left-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
                     title="Remove video"
                   >
                     <X className="w-4 h-4" />

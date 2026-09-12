@@ -49,7 +49,7 @@ export const LikeBar: React.FC<LikeBarProps> = ({
 
   const baseClasses = variant === 'overlay'
     ? "absolute bottom-[12px] left-[12px] flex flex-row items-center gap-[6px] px-[10px] py-[4px] bg-ds-bg/60 backdrop-blur-md border border-white/10 rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2/90 transition-colors shadow-sm z-10 select-none"
-    : "flex flex-row items-center justify-start gap-[6px] pointer-events-auto px-[8px] py-[4px] mt-[4px] cursor-pointer w-fit rounded-[16px] bg-ds-surface-1/60 hover:bg-ds-surface-2 transition-colors select-none";
+    : "flex flex-row items-center justify-start gap-[6px] pointer-events-auto px-0 py-1 mt-[2px] cursor-pointer w-fit bg-transparent hover:opacity-80 transition-opacity select-none";
 
   return (
     <div

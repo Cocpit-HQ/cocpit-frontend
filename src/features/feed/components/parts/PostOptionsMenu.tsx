@@ -18,6 +18,7 @@ interface PostOptionsMenuProps {
   onRemoveMention?: () => void;
   isReported?: boolean;
   isPollPost?: boolean;
+  visibility?: string;
 }
 
 export const PostOptionsMenu = ({
@@ -35,6 +36,7 @@ export const PostOptionsMenu = ({
   onRemoveMention,
   isReported,
   isPollPost,
+  visibility,
 }: PostOptionsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -110,12 +112,14 @@ export const PostOptionsMenu = ({
               Edit post
             </button>
           )}
+          {/*
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onMakePrivate); }}
             className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
           >
-            Make private
+            {visibility === 'private' ? 'Make public' : 'Make private'}
           </button>
+          */}
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onDelete); }}
             className="ds-text-secondary text-[var(--ds-error)] hover:opacity-80 transition-opacity outline-none w-full text-left"

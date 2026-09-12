@@ -44,7 +44,7 @@ export function Sidebar({ className }: SidebarProps) {
           { iconName: 'feed' as IconName, label: 'Feed', href: '/feed' },
           { iconName: 'connection' as IconName, label: 'Connection', href: '/connections' },
           { iconName: 'chat' as IconName, label: 'Chat', href: '/messaging' },
-          { iconName: 'channel' as IconName, label: 'Channel', href: '/channels' },
+          // { iconName: 'channel' as IconName, label: 'Channel', href: '/channels' },
         ],
         gapTop: 'mt-0' // First section has no extra top gap
       },

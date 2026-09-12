@@ -1,129 +1,160 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState, use } from "react"
-import { getPostById } from "@/services/api/posts"
-import { FeedPost } from "@/features/feed/components/FeedPost"
-import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper"
-import { Post } from "@/types/entities"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess"
-import { ArrowLeft, Loader2 } from "lucide-react"
-import api from "@/lib/axios"
+import React, { useEffect, useState, use } from "react";
+import { getPostById } from "@/services/api/posts";
+import { FeedPost } from "@/features/feed/components/FeedPost";
+import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper";
+import { Post } from "@/types/entities";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
+import { ChevronLeft, X } from "lucide-react";
+import api from "@/lib/axios";
 
 interface PageProps {
-    params: Promise<{
-        id: string
-    }>
+  params: Promise<{
+    id: string;
+  }>;
 }
 
 export default function SinglePostPage({ params }: PageProps) {
-    const { id } = use(params)
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const showComments = searchParams.get("comments") === "true" || !!searchParams.get("commentId")
-    const { data: session } = useSession()
-    const [post, setPost] = useState<Post | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState("")
-    const { userCompanies, activeProfile } = useActiveProfile()
+  const { id } = use(params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const showComments = searchParams.get("comments") === "true" || !!searchParams.get("commentId");
+  const { data: session } = useSession();
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { userCompanies, activeProfile } = useActiveProfile();
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-        const fetchPost = async () => {
-            try {
-                const backendPost = await getPostById(id)
-                const mappedPost = mapBackendPostToFrontend(backendPost)
-                if (mappedPost.is_community_article && mappedPost.communityId) {
-                    router.replace(`/channels/${mappedPost.communityId}/article/${mappedPost.id}`)
-                    return
-                }
-                setPost(mappedPost)
-            } catch (err: any) {
-                if (err?.response?.status !== 404) {
-                    console.error("Failed to load post:", err)
-                }
-                setError("Failed to load post. It may have been deleted.")
-            } finally {
-                setLoading(false)
-            }
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const fetchPost = async () => {
+      try {
+        const backendPost = await getPostById(id);
+        const mappedPost = mapBackendPostToFrontend(backendPost);
+        if (mappedPost.is_community_article && mappedPost.communityId) {
+          router.replace(`/channels/${mappedPost.communityId}/article/${mappedPost.id}`);
+          return;
         }
-
-        if (id) {
-            fetchPost()
+        setPost(mappedPost);
+      } catch (err: any) {
+        if (err?.response?.status !== 404) {
+          console.error("Failed to load post:", err);
         }
-    }, [id])
+        setError("Failed to load post. It may have been deleted.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Fire impression when the post finishes loading on the detail page.
-    // Opening a detail page is an explicit view — track it immediately.
-    useEffect(() => {
-        if (!post) return;
-        api.post(`/dashboard/post/${id}/impression`).catch(() => {
-            // silent fail
-        });
-    }, [id, post])
+    if (id) {
+      fetchPost();
+    }
+  }, [id, router]);
 
-    const menuAccess = getPostMenuAccess({
-        isCompanyPost: post?.isCompanyPost,
-        companyId: post?.author_org_id,
-        createdByUserId: post?.createdByUserId,
-        currentUserId: session?.user?.id,
-        userCompanies,
-        activeProfile,
-    })
+  // Fire impression when the post finishes loading on the detail page.
+  useEffect(() => {
+    if (!post) return;
+    api.post(`/dashboard/post/${id}/impression`).catch(() => {
+      // silent fail
+    });
+  }, [id, post]);
 
-    return (
-        <div className="min-h-screen bg-transparent text-foreground md:pr-[220px]">
-            <div className="pt-4 md:pt-6 pb-4 md:pb-8">
-                <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
-                    <div className="mx-auto max-w-[998px] w-full flex flex-col items-center">
-                        <div className="max-w-[442px] w-full px-4 md:px-0 mb-8">
-                            {/* Navigation Header */}
-                            <div className="flex items-center gap-4 mb-8">
-                                <button
-                                    onClick={() => router.back()}
-                                    className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors text-foreground"
-                                >
-                                    <ArrowLeft className="w-5 h-5" />
-                                </button>
-                                <h1 className="text-2xl font-bold text-foreground font-[family-name:var(--font-poppins)]">Post Details</h1>
-                            </div>
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/feed");
+    }
+  };
 
-                            <div className="flex flex-col gap-[24px]">
-                                {/* Main Content Area */}
-                                <div className="space-y-[24px]">
-                                    {loading ? (
-                                        <div className="flex flex-col items-center justify-center py-20 bg-card rounded-[24px] border border-border/40">
-                                            <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-                                            <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">Loading post details...</p>
-                                        </div>
-                                    ) : error ? (
-                                        <div className="text-center py-20 bg-card rounded-[24px] border border-destructive/20">
-                                            <p className="text-destructive font-medium font-[family-name:var(--font-poppins)]">{error}</p>
-                                            <button 
-                                                onClick={() => router.back()}
-                                                className="mt-4 px-6 py-2 bg-primary text-white rounded-full text-sm font-medium"
-                                            >
-                                                Go Back
-                                            </button>
-                                        </div>
-                                    ) : post ? (
-                                        <div className="w-full bg-card rounded-[24px] overflow-hidden">
-                                            <FeedPost
-                                                {...post}
-                                                menuAccess={menuAccess}
-                                                isFullContent={true}
-                                                initialShowComments={showComments}
-                                            />
-                                        </div>
-                                    ) : null}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  const handleClose = () => {
+    router.push("/feed");
+  };
+
+  const menuAccess = getPostMenuAccess({
+    isCompanyPost: post?.isCompanyPost,
+    companyId: post?.author_org_id,
+    createdByUserId: post?.createdByUserId,
+    currentUserId: session?.user?.id,
+    userCompanies,
+    activeProfile,
+  });
+
+  return (
+    <div className="min-h-screen bg-ds-bg text-ds-text-primary flex flex-col items-center pb-16 select-none">
+      {/* ── Top Navigation Bar: < Back on left, ✕ on right ── */}
+      <div className="w-full max-w-[442px] mx-auto flex items-center justify-between py-4 px-4 sm:px-0">
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Go back"
+          className="group flex items-center gap-1.5 py-1.5 px-2 -ml-2 rounded-[6px] text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        >
+          <ChevronLeft className="w-5 h-5 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors" />
+          <span className="font-['DM_Sans'] font-medium text-[14px] leading-[20px]">Back</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleClose}
+          aria-label="Close post"
+          className="flex items-center justify-center w-8 h-8 -mr-1.5 rounded-[6px] text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* ── Main Post View Container ── */}
+      <div className="w-full max-w-[442px] px-4 sm:px-0 mx-auto">
+        {loading ? (
+          <div className="w-full bg-ds-bg rounded-[8px] p-6 flex flex-col gap-4 animate-pulse">
+            {/* Author header skeleton */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-ds-surface-2 shrink-0" />
+              <div className="flex flex-col gap-1.5 flex-1">
+                <div className="w-32 h-3.5 bg-ds-surface-2 rounded" />
+                <div className="w-24 h-2.5 bg-ds-surface-2 rounded" />
+              </div>
             </div>
-        </div>
-    )
+            {/* Post body skeleton */}
+            <div className="flex flex-col gap-2 pt-1">
+              <div className="w-full h-3 bg-ds-surface-2 rounded" />
+              <div className="w-4/5 h-3 bg-ds-surface-2 rounded" />
+              <div className="w-2/3 h-3 bg-ds-surface-2 rounded" />
+            </div>
+            {/* Media skeleton */}
+            <div className="w-full h-[320px] bg-ds-surface-2 rounded-[8px]" />
+            {/* Action bar skeleton */}
+            <div className="flex items-center gap-4 pt-2">
+              <div className="w-6 h-6 bg-ds-surface-2 rounded" />
+              <div className="w-6 h-6 bg-ds-surface-2 rounded" />
+              <div className="w-6 h-6 bg-ds-surface-2 rounded" />
+            </div>
+          </div>
+        ) : error ? (
+          <div className="w-full bg-ds-bg rounded-[8px] p-8 text-center flex flex-col items-center justify-center gap-4">
+            <p className="font-['DM_Sans'] text-ds-text-secondary text-[14px]">{error}</p>
+            <button
+              type="button"
+              onClick={handleBack}
+              className="px-4 py-2 bg-ds-surface-2 hover:bg-ds-border text-ds-text-primary rounded-[8px] text-[13px] font-medium transition-colors cursor-pointer border border-ds-border"
+            >
+              Back to Feed
+            </button>
+          </div>
+        ) : post ? (
+          <FeedPost
+            {...post}
+            menuAccess={menuAccess}
+            isFullContent={true}
+            initialShowComments={showComments}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
 }

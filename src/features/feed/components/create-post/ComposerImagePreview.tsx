@@ -96,9 +96,9 @@ export const ComposerImagePreview = ({
     const singleImage = images[0];
     return (
       <div className="w-full flex flex-col items-start gap-1 select-none">
-        <div className="w-full flex justify-center items-center">
+        <div className="w-full flex justify-start items-center">
           <div
-            className="relative group overflow-hidden rounded-2xl flex items-center justify-center"
+            className="relative group overflow-hidden rounded-2xl flex items-center justify-start"
             style={{
               maxWidth: `${MAX_MEDIA_WIDTH}px`,
               maxHeight: `${MAX_MEDIA_HEIGHT}px`,

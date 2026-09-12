@@ -141,7 +141,7 @@ export const FeedPost = (props: FeedPostProps) => {
     props.initialShowComments || props.isFullContent || false
   );
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(Boolean(props.isFullContent));
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [selectedLikesPostId, setSelectedLikesPostId] = useState<string | null>(null);
@@ -228,7 +228,11 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const searchParams = useSearchParams();
   useEffect(() => {
-    if (props.isFullContent || searchParams?.get("comments") === "true" || !!searchParams?.get("commentId") || props.initialShowComments) {
+    if (props.isFullContent) {
+      setIsCommentSectionOpen(true);
+      return;
+    }
+    if (searchParams?.get("comments") === "true" || !!searchParams?.get("commentId") || props.initialShowComments) {
       setIsCommentSectionOpen(true);
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         setIsMobileDrawerOpen(true);
@@ -242,6 +246,10 @@ export const FeedPost = (props: FeedPostProps) => {
   const handleToggleCommentSection = () => {
     if (props.onCommentClickOverride) {
       props.onCommentClickOverride();
+      return;
+    }
+    if (props.isFullContent) {
+      setIsCommentSectionOpen(!isCommentSectionOpen);
       return;
     }
     if (window.innerWidth < 768) {
@@ -285,7 +293,7 @@ export const FeedPost = (props: FeedPostProps) => {
     setIsShareModalOpen(true);
   };
 
-  const isVideoFeedCard = false; // Disabled full-screen video feed card per mobile responsive design
+  const isVideoFeedCard = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
 
   const handlePostClick = (e: React.MouseEvent) => {
     if (props.isFullContent) return;
@@ -427,10 +435,33 @@ export const FeedPost = (props: FeedPostProps) => {
     );
   }
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (props.isFullContent) return;
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') || 
+      target.closest('a') || 
+      target.closest('input') || 
+      target.closest('textarea') || 
+      target.closest('[role="button"]') || 
+      target.closest('.prevent-card-click')
+    ) {
+      return;
+    }
+    if (targetId && targetId !== 'preview') {
+      router.push(`/post/${targetId}`);
+    }
+  };
+
   return (
     <>
       <div
-        className={`w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`}
+        onClick={handleCardClick}
+        className={
+          props.isFullContent
+            ? "w-full max-w-[442px] mx-auto bg-ds-bg flex flex-col gap-[16px] cursor-default box-border"
+            : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`
+        }
       >
       {isRepostWithoutThoughts && shared_post && (
         <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
@@ -441,33 +472,7 @@ export const FeedPost = (props: FeedPostProps) => {
         </div>
       )}
 
-      {/* Video Overlay Card or Regular Layout */}
-      {isVideoFeedCard ? (
-        <PostVideoCard
-          id={targetId}
-          videoSrc={targetVideoSrc}
-          videoRef={videoRef}
-          onLoad={handleMediaLoad}
-          finalAspectRatio={finalAspectRatio}
-          author={targetAuthor}
-          authorId={targetAuthorId}
-          authorAvatar={targetAuthorAvatar}
-          authorSlug={targetAuthorSlug}
-          authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
-          location={targetLocation}
-          timeAgo={targetTimeAgo}
-          visibility={targetVisibility}
-          isMe={isTargetAuthorMe}
-          isCompanyPost={targetIsCompanyPost}
-          optionsBtnRef={optionsBtnRef}
-          showOptions={showOptions}
-          setShowOptions={setShowOptions}
-          setOptionsPos={setOptionsPos}
-          content={targetContent}
-          isExpanded={isExpanded}
-          onToggleExpand={() => setIsExpanded(!isExpanded)}
-        />
-      ) : (
+      {props.isFullContent ? (
         <>
           {/* Header */}
           <PostHeader
@@ -488,8 +493,134 @@ export const FeedPost = (props: FeedPostProps) => {
             setOptionsPos={setOptionsPos}
           />
 
+          {/* Full Post Description Text */}
+          {targetContent && (
+            <PostBody
+              content={targetContent}
+              author={targetAuthor}
+              authorSlug={targetAuthorSlug}
+              isExpanded={isExpanded}
+              onToggleExpand={() => setIsExpanded(!isExpanded)}
+              hasMedia={hasMedia || isVideoFeedCard}
+            />
+          )}
+
+          {interactionTargetProps.shared_post && (
+            <div className="w-full">
+              <SharedPreview 
+                sharedPost={interactionTargetProps.shared_post} 
+                sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
+                isMobile={typeof window !== 'undefined' && window.innerWidth < 768} 
+              />
+            </div>
+          )}
+
+          {/* Media: Video / Article / Images */}
+          {isVideoFeedCard ? (
+            <PostMedia
+              videoSrc={targetVideoSrc}
+              mediaWidth={interactionTargetProps.mediaWidth}
+              mediaHeight={interactionTargetProps.mediaHeight}
+              videoRef={videoRef}
+              onLoad={handleMediaLoad}
+              tags={targetTags}
+              likeCount={likeCount}
+              isLiked={isLiked}
+              sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+              likedUsers={targetLikedUsers}
+              viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+              onShowLikes={() => handleOpenLikesModal()}
+              videoOverlay={false}
+            />
+          ) : isArticlePost ? (
+            <PostArticle
+              postId={targetId}
+              title={targetTitle}
+              coverImage={targetImageSrc || (targetImages && targetImages.length > 0 ? targetImages[0] : null)}
+            />
+          ) : hasMedia ? (
+            <PostMedia
+              imageSrc={targetImageSrc}
+              images={targetImages}
+              mediaWidth={interactionTargetProps.mediaWidth}
+              mediaHeight={interactionTargetProps.mediaHeight}
+              videoSrc={targetVideoSrc}
+              videoRef={videoRef}
+              onLoad={handleMediaLoad}
+              tags={targetTags}
+              likeCount={likeCount}
+              isLiked={isLiked}
+              sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+              likedUsers={targetLikedUsers}
+              viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+              onShowLikes={() => handleOpenLikesModal()}
+              hideOverlayLikeBar={true}
+            />
+          ) : null}
+        </>
+      ) : isVideoFeedCard ? (
+        <>
+          {/* Video post: header & caption rendered INSIDE video via PostMedia overlay */}
+          <PostMedia
+            videoSrc={targetVideoSrc}
+            mediaWidth={interactionTargetProps.mediaWidth}
+            mediaHeight={interactionTargetProps.mediaHeight}
+            videoRef={videoRef}
+            onLoad={handleMediaLoad}
+            tags={targetTags}
+            likeCount={likeCount}
+            isLiked={isLiked}
+            sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+            likedUsers={targetLikedUsers}
+            viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+            onShowLikes={() => handleOpenLikesModal()}
+            videoOverlay={true}
+            overlayHeader={
+              <PostHeader
+                id={targetId}
+                author={targetAuthor}
+                authorId={targetAuthorId}
+                authorAvatar={targetAuthorAvatar}
+                authorSlug={targetAuthorSlug}
+                authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
+                location={targetLocation}
+                timeAgo={targetTimeAgo}
+                visibility={targetVisibility}
+                isMe={isTargetAuthorMe}
+                isCompanyPost={targetIsCompanyPost}
+                optionsBtnRef={optionsBtnRef}
+                showOptions={showOptions}
+                setShowOptions={setShowOptions}
+                setOptionsPos={setOptionsPos}
+                variant="overlay"
+              />
+            }
+            overlayCaption={targetContent}
+          />
+        </>
+      ) : (
+        <>
+          {/* Non-video post: header & caption outside media */}
+          <PostHeader
+            id={targetId}
+            author={targetAuthor}
+            authorId={targetAuthorId}
+            authorAvatar={targetAuthorAvatar}
+            authorSlug={targetAuthorSlug}
+            authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
+            location={targetLocation}
+            timeAgo={targetTimeAgo}
+            visibility={targetVisibility}
+            isMe={isTargetAuthorMe}
+            isCompanyPost={targetIsCompanyPost}
+            optionsBtnRef={optionsBtnRef}
+            showOptions={showOptions}
+            setShowOptions={setShowOptions}
+            setOptionsPos={setOptionsPos}
+          />
+
           {/* Body (for non-video and non-poll posts, context sits above media) */}
-          {!targetVideoSrc && !pollData && (
+          {!pollData && (
             <PostBody
               content={targetContent}
               author={targetAuthor}
@@ -535,18 +666,6 @@ export const FeedPost = (props: FeedPostProps) => {
               onShowLikes={() => handleOpenLikesModal()}
             />
           )}
-
-          {/* Body (for video posts, context sits below video) */}
-          {!!targetVideoSrc && (
-            <PostBody
-              content={targetContent}
-              author={targetAuthor}
-              authorSlug={targetAuthorSlug}
-              isExpanded={isExpanded}
-              onToggleExpand={() => setIsExpanded(!isExpanded)}
-              hasMedia={true}
-            />
-          )}
         </>
       )}
 
@@ -562,8 +681,8 @@ export const FeedPost = (props: FeedPostProps) => {
         />
       )}
 
-      {/* Liked By (No Media) - Changed: Replaced duplicate liker rendering with unified inline LikeBar component */}
-      {!((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc) && (
+      {/* Liked By - Shown in full view, when no media (text-only), or for video feed cards */}
+      {(props.isFullContent || isVideoFeedCard || !((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc)) && (
         <LikeBar
           likeCount={likeCount}
           isLiked={isLiked}
@@ -655,7 +774,12 @@ export const FeedPost = (props: FeedPostProps) => {
         <DeleteConfirmationModal
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
-          onConfirm={confirmDelete}
+          onConfirm={async () => {
+            await confirmDelete();
+            if (props.isFullContent) {
+              router.push('/feed');
+            }
+          }}
         />
       )}
 
@@ -665,17 +789,23 @@ export const FeedPost = (props: FeedPostProps) => {
         position={optionsPos}
         isMe={isRepostWithoutThoughts ? false : isTargetAuthorMe}
         isPollPost={!!pollData}
+        visibility={targetVisibility}
         onEdit={() => {
           setShowOptions(false);
           if (isArticlePost) {
             router.push(`/article/edit/${id}`);
           } else {
-            if (typeof window !== 'undefined' && window.innerWidth < 768) {
-              const { useUIStore } = require('@/store/ui.store');
-              useUIStore.getState().setEditMode(true, id.toString());
-              useUIStore.getState().setActiveModal('create-post');
+            if (props.onEdit) {
+              props.onEdit(props);
             } else {
-              props.onEdit?.(props);
+              const { useUIStore } = require('@/store/ui.store');
+              useUIStore.getState().setEditMode(true, id.toString(), props);
+              
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                useUIStore.getState().setActiveModal('create-post');
+              } else {
+                router.push('/feed');
+              }
             }
           }
         }}

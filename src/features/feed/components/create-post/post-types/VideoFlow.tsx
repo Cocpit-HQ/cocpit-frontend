@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, Plus, X, Trash2 } from 'lucide-react';
+import { Video, X, Trash2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import RichTextEditor from '../shared/RichTextEditor';
 import { MediaItem } from '../types';
@@ -16,6 +16,9 @@ interface VideoFlowProps {
   videoInputRef: React.RefObject<HTMLInputElement | null>;
   isEditingMedia?: boolean;
   setIsEditingMedia?: (isEditing: boolean) => void;
+  currentUser?: any;
+  currentPoster?: any;
+  isCompanyPost?: boolean;
 }
 
 const VideoFlow = ({
@@ -28,10 +31,18 @@ const VideoFlow = ({
   onRemoveVideo,
   videoInputRef,
   isEditingMedia,
-  setIsEditingMedia
+  setIsEditingMedia,
+  currentUser,
+  currentPoster,
+  isCompanyPost
 }: VideoFlowProps) => {
-
   const hasVideos = uploadedVideos.length > 0;
+
+  const authorName = (isCompanyPost ? currentPoster?.name : (currentPoster?.name || currentUser?.name)) || 'Marcus avery';
+  const authorAvatar = (isCompanyPost 
+    ? (currentPoster?.logo_url || currentPoster?.avatar_url || currentPoster?.logo || currentPoster?.image)
+    : (currentUser?.image || currentPoster?.logo_url || '/assets/pngegg.png')) || '/assets/pngegg.png';
+  const authorRole = (isCompanyPost ? 'Company' : (currentUser?.headline || currentUser?.role)) || 'Senior product designer';
 
   if (isMobile) {
     return (
@@ -59,15 +70,26 @@ const VideoFlow = ({
               style={{ minHeight: '96px', maxHeight: '200px' }}
             />
 
-            <div className="relative group">
+            <div className="relative group max-w-[442px] mx-auto w-full">
               <PostVideoCard
                 videoSrc={uploadedVideos[0].url}
-                showHeader={false}
+                author={authorName}
+                authorId={currentUser?.id || currentPoster?.id}
+                authorAvatar={authorAvatar}
+                authorRole={authorRole}
+                content={caption}
+                showHeader={true}
+                showFooter={true}
+                isPreview={true}
+                isMe={true}
+                isCompanyPost={isCompanyPost}
               />
               {!isEdit && (
                 <button
+                  type="button"
                   onClick={() => onRemoveVideo(uploadedVideos[0].id)}
-                  className="absolute top-2 right-2 p-2 rounded-full transition-colors bg-black/50 text-white hover:bg-black/70 z-30"
+                  className="absolute top-3 left-3 p-2 rounded-full transition-colors bg-black/60 text-white hover:bg-black/80 z-30 shadow-md cursor-pointer"
+                  title="Remove video"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -76,9 +98,10 @@ const VideoFlow = ({
                 <button
                   type="button"
                   onClick={() => setIsEditingMedia(true)}
-                  className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full opacity-100 transition-opacity hover:bg-black/80 z-30"
+                  className="absolute top-3 left-3 p-2 bg-black/60 text-white rounded-full opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+                  title="Edit video"
                 >
-                  <Icon icon="proicons:pencil" className="w-5 h-5" />
+                  <Icon icon="proicons:pencil" className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -135,15 +158,16 @@ const VideoFlow = ({
             placeholder="Add a caption..."
           />
 
-          {(!isEdit || !isEditingMedia) && (
+          {(!isEdit || !isEditingMedia) && uploadedVideos.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {uploadedVideos.map((video) => (
                 <div key={video.id} className="relative flex-shrink-0 w-48 h-32 bg-black rounded-md overflow-hidden border border-border group">
                   <video src={video.url} className="w-full h-full object-cover" />
                   {!isEdit && (
                     <button
+                      type="button"
                       onClick={() => onRemoveVideo(video.id)}
-                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -153,18 +177,38 @@ const VideoFlow = ({
             </div>
           )}
 
-          <div className="relative group">
+          <div className="relative group max-w-[442px] mx-auto w-full">
             <PostVideoCard
               videoSrc={uploadedVideos[0].url}
-              showHeader={false}
+              author={authorName}
+              authorId={currentUser?.id || currentPoster?.id}
+              authorAvatar={authorAvatar}
+              authorRole={authorRole}
+              content={caption}
+              showHeader={true}
+              showFooter={true}
+              isPreview={true}
+              isMe={true}
+              isCompanyPost={isCompanyPost}
             />
+            {!isEdit && (
+              <button
+                type="button"
+                onClick={() => onRemoveVideo(uploadedVideos[0].id)}
+                className="absolute top-3 left-3 p-2 rounded-full transition-colors bg-black/60 text-white hover:bg-black/80 z-30 shadow-md cursor-pointer"
+                title="Remove video"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             {isEdit && !isEditingMedia && setIsEditingMedia && (
               <button
                 type="button"
                 onClick={() => setIsEditingMedia(true)}
-                className="absolute top-4 right-4 p-2 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-30"
+                className="absolute top-3 left-3 p-2 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 z-30 cursor-pointer shadow-md"
+                title="Edit video"
               >
-                <Icon icon="proicons:pencil" className="w-5 h-5" />
+                <Icon icon="proicons:pencil" className="w-4 h-4" />
               </button>
             )}
           </div>

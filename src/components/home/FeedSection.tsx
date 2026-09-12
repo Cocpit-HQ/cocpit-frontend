@@ -52,8 +52,9 @@ export const FeedSection = ({
     // Restore page scroll position when returning to feed after viewing a post or repost
     useScrollRestoration(!feedLoading && posts.length > 0);
     const { pendingPosts, cancelUpload } = usePostUpload();
-    const [editingPostId, setEditingPostId] = useState<string | null>(null);
-    const [editingPostData, setEditingPostData] = useState<any | null>(null);
+    const editingPostId = useUIStore(state => state.editingPostId);
+    const editingPostData = useUIStore(state => state.editingPostData);
+    const setEditMode = useUIStore(state => state.setEditMode);
     const [repostingPostData, setRepostingPostData] = useState<any | null>(null);
 
     const activeAccount = useMemo(() => (
@@ -100,8 +101,7 @@ export const FeedSection = ({
                     editPostId={editingPostId}
                     editPostData={editingPostData}
                     onClearEdit={() => {
-                        setEditingPostId(null);
-                        setEditingPostData(null);
+                        setEditMode(false, null, null);
                     }}
                     repostData={repostingPostData}
                     onClearRepost={() => setRepostingPostData(null)}
@@ -150,8 +150,7 @@ export const FeedSection = ({
                                         onToggleVisibility={togglePostVisibility}
                                         priority={index < 4}
                                         onEdit={(post) => {
-                                            setEditingPostId(post.id);
-                                            setEditingPostData(post);
+                                            setEditMode(true, post.id, post);
                                             window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                         onRepostWithThoughts={(post) => {

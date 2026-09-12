@@ -101,6 +101,9 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             videoInputRef={videoInputRef}
             isEditingMedia={state.isEditingMedia}
             setIsEditingMedia={state.setIsEditingMedia}
+            currentUser={state.currentUser}
+            currentPoster={state.currentPoster}
+            isCompanyPost={state.isCompanyPost}
           />
         );
       case 'poll':

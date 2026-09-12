@@ -41,6 +41,7 @@ export const PostBody = ({
   });
 
   const [truncatedContent, setTruncatedContent] = useState<string | null>(null);
+  const [dynamicMaxHeight, setDynamicMaxHeight] = useState<number>(maxHeight);
 
   useIsomorphicLayoutEffect(() => {
     if (!content) {
@@ -52,12 +53,20 @@ export const PostBody = ({
     const measurer = measurerRef.current;
     if (!measurer) return;
 
+    const getDynamicMaxHeight = (text: string) => {
+      // Count empty lines (2 consecutive newlines, optionally separated by spaces)
+      const emptyLines = (text.match(/\n\s*\n/g) || []).length;
+      return (effectiveMaxLines + emptyLines) * 16;
+    };
+
     const measureAndTruncate = () => {
-      // 1. Check if the entire raw content fits within maxHeight
+      // 1. Check if the entire raw content fits within dynamic maxHeight
+      const fullDynamicMaxHeight = getDynamicMaxHeight(content);
       measurer.textContent = content;
-      if (measurer.scrollHeight <= maxHeight + 1) {
+      if (measurer.scrollHeight <= fullDynamicMaxHeight + 1) {
         setIsLong(false);
         setTruncatedContent(null);
+        setDynamicMaxHeight(fullDynamicMaxHeight);
         return;
       }
 
@@ -86,9 +95,11 @@ export const PostBody = ({
         const mid = Math.floor((low + high) / 2);
         const candidate = tokens.slice(0, mid).join('').trimEnd();
         const cleanCandidate = candidate.replace(/[,;:\s—\-]+$/, '');
+        const currentMaxHeight = getDynamicMaxHeight(candidate);
+        
         measurer.textContent = cleanCandidate + ' ... See more';
 
-        if (measurer.scrollHeight <= maxHeight + 1) {
+        if (measurer.scrollHeight <= currentMaxHeight + 1) {
           best = mid;
           low = mid + 1; // Try to fit more tokens
         } else {
@@ -99,18 +110,24 @@ export const PostBody = ({
       let finalTruncated = '';
       if (best > 0) {
         finalTruncated = tokens.slice(0, best).join('').trimEnd().replace(/[,;:\s—\-]+$/, '');
+        setDynamicMaxHeight(getDynamicMaxHeight(finalTruncated));
       }
 
       // Fallback for extreme cases (e.g. single unbroken token overflowing)
+      const currentMaxHeight = getDynamicMaxHeight(finalTruncated || tokens[0] || '');
       measurer.textContent = finalTruncated + ' ... See more';
-      if ((best === 0 || measurer.scrollHeight > maxHeight + 1) && tokens[0]) {
+      
+      if ((best === 0 || measurer.scrollHeight > currentMaxHeight + 1) && tokens[0]) {
         let charLow = 1;
         let charHigh = tokens[0].length;
         let bestChar = 1;
         while (charLow <= charHigh) {
           const charMid = Math.floor((charLow + charHigh) / 2);
-          measurer.textContent = tokens[0].slice(0, charMid) + ' ... See more';
-          if (measurer.scrollHeight <= maxHeight + 1) {
+          const charCandidate = tokens[0].slice(0, charMid);
+          const charMaxHeight = getDynamicMaxHeight(charCandidate);
+          measurer.textContent = charCandidate + ' ... See more';
+          
+          if (measurer.scrollHeight <= charMaxHeight + 1) {
             bestChar = charMid;
             charLow = charMid + 1;
           } else {
@@ -118,6 +135,7 @@ export const PostBody = ({
           }
         }
         finalTruncated = tokens[0].slice(0, bestChar);
+        setDynamicMaxHeight(getDynamicMaxHeight(finalTruncated));
       }
 
       setTruncatedContent(finalTruncated || null);
@@ -160,7 +178,7 @@ export const PostBody = ({
         style={
           !isExpanded && isLong
             ? {
-                maxHeight: `${maxHeight}px`,
+                maxHeight: `${dynamicMaxHeight}px`,
                 overflow: 'hidden',
               }
             : undefined
