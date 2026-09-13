@@ -8,6 +8,9 @@ export interface BackendComment {
   content: string;
   created_at: string;
   updated_at?: string | null;
+  updatedAt?: string | null;
+  is_edited?: boolean;
+  isEdited?: boolean;
   user_id: string;
   full_name: string;
   avatar_url: string | null;
@@ -384,9 +387,11 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
     is_pinned: backendComment.is_pinned,
     pinned_at: backendComment.pinned_at,
     reply_count: backendComment.reply_count || 0,
-    is_edited: !!(
-      backendComment.updated_at &&
-      new Date(backendComment.updated_at).getTime() - new Date(backendComment.created_at).getTime() > 2000
+    is_edited: Boolean(
+      backendComment.is_edited ??
+      backendComment.isEdited ??
+      (backendComment.updated_at &&
+        new Date(backendComment.updated_at).getTime() - new Date(backendComment.created_at).getTime() > 2000)
     ),
   };
 };

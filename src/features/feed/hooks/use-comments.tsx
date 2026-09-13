@@ -273,13 +273,25 @@ export const useComments = (postId: string, enabled: boolean = true): UseComment
 
   const handleUpdateComment = useCallback(async (commentId: string | number, newText: string) => {
     const prevComments = [...comments];
+    const commentIdStr = commentId.toString();
     
     // Optimistic update
-    setComments(prev => prev.map(c => c.id === commentId ? { ...c, text: newText, is_edited: true, timeAgo: 'Just now' } : c));
+    setComments(prev => prev.map(c => c.id?.toString() === commentIdStr ? { ...c, text: newText, is_edited: true, timeAgo: 'Just now' } : c));
 
     try {
       const companyId = isCompany ? activeProfile?.id : undefined;
-      await updateComment(commentId.toString(), newText, companyId);
+      const res = await updateComment(commentIdStr, newText, companyId);
+      if (res?.comment) {
+        setComments(prev => prev.map(c => 
+          c.id?.toString() === commentIdStr
+            ? { 
+                ...c, 
+                text: res.comment.content ?? newText, 
+                is_edited: res.comment.is_edited ?? res.comment.isEdited ?? true 
+              } 
+            : c
+        ));
+      }
       toast.success('Comment updated');
       return true;
     } catch (error) {
@@ -401,6 +413,22 @@ export const useComments = (postId: string, enabled: boolean = true): UseComment
     });
   }, [isCompany, activeProfile?.id, session?.user?.id]);
 
+  const onCommentUpdated = useCallback((data: { postId: string; commentId?: string; content?: string; comment?: any; is_edited?: boolean; isEdited?: boolean }) => {
+    const targetId = (data.comment?.comment_id || data.comment?.id || data.commentId)?.toString();
+    const newContent = data.comment?.content ?? data.content;
+    if (!targetId || newContent === undefined) return;
+
+    setComments(prev => prev.map(c => 
+      c.id?.toString() === targetId
+        ? { 
+            ...c, 
+            text: newContent, 
+            is_edited: data.comment?.is_edited ?? data.comment?.isEdited ?? data.is_edited ?? data.isEdited ?? true 
+          }
+        : c
+    ));
+  }, []);
+
   const onCommentLikeUpdated = useCallback((data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => {
     setComments(prev => prev.map(c => 
       c.id === data.commentId || c.id === Number(data.commentId) 
@@ -413,6 +441,7 @@ export const useComments = (postId: string, enabled: boolean = true): UseComment
     postId,
     {
       onCommentAdded,
+      onCommentUpdated,
       onCommentLikeUpdated
     },
     false // don't manage room here, let FeedPost handle it

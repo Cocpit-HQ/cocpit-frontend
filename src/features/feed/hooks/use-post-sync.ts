@@ -6,6 +6,7 @@ export function usePostSync(
     callbacks: {
         onLikeUpdated?: (data: { postId: string; liked: boolean; likeCount: number; liker: any }) => void;
         onCommentAdded?: (data: { postId: string; comment: any }) => void;
+        onCommentUpdated?: (data: { postId: string; commentId?: string; content?: string; updatedAt?: string; updated_at?: string; isEdited?: boolean; is_edited?: boolean; comment?: any }) => void;
         onCommentLikeUpdated?: (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => void;
         onShareUpdated?: (data: { postId: string; externalShareCount: number }) => void;
     },
@@ -44,6 +45,12 @@ export function usePostSync(
             }
         };
 
+        const handleCommentUpdated = (data: { postId: string; commentId?: string; content?: string; updatedAt?: string; updated_at?: string; isEdited?: boolean; is_edited?: boolean; comment?: any }) => {
+            if (data.postId === roomId) {
+                callbacksRef.current.onCommentUpdated?.(data);
+            }
+        };
+
         const handleCommentLikeUpdated = (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => {
             if (data.postId === roomId) {
                 callbacksRef.current.onCommentLikeUpdated?.(data);
@@ -58,12 +65,14 @@ export function usePostSync(
 
         socket.on('post_like_updated', handleLikeUpdated);
         socket.on('post_comment_added', handleCommentAdded);
+        socket.on('post_comment_updated', handleCommentUpdated);
         socket.on('post_comment_like_updated', handleCommentLikeUpdated);
         socket.on('post_share_updated', handleShareUpdated);
 
         return () => {
             socket.off('post_like_updated', handleLikeUpdated);
             socket.off('post_comment_added', handleCommentAdded);
+            socket.off('post_comment_updated', handleCommentUpdated);
             socket.off('post_comment_like_updated', handleCommentLikeUpdated);
             socket.off('post_share_updated', handleShareUpdated);
 
