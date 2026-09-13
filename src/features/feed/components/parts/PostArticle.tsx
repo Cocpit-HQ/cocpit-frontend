@@ -39,11 +39,11 @@ export const PostArticle: React.FC<PostArticleProps> = ({
         }
       }}
       aria-label={`Read article: ${title || 'Untitled Article'}`}
-      className="w-full rounded-2xl overflow-hidden border border-ds-border bg-ds-surface-1 hover:border-ds-border transition-all cursor-pointer select-none group flex flex-col mt-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+      className="w-full rounded-[8px] overflow-hidden border-[0.5px] border-[var(--ds-border)] bg-transparent hover:border-[var(--ds-border)] transition-all cursor-pointer select-none group flex flex-col my-3 outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] px-3 py-2 gap-3"
     >
       {/* 16:9 Cover Image */}
       {coverImage && (
-        <div className="w-full aspect-[16/9] overflow-hidden bg-ds-surface-2 border-b border-ds-border">
+        <div className="w-full aspect-[16/9] overflow-hidden rounded-[4px] bg-ds-surface-2">
           <img
             src={coverImage}
             alt={title || 'Article cover'}
@@ -57,8 +57,8 @@ export const PostArticle: React.FC<PostArticleProps> = ({
 
       {/* Title Bar */}
       {title && (
-        <div className="w-full px-4 py-3 bg-ds-surface-1 text-left">
-          <h3 className="text-[15px] font-semibold text-ds-text-primary tracking-tight leading-snug line-clamp-2 transition-colors">
+        <div className="w-full px-0 pb-1 text-left">
+          <h3 className="text-[12px] font-semibold leading-[16px] text-ds-text-primary tracking-tight line-clamp-2 transition-colors">
             {title}
           </h3>
         </div>

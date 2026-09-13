@@ -568,6 +568,12 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       }).catch(console.error);
 
       if (onPostCreated) onPostCreated();
+      
+      // Scroll to the top of the feed to see the newly created post
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
       resetForm();
       onClose();
     } catch (err: any) {

@@ -9,6 +9,7 @@ interface CommentSectionProps {
   postId: string | number;
   incrementCommentCount?: () => void;
   decrementCommentCount?: () => void;
+  isSidebar?: boolean;
 }
 
 /**
@@ -19,7 +20,8 @@ export default function CommentSection({
   isPostOwner, 
   postId,
   incrementCommentCount,
-  decrementCommentCount
+  decrementCommentCount,
+  isSidebar
 }: CommentSectionProps) {
   
   const { 
@@ -60,6 +62,7 @@ export default function CommentSection({
       onUndoComment={handleUndo}
       currentUserId={currentUserId}
       isPostOwner={isPostOwner}
+      isSidebar={isSidebar}
     />
   );
 }

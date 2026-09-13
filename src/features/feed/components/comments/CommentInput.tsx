@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Smile, X, Send } from 'lucide-react';
 import { searchUsers, UserMention } from '@/services/api/users';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -43,6 +44,7 @@ export default function CommentInput({
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
     const [mentionQuery, setMentionQuery] = useState('');
     const [mentionIndex, setMentionIndex] = useState(0);
+    const [mentionPos, setMentionPos] = useState<{ top: number, left: number, width: number } | null>(null);
     const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -97,6 +99,18 @@ export default function CommentInput({
 
         return () => clearTimeout(searchTimer);
     }, [mentionQuery]);
+
+    useEffect(() => {
+        if (showMentionDropdown && textareaRef.current) {
+            const container = textareaRef.current.closest('.relative') || textareaRef.current;
+            const rect = container.getBoundingClientRect();
+            setMentionPos({
+                top: rect.bottom,
+                left: rect.left,
+                width: rect.width
+            });
+        }
+    }, [showMentionDropdown, mentions, commentText]);
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
@@ -253,8 +267,15 @@ export default function CommentInput({
                 setShowEmojiPicker(false);
                 setEmojiPickerPos(null);
             }
+            if (showMentionDropdown) {
+                const target = e.target as HTMLElement;
+                if (target?.closest?.('.mention-dropdown')) {
+                    return;
+                }
+                setShowMentionDropdown(false);
+            }
         };
-        if (showEmojiPicker) {
+        if (showEmojiPicker || showMentionDropdown) {
             window.addEventListener('scroll', handleScrollOrResize, true);
             window.addEventListener('resize', handleScrollOrResize);
         }
@@ -262,11 +283,16 @@ export default function CommentInput({
             window.removeEventListener('scroll', handleScrollOrResize, true);
             window.removeEventListener('resize', handleScrollOrResize);
         };
-    }, [showEmojiPicker]);
+    }, [showEmojiPicker, showMentionDropdown]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (mentionDropdownRef.current && !mentionDropdownRef.current.contains(event.target as Node)) {
+            if (
+                mentionDropdownRef.current && 
+                !mentionDropdownRef.current.contains(event.target as Node) &&
+                textareaRef.current &&
+                !textareaRef.current.contains(event.target as Node)
+            ) {
                 setShowMentionDropdown(false);
             }
         };
@@ -275,11 +301,14 @@ export default function CommentInput({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const renderMentionsDropdown = () => (
-        showMentionDropdown && (
+    const renderMentionsDropdown = () => {
+        if (!showMentionDropdown || !mentionPos) return null;
+
+        const content = (
             <div
                 ref={mentionDropdownRef}
-                className="absolute bottom-full left-0 mb-2 w-64 bg-ds-surface-2 border border-ds-border rounded-xl shadow-2xl z-50 overflow-hidden pointer-events-auto"
+                style={{ top: mentionPos.top + 4, left: mentionPos.left, width: Math.max(mentionPos.width, 256) }}
+                className="mention-dropdown fixed bg-ds-surface-2 border border-ds-border rounded-xl shadow-2xl z-[9999] overflow-hidden pointer-events-auto"
             >
                 <div className="p-1 max-h-60 overflow-y-auto custom-scrollbar">
                     {mentions.map((user, index) => (
@@ -308,158 +337,126 @@ export default function CommentInput({
                     ))}
                 </div>
             </div>
-        )
-    );
+        );
+
+        return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
+    };
 
 
 
     return (
         <div className={`bg-transparent font-dmsans ${className}`}>
-            {replyingTo && variant !== 'reply' && (
-                <div className="flex items-center justify-between px-4 py-2 bg-ds-surface-2 border-t border-x border-ds-border rounded-t-lg mx-0.5 ds-text-small">
-                    <span className="text-ds-text-secondary">
-                        Replying to <span className="font-semibold text-[var(--ds-accent)]">@{replyingTo.account_name || replyingTo.name}</span>
-                    </span>
-                    <button
-                        onClick={onCancelReply}
-                        className="p-1 hover:bg-ds-surface-1 rounded-full transition-colors text-ds-text-muted hover:text-ds-text-primary"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
-
-
-            {variant === 'default' ? (
-
-                <div className={`box-border w-full min-h-[42px] border border-ds-border bg-transparent ${replyingTo && !editingComment ? 'rounded-b-[16px] border-t-0' : 'rounded-[16px]'} transition-all duration-300 relative`}>
-
-
-
-                    <div className="flex flex-col p-[10px] w-full">
-                        <div className="relative w-full min-h-[20px] flex items-center">
-                            <textarea
-                                ref={textareaRef}
-                                value={commentText}
-                                onChange={(e) => {
-                                    handleTextChange(e);
-                                    setCommentText(e.target.value);
+            {editingComment || replyingTo ? (
+                <div className="flex flex-col gap-2 w-full mt-2 relative">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-ds-text-primary">
+                            {editingComment ? "Editing Comment" : `Replying to @${replyingTo?.account_name || replyingTo?.name}`}
+                        </span>
+                        {(onCancelReply || onCancelEdit) && (
+                            <button
+                                aria-label={editingComment ? "Cancel edit" : "Cancel reply"}
+                                onClick={() => {
+                                    if (editingComment && onCancelEdit) onCancelEdit();
+                                    else if (onCancelReply) onCancelReply();
                                 }}
-                                onKeyDown={handleKeyDown}
-                                placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Write your thoughts"}
-                                className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted scrollbar-hide focus:outline-none transition-all duration-300 ${commentText.length > 0 ? 'pr-0' : 'pr-[30px]'}`}
-                                rows={1}
-                                style={{ height: 'auto', minHeight: '20px' }}
-                            />
-                            {renderMentionsDropdown()}
-                        </div>
-                        {/* Spacer for buttons when typing */}
-                        <div className={`w-full transition-all duration-300 ease-in-out ${commentText.length > 0 ? 'h-[32px] mt-2' : 'h-0 mt-0'}`} />
-                    </div>
-
-                    {/* Emoji Button */}
-                    <div
-                        className={`absolute flex items-center transition-all duration-300 ease-in-out z-10`}
-                        style={{
-                            left: commentText.length > 0 ? '10px' : 'calc(100% - 30px)',
-                            bottom: commentText.length > 0 ? '13px' : 'calc(50% - 10px)',
-                        }}
-                    >
-                        <button
-                            ref={buttonRef}
-                            type="button"
-                            aria-label="Insert emoji"
-                            onClick={handleToggleEmojiPicker}
-                            className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary transition-colors bg-transparent"
-                        >
-                            <Smile className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    {/* Comment Button */}
-                    <div
-                        className={`absolute bottom-[10px] right-[10px] transition-all duration-300 ease-in-out z-10
-                            ${commentText.trim().length > 0
-                                ? 'opacity-100 translate-y-0 pointer-events-auto'
-                                : 'opacity-0 translate-y-4 pointer-events-none'
-                            }`}
-                    >
-                        <button
-                            onClick={() => handleSubmit()}
-                            disabled={!commentText.trim()}
-                            className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm
-                                ${commentText.trim().length > 0
-                                    ? 'bg-ds-accent text-white'
-                                    : 'bg-ds-border text-ds-text-muted cursor-not-allowed'
-                                }`}
-                        >
-                            Comment
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <div className="flex flex-row items-start gap-[8px] w-full mt-2 relative">
-                    <div className="w-[24px] h-[24px] rounded-full bg-ds-surface-1 overflow-hidden flex items-center justify-center flex-shrink-0 select-none">
-                        {currentUserAvatar && currentUserAvatar !== '/assets/pngegg.png' ? (
-                            <img 
-                                src={currentUserAvatar} 
-                                alt="User avatar" 
-                                draggable={false}
-                                onDragStart={(e) => e.preventDefault()}
-                                className="w-full h-full object-cover select-none pointer-events-none" 
-                            />
-                        ) : (
-                            <span className="text-xs font-semibold text-ds-text-secondary select-none">{(activeProfile?.name || 'U').charAt(0).toUpperCase()}</span>
+                                className="text-ds-text-muted hover:text-ds-text-primary transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         )}
                     </div>
+                    <div className="w-full border border-ds-border rounded-xl p-3 bg-ds-surface-1 focus-within:ring-1 focus-within:ring-ds-accent transition-all relative">
+                        <textarea
+                            ref={textareaRef}
+                            value={commentText}
+                            onChange={(e) => {
+                                handleTextChange(e);
+                                setCommentText(e.target.value);
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Write your thoughts"}
+                            className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-[14px] text-ds-text-primary placeholder:text-ds-text-muted pb-8 focus:outline-none"
+                            rows={2}
+                            style={{ minHeight: '60px' }}
+                        />
+                        {renderMentionsDropdown()}
 
-                    <div className="flex-1 flex flex-col items-start p-[10px] gap-[10px] border border-ds-border rounded-[16px] bg-transparent transition-all relative">
-                        <div className="font-dm-sans font-semibold text-[12px] text-ds-text-primary w-full flex justify-between">
-                            <span>{activeProfile?.name || 'You'}</span>
-                            {onCancelReply && (
-                                <button aria-label="Cancel reply" onClick={onCancelReply} className="text-ds-text-muted hover:text-ds-text-primary">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
-                        
-                        <div className="w-full relative flex-1 min-h-[16px]">
-                            <textarea
-                                ref={textareaRef}
-                                value={commentText}
-                                onChange={(e) => {
-                                    handleTextChange(e);
-                                    setCommentText(e.target.value);
-                                }}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Write your thoughts"
-                                className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted scrollbar-hide focus:outline-none"
-                                rows={1}
-                                style={{ height: 'auto', minHeight: '16px' }}
-                            />
-                            {renderMentionsDropdown()}
+                        <div className="absolute bottom-3 left-3 flex items-center">
+                            <button
+                                ref={buttonRef}
+                                type="button"
+                                aria-label="Insert emoji"
+                                onClick={handleToggleEmojiPicker}
+                                className="text-ds-text-secondary hover:text-ds-text-primary transition-colors"
+                            >
+                                <Smile className="w-5 h-5" />
+                            </button>
                         </div>
 
-                        <div className="flex flex-row justify-between items-center w-full mt-1">
-                            <div className="relative flex items-center">
-                                <button
-                                    ref={buttonRef}
-                                    type="button"
-                                    aria-label="Insert emoji"
-                                    onClick={handleToggleEmojiPicker}
-                                    className="w-5 h-5 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary transition-colors"
-                                >
-                                    <Smile className="w-5 h-5" />
-                                </button>
-                            </div>
+                        <div
+                            className={`absolute bottom-2 right-2 transition-all duration-300 ease-in-out z-10
+                                ${commentText.trim().length > 0
+                                    ? 'opacity-100 translate-y-0 pointer-events-auto'
+                                    : 'opacity-0 translate-y-4 pointer-events-none'
+                                }`}
+                        >
                             <button
                                 onClick={() => handleSubmit()}
                                 disabled={!commentText.trim()}
-                                className={`px-3 py-1.5 rounded-[100px] font-dm-sans font-medium text-[12px] transition-all flex items-center justify-center
+                                className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm
                                     ${commentText.trim().length > 0
                                         ? 'bg-ds-accent text-white'
                                         : 'bg-ds-border text-ds-text-muted cursor-not-allowed'
                                     }`}
+                            >
+                                {editingComment ? "Save" : "Comment"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className={`flex w-full mt-2 relative border border-ds-border rounded-[24px] bg-transparent transition-all overflow-hidden focus-within:border-ds-text-secondary min-h-[40px] ${commentText.trim().length > 0 ? 'flex-col p-3' : 'flex-row items-center pl-4 pr-1 py-1'}`}>
+                    <div className={`w-full relative flex-1 ${commentText.trim().length > 0 ? 'min-h-[20px]' : 'flex items-center min-h-[20px]'}`}>
+                        <textarea
+                            ref={textareaRef}
+                            value={commentText}
+                            onChange={(e) => {
+                                handleTextChange(e);
+                                setCommentText(e.target.value);
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Write your thoughts"
+                            className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted scrollbar-hide focus:outline-none leading-normal ${commentText.trim().length > 0 ? '' : 'flex items-center m-0'}`}
+                            rows={1}
+                            style={{ height: 'auto' }}
+                        />
+                        {renderMentionsDropdown()}
+                    </div>
+
+                    <div className={`flex flex-row items-center ${commentText.trim().length > 0 ? 'justify-between w-full mt-1' : 'gap-1 shrink-0 ml-2'}`}>
+                        <div className="relative flex items-center">
+                            <button
+                                ref={buttonRef}
+                                type="button"
+                                aria-label="Insert emoji"
+                                onClick={handleToggleEmojiPicker}
+                                className="w-8 h-8 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded-full transition-colors"
+                            >
+                                <Smile className="w-[18px] h-[18px]" />
+                            </button>
+                        </div>
+                        
+                        <div
+                            className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center justify-center
+                                ${commentText.trim().length > 0
+                                    ? 'opacity-100 w-auto translate-x-0'
+                                    : 'opacity-0 w-0 translate-x-4 pointer-events-none'
+                                }`}
+                        >
+                            <button
+                                onClick={() => handleSubmit()}
+                                disabled={!commentText.trim()}
+                                className="px-4 py-1.5 rounded-full font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center bg-ds-accent hover:opacity-90 text-white whitespace-nowrap ml-1"
                             >
                                 Comment
                             </button>

@@ -21,6 +21,7 @@ interface CommentListProps {
   onCancelReply?: () => void;
   onAddComment?: (text: string, replyToId?: string | number) => void;
   currentUserAvatar?: string;
+  showAllInitially?: boolean;
 }
 
 // ORIGINAL: export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport, onHide }: CommentListProps) {
@@ -38,9 +39,10 @@ export default function CommentList({
   replyingTo,
   onCancelReply,
   onAddComment,
-  currentUserAvatar
+  currentUserAvatar,
+  showAllInitially = false
 }: CommentListProps) {
-  const [showAllComments, setShowAllComments] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(showAllInitially);
 
   const searchParams = useSearchParams();
   const targetCommentId = searchParams.get('commentId');
@@ -117,7 +119,7 @@ export default function CommentList({
 
   return (
     /* ORIGINAL: <div className="space-y-4 pb-4 font-poppins"> */
-    <div className="flex flex-col gap-3 pb-4 font-dmsans">
+    <div className="flex flex-col gap-3 pb-12 font-dmsans">
       {visibleRootComments.map((root, index) => (
         <React.Fragment key={root.id}>
           <Comment
@@ -168,21 +170,21 @@ export default function CommentList({
         </React.Fragment>
       ))}
 
-      {!showAllComments && rootComments.length > 3 && (
-        <div className="flex justify-center w-full mt-4">
+      {!showAllInitially && !showAllComments && rootComments.length > 3 && (
+        <div className="flex justify-center w-full mt-4 pb-4">
           <button
             onClick={() => setShowAllComments(true)}
-            className="ds-text-small-1 text-ds-accent hover:underline cursor-pointer"
+            className="ds-text-small-1 text-ds-accent cursor-pointer"
           >
             View more
           </button>
         </div>
       )}
-      {showAllComments && rootComments.length > 3 && (
-        <div className="flex justify-center w-full mt-4">
+      {!showAllInitially && showAllComments && rootComments.length > 3 && (
+        <div className="flex justify-center w-full mt-4 pb-4">
           <button
             onClick={() => setShowAllComments(false)}
-            className="ds-text-small-1 text-ds-accent hover:underline cursor-pointer"
+            className="ds-text-small-1 text-ds-accent cursor-pointer"
           >
             Show less
           </button>

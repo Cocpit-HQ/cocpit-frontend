@@ -20,6 +20,7 @@ interface CommentSectionViewProps {
   onHideComment: (commentId: string | number) => void;
   handleReportComment: (commentId: string | number) => void;
   onUndoComment?: (commentId: string | number) => void;
+  isSidebar?: boolean;
 }
 
 export default function CommentSectionView({
@@ -33,7 +34,8 @@ export default function CommentSectionView({
   onEditComment,
   onHideComment,
   handleReportComment,
-  onUndoComment
+  onUndoComment,
+  isSidebar
 }: CommentSectionViewProps) {
   const { activeProfile } = useActiveProfile();
   // Local UI State only
@@ -62,7 +64,7 @@ export default function CommentSectionView({
 
   return (
     <div 
-      className="flex flex-col min-h-0 md:max-h-[450px] bg-ds-bg relative font-dmsans comment-section"
+      className={`flex flex-col min-h-0 bg-ds-bg relative font-dmsans comment-section ${isSidebar ? 'flex-1 w-full' : 'md:max-h-[450px]'}`}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="py-2 bg-ds-bg z-10 sticky top-0">
@@ -84,7 +86,7 @@ export default function CommentSectionView({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-6 scrollbar-hide">
         {isLoading && !comments.length ? (
           <CommentListSkeleton />
         ) : comments.length === 0 ? (
@@ -107,6 +109,7 @@ export default function CommentSectionView({
             onCancelReply={handleCancelReply}
             onAddComment={onAddComment}
             currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
+            showAllInitially={isSidebar}
           />
         )}
       </div>

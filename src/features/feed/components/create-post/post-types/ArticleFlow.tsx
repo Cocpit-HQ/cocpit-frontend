@@ -771,7 +771,7 @@ const ArticleFlow = ({
     const safeUrl = escapeHtml(formattedUrl);
     const safeTitle = escapeHtml(linkLabel);
 
-    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-ds-accent text-[#EC6229] no-underline hover:opacity-80 font-medium cursor-pointer" style="color: #EC6229 !important; text-decoration: none !important;">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-center gap-[10px] h-[40px] px-3 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-all duration-200 absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap before:absolute before:top-0 before:-left-2 before:w-2 before:h-full before:content-['']"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-text-primary hover:opacity-80" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-error hover:opacity-80" title="Delete">${DELETE_SVG}</button></span></span>&nbsp;`;
+    const linkHtml = `&nbsp;<span class="inline-block group relative font-poppins z-20 hover:z-50" contenteditable="false"><a href="${safeUrl}" target="_blank" class="text-ds-accent no-underline hover:opacity-80 font-medium cursor-pointer">${safeTitle}</a><span class="link-preview-capsule inline-flex items-center justify-center gap-[10px] h-[40px] px-3 bg-ds-surface-2 rounded-[24px] shadow-sm opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto transition-all duration-200 absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap before:absolute before:top-0 before:-left-2 before:w-2 before:h-full before:content-['']"><button type="button" class="edit-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-text-primary hover:opacity-80" title="Edit">${EDIT_SVG}</button><button type="button" class="delete-link-btn flex items-center justify-center w-[24px] h-[24px] rounded cursor-pointer text-ds-error hover:opacity-80" title="Delete">${DELETE_SVG}</button></span></span>&nbsp;`;
 
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
@@ -1145,9 +1145,10 @@ const ArticleFlow = ({
 
   if (step === 2) {
     return (
-      <div className="flex flex-col gap-5 select-none font-poppins">
-        <button
-          type="button"
+      <div className="flex-1 overflow-y-auto w-full custom-scrollbar flex justify-center p-6">
+        <div className="flex flex-col gap-5 select-none font-poppins w-full max-w-[688px]">
+          <button
+            type="button"
           onClick={() => {
             console.log("BACK CLICKED");
             onPreviewStepChange?.(false);
@@ -1227,13 +1228,14 @@ const ArticleFlow = ({
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
           </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex flex-col flex-1 bg-[#030303] text-ds-text-primary font-dm-sans select-none min-h-screen w-full">
+    <div className="relative flex flex-col flex-1 bg-[#030303] text-ds-text-primary font-dm-sans select-none h-full w-full overflow-hidden">
       {/* Custom Styles */}
       <style>{`
         .article-title-editor[contenteditable]:empty:before {
@@ -1250,8 +1252,8 @@ const ArticleFlow = ({
           cursor: text;
         }
         .article-editor a {
-          color: #FFECE6 !important;
-          text-decoration: underline !important;
+          color: var(--ds-accent) !important;
+          text-decoration: none !important;
           font-weight: 500;
         }
       `}</style>
@@ -1266,9 +1268,8 @@ const ArticleFlow = ({
         <X className="w-5 h-5" strokeWidth={1.5} />
       </button>
 
-      {/* Frame 2609568: w-[688px] mx-auto flex flex-col gap-[20px] pt-[60px] pb-[80px] */}
-      <div className="mx-auto flex w-[688px] max-w-full flex-col gap-[20px] pt-[60px] pb-[80px] px-4 sm:px-0">
-        
+      {/* FIXED TOP BAR */}
+      <div className="shrink-0 z-40 bg-[#030303] w-full pt-[60px] pb-[20px] px-4 sm:px-0 flex justify-center transition-all">
         {/* Frame 2609516: Author + Toolbar + Post button - h-[36px] w-[688px] flex items-center gap-[40px] */}
         <div className="flex h-[36px] w-[688px] max-w-full items-center justify-between gap-[40px]">
           
@@ -1548,9 +1549,15 @@ const ArticleFlow = ({
             <span>{isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}</span>
           </button>
         </div>
+      </div>
 
-        {/* Frame 2609565: Cover image (688px x 338px) */}
-        <div className="w-[688px] max-w-full">
+      {/* SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar w-full">
+        {/* Frame 2609568: w-[688px] mx-auto flex flex-col gap-[20px] pb-[80px] */}
+        <div className="mx-auto flex w-[688px] max-w-full flex-col gap-[20px] pb-[80px] px-4 sm:px-0">
+
+          {/* Frame 2609565: Cover image (688px x 338px) */}
+          <div className="w-[688px] max-w-full">
           <ArticleCoverEditor
             coverImage={coverImage?.url ?? null}
             onCoverChange={(url) => onCoverChange(url)}
@@ -1609,6 +1616,7 @@ const ArticleFlow = ({
           {...{ placeholder: "Write your thoughts" }}
           className="article-editor outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-normal text-[16px] leading-[24px] min-h-[300px] pb-16 h-auto w-[688px] max-w-full flex-shrink-0 overflow-visible cursor-text [&_a]:!text-[#EC6229] [&_a]:!no-underline"
         />
+      </div>
       </div>
 
       {/* Add / Edit Link Modal */}

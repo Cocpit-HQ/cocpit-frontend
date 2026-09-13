@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, MoreHorizontal } from 'lucide-react';
 
 import { Post } from '@/types/entities';
 import { FeedPostProps } from '../../types';
@@ -22,6 +22,10 @@ import { companyProfileService } from '@/features/companyprofile/services/compan
 import { usePostInteractions } from '../../hooks/use-post-interactions';
 import { PostActions } from '../parts/PostActions';
 import { LikeBar } from '../parts/LikeBar';
+import { PostOptionsMenu } from '../parts/PostOptionsMenu';
+import { submitPostFeedback } from '@/services/api/feed';
+import { useFeed } from '@/hooks/use-feed';
+import { useUIStore } from '@/store/ui.store';
 import CommentSection from '../comments/CommentSection';
 import api from '@/lib/axios';
 
@@ -39,6 +43,10 @@ const LikesModal = dynamic(
 );
 const CocpitShareModel = dynamic(
   () => import('@/shared/commonComponents/cocpitsharemodel'),
+  { ssr: false }
+);
+const ReportModal = dynamic(
+  () => import('@/components/shared/ReportModal').then(m => m.ReportModal),
   { ssr: false }
 );
 
@@ -59,6 +67,15 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+
+  // Menu and Reporting states
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  
+  const { reportedPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId } = useUIStore();
+  const [isReported, setIsReported] = useState(reportedPostIds.includes(id));
+  const { removePostFromFeed } = useFeed(false);
 
   // Author identity checks
   const isCompanyPost = post.isCompanyPost || false;
@@ -256,6 +273,79 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
     });
   }, [sanitizedHtml]);
 
+
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + 8,
+      right: window.innerWidth - rect.right,
+    });
+    setIsMenuOpen(true);
+  };
+
+  const handleReport = () => {
+    addReportedPostId(id);
+    setIsReportModalOpen(false);
+    toast.success('Report submitted successfully');
+    router.back();
+
+    // Auto-remove the post from the feed entirely after 15 seconds
+    setTimeout(() => {
+      removePostFromFeed(id);
+    }, 5000);
+  };
+
+  const handleReportSuccess = () => {
+    setIsReported(true);
+    addReportedPostId(id);
+    router.back();
+
+    // Auto-remove the post from the feed entirely after 15 seconds
+    setTimeout(() => {
+      removePostFromFeed(id);
+    }, 5000);
+  };
+
+  const handleInterested = () => {
+    addInterestedPostId(id);
+    
+    // Fire API in background
+    submitPostFeedback({
+      item_id: id,
+      type: 'INTERESTED',
+      session_id: 'default',
+      position: 0,
+    }).catch(error => {
+      console.error("Failed to submit feedback", error);
+    });
+
+    router.back();
+  };
+
+  const handleNotInterested = () => {
+    addNotInterestedPostId(id);
+
+    // Fire API in background using submitPostFeedback
+    submitPostFeedback({
+      item_id: id,
+      type: 'NOT_INTERESTED',
+      session_id: 'default',
+      position: 0,
+    }).catch(error => {
+      console.error("Failed to hide post", error);
+    });
+
+    router.back();
+
+    // Auto-remove the post from the feed entirely after 5 seconds
+    setTimeout(() => {
+      removePostFromFeed(id);
+    }, 5000);
+  };
+
   return (
     <main className="relative min-h-screen w-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] overflow-y-auto lg:overflow-hidden font-['DM_Sans']">
       {/* Top Close Button */}
@@ -276,10 +366,10 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
       </button>
 
       {/* Main Two-Column Centered Layout */}
-      <div className="w-full max-w-[903px] mx-auto min-h-screen lg:h-screen flex flex-col lg:flex-row items-center lg:items-start justify-center gap-[20px] px-4 pt-16 md:pt-14 lg:pt-[50px] pb-12">
+      <div className="w-full max-w-[935px] mx-auto h-[100dvh] flex flex-col lg:flex-row items-center lg:items-start justify-center gap-[20px] px-4 pt-[max(env(safe-area-inset-top),64px)] pb-[max(env(safe-area-inset-bottom),24px)] lg:pt-[max(env(safe-area-inset-top),80px)] overflow-hidden">
         {/* LEFT COLUMN: Article Content */}
-        <article className="no-scrollbar flex w-full max-w-[583px] shrink-0 flex-col items-start gap-[12px] h-auto lg:h-[766px] lg:overflow-y-auto">
-          <div className="flex w-full flex-col items-start gap-[20px] pr-0 lg:pr-2">
+        <article className="no-scrollbar flex w-full max-w-[583px] shrink-0 flex-col items-start gap-[12px] h-full lg:h-full lg:max-h-[766px] lg:overflow-y-auto">
+          <div className="flex w-full flex-col items-start gap-[20px] pr-0 lg:pr-2 pb-[120px] lg:pb-0">
             {/* Cover Image */}
             {coverImage && (
               <div className="h-[220px] sm:h-[300px] md:h-[338px] w-full shrink-0 overflow-hidden rounded-[16px] bg-[var(--ds-surface-1)] border border-[var(--ds-border)]">
@@ -297,17 +387,21 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
             </h1>
 
             {/* Bulletproof link styling to override any prose defaults */}
-            <style dangerouslySetInnerHTML={{__html: `
-              .article-content a {
-                color: #EC6229 !important;
-                text-decoration: none !important;
+            <style dangerouslySetInnerHTML={{
+              __html: `
+              .article-content a,
+              [data-theme="dark"] .article-content a,
+              [data-theme="navy"] .article-content a {
+                color: var(--ds-accent) !important;
                 transition: opacity 0.2s;
               }
-              .article-content a:hover {
+              .article-content a:hover,
+              [data-theme="dark"] .article-content a:hover,
+              [data-theme="navy"] .article-content a:hover {
                 opacity: 0.8 !important;
               }
             `}} />
-            
+
             {/* Article Rich Text Body */}
             <div
               ref={contentRef}
@@ -318,7 +412,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
         </article>
 
         {/* RIGHT COLUMN: Sidebar / Comments Panel */}
-        <aside className="box-border flex h-auto lg:h-[766px] w-full max-w-[583px] lg:w-[300px] shrink-0 flex-col items-start gap-[16px] overflow-hidden rounded-[8px] border border-[var(--ds-border)] bg-[var(--ds-bg)] p-[12px]">
+        <aside className="box-border flex h-full lg:h-full lg:max-h-[766px] w-full max-w-[583px] lg:w-[300px] shrink-0 flex-col items-start gap-[12px] overflow-hidden rounded-[8px] border border-[var(--ds-border)] bg-[var(--ds-bg)] p-[12px]">
           {/* Author Header */}
           <div className="flex h-[36px] w-full shrink-0 items-center justify-between gap-[8px]">
             <Link
@@ -338,10 +432,10 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
               )}
 
               <div className="flex flex-col items-start min-w-0 flex-1">
-                <span className="font-['DM_Sans'] text-[14px] sm:text-[15px] font-semibold leading-[20px] text-[var(--ds-text-primary)] truncate max-w-full">
+                <span className="font-['DM_Sans'] text-[16px] font-semibold leading-[24px] text-[var(--ds-text-primary)] truncate max-w-full">
                   {post.author}
                 </span>
-                <span className="font-['DM_Sans'] text-[10px] sm:text-[11px] font-normal leading-[14px] text-[var(--ds-text-secondary)] truncate max-w-full">
+                <span className="font-['DM_Sans'] text-[10px] font-normal leading-[12px] text-[var(--ds-text-secondary)] truncate max-w-full">
                   {post.authorHeadline || 'Author'}
                 </span>
               </div>
@@ -359,74 +453,26 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
               </button>
             )}
 
-            {/* If owner: Edit & Delete buttons */}
-            {canManage && (
-              <div className="flex items-center gap-[6px] shrink-0">
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  className="flex h-[24px] w-[24px] items-center justify-center rounded hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-accent)] transition-colors"
-                  aria-label="Edit article"
-                  title="Edit article"
-                >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M13.95 2.5L17.5 6.05L6.05 17.5H2.5V13.95L13.95 2.5Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M11.875 4.575L15.425 8.125"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="flex h-[24px] w-[24px] items-center justify-center rounded hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-error)] transition-colors"
-                  aria-label="Delete article"
-                  title="Delete article"
-                >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M3.75 5.625H16.25"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M8.125 8.75V14.375M11.875 8.75V14.375"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M5.625 5.625L6.25 17.5H13.75L14.375 5.625"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M7.5 5.625V3.125H12.5V5.625"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </button>
-              </div>
-            )}
+            <div className="flex items-center shrink-0">
+              <button
+                type="button"
+                onClick={handleMenuClick}
+                className="flex h-[24px] w-[24px] items-center justify-center rounded hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors"
+                aria-label="More options"
+              >
+                <MoreHorizontal className="w-[16px] h-[16px]" />
+              </button>
+            </div>
           </div>
 
           {/* Comments Section (Scrollable list + input) */}
-          <div className="w-full flex-1 min-h-0 overflow-y-auto no-scrollbar">
+          <div className="w-full flex-1 min-h-0 flex flex-col">
             <CommentSection
               postId={id}
               isPostOwner={isMe}
               incrementCommentCount={handleIncrementCommentCount}
               decrementCommentCount={handleDecrementCommentCount}
+              isSidebar={true}
             />
           </div>
 
@@ -449,11 +495,19 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
               isCommentSectionOpen={true}
               isCommented={isCommented}
               commentsCount={commentCount}
-              handleToggleCommentSection={() => {}}
+              handleToggleCommentSection={() => { }}
               shares={shareCount}
               externalShares={externalShareCount}
               handleShare={() => setIsShareModalOpen(true)}
-              handleRepostWithThoughts={() => {}}
+              handleRepostWithThoughts={() => {
+                const { setSharedPostData, setActiveModal } = useUIStore.getState();
+                setSharedPostData(post);
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  setActiveModal('create-post');
+                } else {
+                  router.push('/feed');
+                }
+              }}
               handleDirectRepost={handleDirectRepost}
               isReposted={isReposted}
               isRepostedWithThoughts={isRepostedWithThoughts}
@@ -503,6 +557,30 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           entityType="article"
+        />
+      )}
+
+      <PostOptionsMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        position={menuPosition}
+        isMe={canManage}
+        onEdit={handleEdit}
+        onDelete={() => setIsDeleteModalOpen(true)}
+        onReport={() => setIsReportModalOpen(true)}
+        onInterested={handleInterested}
+        onNotInterested={handleNotInterested}
+        isReported={isReported}
+        isPollPost={false}
+      />
+
+      {isReportModalOpen && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          onSuccess={handleReportSuccess}
+          targetId={id}
+          targetType="POST"
         />
       )}
     </main>
@@ -557,7 +635,7 @@ export default function ArticleViewPage() {
   // Track post impression on mount
   useEffect(() => {
     if (!post || !id) return;
-    api.post(`/dashboard/post/${id}/impression`).catch(() => {});
+    api.post(`/dashboard/post/${id}/impression`).catch(() => { });
   }, [id, post]);
 
   if (loading) {

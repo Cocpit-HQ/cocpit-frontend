@@ -642,7 +642,7 @@ export const FeedPost = (props: FeedPostProps) => {
           />
 
           {/* Body (for non-video and non-poll posts, context sits above media) */}
-          {!pollData && (
+          {!pollData && !isArticlePost && (
             <PostBody
               content={targetContent}
               author={targetAuthor}
@@ -833,64 +833,63 @@ export const FeedPost = (props: FeedPostProps) => {
         onMakePrivate={handleToggleVisibility}
         onDelete={handleDelete}
         onReport={() => setIsReportModalOpen(true)}
-        onInterested={async () => {
-          try {
-            await submitPostFeedback({
-              item_id: (isRepostWithoutThoughts && targetId ? targetId : id).toString(),
-              type: 'INTERESTED',
-              session_id: 'default',
-              position: 0,
-            });
-            setIsInterestedLocal(true);
-            if (props.isFullContent) {
-              addInterestedPostId(id.toString());
-              router.back();
-            }
-            if (interestedTimeoutRef.current) {
-              clearTimeout(interestedTimeoutRef.current);
-            }
-            interestedTimeoutRef.current = setTimeout(() => {
-              setIsInterestedLocal(false);
-              useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString()) }));
-            }, 5000);
-          } catch (error) {
+        onInterested={() => {
+          setIsInterestedLocal(true);
+          if (props.isFullContent) {
+            addInterestedPostId(id.toString());
+            router.back();
+          }
+          if (interestedTimeoutRef.current) {
+            clearTimeout(interestedTimeoutRef.current);
+          }
+          interestedTimeoutRef.current = setTimeout(() => {
+            setIsInterestedLocal(false);
+            useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString()) }));
+          }, 5000);
+
+          // Fire API in background
+          submitPostFeedback({
+            item_id: (isRepostWithoutThoughts && targetId ? targetId : id).toString(),
+            type: 'INTERESTED',
+            session_id: 'default',
+            position: 0,
+          }).catch((error) => {
             toast.error("Failed to submit feedback");
             console.error(error);
-          }
+          });
         }}
-        onNotInterested={async () => {
-          try {
-            // 1. Instantly hide the post on the backend to guarantee persistence if the user refreshes
-            await submitPostFeedback({
-              item_id: id.toString(),
+        onNotInterested={() => {
+          // 1. Hide the post content locally and show the temporary snackbar inline
+          setIsNotInterestedLocal(true);
+          
+          if (props.isFullContent) {
+            addNotInterestedPostId(id.toString());
+            router.back();
+          }
+
+          // 2. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
+          notInterestedTimeoutRef.current = setTimeout(() => {
+            removePostFromFeed(id.toString());
+          }, 180000);
+
+          // 3. Instantly submit feedback on the backend to guarantee persistence if the user refreshes
+          submitPostFeedback({
+            item_id: id.toString(),
+            type: 'NOT_INTERESTED',
+            session_id: 'default',
+            position: 0,
+          }).catch((error) => {
+            toast.error("Failed to hide post");
+            console.error(error);
+          });
+          
+          if (isRepostWithoutThoughts && targetId && targetId !== id) {
+            submitPostFeedback({
+              item_id: targetId.toString(),
               type: 'NOT_INTERESTED',
               session_id: 'default',
               position: 0,
-            });
-            if (isRepostWithoutThoughts && targetId && targetId !== id) {
-              await submitPostFeedback({
-                item_id: targetId.toString(),
-                type: 'NOT_INTERESTED',
-                session_id: 'default',
-                position: 0,
-              }).catch(() => {});
-            }
-            // 2. Hide the post content locally and show the temporary snackbar inline
-            setIsNotInterestedLocal(true);
-            
-            if (props.isFullContent) {
-              addNotInterestedPostId(id.toString());
-              router.back();
-            }
-
-            // 3. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
-            notInterestedTimeoutRef.current = setTimeout(() => {
-              removePostFromFeed(id.toString());
-            }, 180000);
-
-          } catch (error) {
-            toast.error("Failed to hide post");
-            console.error(error);
+            }).catch(() => {});
           }
         }}
         isMentioned={isMentioned}

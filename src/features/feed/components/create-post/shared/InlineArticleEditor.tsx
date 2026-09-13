@@ -70,7 +70,7 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-ds-bg text-ds-text-primary font-dm-sans select-none overflow-x-hidden">
+    <main className="relative h-screen w-full bg-ds-bg text-ds-text-primary font-dm-sans select-none overflow-hidden flex flex-col">
       {/* Cocpit Brand Watermark - Right: 40px, Bottom: 40px */}
       <div className="fixed right-[40px] bottom-[40px] pointer-events-none select-none z-10 opacity-90 text-ds-text-primary">
         <CocpitLogoIcon className="w-[27px] h-[30px]" fill="currentColor" />

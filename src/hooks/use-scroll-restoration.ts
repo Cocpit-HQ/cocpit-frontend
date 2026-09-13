@@ -50,8 +50,9 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
     if (isReady && !restoredRef.current) {
       const { useUIStore } = require('@/store/ui.store');
       const isEditing = !!useUIStore.getState().editingPostId;
+      const isReposting = !!useUIStore.getState().sharedPostData;
       
-      const saved = !isEditing ? sessionStorage.getItem(`scroll-${pathname}`) : null;
+      const saved = (!isEditing && !isReposting) ? sessionStorage.getItem(`scroll-${pathname}`) : null;
       
       const getScrollElement = () => containerId ? document.getElementById(containerId) : null;
 
