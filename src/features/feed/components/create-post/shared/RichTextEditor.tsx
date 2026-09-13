@@ -49,6 +49,30 @@ const RichTextEditor = ({
     document.execCommand("insertText", false, text);
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showSuggestions) return;
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        popupRef.current && !popupRef.current.contains(target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showSuggestions, setShowSuggestions]);
+
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const html = e.currentTarget.innerHTML;
     onChange(html);
@@ -64,18 +88,22 @@ const RichTextEditor = ({
 
     if (mentionMatch || hashtagMatch) {
       savedRangeRef.current = range.cloneRange();
-      const rect = range.getBoundingClientRect();
-      const editorRect = editorRef.current?.getBoundingClientRect();
+      const nextMode = mentionMatch ? 'mention' : 'hashtag';
 
-      if (editorRect) {
-        setSuggestionPosition({
-          top: rect.bottom - editorRect.top + 5,
-          left: rect.left - editorRect.left
-        });
+      if (!showSuggestions || mode !== nextMode) {
+        const rect = range.getBoundingClientRect();
+        const editorRect = editorRef.current?.getBoundingClientRect();
+
+        if (editorRect) {
+          setSuggestionPosition({
+            top: rect.bottom - editorRect.top + 5,
+            left: rect.left - editorRect.left
+          });
+        }
       }
 
       setQuery(mentionMatch ? mentionMatch[1] : hashtagMatch![1]);
-      setMode(mentionMatch ? 'mention' : 'hashtag');
+      setMode(nextMode);
       setShowSuggestions(true);
     } else {
       setShowSuggestions(false);
@@ -150,7 +178,7 @@ const RichTextEditor = ({
   };
 
   return (
-    <div className={`flex flex-col border rounded-lg border-border relative ${className}`}>
+    <div ref={containerRef} className={`flex flex-col border rounded-lg border-border relative ${className}`}>
       <div
         ref={editorRef}
         contentEditable
@@ -164,6 +192,7 @@ const RichTextEditor = ({
 
       {showSuggestions && (
         <div 
+          ref={popupRef}
           className={cn(
             "absolute z-[100] bg-ds-surface-2 border border-ds-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95",
             mode === 'mention' ? "w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3" : "w-72"

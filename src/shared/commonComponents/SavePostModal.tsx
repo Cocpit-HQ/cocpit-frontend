@@ -95,7 +95,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 28, stiffness: 350 }}
-                    className="relative w-full max-w-none sm:max-w-[300px] bg-ds-surface-2 border border-ds-border rounded-t-[var(--radius-card-new)] rounded-b-none sm:rounded-[var(--radius-card-new)] shadow-2xl z-20 flex flex-col p-[16px]"
+                    className="relative w-full max-w-none sm:max-w-[300px] bg-ds-bg border border-ds-border rounded-t-[var(--radius-card-new)] rounded-b-none sm:rounded-[var(--radius-card-new)] shadow-2xl z-20 flex flex-col p-[16px]"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header: Save Title and Close Button */}

@@ -1939,8 +1939,7 @@ textarea.mention-textarea-input:not(:placeholder-shown) {
 .article-content li div:not([contenteditable="false"]), .article-editor li div:not([contenteditable="false"]) { margin: 0 !important; padding: 0 !important; display: inline !important; }
 .article-content strong, .article-editor strong { font-weight: 700 !important; }
 .article-content a, .article-editor a,
-[data-theme="dark"] .article-content a, [data-theme="dark"] .article-editor a,
-[data-theme="navy"] .article-content a, [data-theme="navy"] .article-editor a { 
+[data-theme="dark"] .article-content a, [data-theme="dark"] .article-editor a { 
   color: var(--ds-accent) !important;
   text-decoration: none !important;
   font-weight: 500;

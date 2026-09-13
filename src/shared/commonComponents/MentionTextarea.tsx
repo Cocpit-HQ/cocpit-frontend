@@ -180,10 +180,14 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         const hashtagMatch = textBeforeCursor.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/);
 
         if (mentionMatch || hashtagMatch) {
-            const coords = getCaretCoordinates(e.target, cursor);
-            setSuggestionPosition(coords);
+            const nextMode = mentionMatch ? 'mention' : 'hashtag';
+            if (!showSuggestions || mode !== nextMode) {
+                const triggerPos = cursor - (mentionMatch ? mentionMatch[1].length : hashtagMatch![1].length);
+                const coords = getCaretCoordinates(e.target, triggerPos);
+                setSuggestionPosition(coords);
+            }
             setQuery(mentionMatch ? mentionMatch[1] : hashtagMatch![1]);
-            setMode(mentionMatch ? 'mention' : 'hashtag');
+            setMode(nextMode);
             setShowSuggestions(true);
         } else {
             setShowSuggestions(false);
@@ -418,10 +422,35 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         return () => clearTimeout(timer);
     }, [value]);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const popupRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!showSuggestions) return;
+
+        const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+            const target = e.target as Node;
+            if (
+                containerRef.current && !containerRef.current.contains(target) &&
+                popupRef.current && !popupRef.current.contains(target)
+            ) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [showSuggestions, setShowSuggestions]);
+
     return (
-        <div className="flex flex-col w-full relative">
+        <div ref={containerRef} className="flex flex-col w-full relative">
             {showSuggestions && mode === 'mention' && typeof document !== 'undefined' && createPortal(
                 <div 
+                    ref={popupRef}
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
                     className="fixed z-[99999] pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
@@ -453,6 +482,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
                     ref={(el) => {
+                        popupRef.current = el;
                         if (el) {
                             const activeItem = el.children[activeIndex + 1] as HTMLElement; // +1 because first child is "Suggestions" title
                             if (activeItem) {

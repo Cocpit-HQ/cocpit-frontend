@@ -239,16 +239,14 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
                   <button
                     key={reason.id}
                     onClick={() => setSelectedReasonId(selectedReasonId === reason.id ? null : reason.id)}
-                    className="flex items-start w-full min-h-[36px] py-1 outline-none focus-visible:opacity-80"
+                    className={cn(
+                      "flex items-center w-full min-h-[36px] px-3 py-2 rounded-lg transition-colors duration-150 outline-none text-left cursor-pointer",
+                      selectedReasonId === reason.id
+                        ? "bg-ds-surface-1 text-ds-text-primary"
+                        : "hover:bg-ds-surface-1/50 text-ds-text-secondary hover:text-ds-text-primary"
+                    )}
                   >
-                    <span
-                      className={cn(
-                        "ds-text-secondary text-left transition-colors duration-200",
-                        selectedReasonId === reason.id
-                          ? "text-ds-accent"
-                          : "text-ds-text-primary"
-                      )}
-                    >
+                    <span className="ds-text-body-1 font-medium leading-[24px]">
                       {reason.label}
                     </span>
                   </button>
@@ -260,7 +258,7 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
               <Button
                 onClick={handleContinue}
                 disabled={!selectedReasonId || isFetchingReasons}
-                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:opacity-90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-ds-accent hover:bg-ds-accent/90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ds-accent"
               >
                 Continue
               </Button>
@@ -268,9 +266,9 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
           </>
         ) : (
           <>
-            {/* PROPOSAL: Multi-line textarea mapped to Pill/Input tokens, as requested component does not exist in SKILL.md */}
+            {/* Multi-line textarea for additional details */}
             <textarea
-              className="w-full min-h-[80px] bg-transparent border border-ds-border rounded-[16px] p-[10px] ds-text-secondary text-ds-text-primary placeholder:text-ds-text-secondary focus:outline-none focus:border-ds-accent resize-none custom-scrollbar m-0"
+              className="w-full min-h-[80px] bg-transparent border border-ds-border rounded-[16px] p-[10px] ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none focus:border-ds-accent resize-none custom-scrollbar m-0"
               placeholder="Additional information (optional)"
               value={additionalInfo}
               onChange={(e) => setAdditionalInfo(e.target.value)}
@@ -280,7 +278,7 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-[var(--ds-accent)] hover:opacity-90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-ds-accent hover:bg-ds-accent/90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ds-accent"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Submit'}
               </Button>
@@ -288,7 +286,7 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
                 <Button
                   disabled={isLoading}
                   variant="outline"
-                  className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[12px] py-[6px] ds-text-body-1 bg-transparent border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary rounded-full transition-all disabled:opacity-100 disabled:text-ds-text-muted disabled:border-ds-border focus-visible:ring-0 focus-visible:border focus-visible:border-ds-accent"
+                  className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-transparent border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary rounded-full transition-all disabled:opacity-100 disabled:text-ds-text-muted disabled:border-ds-border focus-visible:ring-2 focus-visible:ring-ds-accent"
                 >
                   Cancel
                 </Button>

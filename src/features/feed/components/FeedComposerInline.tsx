@@ -678,7 +678,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   return (
     <>
       <div 
-        className="hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] mx-auto gap-[16px] relative"
+        className="hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] max-h-[calc(100vh-140px)] mx-auto gap-[16px] relative"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
@@ -692,6 +692,9 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         className="hidden"
         onChange={(e) => handleFilesChosen(e.target.files)}
       />
+
+      {/* Content scroll area: expands naturally to screen bottom, then scrolls upward with hidden scrollbar */}
+      <div className="w-full flex-1 min-h-0 flex flex-col gap-[16px] overflow-y-auto no-scrollbar">
 
       {/* ── Mode: Poll Creator ────────────────────────────────────────── */}
       {mode === 'poll' ? (
@@ -930,9 +933,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           </button>
         )
       )}
+      </div>
 
         {/* ── Section 3: Bottom Toolbar ──────────────────────────────────── */}
-        <div className="flex flex-row justify-between items-center w-full mt-1 pl-[44px]">
+        <div className="shrink-0 flex flex-row justify-between items-center w-full mt-auto pl-[44px]">
           {isEditMode ? (
             <>
               <span className="text-ds-text-primary text-[15px] font-medium font-dmsans">Edit post</span>

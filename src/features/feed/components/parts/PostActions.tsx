@@ -27,6 +27,13 @@ interface PostActionsProps {
   hideRepostWithThoughts?: boolean;
 }
 
+/**
+ * PostActions Component
+ * 
+ * Renders the interactive action bar for feed posts (Like, Comment, Repost, Share, Save).
+ * Includes e.stopPropagation() and 'prevent-card-click' to prevent actions from accidentally
+ * triggering navigation to the Single Post View (/post/[id]).
+ */
 export const PostActions = ({
   id, isLiked, likeCount, handleLike,
   isCommentSectionOpen, isCommented, commentsCount, handleToggleCommentSection,
@@ -34,7 +41,10 @@ export const PostActions = ({
   onShowLikes, isSharedPost, hideRepostWithThoughts
 }: PostActionsProps) => {
   return (
-    <div className="flex flex-row justify-between items-center w-full pb-[8px]">
+    <div 
+      onClick={(e) => e.stopPropagation()} 
+      className="flex flex-row justify-between items-center w-full pb-[8px] prevent-card-click"
+    >
       {/* Left Aligned Action Group */}
       <div className="flex flex-row items-center gap-[16px]">
         {/* Like */}
@@ -65,7 +75,10 @@ export const PostActions = ({
           >
             <Icon name="comment" className="w-[20px] h-[20px]" />
           </button>
-          <span className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-ds-text-primary">
+          <span 
+            onClick={(e) => { e.stopPropagation(); handleToggleCommentSection(); }}
+            className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-ds-text-primary cursor-pointer"
+          >
             {commentsCount}
           </span>
         </div>
@@ -93,7 +106,10 @@ export const PostActions = ({
           >
             <Icon name="share" className="w-[20px] h-[20px]" />
           </button>
-          <span className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-center text-ds-text-primary">
+          <span 
+            onClick={(e) => { e.stopPropagation(); handleShare(); }}
+            className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-center text-ds-text-primary cursor-pointer"
+          >
             {externalShares}
           </span>
         </div>

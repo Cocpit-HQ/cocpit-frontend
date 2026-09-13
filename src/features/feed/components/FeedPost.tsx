@@ -743,12 +743,14 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Expandable Sections */}
       {isCommentSectionOpen && (
-        <CommentSection
-          postId={targetId.toString()}
-          isPostOwner={isTargetAuthorMe}
-          incrementCommentCount={handleIncrementCommentCount}
-          decrementCommentCount={handleDecrementCommentCount}
-        />
+        <div onClick={(e) => e.stopPropagation()} className="prevent-card-click">
+          <CommentSection
+            postId={targetId.toString()}
+            isPostOwner={isTargetAuthorMe}
+            incrementCommentCount={handleIncrementCommentCount}
+            decrementCommentCount={handleDecrementCommentCount}
+          />
+        </div>
       )}
 
       <MobileCommentDrawer
