@@ -110,7 +110,6 @@ export function PostOptionsMenu({
                         if (postType === 'Article' || postType === 'article') {
                           router.push(`/article/edit/${postId}`);
                         } else {
-                          setEditMode(true, postId);
                           setIsEditModalOpen(true);
                         }
                       }}
@@ -174,7 +173,6 @@ export function PostOptionsMenu({
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
-            setEditMode(false, null);
           }}
           editPostId={postId}
           onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}

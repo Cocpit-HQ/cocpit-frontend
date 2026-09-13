@@ -1,6 +1,7 @@
 import api from '@/lib/axios';
 import { CreatePostRequest } from '@/services/api/feed';
 import { updatePost, UpdatePostRequest, getPostById } from '@/services/api/posts';
+import { uploadMedia } from '@/services/api/upload';
 import { companyService } from '@/services/organization.service';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
@@ -89,34 +90,32 @@ export const postApi = {
   },
 
   update: async (postId: string, payload: UpdatePostRequest, files: File[] = []) => {
-    if (files.length === 0) {
-      return await updatePost(postId, payload);
+    let finalPayload: UpdatePostRequest = { ...payload };
+
+    if (files && files.length > 0) {
+      console.log("[postApi.update] Uploading", files.length, "files before updating post...");
+      const uploadRes = await uploadMedia(files);
+      const newUrls: string[] = (uploadRes || []).map((item: any) =>
+        typeof item === 'object' && item !== null ? item.url : item
+      );
+
+      let uploadedIdx = 0;
+      if (Array.isArray(finalPayload.media_urls) && finalPayload.media_urls.length > 0) {
+        finalPayload.media_urls = finalPayload.media_urls.map((url) => {
+          if (typeof url === 'string' && url.startsWith('blob:')) {
+            return newUrls[uploadedIdx++] || url;
+          }
+          return url;
+        });
+        while (uploadedIdx < newUrls.length) {
+          finalPayload.media_urls.push(newUrls[uploadedIdx++]);
+        }
+      } else {
+        finalPayload.media_urls = newUrls;
+      }
     }
 
-    console.log("[postApi.update] Submitting unified single-API multipart upload for", files.length, "files...");
-    const formData = new FormData();
-    files.forEach(file => {
-      formData.append("media", file, file.name);
-    });
-
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else if (typeof value === 'object') {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, String(value));
-        }
-      }
-    });
-
-    const response = await api.put<any>(`/post/${postId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
+    return await updatePost(postId, finalPayload);
   },
 
   getById: async (postId: string) => {

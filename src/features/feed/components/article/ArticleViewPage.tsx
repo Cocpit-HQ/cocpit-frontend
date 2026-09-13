@@ -156,7 +156,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
     isRepostedWithThoughts,
     incrementCommentCount,
     decrementCommentCount,
-  } = usePostInteractions(interactionsProps);
+  } = usePostInteractions(interactionsProps, true);
 
   const handleIncrementCommentCount = () => {
     incrementCommentCount();

@@ -7,6 +7,7 @@ import { StoriesProvider } from "@/context/StoriesContext";
 import { usePathname } from "next/navigation";
 import { useUIStore } from "@/store/ui.store";
 import { MobileCreatePostModal } from "@/features/feed/components/create-post";
+import { EditPostModal } from "@/shared/commonComponents/EditPostModal";
 import { useNavigationTracker } from "@/hooks/use-navigation-memory";
 
 export default function DashboardLayout({
@@ -18,6 +19,9 @@ export default function DashboardLayout({
     const pathname = usePathname();
     const isFeedRoute = pathname?.startsWith("/feed") ?? false;
     const { activeModal, setActiveModal, initialPostType } = useUIStore();
+    const isEditMode = useUIStore(state => state.isEditMode);
+    const editingPostId = useUIStore(state => state.editingPostId);
+    const editingPostData = useUIStore(state => state.editingPostData);
 
     // Check if we are on mobile using window.innerWidth or just render it and use CSS to hide it?
     // The MobileCreatePostModal is a full-screen mobile modal, but we can just render it conditionally.
@@ -28,7 +32,9 @@ export default function DashboardLayout({
     return (
         <SocketProvider>
             <SocialProvider>
-                <StoriesProvider enabled={isFeedRoute}>
+                {/* StoriesProvider disabled on feed as story rail is not shown on feed */}
+                {/* <StoriesProvider enabled={isFeedRoute}> */}
+                <StoriesProvider enabled={false}>
                     <AppShell>{children}</AppShell>
                     
                     <MobileCreatePostModal 
@@ -40,6 +46,16 @@ export default function DashboardLayout({
                         }}
                         initialSharedPost={useUIStore(state => state.sharedPostData)}
                         editPostId={useUIStore(state => state.editingPostId)}
+                    />
+
+                    {/* Fullscreen Edit Post Modal */}
+                    <EditPostModal
+                        isOpen={isEditMode && !!editingPostId}
+                        onClose={() => {
+                            useUIStore.getState().setEditMode(false, null, null);
+                        }}
+                        editPostId={editingPostId || ''}
+                        postData={editingPostData}
                     />
                     
                     {/* 

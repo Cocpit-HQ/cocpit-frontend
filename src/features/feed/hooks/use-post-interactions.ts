@@ -10,7 +10,7 @@ import { usePostSync } from './use-post-sync';
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-export const usePostInteractions = (props: FeedPostProps) => {
+export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = false) => {
   const {
     id,
     likes = 0,
@@ -244,7 +244,8 @@ export const usePostInteractions = (props: FeedPostProps) => {
       onCommentAdded,
       onShareUpdated,
     },
-    true // manageRoom = true at the post level
+    manageRoom,
+    manageRoom
   );
 
   return {

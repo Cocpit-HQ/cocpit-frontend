@@ -89,12 +89,21 @@ export const FeedPost = (props: FeedPostProps) => {
     ? !!(targetIsCompanyPost && activeProfile?.id?.toString() === targetAuthorId?.toString())
     : (currentUserId === targetAuthorId?.toString());
 
+  // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
+  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(
+    Boolean(props.initialShowComments)
+  );
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Only join post room on the Post Details page or when the comments drawer/section is open
+  const shouldManageRoom = Boolean(props.isFullContent) || isCommentSectionOpen || isMobileDrawerOpen;
+
   const {
     isLiked, likeCount, isCommented, isSaved, isReposted, pollData, commentCount, shareCount, externalShareCount,
     isVoting, handleLike, handleVote, setIsSaved, setIsCommented, handleRepostToggle, setShareCount,
     repostId, incrementExternalShareCount, isRepostedWithThoughts,
     incrementCommentCount, decrementCommentCount
-  } = usePostInteractions(interactionTargetProps as any);
+  } = usePostInteractions(interactionTargetProps as any, shouldManageRoom);
 
   const handleIncrementCommentCount = () => {
     incrementCommentCount();
@@ -138,11 +147,6 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const { videoRef, finalAspectRatio, handleMediaLoad } = usePostMediaObserver(targetId, targetVideoSrc, props.aspectRatio);
 
-  // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
-  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(
-    Boolean(props.initialShowComments)
-  );
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(Boolean(props.isFullContent));
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
@@ -553,6 +557,7 @@ export const FeedPost = (props: FeedPostProps) => {
               viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
               onShowLikes={() => handleOpenLikesModal()}
               videoOverlay={false}
+              hideOverlayLikeBar={true}
             />
           ) : isArticlePost ? (
             <PostArticle
@@ -823,12 +828,6 @@ export const FeedPost = (props: FeedPostProps) => {
               props.onEdit(props);
             } else {
               useUIStore.getState().setEditMode(true, id.toString(), props);
-              
-              if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                useUIStore.getState().setActiveModal('create-post');
-              } else {
-                router.push('/feed');
-              }
             }
           }
         }}

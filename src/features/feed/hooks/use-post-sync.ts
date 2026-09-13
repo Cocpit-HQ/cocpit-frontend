@@ -10,7 +10,8 @@ export function usePostSync(
         onCommentLikeUpdated?: (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => void;
         onShareUpdated?: (data: { postId: string; externalShareCount: number }) => void;
     },
-    manageRoom: boolean = false
+    manageRoom: boolean = false,
+    enabled: boolean = true
 ) {
     const { socket } = useSocket();
 
@@ -25,7 +26,7 @@ export function usePostSync(
     });
 
     useEffect(() => {
-        if (!socket || !postId) return;
+        if (!enabled || !socket || !postId) return;
 
         const roomId = postId.toString();
 
@@ -80,5 +81,5 @@ export function usePostSync(
                 socket.emit('leavePost', { postId: roomId });
             }
         };
-    }, [socket, postId, manageRoom]);
+    }, [socket, postId, manageRoom, enabled]);
 }

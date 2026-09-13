@@ -32,7 +32,8 @@ export default function HomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [sessionArticle, setSessionArticle] = useState(false);
-  const { loading: isFeedLoading } = useFeed(true);
+  // Redundant feed call commented out — isFeedLoading is unused and FeedSection invokes useFeed() directly
+  // const { loading: isFeedLoading } = useFeed(true);
 
   const { activeTab, setActiveTab } = useFeedUIStore();
   const { isArticleMode } = useUIStore();
@@ -54,6 +55,8 @@ export default function HomePage() {
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
 
+  // Stories hook commented out — stories are not displayed in the Feed section
+  /*
   const {
     groups,
     isLoading: storyLoading,
@@ -62,6 +65,7 @@ export default function HomePage() {
     handleCreateStory,
     handleStoryUpdate
   } = useStories()
+  */
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setMounted(true))
@@ -82,11 +86,16 @@ export default function HomePage() {
         <div className="mx-auto max-w-[1128px] px-0 md:px-4 xl:px-0">
           <div className="mx-auto max-w-[998px] w-full flex flex-col items-center">
             <FeedSection
-              groups={groups}
-              storyLoading={storyLoading}
+              groups={[]}
+              storyLoading={false}
               setShowCreateStory={setShowCreateStory}
               setMobileSelectedGroupId={setMobileSelectedGroupId}
+              setSelectedStory={() => {}}
+              /*
+              groups={groups}
+              storyLoading={storyLoading}
               setSelectedStory={setSelectedStory}
+              */
               activeTab={activeTab}
               setActiveTab={setActiveTab}
             />
@@ -94,7 +103,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Modals & Overlays */}
+      {/* Modals & Overlays (stories not displayed on feed)
       {mobileSelectedGroupId !== null && (
         <div className="md:hidden">
           <MobileStoryViewer
@@ -114,6 +123,7 @@ export default function HomePage() {
           />
         </div>
       )}
+      */}
 
       {/* Commented out for view-only experience
       {showCreateStory && (

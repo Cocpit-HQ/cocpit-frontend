@@ -843,7 +843,6 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                   onDelete={() => handleDeletePost(post.id)}
                   onEdit={() => {
                     setEditingPost(post);
-                    setEditMode(true, post.id);
                     setIsEditModalOpen(true);
                   }}
                   currentUser={profileData?.user}
@@ -869,10 +868,10 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
-            setEditMode(false, null);
             setEditingPost(null);
           }}
           editPostId={editingPost.id}
+          postData={editingPost}
           onUpdate={(updatedPost) => {
             setPosts(prev => prev.map(p => p.id === updatedPost.id ? mergePostState(p, updatedPost as any) : p));
           }}

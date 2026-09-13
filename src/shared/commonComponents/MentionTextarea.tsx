@@ -123,8 +123,45 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
     const adjustHeight = () => {
         const el = textareaRef.current;
         if (!el) return;
+
+        // If content is overflowing, expand height directly without collapsing to 'auto'
+        if (el.scrollHeight > el.clientHeight) {
+            el.style.height = `${el.scrollHeight}px`;
+            return;
+        }
+
+        // Collect all scrollable ancestor containers and their scroll positions
+        const scrollParents: { el: HTMLElement; top: number }[] = [];
+        let curr: HTMLElement | null = el.parentElement;
+        while (curr) {
+            if (curr.scrollHeight > curr.clientHeight) {
+                const overflowY = window.getComputedStyle(curr).overflowY;
+                if (overflowY === 'auto' || overflowY === 'scroll') {
+                    scrollParents.push({ el: curr, top: curr.scrollTop });
+                }
+            }
+            curr = curr.parentElement;
+        }
+        const winTop = window.scrollY || document.documentElement.scrollTop;
+
+        // Recalculate height safely
+        const currentHeight = el.offsetHeight;
         el.style.height = 'auto';
-        el.style.height = `${el.scrollHeight}px`;
+        const newHeight = el.scrollHeight;
+
+        if (newHeight === currentHeight) {
+            el.style.height = `${currentHeight}px`;
+        } else {
+            el.style.height = `${newHeight}px`;
+        }
+
+        // Restore scroll positions synchronously
+        for (const sp of scrollParents) {
+            sp.el.scrollTop = sp.top;
+        }
+        if ((window.scrollY || document.documentElement.scrollTop) !== winTop) {
+            window.scrollTo(window.scrollX, winTop);
+        }
     };
 
     useEffect(() => {

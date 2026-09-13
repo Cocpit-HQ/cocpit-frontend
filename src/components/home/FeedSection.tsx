@@ -102,11 +102,13 @@ export const FeedSection = ({
                         setRepostingPostData(null);
                         useUIStore.getState().setSharedPostData(null);
                     }}
+                    /* ===== LEGACY INLINE EDIT (Replaced by Fullscreen EditPostModal) =====
                     editPostId={editingPostId}
                     editPostData={editingPostData}
                     onClearEdit={() => {
                         setEditMode(false, null, null);
                     }}
+                    ===== END LEGACY INLINE EDIT ===== */
                     repostData={activeRepostData}
                     onClearRepost={() => {
                         setRepostingPostData(null);
@@ -141,7 +143,7 @@ export const FeedSection = ({
                     <div className="w-full flex flex-col">
                         {sortedPosts.map((post, index) => {
                             return (
-                                <div key={post.id} className="w-full">
+                                <div key={post.id || `feed-post-${index}`} className="w-full">
                                     <FeedPost
                                         {...post}
                                         sessionId={sessionId}
@@ -158,7 +160,6 @@ export const FeedSection = ({
                                         priority={index < 4}
                                         onEdit={(post) => {
                                             setEditMode(true, post.id, post);
-                                            window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                         onRepostWithThoughts={(post) => {
                                             if (typeof window !== 'undefined' && window.innerWidth < 768) {

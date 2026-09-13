@@ -7,7 +7,9 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any, data: any) => void) => {
   const { id, visibility: initialVisibility = 'public', onDelete, onToggleVisibility, isCompanyPost, authorId } = props;
-  const { deletePost } = useFeed();
+  // Pass false to avoid mounting redundant active infinite query observers on every post
+  const { deletePost } = useFeed(false);
+  // const { deletePost } = useFeed();
   const { activeProfile, isCompany } = useActiveProfile();
 
   const [showOptions, setShowOptions] = useState(false);

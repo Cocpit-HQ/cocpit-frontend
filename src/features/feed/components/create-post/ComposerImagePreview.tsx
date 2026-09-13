@@ -25,6 +25,7 @@ interface ComposerImagePreviewProps {
   avatarUrl?: string | null;
   initial?: string;
   isEditMode?: boolean;
+  showLimitNotice?: boolean;
 }
 
 export const MAX_COMPOSER_IMAGES = 12;
@@ -34,6 +35,7 @@ export const ComposerImagePreview = ({
   onRemoveImage,
   onReorderImages,
   isEditMode,
+  showLimitNotice = false,
 }: ComposerImagePreviewProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -221,8 +223,8 @@ export const ComposerImagePreview = ({
         )}
       </div>
 
-      {/* Limit Notice (Positioned directly below card 1) */}
-      {isMaxReached && (
+      {/* Limit Notice (Only shown if showLimitNotice is explicitly true) */}
+      {showLimitNotice && isMaxReached && (
         <p className="w-full text-left text-[12px] text-[var(--ds-error)] font-medium pl-0.5 pt-1">
           Attached media limit reached({MAX_COMPOSER_IMAGES}/{MAX_COMPOSER_IMAGES})
         </p>

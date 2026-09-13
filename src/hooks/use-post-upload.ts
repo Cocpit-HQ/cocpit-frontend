@@ -19,7 +19,9 @@ type PendingUploadPost = {
 
 export const usePostUpload = () => {
     const { pendingPosts, setPendingPosts } = useUIStore();
-    const { addPost } = useFeed();
+    // Pass false to avoid redundant initial feed fetch in upload hook
+    const { addPost } = useFeed(false);
+    // const { addPost } = useFeed();
     const queryClient = useQueryClient();
 
     const startUpload = useCallback(async (content: CreatePostRequest, mediaFiles: File[], tagUserIds?: string[]) => {

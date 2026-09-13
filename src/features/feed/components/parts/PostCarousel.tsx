@@ -17,6 +17,9 @@ export interface PostCarouselProps {
   viewportHeight?: string;
   overlay?: React.ReactNode;
   className?: string;
+  arrowPlacement?: 'outside' | 'inside';
+  slideWidth?: 'full' | 'peek';
+  dotsClassName?: string;
 }
 
 export function PostCarousel({
@@ -28,12 +31,15 @@ export function PostCarousel({
   viewportHeight = 'h-full',
   overlay,
   className = '',
+  arrowPlacement = 'outside',
+  slideWidth = 'peek',
+  dotsClassName,
 }: PostCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'start',
     containScroll: 'trimSnaps',
-    dragFree: true,
+    dragFree: slideWidth === 'peek',
   }, [WheelGesturesPlugin()]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -42,7 +48,20 @@ export function PostCarousel({
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
+    
+    // Calculate the active index sequentially based on scroll progress
+    // so the dots don't skip over images during a fast swipe.
+    const progress = emblaApi.scrollProgress();
+    const snapList = emblaApi.scrollSnapList();
+    const total = snapList.length;
+    
+    let currentIndex = emblaApi.selectedScrollSnap();
+    if (total > 1 && typeof progress === 'number') {
+      const calculated = Math.round(progress * (total - 1));
+      currentIndex = Math.max(0, Math.min(total - 1, calculated));
+    }
+
+    setSelectedIndex(currentIndex);
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
   }, [emblaApi]);
@@ -62,6 +81,16 @@ export function PostCarousel({
     };
   }, [emblaApi, onSelect]);
 
+  // Re-initialize Embla when images change or after mount/modal open layout shifts
+  useEffect(() => {
+    if (!emblaApi) return;
+    const timer = setTimeout(() => {
+      emblaApi.reInit();
+      onSelect();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [emblaApi, images, onSelect]);
+
   const scrollPrev = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (emblaApi) emblaApi.scrollPrev();
@@ -78,9 +107,10 @@ export function PostCarousel({
   const sliderHeightClass = isFullHeight
     ? (showDots && images.length > 1 ? 'flex-1 min-h-0' : 'h-full')
     : viewportHeight;
+  const rootHeightClass = isFullHeight ? 'h-full' : '';
 
   return (
-    <div className={`relative w-full flex flex-col items-center select-none ${className}`}>
+    <div className={`relative w-full ${rootHeightClass} flex flex-col items-center select-none ${className}`}>
       {/* Media Slider Viewport */}
       <div className={`relative w-full ${sliderHeightClass} group select-none`}>
         {/* Embla Viewport */}
@@ -89,15 +119,20 @@ export function PostCarousel({
             {images.map((src, index) => (
               <div
                 key={index}
-                className="relative flex-[0_0_80%] min-w-0 h-full rounded-[16px] overflow-hidden mr-2.5 select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                className={
+                  slideWidth === 'full'
+                    ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[16px] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                    : "relative flex-[0_0_80%] min-w-0 h-full rounded-[16px] overflow-hidden mr-2.5 select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                }
               >
                 <Image
                   src={src}
                   alt={`Post image ${index + 1}`}
                   fill
+                  unoptimized={true}
                   className={imageFit === 'contain' ? "object-contain rounded-[16px] transition-transform duration-300 ease-out" : "object-cover rounded-[16px] transition-transform duration-300 ease-out"}
                   priority={priority && index === 0}
-                  sizes="(max-width: 768px) 80vw, 400px"
+                  sizes={slideWidth === 'full' ? "(max-width: 768px) 100vw, 650px" : "(max-width: 768px) 80vw, 400px"}
                   onLoad={(e) => {
                     if (index === 0 && onImageLoad) onImageLoad(e);
                   }}
@@ -107,27 +142,35 @@ export function PostCarousel({
           </div>
         </div>
 
-        {/* Navigation Arrows — Sleek borderless chevrons positioned outside the images */}
+        {/* Navigation Arrows */}
         {images.length > 1 && (
           <>
             {canScrollPrev && (
               <button
                 type="button"
                 onClick={scrollPrev}
-                className="absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
+                className={
+                  arrowPlacement === 'inside'
+                    ? "absolute left-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-150 cursor-pointer outline-none active:scale-95"
+                    : "absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
+                }
                 aria-label="Previous photo"
               >
-                <ChevronLeft className="w-5 h-5 text-ds-text-primary" />
+                <ChevronLeft className={`w-5 h-5 ${arrowPlacement === 'inside' ? 'text-white' : 'text-ds-text-primary'}`} />
               </button>
             )}
             {canScrollNext && (
               <button
                 type="button"
                 onClick={scrollNext}
-                className="absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
+                className={
+                  arrowPlacement === 'inside'
+                    ? "absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-150 cursor-pointer outline-none active:scale-95"
+                    : "absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
+                }
                 aria-label="Next photo"
               >
-                <ChevronRight className="w-5 h-5 text-ds-text-primary" />
+                <ChevronRight className={`w-5 h-5 ${arrowPlacement === 'inside' ? 'text-white' : 'text-ds-text-primary'}`} />
               </button>
             )}
           </>
@@ -143,7 +186,7 @@ export function PostCarousel({
           total={images.length}
           activeIndex={selectedIndex}
           onDotClick={(idx) => emblaApi?.scrollTo(idx)}
-          className="mt-[12px]"
+          className={dotsClassName || (arrowPlacement === 'inside' ? "py-3" : "mt-[12px]")}
         />
       )}
     </div>

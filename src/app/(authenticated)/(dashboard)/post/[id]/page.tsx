@@ -69,6 +69,50 @@ export default function SinglePostPage({ params }: PageProps) {
     });
   }, [id, post]);
 
+  // Listen for real-time post updates and deletions to reflect changes instantly on the detail page
+  useEffect(() => {
+    const handlePostUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const detail = customEvent.detail;
+      if (detail && (detail.id?.toString() === id?.toString() || detail.postId?.toString() === id?.toString())) {
+        if (detail.updatedPost) {
+          setPost(detail.updatedPost);
+        } else {
+          setPost((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              content: 'content' in detail ? detail.content : prev.content,
+              location: 'location' in detail ? detail.location : prev.location,
+              visibility: 'visibility' in detail ? detail.visibility : prev.visibility,
+              images: 'images' in detail ? detail.images : prev.images,
+              imageSrc: 'imageSrc' in detail ? detail.imageSrc : prev.imageSrc,
+              videoSrc: 'videoSrc' in detail ? detail.videoSrc : prev.videoSrc,
+              post_type: 'post_type' in detail ? detail.post_type : prev.post_type,
+              type: 'type' in detail ? detail.type : prev.type,
+            };
+          });
+        }
+      }
+    };
+
+    const handlePostDeleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const detail = customEvent.detail;
+      if (detail && detail.id?.toString() === id?.toString()) {
+        router.push("/feed");
+      }
+    };
+
+    window.addEventListener("postUpdated", handlePostUpdated);
+    window.addEventListener("postDeleted", handlePostDeleted);
+
+    return () => {
+      window.removeEventListener("postUpdated", handlePostUpdated);
+      window.removeEventListener("postDeleted", handlePostDeleted);
+    };
+  }, [id, router]);
+
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
@@ -156,6 +200,12 @@ export default function SinglePostPage({ params }: PageProps) {
             menuAccess={menuAccess}
             isFullContent={true}
             initialShowComments={showComments}
+            onEdit={(postToEdit) => {
+              useUIStore.getState().setEditMode(true, id, postToEdit || post);
+            }}
+            onDelete={() => {
+              router.push('/feed');
+            }}
             // Purpose of Bug Fix: Enable Repost with Thoughts on post detail page to populate quoted post into UI store and navigate to feed composer
             onRepostWithThoughts={(postToQuote) => {
               useUIStore.getState().setSharedPostData(postToQuote);

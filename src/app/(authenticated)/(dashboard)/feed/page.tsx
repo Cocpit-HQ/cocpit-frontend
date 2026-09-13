@@ -47,11 +47,14 @@ export default async function FeedRoute() {
     activeId = actorId || userId || 'me'
   }
 
-  // Prefetch stories and feed
+  // Prefetch feed only (stories prefetch commented out as stories are not displayed on feed)
+  const feedData = await getServerFeed(resolvedActor);
+  /*
   const [feedData, storiesData] = await Promise.all([
     getServerFeed(resolvedActor),
     getServerStories()
   ]);
+  */
 
   if (feedData) {
     // Seed the infinite query cache with the first page
@@ -66,10 +69,12 @@ export default async function FeedRoute() {
     })
   }
 
+  /*
   if (storiesData) {
     // Query key matches StoriesContext: ['grouped-stories', <type>, <id>]
     queryClient.setQueryData(['grouped-stories', activeType, activeId], storiesData);
   }
+  */
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -1009,7 +1009,6 @@ const [posts, setPosts] = useState<Post[]>([])
                       router.push(`/article/edit/${post.id}`);
                     } else {
                       setEditingPost(post);
-                      setEditMode(true, post.id);
                       setIsEditModalOpen(true);
                     }
                   }}
@@ -1036,10 +1035,10 @@ const [posts, setPosts] = useState<Post[]>([])
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
-            setEditMode(false, null);
             setEditingPost(null);
           }}
           editPostId={editingPost.id}
+          postData={editingPost}
           onUpdate={(updatedPost) => {
             setPosts(prev => prev.map(p => p.id === updatedPost.id ? mergePostState(p, updatedPost as any) : p));
           }}

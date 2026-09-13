@@ -47,7 +47,9 @@ interface FeedComposerInlineProps {
 const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPostData, onClearEdit, repostData, onClearRepost }: FeedComposerInlineProps) => {
   const { data: session } = useSession();
   const { activeProfile } = useActiveProfile();
-  const { addPost, updatePostInFeed } = useFeed();
+  // Pass false to avoid redundant initial feed fetch in composer
+  const { addPost, updatePostInFeed } = useFeed(false);
+  // const { addPost, updatePostInFeed } = useFeed();
   const isEditMode = !!editPostId && !!editPostData;
 
   // ── Core State ────────────────────────────────────────────────────────────
@@ -161,18 +163,14 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
     }
   }, [repostData]);
 
-  // ── Edit Mode Initialization ──────────────────────────────────────────────
+  /* ===== LEGACY INLINE EDIT (Replaced by Fullscreen EditPostModal) =====
   React.useEffect(() => {
     if (isEditMode && editPostData) {
-      // Scroll to top is now handled natively and instantly by useScrollRestoration.ts
-      // bypassing the aggressive scroll-restoration lock.
-      
       setIsExpanded(true);
       const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(editPostData.content || '');
       setText(parsedContent);
       setInlineMentions(parsedMentions);
 
-      // Setup Repost Data if editing a repost
       const existingShared = editPostData.shared_post || editPostData.sharedPost;
       if (existingShared) {
         setFetchedSharedPost(existingShared);
@@ -188,7 +186,6 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         setFetchedSharedPost(null);
       }
       
-      // Setup Location
       if (editPostData.location) {
         setLocation({
           name: editPostData.location,
@@ -200,7 +197,6 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         setLocation(null);
       }
 
-      // Setup Post Type & Media
       if (editPostData.post_type === 'poll' && editPostData.poll_question) {
         setMode('poll');
         poll.setPollQuestion(editPostData.poll_question);
@@ -234,6 +230,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       }
     }
   }, [isEditMode, editPostId, editPostData]);
+  ===== END LEGACY INLINE EDIT ===== */
 
   // ── Media Handlers (Max 12 photos, or 1 video) ─────────────────────────────
   const handleImageClick = useCallback(() => {
@@ -258,10 +255,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
     // Media upload size constraints:
     // - Per image limit: 10MB maximum (reject individual file > 10MB)
-    // - Total image upload limit: 100MB maximum (reject cumulative size > 100MB)
+    // - Total image upload limit: 120MB maximum (reject cumulative size > 120MB for up to 12 images)
     // - Video limit: 100MB maximum
     const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
-    const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100MB total images limit
+    const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit
     const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB video limit
 
     const videoFiles = fileArray.filter(f => f.type.startsWith('video/'));
@@ -277,7 +274,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       }
     }
 
-    // Validate image file size limits (10MB per image, 100MB total post images)
+    // Validate image file size limits (10MB per image, 120MB total post images)
     if (imageFiles.length > 0) {
       const oversizedImage = imageFiles.find(f => f.size > MAX_SINGLE_IMAGE_SIZE);
       if (oversizedImage) {
@@ -289,7 +286,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       const currentTotalSize = selectedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
       const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
       if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
-        toast.error("Total image upload size cannot exceed 100MB.");
+        toast.error("Total image upload size cannot exceed 120MB.");
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -493,7 +490,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         editPostData?.sharedPost?.id
       ) : undefined);
 
-      // ── Handle Edit Post Mode ──
+      /* ===== LEGACY INLINE EDIT (Replaced by Fullscreen EditPostModal) =====
       if (isEditMode && editPostId) {
         if (mode === 'poll' && !poll.isPollValid()) {
           setIsSubmitting(false);
@@ -543,6 +540,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         if (onPostCreated) onPostCreated();
         return;
       }
+      ===== END LEGACY INLINE EDIT ===== */
 
       // ── Handle Create Post Mode ──
       // 1. Poll Post
@@ -884,10 +882,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   authorId={(activeProfile as any)?.id}
                   authorAvatar={avatarUrl}
                   authorRole={(activeProfile as any)?.headline || (activeProfile as any)?.role || 'Senior product designer'}
-                  content={text}
-                  showHeader={true}
-                  showFooter={true}
-                  isPreview={true}
+                  content=""
+                  showHeader={false}
+                  showFooter={false}
+                  isPreview={false}
                   isMe={true}
                   isCompanyPost={isCompanyPost}
                 />
@@ -895,7 +893,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   <button
                     type="button"
                     onClick={handleRemoveVideo}
-                    className="absolute top-3 left-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
+                    className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
                     title="Remove video"
                   >
                     <X className="w-4 h-4" />
@@ -937,7 +935,8 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
         {/* ── Section 3: Bottom Toolbar ──────────────────────────────────── */}
         <div className="shrink-0 flex flex-row justify-between items-center w-full mt-auto pl-[44px]">
-          {isEditMode ? (
+          {/* ===== LEGACY INLINE EDIT (Replaced by Fullscreen EditPostModal) =====
+          {isEditMode && (
             <>
               <span className="text-ds-text-primary text-[15px] font-medium font-dmsans">Edit post</span>
               <div className="flex items-center gap-[12px]">
@@ -959,10 +958,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 </button>
               </div>
             </>
-          ) : (
-            <>
-              {/* Hide image/poll/article icons in repost mode. Also enforce mutual exclusion between media attachments and polls/articles */}
-              {!isRepostMode && (
+          )}
+          ===== END LEGACY INLINE EDIT ===== */}
+
+          {/* Hide image/poll/article icons in repost mode. Also enforce mutual exclusion between media attachments and polls/articles */}
+          {!isRepostMode && (
                 <div className="flex flex-row items-center gap-[16px]">
                   {/* Image / Photo */}
                   <button
@@ -1053,8 +1053,6 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   </button>
                 )}
               </div>
-          </>
-        )}
       </div>
 
       {/* Location Selector Dialog */}

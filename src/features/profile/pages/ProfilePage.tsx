@@ -331,7 +331,6 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                       if (isArticlePost) {
                         router.push(`/article/edit/${localPost.id}`);
                       } else {
-                        setEditMode(true, localPost.id);
                         setIsEditModalOpen(true);
                       }
                     }}
@@ -647,9 +646,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
-            setEditMode(false, null);
           }}
           editPostId={localPost.id}
+          postData={localPost}
           onUpdate={(updated) => {
             const mergedPost = mergeProfilePostState(localPost, updated as any);
             setLocalPost(mergedPost);
