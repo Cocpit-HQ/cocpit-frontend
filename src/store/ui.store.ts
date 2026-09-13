@@ -38,6 +38,13 @@ interface UIState {
   setEditMode: (isEdit: boolean, postId?: string | null, postData?: any | null) => void;
   sharedPostData: any | null;
   setSharedPostData: (data: any | null) => void;
+
+  reportedPostIds: string[];
+  notInterestedPostIds: string[];
+  interestedPostIds: string[];
+  addReportedPostId: (id: string) => void;
+  addNotInterestedPostId: (id: string) => void;
+  addInterestedPostId: (id: string) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -51,6 +58,10 @@ export const useUIStore = create<UIState>((set) => ({
   editingPostId: null,
   editingPostData: null,
   sharedPostData: null,
+  
+  reportedPostIds: [],
+  notInterestedPostIds: [],
+  interestedPostIds: [],
   
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   setActiveModal: (modal, type = 'text') => {
@@ -80,4 +91,8 @@ export const useUIStore = create<UIState>((set) => ({
   setArticleDraft: (draft) => set({ articleDraft: draft }),
   setEditMode: (isEdit, postId = null, postData = null) => set({ isEditMode: isEdit, editingPostId: postId, editingPostData: postData }),
   setSharedPostData: (data) => set({ sharedPostData: data }),
+
+  addReportedPostId: (id) => set((state) => ({ reportedPostIds: [...state.reportedPostIds, id] })),
+  addNotInterestedPostId: (id) => set((state) => ({ notInterestedPostIds: [...state.notInterestedPostIds, id] })),
+  addInterestedPostId: (id) => set((state) => ({ interestedPostIds: [...state.interestedPostIds, id] })),
 }));

@@ -14,6 +14,7 @@ import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
 import { feedApi } from '../api/feed.api';
 import { hidePost, unhidePost, submitPostFeedback } from '@/services/api/feed';
+import { useUIStore } from '@/store/ui.store';
 
 // New Parts
 import { PostHeader } from './parts/PostHeader';
@@ -153,11 +154,21 @@ export const FeedPost = (props: FeedPostProps) => {
     setSelectedLikesPostId(postIdToOpen || targetId.toString());
     setIsLikesModalOpen(true);
   };
+
+  // Purpose of Bug Fix: Read from global UI store to correctly display snackbar on the Feed when redirected from post details page
+  const { reportedPostIds, notInterestedPostIds, interestedPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId } = useUIStore();
+
+  const isReportedInStore = reportedPostIds.includes(id.toString());
+  const isNotInterestedInStore = notInterestedPostIds.includes(id.toString());
+  const isInterestedInStore = interestedPostIds.includes(id.toString());
+
   // --- Report Flow State ---
   // Tracks if the temporary 'Report submitted' UI is currently visible
-  const [isReportSubmitted, setIsReportSubmitted] = useState(false);
+  const [isReportSubmittedLocal, setIsReportSubmittedLocal] = useState(false);
+  const isReportSubmitted = isReportSubmittedLocal || isReportedInStore;
+  
   // Tracks if the post was reported during this session (used to show 'Reported' in the options menu if they click 'Show post')
-  const [hasBeenReported, setHasBeenReported] = useState(false);
+  const [hasBeenReported, setHasBeenReported] = useState(isReportedInStore);
 
   const { removePostFromFeed } = useFeed(false);
   // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Show post'
@@ -165,8 +176,12 @@ export const FeedPost = (props: FeedPostProps) => {
 
   // Triggered when the backend successfully saves the report
   const handleReportSuccess = () => {
-    setIsReportSubmitted(true);
+    setIsReportSubmittedLocal(true);
     setHasBeenReported(true);
+    if (props.isFullContent) {
+      addReportedPostId(id.toString());
+      router.back();
+    }
     // Auto-remove the post from the feed entirely after 15 seconds
     reportTimeoutRef.current = setTimeout(() => {
       removePostFromFeed(id.toString());
@@ -182,19 +197,25 @@ export const FeedPost = (props: FeedPostProps) => {
       reportTimeoutRef.current = null;
     }
     // Re-render the actual post UI (but it remains marked as reported in the DB)
-    setIsReportSubmitted(false);
+    setIsReportSubmittedLocal(false);
+    // If we undo from the feed, we also need to clear it from the store if it's there
+    if (isReportedInStore) {
+        useUIStore.setState((state) => ({ reportedPostIds: state.reportedPostIds.filter(postId => postId !== id.toString()) }));
+    }
   };
   // -------------------------
 
 
   // --- Not Interested Flow State ---
   // Tracks if the temporary 'Not interested' snackbar is currently visible replacing the post content
-  const [isNotInterested, setIsNotInterested] = useState(false);
+  const [isNotInterestedLocal, setIsNotInterestedLocal] = useState(false);
+  const isNotInterested = isNotInterestedLocal || isNotInterestedInStore;
   // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Undo'
   const notInterestedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- Interested Flow State ---
-  const [isInterested, setIsInterested] = useState(false);
+  const [isInterestedLocal, setIsInterestedLocal] = useState(false);
+  const isInterested = isInterestedLocal || isInterestedInStore;
   const interestedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Triggered when the user clicks 'Undo' on the snackbar
@@ -220,7 +241,10 @@ export const FeedPost = (props: FeedPostProps) => {
         }).catch(() => {});
       }
       // Re-render the actual post UI in its exact position
-      setIsNotInterested(false);
+      setIsNotInterestedLocal(false);
+      if (isNotInterestedInStore) {
+        useUIStore.setState((state) => ({ notInterestedPostIds: state.notInterestedPostIds.filter(postId => postId !== id.toString()) }));
+      }
     } catch (error) {
       toast.error("Failed to undo");
     }
@@ -796,7 +820,6 @@ export const FeedPost = (props: FeedPostProps) => {
             if (props.onEdit) {
               props.onEdit(props);
             } else {
-              const { useUIStore } = require('@/store/ui.store');
               useUIStore.getState().setEditMode(true, id.toString(), props);
               
               if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -818,12 +841,17 @@ export const FeedPost = (props: FeedPostProps) => {
               session_id: 'default',
               position: 0,
             });
-            setIsInterested(true);
+            setIsInterestedLocal(true);
+            if (props.isFullContent) {
+              addInterestedPostId(id.toString());
+              router.back();
+            }
             if (interestedTimeoutRef.current) {
               clearTimeout(interestedTimeoutRef.current);
             }
             interestedTimeoutRef.current = setTimeout(() => {
-              setIsInterested(false);
+              setIsInterestedLocal(false);
+              useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString()) }));
             }, 5000);
           } catch (error) {
             toast.error("Failed to submit feedback");
@@ -848,7 +876,12 @@ export const FeedPost = (props: FeedPostProps) => {
               }).catch(() => {});
             }
             // 2. Hide the post content locally and show the temporary snackbar inline
-            setIsNotInterested(true);
+            setIsNotInterestedLocal(true);
+            
+            if (props.isFullContent) {
+              addNotInterestedPostId(id.toString());
+              router.back();
+            }
 
             // 3. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
             notInterestedTimeoutRef.current = setTimeout(() => {
