@@ -50,7 +50,18 @@ export const FeedPost = (props: FeedPostProps) => {
   const { updatePostInFeed } = useFeed(false);
 
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
-  const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId, shared_post: shared_post.shared_post } : props;
+  const interactionTargetProps = isRepostWithoutThoughts ? { 
+    ...props, 
+    ...shared_post, 
+    id: shared_post.id, 
+    repostId: props.repostId || shared_post.repostId, 
+    shared_post: shared_post.shared_post,
+    authorAvatar: shared_post.authorAvatar ?? undefined,
+    authorHeadline: shared_post.authorHeadline ?? undefined,
+    authorRole: (shared_post as any).authorRole ?? undefined,
+    authorSlug: shared_post.authorSlug ?? undefined,
+    location: shared_post.location ?? undefined,
+  } : props;
   const isTargetPostRepostWithThoughts = !!interactionTargetProps.shared_post && !!interactionTargetProps.content && interactionTargetProps.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() !== '';
 
   const {

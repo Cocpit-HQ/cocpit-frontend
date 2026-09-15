@@ -256,23 +256,47 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         title: sp.title || "",
         authorHeadline: sp.author.author_headline || undefined,
         isAvailable: true,
-        shared_post: (sp as any).shared_post || ((sp as any).shared_post_data ? {
-          id: (sp as any).shared_post_data.post_id || (sp as any).shared_post_data.job_id,
-          author: (sp as any).shared_post_data.author?.full_name || (sp as any).shared_post_data.company_name,
-          authorId: (sp as any).shared_post_data.author?.user_id,
-          authorAvatar: (sp as any).shared_post_data.author?.avatar_url || (sp as any).shared_post_data.company_logo,
-          isCompanyPost: (sp as any).shared_post_data.author?.is_organization_post || false,
-          authorSlug: (sp as any).shared_post_data.author?.author_slug,
-          content: (sp as any).shared_post_data.content,
-          imageSrc: (sp as any).shared_post_data.media?.[0]?.url || (sp as any).shared_post_data.imageSrc,
-          images: (sp as any).shared_post_data.media ? (sp as any).shared_post_data.media.map((m: any) => m.url).filter(Boolean) : (sp as any).shared_post_data.images,
-          videoSrc: (sp as any).shared_post_data.media?.find((m: any) => m.media_type === 'video' || m.url?.includes('.mp4'))?.url || (sp as any).shared_post_data.videoSrc,
-          isJob: !!(sp as any).shared_post_data.job_id,
-          jobTitle: (sp as any).shared_post_data.title,
-          jobCompany: (sp as any).shared_post_data.company_name,
-          jobLocation: (sp as any).shared_post_data.location,
-          jobLogo: (sp as any).shared_post_data.company_logo
-        } as any : undefined)
+        shared_post: (sp as any).shared_post || ((() => {
+          if (!(sp as any).shared_post_data) return undefined;
+          const spData = (sp as any).shared_post_data;
+          
+          let dataContent = spData.content || "";
+          let dataArticleBody = "";
+          if (dataContent.includes("<!-- article_divider -->")) {
+            const parts = dataContent.split("<!-- article_divider -->");
+            dataContent = parts[0];
+            dataArticleBody = parts[1];
+          } else if (spData.post_type === 'article') {
+            const match = dataContent.match(/<(div|p|h[1-6]|ul|ol|img|figure|video|blockquote)/i);
+            if (match && match.index !== undefined && match.index > 0) {
+              dataArticleBody = dataContent.substring(match.index);
+              dataContent = dataContent.substring(0, match.index);
+            } else if (match && match.index === 0) {
+              dataArticleBody = dataContent;
+              dataContent = "";
+            }
+          }
+
+          return {
+            id: spData.post_id || spData.job_id,
+            author: spData.author?.full_name || spData.company_name,
+            authorId: spData.author?.user_id,
+            authorAvatar: spData.author?.avatar_url || spData.company_logo || undefined,
+            isCompanyPost: spData.author?.is_organization_post || false,
+            authorSlug: spData.author?.author_slug,
+            content: dataContent,
+            articleBody: dataArticleBody,
+            title: spData.title || "",
+            imageSrc: spData.media?.[0]?.url || spData.imageSrc,
+            images: spData.media ? spData.media.map((m: any) => m.url).filter(Boolean) : spData.images,
+            videoSrc: spData.media?.find((m: any) => m.media_type === 'video' || m.url?.includes('.mp4'))?.url || spData.videoSrc,
+            isJob: !!spData.job_id,
+            jobTitle: spData.title,
+            jobCompany: spData.company_name,
+            jobLocation: spData.location,
+            jobLogo: spData.company_logo
+          } as any;
+        })())
       } as Post & { isAvailable?: boolean };
     }
   }
