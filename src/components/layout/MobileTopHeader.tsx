@@ -1,14 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Icon } from "@/components/icons";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { NotificationPopover } from "@/features/notification/components/NotificationPopover";
 
 export function MobileTopHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (pathname && !pathname.startsWith('/search')) {
+      setSearchQuery('');
+    }
+  }, [pathname]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim()) {
