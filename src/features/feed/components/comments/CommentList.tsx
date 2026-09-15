@@ -118,7 +118,8 @@ export default function CommentList({
     : rootComments.slice(0, 3);
 
   return (
-    <div className="flex flex-col gap-3 font-dmsans">
+    /* ORIGINAL: <div className="space-y-4 pb-4 font-poppins"> */
+    <div className="flex flex-col gap-3 pb-2 font-dmsans">
       {visibleRootComments.map((root, index) => (
         <React.Fragment key={root.id}>
           <Comment

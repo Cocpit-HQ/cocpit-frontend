@@ -348,19 +348,16 @@ export default function CommentInput({
 
     return (
         <div className={`bg-transparent font-dmsans ${className}`}>
-            {editingComment || replyingTo ? (
+            {editingComment ? (
                 <div className="flex flex-col gap-2 w-full mt-2 relative">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-ds-text-primary">
-                            {editingComment ? "Editing Comment" : `Replying to @${replyingTo?.account_name || replyingTo?.name}`}
+                            Editing Comment
                         </span>
-                        {(onCancelReply || onCancelEdit) && (
+                        {onCancelEdit && (
                             <button
-                                aria-label={editingComment ? "Cancel edit" : "Cancel reply"}
-                                onClick={() => {
-                                    if (editingComment && onCancelEdit) onCancelEdit();
-                                    else if (onCancelReply) onCancelReply();
-                                }}
+                                aria-label="Cancel edit"
+                                onClick={onCancelEdit}
                                 className="text-ds-text-muted hover:text-ds-accent transition-colors"
                             >
                                 <X className="w-4 h-4" />
@@ -376,7 +373,7 @@ export default function CommentInput({
                                 setCommentText(e.target.value);
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Write your thoughts"}
+                            placeholder="Edit your comment..."
                             className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-[14px] text-ds-text-primary placeholder:text-ds-text-muted pb-8 focus:outline-none"
                             rows={2}
                             style={{ minHeight: '60px' }}
@@ -411,8 +408,67 @@ export default function CommentInput({
                                         : 'bg-ds-border text-ds-text-muted cursor-not-allowed'
                                     }`}
                             >
-                                {editingComment ? "Save" : "Comment"}
+                                Save
                             </button>
+                        </div>
+                    </div>
+                </div>
+            ) : replyingTo ? (
+                <div className="w-full mt-2 relative flex items-start gap-2 min-w-0">
+                    <img 
+                        src={currentUserAvatar || activeProfile?.avatar_url || "/assets/pngegg.png"} 
+                        alt="Current user" 
+                        className="w-6 h-6 rounded-full object-cover shrink-0 mt-1" 
+                    />
+                    <div className="flex-1 min-w-0 max-w-full border border-ds-border rounded-[16px] p-2.5 bg-transparent focus-within:border-ds-text-secondary transition-all flex flex-col justify-between min-h-[94px] gap-2 box-border">
+                        <div className="flex flex-col items-start px-0.5 relative w-full min-w-0 gap-1">
+                            <span className="text-[13px] sm:text-[14px] font-semibold text-ds-text-primary truncate max-w-full leading-[20px]">
+                                {replyingTo.account_name || replyingTo.name}
+                            </span>
+                            <textarea
+                                ref={textareaRef}
+                                value={commentText}
+                                onChange={(e) => {
+                                    handleTextChange(e);
+                                    setCommentText(e.target.value);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Write your reply..."
+                                className="w-full bg-transparent border-none focus:ring-0 p-0 m-0 resize-none text-[13px] sm:text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none leading-[20px] scrollbar-hide min-h-[24px] max-h-[128px]"
+                                rows={1}
+                            />
+                        </div>
+                        {renderMentionsDropdown()}
+
+                        <div className="flex items-center justify-between w-full gap-1.5 mt-auto pt-1">
+                            <button
+                                ref={buttonRef}
+                                type="button"
+                                aria-label="Insert emoji"
+                                onClick={handleToggleEmojiPicker}
+                                className="text-ds-text-secondary hover:text-ds-text-primary transition-colors flex items-center justify-center w-5 h-5 shrink-0"
+                            >
+                                <Smile className="w-[18px] h-[18px]" />
+                            </button>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                    onClick={() => handleSubmit()}
+                                    disabled={!commentText.trim()}
+                                    className={`h-[32px] px-3 rounded-full font-dm-sans font-medium text-[13px] transition-all flex items-center justify-center shadow-sm bg-ds-accent text-white leading-none whitespace-nowrap shrink-0
+                                        ${!commentText.trim() ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
+                                >
+                                    Comment
+                                </button>
+                                {onCancelReply && (
+                                    <button
+                                        onClick={onCancelReply}
+                                        className="h-[32px] px-2.5 rounded-full font-dm-sans font-medium text-[13px] transition-all flex items-center justify-center border border-ds-border bg-transparent text-ds-text-primary hover:bg-ds-surface-1 leading-none whitespace-nowrap shrink-0"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

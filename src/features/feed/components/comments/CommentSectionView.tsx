@@ -86,7 +86,7 @@ export default function CommentSectionView({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 pt-1 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-1 scrollbar-hide">
         {isLoading && !comments.length ? (
           <CommentListSkeleton />
         ) : comments.length === 0 ? (

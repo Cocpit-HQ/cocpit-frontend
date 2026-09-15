@@ -86,6 +86,17 @@ export const PostBody = ({
         return;
       }
 
+      const testFit = (candidateText: string) => {
+        measurer.innerHTML = '';
+        measurer.appendChild(document.createTextNode(candidateText));
+        const seeMoreSpan = document.createElement('span');
+        seeMoreSpan.className = 'font-semibold ml-1 whitespace-nowrap';
+        seeMoreSpan.textContent = ' ... See more';
+        measurer.appendChild(seeMoreSpan);
+        const currentMaxHeight = getDynamicMaxHeight(candidateText);
+        return measurer.scrollHeight <= currentMaxHeight + 1;
+      };
+
       // Binary search on tokens to find the maximum text that fits with " ... See more"
       let low = 1;
       let high = tokens.length;
@@ -95,11 +106,8 @@ export const PostBody = ({
         const mid = Math.floor((low + high) / 2);
         const candidate = tokens.slice(0, mid).join('').trimEnd();
         const cleanCandidate = candidate.replace(/[,;:\s—\-]+$/, '');
-        const currentMaxHeight = getDynamicMaxHeight(candidate);
-        
-        measurer.textContent = cleanCandidate + ' ... See more';
 
-        if (measurer.scrollHeight <= currentMaxHeight + 1) {
+        if (testFit(cleanCandidate)) {
           best = mid;
           low = mid + 1; // Try to fit more tokens
         } else {
@@ -114,20 +122,15 @@ export const PostBody = ({
       }
 
       // Fallback for extreme cases (e.g. single unbroken token overflowing)
-      const currentMaxHeight = getDynamicMaxHeight(finalTruncated || tokens[0] || '');
-      measurer.textContent = finalTruncated + ' ... See more';
-      
-      if ((best === 0 || measurer.scrollHeight > currentMaxHeight + 1) && tokens[0]) {
+      if ((best === 0 || !testFit(finalTruncated)) && tokens[0]) {
         let charLow = 1;
         let charHigh = tokens[0].length;
         let bestChar = 1;
         while (charLow <= charHigh) {
           const charMid = Math.floor((charLow + charHigh) / 2);
           const charCandidate = tokens[0].slice(0, charMid);
-          const charMaxHeight = getDynamicMaxHeight(charCandidate);
-          measurer.textContent = charCandidate + ' ... See more';
           
-          if (measurer.scrollHeight <= charMaxHeight + 1) {
+          if (testFit(charCandidate)) {
             bestChar = charMid;
             charLow = charMid + 1;
           } else {
@@ -203,7 +206,7 @@ export const PostBody = ({
               e.stopPropagation();
               onToggleExpand?.();
             }}
-            className="inline select-none cursor-pointer group ml-1"
+            className="inline whitespace-nowrap select-none cursor-pointer group ml-1"
           >
             <span className={variant === 'overlay' ? 'text-white/80' : 'text-ds-text-muted'}>
               ...{' '}
@@ -212,7 +215,7 @@ export const PostBody = ({
               className={`font-semibold ${
                 variant === 'overlay'
                   ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'
-                  : 'text-[var(--ds-accent)]'
+                  : 'text-ds-accent'
               }`}
             >
               See more
@@ -232,7 +235,7 @@ export const PostBody = ({
           className={`block mt-1.5 w-fit cursor-pointer font-semibold text-[12px] leading-[16px] ${
             variant === 'overlay'
               ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]'
-              : 'text-[var(--ds-accent)]'
+              : 'text-ds-accent'
           }`}
         >
           Show less
