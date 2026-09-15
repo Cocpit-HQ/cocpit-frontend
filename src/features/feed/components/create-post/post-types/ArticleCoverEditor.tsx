@@ -514,7 +514,7 @@ export default function ArticleCoverEditor({
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting || !hasImage}
-                className="h-[24px] w-[109px] shrink-0 text-center font-dm-sans text-[16px] font-medium leading-[24px] text-ds-error hover:underline cursor-pointer border-none bg-transparent p-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-[24px] w-[109px] shrink-0 text-center font-dm-sans text-[16px] font-medium leading-[24px] text-ds-error cursor-pointer border-none bg-transparent p-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isDeleting ? "Removing..." : "Remove photo"}
               </button>

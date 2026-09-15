@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Reorder } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT } from '@/features/feed/utils/imageBounds';
 
@@ -123,11 +123,11 @@ export const ComposerImagePreview = ({
                   e.stopPropagation();
                   onRemoveImage(singleImage.id);
                 }}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-ds-surface-2/90 hover:bg-ds-surface-2 border border-ds-border/40 text-[var(--ds-error)] flex items-center justify-center z-10 transition-all duration-150 hover:scale-105 active:scale-95 shadow-md cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[var(--ds-surface-1)] hover:brightness-110 rounded-full transition-colors z-30 shadow-md cursor-pointer outline-none"
                 aria-label="Remove photo"
                 title="Remove photo"
               >
-                <Icon name="cancel" className="w-4 h-4 text-[var(--ds-error)]" />
+                <X className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
               </button>
             )}
           </div>
@@ -186,11 +186,11 @@ export const ComposerImagePreview = ({
                       e.stopPropagation();
                       onRemoveImage(img.id);
                     }}
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-ds-surface-2/90 hover:bg-ds-surface-2 border border-ds-border/40 text-[var(--ds-error)] flex items-center justify-center z-10 transition-all duration-150 hover:scale-105 active:scale-95 shadow-md cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                    className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[var(--ds-surface-1)] hover:brightness-110 rounded-full transition-colors z-30 shadow-md cursor-pointer outline-none"
                     aria-label="Remove photo"
                     title="Remove photo"
                   >
-                    <Icon name="cancel" className="w-3.5 h-3.5 text-[var(--ds-error)]" />
+                    <X className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
                   </button>
                 )}
               </Reorder.Item>

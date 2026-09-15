@@ -58,15 +58,10 @@ export default function CommentInput({
 
     // Focus when replying or editing
     useEffect(() => {
-        // ORIGINAL: if (replyingTo && textareaRef.current) {
-        if (replyingTo && textareaRef.current && variant !== 'reply') {
+        if (replyingTo && textareaRef.current) {
             textareaRef.current.focus();
-            // Automatically add reply mention if not already there
-            const mentionHandle = replyingTo.account_name || replyingTo.name.replace(/\s+/g, '_').toLowerCase();
-            const mention = `@${mentionHandle} `;
-            if (!commentText.startsWith(mention)) {
-                setCommentText(prev => mention + prev);
-            }
+            // User requested to NOT show the name in the input box, 
+            // so we handle mention injection in handleSubmit instead.
         }
         if (editingComment && textareaRef.current) {
             const parsed = parseMentionsForFrontend(editingComment.text);
@@ -165,7 +160,14 @@ export default function CommentInput({
         e?.preventDefault();
         if (!commentText.trim()) return;
 
-        const finalContent = formatMentionsForBackend(commentText, inlineMentions);
+        let finalContent = formatMentionsForBackend(commentText, inlineMentions);
+
+        if (replyingTo) {
+            const mentionStr = `@[${replyingTo.name}](${replyingTo.account_name || replyingTo.name.replace(/\s+/g, '_').toLowerCase()})`;
+            if (!finalContent.includes(mentionStr)) {
+                finalContent = `${mentionStr} ${finalContent}`;
+            }
+        }
 
         onAddComment(finalContent.trim());
         setCommentText('');
@@ -359,13 +361,13 @@ export default function CommentInput({
                                     if (editingComment && onCancelEdit) onCancelEdit();
                                     else if (onCancelReply) onCancelReply();
                                 }}
-                                className="text-ds-text-muted hover:text-ds-text-primary transition-colors"
+                                className="text-ds-text-muted hover:text-ds-accent transition-colors"
                             >
                                 <X className="w-4 h-4" />
                             </button>
                         )}
                     </div>
-                    <div className="w-full border border-ds-border rounded-xl p-3 bg-ds-surface-1 focus-within:ring-1 focus-within:ring-ds-accent transition-all relative">
+                    <div className="w-full border border-ds-border rounded-[24px] p-3 bg-transparent focus-within:border-ds-text-secondary transition-all relative">
                         <textarea
                             ref={textareaRef}
                             value={commentText}

@@ -11,7 +11,7 @@ import { sanitizeContent } from '@/lib/contentSanitizer';
 import { formatMentionsForBackend } from '@/lib/mentions';
 import { UserMention } from '@/services/api/users';
 import { toast } from 'sonner';
-import { X, Plus, ChevronDown } from 'lucide-react';
+import { X, Plus, ChevronDown, Search } from 'lucide-react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
@@ -108,7 +108,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
   const hasMedia = selectedImages.length > 0 || selectedVideo !== null;
   const showLocationFeature = hasContent || location !== null;
-  const canCancel = hasContent || location !== null || isRepostMode;
+  const canCancel = hasContent || location !== null || isRepostMode || mode === 'poll';
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -683,18 +683,22 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*,video/*"
+        accept={
+          selectedImages.length > 0 
+            ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif" 
+            : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
+        }
         multiple
         className="hidden"
         onChange={(e) => handleFilesChosen(e.target.files)}
       />
 
       {/* Content scroll area: expands naturally to screen bottom, then scrolls upward with hidden scrollbar */}
-      <div className="w-full flex-1 min-h-0 flex flex-col gap-[16px] overflow-y-auto no-scrollbar">
+      <div className={`w-full flex-1 min-h-0 flex flex-col gap-[12px] no-scrollbar ${mode === 'poll' ? 'overflow-visible' : 'overflow-y-auto'}`}>
 
       {/* ── Mode: Poll Creator ────────────────────────────────────────── */}
       {mode === 'poll' ? (
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4 relative z-10">
           {/* Header */}
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-[12px]">
@@ -761,7 +765,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 <button
                   type="button"
                   onClick={poll.addPollOption}
-                  className="w-full py-2.5 rounded-full border border-ds-border hover:bg-ds-surface-1 font-dmsans text-[16px] leading-[24px] text-ds-text-primary font-medium flex items-center justify-center gap-[8px] transition-colors cursor-pointer outline-none mt-1"
+                  className="w-full h-[36px] rounded-full border border-ds-border hover:bg-ds-surface-1 font-dmsans text-[16px] leading-[24px] text-ds-text-primary font-medium flex items-center justify-center gap-[8px] transition-colors cursor-pointer outline-none mt-1"
                 >
                   <Plus className="w-4 h-4" />
                   Add option
@@ -770,20 +774,18 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             </div>
 
             {/* Poll Duration Dropdown */}
-            <div className="relative w-full">
+            <div className={`relative w-full transition-all duration-200 z-[50]`}>
               <button
                 type="button"
                 onClick={() => setDurationOpen((prev) => !prev)}
-                className="w-full flex items-center justify-between pb-2 text-[14px] text-ds-text-primary cursor-pointer border-b border-ds-border focus:border-[var(--ds-accent)] outline-none"
+                className="w-full flex items-center justify-between py-3 text-[14px] text-ds-text-secondary font-medium cursor-pointer bg-transparent outline-none"
               >
-                <span className={poll.pollDuration ? 'text-ds-text-primary' : 'text-ds-text-muted'}>
-                  {poll.pollDuration || 'Poll duration'}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-ds-text-muted transition-transform duration-200 ${durationOpen ? 'rotate-180' : ''}`} />
+                <span>{poll.pollDuration || 'Poll duration'}</span>
+                <ChevronDown className={`w-4 h-4 text-ds-text-secondary transition-transform duration-200 ${durationOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {durationOpen && (
-                <div className="absolute left-0 right-0 top-[calc(100%+4px)] bg-ds-surface-2 border border-ds-border rounded-xl shadow-lg z-30 p-1">
+                <div className="absolute left-0 right-0 top-full bg-ds-bg rounded-b-2xl z-[999] py-2 flex flex-col shadow-2xl border-b border-l border-r border-ds-border/30">
                   {['1 day', '3 days', '1 week', '2 weeks'].map((d) => (
                     <button
                       key={d}
@@ -792,10 +794,10 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                         poll.setPollDuration(d);
                         setDurationOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                      className={`w-full text-left px-4 py-3 text-[14px] font-dmsans transition-colors cursor-pointer bg-transparent hover:bg-white/5 ${
                         poll.pollDuration === d
-                          ? 'bg-[var(--ds-accent)] text-white font-medium'
-                          : 'text-ds-text-primary hover:bg-ds-surface-1'
+                          ? 'text-[var(--ds-accent)] font-medium'
+                          : 'text-ds-text-secondary'
                       }`}
                     >
                       {d}
@@ -829,7 +831,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             </div>
 
             {/* MentionTextarea — active, editable inline */}
-            <div className="flex-grow min-h-[36px] mt-[6px]">
+            <div className="flex-grow mt-[4px]">
               <MentionTextarea
                 ref={textareaRef}
                 value={text}
@@ -848,7 +850,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
           {/* ── Shared Preview (Repost Mode or Edit Repost Mode) ─ */}
           {isRepostMode && resolvedRepostData && (
-            <div className="relative w-full mt-[12px] pl-[44px]">
+            <div className="relative w-full pl-[44px]">
               <SharedPreview 
                 sharedPost={resolvedRepostData} 
                 sharedPostId={resolvedRepostData.id?.toString() || (resolvedRepostData as any).post_id?.toString() || editPostData?.shared_post_id?.toString()}
@@ -860,7 +862,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
           {/* ── Attached Images Preview (Free Aspect Ratio, Max 12) ─ */}
           {selectedImages.length > 0 && (
-            <div className="w-full pl-[44px]">
+            <div className="w-full pl-[44px] mt-[4px]">
               <ComposerImagePreview
                 images={selectedImages}
                 onRemoveImage={handleRemoveImage}
@@ -922,7 +924,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
         ) : (
           <button
             onClick={handleLocationToggle}
-            className="pl-[44px] text-left text-[var(--ds-accent)] ds-text-small cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit"
+            className="pl-[44px] text-left text-[var(--ds-accent)] text-[16px] font-medium font-dmsans cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] hover:opacity-80 w-fit"
             aria-label="Add location"
           >
             Add location
@@ -932,7 +934,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       </div>
 
         {/* ── Section 3: Bottom Toolbar ──────────────────────────────────── */}
-        <div className="shrink-0 flex flex-row justify-between items-center w-full mt-auto pl-[44px]">
+        <div className="shrink-0 flex flex-row justify-between items-center w-full mt-auto">
           {/* ===== LEGACY INLINE EDIT (Replaced by Fullscreen EditPostModal) =====
           {isEditMode && (
             <>
@@ -961,27 +963,38 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
           {/* Hide image/poll/article icons in repost mode. Also enforce mutual exclusion between media attachments and polls/articles */}
           {!isRepostMode && (
-                <div className="flex flex-row items-center gap-[16px]">
+            mode === 'poll' ? (
+                <div className="flex flex-row items-center gap-[12px]">
+                  <button
+                    type="button"
+                    onClick={handlePollClick}
+                    className="flex justify-center items-center gap-[8px] w-[77px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-colors duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] text-[var(--ds-accent)] cursor-pointer"
+                  >
+                    <Icon name="poll" className="w-[20px] h-[20px]" />
+                    <span className="text-[14px] leading-[20px] font-normal font-dmsans">Poll</span>
+                  </button>
+                </div>
+            ) : !hasContent ? (
+                <div className="flex flex-row items-center gap-[12px]">
                   {/* Image / Photo */}
                   <button
                     type="button"
                     onClick={handleImageClick}
-                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null || mode === 'poll'}
-                    className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
-                      selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null || mode === 'poll'
+                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
+                    className={`flex justify-center items-center gap-[8px] w-[92px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${
+                      selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
                         ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
-                        : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                        : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
                     }`}
                     aria-label="Upload image"
                     title={
-                      mode === 'poll'
-                        ? 'Cannot attach media while creating a poll'
-                        : selectedImages.length >= MAX_COMPOSER_IMAGES
+                      selectedImages.length >= MAX_COMPOSER_IMAGES
                         ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
                         : 'Add photos'
                     }
                   >
                     <Icon name="image" className="w-[20px] h-[20px]" />
+                    <span className="text-[14px] leading-[20px] font-normal font-dmsans">Media</span>
                   </button>
 
                   {/* Poll */}
@@ -989,50 +1002,73 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                     type="button"
                     onClick={handlePollClick}
                     disabled={hasMedia}
-                    className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
+                    className={`flex justify-center items-center gap-[8px] w-[77px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${
                       hasMedia
                         ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
-                        : mode === 'poll'
-                        ? 'text-[var(--ds-accent)] cursor-pointer'
-                        : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                        : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
                     }`}
                     aria-label="Create poll"
                     title={hasMedia ? 'Cannot create a poll while media is attached' : 'Create poll'}
                   >
                     <Icon name="poll" className="w-[20px] h-[20px]" />
+                    <span className="text-[14px] leading-[20px] font-normal font-dmsans">Poll</span>
                   </button>
 
                   {/* Article */}
                   <button
                     type="button"
                     onClick={handleArticleClick}
-                    disabled={hasMedia || mode === 'poll'}
-                    className={`w-[20px] h-[20px] flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-colors duration-[120ms] ${
-                      hasMedia || mode === 'poll'
+                    disabled={hasMedia}
+                    className={`flex justify-center items-center gap-[8px] w-[97px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${
+                      hasMedia
                         ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
-                        : 'text-ds-text-primary hover:text-[var(--ds-accent)] cursor-pointer'
+                        : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
                     }`}
                     aria-label="Write article"
                     title={
-                      hasMedia || mode === 'poll'
-                        ? 'Cannot write article while media or poll is active'
+                      hasMedia
+                        ? 'Cannot write article while media is active'
                         : 'Write article'
                     }
                   >
                     <Icon name="articles" className="w-[20px] h-[20px]" />
+                    <span className="text-[14px] leading-[20px] font-normal font-dmsans">Article</span>
                   </button>
                 </div>
-              )}
+            ) : (
+                <div className="flex flex-row items-center gap-[12px]">
+                  <button
+                    type="button"
+                    onClick={handleImageClick}
+                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
+                    className={`flex justify-center items-center gap-[8px] h-[36px] px-[12px] py-[6px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ${
+                      selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
+                        ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
+                        : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
+                    }`}
+                    aria-label="Add more media"
+                    title={
+                      selectedImages.length >= MAX_COMPOSER_IMAGES
+                        ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
+                        : 'Add more photos'
+                    }
+                  >
+                    <Plus className="w-[16px] h-[16px]" />
+                    <span className="text-[14px] leading-[20px] font-medium font-dmsans">Media</span>
+                  </button>
+                </div>
+            )
+          )}
 
               {/* Action Buttons: Post + Cancel */}
               <div className="flex items-center gap-[12px] ml-auto">
                 <button
                   onClick={handlePost}
                   disabled={!canPost || isSubmitting}
-                  className={`w-[77px] h-[36px] flex items-center justify-center rounded-full ds-text-body-1 outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
+                  className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
                     canPost && !isSubmitting
                       ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
-                      : 'bg-ds-surface-1 text-ds-text-muted opacity-40 pointer-events-none cursor-default'
+                      : 'bg-ds-surface-1 text-ds-text-muted pointer-events-none cursor-default'
                   }`}
                   aria-label="Publish post"
                 >
@@ -1087,3 +1123,4 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 };
 
 export default FeedComposerInline;
+
