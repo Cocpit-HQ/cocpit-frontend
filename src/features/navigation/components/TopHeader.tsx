@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '@/components/icons';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { NotificationPopover } from '@/features/notification/components/NotificationPopover';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -16,6 +16,7 @@ interface TopHeaderProps {
 
 export function TopHeader({ className }: TopHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
@@ -59,6 +60,12 @@ export function TopHeader({ className }: TopHeaderProps) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (pathname && !pathname.startsWith('/search')) {
+      setSearchQuery('');
+    }
+  }, [pathname]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {

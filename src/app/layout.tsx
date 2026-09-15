@@ -54,15 +54,29 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning className="scrollbar-hide">
       <head>
+        <meta name="theme-color" content="#030303" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                var themeColors = {
+                  'dark':  '#030303',
+                  'navy':  '#030303',
+                  'light': '#FFF9F6',
+                };
                 try {
-                  var saved = localStorage.getItem('theme');
-                  document.documentElement.setAttribute('data-theme', saved || 'dark');
+                  var saved = localStorage.getItem('theme') || 'dark';
+                  var color = themeColors[saved] || '#030303';
+                  document.documentElement.setAttribute('data-theme', saved);
+                  // Apply bg directly on <html> so Safari overscroll / pull-to-refresh
+                  // shows the correct theme color instead of a mismatched default.
+                  document.documentElement.style.backgroundColor = color;
+                  // Keep <meta name="theme-color"> in sync for the browser chrome.
+                  var meta = document.querySelector('meta[name="theme-color"]');
+                  if (meta) meta.setAttribute('content', color);
                 } catch (e) {
                   document.documentElement.setAttribute('data-theme', 'dark');
+                  document.documentElement.style.backgroundColor = '#030303';
                 }
               })();
             `,
@@ -93,7 +107,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide`}
+        className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide bg-background text-foreground`}
       >
         <Providers>
           {children}

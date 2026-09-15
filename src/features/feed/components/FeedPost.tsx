@@ -13,7 +13,7 @@ import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
 import { feedApi } from '../api/feed.api';
-import { hidePost, unhidePost, submitPostFeedback } from '@/services/api/feed';
+import { unhidePost, submitPostFeedback } from '@/services/api/feed';
 import { useUIStore } from '@/store/ui.store';
 
 // New Parts
@@ -50,7 +50,18 @@ export const FeedPost = (props: FeedPostProps) => {
   const { updatePostInFeed } = useFeed(false);
 
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
-  const interactionTargetProps = isRepostWithoutThoughts ? { ...props, ...shared_post, id: shared_post.id, repostId: props.repostId || shared_post.repostId, shared_post: shared_post.shared_post } : props;
+  const interactionTargetProps = isRepostWithoutThoughts ? { 
+    ...props, 
+    ...shared_post, 
+    id: shared_post.id, 
+    repostId: props.repostId || shared_post.repostId, 
+    shared_post: shared_post.shared_post,
+    authorAvatar: shared_post.authorAvatar ?? undefined,
+    authorHeadline: shared_post.authorHeadline ?? undefined,
+    authorRole: (shared_post as any).authorRole ?? undefined,
+    authorSlug: shared_post.authorSlug ?? undefined,
+    location: shared_post.location ?? undefined,
+  } : props;
   const isTargetPostRepostWithThoughts = !!interactionTargetProps.shared_post && !!interactionTargetProps.content && interactionTargetProps.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() !== '';
 
   const {
@@ -133,7 +144,6 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const {
     showOptions, setShowOptions, optionsPos, setOptionsPos,
-    isEditModalOpen, setIsEditModalOpen,
     isReportModalOpen, setIsReportModalOpen,
     isDeleteDialogOpen, setIsDeleteDialogOpen, confirmDelete,
     handleToggleVisibility, handleDelete
@@ -321,6 +331,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const isVideoFeedCard = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
 
+  /* ===== LEGACY POST CLICK (Commented out — replaced by handleCardClick) =====
   const handlePostClick = (e: React.MouseEvent) => {
     if (props.isFullContent) return;
     
@@ -330,6 +341,7 @@ export const FeedPost = (props: FeedPostProps) => {
     }
     router.push(isArticlePost ? `/article/${id}` : `/post/${id}`);
   };
+  ===== END LEGACY POST CLICK ===== */
 
   const isCompanyProfile = activeProfile?.type === 'COMPANY';
   const currentUserHandle = isCompanyProfile

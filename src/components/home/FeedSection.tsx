@@ -7,7 +7,6 @@ import FeedPost from '@/features/feed/components/FeedPost';
 import FeedComposer from '@/features/feed/components/FeedComposer';
 ===== END OLD COMPOSER ===== */}
 import FeedComposerInline from '@/features/feed/components/FeedComposerInline';
-import PostSkeleton from './PostSkeleton';
 import { CreatePostCardSkeleton } from '@/features/feed/components/skeletons/CreatePostCardSkeleton';
 import { FeedPostCardSkeleton } from '@/features/feed/components/skeletons/FeedPostCardSkeleton';
 import { useFeed } from '@/hooks/use-feed';
@@ -16,9 +15,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useUIStore } from '@/store/ui.store';
 import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 import { StoryDetail, StoryGroup } from '@/types/showcase';
-import { ApplicantInsightCard, CompactJobRecommendation, JobMatchesCard } from './FeedInsights';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
-import dynamic from 'next/dynamic';
 import { usePostUpload } from '@/context/PostUploadContext';
 import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadProgressStrip';
 

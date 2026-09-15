@@ -584,12 +584,10 @@ export function EditPostModal({
         onDelete(editPostId);
       }
 
-      toast.success('Post deleted');
       setIsDeleteDialogOpen(false);
       handleClose();
     } catch (err) {
       console.error('Failed to delete post:', err);
-      toast.error('Failed to delete post');
     } finally {
       setIsDeleting(false);
     }
@@ -901,7 +899,7 @@ export function EditPostModal({
                       type="button"
                       onClick={() => setSelectedLocation(null)}
                       className="hover:opacity-80 cursor-pointer font-medium font-dm-sans"
-                      style={{ color: 'var(--ds-accent)' }}
+                      style={{ color: 'var(--ds-error, #E5484D)' }}
                     >
                       Remove
                     </button>
