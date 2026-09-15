@@ -583,12 +583,10 @@ export function EditPostModal({
         onDelete(editPostId);
       }
 
-      toast.success('Post deleted');
       setIsDeleteDialogOpen(false);
       handleClose();
     } catch (err) {
       console.error('Failed to delete post:', err);
-      toast.error('Failed to delete post');
     } finally {
       setIsDeleting(false);
     }
