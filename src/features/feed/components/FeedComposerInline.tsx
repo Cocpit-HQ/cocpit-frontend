@@ -833,7 +833,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
             </div>
 
             {/* MentionTextarea — active, editable inline */}
-            <div className="flex-grow min-h-[36px] mt-[6px]">
+            <div className="flex-grow mt-[4px]">
               <MentionTextarea
                 ref={textareaRef}
                 value={text}
@@ -864,7 +864,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
           {/* ── Attached Images Preview (Free Aspect Ratio, Max 12) ─ */}
           {selectedImages.length > 0 && (
-            <div className="w-full pl-[44px]">
+            <div className="w-full pl-[44px] mt-[4px]">
               <ComposerImagePreview
                 images={selectedImages}
                 onRemoveImage={handleRemoveImage}
@@ -1043,7 +1043,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                     type="button"
                     onClick={handleImageClick}
                     disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
-                    className={`flex justify-center items-center gap-[8px] h-[36px] px-[12px] py-[6px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${
+                    className={`flex justify-center items-center gap-[8px] h-[36px] px-[12px] py-[6px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ${
                       selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
                         ? 'opacity-40 cursor-not-allowed pointer-events-none text-ds-text-muted'
                         : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
