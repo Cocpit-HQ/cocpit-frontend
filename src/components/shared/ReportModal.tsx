@@ -201,7 +201,8 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
       </DialogContent>
       */}
       <BareDialogContent 
-        className="max-w-none sm:max-w-[400px] w-full border rounded-t-[16px] rounded-b-none sm:rounded-[16px] p-4 flex flex-col gap-3 font-sans shadow-lg bg-ds-surface-2 border-ds-border !top-auto bottom-0 !translate-y-0 !translate-x-0 !left-0 sm:!top-[50%] sm:bottom-auto sm:!translate-y-[-50%] sm:!translate-x-[-50%] sm:!left-[50%]"
+        /* Modal background set to #030303 as per updated Figma design specification */
+        className="max-w-none sm:max-w-[400px] w-full border rounded-t-[16px] rounded-b-none sm:rounded-[16px] p-4 flex flex-col gap-3 font-sans shadow-lg bg-[#030303] border-ds-border !top-auto bottom-0 !translate-y-0 !translate-x-0 !left-0 sm:!top-[50%] sm:bottom-auto sm:!translate-y-[-50%] sm:!translate-x-[-50%] sm:!left-[50%]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Actions Row */}
@@ -236,14 +237,15 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
                 </div>
               ) : (
                 reasons.map((reason) => (
+                  /* Reason item selection style fix: transparent background and orange text highlight when selected per Figma design */
                   <button
                     key={reason.id}
                     onClick={() => setSelectedReasonId(selectedReasonId === reason.id ? null : reason.id)}
                     className={cn(
-                      "flex items-center w-full min-h-[36px] px-3 py-2 rounded-lg transition-colors duration-150 outline-none text-left cursor-pointer",
+                      "flex items-center w-full min-h-[36px] px-3 py-2 rounded-lg transition-colors duration-150 outline-none text-left cursor-pointer bg-transparent",
                       selectedReasonId === reason.id
-                        ? "bg-ds-surface-1 text-ds-text-primary"
-                        : "hover:bg-ds-surface-1/50 text-ds-text-secondary hover:text-ds-text-primary"
+                        ? "text-ds-accent"
+                        : "text-ds-text-primary hover:text-ds-accent"
                     )}
                   >
                     <span className="ds-text-body-1 font-medium leading-[24px]">
@@ -255,10 +257,11 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
             </div>
 
             <div className="flex flex-row justify-center items-center p-0 m-0 w-full min-h-[36px]">
+              {/* Fix button hover color to #EC6229 (bg-ds-accent) overriding default purple button hover */}
               <Button
                 onClick={handleContinue}
                 disabled={!selectedReasonId || isFetchingReasons}
-                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-ds-accent hover:bg-ds-accent/90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+                className="flex flex-row justify-center items-center gap-[10px] w-auto min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-ds-accent hover:bg-ds-accent hover:opacity-90 active:scale-[0.98] text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ds-accent cursor-pointer"
               >
                 Continue
               </Button>
@@ -275,10 +278,11 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
             />
             
             <div className="flex flex-row justify-center items-center gap-[8px] p-0 m-0 w-full min-h-[36px]">
+              {/* Fix submit button hover color to #EC6229 (bg-ds-accent) overriding default purple button hover */}
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-ds-accent hover:bg-ds-accent/90 text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+                className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-ds-accent hover:bg-ds-accent hover:opacity-90 active:scale-[0.98] text-white rounded-full transition-all disabled:!bg-ds-surface-1 disabled:opacity-100 disabled:!text-ds-text-muted disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ds-accent cursor-pointer"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Submit'}
               </Button>
@@ -286,7 +290,7 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
                 <Button
                   disabled={isLoading}
                   variant="outline"
-                  className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-transparent border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary rounded-full transition-all disabled:opacity-100 disabled:text-ds-text-muted disabled:border-ds-border focus-visible:ring-2 focus-visible:ring-ds-accent"
+                  className="flex flex-row justify-center items-center gap-[10px] min-w-[77px] min-h-[36px] px-[16px] py-[6px] ds-text-body-1 bg-transparent border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary rounded-full transition-all disabled:opacity-100 disabled:text-ds-text-muted disabled:border-ds-border focus-visible:ring-2 focus-visible:ring-ds-accent cursor-pointer"
                 >
                   Cancel
                 </Button>
