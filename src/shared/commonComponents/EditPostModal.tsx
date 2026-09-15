@@ -65,6 +65,7 @@ export function EditPostModal({
 
   // Form states
   const [description, setDescription] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
   const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
 
@@ -623,8 +624,8 @@ export function EditPostModal({
         onPaste={handlePaste}
         className="fixed inset-0 z-[150] flex flex-col items-center justify-start overflow-y-auto font-dm-sans"
         style={{
-          backgroundColor: 'var(--ds-bg, #030303)',
-          color: 'var(--ds-text-primary, #FFECE6)',
+          backgroundColor: 'var(--ds-bg)',
+          color: 'var(--ds-text-primary)',
         }}
       >
         {/* Top-Right Close Button (Figma: 20x20, top: 40px, right: 40px, stroke: #FFECE6, stroke-width: 1.8) */}
@@ -633,7 +634,7 @@ export function EditPostModal({
           onClick={handleClose}
           disabled={isSubmitting}
           className="fixed top-[40px] right-[40px] z-[160] flex h-[20px] w-[20px] items-center justify-center p-0 transition-opacity hover:opacity-80 cursor-pointer outline-none disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ color: 'var(--ds-text-primary, #FFECE6)' }}
+          style={{ color: 'var(--ds-text-primary)' }}
           aria-label="Close"
         >
           <svg
@@ -661,8 +662,8 @@ export function EditPostModal({
         <section className="relative z-[155] w-[371px] max-w-full mx-auto pt-[60px] pb-[60px] px-4 sm:px-0 flex flex-col items-start gap-[20px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 w-full">
-              <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--ds-accent, #EC6229)' }} />
-              <p className="mt-3 text-sm" style={{ color: 'var(--ds-text-muted, #726B67)' }}>Loading post...</p>
+              <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--ds-accent)' }} />
+              <p className="mt-3 text-sm" style={{ color: 'var(--ds-text-muted)' }}>Loading post...</p>
             </div>
           ) : (
             <>
@@ -679,8 +680,8 @@ export function EditPostModal({
                     <div
                       className="h-[32px] w-[32px] shrink-0 rounded-full flex items-center justify-center text-sm font-medium"
                       style={{
-                        backgroundColor: 'var(--ds-surface-2, #222228)',
-                        color: 'var(--ds-text-primary, #FFECE6)',
+                        backgroundColor: 'var(--ds-surface-2)',
+                        color: 'var(--ds-text-primary)',
                       }}
                     >
                       {displayName.charAt(0).toUpperCase()}
@@ -688,7 +689,7 @@ export function EditPostModal({
                   )}
                   <span
                     className="h-[24px] shrink-0 font-dm-sans text-[16px] font-normal leading-[24px]"
-                    style={{ color: 'var(--ds-text-primary, #FFECE6)' }}
+                    style={{ color: 'var(--ds-text-primary)' }}
                   >
                     {displayName}
                   </span>
@@ -697,21 +698,48 @@ export function EditPostModal({
 
               {/* Post Text (Figma: width 371px, min-h 96px, font 16px, line-height 24px, #FFECE6) */}
               {postType !== 'poll' && (
-                <div className="w-[371px] max-w-full shrink-0">
-                  <MentionTextarea
-                    ref={textareaRef}
-                    value={description}
-                    onChange={(e: any) => setDescription(e.target.value)}
-                    onMentionsChange={setInlineMentions}
-                    initialMentions={inlineMentions}
-                    placeholder="What's on your mind?"
-                    className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none min-h-[96px] whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
-                    style={{
-                      color: 'var(--ds-text-primary, #FFECE6)',
-                      caretColor: 'var(--ds-accent, #EC6229)',
-                    }}
-                  />
-                </div>
+                (() => {
+                  const hasMediaForText = selectedImages.length > 0 || selectedVideo !== null || sharedPost !== null;
+                  const effectiveMaxLines = hasMediaForText ? 2 : 10;
+                  const isLong = description && (description.split('\n').length > effectiveMaxLines || description.length > effectiveMaxLines * 45);
+                  
+                  // 24px is the line-height.
+                  const maxCollapsedHeight = effectiveMaxLines * 24;
+
+                  return (
+                    <div className="w-[371px] max-w-full shrink-0 flex flex-col">
+                      <div 
+                        className="w-full relative"
+                        style={isLong && !isExpanded ? { maxHeight: `${maxCollapsedHeight}px`, overflow: 'hidden' } : undefined}
+                      >
+                        <MentionTextarea
+                          ref={textareaRef}
+                          value={description}
+                          onChange={(e: any) => setDescription(e.target.value)}
+                          onMentionsChange={setInlineMentions}
+                          initialMentions={inlineMentions}
+                          placeholder="What's on your mind?"
+                          rows={1}
+                          className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
+                          style={{
+                            color: 'var(--ds-text-primary)',
+                            caretColor: 'var(--ds-accent)',
+                          }}
+                        />
+                      </div>
+                      
+                      {isLong && (
+                        <button
+                          type="button"
+                          onClick={() => setIsExpanded(!isExpanded)}
+                          className="text-[var(--ds-accent)] font-semibold text-[14px] leading-[20px] self-start mt-2 hover:opacity-80 transition-opacity"
+                        >
+                          {isExpanded ? 'Show Less' : 'See More'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()
               )}
 
               {/* Poll Creator Mode */}
@@ -725,8 +753,8 @@ export function EditPostModal({
                       placeholder="Ask your network..."
                       className="w-full bg-transparent border-b pb-2.5 text-[15px] outline-none transition-colors"
                       style={{
-                        borderColor: 'var(--ds-border, #2C2C33)',
-                        color: 'var(--ds-text-primary, #FFECE6)',
+                        borderColor: 'var(--ds-border)',
+                        color: 'var(--ds-text-primary)',
                       }}
                     />
                   </div>
@@ -742,8 +770,8 @@ export function EditPostModal({
                             placeholder={`Option ${letter}`}
                             className="w-full bg-transparent border-b pb-2.5 pr-8 text-[14px] outline-none transition-colors"
                             style={{
-                              borderColor: 'var(--ds-border, #2C2C33)',
-                              color: 'var(--ds-text-primary, #FFECE6)',
+                              borderColor: 'var(--ds-border)',
+                              color: 'var(--ds-text-primary)',
                             }}
                           />
                           {poll.pollOptions.length > 2 && index >= 2 && (
@@ -751,7 +779,7 @@ export function EditPostModal({
                               type="button"
                               onClick={() => poll.removePollOption(opt.id)}
                               className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:opacity-80 cursor-pointer transition-colors outline-none"
-                              style={{ color: 'var(--ds-text-muted, #726B67)' }}
+                              style={{ color: 'var(--ds-text-muted)' }}
                               title="Remove option"
                               aria-label="Remove option"
                             >
@@ -767,8 +795,8 @@ export function EditPostModal({
                         onClick={poll.addPollOption}
                         className="w-fit h-[32px] px-3 rounded-full border text-[13px] flex items-center gap-1.5 transition-colors cursor-pointer outline-none hover:opacity-80"
                         style={{
-                          borderColor: 'var(--ds-border, #2C2C33)',
-                          color: 'var(--ds-text-primary, #FFECE6)',
+                          borderColor: 'var(--ds-border)',
+                          color: 'var(--ds-text-primary)',
                         }}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -797,7 +825,7 @@ export function EditPostModal({
                   className="relative h-[332px] w-[371px] max-w-full shrink-0 overflow-hidden rounded-[8px]"
                   style={{
                     borderRadius: 'var(--radius-card-new, 8px)',
-                    backgroundColor: 'var(--ds-surface-1, #1A1A20)',
+                    backgroundColor: 'var(--ds-surface-1)',
                   }}
                 >
                   <img
@@ -809,17 +837,9 @@ export function EditPostModal({
                     type="button"
                     onClick={() => handleRemoveImage(selectedImages[0].id)}
                     aria-label="Remove photo"
-                    className="absolute right-[8px] top-[8px] flex h-[32px] w-[32px] items-center justify-center rounded-full p-[6px] hover:opacity-85 transition-opacity cursor-pointer outline-none z-10"
-                    style={{ backgroundColor: 'var(--ds-surface-1, #1A1A20)' }}
+                    className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[var(--ds-surface-1)] hover:brightness-110 rounded-full transition-colors z-30 shadow-md cursor-pointer outline-none"
                   >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path
-                        d="M4 4L16 16M16 4L4 16"
-                        stroke="var(--ds-error, #E5484D)"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <X className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
                   </button>
                 </div>
               )}
@@ -836,32 +856,27 @@ export function EditPostModal({
                 </div>
               )}
 
-              {/* Attached Video Preview (Matching 371x332 Figma bounds) */}
+              {/* Attached Video Preview (Matching FeedComposerInline) */}
               {selectedVideo && (
-                <div
-                  className="relative h-[332px] w-[371px] max-w-full shrink-0 overflow-hidden rounded-[8px] bg-black"
-                  style={{ borderRadius: 'var(--radius-card-new, 8px)' }}
-                >
-                  <video
-                    src={selectedVideo.previewUrl}
-                    controls
-                    className="block h-full w-full object-cover"
+                <div className="relative w-[371px] max-w-full rounded-[16px] overflow-hidden group">
+                  <PostVideoCard
+                    videoSrc={selectedVideo.previewUrl}
+                    author={displayName || 'Author'}
+                    authorAvatar={displayAvatar}
+                    authorRole={''}
+                    content=""
+                    showHeader={false}
+                    showFooter={false}
+                    isPreview={false}
+                    isMe={true}
                   />
                   <button
                     type="button"
                     onClick={handleRemoveVideo}
-                    aria-label="Remove video"
-                    className="absolute right-[8px] top-[8px] flex h-[32px] w-[32px] items-center justify-center rounded-full p-[6px] hover:opacity-85 transition-opacity cursor-pointer outline-none z-10"
-                    style={{ backgroundColor: 'var(--ds-surface-1, #1A1A20)' }}
+                    className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
+                    title="Remove video"
                   >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path
-                        d="M4 4L16 16M16 4L4 16"
-                        stroke="var(--ds-error, #E5484D)"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               )}
@@ -872,7 +887,7 @@ export function EditPostModal({
                   <div className="flex items-center gap-2 text-[14px] font-dm-sans">
                     <span
                       className="truncate max-w-[280px]"
-                      style={{ color: 'var(--ds-text-primary, #FFECE6)' }}
+                      style={{ color: 'var(--ds-text-primary)' }}
                     >
                       {'formattedAddress' in selectedLocation
                         ? selectedLocation.formattedAddress
@@ -880,13 +895,13 @@ export function EditPostModal({
                     </span>
                     <span
                       className="w-1 h-1 rounded-full shrink-0"
-                      style={{ backgroundColor: 'var(--ds-text-muted, #726B67)' }}
+                      style={{ backgroundColor: 'var(--ds-text-muted)' }}
                     />
                     <button
                       type="button"
                       onClick={() => setSelectedLocation(null)}
                       className="hover:opacity-80 cursor-pointer font-medium font-dm-sans"
-                      style={{ color: 'var(--ds-accent, #EC6229)' }}
+                      style={{ color: 'var(--ds-accent)' }}
                     >
                       Remove
                     </button>
@@ -896,7 +911,7 @@ export function EditPostModal({
                     type="button"
                     onClick={() => setShowLocationSelector(true)}
                     className="h-[24px] shrink-0 p-0 text-left font-dm-sans text-[16px] font-medium leading-[24px] hover:opacity-85 cursor-pointer outline-none transition-opacity"
-                    style={{ color: 'var(--ds-accent, #EC6229)' }}
+                    style={{ color: 'var(--ds-accent)' }}
                   >
                     Add location
                   </button>
@@ -909,7 +924,11 @@ export function EditPostModal({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={ACCEPTED_MEDIA_TYPES}
+                  accept={
+                    selectedImages.length > 0 
+                      ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif" 
+                      : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
+                  }
                   multiple
                   onChange={handleFilesChosen}
                   className="hidden"
@@ -929,37 +948,13 @@ export function EditPostModal({
                         : 'hover:opacity-85 cursor-pointer'
                     }`}
                     style={{
-                      borderColor: 'var(--ds-border, #2C2C33)',
+                      borderColor: 'var(--ds-border)',
                     }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <rect
-                        x="2"
-                        y="3"
-                        width="16"
-                        height="14"
-                        rx="1"
-                        stroke="var(--ds-text-primary, #FFECE6)"
-                        strokeWidth="1.5"
-                      />
-                      <circle
-                        cx="6"
-                        cy="7"
-                        r="1.5"
-                        stroke="var(--ds-text-primary, #FFECE6)"
-                        strokeWidth="1.2"
-                      />
-                      <path
-                        d="M3 14L7.5 10L10.5 13L13 10L17 14"
-                        stroke="var(--ds-text-primary, #FFECE6)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <Plus className="w-[16px] h-[16px]" color="var(--ds-text-primary)" />
                     <span
-                      className="h-[20px] w-[40px] shrink-0 font-dm-sans text-[14px] font-normal leading-[20px]"
-                      style={{ color: 'var(--ds-text-primary, #FFECE6)' }}
+                      className="text-[14px] font-medium leading-[20px] font-dmsans shrink-0"
+                      style={{ color: 'var(--ds-text-primary)' }}
                     >
                       Media
                     </span>
@@ -975,14 +970,14 @@ export function EditPostModal({
                     disabled={isSubmitting || !canSave}
                     className="flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-90 active:scale-95"
                     style={{
-                      backgroundColor: 'var(--ds-accent, #EC6229)',
-                      color: 'var(--ds-text-primary, #FFECE6)',
+                      backgroundColor: 'var(--ds-accent)',
+                      color: 'var(--ds-text-primary)',
                     }}
                   >
                     {isSubmitting ? (
                       <Loader2
                         className="w-4 h-4 animate-spin"
-                        style={{ color: 'var(--ds-text-primary, #FFECE6)' }}
+                        style={{ color: 'var(--ds-text-primary)' }}
                       />
                     ) : (
                       'Save'
@@ -996,8 +991,8 @@ export function EditPostModal({
                     disabled={isSubmitting}
                     className="box-border flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full border px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-85"
                     style={{
-                      borderColor: 'var(--ds-border, #2C2C33)',
-                      color: 'var(--ds-text-primary, #FFECE6)',
+                      borderColor: 'var(--ds-border)',
+                      color: 'var(--ds-text-primary)',
                     }}
                   >
                     Delete
@@ -1057,3 +1052,4 @@ export function LegacyEditPostModal({ isOpen, onClose, editPostId, onUpdate }: E
   return null;
 }
 ============================================================================= */
+

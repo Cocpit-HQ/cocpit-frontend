@@ -81,7 +81,7 @@ const PollFlow = ({
           <button
             type="button"
             onClick={onAddOption}
-            className="flex items-center gap-[8px] font-dmsans text-[16px] font-medium leading-[24px] text-ds-text-primary px-4 py-2 border border-ds-border rounded-full bg-transparent hover:bg-ds-surface-1 transition-all w-fit mt-1 cursor-pointer"
+            className="flex items-center justify-center gap-[8px] font-dmsans text-[16px] font-medium leading-[24px] text-ds-text-primary h-[36px] border border-ds-border rounded-full bg-transparent hover:bg-ds-surface-1 transition-all w-full mt-1 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             Add option
@@ -90,7 +90,7 @@ const PollFlow = ({
       </div>
 
       {/* Duration Dropdown Select */}
-      <div className="space-y-2">
+      <div className={`space-y-2 transition-all duration-200 z-[50] relative`}>
         <label className="text-ds-text-secondary text-[14px] font-medium leading-[20px]">
           Poll duration
         </label>
@@ -98,23 +98,23 @@ const PollFlow = ({
           <button
             type="button"
             onClick={() => setDurationOpen((open) => !open)}
-            className="w-full px-4 py-3 rounded-2xl border border-ds-border bg-transparent text-[14px] font-medium leading-[20px] text-ds-text-secondary focus:outline-none transition-all flex items-center justify-between"
+            className="w-full flex items-center justify-between py-3 text-[14px] text-ds-text-secondary font-medium cursor-pointer bg-transparent outline-none"
           >
-            <span>{pollDuration}</span>
-            <ChevronDown className="w-4 h-4 text-ds-text-secondary" />
+            <span>{pollDuration || 'Poll duration'}</span>
+            <ChevronDown className={`w-4 h-4 text-ds-text-secondary transition-transform duration-200 ${durationOpen ? 'rotate-180' : ''}`} />
           </button>
           {durationOpen && (
-            <div className="absolute left-0 right-0 top-[calc(100%+4px)] bg-ds-surface-2 border border-ds-border rounded-2xl shadow-md z-[200] p-1">
+            <div className="absolute left-0 right-0 top-full bg-ds-bg rounded-b-2xl z-[999] py-2 flex flex-col shadow-2xl border-b border-l border-r border-ds-border/30">
               {durations.map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => { onDurationChange(d); setDurationOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 rounded-xl text-[14px] font-dmsans transition-colors
-                    ${pollDuration === d
-                      ? 'bg-[var(--ds-accent)] text-white'
-                      : 'text-ds-text-primary hover:bg-ds-surface-1'
-                    }`}
+                  className={`w-full text-left px-4 py-3 text-[14px] font-dmsans transition-colors cursor-pointer bg-transparent hover:bg-white/5 ${
+                    pollDuration === d
+                      ? 'text-[var(--ds-accent)] font-medium'
+                      : 'text-ds-text-secondary'
+                  }`}
                 >
                   {d}
                 </button>

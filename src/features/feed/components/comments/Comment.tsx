@@ -324,7 +324,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         <div className="flex items-center gap-[8px] ds-text-small text-ds-text-primary">
           <button
             onClick={handleLike}
-            className={`hover:underline transition-colors ${isLiked ? 'text-ds-accent' : ''}`}
+            className={`transition-colors ${isLiked ? 'text-ds-accent' : ''}`}
           >
             Like
           </button>
@@ -338,7 +338,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
 
           <button
             onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
-            className="hover:underline transition-colors"
+            className="transition-colors"
           >
             Reply
           </button>
