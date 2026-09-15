@@ -14,7 +14,6 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
 
   const [showOptions, setShowOptions] = useState(false);
   const [optionsPos, setOptionsPos] = useState<{ top: number; right: number } | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -63,8 +62,6 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
     setShowOptions,
     optionsPos,
     setOptionsPos,
-    isEditModalOpen,
-    setIsEditModalOpen,
     isReportModalOpen,
     setIsReportModalOpen,
     isDeleteDialogOpen,

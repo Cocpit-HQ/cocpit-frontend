@@ -13,7 +13,7 @@ import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
 import { feedApi } from '../api/feed.api';
-import { hidePost, unhidePost, submitPostFeedback } from '@/services/api/feed';
+import { unhidePost, submitPostFeedback } from '@/services/api/feed';
 import { useUIStore } from '@/store/ui.store';
 
 // New Parts
@@ -133,7 +133,6 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const {
     showOptions, setShowOptions, optionsPos, setOptionsPos,
-    isEditModalOpen, setIsEditModalOpen,
     isReportModalOpen, setIsReportModalOpen,
     isDeleteDialogOpen, setIsDeleteDialogOpen, confirmDelete,
     handleToggleVisibility, handleDelete
@@ -321,6 +320,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const isVideoFeedCard = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
 
+  /* ===== LEGACY POST CLICK (Commented out — replaced by handleCardClick) =====
   const handlePostClick = (e: React.MouseEvent) => {
     if (props.isFullContent) return;
     
@@ -330,6 +330,7 @@ export const FeedPost = (props: FeedPostProps) => {
     }
     router.push(isArticlePost ? `/article/${id}` : `/post/${id}`);
   };
+  ===== END LEGACY POST CLICK ===== */
 
   const isCompanyProfile = activeProfile?.type === 'COMPANY';
   const currentUserHandle = isCompanyProfile
