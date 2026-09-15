@@ -2,13 +2,39 @@
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider, useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { setInMemorySession } from "@/lib/session-cache";
 import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
+
+const THEME_BG_COLORS: Record<string, string> = {
+  dark:  '#030303',
+  navy:  '#030303',
+  light: '#FFF9F6',
+};
+
+/**
+ * Syncs <html> background-color and <meta name="theme-color"> whenever the
+ * active theme changes. This ensures Safari's pull-to-refresh overscroll area
+ * always shows the correct theme background instead of a mismatched default.
+ */
+function ThemeColorSync() {
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    const color = THEME_BG_COLORS[resolvedTheme ?? 'dark'] ?? '#0B0F19';
+    // Safari reads <html> background for the rubber-band / overscroll area.
+    document.documentElement.style.backgroundColor = color;
+    // Keep the browser chrome (tab bar on mobile Safari) in sync.
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', color);
+  }, [resolvedTheme]);
+
+  return null;
+}
 
 function AxiosAuthSync() {
   const { data: session, status } = useSession();
@@ -47,6 +73,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           storageKey="theme"
           themes={['light', 'dark', 'navy']}
         >
+          <ThemeColorSync />
           <QueryClientProvider client={queryClient}>
             <ActiveProfileProvider>
               <TooltipProvider>
