@@ -65,6 +65,7 @@ export function EditPostModal({
 
   // Form states
   const [description, setDescription] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
   const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
 
@@ -657,8 +658,8 @@ export function EditPostModal({
           <CocpitLogoIcon className="w-7 h-7" fill="#FFFFFF" />
         </div>
 
-        {/* Main Edit Post Section (Figma: width 371px, top 60px, gap 24px) */}
-        <section className="relative z-[155] w-[371px] max-w-full mx-auto pt-[60px] pb-[60px] px-4 sm:px-0 flex flex-col items-start gap-[24px]">
+        {/* Main Edit Post Section (Figma: width 371px, top 60px, gap 20px) */}
+        <section className="relative z-[155] w-[371px] max-w-full mx-auto pt-[60px] pb-[60px] px-4 sm:px-0 flex flex-col items-start gap-[20px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 w-full">
               <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--ds-accent)' }} />
@@ -697,21 +698,48 @@ export function EditPostModal({
 
               {/* Post Text (Figma: width 371px, min-h 96px, font 16px, line-height 24px, #FFECE6) */}
               {postType !== 'poll' && (
-                <div className="w-[371px] max-w-full shrink-0">
-                  <MentionTextarea
-                    ref={textareaRef}
-                    value={description}
-                    onChange={(e: any) => setDescription(e.target.value)}
-                    onMentionsChange={setInlineMentions}
-                    initialMentions={inlineMentions}
-                    placeholder="What's on your mind?"
-                    className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none min-h-[96px] whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
-                    style={{
-                      color: 'var(--ds-text-primary)',
-                      caretColor: 'var(--ds-accent)',
-                    }}
-                  />
-                </div>
+                (() => {
+                  const hasMediaForText = selectedImages.length > 0 || selectedVideo !== null || sharedPost !== null;
+                  const effectiveMaxLines = hasMediaForText ? 2 : 10;
+                  const isLong = description && (description.split('\n').length > effectiveMaxLines || description.length > effectiveMaxLines * 45);
+                  
+                  // 24px is the line-height.
+                  const maxCollapsedHeight = effectiveMaxLines * 24;
+
+                  return (
+                    <div className="w-[371px] max-w-full shrink-0 flex flex-col">
+                      <div 
+                        className="w-full relative"
+                        style={isLong && !isExpanded ? { maxHeight: `${maxCollapsedHeight}px`, overflow: 'hidden' } : undefined}
+                      >
+                        <MentionTextarea
+                          ref={textareaRef}
+                          value={description}
+                          onChange={(e: any) => setDescription(e.target.value)}
+                          onMentionsChange={setInlineMentions}
+                          initialMentions={inlineMentions}
+                          placeholder="What's on your mind?"
+                          rows={1}
+                          className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
+                          style={{
+                            color: 'var(--ds-text-primary)',
+                            caretColor: 'var(--ds-accent)',
+                          }}
+                        />
+                      </div>
+                      
+                      {isLong && (
+                        <button
+                          type="button"
+                          onClick={() => setIsExpanded(!isExpanded)}
+                          className="text-[var(--ds-accent)] font-semibold text-[14px] leading-[20px] self-start mt-2 hover:opacity-80 transition-opacity"
+                        >
+                          {isExpanded ? 'Show Less' : 'See More'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()
               )}
 
               {/* Poll Creator Mode */}
