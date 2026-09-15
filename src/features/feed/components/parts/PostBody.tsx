@@ -70,7 +70,7 @@ export const PostBody = ({
         return;
       }
 
-      // If it overflows, truncation with "View more" is required
+      // If it overflows, truncation with "See more" is required
       setIsLong(true);
 
       // For media posts (effectiveMaxLines <= 2), collapse consecutive empty lines (\n\n) to a single \n
@@ -86,7 +86,7 @@ export const PostBody = ({
         return;
       }
 
-      // Binary search on tokens to find the maximum text that fits with " ... View more"
+      // Binary search on tokens to find the maximum text that fits with " ... See more"
       let low = 1;
       let high = tokens.length;
       let best = 0;
@@ -97,7 +97,7 @@ export const PostBody = ({
         const cleanCandidate = candidate.replace(/[,;:\s—\-]+$/, '');
         const currentMaxHeight = getDynamicMaxHeight(candidate);
         
-        measurer.textContent = cleanCandidate + ' ... View more';
+        measurer.textContent = cleanCandidate + ' ... See more';
 
         if (measurer.scrollHeight <= currentMaxHeight + 1) {
           best = mid;
@@ -115,7 +115,7 @@ export const PostBody = ({
 
       // Fallback for extreme cases (e.g. single unbroken token overflowing)
       const currentMaxHeight = getDynamicMaxHeight(finalTruncated || tokens[0] || '');
-      measurer.textContent = finalTruncated + ' ... View more';
+      measurer.textContent = finalTruncated + ' ... See more';
       
       if ((best === 0 || measurer.scrollHeight > currentMaxHeight + 1) && tokens[0]) {
         let charLow = 1;
@@ -125,7 +125,7 @@ export const PostBody = ({
           const charMid = Math.floor((charLow + charHigh) / 2);
           const charCandidate = tokens[0].slice(0, charMid);
           const charMaxHeight = getDynamicMaxHeight(charCandidate);
-          measurer.textContent = charCandidate + ' ... View more';
+          measurer.textContent = charCandidate + ' ... See more';
           
           if (measurer.scrollHeight <= charMaxHeight + 1) {
             bestChar = charMid;
@@ -195,7 +195,7 @@ export const PostBody = ({
           authorSlug={authorSlug}
         />
 
-        {/* Inline "... View more" placed directly at the end of the last word */}
+        {/* Inline "... See more" placed directly at the end of the last word */}
         {isLong && !isExpanded && (
           <span
             onClick={(e) => {
@@ -215,7 +215,7 @@ export const PostBody = ({
                   : 'text-[var(--ds-accent)]'
               }`}
             >
-              View more
+              See more
             </span>
           </span>
         )}

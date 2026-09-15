@@ -20,7 +20,7 @@ export function DeleteConfirmationModal({
 }: DeleteConfirmationModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <BareDialogContent className="w-[193px] h-[150px] p-[12px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center gap-[16px] shadow-xl outline-none">
+      <BareDialogContent className="w-[193px] h-[150px] p-[12px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center gap-[16px] shadow-xl outline-none z-[400]">
         
         <div className="flex flex-col items-center justify-start gap-[8px] w-full">
           <DialogTitle className="font-['DM_Sans'] text-[16px] font-medium leading-[24px] text-[var(--ds-text-primary)] text-center w-full">
