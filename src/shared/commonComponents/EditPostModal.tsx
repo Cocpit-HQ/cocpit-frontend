@@ -886,7 +886,7 @@ export function EditPostModal({
                       type="button"
                       onClick={() => setSelectedLocation(null)}
                       className="hover:opacity-80 cursor-pointer font-medium font-dm-sans"
-                      style={{ color: 'var(--ds-accent, #EC6229)' }}
+                      style={{ color: 'var(--ds-error, #E5484D)' }}
                     >
                       Remove
                     </button>
