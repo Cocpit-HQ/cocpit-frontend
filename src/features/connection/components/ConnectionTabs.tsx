@@ -16,7 +16,7 @@ interface ConnectionTabsProps {
 }
 
 export function ConnectionTabs({ activeCount }: ConnectionTabsProps) {
-  const { activeTab, setActiveTab } = useConnectionStore();
+  const { activeTab, setActiveTab, invitationSubTab } = useConnectionStore();
   const { data: counts } = useConnectionCounts();
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -45,9 +45,12 @@ export function ConnectionTabs({ activeCount }: ConnectionTabsProps) {
               ? counts?.received ?? 0
               : key === 'sent'
               ? counts?.sent ?? 0
-              : counts?.invitations ?? 0;
+              : invitationSubTab === 'teams'
+              ? counts?.teamsInvitations ?? 0
+              : counts?.channelsInvitations ?? 0;
 
           const count = isActive && typeof activeCount === 'number' ? activeCount : fallbackCount;
+          // Fix: Display the pending indicator when count > 0, even for the active tab
           const hasPending = count > 0;
 
           return (
