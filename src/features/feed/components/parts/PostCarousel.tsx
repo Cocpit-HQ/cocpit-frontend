@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import Image from "next/image";
@@ -90,56 +90,135 @@ export function PostCarousel({
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'start',
-    containScroll: 'trimSnaps',
+    containScroll: 'keepSnaps',
     dragFree: true,
   }, [WheelGesturesPlugin()]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const rAFRef = useRef<number | null>(null);
 
-  const onSelect = useCallback(() => {
+  const getActiveIndex = useCallback(() => {
+    if (!emblaApi) return 0;
+
+    const slidesInView = emblaApi.slidesInView();
+    if (slidesInView && slidesInView.length > 0) {
+      if (slidesInView.length === 1) {
+        return slidesInView[0];
+      }
+
+      const rootNode = emblaApi.rootNode();
+      const slideNodes = emblaApi.slideNodes();
+
+      if (rootNode && slideNodes && slideNodes.length > 0) {
+        const rootRect = rootNode.getBoundingClientRect();
+        const rootCenter = rootRect.left + rootRect.width / 2;
+
+        let maxOverlap = -1;
+        let minCenterDist = Infinity;
+        let bestIndex = slidesInView[0];
+
+        for (const idx of slidesInView) {
+          const slideNode = slideNodes[idx];
+          if (!slideNode) continue;
+
+          const slideRect = slideNode.getBoundingClientRect();
+          const overlap = Math.max(
+            0,
+            Math.min(slideRect.right, rootRect.right) - Math.max(slideRect.left, rootRect.left)
+          );
+          const slideCenter = slideRect.left + slideRect.width / 2;
+          const dist = Math.abs(slideCenter - rootCenter);
+
+          if (
+            overlap > maxOverlap ||
+            (Math.abs(overlap - maxOverlap) < 1 && dist < minCenterDist)
+          ) {
+            maxOverlap = overlap;
+            minCenterDist = dist;
+            bestIndex = idx;
+          }
+        }
+        return bestIndex;
+      }
+      return slidesInView[0];
+    }
+
+    return Math.min(images.length - 1, Math.max(0, emblaApi.selectedScrollSnap()));
+  }, [emblaApi, images.length]);
+
+  const updateActiveState = useCallback(() => {
     if (!emblaApi) return;
+    const activeIdx = getActiveIndex();
+    setSelectedIndex(activeIdx);
+    setCanScrollPrev(activeIdx > 0);
+    setCanScrollNext(activeIdx < images.length - 1);
+  }, [emblaApi, getActiveIndex, images.length]);
 
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
+  const onScroll = useCallback(() => {
+    if (rAFRef.current !== null) return;
+    rAFRef.current = requestAnimationFrame(() => {
+      rAFRef.current = null;
+      updateActiveState();
+    });
+  }, [updateActiveState]);
+
+  const onSettle = useCallback(() => {
+    if (rAFRef.current !== null) {
+      cancelAnimationFrame(rAFRef.current);
+      rAFRef.current = null;
+    }
+    updateActiveState();
+  }, [updateActiveState]);
 
   useEffect(() => {
     if (!emblaApi) return;
-    onSelect();
-    emblaApi.on("select", onSelect);
-    emblaApi.on("scroll", onSelect);
-    emblaApi.on("settle", onSelect);
-    emblaApi.on("reInit", onSelect);
+
+    updateActiveState();
+
+    emblaApi.on("select", onSettle);
+    emblaApi.on("scroll", onScroll);
+    emblaApi.on("settle", onSettle);
+    emblaApi.on("reInit", onSettle);
+    emblaApi.on("slidesInView", onScroll);
+
     return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("scroll", onSelect);
-      emblaApi.off("settle", onSelect);
-      emblaApi.off("reInit", onSelect);
+      if (rAFRef.current !== null) {
+        cancelAnimationFrame(rAFRef.current);
+        rAFRef.current = null;
+      }
+      emblaApi.off("select", onSettle);
+      emblaApi.off("scroll", onScroll);
+      emblaApi.off("settle", onSettle);
+      emblaApi.off("reInit", onSettle);
+      emblaApi.off("slidesInView", onScroll);
     };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi, onScroll, onSettle, updateActiveState]);
 
   // Re-initialize Embla when images change or after mount/modal open layout shifts
   useEffect(() => {
     if (!emblaApi) return;
     const timer = setTimeout(() => {
       emblaApi.reInit();
-      onSelect();
+      onSettle();
     }, 50);
     return () => clearTimeout(timer);
-  }, [emblaApi, images, onSelect]);
+  }, [emblaApi, images, onSettle]);
 
   const scrollPrev = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
+    if (!emblaApi) return;
+    const targetIdx = Math.max(0, selectedIndex - 1);
+    emblaApi.scrollTo(targetIdx);
+  }, [emblaApi, selectedIndex]);
 
   const scrollNext = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
+    if (!emblaApi) return;
+    const targetIdx = Math.min(images.length - 1, selectedIndex + 1);
+    emblaApi.scrollTo(targetIdx);
+  }, [emblaApi, images.length, selectedIndex]);
 
   if (!images || images.length === 0) return null;
 
