@@ -26,16 +26,10 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
 
   if (isLoading) {
     return (
-      <section className="mt-5" aria-label="People you may know">
-        <div className="flex items-baseline flex-wrap gap-2 mb-2">
-          <h2 className="font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary">
-            People you may know
-          </h2>
-          <span className="text-ds-text-muted text-[13px]">•</span>
-          <p className="font-dm-sans text-[14px] text-ds-text-secondary">
-            Based on your industry & network
-          </p>
-        </div>
+      <section className="mt-6" aria-label="People you may know">
+        <h2 className="font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary mb-5">
+          People you may know
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <SuggestionCardSkeleton key={i} />
@@ -56,16 +50,10 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
   }
 
   return (
-    <section className="mt-5" aria-label="People you may know">
-      <div className="flex items-baseline flex-wrap gap-2 mb-2">
-        <h2 className="font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary">
-          People you may know
-        </h2>
-        <span className="text-ds-text-muted text-[13px]">•</span>
-        <p className="font-dm-sans text-[14px] text-ds-text-secondary">
-          Based on your industry & network
-        </p>
-      </div>
+    <section className="mt-6" aria-label="People you may know">
+      <h2 className="font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary mb-5">
+        People you may know
+      </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {filteredSuggestions.map((user) => (

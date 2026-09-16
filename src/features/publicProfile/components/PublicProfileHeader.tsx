@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { LogOut, CheckCircle, MoreVertical, Share2, Link as LinkIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
+import { UserIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -180,8 +181,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                         </span>
                                     </div>
                                 ) : (
-                                    <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-light text-[48px] leading-none flex items-center justify-center font-[family-name:var(--font-poppins)] select-none">
-                                        {userInitial}
+                                    <div className="w-full h-full bg-ds-surface-1 text-ds-text-primary p-6 flex items-center justify-center select-none border border-ds-border">
+                                        <UserIcon className="w-full h-full text-ds-text-primary" />
                                     </div>
                                 )}
                             </div>

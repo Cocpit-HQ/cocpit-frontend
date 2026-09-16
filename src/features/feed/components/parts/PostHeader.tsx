@@ -166,7 +166,7 @@ export const PostHeader = ({
                 onError={() => setImgError(true)} 
               />
             ) : (
-              <span className={`text-[11px] font-medium ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'}`}>{initial}</span>
+              <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
             )}
           </div>
         </Link>
@@ -175,7 +175,7 @@ export const PostHeader = ({
         <div className="flex flex-col items-start min-w-0 flex-1">
           <Link href={profileHref} className="block w-full outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded">
             <span className={`block w-full font-['DM_Sans'] font-semibold text-[16px] leading-[24px] truncate ${
-              variant === 'overlay' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-primary'
+              variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
             }`}>
               {author}
             </span>
@@ -204,7 +204,7 @@ export const PostHeader = ({
                     <div 
                       key={index}
                       className={`w-full h-[14px] flex items-center font-['DM_Sans'] font-normal text-[10px] leading-[14px] shrink-0 transition-opacity ease-in-out ${opacityClass} ${
-                        variant === 'overlay' ? 'text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-secondary'
+                        variant === 'overlay' ? 'text-white/80' : 'text-ds-text-secondary'
                       }`}
                       style={{ transitionDuration: isAnimating ? '1000ms' : '0ms' }}
                     >
@@ -241,7 +241,7 @@ export const PostHeader = ({
             ref={optionsBtnRef}
             onClick={handleOptionsClick}
             className={`w-[20px] h-[20px] cursor-pointer flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${
-              variant === 'overlay' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-ds-text-primary'
+              variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
             }`}
             aria-label="Post options"
           >

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { X, Loader2 } from 'lucide-react';
+import { UserIcon } from '@/components/icons';
 import { useConnectionActions } from '../hooks/useConnectionActions';
 import { useConnectionStore } from '@/store/connection.store';
 import type { SuggestedUser } from '../types';
@@ -28,23 +29,24 @@ function MetaRow({ user }: { user: SuggestedUser }) {
   // 1. Mutuals (Priority 1)
   if (reasonSignal === 'mutual' || (mutuals && mutuals.count > 0)) {
     return (
-      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+      <div className="inline-flex items-center gap-1.5 px-1 py-0.5 text-[10px] leading-[12px] font-medium text-ds-text-secondary max-w-full truncate">
+        <span className="truncate">
+          {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
+        </span>
         {mutuals.avatars && mutuals.avatars.length > 0 && (
-          <div className="flex items-center -space-x-1.5 shrink-0" aria-hidden="true">
+          <div className="flex items-center -space-x-1 shrink-0" aria-hidden="true">
+            {/* Mutual avatar with 1px #222228 stroke per Figma spec */}
             {mutuals.avatars.slice(0, 3).map((src, i) => (
               <img
                 key={i}
                 src={src}
                 alt=""
-                className="w-3.5 h-3.5 rounded-full border border-ds-bg object-cover"
+                className="w-4 h-4 rounded-full border border-ds-surface-2 object-cover"
                 style={{ zIndex: 10 - i }}
               />
             ))}
           </div>
         )}
-        <span className="truncate">
-          {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
-        </span>
       </div>
     );
   }
@@ -53,7 +55,7 @@ function MetaRow({ user }: { user: SuggestedUser }) {
   if (reasonSignal === 'education' || studiedAt) {
     if (studiedAt) {
       return (
-        <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+        <div className="inline-flex items-center justify-center px-1 py-0.5 text-[10px] leading-[12px] font-medium text-ds-text-secondary max-w-full truncate">
           <span className="truncate">Studied at {studiedAt}</span>
         </div>
       );
@@ -64,7 +66,7 @@ function MetaRow({ user }: { user: SuggestedUser }) {
   if (reasonSignal === 'company' || worksAt) {
     if (worksAt) {
       return (
-        <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+        <div className="inline-flex items-center justify-center px-1 py-0.5 text-[10px] leading-[12px] font-medium text-ds-text-secondary max-w-full truncate">
           <span className="truncate">Works at {worksAt}</span>
         </div>
       );
@@ -74,14 +76,14 @@ function MetaRow({ user }: { user: SuggestedUser }) {
   // 4. Shared skills / Interests (Priority 4)
   if (sharedSkills && sharedSkills.length > 0) {
     return (
-      <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+      <div className="inline-flex items-center justify-center px-1 py-0.5 text-[10px] leading-[12px] font-medium text-ds-text-secondary max-w-full truncate">
         <span className="truncate">{sharedSkills.join(' • ')}</span>
       </div>
     );
   }
 
   return (
-    <div className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-ds-surface-1 text-[10px] leading-[12px] text-ds-text-secondary border border-ds-border/40 max-w-full truncate">
+    <div className="inline-flex items-center justify-center px-1 py-0.5 text-[10px] leading-[12px] font-medium text-ds-text-secondary max-w-full truncate">
       <span className="truncate">Active network</span>
     </div>
   );
@@ -97,19 +99,20 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
   const isLoading = connect.isPending && connect.variables === user.id;
   const showAvatar = !!user.avatarUrl && !imgError;
 
+  // Suggestion card with bg-ds-bg background and 182x216px dimensions per Figma spec
   return (
-    <div className="relative flex flex-col items-center text-center p-3 h-full rounded-[16px] border border-ds-border bg-ds-surface-1/40 hover:border-ds-border/80 transition-all font-dm-sans group select-none">
-      {/* Top-Right Dismiss Button */}
+    <div className="relative flex flex-col items-center text-center p-3 w-[182px] h-[216px] rounded-[16px] border border-ds-border bg-ds-bg hover:border-ds-border/80 transition-all font-dm-sans group select-none">
+      {/* Top-Right Dismiss Button per Figma spec (32x32px, absolute top-3 right-3) */}
       <button
         type="button"
         onClick={() => dismiss(user.id)}
         aria-label={`Dismiss suggestion for ${user.name}`}
-        className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className="absolute top-3 right-3 w-8 h-8 rounded-full p-[6px] flex items-center justify-center bg-ds-surface-1 text-ds-text-primary hover:bg-ds-surface-2 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
       >
-        <X className="w-5 h-5" strokeWidth={2} />
+        <X className="w-5 h-5 text-ds-text-primary" strokeWidth={2} />
       </button>
 
-      {/* Avatar */}
+      {/* Avatar per Figma spec: 60x60px */}
       <Link
         href={`/profile/${user.id}`}
         className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent mb-2 mt-1"
@@ -120,52 +123,53 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
           <Image
             src={user.avatarUrl}
             alt={user.name}
-            width={56}
-            height={56}
-            className="w-14 h-14 rounded-full object-cover bg-ds-surface-1 border border-ds-border group-hover:scale-105 transition-transform"
+            width={60}
+            height={60}
+            className="w-[60px] h-[60px] rounded-full object-cover bg-ds-surface-1 border border-ds-border group-hover:scale-105 transition-transform"
             onError={() => setImgError(true)}
           />
         ) : (
           <div
-            className="flex items-center justify-center w-14 h-14 rounded-full bg-ds-surface-1 text-ds-text-primary text-lg font-medium tracking-wide border border-ds-border group-hover:scale-105 transition-transform"
+            className="flex items-center justify-center w-[60px] h-[60px] rounded-full bg-ds-surface-1 text-ds-text-primary p-3 border border-ds-border group-hover:scale-105 transition-transform"
             aria-hidden="true"
           >
-            {getInitials(user.name || 'User')}
+            <UserIcon className="w-full h-full text-ds-text-primary" />
           </div>
         )}
       </Link>
 
       {/* User Info */}
-      <div className="flex flex-col items-center w-full min-h-[44px] mb-3">
+      <div className="flex flex-col items-center w-full min-h-[40px] mb-2 mt-1">
         <Link
           href={`/profile/${user.id}`}
-          className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group-hover:text-ds-accent transition-colors max-w-full"
+          className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group-hover:underline transition-colors max-w-full"
         >
           <p className="text-[16px] font-normal text-ds-text-primary leading-[24px] truncate w-full">
             {user.name}
           </p>
         </Link>
-        <p className="text-[12px] text-ds-text-secondary leading-[16px] truncate w-full mt-0.5">
-          {user.headline || 'Member'}
+        {/* Render user headline if present, keeping designated space empty when missing */}
+        <p className="text-[12px] text-ds-text-secondary leading-[16px] truncate w-full mt-0.5 min-h-[16px]">
+          {user.headline}
         </p>
       </div>
 
       {/* Contextual Capsule Badge */}
-      <div className="w-full flex justify-center mb-4">
+      <div className="w-full flex justify-center mb-2">
         <MetaRow user={user} />
       </div>
 
-      {/* Connect Action Button */}
+      {/* Connect action button sized 89x36px per Figma spec */}
       <button
         type="button"
         disabled={isLoading || isRequested}
         onClick={() => !isRequested && connect.mutate(user.id)}
         aria-label={isRequested ? `Request sent to ${user.name}` : `Connect with ${user.name}`}
         aria-pressed={isRequested}
-        className={`w-24 h-[36px] px-3 py-1.5 rounded-full text-[16px] leading-[24px] font-medium font-dm-sans transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent flex items-center justify-center gap-2.5 mt-auto ${
+        className={`w-[89px] h-[36px] px-3 py-1.5 rounded-full text-[16px] leading-[24px] font-medium font-dm-sans transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent flex items-center justify-center gap-2 mt-auto ${
           isRequested
             ? 'bg-ds-surface-1 text-ds-text-secondary border border-ds-border cursor-default opacity-80'
-            : 'bg-transparent text-ds-text-primary border border-ds-border hover:border-ds-accent hover:text-ds-accent active:scale-95'
+            : 'bg-transparent text-ds-text-primary border border-ds-border hover:border-ds-text-primary hover:bg-ds-surface-1 active:scale-95'
         }`}
       >
         {isLoading ? (

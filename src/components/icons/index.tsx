@@ -14,6 +14,7 @@ export type IconName =
   | "headphones"
   | "headset"
   | "user"
+  | "user-icon"
   | "terms"
   | "file-text"
   | "book"
@@ -1017,6 +1018,7 @@ export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   headphones: HeadphonesIcon,
   headset: HeadsetIcon,
   user: UserIcon,
+  "user-icon": UserIcon,
   terms: FileTextIcon,
   "file-text": FileTextIcon,
   book: BookIcon,

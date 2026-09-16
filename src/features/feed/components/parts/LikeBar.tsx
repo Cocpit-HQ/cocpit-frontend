@@ -6,6 +6,7 @@
  * - Handles filtering current viewer out of avatars and sanitizes display names to show first names.
  */
 import React from 'react';
+import { UserIcon } from '@/components/icons';
 
 export interface LikeBarProps {
   likeCount?: number;

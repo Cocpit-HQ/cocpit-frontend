@@ -1,6 +1,7 @@
 "use client"
 import { cn } from "@/lib/utils"
 import { Icon } from "@iconify/react"
+import { UserIcon } from "@/components/icons"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -279,8 +280,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
-            ) : null}
-            <span>{(localPost.author || 'U').charAt(0).toUpperCase()}</span>
+            ) : (
+              <UserIcon className="w-full h-full text-ds-text-primary p-1" />
+            )}
           </div>
           {/* Text Info (Frame 2608568) */}
           <div className="flex flex-col justify-center overflow-hidden min-w-0">
@@ -402,8 +404,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
               <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
                 {localPost.shared_post.authorAvatar && localPost.shared_post.authorAvatar !== '/assets/pngegg.png' ? (
                   <img src={localPost.shared_post.authorAvatar} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : null}
-                <span>{(localPost.shared_post.author || 'U').charAt(0).toUpperCase()}</span>
+                ) : (
+                  <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
+                )}
               </div>
               <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.author}</span>
             </div>
@@ -558,7 +561,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                         }}
                       />
                     ) : (
-                      <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                      <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
                     )}
                   </div>
                 ))}

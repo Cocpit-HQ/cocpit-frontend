@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserIcon } from '@/components/icons';
 
 interface PostIdentityProps {
   isCompanyPost: boolean;
@@ -27,7 +28,7 @@ const PostIdentity = ({
   return (
     <div className={`px-6 py-6 border-b border-ds-border ${className} font-dmsans`}>
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base overflow-hidden shrink-0 shadow-sm font-dmsans select-none relative">
+        <div className="w-12 h-12 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base overflow-hidden shrink-0 shadow-sm font-dmsans select-none relative p-2">
           {avatar ? (
             <img
               src={avatar}
@@ -36,7 +37,7 @@ const PostIdentity = ({
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : (
-            <span>{(name || 'U').charAt(0).toUpperCase()}</span>
+            <UserIcon className="w-full h-full text-ds-text-primary" />
           )}
         </div>
         <div className="flex flex-col">

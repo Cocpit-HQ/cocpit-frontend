@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
+import { UserIcon } from '@/components/icons';
 import type { ConnectionRequest } from '../types';
 
 interface RequestCardProps {
@@ -13,15 +14,6 @@ interface RequestCardProps {
   onDecline?: (id: string) => void;
   onUndo?: (id: string) => void;
   isActing?: boolean;
-}
-
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
 }
 
 export function RequestCard({
@@ -69,12 +61,12 @@ export function RequestCard({
             />
           ) : (
             <div
-              className={`flex items-center justify-center w-8 h-8 shrink-0 bg-ds-surface-1 text-ds-text-primary text-[12px] font-medium tracking-wide border border-ds-border ${
+              className={`flex items-center justify-center w-8 h-8 shrink-0 bg-ds-surface-1 text-ds-text-primary p-1.5 border border-ds-border ${
                 isCompany ? 'rounded-[8px]' : 'rounded-full'
               }`}
               aria-hidden="true"
             >
-              {getInitials(user.name || 'User')}
+              <UserIcon className="w-full h-full text-ds-text-primary" />
             </div>
           )}
         </Link>
@@ -100,28 +92,29 @@ export function RequestCard({
             )}
           </div>
 
-          {/* Contextual Capsule Badge Pill (adaptive content-driven width) */}
+          {/* Contextual badge text with #B8ADA8 (text-ds-text-secondary) color per Figma spec */}
           {hasMutuals ? (
-            <div className="w-fit max-w-full h-6 inline-flex items-center px-2.5 py-1 gap-2 bg-ds-surface-2 rounded-xl text-[12px] leading-4 font-normal text-ds-text-primary">
+            <div className="w-fit max-w-full inline-flex items-center gap-1.5 text-[12px] leading-4 font-normal text-ds-text-secondary">
+              <span className="truncate">
+                {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
+              </span>
               {mutuals.avatars && mutuals.avatars.length > 0 && (
-                <div className="flex items-center -space-x-1.5 shrink-0" aria-hidden="true">
+                <div className="flex items-center -space-x-1 shrink-0" aria-hidden="true">
+                  {/* Mutual avatar with 1px #222228 stroke per Figma spec */}
                   {mutuals.avatars.slice(0, 3).map((src, i) => (
                     <img
                       key={i}
                       src={src}
                       alt=""
-                      className="w-4 h-4 rounded-full border border-ds-bg object-cover"
+                      className="w-4 h-4 rounded-full border border-[#222228] object-cover"
                       style={{ zIndex: 10 - i }}
                     />
                   ))}
                 </div>
               )}
-              <span className="truncate">
-                {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
-              </span>
             </div>
           ) : reason_tag ? (
-            <div className="w-fit max-w-full h-6 inline-flex items-center px-2.5 py-1 gap-2 bg-ds-surface-2 rounded-xl text-[12px] leading-4 font-normal text-ds-text-primary">
+            <div className="w-fit max-w-full inline-flex items-center text-[12px] leading-4 font-normal text-ds-text-secondary">
               <span className="truncate">{reason_tag}</span>
             </div>
           ) : null}

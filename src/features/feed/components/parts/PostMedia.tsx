@@ -5,6 +5,7 @@ import { Icon } from '@/components/icons';
 import { calculateDisplayDimensions, ImageDimensions, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT } from '@/features/feed/utils/imageBounds';
 import { LikeBar } from './LikeBar';
 import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { VideoScrubber } from './VideoScrubber';
 
 interface PostMediaProps {
   imageSrc?: string;
@@ -56,6 +57,7 @@ export const PostMedia = ({
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -75,7 +77,7 @@ export const PostMedia = ({
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [videoRef]);
+  }, [videoRef, videoSrc]);
 
   const isVideoOverlayMode = videoOverlay && !!videoSrc;
 
@@ -113,6 +115,7 @@ export const PostMedia = ({
   };
 
   const handleTimeUpdate = () => {
+    if (isDraggingRef.current) return;
     const video = videoRef.current;
     if (video && video.duration) {
       setProgress((video.currentTime / video.duration) * 100);
@@ -128,18 +131,6 @@ export const PostMedia = ({
       video.play().catch(() => {});
     } else {
       video.pause();
-    }
-  };
-
-  const handleScrubberClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    const video = videoRef.current;
-    if (video && video.duration) {
-      video.currentTime = ratio * video.duration;
-      setProgress(ratio * 100);
     }
   };
 
@@ -177,7 +168,7 @@ export const PostMedia = ({
       ) : (
         <div
           onClick={onClick}
-          className={`relative overflow-hidden rounded-2xl ${isVideoOverlayMode ? 'bg-black' : 'bg-black/5 dark:bg-white/5'} flex flex-col justify-center items-center transition-none ${isVideoOverlayMode ? 'group cursor-pointer' : ''} ${!isVideoOverlayMode && onClick ? 'cursor-pointer' : ''}`}
+          className={`relative overflow-hidden rounded-2xl group ${isVideoOverlayMode ? 'bg-black' : 'bg-black/5 dark:bg-white/5'} flex flex-col justify-center items-center transition-none ${isVideoOverlayMode ? 'cursor-pointer' : ''} ${!isVideoOverlayMode && onClick ? 'cursor-pointer' : ''}`}
           style={{
             width: activeDims ? `${activeDims.width}px` : '100%',
             maxWidth: isFullContent ? '100%' : `${MAX_MEDIA_WIDTH}px`,
@@ -203,7 +194,7 @@ export const PostMedia = ({
                 {/* ── Top Header Overlay ── */}
                 {overlayHeader && (
                   <div 
-                    className="absolute top-0 inset-x-0 pt-3 pb-8 px-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20 pointer-events-auto select-none"
+                    className="absolute top-0 inset-x-0 pt-2.5 pb-6 px-3 bg-gradient-to-b from-black/70 to-transparent z-20 pointer-events-auto select-none"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {overlayHeader}
@@ -212,14 +203,14 @@ export const PostMedia = ({
 
                 {/* ── Bottom Overlay: Caption + Mute + Progress ── */}
                 <div 
-                  className="absolute bottom-0 inset-x-0 pt-12 pb-3 px-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent z-20 pointer-events-auto flex flex-col gap-2 select-none"
+                  className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-auto flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Caption & Mute Row */}
                   <div className="flex items-end justify-between gap-3 w-full">
                     {displayCaption ? (
                       <div className="flex-1 min-w-0">
-                        <p className="font-['Poppins',sans-serif] font-normal text-[12px] leading-[16px] text-[#FFECE6] h-[32px] overflow-hidden line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                        <p className="font-['Poppins',sans-serif] font-normal text-[12px] leading-[16px] text-[#FFECE6] h-[32px] overflow-hidden line-clamp-2">
                           {displayCaption}
                         </p>
                       </div>
@@ -229,7 +220,7 @@ export const PostMedia = ({
                     <button
                       type="button"
                       onClick={handleToggleMute}
-                      className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md border border-white/10 mb-0.5"
+                      className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
                       title={isMuted ? "Unmute" : "Mute"}
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
@@ -242,17 +233,12 @@ export const PostMedia = ({
                   </div>
 
                   {/* Progress Bar */}
-                  <div 
-                    className="w-full cursor-pointer select-none py-1"
-                    onClick={handleScrubberClick}
-                  >
-                    <div className="w-full h-[6px] bg-white/30 rounded-full overflow-hidden transition-all relative">
-                      <div 
-                        className="h-full bg-[#F4D9D2] rounded-full transition-[width] duration-100 ease-linear"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
+                  <VideoScrubber
+                    videoRef={videoRef}
+                    progress={progress}
+                    setProgress={setProgress}
+                    isDraggingRef={isDraggingRef}
+                  />
                 </div>
               </>
             ) : (
@@ -285,7 +271,7 @@ export const PostMedia = ({
 
                 {/* Bottom Overlay: Mute + Progress (Feed Style) */}
                 <div 
-                  className="absolute bottom-0 inset-x-0 pt-12 pb-3 px-3 bg-gradient-to-t from-black/90 via-black/45 to-transparent z-20 pointer-events-auto flex flex-col gap-2 select-none"
+                  className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-auto flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-end justify-end gap-3 w-full">
@@ -293,7 +279,7 @@ export const PostMedia = ({
                     <button
                       type="button"
                       onClick={handleToggleMute}
-                      className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md border border-white/10 mb-0.5"
+                      className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
                       title={isMuted ? "Unmute" : "Mute"}
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
@@ -306,17 +292,12 @@ export const PostMedia = ({
                   </div>
 
                   {/* Progress Bar */}
-                  <div 
-                    className="w-full cursor-pointer select-none py-1"
-                    onClick={handleScrubberClick}
-                  >
-                    <div className="w-full h-[6px] bg-white/30 rounded-full overflow-hidden transition-all relative">
-                      <div 
-                        className="h-full bg-[#F4D9D2] rounded-full transition-[width] duration-100 ease-linear"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
+                  <VideoScrubber
+                    videoRef={videoRef}
+                    progress={progress}
+                    setProgress={setProgress}
+                    isDraggingRef={isDraggingRef}
+                  />
                 </div>
               </div>
             )

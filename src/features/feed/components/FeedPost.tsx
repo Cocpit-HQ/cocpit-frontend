@@ -172,17 +172,36 @@ export const FeedPost = (props: FeedPostProps) => {
   // Purpose of Bug Fix: Read from global UI store to correctly display snackbar on the Feed when redirected from post details page
   const { reportedPostIds, notInterestedPostIds, interestedPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId } = useUIStore();
 
-  const isReportedInStore = reportedPostIds.includes(id.toString());
-  const isNotInterestedInStore = notInterestedPostIds.includes(id.toString());
-  const isInterestedInStore = interestedPostIds.includes(id.toString());
+  // Target ID for reporting:
+  // For repost-without-thoughts, targetOriginalId holds the original post's ID.
+  // For repost-with-thoughts or original posts, the post's own ID is used.
+  const targetOriginalId = shared_post?.id?.toString();
+  const reportTargetId = (isRepostWithoutThoughts && targetOriginalId ? targetOriginalId : id).toString();
+
+  const isReportedInStore = isRepostWithoutThoughts
+    ? (reportedPostIds.includes(id.toString()) || (!!targetOriginalId && reportedPostIds.includes(targetOriginalId)))
+    : reportedPostIds.includes(id.toString());
+
+  const isNotInterestedInStore = notInterestedPostIds.includes(id.toString()) || (!!targetOriginalId && notInterestedPostIds.includes(targetOriginalId));
+  const isInterestedInStore = interestedPostIds.includes(id.toString()) || (!!targetOriginalId && interestedPostIds.includes(targetOriginalId));
+
+  const isBackendReported = isRepostWithoutThoughts
+    ? (!!props.is_reported || !!(props as any).isReported || !!(shared_post as any)?.is_reported)
+    : (!!props.is_reported || !!(props as any).isReported);
 
   // --- Report Flow State ---
   // Tracks if the temporary 'Report submitted' UI is currently visible
   const [isReportSubmittedLocal, setIsReportSubmittedLocal] = useState(false);
   const isReportSubmitted = isReportSubmittedLocal || isReportedInStore;
-  
-  // Tracks if the post was reported during this session (used to show 'Reported' in the options menu if they click 'Show post')
-  const [hasBeenReported, setHasBeenReported] = useState(isReportedInStore);
+
+  // Tracks if the post was reported during this session or returned from backend hydration
+  const [hasBeenReported, setHasBeenReported] = useState(isReportedInStore || isBackendReported);
+
+  useEffect(() => {
+    if (isBackendReported || isReportedInStore) {
+      setHasBeenReported(true);
+    }
+  }, [isBackendReported, isReportedInStore]);
 
   const { removePostFromFeed } = useFeed(false);
   // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Show post'
@@ -192,8 +211,8 @@ export const FeedPost = (props: FeedPostProps) => {
   const handleReportSuccess = () => {
     setIsReportSubmittedLocal(true);
     setHasBeenReported(true);
+    addReportedPostId(reportTargetId);
     if (props.isFullContent) {
-      addReportedPostId(id.toString());
       router.back();
     }
     // Auto-remove the post from the feed entirely after 15 seconds
@@ -212,9 +231,11 @@ export const FeedPost = (props: FeedPostProps) => {
     }
     // Re-render the actual post UI (but it remains marked as reported in the DB)
     setIsReportSubmittedLocal(false);
-    // If we undo from the feed, we also need to clear it from the store if it's there
+    // Clear both the repost wrapper ID and original post ID from store on undo
     if (isReportedInStore) {
-        useUIStore.setState((state) => ({ reportedPostIds: state.reportedPostIds.filter(postId => postId !== id.toString()) }));
+      useUIStore.setState((state) => ({
+        reportedPostIds: state.reportedPostIds.filter(postId => postId !== id.toString() && (!targetOriginalId || postId !== targetOriginalId))
+      }));
     }
   };
   // -------------------------
@@ -252,12 +273,15 @@ export const FeedPost = (props: FeedPostProps) => {
           item_id: targetId.toString(),
           session_id: 'default',
           position: 0,
-        }).catch(() => {});
+        }).catch(() => { });
       }
       // Re-render the actual post UI in its exact position
       setIsNotInterestedLocal(false);
+      // Clear both the repost wrapper ID and original post ID from store on undo
       if (isNotInterestedInStore) {
-        useUIStore.setState((state) => ({ notInterestedPostIds: state.notInterestedPostIds.filter(postId => postId !== id.toString()) }));
+        useUIStore.setState((state) => ({
+          notInterestedPostIds: state.notInterestedPostIds.filter(postId => postId !== id.toString() && (!targetOriginalId || postId !== targetOriginalId))
+        }));
       }
     } catch (error) {
       toast.error("Failed to undo");
@@ -298,11 +322,16 @@ export const FeedPost = (props: FeedPostProps) => {
   const handleDirectRepost = async () => {
     try {
       const result = await handleRepostToggle(isCompany, activeProfile?.id);
-      if (result && result.post_id) {
+      // Purpose of Bug Fix: Safely extract repost ID from API response, dispatch postCreated to immediately render repost on Feed, and smooth scroll to top
+      const createdPostId = result?.postId || result?.post_id || result?.id;
+      if (result && createdPostId) {
         try {
-          const backendPost = await getPostById(result.post_id);
+          const backendPost = await getPostById(createdPostId);
           const mappedPost = mapBackendPostToFrontend(backendPost);
           window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         } catch (fetchErr) {
           console.error("Failed to fetch and add new repost to feed:", fetchErr);
         }
@@ -310,7 +339,7 @@ export const FeedPost = (props: FeedPostProps) => {
         // If we un-reposted, and the current FeedPost is OUR wrapper post, remove it instantly from the UI
         const currentId = isCompany ? activeProfile?.id : currentUserId;
         const isMyPost = (isCompany && props.isCompanyPost && props.authorId === currentId) || (!isCompany && !props.isCompanyPost && props.authorId === currentId);
-        
+
         if (isRepostWithoutThoughts && isMyPost) {
           removePostFromFeed(id.toString());
         }
@@ -334,7 +363,7 @@ export const FeedPost = (props: FeedPostProps) => {
   /* ===== LEGACY POST CLICK (Commented out — replaced by handleCardClick) =====
   const handlePostClick = (e: React.MouseEvent) => {
     if (props.isFullContent) return;
-    
+
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
       return;
@@ -477,11 +506,11 @@ export const FeedPost = (props: FeedPostProps) => {
     if (props.isFullContent) return;
     const target = e.target as HTMLElement;
     if (
-      target.closest('button') || 
-      target.closest('a') || 
-      target.closest('input') || 
-      target.closest('textarea') || 
-      target.closest('[role="button"]') || 
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('[role="button"]') ||
       target.closest('.prevent-card-click')
     ) {
       return;
@@ -501,60 +530,105 @@ export const FeedPost = (props: FeedPostProps) => {
             : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`
         }
       >
-      {isRepostWithoutThoughts && shared_post && (
-        <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
-          <RepostIcon size={12} className="w-[12px] h-[12px] shrink-0 flex-none text-ds-text-secondary" />
-          <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-ds-text-secondary truncate shrink-0 flex-none">
-            {props.author} reposted
-          </span>
-        </div>
-      )}
+        {isRepostWithoutThoughts && shared_post && (
+          <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
+            <RepostIcon size={12} className="w-[12px] h-[12px] shrink-0 flex-none text-ds-text-secondary" />
+            <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-ds-text-secondary truncate shrink-0 flex-none">
+              {props.author} reposted
+            </span>
+          </div>
+        )}
 
-      {props.isFullContent ? (
-        <>
-          {/* Header */}
-          <PostHeader
-            id={targetId}
-            author={targetAuthor}
-            authorId={targetAuthorId}
-            authorAvatar={targetAuthorAvatar}
-            authorSlug={targetAuthorSlug}
-            authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
-            location={targetLocation}
-            timeAgo={targetTimeAgo}
-            visibility={targetVisibility}
-            isMe={isTargetAuthorMe}
-            isCompanyPost={targetIsCompanyPost}
-            optionsBtnRef={optionsBtnRef}
-            showOptions={showOptions}
-            setShowOptions={setShowOptions}
-            setOptionsPos={setOptionsPos}
-          />
-
-          {/* Full Post Description Text */}
-          {targetContent && (
-            <PostBody
-              content={targetContent}
+        {props.isFullContent ? (
+          <>
+            {/* Header */}
+            <PostHeader
+              id={targetId}
               author={targetAuthor}
+              authorId={targetAuthorId}
+              authorAvatar={targetAuthorAvatar}
               authorSlug={targetAuthorSlug}
-              isExpanded={isExpanded}
-              onToggleExpand={() => setIsExpanded(!isExpanded)}
-              hasMedia={hasMedia || isVideoFeedCard}
+              authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
+              location={targetLocation}
+              timeAgo={targetTimeAgo}
+              visibility={targetVisibility}
+              isMe={isTargetAuthorMe}
+              isCompanyPost={targetIsCompanyPost}
+              optionsBtnRef={optionsBtnRef}
+              showOptions={showOptions}
+              setShowOptions={setShowOptions}
+              setOptionsPos={setOptionsPos}
             />
-          )}
 
-          {interactionTargetProps.shared_post && (
-            <div className="w-full">
-              <SharedPreview 
-                sharedPost={interactionTargetProps.shared_post} 
-                sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
-                isMobile={typeof window !== 'undefined' && window.innerWidth < 768} 
+            {/* Full Post Description Text */}
+            {targetContent && (
+              <PostBody
+                content={targetContent}
+                author={targetAuthor}
+                authorSlug={targetAuthorSlug}
+                isExpanded={isExpanded}
+                onToggleExpand={() => setIsExpanded(!isExpanded)}
+                hasMedia={hasMedia || isVideoFeedCard}
               />
-            </div>
-          )}
+            )}
 
-          {/* Media: Video / Article / Images */}
-          {isVideoFeedCard ? (
+            {interactionTargetProps.shared_post && (
+              <div className="w-full">
+                <SharedPreview
+                  sharedPost={interactionTargetProps.shared_post}
+                  sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
+                  isMobile={typeof window !== 'undefined' && window.innerWidth < 768}
+                />
+              </div>
+            )}
+
+            {/* Media: Video / Article / Images */}
+            {isVideoFeedCard ? (
+              <PostMedia
+                videoSrc={targetVideoSrc}
+                mediaWidth={interactionTargetProps.mediaWidth}
+                mediaHeight={interactionTargetProps.mediaHeight}
+                videoRef={videoRef}
+                onLoad={handleMediaLoad}
+                tags={targetTags}
+                likeCount={likeCount}
+                isLiked={isLiked}
+                sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+                likedUsers={targetLikedUsers}
+                viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+                onShowLikes={() => handleOpenLikesModal()}
+                videoOverlay={false}
+                hideOverlayLikeBar={true}
+              />
+            ) : isArticlePost ? (
+              <PostArticle
+                postId={targetId}
+                title={targetTitle}
+                coverImage={targetImageSrc || (targetImages && targetImages.length > 0 ? targetImages[0] : null)}
+              />
+            ) : hasMedia ? (
+              <PostMedia
+                imageSrc={targetImageSrc}
+                images={targetImages}
+                mediaWidth={interactionTargetProps.mediaWidth}
+                mediaHeight={interactionTargetProps.mediaHeight}
+                videoSrc={targetVideoSrc}
+                videoRef={videoRef}
+                onLoad={handleMediaLoad}
+                tags={targetTags}
+                likeCount={likeCount}
+                isLiked={isLiked}
+                sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+                likedUsers={targetLikedUsers}
+                viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+                onShowLikes={() => handleOpenLikesModal()}
+                hideOverlayLikeBar={true}
+              />
+            ) : null}
+          </>
+        ) : isVideoFeedCard ? (
+          <>
+            {/* Video post: header & caption rendered INSIDE video via PostMedia overlay */}
             <PostMedia
               videoSrc={targetVideoSrc}
               mediaWidth={interactionTargetProps.mediaWidth}
@@ -568,358 +642,313 @@ export const FeedPost = (props: FeedPostProps) => {
               likedUsers={targetLikedUsers}
               viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
               onShowLikes={() => handleOpenLikesModal()}
-              videoOverlay={false}
-              hideOverlayLikeBar={true}
+              videoOverlay={true}
+              overlayHeader={
+                <PostHeader
+                  id={targetId}
+                  author={targetAuthor}
+                  authorId={targetAuthorId}
+                  authorAvatar={targetAuthorAvatar}
+                  authorSlug={targetAuthorSlug}
+                  authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
+                  location={targetLocation}
+                  timeAgo={targetTimeAgo}
+                  visibility={targetVisibility}
+                  isMe={isTargetAuthorMe}
+                  isCompanyPost={targetIsCompanyPost}
+                  optionsBtnRef={optionsBtnRef}
+                  showOptions={showOptions}
+                  setShowOptions={setShowOptions}
+                  setOptionsPos={setOptionsPos}
+                  variant="overlay"
+                />
+              }
+              overlayCaption={targetContent}
             />
-          ) : isArticlePost ? (
-            <PostArticle
-              postId={targetId}
-              title={targetTitle}
-              coverImage={targetImageSrc || (targetImages && targetImages.length > 0 ? targetImages[0] : null)}
+          </>
+        ) : (
+          <>
+            {/* Non-video post: header & caption outside media */}
+            <PostHeader
+              id={targetId}
+              author={targetAuthor}
+              authorId={targetAuthorId}
+              authorAvatar={targetAuthorAvatar}
+              authorSlug={targetAuthorSlug}
+              authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
+              location={targetLocation}
+              timeAgo={targetTimeAgo}
+              visibility={targetVisibility}
+              isMe={isTargetAuthorMe}
+              isCompanyPost={targetIsCompanyPost}
+              optionsBtnRef={optionsBtnRef}
+              showOptions={showOptions}
+              setShowOptions={setShowOptions}
+              setOptionsPos={setOptionsPos}
             />
-          ) : hasMedia ? (
-            <PostMedia
-              imageSrc={targetImageSrc}
-              images={targetImages}
-              mediaWidth={interactionTargetProps.mediaWidth}
-              mediaHeight={interactionTargetProps.mediaHeight}
-              videoSrc={targetVideoSrc}
-              videoRef={videoRef}
-              onLoad={handleMediaLoad}
-              tags={targetTags}
-              likeCount={likeCount}
-              isLiked={isLiked}
-              sampleLikerUsername={targetSampleLikerUsername ?? undefined}
-              likedUsers={targetLikedUsers}
-              viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
-              onShowLikes={() => handleOpenLikesModal()}
-              hideOverlayLikeBar={true}
-            />
-          ) : null}
-        </>
-      ) : isVideoFeedCard ? (
-        <>
-          {/* Video post: header & caption rendered INSIDE video via PostMedia overlay */}
-          <PostMedia
-            videoSrc={targetVideoSrc}
-            mediaWidth={interactionTargetProps.mediaWidth}
-            mediaHeight={interactionTargetProps.mediaHeight}
-            videoRef={videoRef}
-            onLoad={handleMediaLoad}
-            tags={targetTags}
+
+            {/* Body (for non-video and non-poll posts, context sits above media) */}
+            {!pollData && !isArticlePost && (
+              <PostBody
+                content={targetContent}
+                author={targetAuthor}
+                authorSlug={targetAuthorSlug}
+                isExpanded={isExpanded}
+                onToggleExpand={() => setIsExpanded(!isExpanded)}
+                hasMedia={hasMedia}
+              />
+            )}
+
+            {interactionTargetProps.shared_post && (
+              <div className="w-full">
+                <SharedPreview
+                  sharedPost={interactionTargetProps.shared_post}
+                  sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
+                  isMobile={typeof window !== 'undefined' && window.innerWidth < 768}
+                />
+              </div>
+            )}
+
+            {/* Article Card or Standard Media */}
+            {isArticlePost ? (
+              <PostArticle
+                postId={targetId}
+                title={targetTitle}
+                coverImage={targetImageSrc || (targetImages && targetImages.length > 0 ? targetImages[0] : null)}
+              />
+            ) : (
+              <PostMedia
+                imageSrc={targetImageSrc}
+                images={targetImages}
+                mediaWidth={interactionTargetProps.mediaWidth}
+                mediaHeight={interactionTargetProps.mediaHeight}
+                videoSrc={targetVideoSrc}
+                videoRef={videoRef}
+                onLoad={handleMediaLoad}
+                tags={targetTags}
+                likeCount={likeCount}
+                isLiked={isLiked}
+                sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+                likedUsers={targetLikedUsers}
+                viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+                onShowLikes={() => handleOpenLikesModal()}
+              />
+            )}
+          </>
+        )}
+
+        {/* Poll (if any) */}
+        {pollData && (
+          <PostPoll
+            pollData={pollData}
+            postId={id}
+            title={props.title || targetTitle || targetContent || (pollData as any)?.question || (pollData as any)?.poll_question}
+            isOwner={activeProfile?.type === 'COMPANY' ? Boolean(props.isCompanyPost && activeProfile?.id?.toString() === props.authorId?.toString()) : (currentUserId === props.authorId?.toString())}
+            isVoting={isVoting}
+            handleVote={(optionId) => handleVote(optionId, isCompany, activeProfile?.id)}
+          />
+        )}
+
+        {/* Liked By - Shown in full view, when no media (text-only), or for video feed cards */}
+        {(props.isFullContent || isVideoFeedCard || !((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc)) && (
+          <LikeBar
             likeCount={likeCount}
             isLiked={isLiked}
             sampleLikerUsername={targetSampleLikerUsername ?? undefined}
             likedUsers={targetLikedUsers}
             viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
             onShowLikes={() => handleOpenLikesModal()}
-            videoOverlay={true}
-            overlayHeader={
-              <PostHeader
-                id={targetId}
-                author={targetAuthor}
-                authorId={targetAuthorId}
-                authorAvatar={targetAuthorAvatar}
-                authorSlug={targetAuthorSlug}
-                authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
-                location={targetLocation}
-                timeAgo={targetTimeAgo}
-                visibility={targetVisibility}
-                isMe={isTargetAuthorMe}
-                isCompanyPost={targetIsCompanyPost}
-                optionsBtnRef={optionsBtnRef}
-                showOptions={showOptions}
-                setShowOptions={setShowOptions}
-                setOptionsPos={setOptionsPos}
-                variant="overlay"
-              />
-            }
-            overlayCaption={targetContent}
+            variant="inline"
           />
-        </>
-      ) : (
-        <>
-          {/* Non-video post: header & caption outside media */}
-          <PostHeader
-            id={targetId}
-            author={targetAuthor}
-            authorId={targetAuthorId}
-            authorAvatar={targetAuthorAvatar}
-            authorSlug={targetAuthorSlug}
-            authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
-            location={targetLocation}
-            timeAgo={targetTimeAgo}
-            visibility={targetVisibility}
-            isMe={isTargetAuthorMe}
-            isCompanyPost={targetIsCompanyPost}
-            optionsBtnRef={optionsBtnRef}
-            showOptions={showOptions}
-            setShowOptions={setShowOptions}
-            setOptionsPos={setOptionsPos}
-          />
+        )}
 
-          {/* Body (for non-video and non-poll posts, context sits above media) */}
-          {!pollData && !isArticlePost && (
-            <PostBody
-              content={targetContent}
-              author={targetAuthor}
-              authorSlug={targetAuthorSlug}
-              isExpanded={isExpanded}
-              onToggleExpand={() => setIsExpanded(!isExpanded)}
-              hasMedia={hasMedia}
-            />
-          )}
-
-          {interactionTargetProps.shared_post && (
-            <div className="w-full">
-              <SharedPreview 
-                sharedPost={interactionTargetProps.shared_post} 
-                sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
-                isMobile={typeof window !== 'undefined' && window.innerWidth < 768} 
-              />
-            </div>
-          )}
-
-          {/* Article Card or Standard Media */}
-          {isArticlePost ? (
-            <PostArticle
-              postId={targetId}
-              title={targetTitle}
-              coverImage={targetImageSrc || (targetImages && targetImages.length > 0 ? targetImages[0] : null)}
-            />
-          ) : (
-            <PostMedia
-              imageSrc={targetImageSrc}
-              images={targetImages}
-              mediaWidth={interactionTargetProps.mediaWidth}
-              mediaHeight={interactionTargetProps.mediaHeight}
-              videoSrc={targetVideoSrc}
-              videoRef={videoRef}
-              onLoad={handleMediaLoad}
-              tags={targetTags}
-              likeCount={likeCount}
-              isLiked={isLiked}
-              sampleLikerUsername={targetSampleLikerUsername ?? undefined}
-              likedUsers={targetLikedUsers}
-              viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
-              onShowLikes={() => handleOpenLikesModal()}
-            />
-          )}
-        </>
-      )}
-
-      {/* Poll (if any) */}
-      {pollData && (
-        <PostPoll
-          pollData={pollData}
-          postId={id}
-          title={props.title || targetTitle || targetContent || (pollData as any)?.question || (pollData as any)?.poll_question}
-          isOwner={activeProfile?.type === 'COMPANY' ? Boolean(props.isCompanyPost && activeProfile?.id?.toString() === props.authorId?.toString()) : (currentUserId === props.authorId?.toString())}
-          isVoting={isVoting}
-          handleVote={(optionId) => handleVote(optionId, isCompany, activeProfile?.id)}
-        />
-      )}
-
-      {/* Liked By - Shown in full view, when no media (text-only), or for video feed cards */}
-      {(props.isFullContent || isVideoFeedCard || !((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc)) && (
-        <LikeBar
-          likeCount={likeCount}
+        {/* Actions */}
+        <PostActions
+          id={targetId}
           isLiked={isLiked}
-          sampleLikerUsername={targetSampleLikerUsername ?? undefined}
-          likedUsers={targetLikedUsers}
-          viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
-          onShowLikes={() => handleOpenLikesModal()}
-          variant="inline"
+          likeCount={likeCount}
+          handleLike={() => handleLike(isCompany, activeProfile?.id)}
+          isCommentSectionOpen={isCommentSectionOpen}
+          isCommented={isCommented}
+          commentsCount={commentCount}
+          handleToggleCommentSection={handleToggleCommentSection}
+          shares={shareCount}
+          externalShares={externalShareCount}
+          handleShare={handleShare}
+          handleRepostWithThoughts={handleRepostWithThoughts}
+          handleDirectRepost={handleDirectRepost}
+          isReposted={isReposted}
+          isRepostedWithThoughts={isRepostedWithThoughts}
+          isSaved={!!isSaved}
+          setIsSaved={setIsSaved}
+          handleSaveToggle={() => setIsSaveModalOpen(true)}
+          onShowLikes={() => setIsLikesModalOpen(true)}
+          isSharedPost={isRepostWithoutThoughts}
+          hideRepostWithThoughts={isTargetPostRepostWithThoughts}
         />
-      )}
 
-      {/* Actions */}
-      <PostActions
-        id={targetId}
-        isLiked={isLiked}
-        likeCount={likeCount}
-        handleLike={() => handleLike(isCompany, activeProfile?.id)}
-        isCommentSectionOpen={isCommentSectionOpen}
-        isCommented={isCommented}
-        commentsCount={commentCount}
-        handleToggleCommentSection={handleToggleCommentSection}
-        shares={shareCount}
-        externalShares={externalShareCount}
-        handleShare={handleShare}
-        handleRepostWithThoughts={handleRepostWithThoughts}
-        handleDirectRepost={handleDirectRepost}
-        isReposted={isReposted}
-        isRepostedWithThoughts={isRepostedWithThoughts}
-        isSaved={!!isSaved}
-        setIsSaved={setIsSaved}
-        handleSaveToggle={() => setIsSaveModalOpen(true)}
-        onShowLikes={() => setIsLikesModalOpen(true)}
-        isSharedPost={isRepostWithoutThoughts}
-        hideRepostWithThoughts={isTargetPostRepostWithThoughts}
-      />
+        {/* Expandable Sections */}
+        {isCommentSectionOpen && (
+          <div onClick={(e) => e.stopPropagation()} className="prevent-card-click">
+            <CommentSection
+              postId={targetId.toString()}
+              isPostOwner={isTargetAuthorMe}
+              incrementCommentCount={handleIncrementCommentCount}
+              decrementCommentCount={handleDecrementCommentCount}
+            />
+          </div>
+        )}
 
-      {/* Expandable Sections */}
-      {isCommentSectionOpen && (
-        <div onClick={(e) => e.stopPropagation()} className="prevent-card-click">
-          <CommentSection
+        <MobileCommentDrawer
+          isOpen={isMobileDrawerOpen}
+          onClose={() => setIsMobileDrawerOpen(false)}
+          postId={targetId.toString()}
+          isPostOwner={isTargetAuthorMe}
+          incrementCommentCount={handleIncrementCommentCount}
+          decrementCommentCount={handleDecrementCommentCount}
+        />
+
+        {isSaveModalOpen && (
+          <SavePostModal
             postId={targetId.toString()}
-            isPostOwner={isTargetAuthorMe}
-            incrementCommentCount={handleIncrementCommentCount}
-            decrementCommentCount={handleDecrementCommentCount}
+            isOpen={isSaveModalOpen}
+            onClose={() => setIsSaveModalOpen(false)}
+            onSaved={() => setIsSaved(true)}
           />
-        </div>
-      )}
+        )}
 
-      <MobileCommentDrawer
-        isOpen={isMobileDrawerOpen}
-        onClose={() => setIsMobileDrawerOpen(false)}
-        postId={targetId.toString()}
-        isPostOwner={isTargetAuthorMe}
-        incrementCommentCount={handleIncrementCommentCount}
-        decrementCommentCount={handleDecrementCommentCount}
-      />
+        {isLikesModalOpen && (
+          <LikesModal
+            postId={(selectedLikesPostId || id).toString()}
+            isOpen={isLikesModalOpen}
+            onClose={() => { setIsLikesModalOpen(false); setSelectedLikesPostId(null); }}
+          />
+        )}
 
-      {isSaveModalOpen && (
-        <SavePostModal
-          postId={targetId.toString()}
-          isOpen={isSaveModalOpen}
-          onClose={() => setIsSaveModalOpen(false)}
-          onSaved={() => setIsSaved(true)}
-        />
-      )}
+        {isShareModalOpen && (
+          <CocpitShareModel
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            postId={targetId.toString()}
+            entityType={isArticlePost ? "article" : "post"}
+            entityId={targetId.toString()}
+            onShare={(selectedIds) => {
+              if (selectedIds.length > 0) {
+                incrementExternalShareCount(selectedIds.length);
+              }
+            }}
+          />
+        )}
 
-      {isLikesModalOpen && (
-        <LikesModal
-          postId={(selectedLikesPostId || id).toString()}
-          isOpen={isLikesModalOpen}
-          onClose={() => { setIsLikesModalOpen(false); setSelectedLikesPostId(null); }}
-        />
-      )}
+        {isDeleteDialogOpen && (
+          <DeleteConfirmationModal
+            isOpen={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+            onConfirm={async () => {
+              await confirmDelete();
+              if (props.isFullContent) {
+                router.push('/feed');
+              }
+            }}
+          />
+        )}
 
-      {isShareModalOpen && (
-        <CocpitShareModel
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          postId={targetId.toString()}
-          entityType={isArticlePost ? "article" : "post"}
-          entityId={targetId.toString()}
-          onShare={(selectedIds) => {
-            if (selectedIds.length > 0) {
-              incrementExternalShareCount(selectedIds.length);
-            }
-          }}
-        />
-      )}
-
-      {isDeleteDialogOpen && (
-        <DeleteConfirmationModal
-          isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          onConfirm={async () => {
-            await confirmDelete();
-            if (props.isFullContent) {
-              router.push('/feed');
-            }
-          }}
-        />
-      )}
-
-      <PostOptionsMenu
-        isOpen={showOptions}
-        onClose={() => setShowOptions(false)}
-        position={optionsPos}
-        isMe={isRepostWithoutThoughts ? false : isTargetAuthorMe}
-        isPollPost={!!pollData}
-        visibility={targetVisibility}
-        onEdit={() => {
-          setShowOptions(false);
-          if (isArticlePost) {
-            router.push(`/article/edit/${id}`);
-          } else {
-            if (props.onEdit) {
-              props.onEdit(props);
+        <PostOptionsMenu
+          isOpen={showOptions}
+          onClose={() => setShowOptions(false)}
+          position={optionsPos}
+          isMe={isRepostWithoutThoughts ? false : isTargetAuthorMe}
+          isPollPost={!!pollData}
+          visibility={targetVisibility}
+          onEdit={() => {
+            setShowOptions(false);
+            if (isArticlePost) {
+              router.push(`/article/edit/${id}`);
             } else {
-              useUIStore.getState().setEditMode(true, id.toString(), props);
+              if (props.onEdit) {
+                props.onEdit(props);
+              } else {
+                useUIStore.getState().setEditMode(true, id.toString(), props);
+              }
             }
-          }
-        }}
-        onMakePrivate={handleToggleVisibility}
-        onDelete={handleDelete}
-        onReport={() => setIsReportModalOpen(true)}
-        onInterested={() => {
-          setIsInterestedLocal(true);
-          if (props.isFullContent) {
-            addInterestedPostId(id.toString());
-            router.back();
-          }
-          if (interestedTimeoutRef.current) {
-            clearTimeout(interestedTimeoutRef.current);
-          }
-          interestedTimeoutRef.current = setTimeout(() => {
-            setIsInterestedLocal(false);
-            useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString()) }));
-          }, 5000);
+          }}
+          onMakePrivate={handleToggleVisibility}
+          onDelete={handleDelete}
+          onReport={() => setIsReportModalOpen(true)}
+          onInterested={() => {
+            setIsInterestedLocal(true);
+            if (props.isFullContent) {
+              addInterestedPostId(id.toString());
+              router.back();
+            }
+            if (interestedTimeoutRef.current) {
+              clearTimeout(interestedTimeoutRef.current);
+            }
+            interestedTimeoutRef.current = setTimeout(() => {
+              setIsInterestedLocal(false);
+              useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString()) }));
+            }, 5000);
 
-          // Fire API in background
-          submitPostFeedback({
-            item_id: (isRepostWithoutThoughts && targetId ? targetId : id).toString(),
-            type: 'INTERESTED',
-            session_id: 'default',
-            position: 0,
-          }).catch((error) => {
-            toast.error("Failed to submit feedback");
-            console.error(error);
-          });
-        }}
-        onNotInterested={() => {
-          // 1. Hide the post content locally and show the temporary snackbar inline
-          setIsNotInterestedLocal(true);
-          
-          if (props.isFullContent) {
-            addNotInterestedPostId(id.toString());
-            router.back();
-          }
-
-          // 2. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
-          notInterestedTimeoutRef.current = setTimeout(() => {
-            removePostFromFeed(id.toString());
-          }, 180000);
-
-          // 3. Instantly submit feedback on the backend to guarantee persistence if the user refreshes
-          submitPostFeedback({
-            item_id: id.toString(),
-            type: 'NOT_INTERESTED',
-            session_id: 'default',
-            position: 0,
-          }).catch((error) => {
-            toast.error("Failed to hide post");
-            console.error(error);
-          });
-          
-          if (isRepostWithoutThoughts && targetId && targetId !== id) {
+            // Fire API in background
             submitPostFeedback({
-              item_id: targetId.toString(),
+              item_id: (isRepostWithoutThoughts && targetId ? targetId : id).toString(),
+              type: 'INTERESTED',
+              session_id: 'default',
+              position: 0,
+            }).catch((error) => {
+              toast.error("Failed to submit feedback");
+              console.error(error);
+            });
+          }}
+          onNotInterested={() => {
+            // 1. Hide the post content locally and show the temporary snackbar inline
+            setIsNotInterestedLocal(true);
+
+            if (props.isFullContent) {
+              addNotInterestedPostId(id.toString());
+              router.back();
+            }
+
+            // 2. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
+            notInterestedTimeoutRef.current = setTimeout(() => {
+              removePostFromFeed(id.toString());
+            }, 180000);
+
+            // 3. Instantly submit feedback on the backend to guarantee persistence if the user refreshes
+            submitPostFeedback({
+              item_id: id.toString(),
               type: 'NOT_INTERESTED',
               session_id: 'default',
               position: 0,
-            }).catch(() => {});
-          }
-        }}
-        isMentioned={isMentioned}
-        onRemoveMention={handleRemoveMention}
-        isReported={hasBeenReported}
-      />
+            }).catch((error) => {
+              toast.error("Failed to hide post");
+              console.error(error);
+            });
 
-      {isReportModalOpen && (
-        <ReportModal
-          isOpen={isReportModalOpen}
-          onClose={() => setIsReportModalOpen(false)}
-          onSuccess={handleReportSuccess}
-          targetType="POST"
-          targetId={(isRepostWithoutThoughts && targetId ? targetId : id).toString()}
+            if (isRepostWithoutThoughts && targetId && targetId !== id) {
+              submitPostFeedback({
+                item_id: targetId.toString(),
+                type: 'NOT_INTERESTED',
+                session_id: 'default',
+                position: 0,
+              }).catch(() => { });
+            }
+          }}
+          isMentioned={isMentioned}
+          onRemoveMention={handleRemoveMention}
+          isReported={hasBeenReported}
         />
-      )}
-    </div>
+
+        {isReportModalOpen && (
+          <ReportModal
+            isOpen={isReportModalOpen}
+            onClose={() => setIsReportModalOpen(false)}
+            onSuccess={handleReportSuccess}
+            targetType="POST"
+            targetId={(isRepostWithoutThoughts && targetId ? targetId : id).toString()}
+          />
+        )}
+      </div>
       {/* Temporary 'Interested' inline snackbar (40x40px thumb icon as per Figma) */}
       {isInterested && (
         <div className="w-full max-w-[442px] h-[86px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">

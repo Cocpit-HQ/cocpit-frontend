@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ThumbsUp, Trash2, Heart, Flag, Ban, Link as LinkIcon, Pin } from 'lucide-react';
+import { UserIcon } from '@/components/icons';
 import { toggleCommentLike, toggleCommentPin } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import Link from 'next/link';
@@ -166,6 +167,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
     );
   }
 
+  const hasCustomAvatar = Boolean(author?.avatar && author.avatar.trim() !== '');
+
   return (
     <div 
       id={`comment-${id}`} 
@@ -174,8 +177,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
       {/* Avatar Column */}
       <div className="flex-shrink-0 shrink-0 flex-none">
         <Link href={authorLink} className="block shrink-0 flex-none">
-          <div className={`w-[24px] h-[24px] ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] font-dmsans select-none shrink-0 flex-none`}>
-            {author?.avatar && author.avatar !== '/assets/pngegg.png' ? (
+          <div className={`w-[24px] h-[24px] ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] font-dmsans select-none shrink-0 flex-none border border-ds-border`}>
+            {hasCustomAvatar ? (
               <img 
                 src={author.avatar} 
                 alt={author?.name || 'User'} 
@@ -190,7 +193,9 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                 }} 
               />
             ) : null}
-            <span data-fallback style={{ display: author?.avatar && author.avatar !== '/assets/pngegg.png' ? 'none' : 'flex' }}>{author?.name ? author.name.charAt(0).toUpperCase() : 'U'}</span>
+            <span data-fallback className="p-0.5 w-full h-full flex items-center justify-center text-ds-text-primary" style={{ display: hasCustomAvatar ? 'none' : 'flex' }}>
+              <UserIcon className="w-full h-full text-ds-text-primary" />
+            </span>
           </div>
         </Link>
       </div>

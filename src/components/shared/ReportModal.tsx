@@ -122,8 +122,15 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
       onClose();
     } catch (error: any) {
       console.error('Failed to submit report', error);
-      const errorMessage = error.response?.data?.message || 'Failed to submit report';
-      toast.error(errorMessage);
+      const statusCode = error?.response?.status;
+      const errorMessage = error?.response?.data?.message || 'Failed to submit report';
+      
+      if (statusCode === 409 || errorMessage.toLowerCase().includes('already reported')) {
+        toast.info('You have already reported this content.');
+        onSuccess?.();
+      } else {
+        toast.error(errorMessage);
+      }
       onClose();
     } finally {
       setIsLoading(false);

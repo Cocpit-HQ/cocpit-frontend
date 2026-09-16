@@ -28,6 +28,7 @@ import {
   Eye,
   Globe
 } from "lucide-react"
+import { UserIcon } from "@/components/icons"
 import { getPublicProfilePosts } from "../services/profile.service"
 import { useProfile } from "../hooks/useProfile"
 import { Icon } from "@iconify/react"
@@ -139,11 +140,11 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
       {/* Target User Commented Header */}
       {activeTab === 'Comments' && targetProfile && (
         <div className="flex w-full items-center gap-2 px-4 py-3 border-b border-border bg-muted/20">
-          <div className="w-5 h-5 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden shrink-0 font-['Poppins'] select-none">
+          <div className="w-5 h-5 rounded-full bg-ds-surface-1 text-ds-text-primary flex items-center justify-center font-semibold text-[10px] overflow-hidden shrink-0 select-none p-0.5 border border-ds-border">
             {targetProfile.avatar_url && targetProfile.avatar_url !== '/assets/pngegg.png' ? (
               <img src={targetProfile.avatar_url} alt={targetProfile.full_name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             ) : (
-              <span>{(targetProfile.full_name || targetProfile.account_name || 'U').charAt(0).toUpperCase()}</span>
+              <UserIcon className="w-full h-full text-ds-text-primary" />
             )}
           </div>
           <span className="font-[family-name:var(--font-poppins)] text-xs text-muted-foreground font-medium">

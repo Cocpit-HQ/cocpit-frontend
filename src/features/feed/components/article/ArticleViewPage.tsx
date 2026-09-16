@@ -74,7 +74,16 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   
   const { reportedPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId } = useUIStore();
-  const [isReported, setIsReported] = useState(reportedPostIds.includes(id));
+  const isBackendReported = !!(post as any)?.is_reported || !!(post as any)?.isReported;
+  const isReportedInStore = reportedPostIds.includes(id);
+  const [isReported, setIsReported] = useState(isReportedInStore || isBackendReported);
+
+  useEffect(() => {
+    if (isBackendReported || isReportedInStore) {
+      setIsReported(true);
+    }
+  }, [isBackendReported, isReportedInStore]);
+
   const { removePostFromFeed } = useFeed(false);
 
   // Author identity checks

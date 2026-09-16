@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Icon } from '@iconify/react';
+import { Icon } from '@/components/icons';
 
 interface EmptyStateProps {
   title: string;
@@ -16,10 +16,11 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
       aria-live="polite"
       aria-label={title}
     >
-      <div className="w-14 h-14 flex items-center justify-center mb-4" aria-hidden="true">
+      <div className="w-[56px] h-[56px] flex items-center justify-center mb-4" aria-hidden="true">
         <Icon
-          icon="ion:people-outline"
-          className="w-8 h-8 text-ds-text-muted stroke-1"
+          name="connection"
+          size={56}
+          className="w-[56px] h-[56px] text-ds-text-muted"
           aria-hidden="true"
         />
       </div>

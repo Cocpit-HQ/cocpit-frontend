@@ -184,11 +184,11 @@ export function TopHeader({ className }: TopHeaderProps) {
 
         {/* User Avatar */}
         <Link href={profileHref} className="cursor-pointer block">
-          <div className="w-[24px] h-[24px] rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-ds-surface-1 border border-ds-border text-ds-text-primary text-[10px] font-medium cursor-pointer">
+          <div className="w-[24px] h-[24px] rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-ds-surface-1 border border-ds-border text-ds-text-primary cursor-pointer">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              initial
+              <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
             )}
           </div>
         </Link>

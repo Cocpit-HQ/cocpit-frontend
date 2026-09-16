@@ -203,8 +203,10 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
         setShareCount(prev => Math.max(0, prev - 1));
       } else {
         setIsReposted(true);
-        if (result && result.post_id) {
-          setRepostId(result.post_id);
+        // Purpose of Bug Fix: Extract repost ID safely from API response (postId, post_id, or id) to update repost state
+        const createdPostId = result?.postId || result?.post_id || result?.id;
+        if (createdPostId) {
+          setRepostId(createdPostId);
         }
       }
       return result;

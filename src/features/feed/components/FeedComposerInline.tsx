@@ -712,7 +712,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                     className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
                   />
                 ) : (
-                  <span className="text-ds-text-primary text-[11px] font-medium select-none">{initial}</span>
+                  <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
                 )}
               </div>
               <span className="font-dmsans text-ds-text-secondary text-[14px] font-medium leading-[20px]">Poll post</span>
@@ -826,7 +826,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
                 />
               ) : (
-                <span className="text-ds-text-primary text-[11px] font-medium select-none">{initial}</span>
+                <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
               )}
             </div>
 

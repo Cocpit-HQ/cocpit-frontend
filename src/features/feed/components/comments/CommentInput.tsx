@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Smile, X, Send } from 'lucide-react';
+import { UserIcon } from '@/components/icons';
 import { searchUsers, UserMention } from '@/services/api/users';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
@@ -320,8 +321,7 @@ export default function CommentInput({
                             onMouseEnter={() => setMentionIndex(index)}
                             className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${index === mentionIndex ? 'bg-[var(--ds-accent)]/10 text-[var(--ds-accent)]' : 'hover:bg-ds-surface-1'}`}
                         >
-                            <div className="relative w-8 h-8 rounded-full bg-ds-surface-1 text-ds-text-secondary flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 select-none">
-                                <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                            <div className="relative w-8 h-8 rounded-full bg-ds-surface-1 text-ds-text-secondary flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 select-none p-1 border border-ds-border">
                                 {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
                                     <img
                                         src={user.avatar_url}
@@ -329,7 +329,9 @@ export default function CommentInput({
                                         className="absolute inset-0 w-full h-full object-cover"
                                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                     />
-                                ) : null}
+                                ) : (
+                                    <UserIcon className="w-full h-full text-ds-text-primary" />
+                                )}
                             </div>
                             <div className="flex flex-col items-start min-w-0">
                                 <span className="ds-text-secondary-1 text-ds-text-primary truncate w-full">{user.full_name}</span>

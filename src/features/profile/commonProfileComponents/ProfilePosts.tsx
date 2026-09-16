@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
+import { UserIcon } from "@/components/icons";
 
 const formatCompanyName = (name?: string): string => {
   if (!name) return "";
@@ -457,7 +458,7 @@ const ProfilePostCard = ({
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ) : (
-              <span>{(mainPost.author || 'U').charAt(0).toUpperCase()}</span>
+              <UserIcon className="w-full h-full text-ds-text-primary p-1" />
             )}
           </div>
           <div className="flex flex-col justify-center overflow-hidden min-w-0">
@@ -612,7 +613,7 @@ const ProfilePostCard = ({
                 {localPost.shared_post.authorAvatar && localPost.shared_post.authorAvatar !== '/assets/pngegg.png' ? (
                   <img src={localPost.shared_post.authorAvatar} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 ) : (
-                  <span>{(localPost.shared_post.author || 'U').charAt(0).toUpperCase()}</span>
+                  <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
                 )}
               </div>
               <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}</span>
@@ -786,7 +787,7 @@ const ProfilePostCard = ({
                         }}
                       />
                     ) : (
-                      <span>{(user.username || 'U').charAt(0).toUpperCase()}</span>
+                      <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
                     )}
                   </div>
                 ))}

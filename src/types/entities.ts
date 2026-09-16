@@ -84,7 +84,7 @@ export interface Comment {
   authorId?: string; // Added for permission checks
   author: {
     name: string;
-    avatar: string;
+    avatar?: string;
     account_name?: string; // Added for mentions
     authorSlug?: string;
     isCompanyPost?: boolean;
@@ -159,6 +159,8 @@ export interface Post {
   repostId?: string | null;
   is_commented?: boolean;
   is_saved?: boolean;
+  is_reported?: boolean;
+  isReported?: boolean;
   likedUsers?: { username: string; avatar_url: string | null }[];
   comments: string;
   shares: string;

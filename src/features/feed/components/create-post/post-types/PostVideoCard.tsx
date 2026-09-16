@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { PostMenuAccess } from '../../../utils/postMenuAccess';
 import { useSocial } from '@/context/SocialContext';
+import { VideoScrubber } from '../../parts/VideoScrubber';
 
 export interface FloatingBadge {
   avatar?: string;
@@ -162,6 +163,8 @@ export const PostVideoCard = ({
     setSavedState(isSaved);
   }, [isSaved]);
 
+  const isDraggingRef = useRef(false);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -180,7 +183,7 @@ export const PostVideoCard = ({
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [videoRef]);
+  }, [videoRef, videoSrc]);
 
   // Autoplay attempt on mount (e.g. when opening post details full view)
   useEffect(() => {
@@ -229,6 +232,7 @@ export const PostVideoCard = ({
   };
 
   const handleTimeUpdate = () => {
+    if (isDraggingRef.current) return;
     const video = videoRef.current;
     if (video && video.duration) {
       setProgress((video.currentTime / video.duration) * 100);
@@ -241,18 +245,6 @@ export const PostVideoCard = ({
       setDuration(video.duration);
     }
     onLoad?.(e);
-  };
-
-  const handleScrubberClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    const video = videoRef.current;
-    if (video && video.duration) {
-      video.currentTime = ratio * video.duration;
-      setProgress(ratio * 100);
-    }
   };
 
   const handleLikeClick = (e: React.MouseEvent) => {
@@ -380,7 +372,7 @@ export const PostVideoCard = ({
         {/* ── Top Header Overlay (In-Video) ── */}
         {showHeader && displayAuthor && (
           <div 
-            className="absolute top-0 inset-x-0 pt-3.5 pb-8 px-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20 pointer-events-auto flex items-center justify-between select-none"
+            className="absolute top-0 inset-x-0 pt-2.5 pb-6 px-4 bg-gradient-to-b from-black/70 to-transparent z-20 pointer-events-auto flex items-center justify-between select-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left: Avatar + Name + Role */}
@@ -397,7 +389,7 @@ export const PostVideoCard = ({
                 }
               }}
             >
-              <div className="w-[36px] h-[36px] rounded-full overflow-hidden border border-white/20 flex-shrink-0 bg-black/40">
+              <div className="w-[36px] h-[36px] rounded-full overflow-hidden border border-white/20 flex-shrink-0 bg-black/40 shadow-md">
                 {displayAvatar ? (
                   <img 
                     src={displayAvatar} 
@@ -414,11 +406,11 @@ export const PostVideoCard = ({
                 )}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-white font-semibold text-[14px] sm:text-[15px] leading-tight truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] hover:underline">
+                <span className="text-white font-semibold text-[14px] sm:text-[15px] leading-tight truncate hover:underline">
                   {displayAuthor}
                 </span>
                 {displayRole && (
-                  <span className="text-white/70 text-[11px] sm:text-[12px] leading-tight truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mt-0.5">
+                  <span className="text-white/80 text-[11px] sm:text-[12px] leading-tight truncate mt-0.5">
                     {displayRole}
                   </span>
                 )}
@@ -432,7 +424,7 @@ export const PostVideoCard = ({
                   type="button"
                   onClick={handleFollowClick}
                   disabled={isAuthorFollowLoading}
-                  className="text-white hover:text-white/80 font-medium text-[14px] transition-opacity cursor-pointer bg-transparent border-none p-0 outline-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] disabled:opacity-50"
+                  className="text-white hover:text-white/80 font-medium text-[14px] transition-opacity cursor-pointer bg-transparent border-none p-0 outline-none disabled:opacity-50"
                 >
                   {isAuthorFollowing ? 'Unfollow' : 'Follow'}
                 </button>
@@ -441,7 +433,7 @@ export const PostVideoCard = ({
                 ref={optionsBtnRef || dummyBtnRef}
                 type="button"
                 onClick={handleOptionsClick}
-                className="text-white hover:text-white/80 p-0.5 transition-opacity cursor-pointer bg-transparent border-none outline-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                className="text-white hover:text-white/80 p-0.5 transition-opacity cursor-pointer bg-transparent border-none outline-none"
                 aria-label="More options"
               >
                 <MoreHorizontal className="w-5 h-5 text-white" />
@@ -510,14 +502,14 @@ export const PostVideoCard = ({
 
         {/* ── Bottom In-Video Overlays ── */}
         <div 
-          className="absolute bottom-0 inset-x-0 pt-12 pb-3.5 px-4 bg-gradient-to-t from-black/90 via-black/45 to-transparent z-20 pointer-events-auto flex flex-col gap-2.5 select-none"
+          className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-4 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-auto flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Caption & Mute Row (Figma layout) */}
           <div className="flex items-end justify-between gap-3 w-full">
             {displayCaption ? (
               <div className="flex-1 max-w-[362px] min-w-0">
-                <p className="font-['Poppins',sans-serif] font-normal text-[12px] leading-[16px] text-[#FFECE6] h-[32px] overflow-hidden line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                <p className="font-['Poppins',sans-serif] font-normal text-[12px] leading-[16px] text-[#FFECE6] h-[32px] overflow-hidden line-clamp-2">
                   {displayCaption}
                 </p>
               </div>
@@ -527,7 +519,7 @@ export const PostVideoCard = ({
             <button
               type="button"
               onClick={handleToggleMute}
-              className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-md border border-white/10 mb-0.5"
+              className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
               title={isMuted ? "Unmute" : "Mute"}
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
@@ -540,17 +532,12 @@ export const PostVideoCard = ({
           </div>
 
           {/* ── Video Scrubber / Progress Bar (Figma spec: 410 Fill × 6 Hug) ── */}
-          <div 
-            className="w-full cursor-pointer select-none py-1"
-            onClick={handleScrubberClick}
-          >
-            <div className="w-full h-[6px] bg-white/30 rounded-full overflow-hidden transition-all relative">
-              <div 
-                className="h-full bg-[#F4D9D2] rounded-full transition-[width] duration-100 ease-linear"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
+          <VideoScrubber
+            videoRef={videoRef}
+            progress={progress}
+            setProgress={setProgress}
+            isDraggingRef={isDraggingRef}
+          />
         </div>
       </div>
 
