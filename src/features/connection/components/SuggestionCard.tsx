@@ -22,6 +22,32 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+// ── MutualAvatar — avatar for mutuals with fallback ─────────────────────────
+function MutualAvatar({ src, index }: { src: string; index: number }) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div
+        className="w-4 h-4 rounded-full border border-ds-surface-2 bg-ds-surface-1 flex items-center justify-center shrink-0"
+        style={{ zIndex: 10 - index }}
+      >
+        <UserIcon className="w-2.5 h-2.5 text-ds-text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt=""
+      className="w-4 h-4 rounded-full border border-ds-surface-2 object-cover"
+      style={{ zIndex: 10 - index }}
+      onError={() => setError(true)}
+    />
+  );
+}
+
 // ── MetaRow — contextual pill badge below headline ──────────────────────────
 function MetaRow({ user }: { user: SuggestedUser }) {
   const { reasonSignal, mutuals, studiedAt, worksAt, sharedSkills } = user;
@@ -37,13 +63,7 @@ function MetaRow({ user }: { user: SuggestedUser }) {
           <div className="flex items-center -space-x-1 shrink-0" aria-hidden="true">
             {/* Mutual avatar with 1px #222228 stroke per Figma spec */}
             {mutuals.avatars.slice(0, 3).map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                alt=""
-                className="w-4 h-4 rounded-full border border-ds-surface-2 object-cover"
-                style={{ zIndex: 10 - i }}
-              />
+              <MutualAvatar key={i} src={src} index={i} />
             ))}
           </div>
         )}
