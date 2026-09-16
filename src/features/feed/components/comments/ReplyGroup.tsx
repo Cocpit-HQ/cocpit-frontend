@@ -82,7 +82,7 @@ export default function ReplyGroup({
                                 onUndo={onUndo}
                             />
                             {replyingTo?.id === reply.id && (
-                                <div className="pl-[32px]">
+                                <div className="w-full">
                                     <CommentInput
                                         variant="reply"
                                         onAddComment={(text) => onAddComment?.(text, reply.id)}
