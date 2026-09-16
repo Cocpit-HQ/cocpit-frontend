@@ -193,7 +193,7 @@ export const FeedPost = (props: FeedPostProps) => {
   // --- Report Flow State ---
   // Tracks if the temporary 'Report submitted' UI is currently visible
   const [isReportSubmittedLocal, setIsReportSubmittedLocal] = useState(false);
-  const isReportSubmitted = isReportSubmittedLocal || isReportedInStore;
+  const isReportSubmitted = isReportSubmittedLocal || isReportedInStore || isBackendReported;
 
   // Tracks if the post was reported during this session or returned from backend hydration
   const [hasBeenReported, setHasBeenReported] = useState(isReportedInStore || isBackendReported);
@@ -233,6 +233,16 @@ export const FeedPost = (props: FeedPostProps) => {
 
   // State to temporarily show the reported post when user clicks 'Show post'
   const [isTemporarilyShowingReportedPost, setIsTemporarilyShowingReportedPost] = useState(false);
+
+  // Trigger auto-remove if reported from another component (e.g. original post reported, so repost should also auto-remove)
+  // or if the backend explicitly tells us it is reported
+  useEffect(() => {
+    if ((isReportedInStore || isBackendReported) && !isReportSubmittedLocal && !isTemporarilyShowingReportedPost && !reportTimeoutRef.current) {
+      reportTimeoutRef.current = setTimeout(() => {
+        removePostFromFeed(id.toString());
+      }, 5000);
+    }
+  }, [isReportedInStore, isBackendReported, isReportSubmittedLocal, isTemporarilyShowingReportedPost, id, removePostFromFeed]);
 
   // Triggered when the user clicks 'Show post' on the success snackbar
   const handleUndoReportUI = (e: React.MouseEvent) => {
@@ -483,6 +493,11 @@ export const FeedPost = (props: FeedPostProps) => {
 
   // Temporary 'Report submitted' inline snackbar after reporting a post
   // Styled as per Figma: bg-ds-border (#2C2C33) background with ds-text-accent action CTA
+  // If it was already reported on the backend (e.g. previous session), do not render anything at all.
+  if (isBackendReported && !isReportedInStore && !isReportSubmittedLocal && !isTemporarilyShowingReportedPost) {
+    return null;
+  }
+
   if (isReportSubmitted && !isTemporarilyShowingReportedPost) {
     return (
       <div className="w-full max-w-[442px] bg-ds-border border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border relative">
