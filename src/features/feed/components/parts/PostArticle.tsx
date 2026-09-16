@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 
 interface PostArticleProps {
   postId: string | number;
@@ -24,6 +25,8 @@ export const PostArticle: React.FC<PostArticleProps> = ({
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Purpose of Bug Fix: Save scroll position and target post ID before navigating to single-view article page
+    saveScrollPosition("post", postId.toString());
     router.push(`/article/${postId}`);
   };
 
@@ -35,6 +38,8 @@ export const PostArticle: React.FC<PostArticleProps> = ({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          // Purpose of Bug Fix: Save scroll position and target post ID before navigating to single-view article page
+          saveScrollPosition("post", postId.toString());
           router.push(`/article/${postId}`);
         }
       }}

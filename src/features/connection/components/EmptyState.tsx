@@ -16,11 +16,12 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
       aria-live="polite"
       aria-label={title}
     >
-      <div className="w-[56px] h-[56px] flex items-center justify-center mb-4" aria-hidden="true">
+      {/* Background circular container frame for connection empty state icon per design spec */}
+      <div className="w-[56px] h-[56px] rounded-full bg-ds-surface-1 p-3 flex items-center justify-center mb-4 shrink-0" aria-hidden="true">
         <Icon
           name="connection"
-          size={56}
-          className="w-[56px] h-[56px] text-ds-text-muted"
+          size={32}
+          className="w-8 h-8 text-ds-text-muted"
           aria-hidden="true"
         />
       </div>

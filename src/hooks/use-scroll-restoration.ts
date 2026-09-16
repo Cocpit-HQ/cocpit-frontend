@@ -9,7 +9,8 @@ export const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayo
  Helper to save current scroll position before navigating away (e.g. to a post or original post in repost),
  * ensuring the user returns to their exact scroll position when navigating back.
  */
-export const saveScrollPosition = (source = "post") => {
+// Purpose of Bug Fix: Save post ID and target viewport offset before navigating to single-view post page to maintain scroll position
+export const saveScrollPosition = (source = "post", postId?: string) => {
   if (typeof window === "undefined") return;
   const currentScroll = window.scrollY;
   const currentPath = window.location.pathname;
@@ -21,6 +22,15 @@ export const saveScrollPosition = (source = "post") => {
   sessionStorage.setItem("cocpit_profile_scroll_y", currentScroll.toString());
   sessionStorage.setItem("cocpit_profile_scroll_source", source);
   sessionStorage.setItem("cocpit_profile_scroll_path", currentPath);
+
+  if (postId) {
+    sessionStorage.setItem("cocpit_last_interacted_post_id", postId.toString());
+    const targetEl = document.getElementById(`post-${postId}`) || document.querySelector(`[data-post-id="${postId}"]`);
+    if (targetEl) {
+      const rect = targetEl.getBoundingClientRect();
+      sessionStorage.setItem("cocpit_last_interacted_post_viewport_top", rect.top.toString());
+    }
+  }
 
   try {
     const currentState = { ...window.history.state };
@@ -57,13 +67,26 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       const getScrollElement = () => containerId ? document.getElementById(containerId) : null;
 
       if (saved) {
-        const targetScroll = parseInt(saved, 10);
+        const initialTargetScroll = parseInt(saved, 10);
+        const lastPostId = sessionStorage.getItem("cocpit_last_interacted_post_id");
+        const lastViewportTopStr = sessionStorage.getItem("cocpit_last_interacted_post_viewport_top");
+        const lastViewportTop = lastViewportTopStr ? parseFloat(lastViewportTopStr) : null;
         let retries = 0;
         const maxRetries = 20; // 20 frames = ~330ms
 
         const attemptScroll = () => {
           const el = getScrollElement();
           
+          // Purpose of Bug Fix: Dynamically adjust scroll target to align the interacted post's viewport top position if DOM heights change
+          const targetEl = lastPostId ? (document.getElementById(`post-${lastPostId}`) || document.querySelector(`[data-post-id="${lastPostId}"]`)) : null;
+
+          let targetScroll = initialTargetScroll;
+          if (targetEl && lastViewportTop !== null) {
+            const currentElTop = targetEl.getBoundingClientRect().top;
+            const currentWinScroll = el ? el.scrollTop : window.scrollY;
+            targetScroll = Math.max(0, currentWinScroll + currentElTop - lastViewportTop);
+          }
+
           // 1. Attempt scroll
           if (el) {
             el.scrollTo({ top: targetScroll, behavior: 'instant' });
@@ -83,7 +106,6 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
           // 4. Retry conditions
           if (retries >= maxRetries) {
-             console.warn(`[ScrollRestoration] DOM height did not reach target ${targetScroll} within ${maxRetries} frames. Clamped at ${currentScroll}.`);
              setTimeout(() => setHasRestored(true), 150);
              return;
           }

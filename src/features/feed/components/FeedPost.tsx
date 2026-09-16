@@ -12,6 +12,7 @@ import { usePostMediaObserver } from '../hooks/use-post-media-observer';
 import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 import { feedApi } from '../api/feed.api';
 import { unhidePost, submitPostFeedback } from '@/services/api/feed';
 import { useUIStore } from '@/store/ui.store';
@@ -206,6 +207,15 @@ export const FeedPost = (props: FeedPostProps) => {
   const { removePostFromFeed } = useFeed(false);
   // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Show post'
   const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const tempViewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (reportTimeoutRef.current) clearTimeout(reportTimeoutRef.current);
+      if (tempViewTimeoutRef.current) clearTimeout(tempViewTimeoutRef.current);
+    };
+  }, []);
 
   // Triggered when the backend successfully saves the report
   const handleReportSuccess = () => {
@@ -215,28 +225,34 @@ export const FeedPost = (props: FeedPostProps) => {
     if (props.isFullContent) {
       router.back();
     }
-    // Auto-remove the post from the feed entirely after 15 seconds
+    // Auto-remove the post from the feed entirely after 5 seconds
     reportTimeoutRef.current = setTimeout(() => {
       removePostFromFeed(id.toString());
-    }, 15000);
+    }, 5000);
   };
+
+  // State to temporarily show the reported post when user clicks 'Show post'
+  const [isTemporarilyShowingReportedPost, setIsTemporarilyShowingReportedPost] = useState(false);
 
   // Triggered when the user clicks 'Show post' on the success snackbar
   const handleUndoReportUI = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Clear the auto-removal timer
+    // Clear any existing removal timer
     if (reportTimeoutRef.current) {
       clearTimeout(reportTimeoutRef.current);
       reportTimeoutRef.current = null;
     }
-    // Re-render the actual post UI (but it remains marked as reported in the DB)
-    setIsReportSubmittedLocal(false);
-    // Clear both the repost wrapper ID and original post ID from store on undo
-    if (isReportedInStore) {
-      useUIStore.setState((state) => ({
-        reportedPostIds: state.reportedPostIds.filter(postId => postId !== id.toString() && (!targetOriginalId || postId !== targetOriginalId))
-      }));
+    if (tempViewTimeoutRef.current) {
+      clearTimeout(tempViewTimeoutRef.current);
+      tempViewTimeoutRef.current = null;
     }
+    // Temporarily render the actual post UI
+    setIsTemporarilyShowingReportedPost(true);
+    
+    // Auto-remove the post completely from the feed after 5 seconds
+    tempViewTimeoutRef.current = setTimeout(() => {
+      removePostFromFeed(id.toString());
+    }, 5000);
   };
   // -------------------------
 
@@ -252,6 +268,18 @@ export const FeedPost = (props: FeedPostProps) => {
   const [isInterestedLocal, setIsInterestedLocal] = useState(false);
   const isInterested = isInterestedLocal || isInterestedInStore;
   const interestedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Purpose of Bug Fix: Auto-clear interestedPostIds from uiStore after 5 seconds if post was marked interested in single view
+  useEffect(() => {
+    if (isInterestedInStore) {
+      const timer = setTimeout(() => {
+        useUIStore.setState((state) => ({
+          interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString() && (!targetOriginalId || postId !== targetOriginalId))
+        }));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isInterestedInStore, id, targetOriginalId]);
 
   // Triggered when the user clicks 'Undo' on the snackbar
   const handleUndoNotInterested = async (e: React.MouseEvent) => {
@@ -455,7 +483,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   // Temporary 'Report submitted' inline snackbar after reporting a post
   // Styled as per Figma: bg-ds-border (#2C2C33) background with ds-text-accent action CTA
-  if (isReportSubmitted) {
+  if (isReportSubmitted && !isTemporarilyShowingReportedPost) {
     return (
       <div className="w-full max-w-[442px] bg-ds-border border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border relative">
         <div className="flex flex-col items-center gap-[8px]">
@@ -485,7 +513,7 @@ export const FeedPost = (props: FeedPostProps) => {
   // Styled as per Figma: 40x40px thumb icon and ds-text-accent 'Undo' button
   if (isNotInterested) {
     return (
-      <div className="w-full max-w-[442px] h-[114px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">
+      <div id={`post-${id}`} data-post-id={id} className="w-full max-w-[442px] h-[114px] bg-ds-surface-2 border border-ds-border rounded-[8px] flex flex-col items-center justify-center p-[8px_12px] gap-[12px] mx-auto mt-[16px] mb-[12px] box-border">
         <div className="w-[40px] h-[40px] flex items-center justify-center shrink-0">
           <NotInterestedIcon className="w-[40px] h-[40px] text-ds-text-primary" />
         </div>
@@ -516,6 +544,8 @@ export const FeedPost = (props: FeedPostProps) => {
       return;
     }
     if (targetId && targetId !== 'preview') {
+      // Purpose of Bug Fix: Save scroll position and target post ID/viewport top before navigating to single-view post page
+      saveScrollPosition("post", targetId.toString());
       router.push(`/post/${targetId}`);
     }
   };
@@ -523,6 +553,8 @@ export const FeedPost = (props: FeedPostProps) => {
   return (
     <>
       <div
+        id={`post-${id}`}
+        data-post-id={id}
         onClick={handleCardClick}
         className={
           props.isFullContent
@@ -909,10 +941,10 @@ export const FeedPost = (props: FeedPostProps) => {
               router.back();
             }
 
-            // 2. Auto-remove the post from the feed entirely after 3 minutes (180,000ms)
+            // 2. Auto-remove the post from the feed entirely after 5 seconds
             notInterestedTimeoutRef.current = setTimeout(() => {
               removePostFromFeed(id.toString());
-            }, 180000);
+            }, 5000);
 
             // 3. Instantly submit feedback on the backend to guarantee persistence if the user refreshes
             submitPostFeedback({

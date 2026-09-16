@@ -13,10 +13,10 @@ export function SeeAllLink({ count, href }: SeeAllLinkProps) {
 
   return (
     <div className="flex items-center justify-center w-full py-4 mt-1 select-none">
-      {/* Design System Token: text-ds-accent for #EC6229 with no underline */}
+      {/* 'See all' link with DM Sans 12px Medium / 16px LH typography and #EC6229 accent text color */}
       <Link
         href={href}
-        className="font-dm-sans text-[12px] sm:text-[13px] font-normal text-ds-accent hover:text-ds-accent !no-underline transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm cursor-pointer"
+        className="font-dm-sans text-[12px] leading-[16px] font-medium tracking-normal !text-ds-accent hover:opacity-80 !no-underline transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm cursor-pointer"
       >
         See all
       </Link>
