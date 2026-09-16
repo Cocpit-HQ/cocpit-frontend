@@ -162,7 +162,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
       <div className="flex flex-col items-center w-full min-h-[40px] mb-2 mt-1">
         <Link
           href={`/profile/${user.id}`}
-          className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group-hover:underline transition-colors max-w-full"
+          className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm no-underline hover:no-underline transition-colors max-w-full"
         >
           <p className="text-[16px] font-normal text-ds-text-primary leading-[24px] truncate w-full">
             {user.name}

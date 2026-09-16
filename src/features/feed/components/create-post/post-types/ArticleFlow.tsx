@@ -1061,6 +1061,7 @@ const ArticleFlow = ({
     await onPost(files, cleanContent);
     
     if (isEdit && editorRef.current) {
+      setLocalFiles([]);
       const snap = {
         title: (title || '').trim(),
         content: normalizeContentForComparison(editorRef.current.innerHTML),

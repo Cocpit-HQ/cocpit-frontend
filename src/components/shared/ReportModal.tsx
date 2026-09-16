@@ -208,8 +208,8 @@ export function ReportModal({ isOpen, onClose, onSuccess, targetType, targetId }
       </DialogContent>
       */}
       <BareDialogContent 
-        /* Modal background set to bg-ds-surface-2 per Figma design system variables */
-        className="max-w-none sm:max-w-[400px] w-full border rounded-t-[16px] rounded-b-none sm:rounded-[16px] p-4 flex flex-col gap-3 font-sans shadow-lg bg-ds-surface-2 border-ds-border !top-auto bottom-0 !translate-y-0 !translate-x-0 !left-0 sm:!top-[50%] sm:bottom-auto sm:!translate-y-[-50%] sm:!translate-x-[-50%] sm:!left-[50%]"
+        /* Modal background set to bg-ds-bg (#030303) per Figma design system variables */
+        className="max-w-none sm:max-w-[400px] w-full border rounded-t-[16px] rounded-b-none sm:rounded-[16px] p-[12px] flex flex-col gap-[12px] font-sans shadow-lg bg-ds-bg border-ds-border !top-auto bottom-0 !translate-y-0 !translate-x-0 !left-0 sm:!top-[50%] sm:bottom-auto sm:!translate-y-[-50%] sm:!translate-x-[-50%] sm:!left-[50%]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Actions Row */}

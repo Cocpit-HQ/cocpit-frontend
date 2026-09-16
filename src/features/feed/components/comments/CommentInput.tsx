@@ -366,48 +366,42 @@ export default function CommentInput({
                             </button>
                         )}
                     </div>
-                    <div className="w-full border border-ds-border rounded-[24px] p-3 bg-transparent focus-within:border-ds-text-secondary transition-all relative">
-                        <textarea
-                            ref={textareaRef}
-                            value={commentText}
-                            onChange={(e) => {
-                                handleTextChange(e);
-                                setCommentText(e.target.value);
-                            }}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Edit your comment..."
-                            className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-[14px] text-ds-text-primary placeholder:text-ds-text-muted pb-8 focus:outline-none"
-                            rows={2}
-                            style={{ minHeight: '60px' }}
-                        />
+                    <div className="w-full border border-ds-border rounded-[16px] p-3 bg-transparent focus-within:border-ds-text-secondary transition-all flex flex-col justify-between gap-2 relative">
+                        <div className="flex flex-col items-start w-full min-w-0">
+                            <textarea
+                                ref={textareaRef}
+                                value={commentText}
+                                onChange={(e) => {
+                                    handleTextChange(e);
+                                    setCommentText(e.target.value);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Edit your comment..."
+                                className="w-full bg-transparent border-none focus:ring-0 p-0 m-0 resize-none text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none leading-[20px] scrollbar-hide min-h-[48px] max-h-[160px]"
+                                rows={2}
+                            />
+                        </div>
                         {renderMentionsDropdown()}
 
-                        <div className="absolute bottom-3 left-3 flex items-center">
+                        <div className="flex items-center justify-between w-full mt-auto pt-1">
                             <button
                                 ref={buttonRef}
                                 type="button"
                                 aria-label="Insert emoji"
                                 onClick={handleToggleEmojiPicker}
-                                className="text-ds-text-secondary hover:text-ds-text-primary transition-colors"
+                                className="text-ds-text-secondary hover:text-ds-text-primary transition-colors flex items-center justify-center w-5 h-5 shrink-0 cursor-pointer"
                             >
                                 <Smile className="w-5 h-5" />
                             </button>
-                        </div>
 
-                        <div
-                            className={`absolute bottom-2 right-2 transition-all duration-300 ease-in-out z-10
-                                ${commentText.trim().length > 0
-                                    ? 'opacity-100 translate-y-0 pointer-events-auto'
-                                    : 'opacity-0 translate-y-4 pointer-events-none'
-                                }`}
-                        >
                             <button
+                                type="button"
                                 onClick={() => handleSubmit()}
                                 disabled={!commentText.trim()}
-                                className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm
+                                className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm cursor-pointer
                                     ${commentText.trim().length > 0
-                                        ? 'bg-ds-accent text-white'
-                                        : 'bg-ds-border text-ds-text-muted cursor-not-allowed'
+                                        ? 'bg-ds-accent text-white hover:opacity-90 active:scale-95'
+                                        : 'bg-ds-border text-ds-text-muted cursor-not-allowed opacity-70'
                                     }`}
                             >
                                 Save

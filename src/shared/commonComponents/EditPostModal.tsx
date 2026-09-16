@@ -65,7 +65,6 @@ export function EditPostModal({
 
   // Form states
   const [description, setDescription] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
   const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
 
@@ -700,48 +699,24 @@ export function EditPostModal({
 
               {/* Post Text (Figma: width 371px, min-h 96px, font 16px, line-height 24px, #FFECE6) */}
               {postType !== 'poll' && (
-                (() => {
-                  const hasMediaForText = selectedImages.length > 0 || selectedVideo !== null || sharedPost !== null;
-                  const effectiveMaxLines = hasMediaForText ? 2 : 10;
-                  const isLong = description && (description.split('\n').length > effectiveMaxLines || description.length > effectiveMaxLines * 45);
-                  
-                  // 24px is the line-height.
-                  const maxCollapsedHeight = effectiveMaxLines * 24;
-
-                  return (
-                    <div className="w-[371px] max-w-full shrink-0 flex flex-col">
-                      <div 
-                        className="w-full relative"
-                        style={isLong && !isExpanded ? { maxHeight: `${maxCollapsedHeight}px`, overflow: 'hidden' } : undefined}
-                      >
-                        <MentionTextarea
-                          ref={textareaRef}
-                          value={description}
-                          onChange={(e: any) => setDescription(e.target.value)}
-                          onMentionsChange={setInlineMentions}
-                          initialMentions={inlineMentions}
-                          placeholder="What's on your mind?"
-                          rows={1}
-                          className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
-                          style={{
-                            color: 'var(--ds-text-primary)',
-                            caretColor: 'var(--ds-accent)',
-                          }}
-                        />
-                      </div>
-                      
-                      {isLong && (
-                        <button
-                          type="button"
-                          onClick={() => setIsExpanded(!isExpanded)}
-                          className="text-[var(--ds-accent)] font-semibold text-[14px] leading-[20px] self-start mt-2 hover:opacity-80 transition-opacity"
-                        >
-                          {isExpanded ? 'Show Less' : 'See More'}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })()
+                <div className="w-[371px] max-w-full shrink-0 flex flex-col">
+                  <div className="w-full relative">
+                    <MentionTextarea
+                      ref={textareaRef}
+                      value={description}
+                      onChange={(e: any) => setDescription(e.target.value)}
+                      onMentionsChange={setInlineMentions}
+                      initialMentions={inlineMentions}
+                      placeholder="What's on your mind?"
+                      rows={1}
+                      className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
+                      style={{
+                        color: 'var(--ds-text-primary)',
+                        caretColor: 'var(--ds-accent)',
+                      }}
+                    />
+                  </div>
+                </div>
               )}
 
               {/* Poll Creator Mode */}

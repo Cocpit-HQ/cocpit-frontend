@@ -52,6 +52,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
     invitationSubTab,
     setInvitationSubTab,
     removedRequestIds,
+    restoreRequests,
   } = useConnectionStore();
   const isExpanded = view === 'expanded';
 
@@ -81,6 +82,16 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
     invitationSubTab
   );
 
+  // Clear IDs from removedRequestIds once they are no longer in the server response
+  useEffect(() => {
+    if (!data?.data || removedRequestIds.length === 0) return;
+    const currentIds = new Set(data.data.map((r) => r.id));
+    const staleIds = removedRequestIds.filter((id) => !currentIds.has(id));
+    if (staleIds.length > 0) {
+      restoreRequests(staleIds);
+    }
+  }, [data?.data, removedRequestIds, restoreRequests]);
+
   const { data: counts } = useConnectionCounts();
   const {
     batchAccept,
@@ -90,10 +101,8 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
   } = useConnectionActions();
 
   const rawRequests = data?.data ?? [];
+  const pendingRemovals = rawRequests.filter((r) => removedRequestIds.includes(r.id)).length;
   const allRequests = rawRequests.filter((r) => !removedRequestIds.includes(r.id));
-  const totalCount = Math.max(0, (data?.totalCount ?? 0) - removedRequestIds.length);
-  const previewLimit = isExpanded ? allRequests.length : 3;
-  const displayRequests = allRequests.slice(0, previewLimit);
 
   // Which inbox count to show for active tab
   const activeTabCount =
@@ -102,6 +111,16 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
       : activeTab === 'sent'
       ? counts?.sent ?? 0
       : counts?.invitations ?? 0;
+
+  const baseCount =
+    typeof data?.totalCount === 'number' && data.totalCount > 0
+      ? data.totalCount
+      : activeTabCount > 0
+      ? activeTabCount
+      : rawRequests.length;
+  const totalCount = Math.max(0, baseCount - pendingRemovals);
+  const previewLimit = isExpanded ? allRequests.length : 3;
+  const displayRequests = allRequests.slice(0, previewLimit);
 
   const inboxCount = data ? totalCount : activeTabCount;
 
