@@ -48,7 +48,8 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
-    unoptimized: process.env.NODE_ENV === 'development',
+    // Uncomment the below line to disable image optimization globally in development (can speed up fast-refresh but hangs carousels with large images)
+    // unoptimized: process.env.NODE_ENV === 'development',
   },
   async headers() {
     return [

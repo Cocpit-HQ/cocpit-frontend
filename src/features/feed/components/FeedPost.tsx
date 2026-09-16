@@ -559,7 +559,7 @@ export const FeedPost = (props: FeedPostProps) => {
         className={
           props.isFullContent
             ? "w-full max-w-[442px] mx-auto bg-ds-bg flex flex-col gap-[16px] cursor-default box-border"
-            : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-ds-border/40'}`
+            : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-[var(--ds-media-border)]'}`
         }
       >
         {isRepostWithoutThoughts && shared_post && (
@@ -631,6 +631,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 onShowLikes={() => handleOpenLikesModal()}
                 videoOverlay={false}
                 hideOverlayLikeBar={true}
+                isFullContent={props.isFullContent}
               />
             ) : isArticlePost ? (
               <PostArticle
@@ -642,6 +643,7 @@ export const FeedPost = (props: FeedPostProps) => {
               <PostMedia
                 imageSrc={targetImageSrc}
                 images={targetImages}
+              imageDimensions={(interactionTargetProps as any).imageDimensions}
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoSrc={targetVideoSrc}
@@ -655,48 +657,9 @@ export const FeedPost = (props: FeedPostProps) => {
                 viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
                 onShowLikes={() => handleOpenLikesModal()}
                 hideOverlayLikeBar={true}
+                isFullContent={props.isFullContent}
               />
             ) : null}
-          </>
-        ) : isVideoFeedCard ? (
-          <>
-            {/* Video post: header & caption rendered INSIDE video via PostMedia overlay */}
-            <PostMedia
-              videoSrc={targetVideoSrc}
-              mediaWidth={interactionTargetProps.mediaWidth}
-              mediaHeight={interactionTargetProps.mediaHeight}
-              videoRef={videoRef}
-              onLoad={handleMediaLoad}
-              tags={targetTags}
-              likeCount={likeCount}
-              isLiked={isLiked}
-              sampleLikerUsername={targetSampleLikerUsername ?? undefined}
-              likedUsers={targetLikedUsers}
-              viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
-              onShowLikes={() => handleOpenLikesModal()}
-              videoOverlay={true}
-              overlayHeader={
-                <PostHeader
-                  id={targetId}
-                  author={targetAuthor}
-                  authorId={targetAuthorId}
-                  authorAvatar={targetAuthorAvatar}
-                  authorSlug={targetAuthorSlug}
-                  authorRole={targetAuthorRole || targetAuthorHeadline || undefined}
-                  location={targetLocation}
-                  timeAgo={targetTimeAgo}
-                  visibility={targetVisibility}
-                  isMe={isTargetAuthorMe}
-                  isCompanyPost={targetIsCompanyPost}
-                  optionsBtnRef={optionsBtnRef}
-                  showOptions={showOptions}
-                  setShowOptions={setShowOptions}
-                  setOptionsPos={setOptionsPos}
-                  variant="overlay"
-                />
-              }
-              overlayCaption={targetContent}
-            />
           </>
         ) : (
           <>
@@ -752,6 +715,7 @@ export const FeedPost = (props: FeedPostProps) => {
               <PostMedia
                 imageSrc={targetImageSrc}
                 images={targetImages}
+              imageDimensions={(interactionTargetProps as any).imageDimensions}
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoSrc={targetVideoSrc}
@@ -764,6 +728,8 @@ export const FeedPost = (props: FeedPostProps) => {
                 likedUsers={targetLikedUsers}
                 viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
                 onShowLikes={() => handleOpenLikesModal()}
+                hideOverlayLikeBar={isVideoFeedCard}
+                isFullContent={props.isFullContent}
               />
             )}
           </>

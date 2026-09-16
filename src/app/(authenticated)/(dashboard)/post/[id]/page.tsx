@@ -90,6 +90,7 @@ export default function SinglePostPage({ params }: PageProps) {
               videoSrc: 'videoSrc' in detail ? detail.videoSrc : prev.videoSrc,
               post_type: 'post_type' in detail ? detail.post_type : prev.post_type,
               type: 'type' in detail ? detail.type : prev.type,
+              imageDimensions: 'imageDimensions' in detail ? detail.imageDimensions : prev.imageDimensions,
             };
           });
         }

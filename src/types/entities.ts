@@ -148,6 +148,7 @@ export interface Post {
   content: string;
   imageSrc?: string;
   images?: string[];
+  imageDimensions?: Array<{ width: number; height: number } | null>;
   mediaWidth?: number;
   mediaHeight?: number;
   videoSrc?: string;

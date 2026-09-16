@@ -7,16 +7,17 @@ export interface CarouselDotsProps {
   activeIndex: number;
   onDotClick?: (index: number) => void;
   className?: string;
+  imageDimensions?: Array<{ width: number; height: number } | null>;
 }
 
 const MAX_VISIBLE = 5;
-const STEP_PX = 10; // Center-to-center step per dot slot in px
 
 export const CarouselDots: React.FC<CarouselDotsProps> = ({
   total,
   activeIndex,
   onDotClick,
   className = '',
+  imageDimensions,
 }) => {
   if (total <= 1) return null;
 
@@ -28,91 +29,95 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
     windowStart = Math.max(0, Math.min(clampedActive - 2, total - MAX_VISIBLE));
   }
 
-  const viewportWidth = total <= MAX_VISIBLE ? total * STEP_PX : MAX_VISIBLE * STEP_PX;
-  const translateX = total <= MAX_VISIBLE ? 0 : -(windowStart * STEP_PX);
-
   return (
     <div
       className={`w-full max-w-[442px] h-[6px] flex items-center justify-center select-none ${className}`}
       aria-label="Carousel pagination"
       role="tablist"
     >
-      {/* Fixed-width clipping viewport */}
-      <div
-        className="relative overflow-hidden flex items-center justify-start h-[6px]"
-        style={{ width: `${viewportWidth}px` }}
-      >
-        {/* Animated sliding track */}
-        <div
-          className="flex flex-row items-center h-[6px] will-change-transform"
-          style={{
-            transform: `translateX(${translateX}px)`,
-            transition: 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          {Array.from({ length: total }, (_, i) => {
-            const isActive = i === clampedActive;
-            const isInsideWindow =
-              total <= MAX_VISIBLE ||
-              (i >= windowStart && i <= windowStart + MAX_VISIBLE - 1);
+      <div className="flex flex-row items-center justify-center h-[6px]">
+        {Array.from({ length: total }, (_, i) => {
+          const isActive = i === clampedActive;
+          const isInsideWindow =
+            total <= MAX_VISIBLE ||
+            (i >= windowStart && i < windowStart + MAX_VISIBLE);
 
-            const isLeftEdge =
-              total > MAX_VISIBLE && i === windowStart && windowStart > 0;
-            const isRightEdge =
-              total > MAX_VISIBLE &&
-              i === windowStart + MAX_VISIBLE - 1 &&
-              windowStart + MAX_VISIBLE - 1 < total - 1;
+          const isLeftEdge =
+            total > MAX_VISIBLE && i === windowStart && windowStart > 0;
+          const isRightEdge =
+            total > MAX_VISIBLE &&
+            i === windowStart + MAX_VISIBLE - 1 &&
+            windowStart + MAX_VISIBLE - 1 < total - 1;
 
-            let scale = 0;
-            let opacity = 0;
-            let bgColor = '#71717A';
+          let width = 0;
+          let height = 0;
+          let opacity = 0;
+          let bgColor = '#726B67';
+          let marginLeft = 0;
 
-            if (isActive) {
-              scale = 1.5; // 4px * 1.5 = 6px
-              opacity = 1;
-              bgColor = 'var(--ds-accent, #EC6229)';
-            } else if (isLeftEdge || isRightEdge) {
-              scale = 0.625; // 4px * 0.625 = 2.5px
-              opacity = 0.75;
-              bgColor = '#71717A';
-            } else if (isInsideWindow) {
-              scale = 1; // 4px * 1 = 4px
-              opacity = 1;
-              bgColor = '#71717A';
-            } else {
-              scale = 0;
-              opacity = 0;
-              bgColor = '#71717A';
+          if (isInsideWindow) {
+            opacity = 1;
+            marginLeft = i === windowStart ? 0 : 2; // 2px gap
+
+            // Calculate proportional width
+            let naturalWidth = 8; // Default medium pill
+            if (imageDimensions && imageDimensions[i]) {
+              const dim = imageDimensions[i]!;
+              if (dim.height > 0) {
+                const ar = dim.width / dim.height;
+                if (ar < 0.8) naturalWidth = 4;
+                else if (ar > 1.2) naturalWidth = 16;
+                else naturalWidth = 8;
+              }
             }
 
-            return (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Go to slide ${i + 1}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDotClick?.(i);
+            if (isActive) {
+              width = naturalWidth;
+              height = 6;
+              bgColor = '#EC6229'; // Active color from Figma
+            } else if (isLeftEdge || isRightEdge) {
+              width = 4; // Shrink edges
+              height = 4;
+            } else {
+              width = naturalWidth;
+              height = 4;
+            }
+          }
+
+          return (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDotClick?.(i);
+              }}
+              className="flex items-center justify-center border-none bg-transparent p-0 cursor-pointer outline-none focus-visible:opacity-80"
+              style={{
+                width: `${width}px`,
+                height: `6px`, // Container is fixed height for alignment
+                marginLeft: `${marginLeft}px`,
+                transition: 'width 250ms ease, margin 250ms ease, opacity 250ms ease',
+                opacity,
+                pointerEvents: isInsideWindow ? 'auto' : 'none',
+              }}
+              tabIndex={isInsideWindow ? 0 : -1}
+            >
+              <span
+                className="rounded-[2px] pointer-events-none block"
+                style={{
+                  width: '100%',
+                  height: `${height}px`,
+                  backgroundColor: bgColor,
+                  transition: 'height 250ms ease, background-color 200ms ease',
                 }}
-                className="w-[10px] h-[12px] flex items-center justify-center shrink-0 border-none bg-transparent p-0 cursor-pointer outline-none focus-visible:opacity-80"
-                tabIndex={isInsideWindow ? 0 : -1}
-              >
-                <span
-                  className="w-[4px] h-[4px] rounded-full block pointer-events-none will-change-transform"
-                  style={{
-                    transform: `scale(${scale})`,
-                    backgroundColor: bgColor,
-                    opacity,
-                    transition:
-                      'transform 250ms cubic-bezier(0.4, 0, 0.2, 1), background-color 200ms ease, opacity 200ms ease',
-                  }}
-                />
-              </button>
-            );
-          })}
-        </div>
+              />
+            </button>
+          );
+        })}
       </div>
     </div>
   );

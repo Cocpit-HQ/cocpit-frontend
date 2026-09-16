@@ -10,6 +10,7 @@ import { VideoScrubber } from './VideoScrubber';
 interface PostMediaProps {
   imageSrc?: string;
   images?: string[];
+  imageDimensions?: Array<{ width: number; height: number } | null>;
   mediaWidth?: number;
   mediaHeight?: number;
   videoSrc?: string;
@@ -33,7 +34,7 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
+  imageSrc, images = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
   hideOverlayLikeBar = false, isFullContent = false,
   videoOverlay = false, overlayHeader, overlayCaption
@@ -51,7 +52,7 @@ export const PostMedia = ({
 
   const [imgDims, setImgDims] = useState<ImageDimensions | null>(null);
   
-  const activeDims = fastDims || imgDims;
+  const activeDims = imgDims || fastDims;
 
   // Video overlay state
   const [isMuted, setIsMuted] = useState(true);
@@ -87,7 +88,7 @@ export const PostMedia = ({
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
-    if (!fastDims && img.naturalWidth && img.naturalHeight) {
+    if (img.naturalWidth && img.naturalHeight) {
       const dims = calculateDisplayDimensions(img.naturalWidth, img.naturalHeight, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT);
       setImgDims(dims);
     }
@@ -96,7 +97,7 @@ export const PostMedia = ({
 
   const handleVideoLoad = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget;
-    if (!fastDims && video.videoWidth && video.videoHeight) {
+    if (video.videoWidth && video.videoHeight) {
       const dims = calculateDisplayDimensions(video.videoWidth, video.videoHeight, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT);
       setImgDims(dims);
     }
@@ -151,10 +152,10 @@ export const PostMedia = ({
         >
           <PostCarousel
             images={validImages}
+            imageDimensions={imageDimensions}
             priority={priority}
             onImageLoad={onLoad}
             imageFit="cover"
-            viewportHeight="h-[430px]"
             showDots={true}
             overlay={
               showTagBadge && (
@@ -168,7 +169,7 @@ export const PostMedia = ({
       ) : (
         <div
           onClick={onClick}
-          className={`relative overflow-hidden rounded-2xl group ${isVideoOverlayMode ? 'bg-black' : 'bg-black/5 dark:bg-white/5'} flex flex-col justify-center items-center transition-none ${isVideoOverlayMode ? 'cursor-pointer' : ''} ${!isVideoOverlayMode && onClick ? 'cursor-pointer' : ''}`}
+          className={`relative overflow-hidden rounded-[8px] border border-[var(--ds-media-border)] group ${isVideoOverlayMode ? 'bg-black' : 'bg-black/5 dark:bg-white/5'} flex flex-col justify-center items-center transition-none ${isVideoOverlayMode ? 'cursor-pointer' : ''} ${!isVideoOverlayMode && onClick ? 'cursor-pointer' : ''}`}
           style={{
             width: activeDims ? `${activeDims.width}px` : '100%',
             maxWidth: isFullContent ? '100%' : `${MAX_MEDIA_WIDTH}px`,
@@ -188,7 +189,7 @@ export const PostMedia = ({
                   playsInline
                   onLoadedMetadata={handleVideoLoad}
                   onTimeUpdate={handleTimeUpdate}
-                  className="w-full h-full object-cover max-h-[589px] rounded-2xl"
+                  className="w-full h-full object-cover max-h-[589px] rounded-[8px]"
                 />
 
                 {/* ── Top Header Overlay ── */}
@@ -244,8 +245,8 @@ export const PostMedia = ({
             ) : (
               /* Standard video mode: custom controls matching feed */
               <div 
-                className="relative w-full h-full group flex items-center justify-center cursor-pointer overflow-hidden"
-                onClick={handleTogglePlay}
+                className={`relative w-full h-full group flex items-center justify-center overflow-hidden ${isFullContent ? 'cursor-pointer' : ''}`}
+                onClick={isFullContent ? handleTogglePlay : undefined}
               >
                 <video
                   ref={videoRef}
@@ -255,41 +256,46 @@ export const PostMedia = ({
                   playsInline
                   onLoadedMetadata={handleVideoLoad}
                   onTimeUpdate={handleTimeUpdate}
-                  className="w-full h-full object-contain object-left max-h-[589px] rounded-2xl"
+                  className="w-full h-full object-contain object-left max-h-[589px] rounded-[8px]"
                 />
                 
-                {/* Center Play/Pause Button on Hover */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                  <div className="w-[64px] h-[64px] rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white shadow-lg">
-                    {isPlaying ? (
-                      <Pause className="w-8 h-8 fill-white" />
-                    ) : (
-                      <Play className="w-8 h-8 fill-white ml-1" />
-                    )}
+                {/* Center Play/Pause Button on Hover (Only on post details page) */}
+                {isFullContent && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                    <div className="w-[64px] h-[64px] rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white shadow-lg">
+                      {isPlaying ? (
+                        <Pause className="w-8 h-8 fill-white" />
+                      ) : (
+                        <Play className="w-8 h-8 fill-white ml-1" />
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Bottom Overlay: Mute + Progress (Feed Style) */}
                 <div 
                   className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-auto flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-end justify-end gap-3 w-full">
-                    {/* Mute Button */}
-                    <button
-                      type="button"
-                      onClick={handleToggleMute}
-                      className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
-                      title={isMuted ? "Unmute" : "Mute"}
-                      aria-label={isMuted ? "Unmute" : "Mute"}
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-4 h-4 text-white" />
-                      ) : (
-                        <Volume2 className="w-4 h-4 text-white" />
-                      )}
-                    </button>
-                  </div>
+                  {isFullContent && (
+                    <div className="flex items-end justify-end gap-3 w-full mb-1">
+                      {/* Mute Button */}
+                      <button
+                        type="button"
+                        onClick={handleToggleMute}
+                        className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
+                        title={isMuted ? "Unmute" : "Mute"}
+                        aria-label={isMuted ? "Unmute" : "Mute"}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-4 h-4 text-white" />
+                        ) : (
+                          <Volume2 className="w-4 h-4 text-white" />
+                        )}
+                      </button>
+                    </div>
+                  )}
+
 
                   {/* Progress Bar */}
                   <VideoScrubber
@@ -305,7 +311,7 @@ export const PostMedia = ({
             <img
               src={contentImgSrc}
               alt="Post content"
-              className={`w-full h-full object-contain object-left rounded-2xl ${isFullContent ? 'max-w-full' : 'max-w-[442px]'} max-h-[589px]`}
+              className={`w-full h-full object-contain object-left rounded-[8px] ${isFullContent ? 'max-w-full' : 'max-w-[442px]'} max-h-[589px]`}
               onLoad={handleImageLoad}
             />
           ) : null}

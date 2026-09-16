@@ -30,6 +30,7 @@ dayjs.extend(relativeTime);
 export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   // Extract images and video
   const images: string[] = [];
+  const imageDimensions: Array<{ width: number; height: number } | null> = [];
   let videoSrc: string | undefined = undefined;
   //const primaryMediaAspectRatio = backendPost.media?.[0]?.aspect_ratio || undefined;
 
@@ -46,6 +47,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
     if (mediaType === "image") {
       images.push(item.url);
+      imageDimensions.push(
+        (item.width && item.height) ? { width: item.width, height: item.height } : null
+      );
       if (!mediaWidth && item.width) mediaWidth = item.width;
       if (!mediaHeight && item.height) mediaHeight = item.height;
     } else if (mediaType === "video") {
@@ -159,6 +163,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       let spVideoSrc: string | undefined = undefined;
 
       // Process shared post media
+      const spImageDimensions: Array<{ width: number; height: number } | null> = [];
       if (Array.isArray(sp.media)) {
         sp.media.forEach((item) => {
           const isActuallyVideo = item.url?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|#|$)/);
@@ -166,6 +171,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
           if (mediaType === "image") {
             spImages.push(item.url);
+            spImageDimensions.push(
+              (item.width && item.height) ? { width: item.width, height: item.height } : null
+            );
           } else if (mediaType === "video") {
             spVideoSrc = item.url;
           }
@@ -236,6 +244,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         articleBody: spArticleBody,
         imageSrc: spImages.length > 0 ? spImages[0] : undefined,
         images: spImages.length > 0 ? spImages : undefined,
+        imageDimensions: spImageDimensions.length > 0 ? spImageDimensions : undefined,
         videoSrc: spVideoSrc,
         //aspectRatio: sp.media?.[0]?.aspect_ratio || undefined,
         likes: sp.like_count || 0,
@@ -331,6 +340,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     articleBody: articleBody,
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
+    imageDimensions: imageDimensions.length > 0 ? imageDimensions : undefined,
     mediaWidth: mediaWidth,
     mediaHeight: mediaHeight,
     videoSrc: videoSrc,

@@ -237,7 +237,6 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       setMode('text');
     }
     if (selectedImages.length >= MAX_COMPOSER_IMAGES) {
-      toast.info(`Attached media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`);
       return;
     }
     if (selectedVideo) {
@@ -329,15 +328,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       }
       const remainingSlots = MAX_COMPOSER_IMAGES - selectedImages.length;
       if (remainingSlots <= 0) {
-        toast.info(`Attached media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       const filesToAdd = imageFiles.slice(0, remainingSlots);
-      if (imageFiles.length > remainingSlots) {
-        toast.info(`Only ${remainingSlots} more photo${remainingSlots > 1 ? 's' : ''} could be added (max ${MAX_COMPOSER_IMAGES}).`);
-      }
 
       const newImages: ComposerImage[] = [];
       for (const file of filesToAdd) {
@@ -869,6 +864,15 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 onReorderImages={setSelectedImages}
                 isEditMode={isEditMode}
               />
+            </div>
+          )}
+
+          {/* ── Attached media limit inline message ─ */}
+          {selectedImages.length >= MAX_COMPOSER_IMAGES && (
+            <div className="w-full pl-[44px] mt-[4px]">
+              <span className="font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-[#E5484D]">
+                Attached media limit reached({MAX_COMPOSER_IMAGES}/{MAX_COMPOSER_IMAGES})
+              </span>
             </div>
           )}
 

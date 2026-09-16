@@ -9,6 +9,7 @@ import { CarouselDots } from "./CarouselDots";
 
 export interface PostCarouselProps {
   images: string[];
+  imageDimensions?: Array<{ width: number; height: number } | null>;
   priority?: boolean;
   aspectRatio?: string | number;
   onImageLoad?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
@@ -22,13 +23,64 @@ export interface PostCarouselProps {
   dotsClassName?: string;
 }
 
+// ─── X-style dynamic sizing helpers ────────────────────────────────────────
+
+const MIN_CONTAINER_H = 200;
+// Derived from X's observed behavior:
+//   landscape/square first-image → X caps at ~412px → we use 416
+//   portrait first-image         → X caps at ~642px → we use 640
+const MAX_CONTAINER_H_LANDSCAPE = 416;
+const MAX_CONTAINER_H_PORTRAIT  = 640;
+const MIN_SLIDE_W = 36;  // X allows ~42px; 36 is our safe minimum
+const MAX_CONTAINER_W = 416;
+
+/**
+ * Compute the shared carousel container height.
+ * - If ANY image in the set is landscape (AR ≥ 1) → use landscape cap (416px).
+ *   This matches X: a carousel containing a landscape slide uses the shorter height.
+ * - If ALL images are portrait → use portrait cap (640px).
+ *   This matches X: a carousel of phone screenshots uses the taller height.
+ * Height is further clamped to the natural height of the first image.
+ */
+function computeContainerHeight(
+  dims: Array<{ width: number; height: number } | null> | undefined
+): number {
+  const validDims = (dims || []).filter(Boolean) as Array<{ width: number; height: number }>;
+  const first = validDims[0];
+  if (!first) return MAX_CONTAINER_H_LANDSCAPE;
+
+  // Pick cap based on whether ANY image is landscape
+  const hasLandscape = validDims.some(d => d.width / d.height >= 1);
+  const maxH = hasLandscape ? MAX_CONTAINER_H_LANDSCAPE : MAX_CONTAINER_H_PORTRAIT;
+
+  return Math.max(MIN_CONTAINER_H, Math.min(first.height, maxH));
+}
+
+/**
+ * Compute the display width for one slide given its natural dimensions,
+ * the shared container height, and the available container width.
+ */
+function computeSlideWidth(
+  dims: { width: number; height: number } | null | undefined,
+  containerH: number,
+  maxW: number
+): number {
+  if (!dims) return Math.round(maxW * 0.8); // fallback: 80% peek
+  const ar = dims.width / dims.height;
+  const natural = Math.round(containerH * ar);
+  return Math.max(MIN_SLIDE_W, Math.min(natural, maxW));
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 export function PostCarousel({
   images,
+  imageDimensions,
   priority = false,
   onImageLoad,
   imageFit = 'cover',
   showDots = true,
-  viewportHeight = 'h-full',
+  viewportHeight,     // legacy prop – ignored when imageDimensions is provided
   overlay,
   className = '',
   arrowPlacement = 'outside',
@@ -39,7 +91,7 @@ export function PostCarousel({
     loop: false,
     align: 'start',
     containScroll: 'trimSnaps',
-    dragFree: slideWidth === 'peek',
+    dragFree: true,
   }, [WheelGesturesPlugin()]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -48,20 +100,8 @@ export function PostCarousel({
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
-    
-    // Calculate the active index sequentially based on scroll progress
-    // so the dots don't skip over images during a fast swipe.
-    const progress = emblaApi.scrollProgress();
-    const snapList = emblaApi.scrollSnapList();
-    const total = snapList.length;
-    
-    let currentIndex = emblaApi.selectedScrollSnap();
-    if (total > 1 && typeof progress === 'number') {
-      const calculated = Math.round(progress * (total - 1));
-      currentIndex = Math.max(0, Math.min(total - 1, calculated));
-    }
 
-    setSelectedIndex(currentIndex);
+    setSelectedIndex(emblaApi.selectedScrollSnap());
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
   }, [emblaApi]);
@@ -103,42 +143,84 @@ export function PostCarousel({
 
   if (!images || images.length === 0) return null;
 
-  const isFullHeight = viewportHeight === 'h-full';
-  const sliderHeightClass = isFullHeight
-    ? (showDots && images.length > 1 ? 'flex-1 min-h-0' : 'h-full')
-    : viewportHeight;
-  const rootHeightClass = isFullHeight ? 'h-full' : '';
+  // ── Dynamic sizing (X-style) vs legacy fixed height ──────────────────────
+  const hasDimensions = imageDimensions && imageDimensions.some(Boolean);
+
+  // Container height in px
+  const containerH = hasDimensions
+    ? computeContainerHeight(imageDimensions)
+    : null; // null → use legacy viewportHeight class
+
+  // Per-slide widths in px (null → use CSS percentage fallback)
+  const slideWidths: (number | null)[] = images.map((_, i) =>
+    hasDimensions
+      ? computeSlideWidth(imageDimensions?.[i], containerH!, MAX_CONTAINER_W)
+      : null
+  );
+
+  // Height class for legacy / full-screen mode
+  const legacyHeightClass = viewportHeight ?? 'h-[430px]';
+  const containerStyle: React.CSSProperties = containerH
+    ? { height: `${containerH}px` }
+    : {};
+
+  // ────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className={`relative w-full ${rootHeightClass} flex flex-col items-center select-none ${className}`}>
+    <div className={`relative w-full flex flex-col items-center select-none ${className}`}>
       {/* Media Slider Viewport */}
-      <div className={`relative w-full ${sliderHeightClass} group select-none`}>
+      <div
+        className={`relative w-full group select-none ${!containerH ? legacyHeightClass : ''}`}
+        style={containerStyle}
+      >
         {/* Embla Viewport */}
         <div className="w-full h-full overflow-hidden" ref={emblaRef}>
-          <div className="flex h-full">
-            {images.map((src, index) => (
-              <div
-                key={index}
-                className={
-                  slideWidth === 'full'
-                    ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[16px] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
-                    : "relative flex-[0_0_80%] min-w-0 h-full rounded-[16px] overflow-hidden mr-2.5 select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
-                }
-              >
-                <Image
-                  src={src}
-                  alt={`Post image ${index + 1}`}
-                  fill
-                  unoptimized={true}
-                  className={imageFit === 'contain' ? "object-contain rounded-[16px] transition-transform duration-300 ease-out" : "object-cover rounded-[16px] transition-transform duration-300 ease-out"}
-                  priority={priority && index === 0}
-                  sizes={slideWidth === 'full' ? "(max-width: 768px) 100vw, 650px" : "(max-width: 768px) 80vw, 400px"}
-                  onLoad={(e) => {
-                    if (index === 0 && onImageLoad) onImageLoad(e);
-                  }}
-                />
-              </div>
-            ))}
+          <div className="flex h-full gap-2">
+            {images.map((src, index) => {
+              const sw = slideWidths[index];
+              const slideStyle: React.CSSProperties = sw
+                ? { width: `${sw}px`, flexShrink: 0, flexGrow: 0 }
+                : {};
+              const slideCls = sw
+                ? "relative h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                : slideWidth === 'full'
+                  ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                  : "relative flex-[0_0_80%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out";
+              const dim = imageDimensions ? imageDimensions[index] : null;
+              let dynamicSizes = "(max-width: 768px) 100vw, 1200px";
+              if (dim && dim.height > 0) {
+                const ar = dim.width / dim.height;
+                // For a ~416px container, we need (416 * AR * 2) width to maintain crisp retina height
+                const neededW = Math.min(3840, Math.ceil(416 * Math.max(1, ar) * 2));
+                dynamicSizes = `${neededW}px`;
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={slideCls}
+                  style={slideStyle}
+                >
+                  <Image
+                    src={src}
+                    alt={`Post image ${index + 1}`}
+                    fill
+                    className={
+                      imageFit === 'contain'
+                        ? "object-contain rounded-[8px] transition-transform duration-300 ease-out"
+                        : "object-cover rounded-[8px] transition-transform duration-300 ease-out"
+                    }
+                    priority={priority && index === 0}
+                    // unoptimized={true}
+                    sizes={dynamicSizes}
+                    quality={90}
+                    onLoad={(e) => {
+                      if (index === 0 && onImageLoad) onImageLoad(e);
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -180,11 +262,12 @@ export function PostCarousel({
         {overlay}
       </div>
 
-      {/* Instagram-style Carousel Indicator Dots */}
+      {/* Carousel Indicator Dots */}
       {showDots && images.length > 1 && (
         <CarouselDots
           total={images.length}
           activeIndex={selectedIndex}
+          imageDimensions={imageDimensions}
           onDotClick={(idx) => emblaApi?.scrollTo(idx)}
           className={dotsClassName || (arrowPlacement === 'inside' ? "py-3" : "mt-[12px]")}
         />

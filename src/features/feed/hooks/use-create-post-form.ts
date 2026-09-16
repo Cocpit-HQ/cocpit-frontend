@@ -522,6 +522,12 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           if (postType === 'poll') updatePayload.title = poll.pollQuestion;
           if (media_urls !== undefined) {
             updatePayload.media_urls = media_urls;
+            if (media.uploadedImages && media.uploadedImages.length > 0) {
+              updatePayload.media_metadata = media.uploadedImages.map((img: any) => ({
+                width: img.naturalWidth || img.width || 800,
+                height: img.naturalHeight || img.height || 600
+              }));
+            }
           }
 
           await postApi.update(editPostId, updatePayload, combinedInlineFiles);

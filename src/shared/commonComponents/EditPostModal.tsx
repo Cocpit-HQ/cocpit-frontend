@@ -149,14 +149,19 @@ export function EditPostModal({
 
       if (postImages.length > 0) {
         setPostType('photo');
-        const initialImages: ComposerImage[] = postImages.map((url: string, idx: number) => ({
-          id: `existing-${idx}-${encodeURIComponent(url.slice(-20))}`,
-          file: new File([''], `existing-image-${idx}.jpg`, { type: 'image/jpeg' }),
-          previewUrl: url,
-          naturalWidth: 800,
-          naturalHeight: 600,
-          aspectRatio: 800 / 600,
-        }));
+        const initialImages: ComposerImage[] = postImages.map((url: string, idx: number) => {
+          const dim = post.imageDimensions?.[idx];
+          const w = dim?.width || 800;
+          const h = dim?.height || 600;
+          return {
+            id: `existing-${idx}-${encodeURIComponent(url.slice(-20))}`,
+            file: new File([''], `existing-image-${idx}.jpg`, { type: 'image/jpeg' }),
+            previewUrl: url,
+            naturalWidth: w,
+            naturalHeight: h,
+            aspectRatio: w / h,
+          };
+        });
         setSelectedImages(initialImages);
         setSelectedVideo(null);
       } else if (post.videoSrc || post.video) {
@@ -316,15 +321,11 @@ export function EditPostModal({
       }
       const remainingSlots = MAX_COMPOSER_IMAGES - selectedImages.length;
       if (remainingSlots <= 0) {
-        toast.info(`Attached media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       const filesToAdd = imageFiles.slice(0, remainingSlots);
-      if (imageFiles.length > remainingSlots) {
-        toast.info(`Only ${remainingSlots} more photo${remainingSlots > 1 ? 's' : ''} could be added (max ${MAX_COMPOSER_IMAGES}).`);
-      }
 
       const newImages: ComposerImage[] = [];
       for (const file of filesToAdd) {
@@ -419,7 +420,6 @@ export function EditPostModal({
       return;
     }
     if (selectedImages.length >= MAX_COMPOSER_IMAGES) {
-      toast.info(`Attached media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`);
       return;
     }
     if (selectedVideo) {
@@ -509,6 +509,9 @@ export function EditPostModal({
         location: locationString,
         companyId: originalPost?.author_org_id || originalPost?.companyId || undefined,
         media_urls: finalMediaUrls,
+        media_metadata: selectedImages.length > 0 
+          ? selectedImages.map(img => ({ width: img.naturalWidth, height: img.naturalHeight }))
+          : [],
       };
 
       if (postType === 'poll') {
@@ -548,6 +551,7 @@ export function EditPostModal({
         post_type: effectivePostType,
         location: locationString || undefined,
         visibility: updatePayload.visibility,
+        imageDimensions: updatedPostObj.imageDimensions,
       });
 
       // Emit global event for active pages (e.g. single post detail, profile)
@@ -851,6 +855,15 @@ export function EditPostModal({
                     onReorderImages={handleReorderImages}
                     isEditMode={false}
                   />
+                </div>
+              )}
+
+              {/* ── Attached media limit inline message ─ */}
+              {selectedImages.length >= MAX_COMPOSER_IMAGES && (
+                <div className="w-[371px] max-w-full mt-[4px]">
+                  <span className="font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-[#E5484D]">
+                    Attached media limit reached({MAX_COMPOSER_IMAGES}/{MAX_COMPOSER_IMAGES})
+                  </span>
                 </div>
               )}
 
