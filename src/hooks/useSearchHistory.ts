@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
+import api from "@/lib/axios";
 import { SearchedUser } from "@/types/user";
-import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export type HistoryItem = 
     | { type: 'QUERY', value: string, id: string }
@@ -9,67 +9,144 @@ export type HistoryItem =
 
 export const useSearchHistory = () => {
     const { data: session } = useSession();
-    const { activeProfile } = useActiveProfile();
     const userId = session?.user?.id || session?.user?.email || 'guest';
-    const contextId = activeProfile?.id || userId;
-    const storageKey = useMemo(() => `search_history_v2_${userId}_${contextId}`, [userId, contextId]);
+    const storageKey = useMemo(() => `cocpit_search_history_${userId}`, [userId]);
     
     const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const hasFetchedRef = useRef(false);
 
-    // Load from localStorage whenever storageKey changes (login/logout)
+    // 1. Load from localStorage immediately, then fetch from API
     useEffect(() => {
-        // One-time migration: copy old search history to new scoped key
-        // We do NOT remove oldKey so that if the user switches to a different context
-        // for the first time, it can still inherit their original search history.
-        const oldKey = `search_history_v2_${userId}`;
-        if (storageKey !== oldKey) {
-            const existingNew = localStorage.getItem(storageKey);
-            const existingOld = localStorage.getItem(oldKey);
-            if (!existingNew && existingOld) {
-                localStorage.setItem(storageKey, existingOld);
-            }
-        }
+        if (!userId) return;
+        
+        // Step 1: Read localStorage for instant UI
         const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
         setHistory(stored);
+        
+        // Step 2: Fetch from database if authenticated
+        const fetchHistory = async () => {
+            if (userId === 'guest') {
+                setIsLoading(false);
+                return;
+            }
+            try {
+                const response = await api.get('/users/search-history');
+                if (response.data.success) {
+                    const dbHistory = response.data.data.map((item: any) => {
+                        if (item.profileSnapshot) {
+                            return {
+                                type: 'USER',
+                                id: item.id,
+                                value: typeof item.profileSnapshot === 'string' ? JSON.parse(item.profileSnapshot) : item.profileSnapshot
+                            };
+                        } else {
+                            return {
+                                type: 'QUERY',
+                                id: item.id,
+                                value: item.query
+                            };
+                        }
+                    });
+                    
+                    // Step 3: Synchronize - Database is the source of truth
+                    setHistory(dbHistory);
+                    localStorage.setItem(storageKey, JSON.stringify(dbHistory));
+                }
+            } catch (error) {
+                console.error("Failed to fetch search history from DB:", error);
+            } finally {
+                setIsLoading(false);
+                hasFetchedRef.current = true;
+            }
+        };
+
+        fetchHistory();
     }, [storageKey, userId]);
 
     // Save search
-    const saveSearch = (item: string | SearchedUser) => {
+    const saveSearch = (item: any) => {
         if (!item) return;
-
-        let newItem: HistoryItem;
-        if (typeof item === 'string') {
-            const trimmed = item.trim();
-            if (!trimmed) return;
-            newItem = { type: 'QUERY', value: trimmed, id: `query-${trimmed.toLowerCase()}` };
-        } else {
-            const userId = item.id || item.slug || Math.random().toString(36).substr(2, 9);
-            newItem = { type: 'USER', value: item, id: `user-${userId}` };
-        }
-
-        // Sync update localStorage immediately to prevent loss on navigation
-        const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-        const filtered = stored.filter((h: any) => h.id !== newItem.id);
-        const updated = [newItem, ...filtered].slice(0, 5);
-        localStorage.setItem(storageKey, JSON.stringify(updated));
         
-        // Update state for UI
-        setHistory(updated);
+        let queryToSave = '';
+        let profileSnapshot = null;
+        let newItem: HistoryItem;
+        const tempId = `temp-${Date.now()}`;
+
+        if (typeof item === 'string') {
+            queryToSave = item.trim();
+            if (!queryToSave) return;
+            newItem = { type: 'QUERY', value: queryToSave, id: tempId };
+        } else {
+            queryToSave = (item.full_name || item.name || '').trim();
+            if (!queryToSave) return;
+            profileSnapshot = item;
+            newItem = { type: 'USER', value: item, id: tempId };
+        }
+        
+        // Optimistic UI update
+        setHistory(prev => {
+            // Remove duplicates by ID for users, or by text for queries
+            const filtered = prev.filter(h => {
+                if (newItem.type === 'USER' && h.type === 'USER') {
+                    return h.value.id !== (newItem.value as SearchedUser).id;
+                }
+                if (newItem.type === 'QUERY' && h.type === 'QUERY') {
+                    return h.value.toLowerCase() !== (newItem.value as string).toLowerCase();
+                }
+                return true; // Query and User searches don't overwrite each other
+            });
+            const updated = [newItem, ...filtered];
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+            return updated;
+        });
+
+        // Background API Sync
+        if (userId !== 'guest') {
+            api.post('/users/search-history', { query: queryToSave, profileSnapshot })
+                .then(response => {
+                    if (response.data.success) {
+                        // Replace temp ID with real DB ID silently
+                        const realId = response.data.data.id;
+                        setHistory(current => {
+                            const updated = current.map(h => h.id === tempId ? { ...h, id: realId } : h);
+                            localStorage.setItem(storageKey, JSON.stringify(updated));
+                            return updated;
+                        });
+                    }
+                })
+                .catch(err => console.error("Failed to save search to DB:", err));
+        }
     };
 
     // Remove one
     const removeSearch = (id: string) => {
-        const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
-        const updated = stored.filter((item: any) => item.id !== id);
-        localStorage.setItem(storageKey, JSON.stringify(updated));
-        setHistory(updated);
+        // Optimistic UI update
+        setHistory(prev => {
+            const updated = prev.filter(item => item.id !== id);
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+            return updated;
+        });
+
+        // Background API Sync
+        if (userId !== 'guest' && !id.startsWith('temp-')) {
+            api.delete(`/users/search-history/${id}`)
+                .catch(err => console.error("Failed to remove search from DB:", err));
+        }
     };
 
     // Clear all
     const clearAll = () => {
+        // Optimistic UI update
         setHistory([]);
-        localStorage.removeItem(storageKey);
+        localStorage.setItem(storageKey, JSON.stringify([]));
+
+        // Background API Sync
+        if (userId !== 'guest') {
+            api.delete('/users/search-history')
+                .catch(err => console.error("Failed to clear search history in DB:", err));
+        }
     };
 
-    return { history, saveSearch, removeSearch, clearAll };
+    return { history, saveSearch, removeSearch, clearAll, isLoading };
 };

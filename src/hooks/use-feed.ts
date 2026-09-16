@@ -180,9 +180,38 @@ export const useFeed = (enableInitialFetch = true) => {
       }
     };
 
+    const handleRepostDeleted = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { repostId, originalPostId } = customEvent.detail;
+      
+      queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => ({
+            ...page,
+            posts: page.posts.filter((p: Post) => {
+               if (repostId && p.id.toString() === repostId.toString()) return false;
+               if (p.shared_post?.id?.toString() === originalPostId?.toString() && p.authorId === activeProfile?.id) return false;
+               return true;
+            }).map((p: Post) => {
+               if (p.id.toString() === originalPostId?.toString()) {
+                  return { ...p, isReposted: false, repostId: null, shares: Math.max(0, (Number(p.shares) || 1) - 1).toString() };
+               }
+               return p;
+            })
+          }))
+        };
+      });
+    };
+
     window.addEventListener('postCreated', handlePostCreated);
-    return () => window.removeEventListener('postCreated', handlePostCreated);
-  }, [addPost, enableInitialFetch]);
+    window.addEventListener('repostDeleted', handleRepostDeleted);
+    return () => {
+      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('repostDeleted', handleRepostDeleted);
+    };
+  }, [addPost, enableInitialFetch, queryClient, feedQueryKey, activeProfile?.id]);
 
   return {
     posts,

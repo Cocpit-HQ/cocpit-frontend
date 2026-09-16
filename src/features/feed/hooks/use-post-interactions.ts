@@ -98,6 +98,23 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
     hasLocalExternalShareChange.current = false;
   }, [id]);
 
+  useEffect(() => {
+    const handleRepostDeleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { originalPostId } = customEvent.detail;
+      // If THIS post is the original post, set isReposted to false
+      if (id.toString() === originalPostId?.toString() && isReposted) {
+        setIsReposted(false);
+        setIsRepostedWithThoughts(false);
+        setRepostId(null);
+        setShareCount(prev => Math.max(0, prev - 1));
+      }
+    };
+    
+    window.addEventListener('repostDeleted', handleRepostDeleted);
+    return () => window.removeEventListener('repostDeleted', handleRepostDeleted);
+  }, [id, isReposted]);
+
   const handleLike = async (isCompany: boolean, activeProfileId?: string) => {
     const prevLiked = isLiked;
     const prevCount = likeCount;
@@ -201,6 +218,10 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
         setIsRepostedWithThoughts(false);
         setRepostId(null);
         setShareCount(prev => Math.max(0, prev - 1));
+        
+        window.dispatchEvent(new CustomEvent('repostDeleted', { 
+           detail: { originalPostId: id.toString(), repostId: prevRepostId } 
+        }));
       } else {
         setIsReposted(true);
         // Purpose of Bug Fix: Extract repost ID safely from API response (postId, post_id, or id) to update repost state
