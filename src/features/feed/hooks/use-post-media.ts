@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Area, MediaSize } from 'react-easy-crop';
 import { MediaItem } from '../types';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
-import { toast } from 'sonner';
+import { feedToast as toast } from '../utils/feed-toast';
 
 type AspectRatioMode = '1:1' | '4:5' | '16:9';
 

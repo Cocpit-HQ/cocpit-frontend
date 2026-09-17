@@ -19,6 +19,12 @@ export default function CreateArticlePage() {
 
     useUIStore.getState().setArticleMode(false);
     
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('scroll-/feed');
+      }
+    } catch (e) {}
+    
     if (window.history.length > 1) {
       router.push('/feed');
     } else {

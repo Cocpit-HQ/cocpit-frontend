@@ -1,5 +1,6 @@
 
 "use client";
+"use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -9,7 +10,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { feedToast as toast } from "@/features/feed/utils/feed-toast";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
 import { universalShare } from "@/services/api/shareService";
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
@@ -269,7 +270,7 @@ export default function CocpitShareModel({
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
       // Calculate how many shares were actually tracked as new
-      const newlyTrackedCount = responses.filter((r: any) => r && r.shareTracked).length;
+      const newlyTrackedCount = responses.filter((r: any) => r && (r.shareTracked || r.data?.shareTracked || r.message?.shareTracked)).length;
 
       onShare?.(newlyTrackedCount > 0 ? Array(newlyTrackedCount).fill("") : []);
       handleClose();
@@ -316,7 +317,7 @@ export default function CocpitShareModel({
         icon: <Briefcase className="w-5 h-5 text-[var(--muted-foreground)]" />,
         label: "Work in progress",
         onClick: () => {
-          toast("This feature is coming soon!");
+          toast.info("This feature is coming soon!");
         },
       },
       {

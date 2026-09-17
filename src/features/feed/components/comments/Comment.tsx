@@ -83,12 +83,13 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const [likes, setLikes] = useState(like_count);
   const [isPinned, setIsPinned] = useState(is_pinned || false);
 
-  const currentActorId = isCompany ? activeProfile?.id : (session?.user as any)?.id || session?.user?.id;
-  const currentActorName = isCompany ? activeProfile?.name : session?.user?.name;
+  const currentActorId = activeProfile?.id || currentUserId || (session?.user as any)?.user_id || (session?.user as any)?.sub || session?.user?.id;
+  const currentActorName = activeProfile?.name || session?.user?.name;
 
-  const isOwner = (currentActorId && String(authorId) === String(currentActorId)) || 
-                  (currentActorName && author?.name === currentActorName);
-
+  const isOwner = Boolean(
+    (currentActorId && authorId && String(authorId) === String(currentActorId)) || 
+    (currentActorName && author?.name && author.name.trim().toLowerCase() === currentActorName.trim().toLowerCase())
+  );
 
   const handleBlock = async () => {
     try {
@@ -334,9 +335,13 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         <div className="flex items-center gap-[8px] ds-text-small text-ds-text-primary">
           <button
             onClick={handleLike}
-            className={`transition-colors ${isLiked ? 'text-ds-accent' : ''}`}
+            className={`transition-colors flex items-center justify-center ${isLiked ? 'text-[var(--ds-like-active)]' : 'text-ds-text-secondary hover:text-ds-text-primary'}`}
+            aria-label={isLiked ? "Unlike comment" : "Like comment"}
           >
-            Like
+            <Icon 
+              name={isLiked ? "like-filled" : "like"} 
+              className={`w-[14px] h-[14px] ${isLiked ? 'text-ds-accent' : ''}`}
+            />
           </button>
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">-</span> */}
           <span className="font-normal text-ds-text-secondary">-</span>

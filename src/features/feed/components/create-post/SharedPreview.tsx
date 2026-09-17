@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
+import { PostBody } from '../parts/PostBody';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 interface SharedPreviewProps {
   sharedPost: any;
@@ -57,6 +58,8 @@ const SharedVideoPreview = ({ src }: { src: string }) => {
 
 const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation }: SharedPreviewProps) => {
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   if (!sharedPost) return null;
 
   // disableNavigation is shorthand for clickable=false + showFollow=false (used in composer/edit contexts)
@@ -328,14 +331,27 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
         </div>
         {/* Content */}
         {contentText && (
-          <div className="text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
-            <RichTextRenderer
+          mediaUrls.length > 0 || !!videoSrc ? (
+            <div className="text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
+              <RichTextRenderer
+                content={contentText}
+                authorName={sharedName}
+                authorSlug={sharedSlug}
+                disableLinks={disableNavigation}
+              />
+            </div>
+          ) : (
+            <PostBody
               content={contentText}
-              authorName={sharedName}
+              author={sharedName || 'Unknown User'}
               authorSlug={sharedSlug}
+              isExpanded={isExpanded}
+              onToggleExpand={() => setIsExpanded(!isExpanded)}
+              hasMedia={false}
+              maxLines={15}
               disableLinks={disableNavigation}
             />
-          </div>
+          )
         )}
 
         {/* Poll Options Capsules (if poll) */}

@@ -101,6 +101,7 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
                 if (typeof window !== 'undefined') {
                   sessionStorage.removeItem('cocpit_article_draft');
                   sessionStorage.removeItem('cocpit_is_article_mode');
+                  sessionStorage.removeItem('scroll-/feed');
                 }
               } catch (e) {}
               if (onSuccess) {

@@ -552,11 +552,24 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             }
         };
 
+        const handleScrollOrResize = (e: Event) => {
+            const target = e.target as Node;
+            if (popupRef.current && popupRef.current.contains(target)) {
+                return;
+            }
+            setShowSuggestions(false);
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('touchstart', handleClickOutside);
+        window.addEventListener('scroll', handleScrollOrResize, true);
+        window.addEventListener('resize', handleScrollOrResize);
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('touchstart', handleClickOutside);
+            window.removeEventListener('scroll', handleScrollOrResize, true);
+            window.removeEventListener('resize', handleScrollOrResize);
         };
     }, [showSuggestions, setShowSuggestions]);
 

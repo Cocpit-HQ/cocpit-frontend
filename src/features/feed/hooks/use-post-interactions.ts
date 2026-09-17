@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
+import { feedToast as toast } from '../utils/feed-toast';
 import { feedApi } from '../api/feed.api';
 import { createRepost } from '@/services/api/posts';
 import { FeedPostProps } from '../types';

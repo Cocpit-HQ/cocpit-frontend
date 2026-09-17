@@ -33,12 +33,12 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted,
             setOpen(prev => !prev);
           }
         }}
-        className={`flex h-[24px] flex-row items-center gap-[8px] group ${isRepostedWithThoughts ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`flex h-[24px] flex-row items-center gap-[8px] group ${isRepostedWithThoughts ? "opacity-50 cursor-default" : "cursor-pointer"}`}
         aria-label="Repost"
         title={isRepostedWithThoughts ? "You've reposted with thoughts — delete that post to undo" : "Repost"}
       >
-        <Icon name="repost" className={`w-[20px] h-[20px] transition-colors ${isReposted ? "text-ds-accent" : "text-ds-text-primary"}`} />
-        <span className={`ds-text-small ${isReposted ? "text-ds-accent" : "text-ds-text-primary"}`}>
+        <Icon name="repost" className={`w-[20px] h-[20px] transition-colors ${isReposted && !isRepostedWithThoughts ? "text-ds-accent" : "text-ds-text-primary"}`} />
+        <span className={`ds-text-small ${isReposted && !isRepostedWithThoughts ? "text-ds-accent" : "text-ds-text-primary"}`}>
           {shares}
         </span>
       </button>

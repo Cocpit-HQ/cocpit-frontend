@@ -44,6 +44,8 @@ export const saveScrollPosition = (source = "post", postId?: string) => {
   }
 };
 
+let isInitialMount = true;
+
 export function useScrollRestoration(isReady: boolean, containerId?: string) {
   const pathname = usePathname();
   const restoredRef = useRef(false);
@@ -62,8 +64,18 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       const isEditing = !!useUIStore.getState().editingPostId;
       const isReposting = !!useUIStore.getState().sharedPostData;
       
-      const saved = (!isEditing && !isReposting) ? sessionStorage.getItem(`scroll-${pathname}`) : null;
+      let saved = (!isEditing && !isReposting) ? sessionStorage.getItem(`scroll-${pathname}`) : null;
       
+      if (isInitialMount && typeof window !== "undefined") {
+        const navEntry = window.performance?.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+        const isReload = navEntry?.type === "reload" || window.performance?.navigation?.type === 1;
+        if (isReload) {
+          saved = null;
+          sessionStorage.removeItem(`scroll-${pathname}`);
+        }
+        isInitialMount = false;
+      }
+
       const getScrollElement = () => containerId ? document.getElementById(containerId) : null;
 
       if (saved) {

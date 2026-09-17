@@ -10,6 +10,7 @@ export interface PostBodyProps {
   variant?: 'default' | 'overlay';
   hasMedia?: boolean;
   maxLines?: number;
+  disableLinks?: boolean;
 }
 
 // Isomorphic layout effect to avoid Next.js SSR warnings
@@ -25,6 +26,7 @@ export const PostBody = ({
   variant = 'default',
   hasMedia = false,
   maxLines,
+  disableLinks = false,
 }: PostBodyProps) => {
   if (!content) return null;
 
@@ -196,6 +198,7 @@ export const PostBody = ({
           content={displayContent}
           authorName={author}
           authorSlug={authorSlug}
+          disableLinks={disableLinks}
         />
 
         {/* Inline "... See more" placed directly at the end of the last word */}

@@ -11,7 +11,8 @@ export interface BackendComment {
   updatedAt?: string | null;
   is_edited?: boolean;
   isEdited?: boolean;
-  user_id: string;
+  user_id?: string;
+  author_id?: string;
   full_name: string;
   avatar_url: string | null;
   author_slug?: string;
@@ -408,7 +409,7 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
 
   return {
     id: backendComment.comment_id,
-    authorId: backendComment.user_id,
+    authorId: backendComment.user_id || backendComment.author_id || (backendComment as any).authorId || (backendComment as any).userId,
     author: {
       name: backendComment.full_name,
       avatar: backendComment.avatar_url || undefined,
