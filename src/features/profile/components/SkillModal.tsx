@@ -117,7 +117,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
             <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
           </button>
-          <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+          <span className="text-[16px] font-medium font-['DM_Sans'] text-foreground">
             Add skills
           </span>
           <Button
@@ -127,7 +127,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               selectedSkills.length === 0 ||
               (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
             }
-            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary text-primary-foreground font-medium text-[14px] disabled:opacity-50 transition-all disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
+            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary text-primary-foreground font-medium text-[14px] disabled:opacity-50 transition-all disabled:cursor-not-allowed font-['DM_Sans']"
           >
             {loading ? "..." : "Save"}
           </Button>
@@ -146,10 +146,10 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
 
         <div className="flex-1 flex flex-col items-center pt-2  w-full">
           {/* Header */}
-          <h2 className="hidden sm:block text-[18px] font-medium leading-[26px] text-foreground mb-1 font-[family-name:var(--font-poppins)] text-center">
+          <h2 className="hidden sm:block text-[18px] font-medium leading-[26px] text-foreground mb-1 font-['DM_Sans'] text-center">
             Add skills
           </h2>
-          <p className="hidden sm:block text-[14px] text-muted-foreground mb-5 font-[family-name:var(--font-poppins)] text-center">
+          <p className="hidden sm:block text-[14px] text-muted-foreground mb-5 font-['DM_Sans'] text-center">
             Help us match you with better opportunities
           </p>
 
@@ -173,7 +173,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                   setSearchQuery("");
                 }
               }}
-              className="flex-1 bg-transparent border-none p-0 focus:ring-0 outline-none text-foreground placeholder:text-muted-foreground text-[14px] font-[family-name:var(--font-poppins)]"
+              className="flex-1 bg-transparent border-none p-0 focus:ring-0 outline-none text-foreground placeholder:text-muted-foreground text-[14px] font-['DM_Sans']"
             />
             <Search className="w-5 h-5 text-muted-foreground ml-2 flex-shrink-0" />
           </div>
@@ -182,7 +182,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <div className="w-full flex-1 flex flex-wrap justify-start content-start items-start gap-3 mb-4 overflow-y-auto">
             {isSearching ? (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-sm text-muted-foreground font-[family-name:var(--font-poppins)]">Searching...</span>
+                <span className="text-sm text-muted-foreground font-['DM_Sans']">Searching...</span>
               </div>
             ) : paginatedSkills.length > 0 ? (
               paginatedSkills.map((skill) => {
@@ -194,7 +194,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                       toggleSkill(skill);
                     }}
                     className={cn(
-                      "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border font-[family-name:var(--font-poppins)]",
+                      "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border font-['DM_Sans']",
                       isSelected
                         ? "bg-primary border-primary text-primary-foreground shadow-sm"
                         : "skill-chip hover:opacity-80"
@@ -206,7 +206,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               })
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-sm text-muted-foreground font-[family-name:var(--font-poppins)]">No skills found</span>
+                <span className="text-sm text-muted-foreground font-['DM_Sans']">No skills found</span>
               </div>
             )}
           </div>
@@ -221,7 +221,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="text-foreground font-medium text-sm font-[family-name:var(--font-poppins)]">
+              <span className="text-foreground font-medium text-sm font-['DM_Sans']">
                 {String(currentPage).padStart(2, '0')}
               </span>
               <button
@@ -238,7 +238,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <div className="hidden sm:flex w-full justify-center gap-4 mt-auto">
             <button
               onClick={onClose}
-              className="w-[142px] h-[40px] rounded-[24px] bg-card border border-primary text-primary font-semibold transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)]"
+              className="w-[142px] h-[40px] rounded-[24px] bg-card border border-primary text-primary font-semibold transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px] font-['DM_Sans']"
             >
               Cancel
             </button>
@@ -249,7 +249,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                 selectedSkills.length === 0 ||
                 (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
               }
-              className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
+              className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-['DM_Sans']"
             >
               {loading ? "Saving..." : "Save"}
             </Button>

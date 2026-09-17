@@ -100,9 +100,9 @@ export function ProjectMediaModal({
   };
 
   const inputStyles =
-    "w-full bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] px-4 font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none";
+    "w-full bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] px-4 font-['DM_Sans'] text-[16px] leading-[24px] text-foreground focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none";
   const labelStyles =
-    "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2";
+    "block font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-foreground mb-2";
 
   const isFormValid = title.trim().length > 0 && (mediaType === "link" ? url.trim().length > 0 : !!(fileUrl || url.trim()));
 
@@ -122,7 +122,7 @@ export function ProjectMediaModal({
 
         {/* Header */}
         <div className="text-center px-6 pb-6">
-          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans'] text-foreground">
             {isEditing ? `Edit ${mediaType}` : `Add ${mediaType}`}
           </h2>
         </div>
@@ -263,7 +263,7 @@ export function ProjectMediaModal({
                 if (initialData?.id) onDelete(initialData.id);
                 onClose();
               }}
-              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)] cursor-pointer"
+              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium w-[142px] font-['DM_Sans'] cursor-pointer"
             >
               Delete
             </Button>
@@ -272,7 +272,7 @@ export function ProjectMediaModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)] cursor-pointer"
+              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium w-[142px] font-['DM_Sans'] cursor-pointer"
             >
               Cancel
             </Button>
@@ -281,7 +281,7 @@ export function ProjectMediaModal({
             type="button"
             onClick={handleSubmit}
             disabled={!isFormValid}
-            className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)] cursor-pointer shadow-sm"
+            className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-['DM_Sans'] cursor-pointer shadow-sm"
           >
             {isEditing ? "Save" : "Add"}
           </Button>

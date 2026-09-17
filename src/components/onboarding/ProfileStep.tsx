@@ -11,7 +11,7 @@ import { getProfile, uploadAvatar } from "@/services/api/profile";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { useMemo } from "react";
-import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
+import { EditAvatarModal } from "@/features/profile/components/EditAvatarModal";
 import { Icon } from "@iconify/react";
 import styles from "./ProfileStep.module.css";
 

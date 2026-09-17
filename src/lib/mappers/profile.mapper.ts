@@ -50,6 +50,19 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     images.push(backendPost.achievement_image_url);
   }
 
+  // Fallback for direct image_url or images array
+  if ((backendPost as any).image_url && images.length === 0) {
+    images.push((backendPost as any).image_url);
+  }
+  if ((backendPost as any).images && Array.isArray((backendPost as any).images)) {
+    (backendPost as any).images.forEach((img: any) => {
+      const url = typeof img === 'string' ? img : img?.url;
+      if (url && !images.includes(url)) {
+        images.push(url);
+      }
+    });
+  }
+
   // Calculate timeAgo
   const now = dayjs();
   const created = dayjs(backendPost.created_at);

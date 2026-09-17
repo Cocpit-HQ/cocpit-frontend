@@ -254,9 +254,9 @@ export default function AddProjectForm({
   };
 
   const inputStyles =
-    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] px-[16px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none w-full";
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] px-[16px] font-['DM_Sans'] text-[16px] leading-[24px] text-foreground focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none w-full";
   const labelStyles =
-    "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2";
+    "block font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-foreground mb-2";
 
   const isFormValid =
     title.trim().length > 0 &&
@@ -309,10 +309,10 @@ export default function AddProjectForm({
 
         {/* Title and Subtitle */}
         <div className="text-center w-full px-8">
-          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[4px]">
+          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans'] text-foreground mb-[4px]">
             {isEditing ? "Edit project" : "Add project"}
           </h2>
-          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+          <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground">
             Update your professional information
           </p>
         </div>
@@ -374,7 +374,7 @@ export default function AddProjectForm({
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="What was this project about? Share the objectives, your approach, and the outcome."
-              className="w-full h-[89px] min-h-[89px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none"
+              className="w-full h-[89px] min-h-[89px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none"
             />
           </div>
 
@@ -442,7 +442,7 @@ export default function AddProjectForm({
                 </Select>
               </div>
               {endDateError && (
-                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
                   <AlertTriangle className="w-3 h-3" />{endDateError}
                 </p>
               )}
@@ -459,7 +459,7 @@ export default function AddProjectForm({
             />
             <label
               htmlFor="currently-working"
-              className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground cursor-pointer select-none"
+              className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-foreground cursor-pointer select-none"
             >
               I&apos;m currently working on this project
             </label>
@@ -505,7 +505,7 @@ export default function AddProjectForm({
                 onFocus={() => setShowSkillDropdown(true)}
                 onKeyDown={handleSkillKeyDown}
                 placeholder={skills.length === 0 ? "Search and add skills (e.g. Figma, Project Management)" : "Add more..."}
-                className="flex-1 bg-transparent border-none outline-none font-[family-name:var(--font-poppins)] text-[15px] text-foreground placeholder:text-muted-foreground min-w-[150px] px-2"
+                className="flex-1 bg-transparent border-none outline-none font-['DM_Sans'] text-[15px] text-foreground placeholder:text-muted-foreground min-w-[150px] px-2"
               />
             </div>
 
@@ -517,7 +517,7 @@ export default function AddProjectForm({
                     <li
                       key={s}
                       onMouseDown={() => addSkill(s)}
-                      className="px-4 py-2 text-[14px] font-[family-name:var(--font-poppins)] text-foreground hover:bg-[#EEF2FF] dark:hover:bg-secondary hover:text-[#6366F1] cursor-pointer transition-colors"
+                      className="px-4 py-2 text-[14px] font-['DM_Sans'] text-foreground hover:bg-[#EEF2FF] dark:hover:bg-secondary hover:text-[#6366F1] cursor-pointer transition-colors"
                     >
                       {s}
                     </li>
@@ -525,7 +525,7 @@ export default function AddProjectForm({
                 ) : skillInput.trim() ? (
                   <li
                     onMouseDown={() => addSkill(skillInput.trim())}
-                    className="px-4 py-2 text-[14px] font-[family-name:var(--font-poppins)] text-[#6366F1] hover:bg-secondary cursor-pointer font-medium flex items-center gap-2"
+                    className="px-4 py-2 text-[14px] font-['DM_Sans'] text-[#6366F1] hover:bg-secondary cursor-pointer font-medium flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" /> Add &quot;{skillInput.trim()}&quot;
                   </li>
@@ -549,7 +549,7 @@ export default function AddProjectForm({
                 onClick={() => handleAddMediaClick("link")}
                 disabled={isMediaLimitReached}
                 className={cn(
-                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-colors flex items-center justify-center shadow-none",
+                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-['DM_Sans'] transition-colors flex items-center justify-center shadow-none",
                   isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
                 )}
               >
@@ -560,7 +560,7 @@ export default function AddProjectForm({
                 onClick={() => handleAddMediaClick("image")}
                 disabled={isMediaLimitReached}
                 className={cn(
-                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-colors flex items-center justify-center shadow-none",
+                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-['DM_Sans'] transition-colors flex items-center justify-center shadow-none",
                   isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
                 )}
               >
@@ -571,7 +571,7 @@ export default function AddProjectForm({
                 onClick={() => handleAddMediaClick("document")}
                 disabled={isMediaLimitReached}
                 className={cn(
-                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-colors flex items-center justify-center shadow-none",
+                  "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-['DM_Sans'] transition-colors flex items-center justify-center shadow-none",
                   isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
                 )}
               >
@@ -579,7 +579,7 @@ export default function AddProjectForm({
               </button>
             </div>
             {isMediaLimitReached && (
-              <p className="text-[12px] text-muted-foreground mt-1 font-[family-name:var(--font-poppins)]">
+              <p className="text-[12px] text-muted-foreground mt-1 font-['DM_Sans']">
                 Maximum 3 media items allowed.
               </p>
             )}
@@ -598,10 +598,10 @@ export default function AddProjectForm({
                         <Icon icon={getMediaIcon(m.type)} className="w-[26px] h-[26px] text-foreground" />
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-[14px] font-medium font-[family-name:var(--font-poppins)] text-foreground truncate">
+                        <span className="text-[14px] font-medium font-['DM_Sans'] text-foreground truncate">
                           {m.title}
                         </span>
-                        <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                        <span className="text-[12px] text-muted-foreground font-['DM_Sans']">
                           {getMediaSublabel(m.type)}
                         </span>
                       </div>
@@ -628,7 +628,7 @@ export default function AddProjectForm({
               type="button"
               onClick={() => setShowMoreDetails(!showMoreDetails)}
               className={cn(
-                "inline-flex items-center gap-1.5 text-[14px] font-[family-name:var(--font-poppins)] hover:underline transition-all cursor-pointer select-none font-medium",
+                "inline-flex items-center gap-1.5 text-[14px] font-['DM_Sans'] hover:underline transition-all cursor-pointer select-none font-medium",
                 showMoreDetails ? "text-[#6366F1] dark:text-primary" : "text-foreground"
               )}
             >
@@ -692,7 +692,7 @@ export default function AddProjectForm({
                     )}
                   />
                   {teamSizeError && (
-                    <span className="mt-1 text-[12px] text-red-500 font-[family-name:var(--font-poppins)]">
+                    <span className="mt-1 text-[12px] text-red-500 font-['DM_Sans']">
                       {teamSizeError}
                     </span>
                   )}
@@ -706,7 +706,7 @@ export default function AddProjectForm({
                   value={roleDescription}
                   onChange={(e) => setRoleDescription(e.target.value)}
                   placeholder="Describe your work, impact, or achievements"
-                  className="w-full h-[90px] min-h-[90px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none"
+                  className="w-full h-[90px] min-h-[90px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#6366F1] focus-visible:outline-none transition-all shadow-none"
                 />
               </div>
             </div>
@@ -720,7 +720,7 @@ export default function AddProjectForm({
           type="button"
           variant="outline"
           onClick={isEditing ? () => onDelete?.(initialData?.project_id!) : onCancel}
-          className="h-[40px] px-8 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-white dark:bg-card font-medium w-[142px] font-[family-name:var(--font-poppins)] cursor-pointer shadow-none transition-all"
+          className="h-[40px] px-8 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-white dark:bg-card font-medium w-[142px] font-['DM_Sans'] cursor-pointer shadow-none transition-all"
         >
           {isEditing ? "Delete" : "Cancel"}
         </Button>
@@ -729,7 +729,7 @@ export default function AddProjectForm({
           onClick={() => handleSubmit()}
           disabled={!isFormValid || isSaving}
           className={cn(
-            "h-[40px] px-8 rounded-full font-medium w-[142px] font-[family-name:var(--font-poppins)] transition-all shadow-none",
+            "h-[40px] px-8 rounded-full font-medium w-[142px] font-['DM_Sans'] transition-all shadow-none",
             isFormValid && !isSaving
               ? "bg-[#6366F1] text-white hover:bg-[#4F46E5] cursor-pointer"
               : "bg-[#C7D2FE] text-white border border-white dark:border-transparent dark:bg-[#6366F1]/40 opacity-100 cursor-not-allowed hover:bg-[#C7D2FE] dark:hover:bg-[#6366F1]/40"

@@ -164,7 +164,7 @@ export function LivingResume({
     <div className="w-full box-border px-4 md:pr-[16px] pb-[20px] md:pl-[40px] mt-[16px]">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-foreground flex items-center">
+        <h2 className="font-['DM_Sans'] font-medium text-[18px] leading-[26px] text-foreground flex items-center">
           Living resume
         </h2>
 
@@ -177,7 +177,7 @@ export function LivingResume({
               title={isOwnProfile ? "Download PDF" : "View Resume"}
             >
               <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-muted-foreground grayscale opacity-80" />
-              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-muted-foreground truncate flex-1 min-w-0">{resumeName}</span>
+              <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-muted-foreground truncate flex-1 min-w-0">{resumeName}</span>
               {isOwnProfile && (
                 <button
                   onClick={(e) => {
@@ -200,7 +200,7 @@ export function LivingResume({
           {!resumeName && isOwnProfile && (
             <button
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-card text-primary rounded-[24px] border border-primary hover:bg-secondary transition-all text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] whitespace-nowrap"
+              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-card text-primary rounded-[24px] border border-primary hover:bg-secondary transition-all text-[14px] leading-[20px] font-normal font-['DM_Sans'] whitespace-nowrap"
             >
               <Plus className="w-6 h-6 stroke-[2px]" />
               <span>Add resume</span>
@@ -231,7 +231,7 @@ export function LivingResume({
 
       {/* Metrics Section */}
       <div className="flex flex-col gap-4 w-full">
-        <h3 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-foreground">
+        <h3 className="font-['DM_Sans'] font-medium text-[18px] leading-[26px] text-foreground">
           Metrics
         </h3>
 
@@ -245,11 +245,11 @@ export function LivingResume({
                 <div className="flex items-center justify-center text-muted-foreground mb-1">
                   {metric.icon}
                 </div>
-                <span className="font-[family-name:var(--font-poppins)] font-medium text-[10px] text-muted-foreground uppercase tracking-tight">
+                <span className="font-['DM_Sans'] font-medium text-[10px] text-muted-foreground uppercase tracking-tight">
                   {metric.label}
                 </span>
               </div>
-              <span className="font-[family-name:var(--font-poppins)] font-bold text-[24px] text-primary">
+              <span className="font-['DM_Sans'] font-bold text-[24px] text-primary">
                 {metric.value}
               </span>
             </div>

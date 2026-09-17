@@ -35,7 +35,7 @@ export function ProfileProjects({
       <div className="pb-[40px] flex flex-col gap-0">
         {/* Header */}
         <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
-          <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">
+          <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-['DM_Sans']">
             Projects
           </h2>
           {isOwnProfile && onAddProjectClick && (
@@ -81,7 +81,7 @@ export function ProfileProjects({
               <div className="flex justify-center mt-6">
                 <button
                   onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
-                  className="w-[86px] h-[24px] flex items-center justify-center text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary transition-all flex-none cursor-pointer"
+                  className="w-[86px] h-[24px] flex items-center justify-center text-[14px] leading-[20px] font-normal font-['DM_Sans'] text-primary transition-all flex-none cursor-pointer"
                 >
                   {isProjectsExpanded ? "View less" : "View more"}
                 </button>

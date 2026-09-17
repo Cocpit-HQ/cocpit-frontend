@@ -86,7 +86,7 @@ function RoleRow({
         <div className="flex-1 min-w-0">
           <div className="flex flex-col">
             <div className="flex justify-between items-start w-full">
-              <h3 className="text-[16px] leading-[22px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
+              <h3 className="text-[16px] leading-[22px] font-semibold font-['DM_Sans'] text-foreground mb-[8px]">
                 {renderField(experience.title)}
               </h3>
               {/* Edit button for mobile */}
@@ -106,7 +106,7 @@ function RoleRow({
               </div>
             </div>
 
-            <p className="text-[12px] leading-[16px] tracking-normal font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
+            <p className="text-[12px] leading-[16px] tracking-normal font-normal font-['DM_Sans'] text-foreground mb-[10px] break-words">
               {displayDescription}
               {!isDescExpanded && isLongDescription && (
                 <button
@@ -133,10 +133,10 @@ function RoleRow({
             </p>
 
             <div className="flex flex-col gap-[8px]">
-              <p className="text-[12px] leading-[16px] tracking-normal  font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+              <p className="text-[12px] leading-[16px] tracking-normal  font-normal font-['DM_Sans'] text-muted-foreground">
                 {renderField(experience.company_name)}
               </p>
-              <p className="text-[12px] leading-[16px] tracking-normal  font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+              <p className="text-[12px] leading-[16px] tracking-normal  font-normal font-['DM_Sans'] text-muted-foreground">
                 {renderField(experience.location)}
               </p>
             </div>
@@ -153,15 +153,15 @@ function RoleRow({
               <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
                 {experience.start_date && (
                   <>
-                    <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                    <span className="md:w-[60px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
                       {formatDate(experience.start_date)}
                     </span>
-                    <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
+                    <span className="md:w-[9px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
                       -
                     </span>
                   </>
                 )}
-                <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                <span className="md:w-[75px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
                   {experience.end_date ? formatDate(experience.end_date) : (experience.start_date ? 'Present' : '')}
                 </span>
               </div>
@@ -169,13 +169,13 @@ function RoleRow({
 
             {/* Row 2: Work type and mode */}
           <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
-            <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+            <span className="md:w-[60px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
               {experience.work_type || 'Full time'}
             </span>
-            <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
+            <span className="md:w-[9px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
               -
             </span>
-            <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+            <span className="md:w-[75px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
               {experience.work_mode || 'Remote'}
             </span>
           </div>
@@ -250,7 +250,7 @@ export function EditableExperienceGroup({
         <div className="flex pl-[72px] mt-4">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-[58px] h-[16px] flex items-center justify-center text-[12px] leading-[16px] font-medium text-[#6366F1] font-[family-name:var(--font-poppins)] transition-all flex-none"
+            className="w-[58px] h-[16px] flex items-center justify-center text-[12px] leading-[16px] font-medium text-[#6366F1] font-['DM_Sans'] transition-all flex-none"
           >
             {isExpanded ? "See less" : "See more"}
           </button>

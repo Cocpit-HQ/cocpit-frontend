@@ -24,6 +24,9 @@ import { toast } from "sonner";
 interface SendOfferDialogProps {
     targetUserId: string;
     targetUserName: string;
+    isOpen?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    trigger?: React.ReactNode;
 }
 
 interface CompanyJob {
@@ -33,9 +36,18 @@ interface CompanyJob {
     job_type: string;
 }
 
-export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialogProps) {
+export function SendOfferDialog({
+    targetUserId,
+    targetUserName,
+    isOpen: controlledOpen,
+    onOpenChange: controlledOnOpenChange,
+    trigger,
+}: SendOfferDialogProps) {
     const { activeProfile, isCompany } = useActiveProfile();
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const open = isControlled ? controlledOpen : internalOpen;
+
     const [jobs, setJobs] = useState<CompanyJob[]>([]);
     const [selectedJobId, setSelectedJobId] = useState("");
     const [message, setMessage] = useState("");
@@ -84,13 +96,19 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
         setOfferLoading(false);
     };
 
-    const handleOpen = (isOpen: boolean) => {
-        setOpen(isOpen);
-        if (isOpen) {
+    useEffect(() => {
+        if (open) {
             loadDialogData();
             setSelectedJobId("");
             setMessage("");
         }
+    }, [open]);
+
+    const handleOpen = (nextOpen: boolean) => {
+        if (!isControlled) {
+            setInternalOpen(nextOpen);
+        }
+        controlledOnOpenChange?.(nextOpen);
     };
 
     const availableJobs = jobs.filter(j => {
@@ -110,7 +128,7 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
             await sendJobOffer(isCompany ? activeProfile!.id : null, selectedJobId, targetUserId, message || undefined);
             toast.success(`Offer sent to ${targetUserName}!`);
             setOfferedJobIds(prev => [...prev, selectedJobId]);
-            setOpen(false);
+            handleOpen(false);
         } catch (err: any) {
             const msg = err?.response?.data?.message || "Failed to send offer";
             toast.error(msg);
@@ -123,26 +141,7 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
 
     return (
         <Dialog open={open} onOpenChange={handleOpen}>
-            <DialogTrigger asChild>
-                <button
-                    disabled={offerLoading}
-                    className={cn(
-                        "px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium cursor-pointer",
-                        allOffered && jobs.length > 0
-                            ? "bg-emerald-600/10 text-emerald-600 border border-emerald-600/20 cursor-default"
-                            : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    )}
-                >
-                    {offerLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (allOffered && jobs.length > 0) ? (
-                        <CheckCircle className="w-4 h-4" />
-                    ) : (
-                        <Briefcase className="w-4 h-4" />
-                    )}
-                    {(allOffered && jobs.length > 0) ? "Offer Sent" : "Send Offer"}
-                </button>
-            </DialogTrigger>
+            {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 
             <DialogContent className="sm:max-w-md bg-card border-border text-foreground">
                 <DialogHeader>
@@ -202,7 +201,7 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="cursor-pointer">
+                    <Button variant="outline" onClick={() => handleOpen(false)} disabled={loading} className="cursor-pointer">
                         Cancel
                     </Button>
                     <Button

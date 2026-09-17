@@ -1,32 +1,50 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, MessageCircle, UserPlus, UserCheck, Share2, Link as LinkIcon, Flag } from "lucide-react";
-import { BackButton } from "@/components/shared/BackButton";
+import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Share2, Flag, Ban } from "lucide-react";
 import { toast } from "sonner";
-import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
+import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSocial } from "@/context/SocialContext";
+import { useProfile, useProfilePosts } from "./hooks/usePublicProfile";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  sendConnectionRequest,
+  removeConnection,
+  getRelationshipStatus,
+} from "@/services/api/social";
 
-import { SkillOverlap } from "./components/SkillOverlap";
-import { ConnectionButton } from "./components/ConnectionButton";
+// Layout & Header Components
+import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
+import { ProfileUserBio } from "@/features/profile/components/ProfileUserBio";
+import { ProfileAboutSection } from "@/features/profile/components/ProfileAboutSection";
+import { ProfileFooterSection } from "@/features/profile/components/ProfileEmptyStates";
+import { ProfileBlockedState } from "./components/ProfileBlockedState";
 
-// Shared common profile components
-import { PublicProfileHeader } from "@/features/publicProfile/components/PublicProfileHeader";
-import { ProfileHeader } from "@/features/profile/commonProfileComponents/ProfileHeader";
-import { ProfileAbout } from "@/features/profile/commonProfileComponents/ProfileAbout";
-import { LivingResume } from "@/features/profile/commonProfileComponents/LivingResume";
-import { ProfilePosts } from "@/features/profile/commonProfileComponents/ProfilePosts";
-import { ProfileSkills } from "@/features/profile/commonProfileComponents/ProfileSkills";
-import { ProfileExperience } from "@/features/profile/commonProfileComponents/ProfileExperience";
-import { ProfileEducation } from "@/features/profile/commonProfileComponents/ProfileEducation";
-import { ProfileProjects } from "@/features/profile/commonProfileComponents/ProfileProjects";
+// Tab Content Components
+import { ProfilePostsTab } from "@/features/profile/components/tabs/ProfilePostsTab";
+import { ProfileExperienceTab } from "@/features/profile/components/tabs/ProfileExperienceTab";
+import { ProfileEducationTab } from "@/features/profile/components/tabs/ProfileEducationTab";
+import { ProfileProjectsTab } from "@/features/profile/components/tabs/ProfileProjectsTab";
+import { ProfileSkillsTab } from "@/features/profile/components/tabs/ProfileSkillsTab";
+
+// Modals
 import { ViewAvatarModal } from "@/features/profile/commonProfileComponents/ViewAvatarModal";
 import { SendOfferDialog } from "@/features/profile/commonProfileComponents/SendOfferDialog";
-import { ProfileSkeleton } from "@/features/profile/commonProfileComponents/ProfileSkeleton";
-
-
+import { FollowListModal } from "@/features/profile/components/FollowListModal";
+import { ContactInfoModal } from "@/features/profile/components/ContactInfoModal";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import { DownloadProfileScreen } from "@/shared/commonComponents/DownloadProfileScreen";
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { ReportModal } from "@/components/shared/ReportModal";
+import { MobilePublicProfileMenuDrawer } from "@/features/profile/components/drawers/MobilePublicProfileMenuDrawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,678 +55,532 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-
-// Hooks and services
-import { useProfile, useProfilePosts, useProfilePostsPreview } from "./hooks/usePublicProfile";
-import { useSocial } from "@/context/SocialContext";
-import { initialSkills as currentUserSkills } from "@/lib/data/profile";
-import { useActiveProfile } from "@/context/ActiveProfileContext";
-import { getProfileStats, recordProfileView, getProfileViewCount } from "./services/publicProfile.service";
-import { CompanyRoleModal } from "@/features/profile/components/CompanyRoleModal";
-import { FollowListModal } from "@/features/profile/components/FollowListModal";
-import { ContactInfoModal } from "@/features/profile/components/ContactInfoModal";
-import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
-import { ReportModal } from "@/components/shared/ReportModal";
-import { Experience } from "@/types/entities";
-import { CompanyRole } from "@/types/user";
+import type { Post } from "@/types/entities";
+import type { UserData } from "@/types/user";
 
 interface PublicProfileProps {
   userId: string;
 }
 
-function groupExperiences(experiences: Experience[]) {
-  const groupsMap = new Map();
-  experiences.forEach(exp => {
-    const key = exp.company_name;
-    if (!groupsMap.has(key)) {
-      groupsMap.set(key, { company_name: exp.company_name, logo_url: exp.logo_url || exp.company_logo || null, experiences: [] });
-    }
-    groupsMap.get(key).experiences.push(exp);
-  });
-  return Array.from(groupsMap.values());
-}
-
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const sourcePostId = searchParams.get('sourcePostId') || undefined;
-  const { data: session } = useSession();
-  const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser, unblockUser, isBlocked } = useSocial();
-  const { activeProfile, isCompany } = useActiveProfile();
-  const { canManageBlock, canBlockTarget } = useOrgBlockPermissions(userId);
-
-  // Only admins/owners of the acting company may follow on behalf of it
-  const activeProfilePermissions: string[] = (activeProfile?.viewer_role_data?.permissions as string[]) || [];
-  const canFollow = activeProfile?.type === 'COMPANY'
-    ? (activeProfilePermissions.includes('*') || (activeProfile?.viewer_role_data?.name || '').toUpperCase() === 'ADMIN')
-    : true;
-  
-  const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
-  const [showBlockDialog, setShowBlockDialog] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<CompanyRole | null>(null);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [isFollowListModalOpen, setIsFollowListModalOpen] = useState(false);
-  const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
-  const [activeFollowTab, setActiveFollowTab] = useState<"followers" | "following" | "connections">("followers");
-
-  // TanStack Query Hooks
-  const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId, sourcePostId);
-  const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
-  const { data: previewPosts, isLoading: isPreviewPostsLoading } = useProfilePostsPreview(userId);
-
-  // Filter out private posts from the main profile page preview
-  const visiblePosts = useMemo(() => {
-    if (!publicPosts) return [];
-    return publicPosts.filter(post => post.visibility !== 'private');
-  }, [publicPosts]);
-
-  // Server-ordered (plain posts before poll/repost) 3-post preview strip only —
-  // ProfileSkills below still uses visiblePosts, the full recency-ordered list.
-  const visiblePreviewPosts = useMemo(() => {
-    if (!previewPosts) return [];
-    return previewPosts.filter(post => post.visibility !== 'private');
-  }, [previewPosts]);
-
-  // Scroll Restoration Logic
-  const hasRestoredScroll = useRef(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && 'scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-
-    if (typeof window !== "undefined" && !(window as any).__cocpit_popstate_registered) {
-      (window as any).__cocpit_popstate_registered = true;
-      window.addEventListener("popstate", () => {
-        sessionStorage.setItem("cocpit_popstate_occurred", "true");
-      }, { capture: true });
-    }
-
-    if (typeof window !== "undefined" && !(window as any).__cocpit_history_patched) {
-      (window as any).__cocpit_history_patched = true;
-
-      const handleRouteScroll = (url: string | URL | null | undefined) => {
-        if (!url) return;
-        const urlStr = url.toString();
-        if (!urlStr.includes("/post/")) return;
-
-        const isComments = urlStr.includes("comments=true");
-
-        // Disconnect any existing observer
-        if ((window as any).__cocpit_scroll_observer) {
-          try {
-            (window as any).__cocpit_scroll_observer.disconnect();
-          } catch (e) {}
-        }
-
-        let observerTimeout: NodeJS.Timeout;
-
-        const cleanup = () => {
-          observer.disconnect();
-          clearTimeout(observerTimeout);
-          window.removeEventListener("wheel", handleUserInteraction);
-          window.removeEventListener("touchmove", handleUserInteraction);
-          window.removeEventListener("keydown", handleUserInteraction);
-        };
-
-        const handleUserInteraction = () => {
-          cleanup();
-        };
-
-        const observer = new MutationObserver(() => {
-          if (window.location.pathname.includes("/post/")) {
-            const hasPostDetails = document.querySelector(".feed-card-shell");
-            if (hasPostDetails) {
-              if (isComments) {
-                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-              } else {
-                window.scrollTo({ top: 0, behavior: "instant" });
-                cleanup();
-              }
-            }
-          }
-        });
-
-        (window as any).__cocpit_scroll_observer = observer;
-
-        window.addEventListener("wheel", handleUserInteraction, { passive: true });
-        window.addEventListener("touchmove", handleUserInteraction, { passive: true });
-        window.addEventListener("keydown", handleUserInteraction, { passive: true });
-
-        // Run once immediately in case the elements are already rendered
-        if (window.location.pathname.includes("/post/")) {
-          const hasPostDetails = document.querySelector(".feed-card-shell");
-          if (hasPostDetails) {
-            if (isComments) {
-              window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-            } else {
-              window.scrollTo({ top: 0, behavior: "instant" });
-              cleanup();
-              return;
-            }
-          }
-        }
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        observerTimeout = setTimeout(cleanup, 2500);
-      };
-
-      const originalPushState = window.history.pushState;
-      window.history.pushState = function(state, unused, url) {
-        originalPushState.apply(this, [state, unused, url]);
-        try {
-          handleRouteScroll(url);
-        } catch (e) {
-          console.error(e);
-        }
-      };
-
-      const originalReplaceState = window.history.replaceState;
-      window.history.replaceState = function(state, unused, url) {
-        originalReplaceState.apply(this, [state, unused, url]);
-        try {
-          handleRouteScroll(url);
-        } catch (e) {
-          console.error(e);
-        }
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    if (hasRestoredScroll.current) return;
-
-    const historyState = typeof window !== "undefined" ? window.history.state : null;
-
-    const savedPath = historyState?.cocpit_scroll_path || sessionStorage.getItem("cocpit_profile_scroll_path");
-    const savedScrollY = historyState?.cocpit_scroll_y !== undefined ? historyState.cocpit_scroll_y.toString() : sessionStorage.getItem("cocpit_profile_scroll_y");
-    const savedSource = historyState?.cocpit_scroll_source || sessionStorage.getItem("cocpit_profile_scroll_source");
-    const popstateOccurred = (historyState?.cocpit_popstate_occurred ? "true" : "") || sessionStorage.getItem("cocpit_popstate_occurred");
-
-    const isTargetPage = savedPath === window.location.pathname && savedSource === "post" && popstateOccurred === "true" && savedScrollY;
-
-    const clearScrollData = () => {
-      sessionStorage.removeItem("cocpit_profile_scroll_path");
-      sessionStorage.removeItem("cocpit_profile_scroll_y");
-      sessionStorage.removeItem("cocpit_profile_scroll_source");
-      sessionStorage.removeItem("cocpit_popstate_occurred");
-
-      if (typeof window !== "undefined") {
-        try {
-          const currentState = { ...window.history.state };
-          delete currentState.cocpit_scroll_y;
-          delete currentState.cocpit_scroll_source;
-          delete currentState.cocpit_scroll_path;
-          delete currentState.cocpit_popstate_occurred;
-          window.history.replaceState(currentState, "", window.location.href);
-        } catch (e) {}
-      }
-    };
-
-    if (isTargetPage) {
-      const targetScroll = parseInt(savedScrollY, 10);
-      if (!isNaN(targetScroll)) {
-        // Disconnect any existing observer
-        if ((window as any).__cocpit_profile_restore_observer) {
-          try {
-            (window as any).__cocpit_profile_restore_observer.disconnect();
-          } catch (e) {}
-        }
-
-        const cleanup = () => {
-          observer.disconnect();
-          window.removeEventListener("wheel", handleUserInteraction);
-          window.removeEventListener("touchmove", handleUserInteraction);
-          window.removeEventListener("keydown", handleUserInteraction);
-        };
-
-        const handleUserInteraction = () => {
-          // If user interacts manually, cancel auto-scrolling
-          hasRestoredScroll.current = true;
-          clearScrollData();
-          cleanup();
-        };
-
-        const observer = new MutationObserver(() => {
-          window.scrollTo(0, targetScroll);
-          const currentScroll = window.scrollY;
-
-          // Once the page height expands enough and scroll succeeds, finish and cleanup
-          if (Math.abs(currentScroll - targetScroll) < 5) {
-            hasRestoredScroll.current = true;
-            clearScrollData();
-            cleanup();
-          }
-        });
-
-        (window as any).__cocpit_profile_restore_observer = observer;
-
-        window.addEventListener("wheel", handleUserInteraction, { passive: true });
-        window.addEventListener("touchmove", handleUserInteraction, { passive: true });
-        window.addEventListener("keydown", handleUserInteraction, { passive: true });
-
-        // Run once immediately
-        window.scrollTo(0, targetScroll);
-        if (Math.abs(window.scrollY - targetScroll) < 5) {
-          hasRestoredScroll.current = true;
-          clearScrollData();
-          cleanup();
-          return;
-        }
-
-        observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-
-        return () => {
-          // Clean up on component unmount
-          cleanup();
-        };
-      }
-    } else {
-      window.scrollTo(0, 0);
-      hasRestoredScroll.current = true;
-      clearScrollData();
-    }
-  }, []);
-  
-  const { data: profileStats } = useQuery({
-    queryKey: ['profileStats', userId],
-    queryFn: () => getProfileStats(userId),
-    enabled: !!userId && !!user,
-    staleTime: Infinity,
-    refetchOnMount: false,
-  });
-
-  const sourceQueryParam = searchParams.get('source') || undefined;
-
-  // Record profile view
-  useEffect(() => {
-    if (user && userId && session?.user?.id && userId !== session.user.id) {
-      recordProfileView(userId, 'user', sourcePostId, sourceQueryParam).catch(() => {
-        // Silently ignore tracking errors to avoid console spam
-      });
-    }
-  }, [userId, session?.user?.id, user, sourcePostId, sourceQueryParam]);
-
-  const isOwnProfile = !!(activeProfile?.type === 'USER' && (session?.user?.id === userId || (user && session?.user?.id === user.id)));
-  // In company mode, SocialContext's followingIds is NOT seeded from the org's following list,
-  // so we read the follow state directly from the API data to get the correct initial state.
-  const isUserFollowing = user
-    ? (activeProfile?.type === 'COMPANY' ? !!(user as any).is_following : isFollowing(user.id))
-    : false;
-  const isUserBlocked = user ? Boolean(user.is_blocked_by_me || isBlocked(user.id)) : false;
+  const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading } = useSocial();
 
   const queryClient = useQueryClient();
-  const isFirstMount = useRef(true);
+  const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showRemoveConnectionDialog, setShowRemoveConnectionDialog] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isDownloadProfileOpen, setIsDownloadProfileOpen] = useState(false);
+  const [isFollowListModalOpen, setIsFollowListModalOpen] = useState(false);
+  const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
+  const [isSendOfferOpen, setIsSendOfferOpen] = useState(false);
+  const [activeFollowTab, setActiveFollowTab] = useState<"followers" | "following" | "connections">("followers");
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
-    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-    queryClient.invalidateQueries({ queryKey: ['followers', userId] });
-    queryClient.invalidateQueries({ queryKey: ['following', userId] });
-  }, [isUserFollowing, userId, queryClient]);
+  // Fetch Public Profile Data
+  const { data: user, isLoading: isUserLoading } = useProfile(userId);
+  const { data: publicPosts } = useProfilePosts(userId);
 
-  const handleFollowToggle = useCallback(() => {
-    if (!user) return;
-    if (isUserFollowing) {
-      unfollowUser(user.id);
+  const visiblePosts = useMemo(() => {
+    if (!publicPosts) return [];
+    return publicPosts.filter((post) => post.visibility !== "private") as Post[];
+  }, [publicPosts]);
+
+  const experiences = useMemo(() => user?.experiences || [], [user?.experiences]);
+  const educations = useMemo(() => user?.educations || [], [user?.educations]);
+  const projects = useMemo(() => user?.projects || [], [user?.projects]);
+  const skills = useMemo(() => (user?.skills || []) as any[], [user?.skills]);
+
+  const targetUserId = user?.id || userId;
+  const blocked = isBlocked(targetUserId) || Boolean(user?.is_blocked_by_me);
+  const following = isFollowing(targetUserId);
+  const followLoading = isFollowLoading(targetUserId);
+
+  // Fetch Relationship / Connection status
+  const { data: relationshipData } = useQuery({
+    queryKey: ["relationshipStatus", targetUserId],
+    queryFn: async () => {
+      try {
+        const res = await getRelationshipStatus(targetUserId);
+        return res;
+      } catch {
+        return { status: "none", request_id: null };
+      }
+    },
+    enabled: !!targetUserId,
+  });
+
+  const connectionStatus = useMemo(() => {
+    if (relationshipData?.status) return relationshipData.status;
+    if ((user as any)?.connection_status) return (user as any).connection_status;
+    if ((user as any)?.is_connected) return "connected";
+    return "none";
+  }, [relationshipData, user]);
+
+  const isConnected = connectionStatus === "connected";
+  const isPending = connectionStatus === "pending_sent" || connectionStatus === "pending";
+
+  const handleFollowToggle = () => {
+    if (!targetUserId) return;
+    if (following) {
+      unfollowUser(targetUserId);
     } else {
-      followUser(user.id, sourcePostId);
+      followUser(targetUserId);
     }
-  }, [user, isUserFollowing, unfollowUser, followUser, sourcePostId]);
+  };
 
-  const handleMessage = useCallback(() => {
+  const handleConnect = async () => {
+    if (!targetUserId) return;
+    try {
+      await sendConnectionRequest(targetUserId);
+      queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
+      toast.success("Connection request sent!");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to send connection request";
+      toast.error(msg);
+    }
+  };
+
+  const handleRemoveConnection = async () => {
+    if (!targetUserId) return;
+    try {
+      await removeConnection(targetUserId);
+      queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none" });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ["connections", targetUserId] });
+      setShowRemoveConnectionDialog(false);
+      toast.success("Connection removed");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to remove connection";
+      toast.error(msg);
+    }
+  };
+
+  const handleViewResume = () => {
+    if (user?.resume?.url) {
+      window.open(user.resume.url, "_blank");
+    } else {
+      toast.info("No resume uploaded yet");
+    }
+  };
+
+  const handleMessage = async () => {
     if (!user) return;
-    const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-    startChat(user.id, companyId);
-  }, [user, activeProfile, startChat]);
+    try {
+      await startChat(user.id);
+      router.push(`/messaging?userId=${user.id}`);
+    } catch {
+      toast.error("Failed to start conversation");
+    }
+  };
 
-  const handleBlock = useCallback(async () => {
-    if (!user) return;
-    await blockUser(user.id);
-    setShowBlockDialog(false);
-    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profile-posts', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profile-posts-preview', userId] });
-  }, [user, userId, blockUser, queryClient]);
+  const handleBlockToggle = async () => {
+    try {
+      if (blocked) {
+        await unblockUser(targetUserId);
+        toast.success("User unblocked");
+      } else {
+        await blockUser(targetUserId);
+        toast.success("User blocked");
+      }
+      setShowBlockDialog(false);
+    } catch {
+      toast.error("Failed to update block status");
+    }
+  };
 
-  const handleUnblock = useCallback(async () => {
-    if (!user) return;
-    await unblockUser(user.id);
-    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profile-posts', userId] });
-    queryClient.invalidateQueries({ queryKey: ['profile-posts-preview', userId] });
-  }, [user, userId, unblockUser, queryClient]);
-
-  const handleRoleClick = useCallback((role: CompanyRole) => {
-    setSelectedRole(role);
-    setIsRoleModalOpen(true);
-  }, []);
-
-  const openFollowList = useCallback((tab: "followers" | "following" | "connections") => {
+  const openFollowList = (tab: "followers" | "following" | "connections") => {
     setActiveFollowTab(tab);
     setIsFollowListModalOpen(true);
-  }, []);
-
-  // Sort and group experiences
-  const flatExperiences = useMemo(() => {
-    const exps = user?.experiences || [];
-    return [...exps].sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
-  }, [user?.experiences]);
-
-  const groupedExperiences = useMemo(() => {
-    if (!user?.experiences) return [];
-    return groupExperiences(flatExperiences);
-  }, [user?.experiences, flatExperiences]);
-
-  const latestExperience = flatExperiences[0] || null;
-  const latestEducation = user?.educations?.[0] || null;
+  };
 
   if (isUserLoading) {
     return (
-      <div className="min-h-screen bg-card">
-        <div className="w-full md:max-w-[998px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-4 xl:px-0">
-          <ProfileSkeleton />
-        </div>
+      <div className="w-full min-h-screen bg-[var(--ds-bg)] flex justify-center items-center py-20">
+        <div className="w-8 h-8 rounded-full border-2 border-[var(--ds-accent)] border-t-transparent animate-spin" />
       </div>
     );
   }
 
-  if (userError || !user) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-md mx-auto">
-          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <Ban className="w-10 h-10 text-muted-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Profile Unavailable</h1>
-          <p className="text-muted-foreground">
-            The user you are looking for could not be found. They may have been removed or the link is incorrect.
-          </p>
-          <button
-            onClick={() => router.push('/feed')}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mt-4 cursor-pointer"
-          >
-            Return to Feed
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Action slots for shared ProfileHeader
-  const publicActions = !isOwnProfile && (
-    <>
-      <button
-        onClick={handleFollowToggle}
-        disabled={isFollowLoading(user.id) || !canFollow}
-        title={!canFollow ? "Only company admins/owners can follow users" : ""}
-        className={`w-36 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-colors ${
-          isUserFollowing
-            ? "bg-muted text-foreground hover:bg-muted/80"
-            : "bg-indigo-500 dark:bg-[#818CF8] text-white hover:opacity-90"
-        } ${(isFollowLoading(user.id) || !canFollow) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-      >
-        <span className="text-center text-sm font-normal font-['Poppins'] leading-5">
-          {isUserFollowing ? "Following" : "Follow"}
-        </span>
-      </button>
-      <button
-        onClick={handleMessage}
-        title="Message"
-        className="w-36 h-10 px-4 py-2 bg-white dark:bg-[#0B0F19] rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-500 dark:outline-[#818CF8] flex justify-center items-center gap-2.5 transition-colors cursor-pointer hover:bg-indigo-50 dark:hover:bg-[#1C2340]"
-      >
-        <span className="text-center text-indigo-500 dark:text-[#818CF8] text-sm font-normal font-['Poppins'] leading-5">Message</span>
-      </button>
-      <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
-    </>
-  );
-
-  const dropdownActions = !isOwnProfile && (
-    <>
-      {(!isCompany && activeProfile?.type !== 'COMPANY') && (
-        <ConnectionButton
-          asMenuItem
-          userId={user.id}
-          username={userId}
-          isFollowing={user.is_following || false}
-          isFollowedBy={user.is_followed_by || false}
-          connectionRequestStatus={user.connection_request_status}
-          connectionRequestId={user.connection_request_id}
-          connectionRequestSender={user.connection_request_sender}
-        />
-      )}
-      <DropdownMenuItem
-        onClick={() => setIsShareModalOpen(true)}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
-      >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Share profile</span>
-        <Share2 className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        onClick={() => {
-          navigator.clipboard.writeText(window.location.href);
-          toast.success("Profile link copied");
-        }}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
-      >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Copy profile</span>
-        <LinkIcon className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        onClick={() => setIsReportModalOpen(true)}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
-      >
-        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Report profile</span>
-        <Flag className="w-4 h-4 text-black dark:text-[#F9FAFB] group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
-      </DropdownMenuItem>
-      {isUserBlocked ? (
-        canManageBlock && (
-          <DropdownMenuItem
-            onClick={async () => {
-              if (user) {
-                await unblockUser(user.id);
-                window.location.reload();
-              }
-            }}
-            className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] dark:focus:bg-[#1C2340] focus:text-[#6366F1] dark:focus:text-[#818CF8] rounded-xl outline-none group transition-colors"
-          >
-            <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8]">Unblock User</span>
-            <Ban className="w-4 h-4 group-focus:text-[#6366F1] dark:group-focus:text-[#818CF8] transition-colors" />
-          </DropdownMenuItem>
-        )
-      ) : (
-        canBlockTarget && (
-          <DropdownMenuItem
-            onClick={() => setShowBlockDialog(true)}
-            className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 dark:focus:bg-[#4A1C1C] focus:text-destructive dark:focus:text-[#F87171] text-destructive dark:text-[#F87171] rounded-xl outline-none group transition-colors"
-          >
-            <span className="text-sm font-medium group-focus:text-destructive dark:group-focus:text-[#F87171]">Block User</span>
-            <Ban className="w-4 h-4 group-focus:text-destructive dark:group-focus:text-[#F87171] transition-colors" />
-          </DropdownMenuItem>
-        )
-      )}
-    </>
-  );
+  const userDataForModal = user as unknown as UserData;
 
   return (
-    <div className="min-h-screen bg-card">
-      <div className="w-full md:max-w-[998px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-4 xl:px-0">
-        <div className="px-4 md:px-0 mb-4">
-          <BackButton />
-        </div>
+    <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center -mt-5 pb-16 px-0 md:px-4 md:pr-[253px] select-text">
+      {/* 800px Centered Main Profile Container */}
+      <div className="w-full max-w-[800px] flex flex-col items-start gap-5">
+        {/* Cover + Profile Image + Action Buttons */}
+        <ProfileCoverSection
+          coverImage={blocked ? null : user?.cover_image}
+          avatarImage={blocked ? null : user?.avatar}
+          userName={user?.name}
+          isOwnProfile={false}
+          onEditAvatar={blocked ? undefined : () => setIsViewAvatarOpen(true)}
+          actionButtons={
+            blocked ? null : (
+              <div className="inline-flex justify-start items-center gap-3">
+              {/* Follow / Unfollow button */}
+              <button
+                type="button"
+                onClick={handleFollowToggle}
+                disabled={followLoading}
+                className={cn(
+                  "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
+                  following
+                    ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
+                    : "bg-[var(--ds-accent)] hover:opacity-90"
+                )}
+              >
+                <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                  {following ? "Unfollow" : "Follow"}
+                </span>
+              </button>
 
-        <div id="profile-card" className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
-          <PublicProfileHeader
-            user={user}
-            isOwnProfile={isOwnProfile}
-            coverImage={user.cover_image}
-            setCoverImage={isOwnProfile ? () => {} : undefined}
-            profileStats={profileStats}
-            latestExperience={latestExperience}
-            latestEducation={latestEducation}
-            isBlockedByMe={isUserBlocked}
-            onAvatarClick={() => {
-              if (user.avatar) {
-                setIsViewAvatarOpen(true);
-              }
-            }}
-            onContactInfoClick={() => setIsContactInfoModalOpen(true)}
-            onFollowListClick={openFollowList}
-            onRoleClick={handleRoleClick}
-            publicActions={publicActions}
-            dropdownActions={dropdownActions}
-          />
+              {/* Message button */}
+              <button
+                type="button"
+                onClick={handleMessage}
+                className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+              >
+                <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                  Message
+                </span>
+              </button>
 
-          {isUserBlocked ? (
-            <div className="w-full h-72 px-4 bg-card inline-flex flex-col justify-center items-center gap-4 my-4">
-              <div className="self-stretch flex flex-col justify-center items-center gap-2">
-                <div className="size-10 relative overflow-hidden flex items-center justify-center">
-                  <Ban className="w-8 h-8 text-foreground" strokeWidth={1.75} />
-                </div>
-                <div className="self-stretch text-center text-foreground text-2xl font-semibold font-['Poppins'] leading-8">
-                  You&apos;ve blocked
-                </div>
-                <div className="self-stretch text-center text-muted-foreground text-xs font-normal font-['Poppins'] leading-4 max-w-[420px] mx-auto">
-                  Unblock this member to view their profile, posts, and professional information again.
-                </div>
+              {/* More button: Mobile → Drawer, Desktop → Dropdown */}
+              {isMobile ? (
                 <button
                   type="button"
-                  onClick={handleUnblock}
-                  className="w-48 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 dark:bg-[#6366F1] dark:hover:bg-[#5558E6] rounded-3xl inline-flex justify-center items-center gap-2.5 cursor-pointer transition-all border-none outline-none mt-2 shadow-sm active:scale-[0.98]"
+                  onClick={() => setIsMobileMoreOpen(true)}
+                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
                 >
-                  <span className="text-center text-white text-sm font-normal font-['Poppins'] leading-5">Unblock</span>
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    More
+                  </span>
                 </button>
+              ) : (
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      More
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="p-3 !bg-[var(--ds-surface-1)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[150px]"
+                  align="end"
+                  sideOffset={8}
+                >
+                  {/* Connect / Pending / Remove connection */}
+                  {isConnected ? (
+                    <DropdownMenuItem
+                      onClick={() => setShowRemoveConnectionDialog(true)}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                    >
+                      Remove connection
+                    </DropdownMenuItem>
+                  ) : isPending ? (
+                    <div className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-muted)] text-sm font-normal font-['DM_Sans'] leading-5 cursor-default select-none pointer-events-none">
+                      Pending
+                    </div>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={handleConnect}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                    >
+                      Connect
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem
+                    onClick={() => setIsSendOfferOpen(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Send offer
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={handleViewResume}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    View resume
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => setIsDownloadProfileOpen(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Download profile
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Share profile
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => setShowBlockDialog(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Block profile
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Report profile
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              )}
+            </div>
+          )
+        }
+      />
+
+        {/* User Bio & Details */}
+        <ProfileUserBio
+          fullName={user?.name}
+          userName={user?.account_name || user?.name?.toLowerCase().replace(/\s+/g, ".")}
+          role={user?.headline}
+          location={user?.location}
+          openTo={user?.identity?.openTo}
+          availability={user?.identity?.availability}
+          workPreference={user?.identity?.workPreference}
+          website={user?.website}
+          followersCount={blocked ? 0 : (user?.followers_count ?? 0)}
+          followingCount={blocked ? 0 : (user?.following_count ?? 0)}
+          connectionsCount={blocked ? 0 : (user?.connections_count ?? 0)}
+          onOpenFollowers={blocked ? undefined : () => openFollowList("followers")}
+          onOpenFollowing={blocked ? undefined : () => openFollowList("following")}
+          onOpenConnections={blocked ? undefined : () => openFollowList("connections")}
+        />
+
+        {/* About Section */}
+        {user?.about && (
+          <ProfileAboutSection bio={user.about} isOwnProfile={false} />
+        )}
+
+        {blocked ? (
+          <ProfileBlockedState onUnblock={handleBlockToggle} />
+        ) : (
+          <>
+            {/* Divider */}
+            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+
+        {/* 1. Post Section */}
+        <div className="w-full flex flex-col items-start gap-4">
+          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+            <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+              Posts
+            </div>
+          </div>
+          <div className="w-full px-4 md:px-0 md:pl-5">
+            <ProfilePostsTab
+              posts={visiblePosts}
+              isOwnProfile={false}
+              userName={user?.name}
+              onSeeAll={() => router.push(`/profile/${userId}/posts`)}
+            />
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+
+        {/* 2. Skills Section */}
+        <ProfileSkillsTab
+          skills={skills}
+          isOwnProfile={false}
+        />
+
+        {/* 3. Experience Section */}
+        {experiences.length > 0 && (
+          <>
+            {/* Divider */}
+            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+
+            <div className="w-full flex flex-col items-start gap-4">
+              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+                  Experience
+                </div>
+              </div>
+              <div className="w-full px-4 md:px-0 md:pl-5">
+                <ProfileExperienceTab
+                  experiences={experiences}
+                  isOwnProfile={false}
+                />
               </div>
             </div>
-          ) : (
-            <>
-              <ProfileAbout
-                aboutText={user.about}
-                isOwnProfile={isOwnProfile}
-              />
+          </>
+        )}
 
-              <LivingResume
-                userId={user.id}
-                experiences={flatExperiences}
-                skills={user.skills}
-                resumeName={user.resume?.originalName}
-                resumeUrl={user.resume?.url}
-                isOwnProfile={isOwnProfile}
-              />
+        {/* 4. Education Section */}
+        {educations.length > 0 && (
+          <>
+            {/* Divider */}
+            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
-              <ProfilePosts
-                posts={visiblePreviewPosts}
-                isOwnProfile={isOwnProfile}
-                isCompany={activeProfile?.type === 'COMPANY'}
-                profileSlug={user?.account_name || user?.id || ""}
-                userName={user?.name || ""}
-                isLoading={isPreviewPostsLoading}
-              />
+            <div className="w-full flex flex-col items-start gap-4">
+              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+                  Education
+                </div>
+              </div>
+              <div className="w-full px-4 md:px-0 md:pl-5">
+                <ProfileEducationTab
+                  educations={educations}
+                  isOwnProfile={false}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
-              <ProfileSkills
-                skills={user.skills}
-                experiences={flatExperiences}
-                posts={visiblePosts}
-                isOwnProfile={isOwnProfile}
-              />
+        {/* 5. Project Section */}
+        {projects.length > 0 && (
+          <>
+            {/* Divider */}
+            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
-              <ProfileExperience
-                experiences={groupedExperiences}
-                isOwnProfile={isOwnProfile}
-              />
+            <div className="w-full flex flex-col items-start gap-4">
+              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+                  Projects
+                </div>
+              </div>
+              <div className="w-full px-4 md:px-0 md:pl-5">
+                <ProfileProjectsTab
+                  projects={projects}
+                  isOwnProfile={false}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
-              <ProfileEducation
-                educations={user.educations || []}
-                isOwnProfile={isOwnProfile}
-              />
-
-              <ProfileProjects
-                projects={(user as any).projects || []}
-                isOwnProfile={isOwnProfile}
-                onMediaClick={(mediaItem) => {
-                  let url = mediaItem.fileUrl || mediaItem.url;
-                  if (url) {
-                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                      url = 'https://' + url;
-                    }
-                    window.open(url, "_blank");
-                  }
-                }}
-              />
-            </>
-          )}
-        </div>
+        {/* Final "That's all for now" Footer */}
+        <ProfileFooterSection />
+          </>
+        )}
       </div>
 
-      <ViewAvatarModal
-        isOpen={isViewAvatarOpen}
-        onClose={() => setIsViewAvatarOpen(false)}
-        avatarUrl={user?.avatar || null}
+      {/* Modals */}
+      {isViewAvatarOpen && (
+        <ViewAvatarModal
+          isOpen={isViewAvatarOpen}
+          onClose={() => setIsViewAvatarOpen(false)}
+          avatarUrl={user?.avatar || null}
+        />
+      )}
+
+      {isContactInfoModalOpen && (
+        <ContactInfoModal
+          isOpen={isContactInfoModalOpen}
+          onClose={() => setIsContactInfoModalOpen(false)}
+          user={userDataForModal || null}
+        />
+      )}
+
+      {isFollowListModalOpen && (
+        <FollowListModal
+          isOpen={isFollowListModalOpen}
+          onClose={() => setIsFollowListModalOpen(false)}
+          initialTab={activeFollowTab}
+          userId={targetUserId}
+        />
+      )}
+
+      {isDownloadProfileOpen && (
+        <DownloadProfileScreen
+          isOpen={isDownloadProfileOpen}
+          onClose={() => setIsDownloadProfileOpen(false)}
+          user={user}
+          experiences={experiences}
+          educations={educations}
+          projects={projects}
+          skills={skills}
+        />
+      )}
+
+      {isShareModalOpen && (
+        <CocpitShareModel
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          postId={targetUserId}
+          onShare={() => {}}
+        />
+      )}
+
+      {isReportModalOpen && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetId={targetUserId}
+          targetType="USER"
+        />
+      )}
+
+      <SendOfferDialog
+        targetUserId={targetUserId}
+        targetUserName={user?.name || "Candidate"}
+        isOpen={isSendOfferOpen}
+        onOpenChange={setIsSendOfferOpen}
       />
 
-      <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
-        <AlertDialogContent className="bg-card border-border text-foreground">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Block {user.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              They will not be able to find your profile, posts, or message you. This will also remove any connection between you.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBlock} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer">
-              Block
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Block Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={showBlockDialog}
+        onClose={() => setShowBlockDialog(false)}
+        onConfirm={handleBlockToggle}
+        type={blocked ? "custom" : "block_profile"}
+        targetName={user?.name || "this user"}
+        title={blocked ? `Unblock ${user?.name || "this user"}?` : undefined}
+        description={
+          blocked
+            ? "They will be able to see your profile and posts again"
+            : undefined
+        }
+        confirmText={blocked ? "Unblock" : "Remove"}
+      />
 
-      <CocpitShareModel
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        profileId={user?.id}
-        onShare={(selectedIds) => {
-          console.log("Shared profile with:", selectedIds);
-          setIsShareModalOpen(false);
+      {/* Remove Connection Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={showRemoveConnectionDialog}
+        onClose={() => setShowRemoveConnectionDialog(false)}
+        onConfirm={handleRemoveConnection}
+        type="remove_connection"
+        targetName={user?.name}
+      />
+
+      {/* Mobile Public Profile More Drawer */}
+      <MobilePublicProfileMenuDrawer
+        isOpen={isMobileMoreOpen}
+        onClose={() => setIsMobileMoreOpen(false)}
+        connectionStatus={connectionStatus}
+        onConnect={handleConnect}
+        onRemoveConnection={() => {
+          setIsMobileMoreOpen(false);
+          setShowRemoveConnectionDialog(true);
         }}
-      />
-
-      <ReportModal
-        isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
-        targetType="USER"
-        targetId={user.id}
-      />
-
-      <CompanyRoleModal
-        isOpen={isRoleModalOpen}
-        onClose={() => setIsRoleModalOpen(false)}
-        role={selectedRole}
-        isOwnProfile={isOwnProfile}
-      />
-
-      <FollowListModal
-        isOpen={isFollowListModalOpen}
-        onClose={() => setIsFollowListModalOpen(false)}
-        initialTab={activeFollowTab}
-        userId={user?.id || ""}
-      />
-
-      <ContactInfoModal
-        isOpen={isContactInfoModalOpen}
-        onClose={() => setIsContactInfoModalOpen(false)}
-        user={user as any}
-        isOwnProfile={false}
+        onSendOffer={() => setIsSendOfferOpen(true)}
+        onViewResume={handleViewResume}
+        onShareProfile={() => setIsShareModalOpen(true)}
+        onBlockProfile={() => setShowBlockDialog(true)}
+        onReportProfile={() => setIsReportModalOpen(true)}
       />
     </div>
   );

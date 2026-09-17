@@ -1,0 +1,725 @@
+"use client";
+
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { LeftArrowIcon } from "@/components/icons";
+import { LeaveConfirmationModal } from "@/components/shared";
+import {
+  useMyProfile,
+  useProfileMutation,
+  useAvatarMutations,
+  useSkillMutations,
+} from "@/hooks/use-my-profile";
+import {
+  uploadCoverPhoto,
+  deleteCoverPhoto,
+} from "@/features/profile/services/profile.service";
+import { getIndustries } from "@/features/jobs/services/jobs.service";
+import { checkAccountNameAvailability } from "@/services/api/onboarding";
+import { EditAvatarModal } from "@/features/profile/components/EditAvatarModal";
+import { EditCoverPhoto } from "@/features/profile/components/EditCoverPhoto";
+import type { UserData } from "@/types/user";
+import type { Experience, Education, Project } from "@/types/entities";
+import { cn } from "@/lib/utils";
+
+// Modular Subcomponents
+import { ProfileEditHeader } from "@/features/profile/components/profile-edit/ProfileEditHeader";
+import { ProfileEditTabs, PROFILE_EDIT_TABS, type ProfileEditTabKey } from "@/features/profile/components/profile-edit/ProfileEditTabs";
+import { ProfileEditMediaSection } from "@/features/profile/components/profile-edit/ProfileEditMediaSection";
+import { ProfileEditForm, type ProfileFormData } from "@/features/profile/components/profile-edit/ProfileEditForm";
+import { ProfileEditSkillsTab } from "@/features/profile/components/profile-edit/ProfileEditSkillsTab";
+import { ProfileEditExperienceTab } from "@/features/profile/components/profile-edit/ProfileEditExperienceTab";
+import { ProfileEditEducationTab } from "@/features/profile/components/profile-edit/ProfileEditEducationTab";
+import { ProfileEditProjectTab } from "@/features/profile/components/profile-edit/ProfileEditProjectTab";
+
+const normalizeAvailability = (value?: string | null) => {
+  if (value === "Immediate") return "Immediately";
+  if (value === "30 Days") return "15 to 30 days";
+  return value || "";
+};
+
+export interface ProfileEditScreenProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  initialTab?: ProfileEditTabKey;
+  initialMode?: "list" | "form";
+  selectedId?: string | null;
+}
+
+export function ProfileEditScreen({
+  isOpen = true,
+  onClose,
+  initialTab = "profile",
+  initialMode = "list",
+  selectedId = null,
+}: ProfileEditScreenProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const tabParam = (searchParams?.get("tab") as ProfileEditTabKey) || initialTab;
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && mounted) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen, mounted]);
+
+  const [activeTab, setActiveTab] = useState<ProfileEditTabKey>(
+    PROFILE_EDIT_TABS.some((t) => t.key === tabParam) ? tabParam : "profile"
+  );
+
+  useEffect(() => {
+    if (initialTab && PROFILE_EDIT_TABS.some((t) => t.key === initialTab)) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
+
+  const { data: profileData } = useMyProfile();
+  const user = profileData?.user as UserData | undefined;
+
+  // Mutations
+  const updateProfileMutation = useProfileMutation();
+  const avatarMutations = useAvatarMutations();
+  const skillMutations = useSkillMutations();
+
+  const userSkills = useMemo(() => {
+    if (!profileData?.skills) return [];
+    return profileData.skills
+      .map((s: any) => (typeof s === "string" ? s : s.name || s.skill_name))
+      .filter(Boolean);
+  }, [profileData?.skills]);
+
+  // Flattened experiences for the edit tab
+  const flatExperiences = useMemo<Experience[]>(() => {
+    if (!profileData?.experiences) return [];
+    return profileData.experiences.flatMap((group: any) => {
+      const groupName = group.company_name || group.company || "";
+      const groupLogo = group.logo_url || group.company_logo || null;
+      const groupSkills =
+        group.skills ||
+        group.experience_skills ||
+        group.skills_used ||
+        group.skill_names ||
+        [];
+      const innerExps =
+        Array.isArray(group.experiences) && group.experiences.length > 0
+          ? group.experiences
+          : [group];
+      return innerExps.map((exp: any, idx: number) => ({
+        ...exp,
+        is_nested_role: idx > 0 || !!exp.parent_id || !!exp.is_nested_role,
+        skills:
+          exp.skills ||
+          exp.experience_skills ||
+          exp.skills_used ||
+          exp.skill_names ||
+          groupSkills ||
+          [],
+        company_name: exp.company_name || groupName,
+        company_logo: exp.company_logo || groupLogo,
+      }));
+    });
+  }, [profileData?.experiences]);
+
+  const educations = useMemo<Education[]>(
+    () => profileData?.educations || [],
+    [profileData?.educations]
+  );
+  const projects = useMemo<Project[]>(
+    () => profileData?.projects || [],
+    [profileData?.projects]
+  );
+
+  const [tabSubtitle, setTabSubtitle] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    setTabSubtitle(undefined);
+  }, [activeTab]);
+
+  // Media Staged State
+  const [stagedCoverPreview, setStagedCoverPreview] = useState<string | null>(null);
+  const [stagedCoverFile, setStagedCoverFile] = useState<File | null>(null);
+  const [isCoverDeleted, setIsCoverDeleted] = useState(false);
+
+  const [stagedAvatarPreview, setStagedAvatarPreview] = useState<string | null>(null);
+  const [stagedAvatarFile, setStagedAvatarFile] = useState<File | null>(null);
+  const [isAvatarDeleted, setIsAvatarDeleted] = useState(false);
+
+  // Modals state
+  const [isEditCoverOpen, setIsEditCoverOpen] = useState(false);
+  const [coverInitialFile, setCoverInitialFile] = useState<File | null>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
+  const [avatarInitialFile, setAvatarInitialFile] = useState<File | null>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form State
+  const [formData, setFormData] = useState<ProfileFormData>({
+    name: "",
+    account_name: "",
+    headline: "",
+    website: "",
+    location: "",
+    status: "",
+    open_to: "",
+    availability: "",
+    work_preference: "",
+    industry: "",
+    about: "",
+  });
+
+  const [initialFormData, setInitialFormData] = useState<ProfileFormData | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Industries
+  const [availableIndustries, setAvailableIndustries] = useState<{ industry_name: string }[]>([]);
+
+  // Username availability
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(true);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+
+  // Initialize form and media data when user data is available
+  useEffect(() => {
+    if (user) {
+      const ACCOUNT_TYPE_TO_ROLE_ID: Record<string, string> = {
+        student: "student",
+        Student: "student",
+        fresher: "fresher",
+        Fresher: "fresher",
+        intern: "intern",
+        Intern: "intern",
+        self_employed: "self_employed",
+        "Self Employed": "self_employed",
+        "Self employed": "self_employed",
+        employed: "employed",
+        Employee: "employed",
+        Employed: "employed",
+        unemployed: "unemployed",
+        Unemployed: "unemployed",
+      };
+      const rawAccountType = (user as any).account_type || "";
+      const initialStatus = ACCOUNT_TYPE_TO_ROLE_ID[rawAccountType] || "employed";
+
+      const rawAccountName = user.account_name || "";
+      const cleanAccountName = rawAccountName.startsWith("@")
+        ? rawAccountName.slice(1)
+        : rawAccountName;
+
+      const data: ProfileFormData = {
+        name: user.name || "",
+        account_name: cleanAccountName,
+        headline: user.headline || "",
+        website: user.website || "",
+        location: user.location || "",
+        status: initialStatus,
+        open_to: user.open_to || "",
+        availability: normalizeAvailability(user.availability),
+        work_preference: user.work_preference || "",
+        industry: (user as any).industry || "",
+        about: user.about || (user as any).about_text || "",
+      };
+
+      setFormData(data);
+      setInitialFormData(data);
+      setStagedAvatarPreview(user.avatar || null);
+      setStagedCoverPreview(user.cover_image || null);
+    }
+  }, [user]);
+
+  // Fetch industries
+  useEffect(() => {
+    const fetchIndustries = async () => {
+      try {
+        const data = await getIndustries();
+        setAvailableIndustries(data || []);
+      } catch (err) {
+        console.error("Failed to fetch industries", err);
+      }
+    };
+    fetchIndustries();
+  }, []);
+
+  // Check username availability on change
+  useEffect(() => {
+    if (!initialFormData || !formData.account_name) return;
+
+    if (formData.account_name === initialFormData.account_name) {
+      setIsUsernameAvailable(true);
+      return;
+    }
+
+    if (formData.account_name.length < 3) {
+      setIsUsernameAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingUsername(true);
+      try {
+        const isAvailable = await checkAccountNameAvailability(formData.account_name);
+        setIsUsernameAvailable(isAvailable);
+      } catch {
+        setIsUsernameAvailable(false);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.account_name, initialFormData]);
+
+  // Has changes check (form fields or staged media changes)
+  const hasChanges = useMemo(() => {
+    if (!initialFormData) return false;
+    const formChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    const avatarChanged = stagedAvatarFile !== null || isAvatarDeleted;
+    const coverChanged = stagedCoverFile !== null || isCoverDeleted;
+    return formChanged || avatarChanged || coverChanged;
+  }, [formData, initialFormData, stagedAvatarFile, isAvatarDeleted, stagedCoverFile, isCoverDeleted]);
+
+  // Form input change handler
+  const handleInputChange = (field: keyof ProfileFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Discard Confirmation Modal State
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+
+  // Close / Dismiss
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      router.push("/profile");
+    }
+  };
+
+  const handleCloseWithCheck = () => {
+    if (activeTab === "profile" && hasChanges) {
+      setIsLeaveModalOpen(true);
+    } else {
+      handleClose();
+    }
+  };
+
+  const handleCancel = () => {
+    if (initialFormData) {
+      setFormData(initialFormData);
+    }
+    setStagedAvatarFile(null);
+    setStagedAvatarPreview(user?.avatar || null);
+    setIsAvatarDeleted(false);
+    setStagedCoverFile(null);
+    setStagedCoverPreview(user?.cover_image || null);
+    setIsCoverDeleted(false);
+    handleClose();
+  };
+
+  const handleCancelWithCheck = () => {
+    if (hasChanges) {
+      setIsLeaveModalOpen(true);
+    } else {
+      handleClose();
+    }
+  };
+
+  // Back button registration for nested tabs/forms
+  const registeredBackFnRef = useRef<(() => void) | null>(null);
+
+  const handleRegisterBackAction = useCallback((fn: (() => void) | null) => {
+    registeredBackFnRef.current = fn;
+  }, []);
+
+  const handleBackClick = () => {
+    if (registeredBackFnRef.current) {
+      registeredBackFnRef.current();
+    }
+  };
+
+  const showBackButton = Boolean(tabSubtitle);
+
+  // Final Save handler - commits all profile and media changes
+  const handleSave = async () => {
+    if (!hasChanges || isSaving || isUsernameAvailable === false) return;
+
+    if (!formData.name || formData.name.trim().length < 3) {
+      toast.error("Full name must be at least 3 characters");
+      return;
+    }
+
+    if (formData.account_name) {
+      const usernameRegex = /^[a-z0-9_.]{3,20}$/;
+      if (!usernameRegex.test(formData.account_name)) {
+        toast.error("Username must be 3-20 characters and contain only lowercase letters, numbers, underscores, or dots");
+        return;
+      }
+    }
+
+    if (formData.headline && formData.headline.length > 100) {
+      toast.error("Headline cannot exceed 100 characters");
+      return;
+    }
+    if (formData.about && formData.about.length > 500) {
+      toast.error("About cannot exceed 500 characters");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // 1. Upload Avatar if staged
+      if (stagedAvatarFile) {
+        const avatarFd = new FormData();
+        avatarFd.append("avatar", stagedAvatarFile);
+        await avatarMutations.upload.mutateAsync(avatarFd);
+      } else if (isAvatarDeleted) {
+        await avatarMutations.remove.mutateAsync();
+      }
+
+      // 2. Upload Cover if staged
+      if (stagedCoverFile) {
+        const coverFd = new FormData();
+        coverFd.append("cover", stagedCoverFile);
+        await uploadCoverPhoto(coverFd);
+      } else if (isCoverDeleted) {
+        await deleteCoverPhoto();
+      }
+
+      // 3. Update Profile fields
+      await updateProfileMutation.mutateAsync({
+        name: formData.name,
+        account_name: formData.account_name,
+        headline: formData.headline,
+        website: formData.website,
+        location: formData.location,
+        status: formData.status,
+        open_to: formData.open_to,
+        availability: formData.availability,
+        work_preference: formData.work_preference,
+        industry: formData.industry,
+        about: formData.about,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast.success("Profile updated successfully");
+      setInitialFormData(formData);
+      setStagedAvatarFile(null);
+      setIsAvatarDeleted(false);
+      setStagedCoverFile(null);
+      setIsCoverDeleted(false);
+      // Stay on the form page; do not auto-close
+    } catch (err: any) {
+      console.error("Save profile error:", err);
+      toast.error(err?.response?.data?.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Avatar handlers
+  const handleOpenAvatarModal = () => {
+    if (stagedAvatarPreview || user?.avatar) {
+      setAvatarInitialFile(null);
+      setIsEditAvatarOpen(true);
+    } else {
+      avatarFileInputRef.current?.click();
+    }
+  };
+
+  const handleAvatarFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarInitialFile(file);
+      setIsEditAvatarOpen(true);
+    }
+    e.target.value = "";
+  };
+
+  const handleAvatarUpload = (file: File) => {
+    setStagedAvatarFile(file);
+    setStagedAvatarPreview(URL.createObjectURL(file));
+    setIsAvatarDeleted(false);
+    setIsEditAvatarOpen(false);
+    setAvatarInitialFile(null);
+  };
+
+  const handleAvatarDelete = () => {
+    setStagedAvatarFile(null);
+    setStagedAvatarPreview(null);
+    setIsAvatarDeleted(true);
+    setIsEditAvatarOpen(false);
+    setAvatarInitialFile(null);
+  };
+
+  // Cover handlers
+  const handleOpenCoverModal = () => {
+    if (stagedCoverPreview || user?.cover_image) {
+      setCoverInitialFile(null);
+      setIsEditCoverOpen(true);
+    } else {
+      coverFileInputRef.current?.click();
+    }
+  };
+
+  const handleCoverFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverInitialFile(file);
+      setIsEditCoverOpen(true);
+    }
+    e.target.value = "";
+  };
+
+  const handleCoverUpload = async (fd: FormData): Promise<{ coverUrl: string }> => {
+    const file = fd.get("cover") as File;
+    if (file) {
+      setStagedCoverFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setStagedCoverPreview(previewUrl);
+      setIsCoverDeleted(false);
+      setIsEditCoverOpen(false);
+      setCoverInitialFile(null);
+      return { coverUrl: previewUrl };
+    }
+    setIsEditCoverOpen(false);
+    return { coverUrl: "" };
+  };
+
+  const handleCoverDelete = async () => {
+    setStagedCoverFile(null);
+    setStagedCoverPreview(null);
+    setIsCoverDeleted(true);
+    setIsEditCoverOpen(false);
+    setCoverInitialFile(null);
+  };
+
+  // Skills Save handler
+  const handleSaveSkills = async (newSkills: string[]) => {
+    setIsSaving(true);
+    try {
+      await skillMutations.sync.mutateAsync({ skills: newSkills });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+    } catch (err: any) {
+      console.error("Save skills error:", err);
+      toast.error(err?.response?.data?.message || "Failed to update skills");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const [headerAction, setHeaderAction] = useState<React.ReactNode | null>(null);
+
+  useEffect(() => {
+    setTabSubtitle(undefined);
+    setHeaderAction(null);
+  }, [activeTab]);
+
+  const [resetKey, setResetKey] = useState(0);
+
+  if (!isOpen) return null;
+
+  const content = (
+    <div className="fixed inset-0 z-[50] min-h-screen w-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">
+      {/* Top-Left Back Button (Frame 2609475: top/left 40px desktop, gap 8px, 20px icon, 16px medium text) */}
+      {showBackButton && (
+        <button
+          type="button"
+          onClick={handleBackClick}
+          aria-label="Back"
+          className="fixed top-4 left-4 md:top-[40px] md:left-[40px] z-[10000] w-[65px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity focus:outline-none"
+        >
+          <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
+            <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
+          </div>
+          <span className="w-[37px] h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] shrink-0">
+            Back
+          </span>
+        </button>
+      )}
+
+      {/* Frame 2609633: Centered Main Container (640px in form mode / 800px in tab mode, top 60px padding desktop / 16px mobile, 20px gap) */}
+      <div
+        className={cn(
+          "max-w-full px-4 sm:px-0 pt-4 md:pt-[60px] pb-[60px] flex flex-col items-center gap-[20px] relative transition-all",
+          tabSubtitle ? "w-full md:w-[640px]" : "w-full md:w-[800px]"
+        )}
+      >
+        {/* Frame 2609631: Top Header & Close Button */}
+        <ProfileEditHeader
+          userName={formData.name || user?.name}
+          avatarUrl={stagedAvatarPreview}
+          subTitle={tabSubtitle}
+          headerAction={headerAction}
+          onClose={handleCloseWithCheck}
+        />
+
+        {/* Frame 2609617: Navigation Tabs - ONLY shown in list mode / profile view */}
+        {!tabSubtitle && (
+          <ProfileEditTabs
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setTabSubtitle(undefined);
+              setHeaderAction(null);
+              setActiveTab(tab);
+            }}
+          />
+        )}
+
+        {/* Active Tab Content */}
+        {activeTab === "profile" ? (
+          <div className="w-full md:w-[800px] md:max-w-full flex flex-col items-center">
+            {/* Frame 2609766: Cover & Profile Avatar Section */}
+            <ProfileEditMediaSection
+              coverImage={stagedCoverPreview}
+              avatarImage={stagedAvatarPreview}
+              userName={formData.name || user?.name}
+              onEditCover={handleOpenCoverModal}
+              onEditAvatar={handleOpenAvatarModal}
+            />
+
+            {/* Frame 2609638: Form Fields Section */}
+            <ProfileEditForm
+              formData={formData}
+              onChange={handleInputChange}
+              onSave={handleSave}
+              onCancel={handleCancelWithCheck}
+              resumeInfo={profileData?.resume}
+              isSaving={isSaving}
+              hasChanges={hasChanges}
+              isUsernameAvailable={isUsernameAvailable}
+              isCheckingUsername={isCheckingUsername}
+              availableIndustries={availableIndustries}
+            />
+          </div>
+        ) : activeTab === "skills" ? (
+          <ProfileEditSkillsTab
+            skills={userSkills}
+            onSave={handleSaveSkills}
+            onCancel={handleCancelWithCheck}
+            isSaving={isSaving}
+          />
+        ) : activeTab === "experience" ? (
+          <ProfileEditExperienceTab
+            key={`exp-${resetKey}`}
+            experiences={flatExperiences}
+            initialMode={resetKey === 0 && activeTab === initialTab ? initialMode : "list"}
+            selectedId={resetKey === 0 && activeTab === initialTab ? selectedId : null}
+            onSubTitleChange={setTabSubtitle}
+            onHeaderActionChange={setHeaderAction}
+            onRegisterBackAction={handleRegisterBackAction}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            }}
+            onCancel={handleCancelWithCheck}
+          />
+        ) : activeTab === "education" ? (
+          <ProfileEditEducationTab
+            key={`edu-${resetKey}`}
+            educations={educations}
+            initialMode={resetKey === 0 && activeTab === initialTab ? initialMode : "list"}
+            selectedId={resetKey === 0 && activeTab === initialTab ? selectedId : null}
+            onSubTitleChange={setTabSubtitle}
+            onRegisterBackAction={handleRegisterBackAction}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            }}
+            onCancel={handleCancelWithCheck}
+          />
+        ) : activeTab === "project" ? (
+          <ProfileEditProjectTab
+            key={`proj-${resetKey}`}
+            projects={projects}
+            initialMode={resetKey === 0 && activeTab === initialTab ? initialMode : "list"}
+            selectedId={resetKey === 0 && activeTab === initialTab ? selectedId : null}
+            onSubTitleChange={setTabSubtitle}
+            onRegisterBackAction={handleRegisterBackAction}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            }}
+            onCancel={handleCancelWithCheck}
+          />
+        ) : null}
+      </div>
+
+      {/* Hidden File Pickers */}
+      <input
+        type="file"
+        ref={coverFileInputRef}
+        className="hidden"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        onChange={handleCoverFileSelected}
+      />
+      <input
+        type="file"
+        ref={avatarFileInputRef}
+        className="hidden"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        onChange={handleAvatarFileSelected}
+      />
+
+      {/* Cover Image Editor Modal */}
+      {isEditCoverOpen && (
+        <EditCoverPhoto
+          isOpen={isEditCoverOpen}
+          onClose={() => {
+            setIsEditCoverOpen(false);
+            setCoverInitialFile(null);
+          }}
+          coverImage={stagedCoverPreview}
+          initialFile={coverInitialFile}
+          onUpload={handleCoverUpload}
+          onDelete={handleCoverDelete}
+        />
+      )}
+
+      {/* Avatar Image Editor Modal */}
+      {isEditAvatarOpen && (
+        <EditAvatarModal
+          isOpen={isEditAvatarOpen}
+          onClose={() => {
+            setIsEditAvatarOpen(false);
+            setAvatarInitialFile(null);
+          }}
+          currentAvatarUrl={stagedAvatarPreview}
+          initialFile={avatarInitialFile}
+          onUpload={handleAvatarUpload}
+          onDelete={handleAvatarDelete}
+        />
+      )}
+
+      {/* Leave Confirmation Modal (same as reset password cross confirmation) */}
+      <LeaveConfirmationModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        title="Leave without saving?"
+        description="Your changes will be lost"
+        confirmText="Stay"
+        cancelText="Leave"
+        onConfirm={() => {
+          setIsLeaveModalOpen(false);
+          handleCancel();
+        }}
+      />
+    </div>
+  );
+
+  if (mounted && typeof document !== "undefined") {
+    return createPortal(content, document.body);
+  }
+
+  return content;
+}
+
+export default ProfileEditScreen;

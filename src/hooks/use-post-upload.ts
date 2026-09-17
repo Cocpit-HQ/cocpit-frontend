@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { postApi } from '@/features/feed/api/post.api';
 import { AxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSocket } from '@/context/SocketContext';
 
 type PendingUploadPost = {
     id: string;
@@ -23,6 +24,7 @@ export const usePostUpload = () => {
     const { addPost } = useFeed(false);
     // const { addPost } = useFeed();
     const queryClient = useQueryClient();
+    const { socket } = useSocket();
 
     const startUpload = useCallback(async (content: CreatePostRequest, mediaFiles: File[], tagUserIds?: string[]) => {
         const id = Math.random().toString(36).substring(7);
@@ -56,6 +58,13 @@ export const usePostUpload = () => {
                 queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
                 queryClient.invalidateQueries({ queryKey: ["orgPostsPreview"] });
                 queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
+                queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+                queryClient.invalidateQueries({ queryKey: ["feed"] });
+
+                if (socket?.connected) {
+                    socket.emit('post_created', { postId: mappedPost.id, post: mappedPost });
+                    socket.emit('joinPost', { postId: mappedPost.id.toString(), post_id: mappedPost.id.toString() });
+                }
 
                 // 3. Update Store to success
                 setPendingPosts(prev => prev.map(p =>
@@ -90,7 +99,7 @@ export const usePostUpload = () => {
             toast.error(message || "Failed to publish post");
             throw error;
         }
-    }, [addPost, setPendingPosts, queryClient]);
+    }, [addPost, setPendingPosts, queryClient, socket]);
 
     return {
         pendingPosts,

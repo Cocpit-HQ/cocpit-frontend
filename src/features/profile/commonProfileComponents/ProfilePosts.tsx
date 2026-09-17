@@ -432,7 +432,7 @@ const ProfilePostCard = ({
     <div onClick={handleCardClick} onClickCapture={handleCardNavigationClick} className="cursor-pointer flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       
       {isRepostWithoutThoughts && (
-        <div className="flex items-center gap-1 text-[#6B7280] text-[10px] font-poppins px-4 mb-2 select-none">
+        <div className="flex items-center gap-1 text-[#6B7280] text-[10px] font-['DM_Sans'] px-4 mb-2 select-none">
           <Icon icon="lucide:repeat" className="w-3 h-3 text-[#6B7280]" style={{ strokeWidth: '1.5px' }} />
           <span>{localPost.author} reposted</span>
         </div>
@@ -449,7 +449,7 @@ const ProfilePostCard = ({
             router.push(authorLink);
           }}
         >
-          <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+          <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['DM_Sans'] select-none">
             {mainPost.authorAvatar && mainPost.authorAvatar !== '/assets/profilephoto.png' && mainPost.authorAvatar !== '/assets/pngegg.png' ? (
               <img
                 src={mainPost.authorAvatar}
@@ -462,13 +462,13 @@ const ProfilePostCard = ({
             )}
           </div>
           <div className="flex flex-col justify-center overflow-hidden min-w-0">
-            <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-[family-name:var(--font-poppins)]">
+            <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-['DM_Sans']">
               {mainPost.isCompanyPost ? formatCompanyName(mainPost.author) : (mainPost.author || "Anonymous")}
             </span>
-            <div className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full" title={mainPost.authorHeadline || mainPost.title || ""}>
+            <div className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-['DM_Sans'] truncate block w-full" title={mainPost.authorHeadline || mainPost.title || ""}>
               {mainPost.authorHeadline || mainPost.title || ""}
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
+            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-['DM_Sans'] mt-0.5">
               {mainPost.location && (() => {
                 const displayLoc = mainPost.location.split(',')[0].trim();
                 const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
@@ -514,7 +514,7 @@ const ProfilePostCard = ({
                     }}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >
-                    <span className="text-[14px] font-[family-name:var(--font-poppins)]">Edit post</span>
+                    <span className="text-[14px] font-['DM_Sans']">Edit post</span>
                     <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
                 )}
@@ -524,7 +524,7 @@ const ProfilePostCard = ({
                     onClick={handleTogglePrivacy}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >
-                    <span className="text-[14px] font-[family-name:var(--font-poppins)]">
+                    <span className="text-[14px] font-['DM_Sans']">
                       {localPost.visibility === 'private' ? 'Make public' : 'Make private'}
                     </span>
                     {localPost.visibility === 'private' ? (
@@ -540,7 +540,7 @@ const ProfilePostCard = ({
                     onClick={() => onDelete(localPost.id)}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-red-50 focus:text-[#FF6B6B] text-[#FF6B6B] rounded-xl outline-none transition-colors"
                   >
-                    <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
+                    <span className="text-[14px] font-['DM_Sans']">Delete post</span>
                     <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-[#FF6B6B]" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
                 )}
@@ -552,7 +552,7 @@ const ProfilePostCard = ({
                       disabled={!authorUserId || isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending}
                       className="flex items-start justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                     >
-                      <span className="text-[14px] font-[family-name:var(--font-poppins)] break-words text-left pr-2">
+                      <span className="text-[14px] font-['DM_Sans'] break-words text-left pr-2">
                         {localPost.isCompanyPost
                           ? (isAuthorFollowing ? "Unfollow company" : "Follow company")
                           : (isAuthorFollowing ? "Unfollow user" : "Follow user")}
@@ -567,14 +567,14 @@ const ProfilePostCard = ({
                       onClick={() => setIsReportModalOpen(true)}
                       className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                     >
-                      <span className="text-[14px] font-[family-name:var(--font-poppins)]">Report post</span>
+                      <span className="text-[14px] font-['DM_Sans']">Report post</span>
                       <Icon icon="mdi:information-outline" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleNotInterested}
                       className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                     >
-                      <span className="text-[14px] font-[family-name:var(--font-poppins)]">Not interested</span>
+                      <span className="text-[14px] font-['DM_Sans']">Not interested</span>
                       <Icon icon="fluent:eye-off-16-regular" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
                     </DropdownMenuItem>
                   </>
@@ -590,14 +590,14 @@ const ProfilePostCard = ({
         {isArticlePost ? null : isPollPost ? (
           <Link
             href={`/post/${mainPost.id}`}
-            className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2 min-h-[40px] cursor-pointer"
+            className="text-[12px] leading-[20px] text-foreground font-['DM_Sans'] line-clamp-2 min-h-[40px] cursor-pointer"
           >
             {mainPost.content}
           </Link>
         ) : (image || videoSrc || (!isRepostWithoutThoughts && localPost.shared_post)) ? (
           <Link
             href={`/post/${mainPost.id}`}
-            className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
+            className="text-[12px] leading-[20px] text-foreground font-['DM_Sans'] truncate h-[20px] cursor-pointer"
           >
             {mainPost.content}
           </Link>
@@ -609,16 +609,16 @@ const ProfilePostCard = ({
         <div className="w-full h-[300px] mb-4 relative overflow-hidden">
           <div className="w-full h-full p-3 bg-[#F8FAFF] dark:bg-[#131C2E]/30 border border-[#E3E9FF] dark:border-[#232F45] rounded-[16px] flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
+              <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden flex-shrink-0 font-['DM_Sans'] select-none">
                 {localPost.shared_post.authorAvatar && localPost.shared_post.authorAvatar !== '/assets/pngegg.png' ? (
                   <img src={localPost.shared_post.authorAvatar} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 ) : (
                   <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
                 )}
               </div>
-              <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}</span>
+              <span className="text-[10px] font-medium truncate font-['DM_Sans'] text-foreground">{localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}</span>
             </div>
-            <div className="text-[10px] leading-[14px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2">
+            <div className="text-[10px] leading-[14px] text-foreground font-['DM_Sans'] line-clamp-2">
               <RichTextRenderer
                 content={localPost.shared_post.content}
                 authorName={localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}
@@ -633,7 +633,7 @@ const ProfilePostCard = ({
                     key={option.option_id || index}
                     className="rounded-[10px] border border-[#E8ECFF] dark:border-[#232F45] bg-white dark:bg-[#1C2840] px-2.5 py-1.5 flex items-center justify-between"
                   >
-                    <span className="text-[10px] text-foreground font-[family-name:var(--font-poppins)] truncate">
+                    <span className="text-[10px] text-foreground font-['DM_Sans'] truncate">
                       {option.option_text}
                     </span>
                   </div>
@@ -654,14 +654,14 @@ const ProfilePostCard = ({
                 <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400">
                   Poll
                 </span>
-                <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                <span className="text-[10px] text-muted-foreground font-['DM_Sans']">
                   {mainPost.poll?.total_votes || 0} votes
                 </span>
               </div>
 
               {pollQuestion && (
                 <div className="mb-3">
-                  <p className="font-[family-name:var(--font-poppins)] font-medium text-[13px] leading-[18px] text-foreground line-clamp-2">
+                  <p className="font-['DM_Sans'] font-medium text-[13px] leading-[18px] text-foreground line-clamp-2">
                     {pollQuestion}
                   </p>
                 </div>
@@ -674,10 +674,10 @@ const ProfilePostCard = ({
                     className="rounded-[14px] border border-[#E8ECFF] dark:border-[#232F45] bg-[#F8FAFF] dark:bg-[#1C2840] px-3 py-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">
+                      <span className="text-[12px] leading-[18px] text-foreground font-['DM_Sans'] line-clamp-1">
                         {option.option_text}
                       </span>
-                      <span className="text-[11px] leading-[16px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)] flex-shrink-0">
+                      <span className="text-[11px] leading-[16px] text-[#6366F1] font-medium font-['DM_Sans'] flex-shrink-0">
                         {option.vote_count}
                       </span>
                     </div>
@@ -686,7 +686,7 @@ const ProfilePostCard = ({
               </div>
 
               {mainPost.poll && mainPost.poll.options.length > pollOptions.length && (
-                <div className="mt-auto pt-3 text-[11px] leading-[16px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                <div className="mt-auto pt-3 text-[11px] leading-[16px] text-muted-foreground font-['DM_Sans']">
                   +{mainPost.poll.options.length - pollOptions.length} more option{mainPost.poll.options.length - pollOptions.length === 1 ? "" : "s"}
                 </div>
               )}
@@ -704,7 +704,7 @@ const ProfilePostCard = ({
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#DDE5FF] flex items-center justify-center px-6 text-center">
-                <span className="text-[16px] leading-[24px] text-[#6366F1] font-semibold font-[family-name:var(--font-poppins)] line-clamp-3">
+                <span className="text-[16px] leading-[24px] text-[#6366F1] font-semibold font-['DM_Sans'] line-clamp-3">
                   {localPost.title || "Untitled Article"}
                 </span>
               </div>
@@ -744,7 +744,7 @@ const ProfilePostCard = ({
         /* Text-only post: show full content inline */
         <Link href={`/post/${localPost.id}`} className="block w-full px-4 mb-3 overflow-hidden">
           <p
-            className="text-[13px] leading-[22px] text-foreground font-[family-name:var(--font-poppins)] overflow-hidden whitespace-pre-wrap"
+            className="text-[13px] leading-[22px] text-foreground font-['DM_Sans'] overflow-hidden whitespace-pre-wrap"
             style={{ display: '-webkit-box', WebkitLineClamp: 10, WebkitBoxOrient: 'vertical' }}
           >
             {(localPost.content || '').split(/(#\w+)/g).map((part, i) =>
@@ -759,7 +759,7 @@ const ProfilePostCard = ({
       {isArticlePost && !localPost.shared_post && (
         <div className="w-full px-4 mb-3">
           <Link href={`/post/${localPost.id}`} className="block">
-            <h3 className="text-[14px] leading-[20px] text-foreground font-semibold font-[family-name:var(--font-poppins)] line-clamp-2">
+            <h3 className="text-[14px] leading-[20px] text-foreground font-semibold font-['DM_Sans'] line-clamp-2">
               {localPost.title || "Untitled Article"}
             </h3>
           </Link>
@@ -815,11 +815,11 @@ const ProfilePostCard = ({
           <div className="flex items-center gap-[16px]">
             <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
               <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-primary" : "text-foreground")} />
-              <span className={cn("text-[12px] leading-[16px] font-[family-name:var(--font-poppins)]", isLiked ? "text-primary" : "text-foreground")}>{likesCount}</span>
+              <span className={cn("text-[12px] leading-[16px] font-['DM_Sans']", isLiked ? "text-primary" : "text-foreground")}>{likesCount}</span>
             </button>
             <Link href={`/post/${mainPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
               <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
-              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{mainPost.comments || 0}</span>
+              <span className="text-[12px] leading-[16px] text-foreground font-['DM_Sans']">{mainPost.comments || 0}</span>
             </Link>
             <button
               onClick={handleRepost}
@@ -829,14 +829,14 @@ const ProfilePostCard = ({
                 icon="hugeicons:repost"
                 className={cn("w-5 h-5", isReposted ? "text-primary" : "text-foreground")}
               />
-              <span className={cn("text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]", isReposted ? "text-primary" : "text-foreground")}>
+              <span className={cn("text-[12px] leading-[16px] text-foreground font-['DM_Sans']", isReposted ? "text-primary" : "text-foreground")}>
                 {mainPost.shares || 0}
               </span>
             </button>
             <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0 cursor-pointer">
               <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
               {mainPost.externalShares !== undefined && Number(mainPost.externalShares) > 0 && (
-                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] ml-1">
+                <span className="text-[12px] leading-[16px] text-foreground font-['DM_Sans'] ml-1">
                   {mainPost.externalShares}
                 </span>
               )}
@@ -961,7 +961,7 @@ export function ProfilePosts({
     >
       {/* Header */}
       <div className="flex items-center justify-between pt-4 pb-4 px-4 md:pl-10 md:pr-4">
-        <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
+        <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-['DM_Sans']">Post</h2>
         {posts.length > 0 && (
           <button
             onClick={() => {
@@ -983,7 +983,7 @@ export function ProfilePosts({
               }
               router.push(`/profile/${profileSlug}/posts`);
             }}
-            className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-primary rounded-[24px] bg-card text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary whitespace-nowrap hover:bg-secondary transition-all duration-200 cursor-pointer"
+            className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-primary rounded-[24px] bg-card text-[14px] leading-[20px] font-normal font-['DM_Sans'] text-primary whitespace-nowrap hover:bg-secondary transition-all duration-200 cursor-pointer"
           >
             See all
           </button>

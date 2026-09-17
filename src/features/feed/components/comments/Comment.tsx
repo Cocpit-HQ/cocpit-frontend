@@ -142,7 +142,12 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
 
   const isReply = variant === 'reply';
 
-  const baseCommentAuthorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}`;
+  const isMe = String(authorId) === String(currentUserId || session?.user?.id);
+  const baseCommentAuthorLink = isMe
+    ? '/profile'
+    : author?.isCompanyPost
+    ? `/organization/${author?.authorSlug}`
+    : `/profile/${author?.authorSlug || authorId}`;
   const authorLink = postId ? `${baseCommentAuthorLink}?sourcePostId=${postId}&commentId=${id}` : baseCommentAuthorLink;
 
   if (comment.actionState) {

@@ -6,3 +6,6 @@ export * from './hooks/useProfile';
 export * from './hooks/useProfilePosts';
 export { ProfileProjects } from './commonProfileComponents/ProfileProjects';
 export { default as AddProjectForm } from './components/AddProjectForm';
+export * from './components/profile-edit';
+export { ProfileAllPostsScreen } from './components/ProfileAllPostsScreen';
+export * from './components/ProfileScoreCard';

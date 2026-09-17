@@ -4,7 +4,7 @@ import type { Project } from "@/types/entities";
 
 export interface GetUserPostsParams {
   category?: 'All' | 'Personal' | 'Professional';
-  filter?: 'Post' | 'Repost' | 'Comments' | 'Private post' | 'Save';
+  filter?: 'Post' | 'Repost' | 'Comments' | 'Private post' | 'Save' | 'Articles' | 'Article' | 'Video' | 'Videos' | 'Poll' | 'Polls' | string;
   limit?: number;
   cursorCreatedAt?: string;
   cursorPostId?: string;

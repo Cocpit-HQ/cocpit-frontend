@@ -146,7 +146,9 @@ export const PostHeader = ({
     setShowOptions(!showOptions);
   };
 
-  const profileHref = isCompanyPost && authorSlug
+  const profileHref = isMe
+    ? '/profile'
+    : isCompanyPost && authorSlug
     ? `/organization/${authorSlug}`
     : `/profile/${authorUserId}`;
 

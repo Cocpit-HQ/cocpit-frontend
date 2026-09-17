@@ -717,8 +717,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     })
   }
 
-  const inputStyles = "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
-  const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
+  const inputStyles = "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-['DM_Sans'] text-[16px] leading-[24px] text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
+  const labelStyles = "block font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-foreground mb-2"
 
   const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
 
@@ -737,14 +737,14 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         <button type="button" onClick={onCancel} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
           <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
         </button>
-        <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+        <span className="text-[16px] font-medium font-['DM_Sans'] text-foreground">
           {isEditing ? 'Edit Education' : 'Add Education'}
         </span>
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!isFormValid}
-          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all font-[family-name:var(--font-poppins)]"
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all font-['DM_Sans']"
         >
           Save
         </button>
@@ -766,8 +766,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
 
         {/* Header */}
         <div className="hidden sm:block text-center mb-8">
-          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-1">{isEditing ? 'Edit Education' : 'Add Education'}</h2>
-          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Update your professional information</p>
+          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans'] text-foreground mb-1">{isEditing ? 'Edit Education' : 'Add Education'}</h2>
+          <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground">Update your professional information</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6 px-6 sm:px-8">
           {/* Row 1: Education & Qualification */}
@@ -1081,7 +1081,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
               </Select>
             </div>
             {fieldErrors.endDate && (
-              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
                 <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
               </p>
             )}
@@ -1103,13 +1103,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             />
             <label
               htmlFor="stillStudying"
-              className="text-[14px] font-medium text-[#111827] dark:text-foreground font-[family-name:var(--font-poppins)]"
+              className="text-[14px] font-medium text-[#111827] dark:text-foreground font-['DM_Sans']"
             >
               I currently study here
             </label>
           </div>
           {fieldErrors.currentEducation && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.currentEducation}
             </p>
           )}
@@ -1121,10 +1121,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               maxLength={1500}
-              className={cn("w-full h-[40px] min-h-[40px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", formData.description.length >= 1500 && "border-destructive focus:border-destructive")}
+              className={cn("w-full h-[40px] min-h-[40px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[8px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", formData.description.length >= 1500 && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
-            <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", formData.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
+            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", formData.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
               {formData.description.length}/1500 characters
             </span>
           </div>
@@ -1136,7 +1136,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 type="button"
                 variant="outline"
                 onClick={() => onDelete?.(initialData.education_id!)}
-                className="h-10 px-8 rounded-full border-[#FF6B6B]/20 text-[#FF6B6B] hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
+                className="h-10 px-8 rounded-full border-[#FF6B6B]/20 text-[#FF6B6B] hover:bg-transparent bg-transparent font-medium w-[142px] font-['DM_Sans']"
               >
                 Delete
               </Button>
@@ -1145,7 +1145,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
+                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-['DM_Sans']"
               >
                 Cancel
               </Button>
@@ -1154,7 +1154,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             <Button
               type="submit"
               disabled={!isFormValid}
-              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
+              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-['DM_Sans']"
             >
               Save
             </Button>

@@ -68,7 +68,7 @@ export function EditableExperienceItem({
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-col">
                         <div className="flex justify-between items-start w-full">
-                            <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
+                            <h3 className="text-[16px] leading-[24px] font-medium font-['DM_Sans'] text-foreground mb-[8px]">
                                 {renderField(experience.title)}
                             </h3>
                             <button
@@ -78,7 +78,7 @@ export function EditableExperienceItem({
                                 <Icon icon="eva:edit-outline" className="w-[20px] h-[20px] transition-colors" />
                             </button>
                         </div>
-                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
+                        <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-foreground mb-[10px] break-words">
                             {displayDescription}
                             {!isDescExpanded && isLongDescription && (
                                 <button
@@ -104,10 +104,10 @@ export function EditableExperienceItem({
                             )}
                         </p>
                         <div className="flex flex-col gap-[8px]">
-                            <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                            <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-['DM_Sans'] text-muted-foreground">
                                 {renderField(experience.company_name)}
                             </p>
-                            <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                            <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-['DM_Sans'] text-muted-foreground">
                                 {renderField(experience.location)}
                             </p>
                         </div>
@@ -118,7 +118,7 @@ export function EditableExperienceItem({
             {/* Right Column: Metadata + Edit Button (Fixed 240px) */}
             <div className="flex items-start flex-shrink-0 w-[240px] justify-between hidden md:flex">
                 <div className="w-full">
-                    <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                    <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground">
                         {!(!experience.start_date && !experience.end_date && !experience.is_current) ? (
                             <>
                                 {experience.start_date ? (

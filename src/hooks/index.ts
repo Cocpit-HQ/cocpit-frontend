@@ -7,3 +7,4 @@ export { useFetch } from "./use-fetch";
 export { useDebounce } from "./use-debounce";
 export { useToast } from "./use-toast";
 export { useIsMobile as useMobile } from "./use-mobile";
+export { useExpandableText, ExpandableText } from "./use-expandable-text";

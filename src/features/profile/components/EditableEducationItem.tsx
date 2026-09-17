@@ -70,7 +70,7 @@ export function EditableEducationItem({
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-col gap-[8px]">
                         <div className="flex justify-between items-start w-full">
-                            <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
+                            <h3 className="text-[16px] leading-[24px] font-medium font-['DM_Sans'] text-foreground mb-[8px]">
                                 {renderField(education.school_name)}
                             </h3>
                             {isOwnProfile && onEdit && (
@@ -86,7 +86,7 @@ export function EditableEducationItem({
                             )}
                         </div>
 
-                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
+                        <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-foreground mb-[10px] break-words">
                             {displayDescription}
                             {!isDescExpanded && isLongDescription && (
                                 <button
@@ -113,10 +113,10 @@ export function EditableEducationItem({
                         </p>
 
                         <div className="flex flex-col gap-[8px]">
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                            <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground">
                                 {renderField(education.degree)}
                             </p>
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                            <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground">
                                 {renderField(education.location)}
                             </p>
                         </div>
@@ -131,20 +131,20 @@ export function EditableEducationItem({
                         <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
                             {education.start_date && (
                                 <>
-                                    <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                                    <span className="md:w-[60px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
                                         {formatDate(education.start_date)}
                                     </span>
-                                    <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
+                                    <span className="md:w-[9px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
                                         -
                                     </span>
                                 </>
                             )}
-                            <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                            <span className="md:w-[75px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
                                 {education.end_date ? formatDate(education.end_date) : (education.start_date ? 'Present' : '')}
                             </span>
                         </div>
                     )}
-                    <div className="w-full break-words font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground">
+                    <div className="w-full break-words font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground">
                         {renderField(education.field_of_study)}
                     </div>
                 </div>

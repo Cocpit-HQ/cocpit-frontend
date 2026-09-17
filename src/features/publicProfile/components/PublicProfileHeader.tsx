@@ -176,13 +176,13 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                 ) : isOwnProfile ? (
                                     <div className="w-full h-full bg-[#EEF2FF] flex flex-col justify-center items-center gap-[4px] select-none">
                                         <Icon icon="solar:gallery-linear" className="w-[24px] h-[24px] text-[#000000]" />
-                                        <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] leading-[15px] text-center text-[#000000]">
+                                        <span className="font-['DM_Sans'] font-normal text-[10px] leading-[15px] text-center text-[#000000]">
                                             Add profile
                                         </span>
                                     </div>
                                 ) : (
-                                    <div className="w-full h-full bg-ds-surface-1 text-ds-text-primary p-6 flex items-center justify-center select-none border border-ds-border">
-                                        <UserIcon className="w-full h-full text-ds-text-primary" />
+                                    <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-light text-[48px] leading-none flex items-center justify-center font-['DM_Sans'] select-none">
+                                        {userInitial}
                                     </div>
                                 )}
                             </div>
@@ -228,7 +228,7 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             {isOwnProfile ? (
                                 <button
                                     onClick={onContactInfoClick}
-                                    className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
+                                    className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-['DM_Sans']"
                                 >
                                     Contact Info
                                 </button>
@@ -236,7 +236,7 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={onContactInfoClick}
-                                        className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
+                                        className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-['DM_Sans']"
                                     >
                                         Contact Info
                                     </button>
@@ -250,18 +250,18 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                 <div className="md:hidden w-full px-4 mt-6">
                     <div className="flex justify-between items-center w-full px-2">
                         <div onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("following")} className={cn("flex flex-col items-center", isBlockedByMe ? "cursor-default" : "cursor-pointer")}>
-                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.following_count || 0)}</span>
-                            <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Following</span>
+                            <span className="text-[16px] font-semibold text-primary font-['DM_Sans']">{isBlockedByMe ? 0 : (profileStats?.following_count || 0)}</span>
+                            <span className="text-[12px] text-muted-foreground font-['DM_Sans']">Following</span>
                         </div>
                         <div className="w-[1px] h-8 bg-border"></div>
                         <div onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("followers")} className={cn("flex flex-col items-center", isBlockedByMe ? "cursor-default" : "cursor-pointer")}>
-                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.followers_count || 0)}</span>
-                            <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Followers</span>
+                            <span className="text-[16px] font-semibold text-primary font-['DM_Sans']">{isBlockedByMe ? 0 : (profileStats?.followers_count || 0)}</span>
+                            <span className="text-[12px] text-muted-foreground font-['DM_Sans']">Followers</span>
                         </div>
                         <div className="w-[1px] h-8 bg-border"></div>
                         <div onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("connections")} className={cn("flex flex-col items-center", isBlockedByMe ? "cursor-default" : "cursor-pointer")}>
-                            <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.connections_count || 0)}</span>
-                            <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Connection</span>
+                            <span className="text-[16px] font-semibold text-primary font-['DM_Sans']">{isBlockedByMe ? 0 : (profileStats?.connections_count || 0)}</span>
+                            <span className="text-[12px] text-muted-foreground font-['DM_Sans']">Connection</span>
                         </div>
                     </div>
                 </div>
@@ -276,8 +276,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             )}
                             style={{ boxShadow: '0px 0px 4px 0px rgba(99, 102, 241, 0.05)' }}
                         >
-                            <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Following</span>
-                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.following_count || 0)}</span>
+                            <span className="text-[14px] leading-[20px] text-foreground font-normal font-['DM_Sans']">Following</span>
+                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-['DM_Sans']">{isBlockedByMe ? 0 : (profileStats?.following_count || 0)}</span>
                         </button>
                         <button
                             onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("followers")}
@@ -287,8 +287,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             )}
                             style={{ boxShadow: '0px 0px 4px 0px rgba(99, 102, 241, 0.05)' }}
                         >
-                            <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Followers</span>
-                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.followers_count || 0)}</span>
+                            <span className="text-[14px] leading-[20px] text-foreground font-normal font-['DM_Sans']">Followers</span>
+                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-['DM_Sans']">{isBlockedByMe ? 0 : (profileStats?.followers_count || 0)}</span>
                         </button>
                         <button
                             onClick={isBlockedByMe ? undefined : () => onFollowListClick?.("connections")}
@@ -298,8 +298,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                             )}
                             style={{ boxShadow: '0px 0px 4px 0px rgba(99, 102, 241, 0.05)' }}
                         >
-                            <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Connection</span>
-                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-[family-name:var(--font-poppins)]">{isBlockedByMe ? 0 : (profileStats?.connections_count || 0)}</span>
+                            <span className="text-[14px] leading-[20px] text-foreground font-normal font-['DM_Sans']">Connection</span>
+                            <span className="text-[18px] leading-[26px] text-[#6366F1] dark:text-[#818CF8] font-medium font-['DM_Sans']">{isBlockedByMe ? 0 : (profileStats?.connections_count || 0)}</span>
                         </button>
                     </div>
                 </div>
@@ -309,12 +309,12 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-3 mb-1 w-full">
                         <div className="flex items-center gap-3 flex-wrap md:flex-nowrap min-w-0">
-                            <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight truncate md:overflow-visible md:text-clip md:whitespace-nowrap">{user?.name}</h1>
+                            <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-['DM_Sans'] tracking-tight truncate md:overflow-visible md:text-clip md:whitespace-nowrap">{user?.name}</h1>
                         </div>
                     </div>
 
                     {user?.headline && (
-                        <p className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
+                        <p className="text-[16px] font-normal text-foreground leading-[24px] font-['DM_Sans'] mb-4">
                             {user?.headline}
                         </p>
                     )}
@@ -322,12 +322,12 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                     {!isBlockedByMe && (user?.location || user?.website) && (
                         <div className="flex flex-col gap-2 mb-4">
                             {user?.location && (
-                                <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)]">
+                                <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-['DM_Sans']">
                                     <span>{user?.location}</span>
                                 </div>
                             )}
                             {user?.website && (
-                                <div className="flex items-center gap-2 text-[12px] font-normal text-[#6366F1] dark:text-[#818CF8] leading-[16px] font-[family-name:var(--font-poppins)] hover:underline">
+                                <div className="flex items-center gap-2 text-[12px] font-normal text-[#6366F1] dark:text-[#818CF8] leading-[16px] font-['DM_Sans'] hover:underline">
                                     <a href={user.website} target="_blank" rel="noopener noreferrer" className="text-inherit">{user.website}</a>
                                 </div>
                             )}
@@ -381,8 +381,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                             )}
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.company_name}</span>
-                                            <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.title}</span>
+                                            <span className="text-[16px] font-normal text-foreground leading-[24px] font-['DM_Sans'] truncate w-[180px]">{latestExperience.company_name}</span>
+                                            <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-['DM_Sans'] truncate w-[180px]">{latestExperience.title}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -407,10 +407,10 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                             )}
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">
+                                            <span className="text-[16px] font-normal text-foreground leading-[24px] font-['DM_Sans'] truncate w-[180px]">
                                                 {latestEducation.school_name || latestEducation.school || 'University'}
                                             </span>
-                                            <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestEducation.degree}</span>
+                                            <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-['DM_Sans'] truncate w-[180px]">{latestEducation.degree}</span>
                                         </div>
                                     </div>
                                 </div>

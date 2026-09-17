@@ -204,8 +204,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     })
   }
 
-  const inputStyles = "h-[48px] w-full px-4 py-3 !rounded-[16px] border-border bg-card text-[16px] leading-[24px] text-foreground text-left font-[family-name:var(--font-poppins)] font-normal placeholder:text-muted-foreground focus:border-primary focus:ring-0 transition-all"
-  const labelStyles = "text-[14px] font-normal text-foreground mb-[8px] font-[family-name:var(--font-poppins)] leading-[20px]"
+  const inputStyles = "h-[48px] w-full px-4 py-3 !rounded-[16px] border-border bg-card text-[16px] leading-[24px] text-foreground text-left font-['DM_Sans'] font-normal placeholder:text-muted-foreground focus:border-primary focus:ring-0 transition-all"
+  const labelStyles = "text-[14px] font-normal text-foreground mb-[8px] font-['DM_Sans'] leading-[20px]"
   const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
 
   const hasChanges = () => {
@@ -264,7 +264,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
             <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
           </button>
-          <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+          <span className="text-[16px] font-medium font-['DM_Sans'] text-foreground">
             Edit profile
           </span>
           <button
@@ -290,10 +290,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           </div>
 
           <DialogHeader className="hidden sm:flex w-full flex-col items-center justify-center text-center mb-6 h-auto gap-0">
-            <DialogTitle className="w-full text-[18px] leading-[26px] font-medium text-foreground font-[family-name:var(--font-poppins)] text-center p-0 m-0">
+            <DialogTitle className="w-full text-[18px] leading-[26px] font-medium text-foreground font-['DM_Sans'] text-center p-0 m-0">
               Edit profile
             </DialogTitle>
-            <DialogDescription className="w-full text-[14px] leading-[20px] text-muted-foreground font-[family-name:var(--font-poppins)] text-center p-0 m-0 mt-[6px]">
+            <DialogDescription className="w-full text-[14px] leading-[20px] text-muted-foreground font-['DM_Sans'] text-center p-0 m-0 mt-[6px]">
               Update your personal and professional information
             </DialogDescription>
           </DialogHeader>
@@ -395,7 +395,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                           <div
                             key={ind.industry_name}
                             className={cn(
-                              "w-full text-left px-4 py-2.5 text-[14px] font-[family-name:var(--font-poppins)] font-normal transition-colors flex items-center justify-between cursor-pointer",
+                              "w-full text-left px-4 py-2.5 text-[14px] font-['DM_Sans'] font-normal transition-colors flex items-center justify-between cursor-pointer",
                               formData.industry === ind.industry_name
                                 ? "bg-primary/10 text-primary font-medium"
                                 : "text-foreground hover:bg-secondary"
@@ -414,8 +414,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                         ))
                       ) : (
                         <div className="px-4 py-8 text-center">
-                          <p className="text-[14px] font-[family-name:var(--font-poppins)] font-medium text-foreground mb-1">No industries found</p>
-                          <p className="text-[12px] font-[family-name:var(--font-poppins)] text-muted-foreground">Try a different search term</p>
+                          <p className="text-[14px] font-['DM_Sans'] font-medium text-foreground mb-1">No industries found</p>
+                          <p className="text-[12px] font-['DM_Sans'] text-muted-foreground">Try a different search term</p>
                         </div>
                       )}
                     </div>
@@ -440,8 +440,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             <div className="grid grid-cols-1 gap-4">
               <div className="flex flex-col" ref={headlineRef}>
                 <div className="flex justify-between items-center mb-[8px]">
-                  <Label className="text-[14px] font-normal text-foreground font-[family-name:var(--font-poppins)] leading-[20px] mb-0">Headline*</Label>
-                  <span className={`text-[12px] font-normal leading-[16px] font-[family-name:var(--font-poppins)] ${formData.headline.length > 200 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                  <Label className="text-[14px] font-normal text-foreground font-['DM_Sans'] leading-[20px] mb-0">Headline*</Label>
+                  <span className={`text-[12px] font-normal leading-[16px] font-['DM_Sans'] ${formData.headline.length > 200 ? 'text-red-500' : 'text-muted-foreground'}`}>
                     {formData.headline.length}/200
                   </span>
                 </div>
@@ -547,7 +547,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Textarea
                 value={formData.about}
                 onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
-                className="w-full min-h-[100px] bg-card border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-[family-name:var(--font-poppins)] text-[14px] leading-[20px] resize-none focus-visible:border-primary focus-visible:outline-none transition-all shadow-none"
+                className="w-full min-h-[100px] bg-card border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-['DM_Sans'] text-[14px] leading-[20px] resize-none focus-visible:border-primary focus-visible:outline-none transition-all shadow-none"
                 placeholder="Tell us about yourself..."
               />
             </div>
@@ -568,7 +568,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       }}
                       className="w-[18px] h-[18px] bg-card rounded-[4px] border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground"
                     />
-                    <Label htmlFor={`role-${orgId}`} className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] cursor-pointer">
+                    <Label htmlFor={`role-${orgId}`} className="text-[14px] leading-[20px] font-normal text-foreground font-['DM_Sans'] cursor-pointer">
                       Show <span className="text-primary font-normal">"{role.role} at {role.name}"</span> on profile
                     </Label>
                   </div>

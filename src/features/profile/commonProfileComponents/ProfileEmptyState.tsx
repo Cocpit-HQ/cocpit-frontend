@@ -34,12 +34,12 @@ export function ProfileEmptyState({
             {/* Text container */}
             <div className="flex flex-col items-center px-4 py-0 gap-2 w-full md:w-[204px] h-auto md:h-12">
               {/* Title */}
-              <span className="w-auto md:w-[86px] h-auto md:h-6 font-[family-name:var(--font-poppins)] font-medium text-base leading-6 text-center text-black whitespace-normal md:whitespace-nowrap">
+              <span className="w-auto md:w-[86px] h-auto md:h-6 font-['DM_Sans'] font-medium text-base leading-6 text-center text-black whitespace-normal md:whitespace-nowrap">
                 No activity
               </span>
 
               {/* Subtitle */}
-              <span className="w-full md:w-auto h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap overflow-visible md:overflow-hidden md:text-ellipsis">
+              <span className="w-full md:w-auto h-auto md:h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap overflow-visible md:overflow-hidden md:text-ellipsis">
                 <span className="font-medium">{userName || "User"}</span>
                 {" hasn't posted anything yet"}
               </span>
@@ -64,12 +64,12 @@ export function ProfileEmptyState({
           {/* Text container */}
           <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[507px] px-2 md:px-0">
             {/* Title */}
-            <span className="w-auto md:w-[260px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
+            <span className="w-auto md:w-[260px] h-auto md:h-5 font-['DM_Sans'] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
               Start building your professional story
             </span>
 
             {/* Subtitle */}
-            <span className="w-full md:w-[507px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
+            <span className="w-full md:w-[507px] h-auto md:h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
               Share projects, progress, ideas, or learning moments to grow your
               network presence.
             </span>
@@ -80,7 +80,7 @@ export function ProfileEmptyState({
             onClick={onCreateClick}
             className="flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[122px] h-10 bg-[#6366F1] rounded-[24px] border-none cursor-pointer"
           >
-            <span className="font-[family-name:var(--font-poppins)] font-medium text-sm leading-5 text-white">
+            <span className="font-['DM_Sans'] font-medium text-sm leading-5 text-white">
               Create
             </span>
             <Icon icon="solar:add-circle-linear" className="w-5 h-5 text-white" />
@@ -104,12 +104,12 @@ export function ProfileEmptyState({
         {/* Text container */}
         <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[396px] h-auto md:h-11 px-2 md:px-0">
           {/* Title */}
-          <span className="w-auto md:w-[170px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
+          <span className="w-auto md:w-[170px] h-auto md:h-5 font-['DM_Sans'] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
             Every experience counts
           </span>
 
           {/* Subtitle */}
-          <span className="w-full md:w-[396px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
+          <span className="w-full md:w-[396px] h-auto md:h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
             Add internships, freelance work, projects, volunteering, or startups
           </span>
         </div>
@@ -133,12 +133,12 @@ export function ProfileEmptyState({
           {/* Text container */}
           <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[427px] h-auto md:h-11 px-2 md:px-0">
             {/* Title */}
-            <span className="w-auto md:w-[195px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
+            <span className="w-auto md:w-[195px] h-auto md:h-5 font-['DM_Sans'] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
               Add your education journey
             </span>
 
             {/* Subtitle */}
-            <span className="w-full md:w-[427px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
+            <span className="w-full md:w-[427px] h-auto md:h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
               Showcase courses, certifications, colleges, bootcamps, or
               self-learning.
             </span>
@@ -159,10 +159,10 @@ export function ProfileEmptyState({
             className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
           />
           <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[427px] h-auto md:h-11 px-2 md:px-0">
-            <span className="w-auto md:w-[195px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
+            <span className="w-auto md:w-[195px] h-auto md:h-5 font-['DM_Sans'] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
               Showcase your projects
             </span>
-            <span className="w-full md:w-[427px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
+            <span className="w-full md:w-[427px] h-auto md:h-4 font-['DM_Sans'] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
               Add campaigns, applications, designs, or academic projects.
             </span>
           </div>

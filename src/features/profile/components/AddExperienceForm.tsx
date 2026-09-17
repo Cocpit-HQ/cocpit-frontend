@@ -188,8 +188,8 @@ function RoleSection({
   descriptionRef,
 }: RoleSectionProps) {
   const inputStyles =
-    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
-  const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-['DM_Sans'] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
+  const labelStyles = "block font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-foreground mb-2"
   const getSelectTextColor = (value: string) =>
     value ? "text-foreground" : "text-muted-foreground"
 
@@ -302,7 +302,7 @@ function RoleSection({
               <button
                 type="button"
                 onClick={onRemove}
-                className="text-[#FF6B6B] hover:text-[#FF6B6B]/80 transition-colors flex items-center gap-1.5 text-[12px] font-[family-name:var(--font-poppins)]"
+                className="text-[#FF6B6B] hover:text-[#FF6B6B]/80 transition-colors flex items-center gap-1.5 text-[12px] font-['DM_Sans']"
                 aria-label="Remove this role"
               >
                 <Trash2 className="w-4 h-4" />
@@ -401,7 +401,7 @@ function RoleSection({
                 )}
               </div>
               {fieldErrors.title && (
-                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
                   <AlertTriangle className="w-3 h-3" />{fieldErrors.title}
                 </p>
               )}
@@ -449,7 +449,7 @@ function RoleSection({
             />
             <label
               htmlFor={`endCurrentRole-${index}`}
-              className="text-[13px] font-medium text-foreground cursor-pointer leading-[20px] font-[family-name:var(--font-poppins)]"
+              className="text-[13px] font-medium text-foreground cursor-pointer leading-[20px] font-['DM_Sans']"
             >
               End current role
               {previousRoleTitle && (
@@ -469,14 +469,14 @@ function RoleSection({
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
               maxLength={1500}
-              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
-            <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
+            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
               {role.description.length}/1500 characters
             </span>
             {fieldErrors.description && (
-              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
                 <AlertTriangle className="w-3 h-3" />{fieldErrors.description}
               </p>
             )}
@@ -493,7 +493,7 @@ function RoleSection({
                 type="button"
                 onClick={() => set("work_type", role.work_type === type ? "" : type)}
                 className={cn(
-                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent font-[family-name:var(--font-poppins)]",
+                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent font-['DM_Sans']",
                   role.work_type === type
                     ? "bg-primary text-primary-foreground border-primary"
                     : "skill-chip hover:opacity-80"
@@ -515,7 +515,7 @@ function RoleSection({
                 type="button"
                 onClick={() => set("work_mode", role.work_mode === mode ? "" : mode)}
                 className={cn(
-                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent font-[family-name:var(--font-poppins)]",
+                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent font-['DM_Sans']",
                   role.work_mode === mode
                     ? "bg-primary text-primary-foreground border-primary"
                     : "skill-chip hover:opacity-80"
@@ -568,12 +568,12 @@ function RoleSection({
             </Select>
           </div>
           {fieldErrors.startDate && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.startDate}
             </p>
           )}
           {!fieldErrors.startDate && fieldWarnings.startDate && (
-            <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+            <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1 font-['DM_Sans']">
               <AlertTriangle className="w-3 h-3" />{fieldWarnings.startDate}
             </p>
           )}
@@ -609,7 +609,7 @@ function RoleSection({
             </Select>
           </div>
           {fieldErrors.endDate && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
             </p>
           )}
@@ -660,7 +660,7 @@ function RoleSection({
           />
           <label
             htmlFor={`currentlyWorking-${index}`}
-            className="text-[14px] font-medium text-foreground font-[family-name:var(--font-poppins)]"
+            className="text-[14px] font-medium text-foreground font-['DM_Sans']"
           >
             I currently work here
           </label>
@@ -674,14 +674,14 @@ function RoleSection({
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
               maxLength={1500}
-              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
+              className={cn("w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-['DM_Sans'] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none", (role.description.length >= 1500 || fieldErrors.description) && "border-destructive focus:border-destructive")}
               placeholder="Describe your work, impact, or achievements"
             />
-            <span className={cn("text-[10px] mt-1 text-right block font-[family-name:var(--font-poppins)]", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
+            <span className={cn("text-[10px] mt-1 text-right block font-['DM_Sans']", role.description.length >= 1500 ? "text-destructive" : "text-muted-foreground")}>
               {role.description.length}/1500 characters
             </span>
             {fieldErrors.description && (
-              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
                 <AlertTriangle className="w-3 h-3" />{fieldErrors.description}
               </p>
             )}
@@ -1266,8 +1266,8 @@ export default function AddExperienceForm({
   }
 
   const inputStyles =
-    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
-  const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-['DM_Sans'] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
+  const labelStyles = "block font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-foreground mb-2"
 
   const modalTitle = isEditing ? "Edit experience" : "Add experience"
 
@@ -1354,13 +1354,13 @@ export default function AddExperienceForm({
         >
           <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
         </button>
-        <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+        <span className="text-[16px] font-medium font-['DM_Sans'] text-foreground">
           {modalTitle}
         </span>
         <button
           onClick={() => handleSubmit()}
           disabled={!isFormValid || isSaving}
-          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all font-[family-name:var(--font-poppins)]"
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all font-['DM_Sans']"
         >
           {isSaving ? "Saving..." : "Save"}
         </button>
@@ -1383,10 +1383,10 @@ export default function AddExperienceForm({
 
         {/* Desktop header */}
         <div className="hidden sm:block text-center mb-8 relative">
-          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-1">
+          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans'] text-foreground mb-1">
             {modalTitle}
           </h2>
-          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+          <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground">
             Update your professional information
           </p>
 
@@ -1396,7 +1396,7 @@ export default function AddExperienceForm({
               onClick={addNewRole}
               disabled={!canAddRole}
               className={cn(
-                "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 py-2 rounded-full border border-border transition-all text-primary font-[family-name:var(--font-poppins)] text-[14px] font-medium",
+                "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 py-2 rounded-full border border-border transition-all text-primary font-['DM_Sans'] text-[14px] font-medium",
                 canAddRole ? "hover:bg-secondary" : "opacity-30 cursor-not-allowed border-dashed"
               )}
               title={!canAddRole ? "You can only add multiple roles to an existing company" : "Add another role at this company"}
@@ -1417,7 +1417,7 @@ export default function AddExperienceForm({
           {multipleCurrentRoles && activeRoleIndex === 0 && (
             <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-[12px]">
               <Icon icon="mdi:alert-outline" className="w-4 h-4 text-amber-600 flex-shrink-0" />
-              <p className="text-[12px] text-amber-700 font-[family-name:var(--font-poppins)]">
+              <p className="text-[12px] text-amber-700 font-['DM_Sans']">
                 You already have an active role. Adding another "currently working" role is allowed
                 (e.g. freelance, parallel positions) but make sure this is intentional.
               </p>
@@ -1458,7 +1458,7 @@ export default function AddExperienceForm({
               onClick={addNewRole}
               disabled={!canAddRole}
               className={cn(
-                "sm:hidden flex items-center gap-2 w-full justify-center py-3 rounded-[16px] border border-dashed text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-all",
+                "sm:hidden flex items-center gap-2 w-full justify-center py-3 rounded-[16px] border border-dashed text-[14px] font-medium font-['DM_Sans'] transition-all",
                 canAddRole
                   ? "border-[#6366F1] text-[#6366F1] hover:bg-[#EEF2FF]"
                   : "border-gray-300 text-gray-400 opacity-50 cursor-not-allowed"
@@ -1480,7 +1480,7 @@ export default function AddExperienceForm({
             variant="outline"
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isSaving}
-            className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
+            className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px] font-['DM_Sans']"
           >
             Delete
           </Button>
@@ -1490,7 +1490,7 @@ export default function AddExperienceForm({
             variant="outline"
             onClick={() => setShowDiscardConfirm(true)}
             disabled={isSaving}
-            className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
+            className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-['DM_Sans']"
           >
             Cancel
           </Button>
@@ -1498,7 +1498,7 @@ export default function AddExperienceForm({
         <Button
           type="submit"
           disabled={!isFormValid || isSaving}
-          className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
+          className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-['DM_Sans']"
         >
           {isSaving ? "Saving..." : "Save"}
         </Button>
@@ -1507,15 +1507,15 @@ export default function AddExperienceForm({
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent overlayClassName="bg-white/40 backdrop-blur-[3px]" className="w-[300px] h-[158px] sm:max-w-[300px] rounded-[24px] p-[16px] flex flex-col gap-[8px] justify-between shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border-0 sm:rounded-[24px]">
           <AlertDialogHeader className="flex flex-col items-center p-0 m-0 space-y-0">
-            <AlertDialogTitle className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] p-0 m-0 text-foreground">
+            <AlertDialogTitle className="text-[18px] leading-[26px] font-medium font-['DM_Sans'] p-0 m-0 text-foreground">
               Delete item?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[14px] leading-[20px] text-muted-foreground font-[family-name:var(--font-poppins)] text-center p-0 m-0 mt-[2px]">
+            <AlertDialogDescription className="text-[14px] leading-[20px] text-muted-foreground font-['DM_Sans'] text-center p-0 m-0 mt-[2px]">
               This will be permanently removed from your profile
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-row justify-between items-center w-full p-0 m-0 mt-auto sm:space-x-0 gap-[8px]">
-            <AlertDialogCancel className="h-[40px] flex-1 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium font-[family-name:var(--font-poppins)] m-0">
+            <AlertDialogCancel className="h-[40px] flex-1 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium font-['DM_Sans'] m-0">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1526,7 +1526,7 @@ export default function AddExperienceForm({
                 }
                 setShowDeleteConfirm(false);
               }}
-              className="h-[40px] flex-1 rounded-full bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 text-white font-medium font-[family-name:var(--font-poppins)] m-0"
+              className="h-[40px] flex-1 rounded-full bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 text-white font-medium font-['DM_Sans'] m-0"
             >
               Delete
             </AlertDialogAction>
@@ -1537,12 +1537,12 @@ export default function AddExperienceForm({
       <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
         <AlertDialogContent overlayClassName="bg-white/40 backdrop-blur-[3px]" className="w-[300px] h-[130px] sm:max-w-[300px] rounded-[24px] p-[16px] flex flex-col gap-[8px] justify-between shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border-0 sm:rounded-[24px]">
           <AlertDialogHeader className="flex flex-col items-center justify-center p-0 m-0 space-y-0 h-full">
-            <AlertDialogTitle className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] p-0 m-0 text-foreground text-center">
+            <AlertDialogTitle className="text-[18px] leading-[26px] font-medium font-['DM_Sans'] p-0 m-0 text-foreground text-center">
               Discard all changes
             </AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-row justify-between items-center w-full p-0 m-0 mt-auto sm:space-x-0 gap-[8px]">
-            <AlertDialogCancel className="h-[40px] flex-1 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium font-[family-name:var(--font-poppins)] m-0">
+            <AlertDialogCancel className="h-[40px] flex-1 rounded-full border border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8]/10 bg-transparent font-medium font-['DM_Sans'] m-0">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1550,7 +1550,7 @@ export default function AddExperienceForm({
                 setShowDiscardConfirm(false);
                 onCancel();
               }}
-              className="h-[40px] flex-1 rounded-full bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 text-white font-medium font-[family-name:var(--font-poppins)] m-0"
+              className="h-[40px] flex-1 rounded-full bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 text-white font-medium font-['DM_Sans'] m-0"
             >
               Discard
             </AlertDialogAction>

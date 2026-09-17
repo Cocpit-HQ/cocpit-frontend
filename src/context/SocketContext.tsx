@@ -808,6 +808,22 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.refetchQueries({ queryKey: ['groupDetails'], type: 'all' });
     };
 
+    const handlePostCreated = (payload: any) => {
+      console.log("[Socket] post_created/new_post event received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+    };
+
+    const handlePostUpdated = (payload: any) => {
+      console.log("[Socket] post_updated/deleted event received:", payload);
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -847,6 +863,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('saved_posts_updated', handleSavedUpdated);
     newSocket.on('activity_updated', handleActivityUpdated);
     newSocket.on('group_invite', handleGroupInvite);
+    newSocket.on('new_post', handlePostCreated);
+    newSocket.on('post_created', handlePostCreated);
+    newSocket.on('post_updated', handlePostUpdated);
+    newSocket.on('post_deleted', handlePostUpdated);
+    newSocket.on('feed_updated', handlePostCreated);
     socketRef.current = newSocket;
 
 
@@ -904,6 +925,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('saved_posts_updated', handleSavedUpdated);
       newSocket.off('activity_updated', handleActivityUpdated);
       newSocket.off('group_invite', handleGroupInvite);
+      newSocket.off('new_post', handlePostCreated);
+      newSocket.off('post_created', handlePostCreated);
+      newSocket.off('post_updated', handlePostUpdated);
+      newSocket.off('post_deleted', handlePostUpdated);
+      newSocket.off('feed_updated', handlePostCreated);
       newSocket.disconnect();
       setTypingConversations({});
     };

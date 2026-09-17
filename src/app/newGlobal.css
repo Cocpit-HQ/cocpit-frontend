@@ -1516,14 +1516,14 @@
 
 /* ── Primary accent → Secondary accent ──────────────────── */
 [data-theme="dark"] .text-primary,
-[data-theme="dark"] a:not(.mention-link),
+[data-theme="dark"] a:not(.mention-link):not(.profile-website-link),
 [data-theme="dark"] [icon*="dots-three"],
 [data-theme="dark"] svg[data-icon*="dots-three"],
 [data-theme="dark"] button[data-state] svg {
   color: #F9FAFB !important;
 }
 
-/* ── Mention Links: Always orange per design system ──────── */
+/* ── Mention Links & Profile Links: Always orange per design system ──────── */
 a.mention-link,
 [data-theme="dark"] a.mention-link,
 [data-theme="navy"] a.mention-link,
@@ -1531,7 +1531,11 @@ a.mention-link,
 .mention-token,
 [data-theme="dark"] .mention-token,
 [data-theme="navy"] .mention-token,
-[data-theme="light"] .mention-token {
+[data-theme="light"] .mention-token,
+a.profile-website-link,
+[data-theme="dark"] a.profile-website-link,
+[data-theme="navy"] a.profile-website-link,
+[data-theme="light"] a.profile-website-link {
   color: var(--ds-accent) !important;
   -webkit-text-fill-color: var(--ds-accent) !important;
 }

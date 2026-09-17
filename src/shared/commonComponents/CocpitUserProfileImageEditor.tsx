@@ -22,6 +22,7 @@ export interface CocpitUserProfileImageEditorProps {
   isOpen: boolean;
   onClose: () => void;
   initialImage?: string | null;
+  initialFile?: File | null;
   onSave: (dataUrl: string | null, file: File | null) => void;
   onRemove?: () => void;
   theme?: "dark" | "light";
@@ -33,12 +34,13 @@ export const CocpitUserProfileImageEditor: React.FC<
   isOpen,
   onClose,
   initialImage = null,
+  initialFile = null,
   onSave,
   onRemove,
   theme,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialImage);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(initialFile);
   const [naturalDimensions, setNaturalDimensions] = useState<{
     width: number;
     height: number;
@@ -84,7 +86,14 @@ export const CocpitUserProfileImageEditor: React.FC<
   // Synchronize on open
   useEffect(() => {
     if (isOpen) {
-      setPreviewUrl(initialImage);
+      if (initialFile) {
+        setSelectedFile(initialFile);
+        const url = URL.createObjectURL(initialFile);
+        setPreviewUrl(url);
+      } else {
+        setSelectedFile(null);
+        setPreviewUrl(initialImage);
+      }
       setZoom(0);
       setRotation(0);
       setFlipH(false);
@@ -94,7 +103,7 @@ export const CocpitUserProfileImageEditor: React.FC<
       setIsCropMode(false);
       setIsSaving(false);
     }
-  }, [isOpen, initialImage]);
+  }, [isOpen, initialImage, initialFile]);
 
   // Calculate exact on-screen geometry with zero blank space
   const geometry = useMemo(() => {
@@ -301,9 +310,6 @@ export const CocpitUserProfileImageEditor: React.FC<
     setIsCropMode(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
-    }
-    if (onRemove) {
-      onRemove();
     }
   };
 
@@ -602,7 +608,7 @@ export const CocpitUserProfileImageEditor: React.FC<
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving || !hasImage}
+              disabled={isSaving || (!hasImage && !initialImage && !initialFile)}
               className="w-16 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 rounded-[100px] flex justify-center items-center transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-default"
             >
               <span className="text-[#FFECE6] text-base font-medium font-['DM_Sans'] leading-6">

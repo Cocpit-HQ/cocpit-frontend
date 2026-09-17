@@ -281,9 +281,22 @@ export default function CocpitShareModel({
     }
   };
 
+  const copyLabel = useMemo(() => {
+    if (profileId || entityType === "profile") return "Copy profile link";
+    if (postId || entityType === "post") return "Copy post link";
+    if (effectiveJobId || entityType === "job") return "Copy job link";
+    if (entityType === "event") return "Copy event link";
+    if (entityType === "company") return "Copy organization link";
+    return "Copy link";
+  }, [profileId, postId, effectiveJobId, entityType]);
+
   const shareOptions = useMemo(() => {
     const trackShare = () => {
-      if (postId) {
+      if (profileId || entityType === "profile") {
+        universalShare({ entityType: "profile", entityId: (profileId || effectiveEntityId) as string, shareMethod: "copy_link" })
+          .then(() => onShare?.(["share"]))
+          .catch(() => {});
+      } else if (postId) {
         universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" })
           .then(() => onShare?.(["share"]))
           .catch(() => {});
@@ -340,7 +353,7 @@ export default function CocpitShareModel({
         },
       },
     ];
-  }, [shareUrl, toast, postId, jobId, entityType, entityId]);
+  }, [shareUrl, toast, postId, profileId, effectiveJobId, effectiveEntityType, effectiveEntityId, onShare]);
 
   return (
     <>
@@ -469,15 +482,27 @@ export default function CocpitShareModel({
                 onClick={() => {
                    navigator.clipboard.writeText(shareUrl);
                    toast.success("Link copied!");
-                   if (postId || effectiveJobId || (effectiveEntityType && effectiveEntityId)) {
-                     universalShare({ entityType: (postId ? 'post' : effectiveJobId ? 'job' : effectiveEntityType) as any, entityId: (postId || effectiveJobId || effectiveEntityId) as string, shareMethod: "copy_link" })
+                   if (profileId || entityType === "profile") {
+                     universalShare({ entityType: "profile", entityId: (profileId || effectiveEntityId) as string, shareMethod: "copy_link" })
+                       .then(() => onShare?.(["copy_link"]))
+                       .catch(() => {});
+                   } else if (postId) {
+                     universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" })
+                       .then(() => onShare?.(["copy_link"]))
+                       .catch(() => {});
+                   } else if (effectiveJobId) {
+                     universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" })
+                       .then(() => onShare?.(["copy_link"]))
+                       .catch(() => {});
+                   } else if (effectiveEntityType && effectiveEntityId) {
+                     universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId as string, shareMethod: "copy_link" })
                        .then(() => onShare?.(["copy_link"]))
                        .catch(() => {});
                    }
                 }}
               >
                 <Link className="w-[12px] h-[12px] text-ds-accent" />
-                <span className="text-ds-accent ds-text-small">Copy post link</span>
+                <span className="text-ds-accent ds-text-small">{copyLabel}</span>
               </button>
 
               <div className="flex items-center justify-center gap-[8px] w-full mt-2">

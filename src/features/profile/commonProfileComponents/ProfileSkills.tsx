@@ -54,7 +54,7 @@ export function ProfileSkills({
             <div className="pt-[16px] pb-[16px] flex flex-col gap-[16px]">
                 {/* Header */}
                 <div className="w-full h-[40px] flex items-center justify-between px-4 md:pl-10 md:pr-4">
-                    <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
+                    <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-['DM_Sans']">Skills</h2>
                     {isOwnProfile && onAddSkillClick && (
                         <button
                             onClick={onAddSkillClick}
@@ -108,7 +108,7 @@ export function ProfileSkills({
                             <div className="w-full flex justify-center">
                                 <button
                                     onClick={() => setIsExpanded((prev) => !prev)}
-                                    className="py-[8px] px-[16px] flex justify-center items-center font-normal text-[14px] leading-[20px] text-[#6366F1] font-[family-name:var(--font-poppins)] cursor-pointer"
+                                    className="py-[8px] px-[16px] flex justify-center items-center font-normal text-[14px] leading-[20px] text-[#6366F1] font-['DM_Sans'] cursor-pointer"
                                 >
                                     {isExpanded ? "View less" : "View more"}
                                 </button>

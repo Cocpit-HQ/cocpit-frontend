@@ -31,35 +31,41 @@ export function usePostSync(
         const roomId = postId.toString();
 
         if (manageRoom) {
-            socket.emit('joinPost', { postId: roomId });
+            socket.emit('joinPost', { postId: roomId, post_id: roomId });
         }
 
-        const handleLikeUpdated = (data: { postId: string; liked: boolean; likeCount: number; liker: any }) => {
-            if (data.postId === roomId) {
+        const matchPostId = (data: any) => {
+            if (!data) return false;
+            const incomingId = (data.postId ?? data.post_id ?? data.id)?.toString();
+            return incomingId === roomId;
+        };
+
+        const handleLikeUpdated = (data: any) => {
+            if (matchPostId(data)) {
                 callbacksRef.current.onLikeUpdated?.(data);
             }
         };
 
-        const handleCommentAdded = (data: { postId: string; comment: any }) => {
-            if (data.postId === roomId) {
+        const handleCommentAdded = (data: any) => {
+            if (matchPostId(data)) {
                 callbacksRef.current.onCommentAdded?.(data);
             }
         };
 
-        const handleCommentUpdated = (data: { postId: string; commentId?: string; content?: string; updatedAt?: string; updated_at?: string; isEdited?: boolean; is_edited?: boolean; comment?: any }) => {
-            if (data.postId === roomId) {
+        const handleCommentUpdated = (data: any) => {
+            if (matchPostId(data)) {
                 callbacksRef.current.onCommentUpdated?.(data);
             }
         };
 
-        const handleCommentLikeUpdated = (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => {
-            if (data.postId === roomId) {
+        const handleCommentLikeUpdated = (data: any) => {
+            if (matchPostId(data)) {
                 callbacksRef.current.onCommentLikeUpdated?.(data);
             }
         };
 
-        const handleShareUpdated = (data: { postId: string; externalShareCount: number }) => {
-            if (data.postId === roomId) {
+        const handleShareUpdated = (data: any) => {
+            if (matchPostId(data)) {
                 callbacksRef.current.onShareUpdated?.(data);
             }
         };
@@ -78,7 +84,7 @@ export function usePostSync(
             socket.off('post_share_updated', handleShareUpdated);
 
             if (manageRoom) {
-                socket.emit('leavePost', { postId: roomId });
+                socket.emit('leavePost', { postId: roomId, post_id: roomId });
             }
         };
     }, [socket, postId, manageRoom, enabled]);

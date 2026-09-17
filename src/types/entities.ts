@@ -28,6 +28,7 @@ export interface Experience {
   end_date: string | null;
   is_current: boolean;
   description: string | null;
+  skills?: string[] | any[];
 }
 
 /** Grouped structure returned by backend getExperiences() via groupByCompany() */

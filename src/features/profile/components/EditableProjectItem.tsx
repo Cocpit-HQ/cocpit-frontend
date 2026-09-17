@@ -94,7 +94,7 @@ export function EditableProjectItem({
           <div className="flex flex-col gap-[6px]">
             {/* Title & Mobile Edit Button */}
             <div className="flex justify-between items-start w-full">
-              <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[2px]">
+              <h3 className="text-[16px] leading-[24px] font-medium font-['DM_Sans'] text-foreground mb-[2px]">
                 {project.title}
               </h3>
               {isOwnProfile && onEdit && (
@@ -109,7 +109,7 @@ export function EditableProjectItem({
 
             {/* Details / Description */}
             {project.details && (
-              <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[6px] break-words">
+              <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-foreground mb-[6px] break-words">
                 {displayDescription}
                 {!isDescExpanded && isLongDescription && (
                   <button
@@ -138,7 +138,7 @@ export function EditableProjectItem({
 
             {/* Skills Used */}
             {project.skills && project.skills.length > 0 && (
-              <div className="flex items-center gap-[6px] text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] text-foreground py-[2px]">
+              <div className="flex items-center gap-[6px] text-[12px] leading-[16px] font-['DM_Sans'] text-foreground py-[2px]">
                 <Icon icon="iconoir:light-bulb-on" className="w-[15px] h-[15px] text-black dark:text-white flex-shrink-0" />
                 <span className="flex flex-wrap items-center gap-[12px] break-words font-medium text-black">
                   {project.skills.slice(0, 2).map((skill, idx) => (
@@ -166,7 +166,7 @@ export function EditableProjectItem({
                       e.stopPropagation();
                       onMediaClick?.(item);
                     }}
-                    className="flex items-center gap-[6px] text-[12px] leading-[16px] font-medium font-[family-name:var(--font-poppins)] text-[#6366F1] dark:text-primary cursor-pointer hover:underline"
+                    className="flex items-center gap-[6px] text-[12px] leading-[16px] font-medium font-['DM_Sans'] text-[#6366F1] dark:text-primary cursor-pointer hover:underline"
                   >
                     <Icon icon={getMediaIcon(item.type)} className="w-[15px] h-[15px] text-[#6366F1] dark:text-primary flex-shrink-0" />
                     <span>{item.title || "Attachment"}</span>
@@ -177,14 +177,14 @@ export function EditableProjectItem({
 
             {/* Role in project */}
             {project.role && (
-              <div className="text-[12px] leading-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground mt-[4px]">
+              <div className="text-[12px] leading-[16px] font-medium font-['DM_Sans'] text-foreground mt-[4px]">
                 Role — {project.role}
               </div>
             )}
 
             {/* Role Description */}
             {project.role_description && (
-              <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground mt-[2px] break-words">
+              <p className="text-[12px] leading-[16px] font-normal font-['DM_Sans'] text-muted-foreground mt-[2px] break-words">
                 {project.role_description}
               </p>
             )}
@@ -197,24 +197,24 @@ export function EditableProjectItem({
         <div className="flex flex-col items-start p-0 gap-[8px] md:w-[130px]">
           {formattedStart || formattedEnd ? (
             <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
-              <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+              <span className="md:w-[60px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
                 {formattedStart || "—"}
               </span>
-              <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
+              <span className="md:w-[9px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
                 -
               </span>
-              <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+              <span className="md:w-[75px] md:h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
                 {formattedEnd}
               </span>
             </div>
           ) : null}
           {project.organization && (
-            <div className="w-full break-words font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground">
+            <div className="w-full break-words font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground">
               {project.organization}
             </div>
           )}
           {formattedTeamSize && (
-            <div className="w-full break-words font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground">
+            <div className="w-full break-words font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-muted-foreground">
               {formattedTeamSize}
             </div>
           )}

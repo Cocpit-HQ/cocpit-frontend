@@ -31,7 +31,7 @@ export function ProjectSkillsModal({ isOpen, onClose, projectTitle, skills }: Pr
           </button>
         </div>
 
-        <DialogTitle className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-center text-black mt-2 mb-4">
+        <DialogTitle className="font-['DM_Sans'] font-medium text-[18px] leading-[26px] text-center text-black mt-2 mb-4">
           Skills for {projectTitle.toLowerCase()}
         </DialogTitle>
 
@@ -42,7 +42,7 @@ export function ProjectSkillsModal({ isOpen, onClose, projectTitle, skills }: Pr
               className="w-full flex items-center px-4 bg-white rounded-[24px]"
               style={{ height: '36px' }}
             >
-              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-black">
+              <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-black">
                 {skill}
               </span>
             </div>

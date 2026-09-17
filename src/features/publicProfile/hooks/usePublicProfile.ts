@@ -13,15 +13,20 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
 
     // Flatten all nested experiences across groups
     const flatExperiences = experienceGroups.flatMap((group: any) => {
-        const groupLogo = group.logo_url || null;
-        return (group.experiences || []).map((exp: any) => {
-            const startDate = new Date(exp.start_date);
+        const groupLogo = group.logo_url || group.company_logo || null;
+        const groupName = group.company_name || group.company || '';
+        const innerExps = Array.isArray(group.experiences) && group.experiences.length > 0
+            ? group.experiences
+            : [group];
+
+        return innerExps.map((exp: any) => {
+            const startDate = exp.start_date ? new Date(exp.start_date) : null;
             const endDate = exp.end_date ? new Date(exp.end_date) : null;
 
-            const startMonth = startDate.toLocaleString('default', { month: 'short' });
-            const startYear = startDate.getFullYear();
-            const endMonth = endDate ? endDate.toLocaleString('default', { month: 'short' }) : '';
-            const endYear = endDate ? endDate.getFullYear() : 'Present';
+            const startMonth = startDate && !isNaN(startDate.getTime()) ? startDate.toLocaleString('default', { month: 'short' }) : '';
+            const startYear = startDate && !isNaN(startDate.getTime()) ? startDate.getFullYear() : '';
+            const endMonth = endDate && !isNaN(endDate.getTime()) ? endDate.toLocaleString('default', { month: 'short' }) : '';
+            const endYear = endDate && !isNaN(endDate.getTime()) ? endDate.getFullYear() : 'Present';
 
             let duration = `${startMonth} ${startYear} - `;
             if (endYear === 'Present') {
@@ -34,7 +39,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
                 experience_id: exp.experience_id,
                 profile_id: exp.profile_id || '',
                 title: exp.title,
-                company_name: exp.company_name,
+                company_name: exp.company_name || groupName,
                 start_date: exp.start_date,
                 end_date: exp.end_date,
                 is_current: exp.is_current,
@@ -44,10 +49,10 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
                 location: exp.location,
                 description: exp.description,
                 id: exp.experience_id,
-                company: exp.company_name,
+                company: exp.company_name || groupName,
                 duration,
                 logo_url: exp.logo_url || groupLogo || null,
-                company_logo: exp.company_logo || null,
+                company_logo: exp.company_logo || groupLogo || null,
                 org_id: exp.org_id || null,
             };
         });
