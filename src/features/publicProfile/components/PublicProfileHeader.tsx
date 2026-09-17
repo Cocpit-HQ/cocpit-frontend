@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ProfileIdentityChips } from "@/features/profile/components/ProfileIdentityChips";
 import { CompanyRolesList } from "@/features/profile/components/CompanyRolesList";
 import EditCoverPhoto from "@/features/profile/components/EditCoverPhoto";
+import { ViewMediaModal } from "@/features/profile/commonProfileComponents/ViewMediaModal";
 
 import {
     DropdownMenu,
@@ -72,6 +73,11 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [expImgError, setExpImgError] = useState(false);
     const [eduImgError, setEduImgError] = useState(false);
+    const [mediaModal, setMediaModal] = useState<{
+        isOpen: boolean;
+        type: "avatar" | "banner";
+        url: string;
+    } | null>(null);
 
     const handleLogoutClick = () => {
         if (onLogout) {
@@ -100,7 +106,19 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
     const visibleRoles = user?.company_roles?.filter((r: any) => r.is_role_visible) || [];
 
     const coverContent = (
-        <div className="h-[160px] relative rounded-b-[24px] overflow-hidden">
+        <div
+            className={cn("h-[160px] relative rounded-b-[24px] overflow-hidden", coverImage && "cursor-pointer")}
+            onClick={() => {
+                if (coverImage && typeof window !== "undefined" && window.innerWidth < 768) {
+                    setMediaModal({ isOpen: true, type: "banner", url: coverImage });
+                }
+            }}
+            onDoubleClick={() => {
+                if (coverImage) {
+                    setMediaModal({ isOpen: true, type: "banner", url: coverImage });
+                }
+            }}
+        >
             {coverImage ? (
                 <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
             ) : (
@@ -159,7 +177,20 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                     <div className="relative group ml-[12px] md:ml-[34px]">
                         <div
                             className="w-[98px] h-[98px] relative cursor-pointer"
-                            onClick={onAvatarClick}
+                            onClick={(e) => {
+                                if (typeof window !== "undefined" && window.innerWidth < 768 && hasValidAvatar) {
+                                    e.stopPropagation();
+                                    setMediaModal({ isOpen: true, type: "avatar", url: user.avatar });
+                                    return;
+                                }
+                                onAvatarClick?.();
+                            }}
+                            onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                if (hasValidAvatar) {
+                                    setMediaModal({ isOpen: true, type: "avatar", url: user.avatar });
+                                }
+                            }}
                         >
                             {/* Top Half Border Only */}
                             <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)] z-10" />
@@ -181,8 +212,8 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                         </span>
                                     </div>
                                 ) : (
-                                    <div className="w-full h-full bg-[#EEF2FF] text-[#6366F1] font-light text-[48px] leading-none flex items-center justify-center font-['DM_Sans'] select-none">
-                                        {userInitial}
+                                    <div className="w-full h-full bg-[var(--ds-surface-2)] flex items-center justify-center select-none">
+                                        <UserIcon className="w-10 h-10 text-[var(--ds-text-primary)] flex-none" size={40} />
                                     </div>
                                 )}
                             </div>
@@ -423,6 +454,16 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                     </div>
                 )}
             </div>
+
+            {mediaModal?.isOpen && (
+                <ViewMediaModal
+                    isOpen={mediaModal.isOpen}
+                    onClose={() => setMediaModal(null)}
+                    mediaUrl={mediaModal.url}
+                    type={mediaModal.type}
+                    alt={mediaModal.type === "avatar" ? user?.name || "Profile photo" : "Banner"}
+                />
+            )}
         </div>
     );
 });

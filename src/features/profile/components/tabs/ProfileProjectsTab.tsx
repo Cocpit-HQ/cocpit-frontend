@@ -6,8 +6,9 @@ import {
   EduGraduationIcon,
   ProjectDocIcon,
 } from "@/components/icons";
-import type { Project } from "@/types/entities";
+import type { Project, ProjectMedia } from "@/types/entities";
 import { ProfileProjectsEmptyState, ProfileProjectsErrorState } from "../ProfileEmptyStates";
+import { ProjectDocPreviewModal } from "@/features/profile/commonProfileComponents/ProjectDocPreviewModal";
 
 interface ProfileProjectsTabProps {
   projects: Project[];
@@ -30,6 +31,9 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedSkills, setExpandedSkills] = useState<Record<string, boolean>>({});
+  const [previewDocs, setPreviewDocs] = useState<ProjectMedia[]>([]);
+  const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   const toggleSkills = (id: string) => {
     setExpandedSkills((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -147,12 +151,22 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
                       m.type === "link" ||
                       (m.url && !/\.(jpg|jpeg|png|webp|gif|svg|pdf|doc|docx)$/i.test(m.url))
                   );
-                  const docMedia = mediaList.find(
+                  // All previewable media for this project (documents + images)
+                  const previewMediaList: ProjectMedia[] = mediaList.filter(
                     (m: any) =>
                       m.type === "document" ||
-                      (m.url && /\.(pdf|doc|docx|txt)$/i.test(m.url))
+                      m.type === "image" ||
+                      (m.url && /\.(jpg|jpeg|png|webp|gif|svg|pdf|doc|docx|txt)$/i.test(m.url)) ||
+                      (m.fileUrl && /\.(jpg|jpeg|png|webp|gif|svg|pdf|doc|docx|txt)$/i.test(m.fileUrl))
                   );
-                  const imgMedia = mediaList.find(
+
+                  const docMedias = previewMediaList.filter(
+                    (m: any) =>
+                      m.type === "document" ||
+                      (m.url && /\.(pdf|doc|docx|txt)$/i.test(m.url)) ||
+                      (m.fileUrl && /\.(pdf|doc|docx|txt)$/i.test(m.fileUrl))
+                  );
+                  const imgMedias = previewMediaList.filter(
                     (m: any) =>
                       m.type === "image" ||
                       (m.url && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(m.url)) ||
@@ -160,10 +174,11 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
                   );
 
                   const linkUrl = linkMedia?.url || linkMedia?.fileUrl;
-                  const docUrl = docMedia?.url || docMedia?.fileUrl;
-                  const imgUrl = imgMedia?.url || imgMedia?.fileUrl;
+                  const hasDocs = docMedias.length > 0;
+                  const hasImages = imgMedias.length > 0;
+                  const imgUrl = imgMedias[0]?.url || imgMedias[0]?.fileUrl;
 
-                  const hasAnyMedia = !!(linkUrl || docUrl || imgUrl);
+                  const hasAnyMedia = !!(linkUrl || hasDocs || hasImages);
                   if (!hasAnyMedia) return null;
 
                   return (
@@ -185,31 +200,51 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
                         </a>
                       )}
 
-                      {/* Box 2: Document (only if present) */}
-                      {docUrl && (
-                        <a
-                          href={docUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-20 h-10 bg-[var(--ds-surface-1)] rounded-lg flex flex-col items-center justify-center gap-2.5 overflow-hidden flex-none hover:opacity-80 transition-opacity cursor-pointer"
-                          title={docMedia?.title || "Project document"}
+                      {/* Box 2: Document (single box even if multiple docs, opens modal on click) */}
+                      {hasDocs && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const docIdx = previewMediaList.findIndex((m) =>
+                              docMedias.includes(m)
+                            );
+                            setPreviewDocs(previewMediaList);
+                            setPreviewInitialIndex(docIdx >= 0 ? docIdx : 0);
+                            setIsDocModalOpen(true);
+                          }}
+                          className="w-20 h-10 bg-[var(--ds-surface-1)] rounded-lg flex flex-col items-center justify-center gap-2.5 overflow-hidden flex-none hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
+                          title={docMedias[0]?.title || docMedias[0]?.fileName || "Project document"}
+                          aria-label="View project document"
                         >
                           <ProjectDocIcon className="w-5 h-5 flex-none order-0 text-[var(--ds-text-primary)]" />
-                        </a>
+                        </button>
                       )}
 
-                      {/* Box 3: Image (only if present) */}
-                      {imgUrl && (
-                        <div className="w-20 h-10 bg-[var(--ds-surface-1)] rounded-lg overflow-hidden flex-none flex items-center justify-center">
+                      {/* Box 3: Image (only if present, clicking opens media preview) */}
+                      {hasImages && imgUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const imgIdx = previewMediaList.findIndex((m) =>
+                              imgMedias.includes(m)
+                            );
+                            setPreviewDocs(previewMediaList);
+                            setPreviewInitialIndex(imgIdx >= 0 ? imgIdx : 0);
+                            setIsDocModalOpen(true);
+                          }}
+                          className="w-20 h-10 bg-[var(--ds-surface-1)] rounded-lg overflow-hidden flex-none flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
+                          title={imgMedias[0]?.title || "Project preview"}
+                          aria-label="View project image"
+                        >
                           <img
                             src={imgUrl}
-                            alt={imgMedia?.title || "Project preview"}
+                            alt={imgMedias[0]?.title || "Project preview"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.currentTarget.parentElement?.remove();
                             }}
                           />
-                        </div>
+                        </button>
                       )}
                     </div>
                   );
@@ -250,6 +285,14 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
           {isExpanded ? "View less" : "View more"}
         </button>
       )}
+
+      {/* Full screen Document / Image Preview Modal */}
+      <ProjectDocPreviewModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        documents={previewDocs}
+        initialIndex={previewInitialIndex}
+      />
     </div>
   );
 };

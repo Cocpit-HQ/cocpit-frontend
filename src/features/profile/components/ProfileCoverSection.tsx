@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { AddProfileUserIcon, ProfileEditIcon } from "@/components/icons";
+import { AddProfileUserIcon, ProfileEditIcon, UserIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import { MoreHorizontal } from "lucide-react";
 import { MobileProfileMenuDrawer } from "./drawers/MobileProfileMenuDrawer";
 import type { ProfileScoreBreakdown } from "@/features/profile-score/types/profileScore.types";
 import { getProfileScoreActionLinks, type ProfileScoreActionLink } from "./ProfileScoreCard";
+import { ViewMediaModal } from "../commonProfileComponents/ViewMediaModal";
 
 interface ProfileCoverSectionProps {
   coverImage?: string | null;
@@ -67,6 +68,11 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
   const [avatarError, setAvatarError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mediaModal, setMediaModal] = useState<{
+    isOpen: boolean;
+    type: "avatar" | "banner";
+    url: string;
+  } | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
@@ -146,14 +152,73 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (completionPercentage / 100) * circumference;
 
-  const initialLetter = (userName || "U").trim().charAt(0).toUpperCase();
   const showProgressRing = isOwnProfile && Math.round(completionPercentage) < 100;
+
+  const lastBannerTapRef = useRef<number>(0);
+  const lastAvatarTapRef = useRef<number>(0);
+
+  const handleBannerClick = () => {
+    if (!displayCover) return;
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setMediaModal({ isOpen: true, type: "banner", url: displayCover });
+    }
+  };
+
+  const handleBannerDoubleClick = () => {
+    if (displayCover) {
+      setMediaModal({ isOpen: true, type: "banner", url: displayCover });
+    }
+  };
+
+  const handleBannerTouchEnd = () => {
+    if (!displayCover) return;
+    const now = Date.now();
+    if (now - lastBannerTapRef.current < 350) {
+      setMediaModal({ isOpen: true, type: "banner", url: displayCover });
+      lastBannerTapRef.current = 0;
+    } else {
+      lastBannerTapRef.current = now;
+    }
+  };
+
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    if (!displayAvatar) return;
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      e.stopPropagation();
+      setMediaModal({ isOpen: true, type: "avatar", url: displayAvatar });
+    }
+  };
+
+  const handleAvatarDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (displayAvatar) {
+      setMediaModal({ isOpen: true, type: "avatar", url: displayAvatar });
+    }
+  };
+
+  const handleAvatarTouchEnd = (e: React.TouchEvent) => {
+    if (!displayAvatar) return;
+    const now = Date.now();
+    if (now - lastAvatarTapRef.current < 350) {
+      e.stopPropagation();
+      setMediaModal({ isOpen: true, type: "avatar", url: displayAvatar });
+      lastAvatarTapRef.current = 0;
+    } else {
+      lastAvatarTapRef.current = now;
+    }
+  };
 
   return (
     <div className="w-full max-w-[800px] h-[205px] sm:h-[235px] md:h-[264px] relative select-none">
       {/* Cover Photo Frame (800x200px on desktop, 16:9 responsive on mobile) */}
       <div
-        className="w-full h-[140px] sm:h-[180px] md:h-[200px] rounded-none sm:rounded-[16px] overflow-hidden relative flex flex-col justify-center items-center select-none bg-[var(--ds-surface-1)]"
+        className={cn(
+          "w-full h-[140px] sm:h-[180px] md:h-[200px] rounded-none sm:rounded-[16px] overflow-hidden relative flex flex-col justify-center items-center select-none bg-[var(--ds-surface-1)]",
+          displayCover && "cursor-pointer"
+        )}
+        onClick={handleBannerClick}
+        onTouchEnd={handleBannerTouchEnd}
+        onDoubleClick={handleBannerDoubleClick}
       >
         {displayCover ? (
           <img
@@ -223,7 +288,13 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
             {/* Frame 2609490: Inner Avatar Image */}
             <div
               onMouseEnter={handleMouseLeave}
-              className="w-[76px] h-[76px] md:w-[102px] md:h-[102px] left-[6px] top-[6px] md:left-[7px] md:top-[7px] absolute rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)] z-10"
+              onClick={handleAvatarClick}
+              onTouchEnd={handleAvatarTouchEnd}
+              onDoubleClick={handleAvatarDoubleClick}
+              className={cn(
+                "w-[76px] h-[76px] md:w-[102px] md:h-[102px] left-[6px] top-[6px] md:left-[7px] md:top-[7px] absolute rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)] z-10",
+                displayAvatar && "cursor-pointer"
+              )}
             >
               {displayAvatar ? (
                 <img
@@ -233,9 +304,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                   onError={() => setAvatarError(true)}
                 />
               ) : (
-                <span className="text-[var(--ds-text-primary)] font-bold text-2xl md:text-[32px] md:leading-[40px] font-['DM_Sans'] select-none">
-                  {initialLetter}
-                </span>
+                <UserIcon className="w-10 h-10 text-[var(--ds-text-primary)] flex-none" size={40} />
               )}
             </div>
 
@@ -253,7 +322,13 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
         ) : (
           /* Standalone Avatar Circle */
           <div
-            className="w-[88px] h-[88px] md:w-[116px] md:h-[116px] rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)]"
+            onClick={handleAvatarClick}
+            onTouchEnd={handleAvatarTouchEnd}
+            onDoubleClick={handleAvatarDoubleClick}
+            className={cn(
+              "w-[88px] h-[88px] md:w-[116px] md:h-[116px] rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)]",
+              displayAvatar && "cursor-pointer"
+            )}
           >
             {displayAvatar ? (
               <img
@@ -263,9 +338,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 onError={() => setAvatarError(true)}
               />
             ) : (
-              <span className="text-[var(--ds-text-primary)] font-bold text-2xl md:text-[32px] md:leading-[40px] font-['DM_Sans'] select-none">
-                {initialLetter}
-              </span>
+              <UserIcon className="w-10 h-10 text-[var(--ds-text-primary)] flex-none" size={40} />
             )}
           </div>
         )}
@@ -391,6 +464,17 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
           onContactInfo={() => onContactInfo?.()}
           onShareProfile={handleDefaultShare}
           onDownloadProfile={handleDefaultDownload}
+        />
+      )}
+
+      {/* Full screen view modal for profile photo or banner */}
+      {mediaModal?.isOpen && (
+        <ViewMediaModal
+          isOpen={mediaModal.isOpen}
+          onClose={() => setMediaModal(null)}
+          mediaUrl={mediaModal.url}
+          type={mediaModal.type}
+          alt={mediaModal.type === "avatar" ? userName || "Profile photo" : "Banner"}
         />
       )}
     </div>

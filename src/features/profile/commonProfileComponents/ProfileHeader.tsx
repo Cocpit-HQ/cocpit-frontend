@@ -12,6 +12,7 @@ import { ProfileIdentityChips } from "../components/ProfileIdentityChips";
 import { CompanyRolesList } from "../components/CompanyRolesList";
 import EditCoverPhoto from "../components/EditCoverPhoto";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { ViewMediaModal } from "./ViewMediaModal";
 
 import {
     DropdownMenu,
@@ -82,6 +83,11 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [expImgError, setExpImgError] = useState(false);
     const [eduImgError, setEduImgError] = useState(false);
+    const [mediaModal, setMediaModal] = useState<{
+        isOpen: boolean;
+        type: "avatar" | "banner";
+        url: string;
+    } | null>(null);
 
     const handleLogoutClick = () => {
         if (onLogout) {
@@ -139,7 +145,19 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     const visibleRoles = user?.company_roles?.filter((r: any) => r.is_role_visible) || [];
 
     const coverContent = (
-        <div className="h-[160px] relative rounded-b-[24px] overflow-hidden">
+        <div
+            className={cn("h-[160px] relative rounded-b-[24px] overflow-hidden", coverImage && "cursor-pointer")}
+            onClick={() => {
+                if (coverImage && typeof window !== "undefined" && window.innerWidth < 768) {
+                    setMediaModal({ isOpen: true, type: "banner", url: coverImage });
+                }
+            }}
+            onDoubleClick={() => {
+                if (coverImage) {
+                    setMediaModal({ isOpen: true, type: "banner", url: coverImage });
+                }
+            }}
+        >
             {coverImage ? (
                 <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
             ) : (
@@ -198,7 +216,20 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                     <div className="relative group ml-[12px] md:ml-[34px]">
                         <div
                             className="w-[98px] h-[98px] relative cursor-pointer"
-                            onClick={onAvatarClick}
+                            onClick={(e) => {
+                                if (typeof window !== "undefined" && window.innerWidth < 768 && hasValidAvatar) {
+                                    e.stopPropagation();
+                                    setMediaModal({ isOpen: true, type: "avatar", url: user.avatar });
+                                    return;
+                                }
+                                onAvatarClick?.();
+                            }}
+                            onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                if (hasValidAvatar) {
+                                    setMediaModal({ isOpen: true, type: "avatar", url: user.avatar });
+                                }
+                            }}
                         >
                             {/* Top Half Border Only */}
                             <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)]" />
@@ -568,6 +599,16 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                     </div>
                 </div>
             </div>
+
+            {mediaModal?.isOpen && (
+                <ViewMediaModal
+                    isOpen={mediaModal.isOpen}
+                    onClose={() => setMediaModal(null)}
+                    mediaUrl={mediaModal.url}
+                    type={mediaModal.type}
+                    alt={mediaModal.type === "avatar" ? user?.name || "Profile photo" : "Banner"}
+                />
+            )}
         </div>
     );
 });
