@@ -623,7 +623,7 @@ export function EditPostModal({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onPaste={handlePaste}
-        className="fixed inset-0 z-[150] flex flex-col items-center justify-start overflow-y-auto font-dm-sans"
+        className="fixed inset-0 z-[150] flex flex-col items-center justify-between overflow-hidden font-dm-sans"
         style={{
           backgroundColor: 'var(--ds-bg)',
           color: 'var(--ds-text-primary)',
@@ -659,335 +659,341 @@ export function EditPostModal({
           <CocpitLogoIcon className="w-7 h-7" fill="#FFFFFF" />
         </div>
 
-        {/* Main Edit Post Section (Figma: width 371px, top 60px, gap 20px) */}
-        <section className="relative z-[155] w-[371px] max-w-full mx-auto pt-[60px] pb-[60px] px-4 sm:px-0 flex flex-col items-start gap-[20px]">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 w-full">
-              <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--ds-accent)' }} />
-              <p className="mt-3 text-sm" style={{ color: 'var(--ds-text-muted)' }}>Loading post...</p>
-            </div>
-          ) : (
-            <>
-              {/* Author Header (Figma: 371x32, gap 8, avatar 32x32 rounded-full, DM Sans 16px/24px) */}
-              <div className="flex h-[32px] w-[371px] max-w-full shrink-0 flex-row items-center gap-[40px]">
-                <div className="flex h-[32px] shrink-0 flex-row items-center gap-[8px]">
-                  {displayAvatar ? (
-                    <img
-                      src={displayAvatar}
-                      alt={displayName}
-                      className="h-[32px] w-[32px] shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="h-[32px] w-[32px] shrink-0 rounded-full flex items-center justify-center text-sm font-medium"
-                      style={{
-                        backgroundColor: 'var(--ds-surface-2)',
-                        color: 'var(--ds-text-primary)',
-                      }}
-                    >
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <span
-                    className="h-[24px] shrink-0 font-dm-sans text-[16px] font-normal leading-[24px]"
-                    style={{ color: 'var(--ds-text-primary)' }}
-                  >
-                    {displayName}
-                  </span>
-                </div>
+        {/* Scrollable Main Edit Post Body (Fix: Keep Save bar fixed at bottom while post content scrolls and hide visible scrollbar track) */}
+        <div className="flex-1 w-full overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col items-center pt-[60px] pb-[24px]">
+          <section className="relative z-[155] w-[371px] max-w-full mx-auto px-4 sm:px-0 flex flex-col items-start gap-[20px]">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 w-full">
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--ds-accent)' }} />
+                <p className="mt-3 text-sm" style={{ color: 'var(--ds-text-muted)' }}>Loading post...</p>
               </div>
-
-              {/* Post Text (Figma: width 371px, min-h 96px, font 16px, line-height 24px, #FFECE6) */}
-              {postType !== 'poll' && (
-                <div className="w-[371px] max-w-full shrink-0 flex flex-col">
-                  <div className="w-full relative">
-                    <MentionTextarea
-                      ref={textareaRef}
-                      value={description}
-                      onChange={(e: any) => setDescription(e.target.value)}
-                      onMentionsChange={setInlineMentions}
-                      initialMentions={inlineMentions}
-                      placeholder="What's on your mind?"
-                      rows={1}
-                      className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
-                      style={{
-                        color: 'var(--ds-text-primary)',
-                        caretColor: 'var(--ds-accent)',
-                      }}
-                    />
+            ) : (
+              <>
+                {/* Author Header (Figma: 371x32, gap 8, avatar 32x32 rounded-full, DM Sans 16px/24px) */}
+                <div className="flex h-[32px] w-[371px] max-w-full shrink-0 flex-row items-center gap-[40px]">
+                  <div className="flex h-[32px] shrink-0 flex-row items-center gap-[8px]">
+                    {displayAvatar ? (
+                      <img
+                        src={displayAvatar}
+                        alt={displayName}
+                        className="h-[32px] w-[32px] shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="h-[32px] w-[32px] shrink-0 rounded-full flex items-center justify-center text-sm font-medium"
+                        style={{
+                          backgroundColor: 'var(--ds-surface-2)',
+                          color: 'var(--ds-text-primary)',
+                        }}
+                      >
+                        {displayName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span
+                      className="h-[24px] shrink-0 font-dm-sans text-[16px] font-normal leading-[24px]"
+                      style={{ color: 'var(--ds-text-primary)' }}
+                    >
+                      {displayName}
+                    </span>
                   </div>
                 </div>
-              )}
 
-              {/* Poll Creator Mode */}
-              {postType === 'poll' && (
-                <div className="w-[371px] max-w-full flex flex-col gap-4">
-                  <div className="w-full">
-                    <input
-                      type="text"
-                      value={poll.pollQuestion}
-                      onChange={(e) => poll.setPollQuestion(e.target.value)}
-                      placeholder="Ask your network..."
-                      className="w-full bg-transparent border-b pb-2.5 text-[15px] outline-none transition-colors"
-                      style={{
-                        borderColor: 'var(--ds-border)',
-                        color: 'var(--ds-text-primary)',
-                      }}
-                    />
+                {/* Post Text (Figma: width 371px, min-h 96px, font 16px, line-height 24px, #FFECE6) */}
+                {postType !== 'poll' && (
+                  <div className="w-[371px] max-w-full shrink-0 flex flex-col">
+                    <div className="w-full relative">
+                      <MentionTextarea
+                        ref={textareaRef}
+                        value={description}
+                        onChange={(e: any) => setDescription(e.target.value)}
+                        onMentionsChange={setInlineMentions}
+                        initialMentions={inlineMentions}
+                        placeholder="What's on your mind?"
+                        rows={1}
+                        className="w-full bg-transparent font-dm-sans font-normal text-[16px] leading-[24px] resize-none border-none outline-none whitespace-pre-wrap p-0 focus:ring-0 focus:outline-none focus-visible:ring-0"
+                        style={{
+                          color: 'var(--ds-text-primary)',
+                          caretColor: 'var(--ds-accent)',
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full flex flex-col gap-3">
-                    {poll.pollOptions.map((opt, index) => {
-                      const letter = ['A', 'B', 'C', 'D', 'E', 'F'][index] || `${index + 1}`;
-                      return (
-                        <div key={opt.id} className="relative flex items-center w-full">
-                          <input
-                            type="text"
-                            value={opt.text}
-                            onChange={(e) => poll.updatePollOption(opt.id, e.target.value)}
-                            placeholder={`Option ${letter}`}
-                            className="w-full bg-transparent border-b pb-2.5 pr-8 text-[14px] outline-none transition-colors"
-                            style={{
-                              borderColor: 'var(--ds-border)',
-                              color: 'var(--ds-text-primary)',
-                            }}
-                          />
-                          {poll.pollOptions.length > 2 && index >= 2 && (
-                            <button
-                              type="button"
-                              onClick={() => poll.removePollOption(opt.id)}
-                              className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:opacity-80 cursor-pointer transition-colors outline-none"
-                              style={{ color: 'var(--ds-text-muted)' }}
-                              title="Remove option"
-                              aria-label="Remove option"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {poll.pollOptions.length < 6 && (
-                      <button
-                        type="button"
-                        onClick={poll.addPollOption}
-                        className="w-fit h-[32px] px-3 rounded-full border text-[13px] flex items-center gap-1.5 transition-colors cursor-pointer outline-none hover:opacity-80"
+                )}
+
+                {/* Poll Creator Mode */}
+                {postType === 'poll' && (
+                  <div className="w-[371px] max-w-full flex flex-col gap-4">
+                    <div className="w-full">
+                      <input
+                        type="text"
+                        value={poll.pollQuestion}
+                        onChange={(e) => poll.setPollQuestion(e.target.value)}
+                        placeholder="Ask your network..."
+                        className="w-full bg-transparent border-b pb-2.5 text-[15px] outline-none transition-colors"
                         style={{
                           borderColor: 'var(--ds-border)',
                           color: 'var(--ds-text-primary)',
                         }}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add option
-                      </button>
-                    )}
+                      />
+                    </div>
+                    <div className="w-full flex flex-col gap-3">
+                      {poll.pollOptions.map((opt, index) => {
+                        const letter = ['A', 'B', 'C', 'D', 'E', 'F'][index] || `${index + 1}`;
+                        return (
+                          <div key={opt.id} className="relative flex items-center w-full">
+                            <input
+                              type="text"
+                              value={opt.text}
+                              onChange={(e) => poll.updatePollOption(opt.id, e.target.value)}
+                              placeholder={`Option ${letter}`}
+                              className="w-full bg-transparent border-b pb-2.5 pr-8 text-[14px] outline-none transition-colors"
+                              style={{
+                                borderColor: 'var(--ds-border)',
+                                color: 'var(--ds-text-primary)',
+                              }}
+                            />
+                            {poll.pollOptions.length > 2 && index >= 2 && (
+                              <button
+                                type="button"
+                                onClick={() => poll.removePollOption(opt.id)}
+                                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:opacity-80 cursor-pointer transition-colors outline-none"
+                                style={{ color: 'var(--ds-text-muted)' }}
+                                title="Remove option"
+                                aria-label="Remove option"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {poll.pollOptions.length < 6 && (
+                        <button
+                          type="button"
+                          onClick={poll.addPollOption}
+                          className="w-fit h-[32px] px-3 rounded-full border text-[13px] flex items-center gap-1.5 transition-colors cursor-pointer outline-none hover:opacity-80"
+                          style={{
+                            borderColor: 'var(--ds-border)',
+                            color: 'var(--ds-text-primary)',
+                          }}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Add option
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Shared Repost Preview */}
-              {sharedPost && (
-                <div className="relative w-[371px] max-w-full">
-                  <SharedPreview
-                    sharedPost={sharedPost}
-                    sharedPostId={sharedPost.id?.toString() || (sharedPost as any).post_id?.toString() || originalPost?.shared_post_id?.toString()}
-                    isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false}
-                    disableNavigation
-                  />
-                </div>
-              )}
+                {/* Shared Repost Preview */}
+                {sharedPost && (
+                  <div className="relative w-[371px] max-w-full">
+                    <SharedPreview
+                      sharedPost={sharedPost}
+                      sharedPostId={sharedPost.id?.toString() || (sharedPost as any).post_id?.toString() || originalPost?.shared_post_id?.toString()}
+                      isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false}
+                      disableNavigation
+                    />
+                  </div>
+                )}
 
-              {/* Attached Single Image Preview (Figma: 371x332, radius 8px, remove btn 32x32 #1A1A20) */}
-              {selectedImages.length === 1 && (
-                <div
-                  className="relative h-[332px] w-[371px] max-w-full shrink-0 overflow-hidden rounded-[8px]"
-                  style={{
-                    borderRadius: 'var(--radius-card-new, 8px)',
-                    backgroundColor: 'var(--ds-surface-1)',
-                  }}
-                >
-                  <img
-                    src={selectedImages[0].previewUrl}
-                    alt="Post media"
-                    className="block h-full w-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(selectedImages[0].id)}
-                    aria-label="Remove photo"
-                    className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[var(--ds-surface-1)] hover:brightness-110 rounded-full transition-colors z-30 shadow-md cursor-pointer outline-none"
+                {/* Attached Single Image Preview (Figma: 371x332, radius 8px, remove btn 32x32 #1A1A20) */}
+                {selectedImages.length === 1 && (
+                  <div
+                    className="relative h-[332px] w-[371px] max-w-full shrink-0 overflow-hidden rounded-[8px]"
+                    style={{
+                      borderRadius: 'var(--radius-card-new, 8px)',
+                      backgroundColor: 'var(--ds-surface-1)',
+                    }}
                   >
-                    <X className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
-                  </button>
-                </div>
-              )}
-
-              {/* Attached Multiple Images Preview (Same as Post Creator: ComposerImagePreview) */}
-              {selectedImages.length > 1 && (
-                <div className="w-[371px] max-w-full overflow-visible">
-                  <ComposerImagePreview
-                    images={selectedImages}
-                    onRemoveImage={handleRemoveImage}
-                    onReorderImages={handleReorderImages}
-                    isEditMode={false}
-                  />
-                </div>
-              )}
-
-              {/* ── Attached media limit inline message ─ */}
-              {selectedImages.length >= MAX_COMPOSER_IMAGES && (
-                <div className="w-[371px] max-w-full mt-[4px]">
-                  <span className="font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-[#E5484D]">
-                    Attached media limit reached({MAX_COMPOSER_IMAGES}/{MAX_COMPOSER_IMAGES})
-                  </span>
-                </div>
-              )}
-
-              {/* Attached Video Preview (Matching FeedComposerInline) */}
-              {selectedVideo && (
-                <div className="relative w-[371px] max-w-full rounded-[16px] overflow-hidden group">
-                  <PostVideoCard
-                    videoSrc={selectedVideo.previewUrl}
-                    author={displayName || 'Author'}
-                    authorAvatar={displayAvatar}
-                    authorRole={''}
-                    content=""
-                    showHeader={false}
-                    showFooter={false}
-                    isPreview={false}
-                    isMe={true}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRemoveVideo}
-                    className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
-                    title="Remove video"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Add Location (Figma: width 96px, height 24px, text 16px medium #EC6229) */}
-              <div className="w-[371px] max-w-full shrink-0">
-                {selectedLocation ? (
-                  <div className="flex items-center gap-2 text-[14px] font-dm-sans">
-                    <span
-                      className="truncate max-w-[280px]"
-                      style={{ color: 'var(--ds-text-primary)' }}
-                    >
-                      {'formattedAddress' in selectedLocation
-                        ? selectedLocation.formattedAddress
-                        : selectedLocation.name}
-                    </span>
-                    <span
-                      className="w-1 h-1 rounded-full shrink-0"
-                      style={{ backgroundColor: 'var(--ds-text-muted)' }}
+                    <img
+                      src={selectedImages[0].previewUrl}
+                      alt="Post media"
+                      className="block h-full w-full object-cover"
                     />
                     <button
                       type="button"
-                      onClick={() => setSelectedLocation(null)}
-                      className="hover:opacity-80 cursor-pointer font-medium font-dm-sans"
-                      style={{ color: 'var(--ds-error, #E5484D)' }}
+                      onClick={() => handleRemoveImage(selectedImages[0].id)}
+                      aria-label="Remove photo"
+                      className="absolute top-[8px] right-[8px] w-[32px] h-[32px] flex items-center justify-center bg-[var(--ds-surface-1)] hover:brightness-110 rounded-full transition-colors z-30 shadow-md cursor-pointer outline-none"
                     >
-                      Remove
+                      <X className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
                     </button>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowLocationSelector(true)}
-                    className="h-[24px] shrink-0 p-0 text-left font-dm-sans text-[16px] font-medium leading-[24px] hover:opacity-85 cursor-pointer outline-none transition-opacity"
-                    style={{ color: 'var(--ds-accent)' }}
-                  >
-                    Add location
-                  </button>
                 )}
-              </div>
 
-              {/* Bottom Action Row (Figma: 371x38, justify-between, gap 16) */}
-              <div className="flex h-[38px] w-[371px] max-w-full shrink-0 flex-row items-center justify-between gap-[16px]">
-                {/* Hidden File Input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={
-                    selectedImages.length > 0 
-                      ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif" 
-                      : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
-                  }
-                  multiple
-                  onChange={handleFilesChosen}
-                  className="hidden"
-                />
+                {/* Attached Multiple Images Preview (Same as Post Creator: ComposerImagePreview) */}
+                {selectedImages.length > 1 && (
+                  <div className="w-[371px] max-w-full overflow-visible">
+                    <ComposerImagePreview
+                      images={selectedImages}
+                      onRemoveImage={handleRemoveImage}
+                      onReorderImages={handleReorderImages}
+                      isEditMode={false}
+                    />
+                  </div>
+                )}
 
-                {/* Media Button (Figma: 94x38, border #2C2C33, rounded-full, px 12 py 8, text 14px #FFECE6) */}
-                <div className="flex h-[38px] w-[94px] shrink-0 items-center gap-[12px]">
-                  <button
-                    type="button"
-                    onClick={handleMediaClick}
-                    disabled={isMediaDisabled}
-                    title={mediaButtonTitle}
-                    aria-label={mediaButtonTitle}
-                    className={`box-border flex h-[38px] w-[94px] shrink-0 flex-row items-center gap-[8px] rounded-full border px-[12px] py-[8px] transition-opacity outline-none ${
-                      isMediaDisabled
-                        ? 'opacity-40 cursor-not-allowed pointer-events-none'
-                        : 'hover:opacity-85 cursor-pointer'
-                    }`}
-                    style={{
-                      borderColor: 'var(--ds-border)',
-                    }}
-                  >
-                    <Plus className="w-[16px] h-[16px]" color="var(--ds-text-primary)" />
-                    <span
-                      className="text-[14px] font-medium leading-[20px] font-dmsans shrink-0"
-                      style={{ color: 'var(--ds-text-primary)' }}
-                    >
-                      Media
+                {/* ── Attached media limit inline message ─ */}
+                {selectedImages.length >= MAX_COMPOSER_IMAGES && (
+                  <div className="w-[371px] max-w-full mt-[4px]">
+                    <span className="font-['DM_Sans'] font-medium text-[10px] leading-[12px] text-[#E5484D]">
+                      Attached media limit reached({MAX_COMPOSER_IMAGES}/{MAX_COMPOSER_IMAGES})
                     </span>
-                  </button>
-                </div>
+                  </div>
+                )}
 
-                {/* Save + Delete (Figma: container 162x36, gap 8) */}
-                <div className="flex h-[36px] w-[162px] shrink-0 flex-row items-center gap-[8px]">
-                  {/* Save Button (Figma: 77x36, rounded-full, bg #EC6229, text 16px medium #FFECE6) */}
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSubmitting || !canSave}
-                    className="flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-90 active:scale-95"
-                    style={{
-                      backgroundColor: 'var(--ds-accent)',
-                      color: 'var(--ds-text-primary)',
-                    }}
-                  >
-                    {isSubmitting ? (
-                      <Loader2
-                        className="w-4 h-4 animate-spin"
+                {/* Attached Video Preview (Matching FeedComposerInline) */}
+                {selectedVideo && (
+                  <div className="relative w-[371px] max-w-full rounded-[16px] overflow-hidden group">
+                    <PostVideoCard
+                      videoSrc={selectedVideo.previewUrl}
+                      author={displayName || 'Author'}
+                      authorAvatar={displayAvatar}
+                      authorRole={''}
+                      content=""
+                      showHeader={false}
+                      showFooter={false}
+                      isPreview={false}
+                      isMe={true}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveVideo}
+                      className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
+                      title="Remove video"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Add Location (Figma: width 96px, height 24px, text 16px medium #EC6229) */}
+                <div className="w-[371px] max-w-full shrink-0">
+                  {selectedLocation ? (
+                    <div className="flex items-center gap-2 text-[14px] font-dm-sans">
+                      <span
+                        className="truncate max-w-[280px]"
                         style={{ color: 'var(--ds-text-primary)' }}
+                      >
+                        {'formattedAddress' in selectedLocation
+                          ? selectedLocation.formattedAddress
+                          : selectedLocation.name}
+                      </span>
+                      <span
+                        className="w-1 h-1 rounded-full shrink-0"
+                        style={{ backgroundColor: 'var(--ds-text-muted)' }}
                       />
-                    ) : (
-                      'Save'
-                    )}
-                  </button>
-
-                  {/* Delete Button (Figma: 77x36, rounded-full, border #2C2C33, text 16px medium #FFECE6) */}
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    disabled={isSubmitting}
-                    className="box-border flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full border px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-85"
-                    style={{
-                      borderColor: 'var(--ds-border)',
-                      color: 'var(--ds-text-primary)',
-                    }}
-                  >
-                    Delete
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLocation(null)}
+                        className="hover:opacity-80 cursor-pointer font-medium font-dm-sans"
+                        style={{ color: 'var(--ds-error, #E5484D)' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowLocationSelector(true)}
+                      className="h-[24px] shrink-0 p-0 text-left font-dm-sans text-[16px] font-medium leading-[24px] hover:opacity-85 cursor-pointer outline-none transition-opacity"
+                      style={{ color: 'var(--ds-accent)' }}
+                    >
+                      Add location
+                    </button>
+                  )}
                 </div>
+              </>
+            )}
+          </section>
+        </div>
+
+        {/* Fixed Bottom Action Row (Fix: Keep Save bar fixed at the bottom of the screen consistent with Create Post UI) */}
+        {!isLoading && (
+          <div className="shrink-0 w-full flex flex-col items-center justify-center pb-[24px] pt-[12px] bg-[var(--ds-bg)] z-[155]">
+            <div className="flex h-[38px] w-[371px] max-w-full shrink-0 flex-row items-center justify-between gap-[16px] px-4 sm:px-0">
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={
+                  selectedImages.length > 0 
+                    ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif" 
+                    : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
+                }
+                multiple
+                onChange={handleFilesChosen}
+                className="hidden"
+              />
+
+              {/* Media Button (Figma: 94x38, border #2C2C33, rounded-full, px 12 py 8, text 14px #FFECE6) */}
+              <div className="flex h-[38px] w-[94px] shrink-0 items-center gap-[12px]">
+                <button
+                  type="button"
+                  onClick={handleMediaClick}
+                  disabled={isMediaDisabled}
+                  title={mediaButtonTitle}
+                  aria-label={mediaButtonTitle}
+                  className={`box-border flex h-[38px] w-[94px] shrink-0 flex-row items-center gap-[8px] rounded-full border px-[12px] py-[8px] transition-opacity outline-none ${
+                    isMediaDisabled
+                      ? 'opacity-40 cursor-not-allowed pointer-events-none'
+                      : 'hover:opacity-85 cursor-pointer'
+                  }`}
+                  style={{
+                    borderColor: 'var(--ds-border)',
+                  }}
+                >
+                  <Plus className="w-[16px] h-[16px]" color="var(--ds-text-primary)" />
+                  <span
+                    className="text-[14px] font-medium leading-[20px] font-dmsans shrink-0"
+                    style={{ color: 'var(--ds-text-primary)' }}
+                  >
+                    Media
+                  </span>
+                </button>
               </div>
-            </>
-          )}
-        </section>
+
+              {/* Save + Delete (Figma: container 162x36, gap 8) */}
+              <div className="flex h-[36px] w-[162px] shrink-0 flex-row items-center gap-[8px]">
+                {/* Save Button (Figma: 77x36, rounded-full, bg #EC6229, text 16px medium #FFECE6) */}
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSubmitting || !canSave}
+                  className="flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-90 active:scale-95"
+                  style={{
+                    backgroundColor: 'var(--ds-accent)',
+                    color: 'var(--ds-text-primary)',
+                  }}
+                >
+                  {isSubmitting ? (
+                    <Loader2
+                      className="w-4 h-4 animate-spin"
+                      style={{ color: 'var(--ds-text-primary)' }}
+                    />
+                  ) : (
+                    'Save'
+                  )}
+                </button>
+
+                {/* Delete Button (Figma: 77x36, rounded-full, border #2C2C33, text 16px medium #FFECE6) */}
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  disabled={isSubmitting}
+                  className="box-border flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full border px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-85"
+                  style={{
+                    borderColor: 'var(--ds-border)',
+                    color: 'var(--ds-text-primary)',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Location Selector Dialog */}

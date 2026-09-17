@@ -905,6 +905,7 @@ export const HomeHeader = () => {
                                 <div className="relative">
                                     <Bell width={24} height={24} strokeWidth={1.5} />
                                     {unreadNotificationsCount > 0 && (
+                                        /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
                                         <span 
                                             style={{
                                                 position: 'absolute',
@@ -912,7 +913,7 @@ export const HomeHeader = () => {
                                                 height: '6px',
                                                 left: '19px',
                                                 top: '-3px',
-                                                backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
+                                                backgroundColor: isCompany ? '#1A73E8' : '#EC6229',
                                                 borderRadius: '50%'
                                             }}
                                         />
@@ -1203,6 +1204,7 @@ export const HomeHeader = () => {
                                 <div className="relative">
                                     <Bell className="w-5 h-5" />
                                     {unreadNotificationsCount > 0 && (
+                                        /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
                                         <span 
                                             style={{
                                                 position: 'absolute',
@@ -1210,7 +1212,7 @@ export const HomeHeader = () => {
                                                 height: '6px',
                                                 left: '16px',
                                                 top: '-3px',
-                                                backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
+                                                backgroundColor: isCompany ? '#1A73E8' : '#EC6229',
                                                 borderRadius: '50%'
                                             }}
                                         />

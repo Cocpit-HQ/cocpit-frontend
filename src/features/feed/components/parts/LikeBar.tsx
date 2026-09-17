@@ -62,7 +62,8 @@ export const LikeBar: React.FC<LikeBarProps> = ({
     >
       <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary flex items-center gap-[3px] truncate">
         <span>Liked by</span>{' '}
-        <span className="font-semibold text-ds-text-primary hover:underline max-w-[100px] truncate inline-block align-bottom">
+        {/* Bug fix: Removed underline styling from liker display name in feed */}
+        <span className="font-semibold text-ds-text-primary max-w-[100px] truncate inline-block align-bottom">
           {firstName}
         </span>
         {otherCount > 0 && (

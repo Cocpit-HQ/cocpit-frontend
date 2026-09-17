@@ -453,7 +453,8 @@ export function NotificationPopover({
           <div className="relative inline-flex">
             {icon}
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#6366F1] rounded-full border-background" />
+              /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[var(--ds-accent)] rounded-full border-background" />
             )}
           </div>
         </button>

@@ -71,7 +71,8 @@ export function AppShell({
           <MobileBottomNav />
         </>
       )}
-      {!isDistractionFree && <QuickChatWidget />}
+      {/* Quick Chat removed/hidden for UAT environment */}
+      {/* {!isDistractionFree && <QuickChatWidget />} */}
     </div>
   );
 }

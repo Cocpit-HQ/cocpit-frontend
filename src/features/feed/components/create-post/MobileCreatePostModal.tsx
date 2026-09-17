@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
-import { X, Image as ImageIcon, BarChart3, Loader2, ChevronDown } from 'lucide-react';
+import { X, Image as ImageIcon, BarChart3, Loader2, Loader, ChevronDown } from 'lucide-react';
 import { useCreatePostForm } from '../../hooks/use-create-post-form';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
@@ -375,13 +375,23 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
               >
                 Cancel
               </button>
+              {/* Bug Fix: Post button upload loading state matches Figma design (w-77px, h-36px, ds-surface-1, 24x24 ds-text-secondary loader) */}
               <button 
                 onClick={() => actions.handlePost()}
                 disabled={!isPostEnabled || state.isSubmitting}
-                className={`ds-btn h-[36px] ${isPostEnabled ? 'bg-[var(--ds-accent)] hover:opacity-90 text-white' : 'bg-ds-surface-2 text-ds-text-muted opacity-50 cursor-not-allowed'} rounded-full px-5 py-1.5 font-medium flex items-center gap-2 transition-all`}
+                className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans transition-all ${
+                  state.isSubmitting
+                    ? 'bg-ds-surface-1 border-none cursor-default'
+                    : isPostEnabled
+                    ? 'bg-[var(--ds-accent)] hover:opacity-90 text-white cursor-pointer'
+                    : 'bg-ds-surface-2 text-ds-text-muted opacity-50 cursor-not-allowed'
+                }`}
               >
-                {state.isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editPostId ? 'Save' : 'Post'}
+                {state.isSubmitting ? (
+                  <Loader className="w-[24px] h-[24px] text-ds-text-secondary animate-spin" />
+                ) : (
+                  editPostId ? 'Save' : 'Post'
+                )}
               </button>
             </div>
           </div>

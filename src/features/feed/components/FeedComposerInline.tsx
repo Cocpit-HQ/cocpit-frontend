@@ -11,7 +11,7 @@ import { sanitizeContent } from '@/lib/contentSanitizer';
 import { formatMentionsForBackend } from '@/lib/mentions';
 import { UserMention } from '@/services/api/users';
 import { toast } from 'sonner';
-import { X, Plus, ChevronDown, Search } from 'lucide-react';
+import { X, Plus, ChevronDown, Search, Loader } from 'lucide-react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
@@ -1066,17 +1066,24 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
               {/* Action Buttons: Post + Cancel */}
               <div className="flex items-center gap-[12px] ml-auto">
+                {/* Bug Fix: Post button upload loading state matches Figma design (w-77px, h-36px, ds-surface-1, 24x24 ds-text-secondary loader) */}
                 <button
                   onClick={handlePost}
                   disabled={!canPost || isSubmitting}
                   className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${
-                    canPost && !isSubmitting
+                    isSubmitting
+                      ? 'bg-ds-surface-1 border-none cursor-default'
+                      : canPost
                       ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
                       : 'bg-ds-surface-1 text-ds-text-muted pointer-events-none cursor-default'
                   }`}
                   aria-label="Publish post"
                 >
-                  {isSubmitting ? 'Posting...' : 'Post'}
+                  {isSubmitting ? (
+                    <Loader className="w-[24px] h-[24px] text-ds-text-secondary animate-spin" />
+                  ) : (
+                    'Post'
+                  )}
                 </button>
 
                 {canCancel && (

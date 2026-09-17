@@ -327,6 +327,83 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
         setTimeout(handleScroll, 0);
     };
 
+    // Position cursor at the end of pasted content and process inline mention markers or triggers on paste
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        if (props.onPaste) {
+            props.onPaste(e);
+        }
+        if (e.defaultPrevented) return;
+
+        const pastedText = e.clipboardData?.getData('text/plain');
+        if (!pastedText) return;
+
+        const el = textareaRef.current;
+        const start = el ? el.selectionStart : value.length;
+        const end = el ? el.selectionEnd : value.length;
+
+        let insertedText = pastedText;
+        let newMentions: UserMention[] = [];
+
+        if (/@\[([^\]]+)\]\(([^)]+)\)/.test(pastedText)) {
+            const { content: parsedContent, inlineMentions: parsedMentions } = parseMentionsForFrontend(pastedText);
+            insertedText = parsedContent;
+            newMentions = parsedMentions;
+        }
+
+        e.preventDefault();
+
+        const textBefore = value.substring(0, start);
+        const textAfter = value.substring(end);
+        const newValue = textBefore + insertedText + textAfter;
+
+        if (newMentions.length > 0) {
+            setSelectedUsers(prev => {
+                const combined = [...prev];
+                newMentions.forEach(pm => {
+                    if (!combined.some(u => u.full_name === pm.full_name || u.account_name === pm.account_name)) {
+                        combined.push(pm);
+                    }
+                });
+                return combined;
+            });
+            setMentionedNames(prev => Array.from(new Set([...prev, ...newMentions.map(u => u.full_name)])));
+            if (onMentionsChange) {
+                onMentionsChange([...selectedUsers, ...newMentions]);
+            }
+        }
+
+        const newCursorPos = start + insertedText.length;
+
+        const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+        onChange(event);
+
+        setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                textareaRef.current.focus();
+                adjustHeight();
+
+                const textBeforeCursor = newValue.substring(0, newCursorPos);
+                const mentionMatch = textBeforeCursor.match(/(?:^|[\s\u200B])@([a-zA-Z0-9_]*)$/);
+                const hashtagMatch = textBeforeCursor.match(/(?:^|[\s\u200B])#([a-zA-Z0-9_]*)$/);
+
+                if (mentionMatch || hashtagMatch) {
+                    const nextMode = mentionMatch ? 'mention' : 'hashtag';
+                    const triggerPos = newCursorPos - (mentionMatch ? mentionMatch[1].length : hashtagMatch![1].length);
+                    const coords = getCaretCoordinates(textareaRef.current, triggerPos);
+                    setSuggestionPosition(coords);
+                    setQuery(mentionMatch ? mentionMatch[1] : hashtagMatch![1]);
+                    setMode(nextMode);
+                    setShowSuggestions(true);
+                } else {
+                    setShowSuggestions(false);
+                    setMode(null);
+                    setQuery('');
+                }
+            }
+        }, 0);
+    };
+
     const selectUser = (user: UserMention, format: 'account' | 'full' = 'account') => {
         const el = textareaRef.current;
         if (!el) return;
@@ -429,7 +506,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                         return (
                             <span 
                                 key={i} 
-                                className="hashtag-token text-[var(--ds-text-primary)] !text-[var(--ds-text-primary)] font-semibold"
+                                className="hashtag-token text-[var(--ds-text-primary)] !text-[var(--ds-text-primary)]"
                                 style={{ color: 'var(--ds-text-primary)' }}
                             >
                                 {part}
@@ -609,6 +686,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                         }
                     }}
                     onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                     className={cn(
                         "w-full resize-none overflow-hidden bg-transparent outline-none relative z-10 selection:bg-[var(--primary)] selection:text-white dark:selection:text-white mention-textarea-input",
                         value.length > 0 ? "!text-transparent" : "text-ds-text-primary",
