@@ -110,9 +110,9 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         following_count: user.following_count || 0,
         connections_count: user.connections_count || 0,
         identity: {
-            openTo: (Array.isArray(user.open_to) ? user.open_to[0] : user.open_to) as any || 'Full-time',
-            availability: user.availability as any || 'Casual Networking',
-            workPreference: user.work_preference as any || 'Onsite',
+            openTo: (Array.isArray(user.open_to) ? user.open_to[0] : user.open_to) || undefined,
+            availability: (user.availability as any) || undefined,
+            workPreference: (user.work_preference as any) || undefined,
         },
         is_following: user.is_following,
         is_followed_by: user.is_followed_by,
@@ -150,7 +150,7 @@ export function useProfilePosts(userId: string) {
     return useQuery({
         queryKey: ["profile-posts", userId],
         queryFn: async () => {
-            const data = await getPublicProfilePosts(userId, 'All');
+            const data = await getPublicProfilePosts(userId, 'All', { limit: 50 });
             return data.posts.map(mapPublicPostToPost);
         },
         enabled: !!userId,

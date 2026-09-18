@@ -82,10 +82,14 @@ export interface PublicPostsResponse {
   } | null;
 }
 
-export const getPublicProfilePosts = async (userId: string, category: string, options?: { preview?: boolean }): Promise<PublicPostsResponse> => {
+export const getPublicProfilePosts = async (userId: string, category: string, options?: { preview?: boolean; limit?: number }): Promise<PublicPostsResponse> => {
   // Using query params as per updated backend requirement
   const response = await api.get<PublicPostsResponse>(`/users/${userId}/posts`, {
-    params: { category, preview: options?.preview || undefined }
+    params: {
+      category,
+      preview: options?.preview || undefined,
+      limit: options?.limit ?? 50,
+    }
   });
   return response.data;
 };

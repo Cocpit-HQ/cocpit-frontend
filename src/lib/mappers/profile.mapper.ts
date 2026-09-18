@@ -38,12 +38,29 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
   const mediaList = Array.isArray(backendPost.media) ? backendPost.media : [];
 
   mediaList.forEach((item) => {
-    if (item.media_type === "image") {
-      images.push(item.url);
-    } else if (item.media_type === "video") {
+    const isActuallyVideo =
+      item.media_type === "video" ||
+      (item as any).type === "video" ||
+      item.url?.toLowerCase()?.match(/\.(mp4|webm|mov|m4v)(\?|#|$)/);
+
+    if (isActuallyVideo) {
       videoSrc = item.url;
+    } else if (
+      item.media_type === "image" ||
+      (item as any).type === "image" ||
+      item.url?.toLowerCase()?.match(/\.(jpg|jpeg|png|webp|gif|svg|avif)(\?|#|$)/)
+    ) {
+      images.push(item.url);
     }
   });
+
+  // Fallback for direct video_url or videoSrc
+  if ((backendPost as any).video_url && !videoSrc) {
+    videoSrc = (backendPost as any).video_url;
+  }
+  if ((backendPost as any).videoSrc && !videoSrc) {
+    videoSrc = (backendPost as any).videoSrc;
+  }
 
   // Inject achievement image if available
   if (backendPost.achievement_image_url && images.length === 0) {
@@ -204,5 +221,6 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     achievementImageUrl: backendPost.achievement_image_url || undefined,
     achievementImageTitle: backendPost.achievement_image_title || (backendPost.achievement_image_id ? 'Achievement' : undefined),
     achievementImageKey: backendPost.achievement_image_key || undefined,
+    media: backendPost.media,
   };
 };

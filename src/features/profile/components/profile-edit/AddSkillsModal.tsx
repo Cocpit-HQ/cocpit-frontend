@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { CloseCrossIcon, SearchIcon, LoadingIcon } from "@/components/icons";
 import { getOnboardingSkills, Skill } from "@/services/api/onboarding";
 import { getProfileSkills } from "@/services/api/profile";
@@ -197,22 +198,15 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
     }
   };
 
-  // Close on outside click or Escape
+  // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
 
@@ -237,14 +231,11 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
     return filtered;
   }, [search, availableSkills, apiSearchResults, existingSkills]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === "undefined") return null;
 
-  return (
+  const modalContent = (
     <div
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-150"
     >
       {/* Main Popup: Bottom sheet on mobile, 400px x 304px centered modal on desktop */}
       <div
@@ -254,13 +245,13 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
         {/* Mobile Grabber Handle */}
         <div className="w-9 h-1 rounded-full bg-[var(--ds-text-muted)] mx-auto mb-2 sm:hidden shrink-0" />
 
-        {/* Frame 2609536: Top Bar with Cancel / Close button (Desktop only, 376px x 20px, justify-end) */}
-        <div className="w-full sm:w-[376px] h-[20px] hidden sm:flex flex-row items-center justify-end shrink-0">
+        {/* Frame 2609536: Top Bar with Cancel / Close button (376px x 20px, justify-end) */}
+        <div className="w-full sm:w-[376px] h-[20px] flex flex-row items-center justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
             className="w-[20px] h-[20px] flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer p-0"
-            aria-label="Cancel"
+            aria-label="Close"
           >
             <CloseCrossIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
           </button>
@@ -336,6 +327,8 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default AddSkillsModal;

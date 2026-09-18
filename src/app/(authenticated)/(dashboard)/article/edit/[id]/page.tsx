@@ -27,7 +27,10 @@ export default function EditArticlePage() {
   };
 
   const handleClose = () => {
-    if (window.history.length > 1) {
+    const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_scroll_path') : null;
+    if (savedPath && savedPath !== window.location.pathname) {
+      router.push(savedPath);
+    } else if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
       router.push('/feed');

@@ -814,6 +814,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
       queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('postCreated', { detail: payload }));
+      }
     };
 
     const handlePostUpdated = (payload: any) => {
@@ -822,6 +825,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
       queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('postUpdated', { detail: payload }));
+      }
     };
 
     newSocket.on('notification', handleNotification);

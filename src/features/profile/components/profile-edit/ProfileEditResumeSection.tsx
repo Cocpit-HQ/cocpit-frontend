@@ -2,7 +2,6 @@
 
 import React, { useRef } from "react";
 import { toast } from "sonner";
-import { useResumeMutations } from "@/hooks/use-my-profile";
 
 interface ProfileEditResumeSectionProps {
   resumeInfo?: {
@@ -11,31 +10,43 @@ interface ProfileEditResumeSectionProps {
     url?: string | null;
     file_url?: string | null;
   } | null;
+  stagedResumeFile?: File | null;
+  isResumeDeleted?: boolean;
+  onSelectResume?: (file: File) => void;
+  onRemoveResume?: () => void;
+  isSaving?: boolean;
 }
 
 export const ProfileEditResumeSection: React.FC<ProfileEditResumeSectionProps> = ({
   resumeInfo,
+  stagedResumeFile,
+  isResumeDeleted = false,
+  onSelectResume,
+  onRemoveResume,
+  isSaving = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { upload, remove } = useResumeMutations();
 
-  const resumeFileName =
-    resumeInfo?.originalName ||
-    resumeInfo?.name ||
-    (resumeInfo?.url || resumeInfo?.file_url
-      ? (resumeInfo.url || resumeInfo.file_url)!.split("/").pop()?.split("?")[0]
-      : null) ||
-    "Resume.pdf";
-
-  const hasResume = Boolean(
+  const hasInitialResume = Boolean(
     resumeInfo?.url || resumeInfo?.file_url || resumeInfo?.originalName || resumeInfo?.name
   );
+
+  const hasResume = (!isResumeDeleted && hasInitialResume) || Boolean(stagedResumeFile);
+
+  const resumeFileName = stagedResumeFile
+    ? stagedResumeFile.name
+    : resumeInfo?.originalName ||
+      resumeInfo?.name ||
+      (resumeInfo?.url || resumeInfo?.file_url
+        ? (resumeInfo.url || resumeInfo.file_url)!.split("/").pop()?.split("?")[0]
+        : null) ||
+      "Resume.pdf";
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -44,27 +55,14 @@ export const ProfileEditResumeSection: React.FC<ProfileEditResumeSectionProps> =
       return;
     }
 
-    try {
-      const fd = new FormData();
-      fd.append("resume", file);
-      await upload.mutateAsync(fd);
-      toast.success("Resume uploaded successfully!");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to upload resume.");
-    } finally {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    onSelectResume?.(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
-  const handleRemove = async () => {
-    try {
-      await remove.mutateAsync();
-      toast.success("Resume removed successfully!");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to remove resume.");
-    }
+  const handleRemove = () => {
+    onRemoveResume?.();
   };
 
   return (
@@ -86,10 +84,10 @@ export const ProfileEditResumeSection: React.FC<ProfileEditResumeSectionProps> =
             <button
               type="button"
               onClick={handleRemove}
-              disabled={remove.isPending}
-              className="font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[var(--ds-error)] hover:underline cursor-pointer disabled:opacity-50 focus:outline-none"
+              disabled={isSaving}
+              className="font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[var(--ds-error)] hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 focus:outline-none"
             >
-              {remove.isPending ? "Removing..." : "Remove"}
+              Remove
             </button>
           </>
         ) : (
@@ -101,10 +99,10 @@ export const ProfileEditResumeSection: React.FC<ProfileEditResumeSectionProps> =
             <button
               type="button"
               onClick={handleUploadClick}
-              disabled={upload.isPending}
-              className="font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[var(--ds-accent)] hover:underline cursor-pointer disabled:opacity-50 focus:outline-none"
+              disabled={isSaving}
+              className="font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[var(--ds-accent)] hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 focus:outline-none"
             >
-              {upload.isPending ? "Uploading..." : "Upload resume"}
+              Upload resume
             </button>
           </>
         )}

@@ -27,6 +27,10 @@ interface ProfileEditFormProps {
   onSave: () => void;
   onCancel: () => void;
   resumeInfo?: any;
+  stagedResumeFile?: File | null;
+  isResumeDeleted?: boolean;
+  onSelectResume?: (file: File) => void;
+  onRemoveResume?: () => void;
   isSaving?: boolean;
   hasChanges?: boolean;
   isUsernameAvailable?: boolean | null;
@@ -68,6 +72,10 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   onSave,
   onCancel,
   resumeInfo,
+  stagedResumeFile,
+  isResumeDeleted,
+  onSelectResume,
+  onRemoveResume,
   isSaving = false,
   hasChanges = false,
   isUsernameAvailable = true,
@@ -88,7 +96,14 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     /* Frame 2609638: Profile Tab Form Container (800px width, gap 40px) */
     <div className="w-[800px] max-w-full flex flex-col items-center gap-[40px] mt-[40px]">
       {/* 1. Resume Section */}
-      <ProfileEditResumeSection resumeInfo={resumeInfo} />
+      <ProfileEditResumeSection
+        resumeInfo={resumeInfo}
+        stagedResumeFile={stagedResumeFile}
+        isResumeDeleted={isResumeDeleted}
+        onSelectResume={onSelectResume}
+        onRemoveResume={onRemoveResume}
+        isSaving={isSaving}
+      />
 
       {/* 2. Full Name & Username (Frame 2609630: 800px width, 40px gap, 300px each) */}
       <div className="w-full flex flex-row items-center justify-between sm:justify-start gap-[40px]">

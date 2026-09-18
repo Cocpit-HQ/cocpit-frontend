@@ -55,12 +55,42 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
   const images: string[] = [];
   let videoSrc: string | undefined = undefined;
 
-  if (Array.isArray(publicPost.media)) {
-    publicPost.media.forEach((item) => {
-      if (item.media_type === "image") {
-        images.push(item.url);
-      } else if (item.media_type === "video") {
-        videoSrc = item.url;
+  const mediaList = Array.isArray(publicPost.media) ? publicPost.media : [];
+
+  mediaList.forEach((item) => {
+    const isActuallyVideo =
+      item.media_type === "video" ||
+      (item as any).type === "video" ||
+      item.url?.toLowerCase()?.match(/\.(mp4|webm|mov|m4v)(\?|#|$)/);
+
+    if (isActuallyVideo) {
+      videoSrc = item.url;
+    } else if (
+      item.media_type === "image" ||
+      (item as any).type === "image" ||
+      item.url?.toLowerCase()?.match(/\.(jpg|jpeg|png|webp|gif|svg|avif)(\?|#|$)/)
+    ) {
+      images.push(item.url);
+    }
+  });
+
+  // Fallback for direct video_url or videoSrc
+  if ((publicPost as any).video_url && !videoSrc) {
+    videoSrc = (publicPost as any).video_url;
+  }
+  if ((publicPost as any).videoSrc && !videoSrc) {
+    videoSrc = (publicPost as any).videoSrc;
+  }
+
+  // Fallback for direct image_url or images array
+  if ((publicPost as any).image_url && images.length === 0) {
+    images.push((publicPost as any).image_url);
+  }
+  if ((publicPost as any).images && Array.isArray((publicPost as any).images)) {
+    (publicPost as any).images.forEach((img: any) => {
+      const url = typeof img === 'string' ? img : img?.url;
+      if (url && !images.includes(url)) {
+        images.push(url);
       }
     });
   }
@@ -83,10 +113,11 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
 
   // Category mapping
   // Post entity expects specific string literals. We map what we can.
-  let category: 'Personal' | 'Professional' | 'Achievement' | undefined = undefined;
+  let category: 'Personal' | 'Professional' | 'Achievement' | 'Article' | undefined = undefined;
   if (publicPost.category_name === 'Personal') category = 'Personal';
   else if (publicPost.category_name === 'Professional') category = 'Professional';
   else if (publicPost.category_name === 'Achievement') category = 'Achievement';
+  else if (publicPost.category_name === 'Article' || (publicPost as any).post_type === 'article') category = 'Article';
 
   return {
     id: publicPost.post_id,
@@ -185,5 +216,8 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     tags: publicPost.tags || [],
     sampleLikerUsername: publicPost.sample_liker_username || undefined,
     authorHeadline: publicPost.author_headline || undefined,
+    post_type: publicPost.post_type,
+    type: publicPost.post_type,
+    media: publicPost.media,
   };
 };

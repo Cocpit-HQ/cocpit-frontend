@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { AddIcon } from "@/components/icons";
 import { ProfileEditActions } from "@/features/profile/components/profile-edit/ProfileEditActions";
 import { AddSkillsModal } from "@/features/profile/components/profile-edit/AddSkillsModal";
+import { SkillChip } from "@/features/profile/components/SkillChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,6 @@ export const ProfileEditSkillsTab: React.FC<ProfileEditSkillsTabProps> = ({
       return;
     }
     setStagedSkills((prev) => [...prev, trimmed]);
-    setIsAddModalOpen(false);
   };
 
   const handleSaveClick = async () => {
@@ -97,22 +97,21 @@ export const ProfileEditSkillsTab: React.FC<ProfileEditSkillsTabProps> = ({
       {/* Frame 2609753: Chips Container (800px width, flex-wrap, 8px gap, left-aligned) */}
       <div className="w-full flex flex-row flex-wrap items-start gap-[8px]">
         {stagedSkills.map((skill) => (
-          <button
+          <SkillChip
             key={skill}
-            type="button"
-            onClick={() => handleRemoveSkill(skill)}
+            name={skill}
+            showBulbIcon={true}
+            deletable={true}
+            canDelete={() => {
+              if (stagedSkills.length <= 3) {
+                toast.info("Minimum 3 skills must be present");
+                return false;
+              }
+              return true;
+            }}
             title={isMinReached ? "Minimum 3 skills required" : `Click to remove ${skill}`}
-            className={cn(
-              "h-[28px] px-[8px] py-[6px] bg-[var(--ds-surface-1)] rounded-[100px] flex flex-row items-center justify-center gap-[10px] transition-all select-none focus:outline-none",
-              isMinReached
-                ? "border border-[var(--ds-border)] cursor-default"
-                : "border border-[var(--ds-accent)] hover:opacity-90 active:scale-95 cursor-pointer"
-            )}
-          >
-            <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] whitespace-nowrap">
-              {skill}
-            </span>
-          </button>
+            onDelete={(skillToRemove) => handleRemoveSkill(skillToRemove)}
+          />
         ))}
       </div>
 

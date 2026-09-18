@@ -6,14 +6,43 @@ import { usePathname } from 'next/navigation';
 export const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 /**
- Helper to save current scroll position before navigating away (e.g. to a post or original post in repost),
+ * Helper to save current scroll position before navigating away (e.g. to a post or original post in repost),
  * ensuring the user returns to their exact scroll position when navigating back.
  */
-// Purpose of Bug Fix: Save post ID and target viewport offset before navigating to single-view post page to maintain scroll position
 export const saveScrollPosition = (source = "post", postId?: string) => {
   if (typeof window === "undefined") return;
-  const currentScroll = window.scrollY;
+  let currentScroll = window.scrollY;
   const currentPath = window.location.pathname;
+
+  let targetEl: HTMLElement | null = null;
+  if (postId) {
+    sessionStorage.setItem("cocpit_last_interacted_post_id", postId.toString());
+    targetEl = (document.getElementById(`post-${postId}`) || document.querySelector(`[data-post-id="${postId}"]`)) as HTMLElement | null;
+  }
+
+  // If window.scrollY is 0, check for active scroll container (e.g. ProfileAllPostsScreen or ancestor of targetEl)
+  if (currentScroll === 0) {
+    const allPostsContainer = document.getElementById("profile-all-posts-scroll-container");
+    if (allPostsContainer && allPostsContainer.scrollTop > 0) {
+      currentScroll = allPostsContainer.scrollTop;
+    } else if (targetEl) {
+      let parent = targetEl.parentElement;
+      while (parent && parent !== document.body) {
+        if (parent.scrollTop > 0) {
+          currentScroll = parent.scrollTop;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+  }
+
+  if (targetEl) {
+    const rect = targetEl.getBoundingClientRect();
+    const container = document.getElementById("profile-all-posts-scroll-container");
+    const containerTop = container ? container.getBoundingClientRect().top : 0;
+    sessionStorage.setItem("cocpit_last_interacted_post_viewport_top", (rect.top - containerTop).toString());
+  }
 
   sessionStorage.setItem(`scroll-${currentPath}`, currentScroll.toString());
   sessionStorage.setItem("cocpit_scroll_y", currentScroll.toString());
@@ -22,15 +51,6 @@ export const saveScrollPosition = (source = "post", postId?: string) => {
   sessionStorage.setItem("cocpit_profile_scroll_y", currentScroll.toString());
   sessionStorage.setItem("cocpit_profile_scroll_source", source);
   sessionStorage.setItem("cocpit_profile_scroll_path", currentPath);
-
-  if (postId) {
-    sessionStorage.setItem("cocpit_last_interacted_post_id", postId.toString());
-    const targetEl = document.getElementById(`post-${postId}`) || document.querySelector(`[data-post-id="${postId}"]`);
-    if (targetEl) {
-      const rect = targetEl.getBoundingClientRect();
-      sessionStorage.setItem("cocpit_last_interacted_post_viewport_top", rect.top.toString());
-    }
-  }
 
   try {
     const currentState = { ...window.history.state };
@@ -50,6 +70,13 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
   const pathname = usePathname();
   const restoredRef = useRef(false);
   const [hasRestored, setHasRestored] = useState(false);
+  const lastPathnameRef = useRef(pathname);
+
+  if (lastPathnameRef.current !== pathname) {
+    lastPathnameRef.current = pathname;
+    restoredRef.current = false;
+    setHasRestored(false);
+  }
 
   // Disable native browser scroll restoration fighting us
   useIsomorphicLayoutEffect(() => {
@@ -64,7 +91,14 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       const isEditing = !!useUIStore.getState().editingPostId;
       const isReposting = !!useUIStore.getState().sharedPostData;
       
-      let saved = (!isEditing && !isReposting) ? sessionStorage.getItem(`scroll-${pathname}`) : null;
+      if (isEditing || isReposting) {
+        return;
+      }
+
+      let saved = sessionStorage.getItem(`scroll-${pathname}`);
+      if (!saved && pathname.startsWith('/profile')) {
+        saved = sessionStorage.getItem("cocpit_profile_scroll_y");
+      }
       
       if (isInitialMount && typeof window !== "undefined") {
         const navEntry = window.performance?.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
@@ -84,17 +118,17 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         const lastViewportTopStr = sessionStorage.getItem("cocpit_last_interacted_post_viewport_top");
         const lastViewportTop = lastViewportTopStr ? parseFloat(lastViewportTopStr) : null;
         let retries = 0;
-        const maxRetries = 20; // 20 frames = ~330ms
+        const maxRetries = 60; // 60 frames = ~1000ms
 
         const attemptScroll = () => {
           const el = getScrollElement();
           
-          // Purpose of Bug Fix: Dynamically adjust scroll target to align the interacted post's viewport top position if DOM heights change
           const targetEl = lastPostId ? (document.getElementById(`post-${lastPostId}`) || document.querySelector(`[data-post-id="${lastPostId}"]`)) : null;
 
           let targetScroll = initialTargetScroll;
           if (targetEl && lastViewportTop !== null) {
-            const currentElTop = targetEl.getBoundingClientRect().top;
+            const containerTop = el ? el.getBoundingClientRect().top : 0;
+            const currentElTop = targetEl.getBoundingClientRect().top - containerTop;
             const currentWinScroll = el ? el.scrollTop : window.scrollY;
             targetScroll = Math.max(0, currentWinScroll + currentElTop - lastViewportTop);
           }
@@ -110,7 +144,6 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
           const currentScroll = el ? el.scrollTop : window.scrollY;
 
           // 3. Evaluate success (within small fractional margin)
-          // If true, DOM successfully expanded to accommodate coordinate
           if (Math.abs(currentScroll - targetScroll) < 5) {
             setTimeout(() => setHasRestored(true), 150);
             return;
@@ -122,7 +155,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
              return;
           }
 
-          // Keep attempting for subsequent frames as the virtualizer/DOM mutates sizes
+          // Keep attempting for subsequent frames as virtualizer/DOM mutates sizes
           retries++;
           requestAnimationFrame(attemptScroll);
         };
@@ -145,7 +178,6 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
   // Scroll position sync (debounced)
   useEffect(() => {
-    // Block saving 0 coordinates until AFTER restoration sequence is complete
     if (!hasRestored) return;
 
     let timeoutId: NodeJS.Timeout;
@@ -154,6 +186,9 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
     const scrollTarget = getScrollElement() || window;
 
     const handleScroll = () => {
+      const { useUIStore } = require('@/store/ui.store');
+      if (useUIStore.getState().editingPostId) return;
+
       const el = getScrollElement();
       const currentScroll = el ? el.scrollTop : window.scrollY;
       
@@ -164,6 +199,9 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         sessionStorage.setItem(`scroll-${pathname}`, currentScroll.toString());
+        if (pathname.startsWith('/profile')) {
+          sessionStorage.setItem("cocpit_profile_scroll_y", currentScroll.toString());
+        }
       }, 150); 
     };
 

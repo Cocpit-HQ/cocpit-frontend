@@ -31,6 +31,8 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
     } catch (e) {}
   }, [setArticleMode]);
 
+  const formActionsRef = useRef<{ resetForm: (clearDraft?: boolean) => void; clearMedia: () => void } | null>(null);
+
   const handleClose = () => {
     if (isSavingRef.current) return; // Prevent double navigation when handlePost calls onClose
 
@@ -45,11 +47,18 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
     setArticleDraft(null);
     setArticleMode(false);
     setActiveModal(null);
+    formActionsRef.current?.resetForm(true);
+    formActionsRef.current?.clearMedia();
 
     if (onClose) {
       onClose();
     } else {
-      router.push('/feed');
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        router.back();
+      } else {
+        const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_scroll_path') : null;
+        router.push(savedPath || '/feed');
+      }
     }
   };
 
@@ -60,6 +69,8 @@ export default function InlineArticleEditor({ editPostId, onClose, onSuccess }: 
     isMobile,
     editPostId,
   });
+
+  formActionsRef.current = { resetForm: actions.resetForm, clearMedia: media.clearMedia };
 
   if (isEdit && state.isLoadingPost) {
     return (

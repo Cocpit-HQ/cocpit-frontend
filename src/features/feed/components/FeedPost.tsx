@@ -92,7 +92,7 @@ export const FeedPost = (props: FeedPostProps) => {
     (Array.isArray(targetImages) && targetImages.length > 0)
   );
   const hasVideo = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
-  const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video';
+  const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
 
   const targetIsCompanyPost = interactionTargetProps.isCompanyPost || false;
   const targetAuthorId = interactionTargetProps.authorId || (interactionTargetProps as any).author_id;
@@ -545,6 +545,15 @@ export const FeedPost = (props: FeedPostProps) => {
     );
   }
 
+  const handleSeeMoreClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (targetId && targetId !== 'preview') {
+      saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
+      router.push(isArticlePost ? `/article/${targetId}` : `/post/${targetId}`);
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     if (props.isFullContent) return;
     const target = e.target as HTMLElement;
@@ -560,8 +569,8 @@ export const FeedPost = (props: FeedPostProps) => {
     }
     if (targetId && targetId !== 'preview') {
       // Purpose of Bug Fix: Save scroll position and target post ID/viewport top before navigating to single-view post page
-      saveScrollPosition("post", targetId.toString());
-      router.push(`/post/${targetId}`);
+      saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
+      router.push(isArticlePost ? `/article/${targetId}` : `/post/${targetId}`);
     }
   };
 
@@ -574,6 +583,8 @@ export const FeedPost = (props: FeedPostProps) => {
         className={
           props.isFullContent
             ? "w-full max-w-[442px] mx-auto bg-ds-bg flex flex-col gap-[16px] cursor-default box-border"
+            : props.isProfileView
+            ? "w-full max-w-[442px] mx-auto flex flex-col gap-[12px] bg-ds-bg cursor-pointer"
             : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-[var(--ds-media-border)]'}`
         }
       >
@@ -615,6 +626,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 authorSlug={targetAuthorSlug}
                 isExpanded={isExpanded}
                 onToggleExpand={() => setIsExpanded(!isExpanded)}
+                onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 hasMedia={hasMedia || isVideoFeedCard}
               />
             )}
@@ -625,6 +637,7 @@ export const FeedPost = (props: FeedPostProps) => {
                   sharedPost={interactionTargetProps.shared_post}
                   sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
                   isMobile={typeof window !== 'undefined' && window.innerWidth < 768}
+                  onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 />
               </div>
             )}
@@ -705,6 +718,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 authorSlug={targetAuthorSlug}
                 isExpanded={isExpanded}
                 onToggleExpand={() => setIsExpanded(!isExpanded)}
+                onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 hasMedia={hasMedia}
               />
             )}
@@ -715,6 +729,7 @@ export const FeedPost = (props: FeedPostProps) => {
                   sharedPost={interactionTargetProps.shared_post}
                   sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
                   isMobile={typeof window !== 'undefined' && window.innerWidth < 768}
+                  onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 />
               </div>
             )}
@@ -876,8 +891,10 @@ export const FeedPost = (props: FeedPostProps) => {
           onEdit={() => {
             setShowOptions(false);
             if (isArticlePost) {
+              saveScrollPosition(props.isProfileView ? "profile" : "post", id.toString());
               router.push(`/article/edit/${id}`);
             } else {
+              saveScrollPosition(props.isProfileView ? "profile" : "post", id.toString());
               if (props.onEdit) {
                 props.onEdit(props);
               } else {

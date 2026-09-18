@@ -73,6 +73,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
               </button>
             )}
 
+            {/*
             <button
               type="button"
               onClick={() => {
@@ -83,6 +84,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
             >
               Send offer
             </button>
+            */}
 
             <button
               type="button"

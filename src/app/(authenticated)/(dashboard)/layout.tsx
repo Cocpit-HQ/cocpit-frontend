@@ -52,7 +52,42 @@ export default function DashboardLayout({
                     <EditPostModal
                         isOpen={isEditMode && !!editingPostId}
                         onClose={() => {
+                            const closedPostId = editingPostId;
                             useUIStore.getState().setEditMode(false, null, null);
+                            if (typeof window !== 'undefined') {
+                                const lastPostId = closedPostId || sessionStorage.getItem('cocpit_last_interacted_post_id');
+                                const restore = () => {
+                                    const container = document.getElementById("profile-all-posts-scroll-container");
+                                    const targetEl = lastPostId ? (document.getElementById(`post-${lastPostId}`) || document.querySelector(`[data-post-id="${lastPostId}"]`)) : null;
+                                    const lastViewportTopStr = sessionStorage.getItem("cocpit_last_interacted_post_viewport_top");
+                                    const lastViewportTop = lastViewportTopStr ? parseFloat(lastViewportTopStr) : null;
+
+                                    if (targetEl && lastViewportTop !== null) {
+                                        const containerTop = container ? container.getBoundingClientRect().top : 0;
+                                        const currentElTop = targetEl.getBoundingClientRect().top - containerTop;
+                                        const currentWinScroll = container ? container.scrollTop : window.scrollY;
+                                        const targetScroll = Math.max(0, currentWinScroll + currentElTop - lastViewportTop);
+                                        if (container) {
+                                            container.scrollTo({ top: targetScroll, behavior: 'instant' });
+                                        } else {
+                                            window.scrollTo({ top: targetScroll, behavior: 'instant' });
+                                        }
+                                    } else if (targetEl) {
+                                        targetEl.scrollIntoView({ block: 'center', behavior: 'instant' });
+                                    } else {
+                                        const saved = sessionStorage.getItem(`scroll-${window.location.pathname}`) || sessionStorage.getItem('cocpit_profile_scroll_y');
+                                        if (saved) {
+                                            if (container) {
+                                                container.scrollTo({ top: parseInt(saved, 10), behavior: 'instant' });
+                                            } else {
+                                                window.scrollTo({ top: parseInt(saved, 10), behavior: 'instant' });
+                                            }
+                                        }
+                                    }
+                                };
+                                requestAnimationFrame(restore);
+                                setTimeout(restore, 50);
+                            }
                         }}
                         editPostId={editingPostId || ''}
                         postData={editingPostData}

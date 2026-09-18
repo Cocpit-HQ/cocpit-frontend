@@ -55,10 +55,11 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
-  const { syncFollowStatus, startChat } = useSocial();
+  const { isFollowing, syncFollowStatus, startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
 
-  const isOwnProfile = activeProfile?.type === "USER" && currentUser?.id === userId;
+  const loggedInUserId = currentUser?.id?.toString();
+  const isOwnProfile = activeProfile?.type === "USER" && (loggedInUserId === userId?.toString() || (currentUser as any)?.username === userId);
 
   useEffect(() => {
     if (isOpen) {
@@ -152,19 +153,35 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         );
       }
 
+      if (activeTab === "following") {
+        queryClient.setQueryData(["following", userId, search], (old: any[]) =>
+          old?.map((u) =>
+            (u.user_id === newUserId || u.following_id === newUserId || u.id === newUserId)
+              ? { ...u, is_following: true }
+              : u
+          )
+        );
+      }
+
+      syncFollowStatus(newUserId, true);
+
       return { previousStats, previousFollowing, previousFollowers };
     },
     onError: (err, newUserId, context: any) => {
+      syncFollowStatus(newUserId, false);
       if (context) {
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
         queryClient.setQueryData(["following", userId, search], context.previousFollowing);
         queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
       }
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["following", userId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
       queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 
@@ -180,9 +197,19 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       const previousFollowers = queryClient.getQueryData(["followers", userId, search]);
 
       if (activeTab === "following") {
-        queryClient.setQueryData(["following", userId, search], (old: any[]) =>
-          old?.filter((u) => (u.user_id || u.following_id || u.id) !== targetId)
-        );
+        if (isOwnProfile) {
+          queryClient.setQueryData(["following", userId, search], (old: any[]) =>
+            old?.filter((u) => (u.user_id || u.following_id || u.id) !== targetId)
+          );
+        } else {
+          queryClient.setQueryData(["following", userId, search], (old: any[]) =>
+            old?.map((u) =>
+              (u.user_id === targetId || u.following_id === targetId || u.id === targetId)
+                ? { ...u, is_following: false }
+                : u
+            )
+          );
+        }
       }
       if (activeTab === "followers") {
         queryClient.setQueryData(["followers", userId, search], (old: any[]) =>
@@ -194,19 +221,25 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         );
       }
 
+      syncFollowStatus(targetId, false);
+
       return { previousStats, previousFollowing, previousFollowers };
     },
     onError: (err, targetId, context: any) => {
+      syncFollowStatus(targetId, true);
       if (context) {
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
         queryClient.setQueryData(["following", userId, search], context.previousFollowing);
         queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
       }
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["following", userId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
       queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 
@@ -220,12 +253,23 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       const previousFollowing = queryClient.getQueryData(["following", userId, search]);
 
       if (activeTab === "following") {
-        queryClient.setQueryData(["following", userId, search], (old: any[]) =>
-          old?.filter((u) => u.user_id !== companyId && u.id !== companyId)
-        );
+        if (isOwnProfile) {
+          queryClient.setQueryData(["following", userId, search], (old: any[]) =>
+            old?.filter((u) => u.user_id !== companyId && u.id !== companyId)
+          );
+        } else {
+          queryClient.setQueryData(["following", userId, search], (old: any[]) =>
+            old?.map((u) =>
+              (u.user_id === companyId || u.id === companyId)
+                ? { ...u, is_following: false }
+                : u
+            )
+          );
+        }
       }
 
       syncFollowStatus(companyId, false);
+
       return { previousStats, previousFollowing };
     },
     onError: (err, companyId, context: any) => {
@@ -234,10 +278,13 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         queryClient.setQueryData(["following", userId, search], context.previousFollowing);
       }
       syncFollowStatus(companyId, true);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["following", userId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 
@@ -350,6 +397,38 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
   const renderAction = (user: any, id: string, name: string) => {
     if (activeTab === "following") {
+      if (!isOwnProfile) {
+        // Public profile view: action reflects the logged-in user's relationship to this user
+        if (id === loggedInUserId) {
+          return null; // Cannot follow yourself
+        }
+
+        const isUserFollowed = isFollowing(id) || Boolean(user.is_following);
+
+        if (isUserFollowed) {
+          return (
+            <button
+              type="button"
+              onClick={() => handleUnfollow(id, name, user.type)}
+              className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
+            >
+              Unfollow
+            </button>
+          );
+        }
+
+        return (
+          <button
+            type="button"
+            onClick={() => handleFollow(id)}
+            className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
+          >
+            Follow
+          </button>
+        );
+      }
+
+      // Own profile: everyone in following tab is followed by you
       return (
         <button
           type="button"
@@ -362,8 +441,12 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     }
 
     if (activeTab === "followers") {
+      if (id === loggedInUserId) {
+        return null; // Cannot follow yourself
+      }
+
       const isConnected = !!(user.is_connected || user.connection_status === "connected" || user.is_connection);
-      const isFollowing = !!(user.is_following_back || user.is_following);
+      const isUserFollowed = isFollowing(id) || !!(user.is_following_back || user.is_following);
 
       if (isConnected) {
         return (
@@ -377,7 +460,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         );
       }
 
-      if (!isFollowing) {
+      if (!isUserFollowed) {
         return (
           <button
             type="button"

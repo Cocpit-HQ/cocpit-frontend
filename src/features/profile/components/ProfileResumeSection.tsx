@@ -35,7 +35,6 @@ export const ProfileResumeSection: React.FC<ProfileResumeSectionProps> = ({
       const formData = new FormData();
       formData.append("resume", file);
       await upload.mutateAsync(formData);
-      toast.success("Resume uploaded successfully!");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to upload resume.");
     } finally {
@@ -48,7 +47,6 @@ export const ProfileResumeSection: React.FC<ProfileResumeSectionProps> = ({
   const handleRemove = async () => {
     try {
       await remove.mutateAsync();
-      toast.success("Resume removed successfully!");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to remove resume.");
     }
@@ -65,7 +63,8 @@ export const ProfileResumeSection: React.FC<ProfileResumeSectionProps> = ({
   if (!hasResume && !isOwnProfile) return null;
 
   return (
-    <div className="w-full max-w-[800px] pl-5 flex flex-row justify-between items-center select-none">
+    /* Frame 2609756: Main Resume Section Container (w: 800px, pl: 20px, gap: 20px) */
+    <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-start gap-5">
       {/* Title */}
       <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6">
         Resume
@@ -78,7 +77,7 @@ export const ProfileResumeSection: React.FC<ProfileResumeSectionProps> = ({
             <button
               type="button"
               onClick={handleView}
-              className="text-[var(--ds-text-primary)] text-base font-normal font-['DM_Sans'] leading-6 hover:underline cursor-pointer truncate max-w-[240px]"
+              className="text-[var(--ds-text-primary)] text-base font-normal font-['DM_Sans'] leading-6 hover:opacity-80 transition-opacity cursor-pointer truncate max-w-[240px]"
               title={resumeName || "Resume.pdf"}
             >
               {resumeName || "Resume.pdf"}
@@ -89,7 +88,7 @@ export const ProfileResumeSection: React.FC<ProfileResumeSectionProps> = ({
                 type="button"
                 onClick={handleRemove}
                 disabled={remove.isPending}
-                className="text-[var(--ds-error)] text-base font-normal font-['DM_Sans'] leading-6 hover:underline cursor-pointer disabled:opacity-50"
+                className="text-[var(--ds-error)] text-base font-normal font-['DM_Sans'] leading-6 hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50"
               >
                 {remove.isPending ? "Removing..." : "Remove"}
               </button>
@@ -105,7 +104,7 @@ export const ProfileResumeSection: React.FC<ProfileResumeSectionProps> = ({
               type="button"
               onClick={handleUploadClick}
               disabled={upload.isPending}
-              className="text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:underline cursor-pointer disabled:opacity-50"
+              className="text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50"
             >
               {upload.isPending ? "Uploading..." : "Upload resume"}
             </button>

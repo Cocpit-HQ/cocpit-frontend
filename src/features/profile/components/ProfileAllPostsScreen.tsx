@@ -18,6 +18,7 @@ import { useMyProfile } from "@/hooks/use-my-profile";
 import { useProfile } from "@/features/publicProfile/hooks/usePublicProfile";
 import type { Post } from "@/types/entities";
 import { cn } from "@/lib/utils";
+import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 
 export type PostFilterTab = "all" | "repost" | "article" | "video" | "poll";
 
@@ -95,6 +96,9 @@ export function ProfileAllPostsScreen({
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+
+  // Restore scroll position in container when posts are loaded
+  useScrollRestoration(!loading && mounted && posts.length > 0, "profile-all-posts-scroll-container");
 
   const fetchPosts = useCallback(
     async (reset = false, tabToFetch: PostFilterTab = activeTab) => {
@@ -179,6 +183,39 @@ export function ProfileAllPostsScreen({
     setPosts((prev) => prev.filter((post) => post.id !== id));
   };
 
+  useEffect(() => {
+    const handlePostUpdated = (e: any) => {
+      const updated = e.detail;
+      if (updated && updated.id) {
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === updated.id || post.id?.toString() === updated.id?.toString()
+              ? { ...post, ...updated }
+              : post
+          )
+        );
+      }
+    };
+    const handlePostDeleted = (e: any) => {
+      const deletedId = e.detail?.id;
+      if (deletedId) {
+        handleDeletePost(deletedId);
+      }
+    };
+
+    const handlePostCreated = () => {
+      fetchPosts(true, activeTabRef.current);
+    };
+    window.addEventListener("postCreated", handlePostCreated);
+    window.addEventListener("postUpdated", handlePostUpdated);
+    window.addEventListener("postDeleted", handlePostDeleted);
+    return () => {
+      window.removeEventListener("postCreated", handlePostCreated);
+      window.removeEventListener("postUpdated", handlePostUpdated);
+      window.removeEventListener("postDeleted", handlePostDeleted);
+    };
+  }, [fetchPosts]);
+
   const handleToggleVisibility = (id: string) => {
     setPosts((prev) =>
       prev.map((post) =>
@@ -246,7 +283,10 @@ export function ProfileAllPostsScreen({
   }, [activeTab]);
 
   const content = (
-    <div className="fixed inset-0 z-[50] w-full h-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">
+    <div
+      id="profile-all-posts-scroll-container"
+      className="fixed inset-0 z-[50] w-full h-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200"
+    >
       {/* Cancel: Top Right Close Cross Icon (top: 40px, right: 40px, 20x20px) */}
       <button
         type="button"

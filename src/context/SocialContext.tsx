@@ -68,6 +68,35 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       } catch (e) {}
     }
 
+    // Optimistically update current user's following count in my-profile
+    queryClient.setQueryData(["my-profile"], (old: any) => {
+      if (!old?.user) return old;
+      const prev = old.user.following_count ?? 0;
+      return {
+        ...old,
+        user: {
+          ...old.user,
+          following_count: isFollowing ? prev + 1 : Math.max(0, prev - 1),
+        },
+      };
+    });
+
+    // Optimistically update target user's followers count in profile queries
+    queryClient.setQueriesData({ queryKey: ["profile"] }, (old: any) => {
+      if (!old) return old;
+      if (old.id === targetId || old.account_name === targetId || (old.user && (old.user.id === targetId || old.user.account_name === targetId))) {
+        const prev = (old.followers_count ?? old.user?.followers_count) ?? 0;
+        const nextCount = isFollowing ? prev + 1 : Math.max(0, prev - 1);
+        return {
+          ...old,
+          is_following: isFollowing,
+          followers_count: nextCount,
+          ...(old.user ? { user: { ...old.user, followers_count: nextCount, is_following: isFollowing } } : {}),
+        };
+      }
+      return old;
+    });
+
     queryClient.invalidateQueries({ queryKey: ["followers"] });
     queryClient.invalidateQueries({ queryKey: ["following"] });
     queryClient.invalidateQueries({ queryKey: ["organization-followers"] });
@@ -75,6 +104,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["profile"] });
     queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
     queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+    queryClient.invalidateQueries({ queryKey: ["my-profile"] });
   };
 
   const followUser = async (id: string, sourcePostId?: string) => {

@@ -5,6 +5,7 @@ import { ChevronDownIcon, CloseCrossIcon, SearchIcon } from "@/components/icons"
 import { INITIAL_POPULAR_SKILLS } from "./AddSkillsModal";
 import { getOnboardingSkills, Skill } from "@/services/api/onboarding";
 import { useDebounce } from "@/hooks/use-debounce";
+import { SkillChip } from "@/features/profile/components/SkillChip";
 import { cn } from "@/lib/utils";
 
 interface ProfileEditSkillsPickerProps {
@@ -191,22 +192,13 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
       {selectedSkills.length > 0 && (
         <div className="w-full flex flex-wrap gap-2 pt-1">
           {selectedSkills.map((skill, idx) => (
-            <div
+            <SkillChip
               key={`selected-skill-${idx}-${skill}`}
-              className="h-7 px-3 py-1 bg-[var(--ds-surface-1)] border border-[var(--ds-border)] hover:border-[var(--ds-text-secondary)] rounded-full inline-flex items-center gap-2 transition-colors select-none group"
-            >
-              <span className="text-xs font-medium text-[var(--ds-text-primary)] font-['DM_Sans']">
-                {skill}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleRemoveSkill(skill)}
-                className="w-3.5 h-3.5 flex items-center justify-center text-[var(--ds-text-muted)] hover:text-[var(--ds-text-primary)] cursor-pointer focus:outline-none"
-                aria-label={`Remove ${skill}`}
-              >
-                <CloseCrossIcon size={12} className="w-3 h-3" />
-              </button>
-            </div>
+              name={skill}
+              showBulbIcon={false}
+              deletable={true}
+              onDelete={(skillToRemove) => handleRemoveSkill(skillToRemove)}
+            />
           ))}
         </div>
       )}

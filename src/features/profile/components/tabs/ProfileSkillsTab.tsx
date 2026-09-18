@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { SkillsBulbIcon, AddIcon } from "@/components/icons";
+import { SkillChip } from "../SkillChip";
 import type { SkillResponse } from "@/types/user";
 import { ProfileSkillsErrorState } from "../ProfileEmptyStates";
+import { toast } from "sonner";
 
 interface ProfileSkillsTabProps {
   skills: SkillResponse[];
@@ -12,6 +14,7 @@ interface ProfileSkillsTabProps {
   onRetry?: () => void;
   onAddSkills?: () => void;
   onEditSkills?: () => void;
+  onDeleteSkill?: (skillName: string) => void;
 }
 
 export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
@@ -21,6 +24,7 @@ export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
   onRetry,
   onAddSkills,
   onEditSkills,
+  onDeleteSkill,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
@@ -119,23 +123,21 @@ export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
         {skills.map((skill, idx) => {
           const name = typeof skill === "string" ? skill : skill.name || (skill as any).skill_name;
           return (
-            /* Chips: (h: 28px, py: 6px, px: 8px, gap: 8px, bg: #1A1A20, rounded-full) */
-            <div
+            <SkillChip
               key={skill.skill_id || idx}
+              name={name}
+              showBulbIcon={true}
+              deletable={Boolean(isOwnProfile && onDeleteSkill)}
+              canDelete={() => {
+                if (skills.length <= 3) {
+                  toast.info("Minimum 3 skills must be present");
+                  return false;
+                }
+                return true;
+              }}
+              onDelete={onDeleteSkill ? () => onDeleteSkill(name) : undefined}
               onClick={isOwnProfile && onEditSkills ? onEditSkills : undefined}
-              className={`h-7 px-2 py-1.5 bg-[var(--ds-surface-1)] hover:bg-[var(--ds-surface-2)] rounded-[100px] inline-flex justify-center items-center gap-2 transition-colors select-none ${
-                isOwnProfile && onEditSkills ? "cursor-pointer" : ""
-              }`}
-            >
-              {/* Icon (16x16px) */}
-              <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                <SkillsBulbIcon className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" />
-              </div>
-              {/* Text (12px Regular, 16px LH, #FFECE6) */}
-              <span className="text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4 whitespace-nowrap">
-                {name}
-              </span>
-            </div>
+            />
           );
         })}
       </div>

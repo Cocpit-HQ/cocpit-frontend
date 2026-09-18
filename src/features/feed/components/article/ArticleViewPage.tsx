@@ -26,6 +26,7 @@ import { PostOptionsMenu } from '../parts/PostOptionsMenu';
 import { submitPostFeedback } from '@/services/api/feed';
 import { useFeed } from '@/hooks/use-feed';
 import { useUIStore } from '@/store/ui.store';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 import CommentSection from '../comments/CommentSection';
 import api from '@/lib/axios';
 
@@ -190,14 +191,16 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
 
   // Navigation handlers
   const handleClose = () => {
-    if (window.history.length > 1) {
+    if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push('/feed');
+      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+      router.push(savedPath || '/feed');
     }
   };
 
   const handleEdit = () => {
+    saveScrollPosition("article", id);
     router.push(`/article/edit/${id}`);
   };
 

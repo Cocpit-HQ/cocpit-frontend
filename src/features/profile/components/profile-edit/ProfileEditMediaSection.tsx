@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { ProfileEditIcon } from "@/components/icons";
+import React, { useState } from "react";
+import { ProfileEditIcon, UserIcon } from "@/components/icons";
 
 interface ProfileEditMediaSectionProps {
   coverImage?: string | null;
@@ -18,7 +18,8 @@ export const ProfileEditMediaSection: React.FC<ProfileEditMediaSectionProps> = (
   onEditCover,
   onEditAvatar,
 }) => {
-  const userInitial = userName.trim().charAt(0).toUpperCase() || "U";
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const displayAvatar = avatarImage && avatarImage !== failedUrl ? avatarImage : null;
 
   return (
     /* Frame 2609766: Banner and Profile Parent Box (800px width desktop, full width mobile) */
@@ -63,25 +64,24 @@ export const ProfileEditMediaSection: React.FC<ProfileEditMediaSectionProps> = (
 
       {/* Frame 2609490: Profile Avatar Box (116px width, 116px height, rounded-full, -mt-60px) */}
       <div className="relative -mt-[60px] w-[116px] h-[116px] rounded-full border-4 border-[var(--ds-bg)] bg-[var(--ds-surface-2)] shrink-0 flex items-center justify-center shadow-lg">
-        <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
-          {avatarImage ? (
+        <div className="w-full h-full rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)]">
+          {displayAvatar ? (
             <img
-              src={avatarImage}
-              alt={userName}
+              src={displayAvatar}
+              alt={userName || "Profile avatar"}
               onDoubleClick={onEditAvatar}
               title="Double-click to change profile photo"
               className="w-full h-full object-cover cursor-pointer"
+              onError={() => setFailedUrl(displayAvatar)}
             />
           ) : (
             <button
               type="button"
               onClick={onEditAvatar}
               aria-label="Add profile photo"
-              className="w-full h-full flex items-center justify-center cursor-pointer bg-transparent border-none p-0"
+              className="w-full h-full flex flex-col justify-center items-center cursor-pointer bg-transparent border-none p-0 select-none"
             >
-              <span className="text-3xl font-bold text-[var(--ds-text-primary)] font-['DM_Sans'] select-none">
-                {userInitial}
-              </span>
+              <UserIcon className="w-10 h-10 text-[var(--ds-text-primary)] flex-none" size={40} />
             </button>
           )}
         </div>

@@ -24,7 +24,7 @@ import {
 import { ProfileCoverSection } from "../components/ProfileCoverSection";
 import { ProfileUserBio } from "../components/ProfileUserBio";
 import { ProfileAboutSection } from "../components/ProfileAboutSection";
-import { ProfileFooterSection, FullPageError, SomethingWentWrong } from "../components/ProfileEmptyStates";
+import { FullPageError, SomethingWentWrong } from "../components/ProfileEmptyStates";
 import { AddIcon } from "@/components/icons";
 
 // Tab Content Components
@@ -52,6 +52,7 @@ import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import type { Education, Experience, Post, Project } from "@/types/entities";
 import type { SkillResponse } from "@/types/user";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
+import { useScrollRestoration, saveScrollPosition } from "@/hooks/use-scroll-restoration";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -133,17 +134,42 @@ export default function ProfilePage() {
   const resume = profileData?.resume;
   const profileScore = profileData?.profile_score?.score ?? 82;
 
+  const handleDeleteSkill = useCallback(
+    async (skillToDelete: string) => {
+      const currentSkills = skills
+        .map((s) => (typeof s === "string" ? s : s.name || (s as any).skill_name))
+        .filter(Boolean);
+      if (currentSkills.length <= 3) {
+        toast.info("Minimum 3 skills must be present");
+        return;
+      }
+      const updatedSkills = currentSkills.filter((s) => s !== skillToDelete);
+      try {
+        await skillMutations.sync.mutateAsync({ skills: updatedSkills });
+        refetchProfile();
+      } catch (err: any) {
+        toast.error("Failed to remove skill");
+      }
+    },
+    [skills, skillMutations.sync, refetchProfile]
+  );
+
 
   // Posts Query
   const { data: userPostsData, isError: isPostsError, refetch: refetchPosts } = useQuery({
     queryKey: ["userPosts", user?.id],
-    queryFn: () => getUserPosts({}),
+    queryFn: () => getUserPosts({ limit: 50 }),
     enabled: !!user?.id,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const posts = useMemo<Post[]>(() => {
     return (userPostsData?.posts || []).map(mapProfilePostToPost);
   }, [userPostsData]);
+
+  // Restore scroll position when profile and posts are loaded
+  useScrollRestoration(!isLoading && (userPostsData !== undefined || isPostsError));
 
   // Handlers for edit profile
   const handleUpdateProfile = useCallback(
@@ -151,7 +177,6 @@ export default function ProfilePage() {
       try {
         await updateProfileMutation.mutateAsync(data);
         setIsEditProfileModalOpen(false);
-        toast.success("Profile updated successfully");
       } catch (error) {
         console.error("Failed to update profile:", error);
         toast.error("Failed to update profile");
@@ -560,7 +585,10 @@ export default function ProfilePage() {
               onDeletePost={handleDeletePost}
               onUpdatePost={() => refetchPosts()}
               onCreatePost={() => router.push("/feed")}
-              onSeeAll={() => router.push("/profile/posts")}
+              onSeeAll={() => {
+                saveScrollPosition("profile");
+                router.push("/profile/posts");
+              }}
             />
           </div>
         </div>
@@ -574,6 +602,7 @@ export default function ProfilePage() {
           isOwnProfile={true}
           isError={isProfileError}
           onRetry={() => refetchProfile()}
+          onDeleteSkill={handleDeleteSkill}
           onAddSkills={() => {
             setEditInitialTab("skills");
             setIsEditProfileModalOpen(true);
@@ -718,9 +747,6 @@ export default function ProfilePage() {
             />
           </div>
         </div>
-
-        {/* Final "That's all for now" Footer */}
-        <ProfileFooterSection />
       </div>
 
       {/* Modals & Dialogs */}

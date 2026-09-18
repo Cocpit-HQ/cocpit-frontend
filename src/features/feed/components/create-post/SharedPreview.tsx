@@ -15,6 +15,7 @@ interface SharedPreviewProps {
   clickable?: boolean;
   showFollow?: boolean;
   disableNavigation?: boolean;
+  onSeeMoreClick?: (e: React.MouseEvent) => void;
 }
 
 /** Changed: Added SharedVideoPreview component with IntersectionObserver for auto-playing shared post videos when in viewport */
@@ -56,7 +57,7 @@ const SharedVideoPreview = ({ src }: { src: string }) => {
   );
 };
 
-const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation }: SharedPreviewProps) => {
+const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation, onSeeMoreClick }: SharedPreviewProps) => {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -331,27 +332,17 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
         </div>
         {/* Content */}
         {contentText && (
-          mediaUrls.length > 0 || !!videoSrc ? (
-            <div className="text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] line-clamp-2">
-              <RichTextRenderer
-                content={contentText}
-                authorName={sharedName}
-                authorSlug={sharedSlug}
-                disableLinks={disableNavigation}
-              />
-            </div>
-          ) : (
-            <PostBody
-              content={contentText}
-              author={sharedName || 'Unknown User'}
-              authorSlug={sharedSlug}
-              isExpanded={isExpanded}
-              onToggleExpand={() => setIsExpanded(!isExpanded)}
-              hasMedia={false}
-              maxLines={15}
-              disableLinks={disableNavigation}
-            />
-          )
+          <PostBody
+            content={contentText}
+            author={sharedName || 'Unknown User'}
+            authorSlug={sharedSlug}
+            isExpanded={isExpanded}
+            onToggleExpand={() => setIsExpanded(!isExpanded)}
+            onSeeMoreClick={onSeeMoreClick}
+            hasMedia={mediaUrls.length > 0 || !!videoSrc}
+            maxLines={mediaUrls.length > 0 || !!videoSrc ? 2 : 15}
+            disableLinks={disableNavigation}
+          />
         )}
 
         {/* Poll Options Capsules (if poll) */}

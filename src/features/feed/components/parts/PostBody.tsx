@@ -7,6 +7,7 @@ export interface PostBodyProps {
   authorSlug?: string;
   isExpanded: boolean;
   onToggleExpand?: () => void;
+  onSeeMoreClick?: (e: React.MouseEvent) => void;
   variant?: 'default' | 'overlay';
   hasMedia?: boolean;
   maxLines?: number;
@@ -23,6 +24,7 @@ export const PostBody = ({
   authorSlug,
   isExpanded,
   onToggleExpand,
+  onSeeMoreClick,
   variant = 'default',
   hasMedia = false,
   maxLines,
@@ -207,7 +209,11 @@ export const PostBody = ({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onToggleExpand?.();
+              if (onSeeMoreClick) {
+                onSeeMoreClick(e);
+              } else {
+                onToggleExpand?.();
+              }
             }}
             className="inline whitespace-nowrap select-none cursor-pointer group ml-1"
           >

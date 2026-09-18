@@ -34,7 +34,12 @@ export default function CreateArticlePage() {
 
   const handleClose = () => {
     useUIStore.getState().setArticleMode(false);
-    router.push('/feed');
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_scroll_path') : null;
+      router.push(savedPath || '/feed');
+    }
   };
 
   return (

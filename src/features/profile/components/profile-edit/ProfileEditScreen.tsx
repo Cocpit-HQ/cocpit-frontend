@@ -16,6 +16,8 @@ import {
 import {
   uploadCoverPhoto,
   deleteCoverPhoto,
+  uploadResume,
+  deleteResume,
 } from "@/features/profile/services/profile.service";
 import { getIndustries } from "@/features/jobs/services/jobs.service";
 import { checkAccountNameAvailability } from "@/services/api/onboarding";
@@ -157,6 +159,10 @@ export function ProfileEditScreen({
   const [stagedAvatarFile, setStagedAvatarFile] = useState<File | null>(null);
   const [isAvatarDeleted, setIsAvatarDeleted] = useState(false);
 
+  // Resume Staged State
+  const [stagedResumeFile, setStagedResumeFile] = useState<File | null>(null);
+  const [isResumeDeleted, setIsResumeDeleted] = useState(false);
+
   // Modals state
   const [isEditCoverOpen, setIsEditCoverOpen] = useState(false);
   const [coverInitialFile, setCoverInitialFile] = useState<File | null>(null);
@@ -236,6 +242,8 @@ export function ProfileEditScreen({
       setInitialFormData(data);
       setStagedAvatarPreview(user.avatar || null);
       setStagedCoverPreview(user.cover_image || null);
+      setStagedResumeFile(null);
+      setIsResumeDeleted(false);
     }
   }, [user]);
 
@@ -281,14 +289,24 @@ export function ProfileEditScreen({
     return () => clearTimeout(timer);
   }, [formData.account_name, initialFormData]);
 
-  // Has changes check (form fields or staged media changes)
+  // Has changes check (form fields or staged media/resume changes)
   const hasChanges = useMemo(() => {
     if (!initialFormData) return false;
     const formChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
     const avatarChanged = stagedAvatarFile !== null || isAvatarDeleted;
     const coverChanged = stagedCoverFile !== null || isCoverDeleted;
-    return formChanged || avatarChanged || coverChanged;
-  }, [formData, initialFormData, stagedAvatarFile, isAvatarDeleted, stagedCoverFile, isCoverDeleted]);
+    const resumeChanged = stagedResumeFile !== null || isResumeDeleted;
+    return formChanged || avatarChanged || coverChanged || resumeChanged;
+  }, [
+    formData,
+    initialFormData,
+    stagedAvatarFile,
+    isAvatarDeleted,
+    stagedCoverFile,
+    isCoverDeleted,
+    stagedResumeFile,
+    isResumeDeleted,
+  ]);
 
   // Form input change handler
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
@@ -325,6 +343,8 @@ export function ProfileEditScreen({
     setStagedCoverFile(null);
     setStagedCoverPreview(user?.cover_image || null);
     setIsCoverDeleted(false);
+    setStagedResumeFile(null);
+    setIsResumeDeleted(false);
     handleClose();
   };
 
@@ -351,7 +371,25 @@ export function ProfileEditScreen({
 
   const showBackButton = Boolean(tabSubtitle);
 
-  // Final Save handler - commits all profile and media changes
+  // Resume handlers
+  const handleSelectResume = (file: File) => {
+    setStagedResumeFile(file);
+    setIsResumeDeleted(false);
+  };
+
+  const handleRemoveResume = () => {
+    setStagedResumeFile(null);
+    const hasInitialResume = Boolean(
+      profileData?.resume?.url ||
+      (profileData?.resume as any)?.file_url ||
+      profileData?.resume?.originalName ||
+      (profileData?.resume as any)?.name ||
+      (profileData?.resume as any)?.file_name
+    );
+    setIsResumeDeleted(hasInitialResume);
+  };
+
+  // Final Save handler - commits all profile, media, and resume changes
   const handleSave = async () => {
     if (!hasChanges || isSaving || isUsernameAvailable === false) return;
 
@@ -397,7 +435,16 @@ export function ProfileEditScreen({
         await deleteCoverPhoto();
       }
 
-      // 3. Update Profile fields
+      // 3. Upload or Delete Resume if staged
+      if (stagedResumeFile) {
+        const resumeFd = new FormData();
+        resumeFd.append("resume", stagedResumeFile);
+        await uploadResume(resumeFd);
+      } else if (isResumeDeleted) {
+        await deleteResume();
+      }
+
+      // 4. Update Profile fields
       await updateProfileMutation.mutateAsync({
         name: formData.name,
         account_name: formData.account_name,
@@ -413,12 +460,13 @@ export function ProfileEditScreen({
       });
 
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-      toast.success("Profile updated successfully");
       setInitialFormData(formData);
       setStagedAvatarFile(null);
       setIsAvatarDeleted(false);
       setStagedCoverFile(null);
       setIsCoverDeleted(false);
+      setStagedResumeFile(null);
+      setIsResumeDeleted(false);
       // Stay on the form page; do not auto-close
     } catch (err: any) {
       console.error("Save profile error:", err);
@@ -538,7 +586,7 @@ export function ProfileEditScreen({
           type="button"
           onClick={handleBackClick}
           aria-label="Back"
-          className="fixed top-4 left-4 md:top-[40px] md:left-[40px] z-[10000] w-[65px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity focus:outline-none"
+          className="fixed top-4 left-4 md:top-[40px] md:left-[40px] z-[60] w-[65px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity focus:outline-none"
         >
           <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
             <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
@@ -596,6 +644,10 @@ export function ProfileEditScreen({
               onSave={handleSave}
               onCancel={handleCancelWithCheck}
               resumeInfo={profileData?.resume}
+              stagedResumeFile={stagedResumeFile}
+              isResumeDeleted={isResumeDeleted}
+              onSelectResume={handleSelectResume}
+              onRemoveResume={handleRemoveResume}
               isSaving={isSaving}
               hasChanges={hasChanges}
               isUsernameAvailable={isUsernameAvailable}

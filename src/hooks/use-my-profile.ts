@@ -58,8 +58,8 @@ export function useMyProfile() {
             const data = await getProfile();
             return data; // Returns UserProfile
         },
-        staleTime: Infinity,
-        refetchOnMount: false,
+        staleTime: 1000 * 30,
+        refetchOnMount: true,
     });
 }
 
@@ -404,7 +404,7 @@ export function useResumeMutations() {
                 return { ...old, resume: null };
             });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-            toast.success("Resume deleted successfully");
+            toast.success("Resume removed successfully");
         },
     });
 

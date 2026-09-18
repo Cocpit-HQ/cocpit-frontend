@@ -154,6 +154,7 @@ export interface Post {
   mediaHeight?: number;
   videoSrc?: string;
   aspectRatio?: string;
+  media?: any[];
   likes: number;
   isLiked?: boolean;
   isReposted?: boolean;

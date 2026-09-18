@@ -2,9 +2,10 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Share2, Flag, Ban } from "lucide-react";
+import { Share2, Flag, Ban, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSocial } from "@/context/SocialContext";
 import { useProfile, useProfilePosts } from "./hooks/usePublicProfile";
@@ -19,7 +20,6 @@ import {
 import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
 import { ProfileUserBio } from "@/features/profile/components/ProfileUserBio";
 import { ProfileAboutSection } from "@/features/profile/components/ProfileAboutSection";
-import { ProfileFooterSection } from "@/features/profile/components/ProfileEmptyStates";
 import { ProfileBlockedState } from "./components/ProfileBlockedState";
 
 // Tab Content Components
@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Post } from "@/types/entities";
 import type { UserData } from "@/types/user";
+import { useScrollRestoration, saveScrollPosition } from "@/hooks/use-scroll-restoration";
 
 interface PublicProfileProps {
   userId: string;
@@ -88,6 +89,9 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!publicPosts) return [];
     return publicPosts.filter((post) => post.visibility !== "private") as Post[];
   }, [publicPosts]);
+
+  // Restore scroll position when public profile and posts are loaded
+  useScrollRestoration(!isUserLoading && publicPosts !== undefined);
 
   const experiences = useMemo(() => user?.experiences || [], [user?.experiences]);
   const educations = useMemo(() => user?.educations || [], [user?.educations]);
@@ -200,10 +204,58 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     setIsFollowListModalOpen(true);
   };
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/feed");
+    }
+  };
+
+  const handleClose = () => {
+    router.push("/feed");
+  };
+
+  const renderTopNavigation = () => (
+    <>
+      {/* Occlusion bar for smooth scrolling under top navigation */}
+      <div className="fixed top-0 left-0 right-0 h-[88px] sm:h-[100px] bg-[var(--ds-bg)] z-40 pointer-events-none" />
+
+      {/* Back button (top: 40px, left: 40px) */}
+      <button
+        type="button"
+        onClick={handleBack}
+        aria-label="Back"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 flex items-center gap-2 h-9 px-2 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-50 group"
+      >
+        <ChevronLeft className="w-5 h-5 text-[var(--ds-text-primary)] group-hover:text-[var(--ds-text-secondary)] transition-colors shrink-0" />
+        <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px]">Back</span>
+      </button>
+
+      {/* Center Search (Figma top: 40px) */}
+      <div className="hidden sm:block">
+        <GlobalSearch />
+      </div>
+
+      {/* Cross / Close to Feed button (top: 40px, right: 40px) */}
+      <button
+        type="button"
+        onClick={handleClose}
+        aria-label="Close to feed"
+        className="fixed top-6 right-4 sm:top-10 sm:right-10 flex items-center justify-center w-9 h-9 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-50"
+      >
+        <X className="w-5 h-5" />
+      </button>
+    </>
+  );
+
   if (isUserLoading) {
     return (
-      <div className="w-full min-h-screen bg-[var(--ds-bg)] flex justify-center items-center py-20">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--ds-accent)] border-t-transparent animate-spin" />
+      <div className="w-full min-h-screen bg-[var(--ds-bg)] flex flex-col items-center pt-20 sm:pt-[100px] relative">
+        {renderTopNavigation()}
+        <div className="flex-1 flex justify-center items-center py-20">
+          <div className="w-8 h-8 rounded-full border-2 border-[var(--ds-accent)] border-t-transparent animate-spin" />
+        </div>
       </div>
     );
   }
@@ -211,7 +263,9 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const userDataForModal = user as unknown as UserData;
 
   return (
-    <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center -mt-5 pb-16 px-0 md:px-4 md:pr-[253px] select-text">
+    <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center pt-20 sm:pt-[100px] pb-16 px-4 select-text relative">
+      {renderTopNavigation()}
+
       {/* 800px Centered Main Profile Container */}
       <div className="w-full max-w-[800px] flex flex-col items-start gap-5">
         {/* Cover + Profile Image + Action Buttons */}
@@ -301,12 +355,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                     </DropdownMenuItem>
                   )}
 
+                  {/*
                   <DropdownMenuItem
                     onClick={() => setIsSendOfferOpen(true)}
                     className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
                   >
                     Send offer
                   </DropdownMenuItem>
+                  */}
 
                   <DropdownMenuItem
                     onClick={handleViewResume}
@@ -392,7 +448,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
               posts={visiblePosts}
               isOwnProfile={false}
               userName={user?.name}
-              onSeeAll={() => router.push(`/profile/${userId}/posts`)}
+              onSeeAll={() => {
+                saveScrollPosition("profile");
+                router.push(`/profile/${userId}/posts`);
+              }}
             />
           </div>
         </div>
@@ -472,8 +531,6 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           </>
         )}
 
-        {/* Final "That's all for now" Footer */}
-        <ProfileFooterSection />
           </>
         )}
       </div>

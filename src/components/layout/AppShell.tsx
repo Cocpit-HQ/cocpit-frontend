@@ -29,11 +29,15 @@ export function AppShell({
   const searchParams = useSearchParams();
   const isCreateJobActive = searchParams?.get('view') === 'create-job';
 
-  // Automatically hide bottom nav and distraction-free elements on article pages, article mode, or post detail full view
+  // Automatically hide bottom nav and distraction-free elements on article pages, article mode, post detail, or public profile full view
   const isArticlePage = pathname?.includes('/article/');
   const isPostDetailPage = pathname?.startsWith('/post/');
+  const isPublicProfile = Boolean(
+    pathname?.startsWith('/profile/') &&
+    !['/profile/edit', '/profile/download', '/profile/posts'].includes(pathname)
+  );
   const { activeModal, isArticleMode } = useUIStore();
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage;
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || activeModal === 'create-post';
 
   return (

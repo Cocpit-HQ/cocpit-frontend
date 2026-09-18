@@ -22,7 +22,6 @@ import {
   MenuIcon,
 } from "@/components/icons";
 import { CommentModal } from "../CommentModal";
-import { EditPostModal } from "@/shared/commonComponents/EditPostModal";
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { LikesModal } from "@/shared/commonComponents/LikesModal";
@@ -38,6 +37,7 @@ import {
 } from "../../services/profile.service";
 import type { Post } from "@/types/entities";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
+import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 
 const mergeProfilePostState = (current: Post, incoming: Post): Post => ({
   ...current,
@@ -81,7 +81,6 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
   const [repostId, setRepostId] = useState<string | null>(post.repostId || null);
 
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isUndoRepostConfirmOpen, setIsUndoRepostConfirmOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
@@ -97,6 +96,29 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
     setRepostId(post.repostId || null);
     setAvatarError(false);
   }, [post]);
+
+  useEffect(() => {
+    const handlePostUpdated = (e: any) => {
+      const updated = e.detail;
+      if (updated && (updated.id === localPost.id || updated.id?.toString() === localPost.id?.toString())) {
+        const merged = mergeProfilePostState(localPost, updated);
+        setLocalPost(merged);
+        onUpdate?.(merged);
+      }
+    };
+    const handlePostDeleted = (e: any) => {
+      const deletedId = e.detail?.id;
+      if (deletedId && (deletedId === localPost.id || deletedId?.toString() === localPost.id?.toString())) {
+        onDelete?.(localPost.id);
+      }
+    };
+    window.addEventListener("postUpdated", handlePostUpdated);
+    window.addEventListener("postDeleted", handlePostDeleted);
+    return () => {
+      window.removeEventListener("postUpdated", handlePostUpdated);
+      window.removeEventListener("postDeleted", handlePostDeleted);
+    };
+  }, [localPost, onUpdate, onDelete]);
 
   const rawImage =
     localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
@@ -189,18 +211,58 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('[role="button"]') ||
+      target.closest('[role="menu"]') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('[data-radix-popper-content-wrapper]') ||
+      target.closest('.prevent-card-click')
+    ) {
+      return;
+    }
+    const targetPostId = (
+      localPost.shared_post && (!localPost.content || !localPost.content.trim())
+        ? (localPost.shared_post.id || localPost.id)
+        : localPost.id
+    );
+    if (targetPostId && targetPostId !== 'preview') {
+      saveScrollPosition("profile", targetPostId.toString());
+      if (isArticlePost) {
+        router.push(`/article/${targetPostId}`);
+      } else {
+        router.push(`/post/${targetPostId}`);
+      }
+    }
+  };
+
   const authorLink = localPost.isCompanyPost
     ? `/organization/${localPost.authorSlug}`
     : `/profile/${localPost.authorSlug || localPost.authorId}`;
 
   return (
-    <div className="w-full flex flex-col items-start gap-3 select-none">
+    <div
+      id={`post-${localPost.id}`}
+      data-post-id={localPost.id}
+      onClick={handleCardClick}
+      className="w-full flex flex-col items-start gap-3 select-none cursor-pointer"
+    >
       {/* Post Header */}
       <div className="w-full h-9 flex flex-row justify-between items-center gap-2">
         {/* Author Details */}
         <div
-          onClick={() => router.push(authorLink)}
-          className="flex flex-row items-center gap-2 cursor-pointer group flex-1 min-w-0"
+          role="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(authorLink);
+          }}
+          className="flex flex-row items-center gap-2 cursor-pointer group flex-1 min-w-0 prevent-card-click"
         >
           {/* Avatar (32x32px) */}
           <div className="w-8 h-8 rounded-[100px] overflow-hidden bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center flex-shrink-0">
@@ -250,10 +312,11 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
               <DropdownMenuItem
                 onClick={() => {
                   if (isArticlePost) {
+                    saveScrollPosition("profile", localPost.id.toString());
                     router.push(`/article/edit/${localPost.id}`);
                   } else {
-                    setEditMode(true, localPost.id);
-                    setIsEditModalOpen(true);
+                    saveScrollPosition("profile", localPost.id.toString());
+                    setEditMode(true, localPost.id.toString(), localPost);
                   }
                 }}
                 className="!p-0 !m-0 !w-[59px] !h-[20px] flex-none order-0 flex-grow-0 whitespace-nowrap justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none"
@@ -293,6 +356,7 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
           <video
             src={videoSrc}
             controls
+            onClick={(e) => e.stopPropagation()}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -316,7 +380,10 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
       </div>
 
       {/* Like / Comment / Repost / Share / Bookmark Row (Frame 2609512: 442x28px) */}
-      <div className="w-full pt-2 flex flex-row justify-between items-center">
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="w-full pt-2 flex flex-row justify-between items-center prevent-card-click"
+      >
         <div className="flex flex-row items-center gap-3">
           {/* Like */}
           <button
@@ -408,21 +475,6 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         />
       )}
 
-      {isEditModalOpen && (
-        <EditPostModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditMode(false, null);
-          }}
-          editPostId={localPost.id}
-          onUpdate={(updated) => {
-            const merged = mergeProfilePostState(localPost, updated as any);
-            setLocalPost(merged);
-            onUpdate?.(merged);
-          }}
-        />
-      )}
 
       {isShareModalOpen && (
         <CocpitShareModel

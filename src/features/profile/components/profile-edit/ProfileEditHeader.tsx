@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { CloseIcon } from "@/components/icons";
+import { CloseIcon, UserIcon } from "@/components/icons";
 
 interface ProfileEditHeaderProps {
   userName?: string;
@@ -19,7 +19,8 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
   onClose,
   headerAction,
 }) => {
-  const userInitial = userName.trim().charAt(0).toUpperCase() || "U";
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const displayAvatar = avatarUrl && avatarUrl !== failedUrl ? avatarUrl : null;
 
   return (
     <>
@@ -28,7 +29,7 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
         type="button"
         onClick={onClose}
         aria-label="Close edit profile"
-        className="hidden md:flex fixed top-[40px] right-[40px] z-[10000] w-[20px] h-[20px] items-center justify-center text-[var(--ds-text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer focus:outline-none"
+        className="hidden md:flex fixed top-[40px] right-[40px] z-[60] w-[20px] h-[20px] items-center justify-center text-[var(--ds-text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer focus:outline-none"
       >
         <CloseIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
       </button>
@@ -43,17 +44,16 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
         {/* Left Side: Avatar + Name + Subtitle */}
         <div className="flex flex-row items-center gap-[8px] overflow-hidden">
           {/* Frame 2609611: Avatar 32x32 rounded-full */}
-          <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-[var(--ds-surface-1)] border border-[var(--ds-border)]/40 shrink-0 flex items-center justify-center">
-            {avatarUrl ? (
+          <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-[var(--ds-surface-2)] border border-[var(--ds-border)]/40 shrink-0 flex items-center justify-center select-none">
+            {displayAvatar ? (
               <img
-                src={avatarUrl}
-                alt={userName}
+                src={displayAvatar}
+                alt={userName || "Profile avatar"}
                 className="w-full h-full object-cover"
+                onError={() => setFailedUrl(displayAvatar)}
               />
             ) : (
-              <span className="text-xs font-semibold text-[var(--ds-text-primary)] font-['DM_Sans']">
-                {userInitial}
-              </span>
+              <UserIcon className="w-4 h-4 text-[var(--ds-text-primary)] flex-none" size={16} />
             )}
           </div>
           {/* Kat Denis / Name Text + Subtitle (Frame 2609632) */}

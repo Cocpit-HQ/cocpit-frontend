@@ -101,7 +101,12 @@ export default function SinglePostPage({ params }: PageProps) {
       const customEvent = event as CustomEvent;
       const detail = customEvent.detail;
       if (detail && detail.id?.toString() === id?.toString()) {
-        router.push("/feed");
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+        } else {
+          const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+          router.push(savedPath || "/feed");
+        }
       }
     };
 
@@ -118,12 +123,18 @@ export default function SinglePostPage({ params }: PageProps) {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      router.push("/feed");
+      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+      router.push(savedPath || "/feed");
     }
   };
 
   const handleClose = () => {
-    router.push("/feed");
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+      router.push(savedPath || "/feed");
+    }
   };
 
   const menuAccess = getPostMenuAccess({
@@ -192,7 +203,7 @@ export default function SinglePostPage({ params }: PageProps) {
               onClick={handleBack}
               className="px-4 py-2 bg-ds-surface-2 hover:bg-ds-border text-ds-text-primary rounded-[8px] text-[13px] font-medium transition-colors cursor-pointer border border-ds-border"
             >
-              Back to Feed
+              Go Back
             </button>
           </div>
         ) : post ? (
@@ -205,7 +216,12 @@ export default function SinglePostPage({ params }: PageProps) {
               useUIStore.getState().setEditMode(true, id, postToEdit || post);
             }}
             onDelete={() => {
-              router.push('/feed');
+              if (typeof window !== "undefined" && window.history.length > 1) {
+                router.back();
+              } else {
+                const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+                router.push(savedPath || "/feed");
+              }
             }}
             // Purpose of Bug Fix: Enable Repost with Thoughts on post detail page to populate quoted post into UI store and navigate to feed composer
             onRepostWithThoughts={(postToQuote) => {

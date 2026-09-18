@@ -23,6 +23,8 @@ import { MentionTextarea } from './MentionTextarea';
 import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
 import { UserMention } from '@/services/api/users';
 import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationModal';
+import DiscardConfirmOverlay from '@/features/feed/components/create-post/shared/DiscardConfirmOverlay';
+import { cn } from '@/lib/utils';
 
 const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
 const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit (up to 12 images x 10MB)
@@ -40,6 +42,16 @@ export interface EditPostModalProps {
   postData?: any;
   onUpdate?: (updatedPost: any) => void;
   onDelete?: (postId: string) => void;
+}
+
+interface PostEditSnapshot {
+  description: string;
+  location: string | null;
+  imageUrls: string[];
+  videoUrl: string | null;
+  pollQuestion: string;
+  pollOptions: string[];
+  pollDuration: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,6 +74,11 @@ export function EditPostModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Snapshot of saved state for change detection (dirty tracking)
+  const initialSnapshotRef = useRef<PostEditSnapshot | null>(null);
+  const [, setSnapshotState] = useState<PostEditSnapshot | null>(null);
 
   // Form states
   const [description, setDescription] = useState('');
@@ -84,15 +101,17 @@ export function EditPostModal({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Clean up object URLs on close (prevent closing while submission is in-flight)
-  const handleClose = useCallback(() => {
-    if (isSubmitting) return;
+  // Clean up object URLs on close (prevent closing while submission is in-flight unless forced)
+  const handleClose = useCallback((force?: boolean | React.SyntheticEvent) => {
+    const isForced = force === true;
+    if (!isForced && isSubmitting) return;
     selectedImages.forEach((img) => {
       if (img.previewUrl.startsWith('blob:')) URL.revokeObjectURL(img.previewUrl);
     });
     if (selectedVideo && selectedVideo.previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(selectedVideo.previewUrl);
     }
+    setIsSubmitting(false);
     onClose();
   }, [isSubmitting, selectedImages, selectedVideo, onClose]);
 
@@ -128,16 +147,24 @@ export function EditPostModal({
       setSharedPost(null);
     }
 
+    let snapImages: string[] = [];
+    let snapVideo: string | null = null;
+    let snapPollQ = '';
+    let snapPollOpts: string[] = [];
+    let snapPollDur = '1 week';
+
     // Poll
     if (post.post_type === 'poll' && post.poll_question) {
       setPostType('poll');
       poll.setPollQuestion(post.poll_question);
-      poll.setPollOptions(
-        post.poll_options?.map((opt: string) => ({ id: Math.random().toString(), text: opt })) || []
-      );
+      const pollOpts = post.poll_options?.map((opt: string) => ({ id: Math.random().toString(), text: opt })) || [];
+      poll.setPollOptions(pollOpts);
       poll.setPollDuration(post.poll_duration || '1 week');
       setSelectedImages([]);
       setSelectedVideo(null);
+      snapPollQ = post.poll_question.trim();
+      snapPollOpts = post.poll_options?.map((opt: string) => opt.trim()) || [];
+      snapPollDur = post.poll_duration || '1 week';
     } else {
       // Media
       const postImages = post.images && post.images.length > 0
@@ -163,6 +190,7 @@ export function EditPostModal({
         });
         setSelectedImages(initialImages);
         setSelectedVideo(null);
+        snapImages = postImages;
       } else if (post.videoSrc || post.video) {
         setPostType('video');
         const vUrl = post.videoSrc || post.video;
@@ -171,12 +199,25 @@ export function EditPostModal({
           previewUrl: vUrl,
         });
         setSelectedImages([]);
+        snapVideo = vUrl;
       } else {
         setPostType(post.post_type || 'text');
         setSelectedImages([]);
         setSelectedVideo(null);
       }
     }
+
+    const snap: PostEditSnapshot = {
+      description: parsedContent.trim(),
+      location: post.location || null,
+      imageUrls: snapImages,
+      videoUrl: snapVideo,
+      pollQuestion: snapPollQ,
+      pollOptions: snapPollOpts,
+      pollDuration: snapPollDur,
+    };
+    initialSnapshotRef.current = snap;
+    setSnapshotState(snap);
   }, [poll]);
 
   // Load post details on open
@@ -563,7 +604,11 @@ export function EditPostModal({
       }
 
       toast.success('Post updated successfully!');
-      handleClose();
+      setIsSubmitting(false);
+
+      // Update snapshot with newly saved post state so hasUnsavedChanges() becomes false,
+      // keeping the user on the page with state preserved and Save button inactive!
+      populateData(updatedPostObj);
       onUpdate?.(updatedPostObj);
     } catch (error: any) {
       console.error('Failed to update post:', error);
@@ -588,13 +633,78 @@ export function EditPostModal({
       }
 
       setIsDeleteDialogOpen(false);
-      handleClose();
+      setIsDeleting(false);
+      handleClose(true);
     } catch (err) {
       console.error('Failed to delete post:', err);
     } finally {
       setIsDeleting(false);
     }
   };
+
+  const hasUnsavedChanges = useCallback((): boolean => {
+    const snap = initialSnapshotRef.current;
+    if (!snap) return false;
+
+    // 1. Description changed?
+    if (description.trim() !== snap.description) return true;
+
+    // 2. Location changed?
+    const currentLocation = selectedLocation
+      ? 'formattedAddress' in selectedLocation
+        ? selectedLocation.formattedAddress
+        : (selectedLocation as any).name || null
+      : null;
+    if (currentLocation !== snap.location) return true;
+
+    // 3. Video changed?
+    const currentVideoUrl = selectedVideo ? selectedVideo.previewUrl : null;
+    if (currentVideoUrl !== snap.videoUrl) return true;
+    if (selectedVideo && selectedVideo.file && selectedVideo.file.size > 0) return true;
+
+    // 4. Images changed?
+    const hasNewImageFile = selectedImages.some(
+      (img) => !img.id.startsWith('existing-') || (img.file && img.file.size > 0)
+    );
+    if (hasNewImageFile) return true;
+    if (selectedImages.length !== snap.imageUrls.length) return true;
+    for (let i = 0; i < selectedImages.length; i++) {
+      if (selectedImages[i].previewUrl !== snap.imageUrls[i]) return true;
+    }
+
+    // 5. Poll changed?
+    if (postType === 'poll') {
+      if (poll.pollQuestion.trim() !== snap.pollQuestion) return true;
+      if (poll.pollDuration !== snap.pollDuration) return true;
+      if (poll.pollOptions.length !== snap.pollOptions.length) return true;
+      for (let i = 0; i < poll.pollOptions.length; i++) {
+        if (poll.pollOptions[i].text.trim() !== snap.pollOptions[i]) return true;
+      }
+    }
+
+    return false;
+  }, [description, selectedLocation, selectedVideo, selectedImages, postType, poll]);
+
+  const handleRequestClose = useCallback(() => {
+    if (isSubmitting) return;
+    if (hasUnsavedChanges()) {
+      setShowDiscardConfirm(true);
+    } else {
+      handleClose(false);
+    }
+  }, [isSubmitting, hasUnsavedChanges, handleClose]);
+
+  // Escape key handler
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isDeleteDialogOpen && !showLocationSelector && !showDiscardConfirm) {
+        handleRequestClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isDeleteDialogOpen, showLocationSelector, showDiscardConfirm, handleRequestClose]);
 
   if (!isOpen) return null;
 
@@ -610,12 +720,15 @@ export function EditPostModal({
     currentUser?.name ||
     'User';
 
-  const canSave =
+  const isDirty = hasUnsavedChanges();
+  const hasBasicContent =
     description.trim().length > 0 ||
     selectedImages.length > 0 ||
     selectedVideo !== null ||
     sharedPost !== null ||
     (postType === 'poll' && poll.isPollValid());
+
+  const canSave = hasBasicContent && isDirty;
 
   return (
     <>
@@ -632,7 +745,7 @@ export function EditPostModal({
         {/* Top-Right Close Button (Figma: 20x20, top: 40px, right: 40px, stroke: #FFECE6, stroke-width: 1.8) */}
         <button
           type="button"
-          onClick={handleClose}
+          onClick={handleRequestClose}
           disabled={isSubmitting}
           className="fixed top-[40px] right-[40px] z-[160] flex h-[20px] w-[20px] items-center justify-center p-0 transition-opacity hover:opacity-80 cursor-pointer outline-none disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ color: 'var(--ds-text-primary)' }}
@@ -961,16 +1074,16 @@ export function EditPostModal({
                   type="button"
                   onClick={handleSave}
                   disabled={isSubmitting || !canSave}
-                  className="flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-90 active:scale-95"
-                  style={{
-                    backgroundColor: 'var(--ds-accent)',
-                    color: 'var(--ds-text-primary)',
-                  }}
+                  className={cn(
+                    "flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-all outline-none",
+                    canSave && !isSubmitting
+                      ? "bg-[var(--ds-accent)] text-[var(--ds-text-primary)] cursor-pointer hover:opacity-90 active:scale-95"
+                      : "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-60"
+                  )}
                 >
                   {isSubmitting ? (
                     <Loader2
-                      className="w-4 h-4 animate-spin"
-                      style={{ color: 'var(--ds-text-primary)' }}
+                      className="w-4 h-4 animate-spin text-[var(--ds-text-primary)]"
                     />
                   ) : (
                     'Save'
@@ -1023,6 +1136,16 @@ export function EditPostModal({
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      {/* Discard Confirmation Modal */}
+      <DiscardConfirmOverlay
+        isOpen={showDiscardConfirm}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          handleClose(true);
+        }}
       />
     </>
   );
