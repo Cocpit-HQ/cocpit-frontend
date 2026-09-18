@@ -100,7 +100,7 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
 
   const handleEditItem = (exp: Experience) => {
     setActiveExpId(exp.experience_id);
-    setIsAddingNewRole(Boolean((exp as any).is_nested_role));
+    setIsAddingNewRole(false);
     setViewMode("form");
   };
 

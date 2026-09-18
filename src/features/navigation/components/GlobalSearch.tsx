@@ -5,9 +5,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/components/icons';
 import { useDebounce } from '@/hooks/use-debounce';
-import { searchUsers } from '@/services/api/user';
+import { searchUsers, getUserById } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { useToast } from '@/hooks/use-toast';
 
 export function GlobalSearch() {
   const router = useRouter();
@@ -17,11 +18,13 @@ export function GlobalSearch() {
   const [isFocused, setIsFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const debouncedSearch = useDebounce(searchQuery, 600);
   const { history, saveSearch, removeSearch, clearAll } = useSearchHistory();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -74,6 +77,41 @@ export function GlobalSearch() {
   const handleResultClick = (user: SearchedUser) => {
     saveSearch(user);
     setIsFocused(false);
+  };
+
+  const handleRecentUserClick = async (e: React.MouseEvent, user: SearchedUser) => {
+    e.preventDefault();
+    if (isNavigating) return;
+
+    if (!user.id) {
+      toast({ title: "Error", description: "Invalid history record.", variant: "destructive" });
+      return;
+    }
+
+    if (user.type === 'COMPANY' || user.account_type === 'COMPANY') {
+      setIsFocused(false);
+      saveSearch(user);
+      router.push(getUrlForUser(user));
+      return;
+    }
+
+    setIsNavigating(true);
+    try {
+      const liveProfile = await getUserById(user.id);
+      const newUsername = liveProfile.user?.account_name;
+      
+      if (!newUsername) {
+        throw new Error('Account name missing');
+      }
+
+      setIsFocused(false);
+      saveSearch({ ...user, account_name: newUsername });
+      router.push(`/profile/${newUsername}`);
+    } catch (err) {
+      toast({ title: "Error", description: "Unable to load profile. The user may have been deleted or deactivated.", variant: "destructive" });
+    } finally {
+      setIsNavigating(false);
+    }
   };
   
   const getUrlForUser = (user: SearchedUser) => {
@@ -217,10 +255,9 @@ export function GlobalSearch() {
               const user = item.value as SearchedUser;
               return (
                 <div key={item.id} className="w-full h-9 flex flex-row items-center justify-between gap-2 group transition-colors">
-                  <Link
-                    href={getUrlForUser(user)}
+                  <div
                     className="flex items-center gap-2 h-9 cursor-pointer flex-grow min-w-0"
-                    onClick={() => handleResultClick(user)}
+                    onClick={(e) => handleRecentUserClick(e, user)}
                   >
                     {renderAvatar(user)}
                     <div className="h-9 flex flex-col justify-center items-start min-w-0 overflow-hidden flex-1">
@@ -233,7 +270,7 @@ export function GlobalSearch() {
                         </p>
                       )}
                     </div>
-                  </Link>
+                  </div>
                   <button 
                     onClick={(e) => {
                       e.preventDefault();
