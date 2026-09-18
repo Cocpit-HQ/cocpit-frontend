@@ -68,6 +68,33 @@ export const cancelConnectionRequest = async (requestId: string) => {
   return data;
 };
 
+/**
+ * Batch accept received connection requests.
+ * Backend: PATCH /connections/batch-accept  { requestIds: string[] }
+ */
+export const batchAcceptConnectionRequests = async (requestIds: string[]) => {
+  const { data } = await api.patch('/connections/batch-accept', { requestIds });
+  return data;
+};
+
+/**
+ * Batch decline received connection requests.
+ * Backend: PATCH /connections/batch-decline  { requestIds: string[] }
+ */
+export const batchDeclineConnectionRequests = async (requestIds: string[]) => {
+  const { data } = await api.patch('/connections/batch-decline', { requestIds });
+  return data;
+};
+
+/**
+ * Batch withdraw sent connection requests.
+ * Backend: DELETE /connections/batch-withdraw  { data: { requestIds: string[] } }
+ */
+export const batchWithdrawConnectionRequests = async (requestIds: string[]) => {
+  const { data } = await api.delete('/connections/batch-withdraw', { data: { requestIds } });
+  return data;
+};
+
 // ─── Suggestions ──────────────────────────────────────────────────────────────
 
 /**

@@ -10,8 +10,15 @@ import {
   sendConnectionRequest,
   acceptChannelInvitation,
   declineChannelInvitation,
+  batchAcceptConnectionRequests,
+  batchDeclineConnectionRequests,
+  batchWithdrawConnectionRequests,
 } from '@/services/api/connections';
-import { acceptInvite as acceptTeamInvite, declineInvite as declineTeamInvite } from '@/features/manage-team/services/team.service';
+import { 
+  acceptInvite as acceptTeamInvite, 
+  declineInvite as declineTeamInvite,
+  batchDeclineTeamInvites
+} from '@/features/manage-team/services/team.service';
 import { useConnectionStore } from '@/store/connection.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -200,14 +207,7 @@ export const useConnectionActions = () => {
     mutationFn: async (requestIds: string[]) => {
       removeRequests(requestIds);
       updateCountsOptimistically('received', -requestIds.length);
-      const results = await Promise.allSettled(
-        requestIds.map((id) => acceptConnectionRequest(id))
-      );
-      const failed = results.filter((r) => r.status === 'rejected');
-      if (failed.length > 0) {
-        throw new Error(`${failed.length} requests failed to accept`);
-      }
-      return results;
+      return batchAcceptConnectionRequests(requestIds);
     },
     onSuccess: () => {
       invalidateAll();
@@ -224,10 +224,7 @@ export const useConnectionActions = () => {
     mutationFn: async (requestIds: string[]) => {
       removeRequests(requestIds);
       updateCountsOptimistically('received', -requestIds.length);
-      const results = await Promise.allSettled(
-        requestIds.map((id) => declineConnectionRequest(id))
-      );
-      return results;
+      return batchDeclineConnectionRequests(requestIds);
     },
     onSuccess: () => {
       invalidateAll();
@@ -244,10 +241,7 @@ export const useConnectionActions = () => {
     mutationFn: async (requestIds: string[]) => {
       removeRequests(requestIds);
       updateCountsOptimistically('sent', -requestIds.length);
-      const results = await Promise.allSettled(
-        requestIds.map((id) => cancelConnectionRequest(id))
-      );
-      return results;
+      return batchWithdrawConnectionRequests(requestIds);
     },
     onSuccess: () => {
       invalidateAll();
@@ -270,12 +264,15 @@ export const useConnectionActions = () => {
     }) => {
       removeRequests(inviteIds);
       updateCountsOptimistically('invitations', -inviteIds.length);
-      const results = await Promise.allSettled(
-        inviteIds.map((id) =>
-          subTab === 'teams' ? declineTeamInvite(id) : declineChannelInvitation(id)
-        )
-      );
-      return results;
+      
+      // Channel logic is currently not used in the UI.
+      // if (subTab === 'channels') {
+      //   return Promise.allSettled(
+      //     inviteIds.map((id) => declineChannelInvitation(id))
+      //   );
+      // }
+
+      return batchDeclineTeamInvites(inviteIds);
     },
     onSuccess: () => {
       invalidateAll();

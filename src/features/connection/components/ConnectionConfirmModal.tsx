@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2 } from 'lucide-react';
 
 export type ConnectionConfirmType =
@@ -70,6 +71,11 @@ export function ConnectionConfirmModal({
   onCancel,
 }: ConnectionConfirmModalProps) {
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -86,11 +92,11 @@ export function ConnectionConfirmModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isLoading, onCancel]);
 
-  if (!isOpen || !type) return null;
+  if (!isOpen || !type || !mounted) return null;
 
   const config = MODAL_CONFIG[type];
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -156,7 +162,8 @@ export function ConnectionConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -453,3 +453,8 @@ export async function declineInvite(token: string): Promise<any> {
   const res = await api.post('/organizations/teams/invites/decline', { token });
   return res.data;
 }
+
+export async function batchDeclineTeamInvites(tokens: string[]): Promise<any> {
+  const res = await api.post('/organizations/teams/invites/batch-decline', { tokens });
+  return res.data;
+}
