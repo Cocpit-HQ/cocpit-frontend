@@ -668,10 +668,10 @@ export default function ProfilePage() {
               isOwnProfile={true}
               isError={isProfileError}
               onRetry={() => refetchProfile()}
-              onEditExperience={(exp) => {
+              onEditExperience={(exp, isNestedGroup) => {
                 setEditInitialTab("experience");
-                setEditInitialMode("form");
-                setEditSelectedId(exp.experience_id);
+                setEditInitialMode(isNestedGroup ? "list" : "form");
+                setEditSelectedId(isNestedGroup ? null : exp.experience_id);
                 setIsEditProfileModalOpen(true);
               }}
               onAddExperience={() => {

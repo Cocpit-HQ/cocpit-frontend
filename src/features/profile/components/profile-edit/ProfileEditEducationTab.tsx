@@ -108,7 +108,9 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
 
   const handleDeleted = () => {
     onSuccess?.();
-    if (educations.length <= 1) {
+    if (!hasVisitedList) {
+      onCancel?.();
+    } else if (educations.length <= 1) {
       setViewMode("form");
       setActiveEduId("new");
     } else {

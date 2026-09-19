@@ -164,7 +164,9 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
   const handleDeleted = () => {
     setIsAddingNewRole(false);
     onSuccess?.();
-    if (experiences.length <= 1) {
+    if (!hasVisitedList) {
+      onCancel?.();
+    } else if (experiences.length <= 1) {
       setViewMode("form");
       setActiveExpId("new");
     } else {

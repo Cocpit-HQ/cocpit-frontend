@@ -108,7 +108,9 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
 
   const handleDeleted = () => {
     onSuccess?.();
-    if (projects.length <= 1) {
+    if (!hasVisitedList) {
+      onCancel?.();
+    } else if (projects.length <= 1) {
       setViewMode("form");
       setActiveProjId("new");
     } else {

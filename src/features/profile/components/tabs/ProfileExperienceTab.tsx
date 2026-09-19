@@ -8,7 +8,7 @@ interface ProfileExperienceTabProps {
   isOwnProfile?: boolean;
   isError?: boolean;
   onRetry?: () => void;
-  onEditExperience?: (experience: Experience) => void;
+  onEditExperience?: (experience: Experience, isNestedGroup: boolean) => void;
   onAddExperience?: () => void;
 }
 
@@ -160,7 +160,7 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
                           {idx === 0 && isOwnProfile && onEditExperience && (
                             <button
                               type="button"
-                              onClick={() => onEditExperience(exp)}
+                              onClick={() => onEditExperience(exp, hasMultipleRoles)}
                               className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0"
                               title="Edit experience"
                             >
