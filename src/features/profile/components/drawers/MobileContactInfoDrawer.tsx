@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Drawer } from "vaul";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Check } from "lucide-react";
 import { UserData } from "@/types/user";
 import { useRouter } from "next/navigation";
 
@@ -20,6 +20,14 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
   isOwnProfile = false,
 }) => {
   const router = useRouter();
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopy = (key: string, text?: string | null) => {
+    if (!text) return;
+    navigator.clipboard?.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey((prev) => (prev === key ? null : prev)), 3000);
+  };
 
   if (!user) return null;
 
@@ -74,9 +82,20 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
             {isEmailVisible && (
               <div className="flex flex-col gap-1">
                 <span className="text-[var(--ds-text-secondary)] text-sm font-medium">Email</span>
-                <span className="text-[var(--ds-text-primary)] text-sm font-normal break-all">
-                  {user.email || "—"}
-                </span>
+                <div
+                  onClick={() => user.email && handleCopy("email", user.email)}
+                  className={`flex justify-between items-center ${user.email ? "cursor-pointer group" : ""}`}
+                >
+                  <span className="text-[var(--ds-text-primary)] group-hover:text-[var(--ds-accent)] active:text-[var(--ds-accent)] transition-colors text-sm font-normal break-all">
+                    {user.email || "—"}
+                  </span>
+                  {copiedKey === "email" && (
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium shrink-0">
+                      <Check className="w-3.5 h-3.5" />
+                      Copied!
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -84,30 +103,52 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
             {(isPhoneVisible || isOwnProfile) && (
               <div className="flex flex-col gap-1">
                 <span className="text-[var(--ds-text-secondary)] text-sm font-medium">Phone number</span>
-                {user.mobile_number ? (
-                  <span className="text-[var(--ds-text-primary)] text-sm font-normal">
-                    {user.mobile_number}
-                  </span>
-                ) : isOwnProfile ? (
-                  <button
-                    type="button"
-                    onClick={handleRedirectToSettings}
-                    className="text-left text-[var(--ds-accent)] hover:underline text-sm font-normal cursor-pointer"
-                  >
-                    Add phone number
-                  </button>
-                ) : (
-                  <span className="text-[var(--ds-text-muted)] text-sm font-normal">—</span>
-                )}
+                <div
+                  onClick={() => user.mobile_number && handleCopy("phone", user.mobile_number)}
+                  className={`flex justify-between items-center ${user.mobile_number ? "cursor-pointer group" : ""}`}
+                >
+                  {user.mobile_number ? (
+                    <span className="text-[var(--ds-text-primary)] group-hover:text-[var(--ds-accent)] active:text-[var(--ds-accent)] transition-colors text-sm font-normal">
+                      {user.mobile_number}
+                    </span>
+                  ) : isOwnProfile ? (
+                    <button
+                      type="button"
+                      onClick={handleRedirectToSettings}
+                      className="text-left text-[var(--ds-accent)] hover:underline text-sm font-normal cursor-pointer"
+                    >
+                      Add phone number
+                    </button>
+                  ) : (
+                    <span className="text-[var(--ds-text-muted)] text-sm font-normal">—</span>
+                  )}
+                  {copiedKey === "phone" && (
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium shrink-0">
+                      <Check className="w-3.5 h-3.5" />
+                      Copied!
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Profile Url Section */}
             <div className="flex flex-col gap-1">
               <span className="text-[var(--ds-text-secondary)] text-sm font-medium">Profile Url</span>
-              <span className="text-[var(--ds-text-primary)] text-sm font-normal break-all">
-                {profileUrl}
-              </span>
+              <div
+                onClick={() => handleCopy("profileUrl", profileUrl)}
+                className="flex justify-between items-center cursor-pointer group gap-2"
+              >
+                <span className="text-[var(--ds-text-primary)] group-hover:text-[var(--ds-accent)] active:text-[var(--ds-accent)] transition-colors text-sm font-normal break-all line-clamp-1">
+                  {profileUrl}
+                </span>
+                {copiedKey === "profileUrl" && (
+                  <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                    Copied!
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Verifications Section */}
@@ -138,3 +179,5 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
 };
 
 export default MobileContactInfoDrawer;
+
+

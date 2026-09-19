@@ -40,7 +40,7 @@ export type {
 
 // Public profile API functions
 export { getPublicProfilePosts } from "@/services/api/public-profile";
-export type { PublicPost, PublicPostsResponse } from "@/services/api/public-profile";
+export type { PublicPost, PublicPostsResponse, GetPublicProfilePostsOptions } from "@/services/api/public-profile";
 
 // Shared services imported/used by the profile feature
 export {

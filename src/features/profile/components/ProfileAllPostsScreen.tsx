@@ -127,10 +127,18 @@ export function ProfileAllPostsScreen({
           newNextCursor = response.nextCursor;
           setHasMore(Boolean(response.nextCursor));
         } else if (userId) {
-          const data = await getPublicProfilePosts(userId, "All");
+          const currentCursor = reset ? undefined : nextCursor;
+          const backendFilter = TAB_FILTER_MAP[tabToFetch];
+          const data = await getPublicProfilePosts(userId, "All", {
+            filter: backendFilter,
+            limit: 20,
+            cursorCreatedAt: currentCursor?.cursorCreatedAt,
+            cursorPostId: currentCursor?.cursorPostId,
+          });
           if (activeTabRef.current !== tabToFetch) return;
           mappedPosts = data.posts.map(mapPublicPostToPost);
-          setHasMore(false);
+          newNextCursor = data.nextCursor;
+          setHasMore(Boolean(data.nextCursor));
         }
 
         if (reset) {

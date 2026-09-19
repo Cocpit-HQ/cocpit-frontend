@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, BareDialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CloseCrossIcon } from "@/components/icons";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Check } from "lucide-react";
 import { UserData } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +24,14 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopy = (key: string, text?: string | null) => {
+    if (!text) return;
+    navigator.clipboard?.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey((prev) => (prev === key ? null : prev)), 3000);
+  };
 
   if (!user) return null;
 
@@ -101,10 +109,19 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                 <div className="text-center justify-start text-[var(--ds-text-primary)] text-sm font-semibold font-['DM_Sans'] leading-5">
                   Email
                 </div>
-                <div className="self-stretch inline-flex justify-between items-center">
-                  <div className="text-center justify-start text-[var(--ds-text-primary)] text-sm font-normal font-['DM_Sans'] leading-5 break-all">
+                <div
+                  onClick={() => user.email && handleCopy("email", user.email)}
+                  className={`self-stretch inline-flex justify-between items-center ${user.email ? "cursor-pointer group" : ""}`}
+                >
+                  <div className="text-center justify-start text-[var(--ds-text-primary)] group-hover:text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 break-all transition-colors">
                     {user.email || "—"}
                   </div>
+                  {copiedKey === "email" && (
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium">
+                      <Check className="w-3.5 h-3.5" />
+                      Copied!
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -116,9 +133,12 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                   Phone number
                 </div>
 
-                <div className="self-stretch inline-flex justify-between items-center">
+                <div
+                  onClick={() => user.mobile_number && handleCopy("phone", user.mobile_number)}
+                  className={`self-stretch inline-flex justify-between items-center ${user.mobile_number ? "cursor-pointer group" : ""}`}
+                >
                   {user.mobile_number ? (
-                    <div className="text-center justify-start text-[var(--ds-text-primary)] text-sm font-normal font-['DM_Sans'] leading-5">
+                    <div className="text-center justify-start text-[var(--ds-text-primary)] group-hover:text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 transition-colors">
                       {user.mobile_number}
                     </div>
                   ) : isOwnProfile ? (
@@ -129,7 +149,17 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                     >
                       Add phone number
                     </button>
-                  ) : null}
+                  ) : (
+                    <div className="text-center justify-start text-[var(--ds-text-muted)] text-sm font-normal font-['DM_Sans'] leading-5">
+                      —
+                    </div>
+                  )}
+                  {copiedKey === "phone" && (
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium">
+                      <Check className="w-3.5 h-3.5" />
+                      Copied!
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -139,15 +169,19 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
               <div className="text-center justify-start text-[var(--ds-text-primary)] text-sm font-semibold font-['DM_Sans'] leading-5">
                 Profile Url
               </div>
-              <div className="self-stretch inline-flex justify-between items-center">
-                <a
-                  href={profileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-center justify-start text-[var(--ds-text-primary)] hover:underline text-sm font-normal font-['DM_Sans'] leading-5 break-all line-clamp-1"
-                >
+              <div
+                onClick={() => handleCopy("profileUrl", profileUrl)}
+                className="self-stretch inline-flex justify-between items-center cursor-pointer group gap-2"
+              >
+                <div className="text-center justify-start text-[var(--ds-text-primary)] group-hover:text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 break-all line-clamp-1 transition-colors">
                   {profileUrl}
-                </a>
+                </div>
+                {copiedKey === "profileUrl" && (
+                  <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                    Copied!
+                  </span>
+                )}
               </div>
             </div>
 
@@ -193,3 +227,5 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
 };
 
 export default ContactInfoModal;
+
+

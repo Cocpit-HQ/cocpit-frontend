@@ -146,11 +146,16 @@ export function useProfile(userId: string, sourcePostId?: string) {
     });
 }
 
-export function useProfilePosts(userId: string) {
+export function useProfilePosts(userId: string, filterOrOptions?: string | { filter?: string; limit?: number; category?: string }) {
+    const options =
+        typeof filterOrOptions === "string"
+            ? { filter: filterOrOptions, limit: 50 }
+            : { limit: 50, ...filterOrOptions };
+
     return useQuery({
-        queryKey: ["profile-posts", userId],
+        queryKey: ["profile-posts", userId, options.filter, options.category, options.limit],
         queryFn: async () => {
-            const data = await getPublicProfilePosts(userId, 'All', { limit: 50 });
+            const data = await getPublicProfilePosts(userId, options.category || 'All', options);
             return data.posts.map(mapPublicPostToPost);
         },
         enabled: !!userId,

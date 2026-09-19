@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef } from "react";
 import { AddProfileUserIcon, ProfileEditIcon, UserIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import {
@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
 import { MobileProfileMenuDrawer } from "./drawers/MobileProfileMenuDrawer";
 import type { ProfileScoreBreakdown } from "@/features/profile-score/types/profileScore.types";
-import { getProfileScoreActionLinks, type ProfileScoreActionLink } from "./ProfileScoreCard";
 import { ViewMediaModal } from "../commonProfileComponents/ViewMediaModal";
 
 interface ProfileCoverSectionProps {
@@ -66,64 +65,12 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
 }) => {
   const [coverError, setCoverError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
     type: "avatar" | "banner";
     url: string;
   } | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsHovered(false);
-    }, 280);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const isCoverSet = Boolean(!coverError && coverImage) || Boolean(hasCoverImage);
-  const isAvatarSet = Boolean(!avatarError && avatarImage) || Boolean(hasAvatar);
-
-  const actionLinks: ProfileScoreActionLink[] = useMemo(() => {
-    return getProfileScoreActionLinks({
-      breakdown,
-      hasExperience,
-      hasEducation,
-      hasProjects,
-      hasSkills,
-      hasAvatar: isAvatarSet,
-      hasCoverImage: isCoverSet,
-      hasBasicInfo,
-    });
-  }, [
-    breakdown,
-    hasExperience,
-    hasEducation,
-    hasProjects,
-    hasSkills,
-    isAvatarSet,
-    isCoverSet,
-    hasBasicInfo,
-  ]);
 
   const handleDefaultShare = () => {
     if (onShareProfile) {
@@ -270,24 +217,10 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 strokeLinecap="round"
                 fill="none"
               />
-              {/* Hit Track: Only intercepts mouse events over the circular progress bar stroke */}
-              <circle
-                cx="58"
-                cy="58"
-                r={radius}
-                stroke="transparent"
-                strokeWidth="10"
-                fill="none"
-                className="cursor-pointer"
-                style={{ pointerEvents: "stroke" }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-              />
             </svg>
 
             {/* Frame 2609490: Inner Avatar Image */}
             <div
-              onMouseEnter={handleMouseLeave}
               onClick={handleAvatarClick}
               onTouchEnd={handleAvatarTouchEnd}
               onDoubleClick={handleAvatarDoubleClick}
@@ -310,9 +243,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
 
             {/* Frame 2609750: Percentage Badge */}
             <div
-              className="w-[34px] md:w-[38px] h-[16px] md:h-[17.5px] px-0.5 left-1/2 -translate-x-1/2 top-[76px] md:top-[103.51px] absolute bg-[var(--ds-surface-1)] rounded-[99px] inline-flex justify-center items-center gap-1 md:gap-2.5 z-30 shadow-md cursor-pointer"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
+              className="w-[34px] md:w-[38px] h-[16px] md:h-[17.5px] px-0.5 left-1/2 -translate-x-1/2 top-[76px] md:top-[103.51px] absolute bg-[var(--ds-surface-1)] rounded-[99px] inline-flex justify-center items-center gap-1 md:gap-2.5 z-30 shadow-md pointer-events-none"
             >
               <span className="text-[var(--ds-text-primary)] text-[9px] md:text-[10px] font-medium font-['DM_Sans'] leading-[12px]">
                 {completionPercentage}%
@@ -343,30 +274,6 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
           </div>
         )}
       </div>
-
-      {/* Suggestions Tooltip on Score Hover (Single Box, wraps up to banner boundary) */}
-      {showProgressRing && isHovered && actionLinks.length > 0 && (
-        <div
-          className="absolute left-[108px] md:left-[144px] top-[110px] sm:top-[135px] md:top-[152px] z-30 box-border flex flex-row flex-wrap items-center px-3 py-1.5 gap-x-2 gap-y-1 md:gap-y-2 min-h-[34px] h-auto w-fit max-w-[calc(100%-120px)] md:max-w-[624px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] shadow-lg before:absolute before:-left-3 before:top-0 before:w-3 before:h-full before:content-[''] animate-in fade-in duration-200 select-none"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          {actionLinks.map((link) => (
-            <button
-              key={link.action + link.label}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsHovered(false);
-                onActionClick?.(link.action);
-              }}
-              className="font-['DM_Sans'] font-normal text-xs md:text-sm leading-5 text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors cursor-pointer whitespace-nowrap outline-none flex-none select-none"
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Mobile Quick Action Buttons (Own Profile) */}
       {isOwnProfile && (

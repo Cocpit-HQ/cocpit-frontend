@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 import { Share2, Flag, Ban, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { FeatureDisabledTooltip } from "@/components/feature-flags";
@@ -58,7 +59,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Post } from "@/types/entities";
 import type { UserData } from "@/types/user";
-import { useScrollRestoration, saveScrollPosition } from "@/hooks/use-scroll-restoration";
 
 interface PublicProfileProps {
   userId: string;
@@ -72,6 +72,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showRemoveConnectionDialog, setShowRemoveConnectionDialog] = useState(false);
+  const [showUnfollowDialog, setShowUnfollowDialog] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDownloadProfileOpen, setIsDownloadProfileOpen] = useState(false);
@@ -91,8 +92,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     return publicPosts.filter((post) => post.visibility !== "private") as Post[];
   }, [publicPosts]);
 
-  // Restore scroll position when public profile and posts are loaded
-  useScrollRestoration(!isUserLoading && publicPosts !== undefined);
+  // Always ensure public profile opens scrolled to top (0, 0)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [userId]);
 
   const experiences = useMemo(() => user?.experiences || [], [user?.experiences]);
   const educations = useMemo(() => user?.educations || [], [user?.educations]);
@@ -131,7 +134,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const handleFollowToggle = () => {
     if (!targetUserId) return;
     if (following) {
-      unfollowUser(targetUserId);
+      setShowUnfollowDialog(true);
     } else {
       followUser(targetUserId);
     }
@@ -634,7 +637,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             ? "They will be able to see your profile and posts again"
             : undefined
         }
-        confirmText={blocked ? "Unblock" : "Remove"}
+        confirmText={blocked ? "Unblock" : undefined}
       />
 
       {/* Remove Connection Confirmation Modal */}
@@ -643,6 +646,18 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         onClose={() => setShowRemoveConnectionDialog(false)}
         onConfirm={handleRemoveConnection}
         type="remove_connection"
+        targetName={user?.name}
+      />
+
+      {/* Unfollow Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={showUnfollowDialog}
+        onClose={() => setShowUnfollowDialog(false)}
+        onConfirm={() => {
+          if (targetUserId) unfollowUser(targetUserId);
+          setShowUnfollowDialog(false);
+        }}
+        type="unfollow"
         targetName={user?.name}
       />
 

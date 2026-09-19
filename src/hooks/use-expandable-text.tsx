@@ -52,7 +52,7 @@ export function useExpandableText({
     const measurer = measurerRef.current;
     if (!measurer) return;
 
-    const maxHeight = maxLines * lineHeight;
+    const maxHeight = maxLines * lineHeight + Math.min(8, Math.floor(lineHeight * 0.35));
 
     const escapeHtml = (str: string) =>
       str
@@ -63,7 +63,12 @@ export function useExpandableText({
         .replace(/'/g, "&#039;");
 
     const setMeasurerContent = (candidateText: string) => {
-      measurer.innerHTML = `${escapeHtml(candidateText)}&nbsp;<span style="display: inline; margin-left: 4px; font-weight: 600;">...&nbsp;${moreText}&nbsp;</span>`;
+      measurer.innerHTML = `${escapeHtml(candidateText)}<span style="display: inline; margin-left: 4px; white-space: nowrap; font-weight: 600;">...&nbsp;${escapeHtml(moreText)}</span>`;
+    };
+
+    const testFit = (candidateText: string) => {
+      setMeasurerContent(candidateText);
+      return measurer.scrollHeight <= maxHeight;
     };
 
     const measure = () => {
@@ -91,9 +96,8 @@ export function useExpandableText({
       while (low <= high) {
         const mid = Math.floor((low + high) / 2);
         const candidate = tokens.slice(0, mid).join("").trimEnd().replace(/[,;:\s—\-]+$/, "");
-        setMeasurerContent(candidate);
 
-        if (measurer.scrollHeight <= maxHeight) {
+        if (testFit(candidate)) {
           best = mid;
           low = mid + 1;
         } else {
@@ -105,19 +109,21 @@ export function useExpandableText({
       if (best > 0) {
         finalTruncated = tokens.slice(0, best).join("").trimEnd().replace(/[,;:\s—\-]+$/, "");
 
-        // If the next token is an unbroken long string (e.g. >= 10 chars without whitespace),
-        // try to fit as many characters as possible into the remaining line space
-        const nextToken = tokens[best];
-        if (nextToken && nextToken.trim().length >= 10) {
-          const baseText = tokens.slice(0, best).join("");
+        // If the next word token is unbroken / long (>= 8 chars), try fitting as many characters as possible into remaining line space
+        let nextIdx = best;
+        while (nextIdx < tokens.length && tokens[nextIdx].trim().length === 0) {
+          nextIdx++;
+        }
+        const nextWord = tokens[nextIdx];
+        if (nextWord && nextWord.length >= 8) {
+          const baseText = tokens.slice(0, nextIdx).join("");
           let cLow = 1;
-          let cHigh = nextToken.length;
+          let cHigh = nextWord.length;
           let cBest = 0;
           while (cLow <= cHigh) {
             const cMid = Math.floor((cLow + cHigh) / 2);
-            const cCandidate = nextToken.slice(0, cMid);
-            setMeasurerContent(`${baseText}${cCandidate}`);
-            if (measurer.scrollHeight <= maxHeight) {
+            const candidate = `${baseText}${nextWord.slice(0, cMid)}`;
+            if (testFit(candidate)) {
               cBest = cMid;
               cLow = cMid + 1;
             } else {
@@ -125,28 +131,26 @@ export function useExpandableText({
             }
           }
           if (cBest > 0) {
-            // Safety buffer: take 3 fewer characters to guarantee ... See more never wraps to next line
-            const safeChars = Math.max(1, cBest - 3);
-            finalTruncated = `${baseText}${nextToken.slice(0, safeChars)}`.trimEnd();
+            const safeChars = Math.max(1, cBest - 1);
+            finalTruncated = `${baseText}${nextWord.slice(0, safeChars)}`.trimEnd();
           }
         }
       } else if (tokens[0]) {
-        // Fallback for long single word
+        // Fallback for long single word exceeding maxHeight
         let cLow = 1;
         let cHigh = tokens[0].length;
         let cBest = 1;
         while (cLow <= cHigh) {
           const cMid = Math.floor((cLow + cHigh) / 2);
           const cCandidate = tokens[0].slice(0, cMid);
-          setMeasurerContent(cCandidate);
-          if (measurer.scrollHeight <= maxHeight) {
+          if (testFit(cCandidate)) {
             cBest = cMid;
             cLow = cMid + 1;
           } else {
             cHigh = cMid - 1;
           }
         }
-        const safeChars = Math.max(1, cBest - 3);
+        const safeChars = Math.max(1, cBest - 1);
         finalTruncated = tokens[0].slice(0, safeChars);
       }
 
@@ -226,16 +230,16 @@ export const ExpandableText: React.FC<ExpandableTextProps> = ({
       <div
         ref={measurerRef}
         aria-hidden="true"
-        className={`whitespace-pre-wrap break-words pointer-events-none absolute top-0 left-0 right-0 invisible -z-50 ${textClassName}`}
+        className={`whitespace-pre-wrap break-words [overflow-wrap:anywhere] pointer-events-none absolute top-0 left-0 right-0 invisible -z-50 ${textClassName}`}
       />
 
       <p
         style={
           !isExpanded && isOverflowing
-            ? { maxHeight: `${maxLines * lineHeight + 4}px`, overflow: "hidden" }
+            ? { maxHeight: `${maxLines * lineHeight + 8}px`, overflow: "hidden" }
             : undefined
         }
-        className={`self-stretch whitespace-pre-wrap break-words ${textClassName}`}
+        className={`self-stretch whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${textClassName}`}
       >
         <span>{displayText}</span>
         {isOverflowing && !isExpanded && (
@@ -248,7 +252,7 @@ export const ExpandableText: React.FC<ExpandableTextProps> = ({
             }}
             className={
               buttonClassName ||
-              "inline select-none cursor-pointer ml-1 bg-transparent border-none p-0 align-baseline"
+              "inline select-none cursor-pointer ml-1 bg-transparent border-none p-0 align-baseline whitespace-nowrap"
             }
           >
             <span className="text-[var(--ds-text-muted)]">... </span>

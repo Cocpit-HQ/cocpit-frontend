@@ -240,6 +240,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ["followers", userId] });
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus", userId] });
     },
   });
 
@@ -318,6 +320,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ["connections", userId] });
       queryClient.invalidateQueries({ queryKey: ["following", userId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus", userId] });
     },
   });
 
@@ -356,21 +360,25 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     }
   };
 
-  const executeConfirmedAction = () => {
+  const executeConfirmedAction = async () => {
     if (!confirmAction) return;
     const { type, userId: targetId, userType } = confirmAction;
 
-    if (type === "unfollow") {
-      if (userType === "company") {
-        unfollowCompanyMutation.mutate(targetId);
-      } else {
-        unfollowMutation.mutate(targetId);
+    try {
+      if (type === "unfollow") {
+        if (userType === "company") {
+          await unfollowCompanyMutation.mutateAsync(targetId);
+        } else {
+          await unfollowMutation.mutateAsync(targetId);
+        }
+      } else if (type === "remove_connection") {
+        await removeConnectionMutation.mutateAsync({ id: targetId, type: userType });
       }
-    } else if (type === "remove_connection") {
-      removeConnectionMutation.mutate({ id: targetId, type: userType });
+    } catch (err) {
+      // Error handled by mutation onError
+    } finally {
+      setConfirmAction(null);
     }
-
-    setConfirmAction(null);
   };
 
   // Private empty state texts
@@ -533,7 +541,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   }, [activeTab]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) return; }}>
+    <>
+      <Dialog open={isOpen && !confirmAction} onOpenChange={(open) => { if (!open) return; }}>
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
@@ -704,45 +713,46 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             </div>
           </div>
         )}
-
-        {/* Confirmation Modal */}
-        {confirmAction && (
-          <ActionConfirmModal
-            isOpen={!!confirmAction}
-            onClose={() => setConfirmAction(null)}
-            onConfirm={executeConfirmedAction}
-            type={
-              confirmAction.type === "unfollow"
-                ? "unfollow"
-                : confirmAction.type === "remove_connection"
-                ? "remove_connection"
-                : "custom"
-            }
-            targetName={confirmAction.userName}
-            title={
-              confirmAction.type === "remove_follower"
-                ? "Remove follower?"
-                : undefined
-            }
-            description={
-              confirmAction.type === "remove_follower"
-                ? "You’ll no longer have them in your followers list"
-                : undefined
-            }
-            confirmText={
-              confirmAction.type === "remove_follower"
-                ? "Remove"
-                : undefined
-            }
-            isLoading={
-              unfollowMutation.isPending ||
-              unfollowCompanyMutation.isPending ||
-              removeConnectionMutation.isPending
-            }
-          />
-        )}
       </DialogContent>
     </Dialog>
+
+    {/* Confirmation Modal */}
+    {confirmAction && (
+      <ActionConfirmModal
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={executeConfirmedAction}
+        type={
+          confirmAction.type === "unfollow"
+            ? "unfollow"
+            : confirmAction.type === "remove_connection"
+            ? "remove_connection"
+            : "custom"
+        }
+        targetName={confirmAction.userName}
+        title={
+          confirmAction.type === "remove_follower"
+            ? "Remove follower?"
+            : undefined
+        }
+        description={
+          confirmAction.type === "remove_follower"
+            ? "You’ll no longer have them in your followers list"
+            : undefined
+        }
+        confirmText={
+          confirmAction.type === "remove_follower"
+            ? "Remove"
+            : undefined
+        }
+        isLoading={
+          unfollowMutation.isPending ||
+          unfollowCompanyMutation.isPending ||
+          removeConnectionMutation.isPending
+        }
+      />
+    )}
+  </>
   );
 };
 
