@@ -24,21 +24,46 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
   onSuccess,
   onCancel,
 }) => {
-  const [viewMode, setViewMode] = useState<"list" | "form">(
-    educations.length === 0 ? "form" : initialMode
-  );
-  const [activeEduId, setActiveEduId] = useState<string | "new">(
-    selectedId || (initialMode === "form" ? "new" : "new")
-  );
+  const [viewMode, setViewMode] = useState<"list" | "form">(() => {
+    if (typeof window !== "undefined") {
+      const savedMode = sessionStorage.getItem("profile_edit_edu_mode") as "list" | "form";
+      if (savedMode) return savedMode;
+    }
+    return educations.length === 0 ? "form" : initialMode;
+  });
+  
+  const [activeEduId, setActiveEduId] = useState<string | "new">(() => {
+    if (typeof window !== "undefined") {
+      const savedId = sessionStorage.getItem("profile_edit_edu_id");
+      if (savedId) return savedId;
+    }
+    return selectedId || (initialMode === "form" ? "new" : "new");
+  });
+  const [hasVisitedList, setHasVisitedList] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("profile_edit_edu_has_visited");
+      if (saved) return saved === "true";
+    }
+    return initialMode === "list" && educations.length > 0;
+  });
 
   useEffect(() => {
-    if (initialMode === "form") {
+    if (initialMode === "form" && typeof window !== "undefined" && !sessionStorage.getItem("profile_edit_edu_mode")) {
       setViewMode("form");
       setActiveEduId(selectedId || "new");
-    } else {
-      setViewMode(educations.length === 0 ? "form" : "list");
+      setHasVisitedList(false);
+    } else if (typeof window !== "undefined" && !sessionStorage.getItem("profile_edit_edu_mode")) {
+      const mode = educations.length === 0 ? "form" : "list";
+      setViewMode(mode);
+      setHasVisitedList(mode === "list");
     }
   }, [initialMode, selectedId, educations.length]);
+
+  useEffect(() => {
+    sessionStorage.setItem("profile_edit_edu_mode", viewMode);
+    sessionStorage.setItem("profile_edit_edu_id", activeEduId);
+    sessionStorage.setItem("profile_edit_edu_has_visited", String(hasVisitedList));
+  }, [viewMode, activeEduId, hasVisitedList]);
 
   // Sync subtitle with parent
   useEffect(() => {
@@ -51,6 +76,7 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
 
   useEffect(() => {
     if (viewMode === "list") {
+      setHasVisitedList(true);
       onRegisterBackAction?.(null);
     }
   }, [viewMode, onRegisterBackAction]);
@@ -63,21 +89,31 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
   const handleAddNew = () => {
     setActiveEduId("new");
     setViewMode("form");
+    setHasVisitedList(true);
   };
 
   const handleEditItem = (edu: Education) => {
     setActiveEduId(edu.education_id);
     setViewMode("form");
+    setHasVisitedList(true);
   };
 
-  const handleSaved = () => {
+  const handleSaved = (id?: string) => {
+    if (id) {
+      setActiveEduId(id);
+    }
     onSuccess?.();
     // Retain user on the form page
   };
 
   const handleDeleted = () => {
     onSuccess?.();
-    setViewMode("list");
+    if (educations.length <= 1) {
+      setViewMode("form");
+      setActiveEduId("new");
+    } else {
+      setViewMode("list");
+    }
   };
 
   if (viewMode === "list") {
@@ -93,7 +129,17 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
   return (
     <ProfileEditEducationForm
       initialEducation={activeEducation}
-      onBackToList={() => setViewMode("list")}
+      onBackToList={() => {
+        if (educations.length === 0) {
+          onCancel?.();
+          return;
+        }
+        if (!hasVisitedList) {
+          onCancel?.();
+        } else {
+          setViewMode("list");
+        }
+      }}
       onAddNew={handleAddNew}
       onSaved={handleSaved}
       onDeleted={handleDeleted}

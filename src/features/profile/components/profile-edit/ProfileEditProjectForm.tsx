@@ -52,7 +52,7 @@ interface ProfileEditProjectFormProps {
   initialProject?: Project | null;
   onBackToList: () => void;
   onAddNew: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   onDeleted: () => void;
   onRegisterBack?: (fn: () => void) => void;
 }
@@ -109,8 +109,44 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
     } else {
       initialData = EMPTY_FORM;
     }
+
+    if (typeof window !== "undefined") {
+      const draftKey = `profile_draft_proj_${initialProject?.project_id || "new"}`;
+      const savedDraft = sessionStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          // Only use draft if it has the same ID or both are new
+          if (parsed.project_id === initialData.project_id) {
+             initialData = parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
     setFormData(initialData);
     setInitialSnapshot(initialData);
+  }, [initialProject]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && formData) {
+      const draftKey = `profile_draft_proj_${initialProject?.project_id || "new"}`;
+      // Clean out pendingFiles before storing since File objects can't be stringified properly
+      const safeData = {
+        ...formData,
+        media: formData.media.map(({ pendingFile, ...rest }) => rest)
+      };
+      sessionStorage.setItem(draftKey, JSON.stringify(safeData));
+    }
+  }, [formData, initialProject]);
+
+  const clearDraft = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const draftKey = `profile_draft_proj_${initialProject?.project_id || "new"}`;
+      sessionStorage.removeItem(draftKey);
+    }
   }, [initialProject]);
 
   const isEditing = Boolean(formData.project_id);
@@ -243,6 +279,8 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         role_description: formData.role_description.trim() || undefined,
       };
 
+      let savedId: string | undefined;
+
       if (isEditing && formData.project_id) {
         await projMutations.update.mutateAsync({
           id: formData.project_id,
@@ -250,17 +288,20 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         });
         toast.success("Project updated successfully");
         setInitialSnapshot({ ...formData });
+        savedId = formData.project_id;
       } else {
         const res: any = await projMutations.add.mutateAsync(payload);
         const newId = res?.project?.project_id || res?.project?.id || res?.data?.project_id || res?.data?.id;
         const updatedForm = { ...formData, ...(newId ? { project_id: newId } : {}) };
         if (newId) {
           setFormData(updatedForm);
+          savedId = newId;
         }
         setInitialSnapshot(updatedForm);
         toast.success("Project added successfully");
       }
-      onSaved();
+      clearDraft();
+      onSaved(savedId);
     } catch (err: any) {
       console.error("Failed to save project:", err);
       toast.error(err?.response?.data?.message || "Failed to save project");
@@ -271,6 +312,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
 
   const handleDelete = async () => {
     if (!isEditing || !formData.project_id) {
+      clearDraft();
       onBackToList();
       return;
     }
@@ -279,6 +321,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
     try {
       await projMutations.remove.mutateAsync(formData.project_id);
       toast.success("Project deleted successfully");
+      clearDraft();
       onDeleted();
     } catch (err: any) {
       console.error("Failed to delete project:", err);
@@ -320,9 +363,10 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
     if (hasChanges) {
       setShowLeaveModal(true);
     } else {
+      clearDraft();
       onBackToList();
     }
-  }, [hasChanges, onBackToList]);
+  }, [hasChanges, clearDraft, onBackToList]);
 
   useEffect(() => {
     onRegisterBack?.(handleCancelClick);
@@ -767,6 +811,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         confirmText="Stay"
         cancelText="Leave"
         onConfirm={() => {
+          clearDraft();
           setShowLeaveModal(false);
           onBackToList();
         }}

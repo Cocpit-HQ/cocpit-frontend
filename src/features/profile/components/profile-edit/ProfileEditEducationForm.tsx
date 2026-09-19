@@ -39,7 +39,7 @@ interface ProfileEditEducationFormProps {
   initialEducation?: Education | null;
   onBackToList: () => void;
   onAddNew: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   onDeleted: () => void;
   onRegisterBack?: (fn: () => void) => void;
 }
@@ -76,8 +76,39 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     } else {
       initialData = EMPTY_FORM;
     }
+
+    if (typeof window !== "undefined") {
+      const draftKey = `profile_draft_edu_${initialEducation?.education_id || "new"}`;
+      const savedDraft = sessionStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          // Only use draft if it has the same ID or both are new
+          if (parsed.education_id === initialData.education_id) {
+             initialData = parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
     setFormData(initialData);
     setInitialSnapshot(initialData);
+  }, [initialEducation]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && formData) {
+      const draftKey = `profile_draft_edu_${initialEducation?.education_id || "new"}`;
+      sessionStorage.setItem(draftKey, JSON.stringify(formData));
+    }
+  }, [formData, initialEducation]);
+
+  const clearDraft = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const draftKey = `profile_draft_edu_${initialEducation?.education_id || "new"}`;
+      sessionStorage.removeItem(draftKey);
+    }
   }, [initialEducation]);
 
   const isEditing = Boolean(formData.education_id);
@@ -172,6 +203,8 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
         description: formData.description.trim() || null,
       };
 
+      let savedId: string | undefined;
+
       if (isEditing && formData.education_id) {
         await eduMutations.update.mutateAsync({
           id: formData.education_id,
@@ -179,17 +212,20 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
         });
         toast.success("Education updated successfully");
         setInitialSnapshot({ ...formData });
+        savedId = formData.education_id;
       } else {
         const res: any = await eduMutations.add.mutateAsync(payload);
         const newId = res?.education?.education_id || res?.education?.id || res?.data?.education_id || res?.data?.id;
         const updatedForm = { ...formData, ...(newId ? { education_id: newId } : {}) };
         if (newId) {
           setFormData(updatedForm);
+          savedId = newId;
         }
         setInitialSnapshot(updatedForm);
         toast.success("Education added successfully");
       }
-      onSaved();
+      clearDraft();
+      onSaved(savedId);
     } catch (err: any) {
       console.error("Failed to save education:", err);
       toast.error(err?.response?.data?.message || "Failed to save education");
@@ -200,6 +236,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
 
   const handleDelete = async () => {
     if (!isEditing || !formData.education_id) {
+      clearDraft();
       onBackToList();
       return;
     }
@@ -208,6 +245,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     try {
       await eduMutations.remove.mutateAsync(formData.education_id);
       toast.success("Education deleted successfully");
+      clearDraft();
       onDeleted();
     } catch (err: any) {
       console.error("Failed to delete education:", err);
@@ -246,9 +284,10 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     if (hasChanges) {
       setShowLeaveModal(true);
     } else {
+      clearDraft();
       onBackToList();
     }
-  }, [hasChanges, onBackToList]);
+  }, [hasChanges, clearDraft, onBackToList]);
 
   useEffect(() => {
     onRegisterBack?.(handleCancelClick);
@@ -416,6 +455,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
         confirmText="Stay"
         cancelText="Leave"
         onConfirm={() => {
+          clearDraft();
           setShowLeaveModal(false);
           onBackToList();
         }}
@@ -424,5 +464,4 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   );
 };
 
-export default ProfileEditEducationForm;
 

@@ -94,6 +94,8 @@ export function ProjectDocPreviewModal({
   };
 
   const docTitle = getMediaName();
+  
+  const isOfficeDoc = /\.(doc|docx|ppt|pptx|xls|xlsx)$/i.test(docUrl) || /\.(doc|docx|ppt|pptx|xls|xlsx)$/i.test(docTitle);
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -209,7 +211,11 @@ export function ProjectDocPreviewModal({
             />
           ) : (
             <iframe
-              src={`${docUrl}#toolbar=0&navpanes=0`}
+              src={
+                isOfficeDoc
+                  ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(docUrl)}`
+                  : `${docUrl}#toolbar=0&navpanes=0`
+              }
               className="w-full h-full border-0 bg-white"
               title={docTitle}
             />

@@ -53,9 +53,10 @@ interface ProfileEditExperienceFormProps {
   onToggleAddNewRole?: (adding: boolean) => void;
   onBackToList: () => void;
   onAddNew?: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   onDeleted: () => void;
   onRegisterBack?: (fn: () => void) => void;
+  onDisableAddRole?: (disabled: boolean) => void;
 }
 
 const extractSkills = (exp: any): string[] => {
@@ -105,6 +106,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   onSaved,
   onDeleted,
   onRegisterBack,
+  onDisableAddRole,
 }) => {
   const expMutations = useExperienceMutations();
   const skillMutations = useSkillMutations();
@@ -154,11 +156,41 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
       initialEnd = false;
     }
 
+    if (typeof window !== "undefined") {
+      const draftKey = `profile_draft_exp_${initialExperience?.experience_id || "new"}`;
+      const savedDraft = sessionStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          // Only use draft if it has the same ID or both are new
+          if (parsed.experience_id === initialData.experience_id) {
+             initialData = parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
     setFormData(initialData);
     setInitialSnapshot(initialData);
     setEndCurrentRole(initialEnd);
     setInitialEndCurrentRole(initialEnd);
   }, [initialExperience, isAddingNewRole]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && formData) {
+      const draftKey = `profile_draft_exp_${initialExperience?.experience_id || "new"}`;
+      sessionStorage.setItem(draftKey, JSON.stringify(formData));
+    }
+  }, [formData, initialExperience]);
+
+  const clearDraft = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const draftKey = `profile_draft_exp_${initialExperience?.experience_id || "new"}`;
+      sessionStorage.removeItem(draftKey);
+    }
+  }, [initialExperience]);
 
   const isEditing = Boolean(
     !isInitialAdd &&
@@ -252,6 +284,8 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           : {}),
       };
 
+      let savedId: string | undefined;
+
       if (isEditing && formData.experience_id) {
         await expMutations.update.mutateAsync({
           id: formData.experience_id,
@@ -259,12 +293,14 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         });
         toast.success("Experience updated successfully");
         setInitialSnapshot({ ...formData });
+        savedId = formData.experience_id;
       } else {
         const res: any = await expMutations.add.mutateAsync(payload);
         const newId = res?.experience?.experience_id || res?.experience?.id || res?.data?.experience_id || res?.data?.id;
         const updatedForm = { ...formData, ...(newId ? { experience_id: newId } : {}) };
         if (newId) {
           setFormData(updatedForm);
+          savedId = newId;
         }
         setInitialSnapshot(updatedForm);
         toast.success(isAddingNewRole ? "New role added successfully" : "Experience added successfully");
@@ -279,7 +315,8 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         }
       }
 
-      onSaved();
+      clearDraft();
+      onSaved(savedId);
     } catch (err: any) {
       console.error("Failed to save experience:", err);
       toast.error(err?.response?.data?.message || "Failed to save experience");
@@ -291,6 +328,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   const handleDelete = async () => {
     const expId = formData.experience_id || initialExperience?.experience_id || (initialExperience as any)?.id;
     if (!isEditing || !expId) {
+      clearDraft();
       onBackToList();
       return;
     }
@@ -299,6 +337,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
     try {
       await expMutations.remove.mutateAsync(expId);
       toast.success("Experience deleted successfully");
+      clearDraft();
       onDeleted();
       onBackToList();
     } catch (err: any) {
@@ -340,13 +379,20 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
 
   const currentRoleName = initialExperience?.title || previousRoleTitle || "";
 
+  useEffect(() => {
+    // Disable adding a new role if the form has unsaved changes, is currently saving/deleting, or lacks required fields like company
+    const disabled = hasChanges || isSaving || isDeleting || !hasCompany || !isRequiredFilled;
+    onDisableAddRole?.(disabled);
+  }, [hasChanges, isSaving, isDeleting, hasCompany, isRequiredFilled, onDisableAddRole]);
+
   const handleCancelClick = useCallback(() => {
     if (hasChanges) {
       setShowLeaveModal(true);
     } else {
+      clearDraft();
       onBackToList();
     }
-  }, [hasChanges, onBackToList]);
+  }, [hasChanges, clearDraft, onBackToList]);
 
   useEffect(() => {
     onRegisterBack?.(handleCancelClick);
@@ -562,7 +608,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           className={cn(
             "w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all focus:outline-none",
             !canSubmit || isSaving || isDeleting
-              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-90"
+              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-90"
               : "bg-[var(--ds-accent)] text-white hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
           )}
         >
@@ -592,6 +638,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         confirmText="Stay"
         cancelText="Leave"
         onConfirm={() => {
+          clearDraft();
           setShowLeaveModal(false);
           onBackToList();
         }}

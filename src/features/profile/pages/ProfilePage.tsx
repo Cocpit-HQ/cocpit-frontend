@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -59,7 +59,33 @@ export default function ProfilePage() {
   const { data: profileData, isLoading, isError: isProfileError, refetch: refetchProfile } = useMyProfile();
 
   // Modals state
-  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("profile_edit_modal_open") === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("profile_edit_modal_open", String(isEditProfileModalOpen));
+      if (!isEditProfileModalOpen) {
+        // Clean up drafts when modal is completely closed from the outside
+        sessionStorage.removeItem("profile_edit_active_tab");
+        sessionStorage.removeItem("profile_edit_exp_mode");
+        sessionStorage.removeItem("profile_edit_exp_id");
+        sessionStorage.removeItem("profile_edit_exp_adding_role");
+        sessionStorage.removeItem("profile_edit_exp_has_visited");
+        sessionStorage.removeItem("profile_edit_edu_mode");
+        sessionStorage.removeItem("profile_edit_edu_id");
+        sessionStorage.removeItem("profile_edit_edu_has_visited");
+        sessionStorage.removeItem("profile_edit_proj_mode");
+        sessionStorage.removeItem("profile_edit_proj_id");
+        sessionStorage.removeItem("profile_edit_proj_has_visited");
+      }
+    }
+  }, [isEditProfileModalOpen]);
+
   const [editInitialTab, setEditInitialTab] = useState<ProfileEditTabKey>("profile");
   const [editInitialMode, setEditInitialMode] = useState<"list" | "form">("list");
   const [editSelectedId, setEditSelectedId] = useState<string | null>(null);

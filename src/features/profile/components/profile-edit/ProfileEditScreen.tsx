@@ -78,15 +78,20 @@ export function ProfileEditScreen({
     }
   }, [isOpen, mounted]);
 
-  const [activeTab, setActiveTab] = useState<ProfileEditTabKey>(
-    PROFILE_EDIT_TABS.some((t) => t.key === tabParam) ? tabParam : "profile"
-  );
+  const [activeTab, setActiveTab] = useState<ProfileEditTabKey>(() => {
+    if (typeof window !== "undefined") {
+      const savedTab = sessionStorage.getItem("profile_edit_active_tab") as ProfileEditTabKey;
+      if (savedTab && PROFILE_EDIT_TABS.some((t) => t.key === savedTab)) {
+        return savedTab;
+      }
+    }
+    return PROFILE_EDIT_TABS.some((t) => t.key === tabParam) ? tabParam : "profile";
+  });
 
   useEffect(() => {
-    if (initialTab && PROFILE_EDIT_TABS.some((t) => t.key === initialTab)) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab, isOpen]);
+    sessionStorage.setItem("profile_edit_active_tab", activeTab);
+  }, [activeTab]);
+
 
   const { data: profileData } = useMyProfile();
   const user = profileData?.user as UserData | undefined;
@@ -620,6 +625,19 @@ export function ProfileEditScreen({
             onTabChange={(tab) => {
               setTabSubtitle(undefined);
               setHeaderAction(null);
+              
+              if (tab === "experience") {
+                sessionStorage.removeItem("profile_edit_exp_mode");
+                sessionStorage.removeItem("profile_edit_exp_id");
+                sessionStorage.removeItem("profile_edit_exp_adding_role");
+              } else if (tab === "education") {
+                sessionStorage.removeItem("profile_edit_edu_mode");
+                sessionStorage.removeItem("profile_edit_edu_id");
+              } else if (tab === "project") {
+                sessionStorage.removeItem("profile_edit_proj_mode");
+                sessionStorage.removeItem("profile_edit_proj_id");
+              }
+              
               setActiveTab(tab);
             }}
           />
