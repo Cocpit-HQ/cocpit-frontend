@@ -67,7 +67,12 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
 
   const handleRedirectToSettings = () => {
     onClose();
-    router.push("/settings/account");
+    router.push("/settings/account-phone");
+  };
+
+  const handleRedirectToVerification = () => {
+    onClose();
+    router.push("/settings/privacy");
   };
 
   return (
@@ -207,7 +212,7 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                 ) : isOwnProfile ? (
                   <button
                     type="button"
-                    onClick={handleRedirectToSettings}
+                    onClick={handleRedirectToVerification}
                     className="text-center justify-start text-[var(--ds-accent)] hover:opacity-80 text-sm font-normal font-['DM_Sans'] leading-5 transition-opacity cursor-pointer"
                   >
                     Verify account

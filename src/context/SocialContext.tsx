@@ -10,8 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface SocialContextType {
   followingIds: string[];
-  followUser: (id: string, sourcePostId?: string) => void;
-  unfollowUser: (id: string) => void;
+  followUser: (id: string, sourcePostId?: string) => Promise<void> | void;
+  unfollowUser: (id: string) => Promise<void> | void;
   isFollowing: (id: string) => boolean;
   startChat: (userId: string, companyId?: string) => void;
   isFollowLoading: (id: string) => boolean;

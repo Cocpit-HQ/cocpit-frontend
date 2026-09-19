@@ -449,6 +449,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Invalidate notifications cache and trigger custom reload event
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (payload?.type === 'follow' || payload?.type === 'connection_accepted') {
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+        queryClient.invalidateQueries({ queryKey: ['profileStats'] });
+      }
       window.dispatchEvent(new CustomEvent('notifications-updated'));
     };
 
@@ -678,6 +683,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleRelationshipUpdated = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profileStats'] });
+      queryClient.invalidateQueries({ queryKey: ['relationshipStatus'] });
       if (payload?.is_blocked === false || payload?.status === 'none') {
         handleUnblock(payload);
       } else if (payload?.is_blocked === true || payload?.status === 'blocked') {

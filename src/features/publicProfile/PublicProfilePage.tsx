@@ -84,7 +84,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const isMobile = useIsMobile();
 
   // Fetch Public Profile Data
-  const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
+  const { data: user, isLoading: isUserLoading, error: userError, refetch: refetchProfile } = useProfile(userId);
   const { data: publicPosts } = useProfilePosts(userId);
 
   const visiblePosts = useMemo(() => {
@@ -97,12 +97,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [userId]);
 
+  const targetUserId = user?.id || userId;
+
   const experiences = useMemo(() => user?.experiences || [], [user?.experiences]);
   const educations = useMemo(() => user?.educations || [], [user?.educations]);
   const projects = useMemo(() => user?.projects || [], [user?.projects]);
   const skills = useMemo(() => (user?.skills || []) as any[], [user?.skills]);
 
-  const targetUserId = user?.id || userId;
   const blocked = isBlocked(targetUserId) || Boolean(user?.is_blocked_by_me);
   const following = isFollowing(targetUserId);
   const followLoading = isFollowLoading(targetUserId);
@@ -131,12 +132,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const isConnected = connectionStatus === "connected";
   const isPending = connectionStatus === "pending_sent" || connectionStatus === "pending";
 
-  const handleFollowToggle = () => {
+  const handleFollowToggle = async () => {
     if (!targetUserId) return;
     if (following) {
       setShowUnfollowDialog(true);
     } else {
-      followUser(targetUserId);
+      await followUser(targetUserId);
+      refetchProfile();
     }
   };
 
@@ -381,6 +383,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                     </DropdownMenuItem>
                   )}
 
+                  <DropdownMenuItem
+                    onClick={() => setIsContactInfoModalOpen(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Contact info
+                  </DropdownMenuItem>
+
                   {/*
                   <DropdownMenuItem
                     onClick={() => setIsSendOfferOpen(true)}
@@ -575,6 +584,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           isOpen={isContactInfoModalOpen}
           onClose={() => setIsContactInfoModalOpen(false)}
           user={userDataForModal || null}
+          isOwnProfile={false}
         />
       )}
 
@@ -653,8 +663,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       <ActionConfirmModal
         isOpen={showUnfollowDialog}
         onClose={() => setShowUnfollowDialog(false)}
-        onConfirm={() => {
-          if (targetUserId) unfollowUser(targetUserId);
+        onConfirm={async () => {
+          if (targetUserId) {
+            await unfollowUser(targetUserId);
+            refetchProfile();
+          }
           setShowUnfollowDialog(false);
         }}
         type="unfollow"
@@ -670,6 +683,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         onRemoveConnection={() => {
           setIsMobileMoreOpen(false);
           setShowRemoveConnectionDialog(true);
+        }}
+        onContactInfo={() => {
+          setIsMobileMoreOpen(false);
+          setIsContactInfoModalOpen(true);
         }}
         onSendOffer={() => setIsSendOfferOpen(true)}
         onViewResume={handleViewResume}

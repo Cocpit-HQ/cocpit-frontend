@@ -9,6 +9,7 @@ interface MobilePublicProfileMenuDrawerProps {
   connectionStatus: "none" | "pending" | "pending_sent" | "connected" | string;
   onConnect: () => void;
   onRemoveConnection: () => void;
+  onContactInfo?: () => void;
   onSendOffer: () => void;
   onViewResume: () => void;
   onShareProfile: () => void;
@@ -22,6 +23,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
   connectionStatus,
   onConnect,
   onRemoveConnection,
+  onContactInfo,
   onSendOffer,
   onViewResume,
   onShareProfile,
@@ -72,6 +74,17 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
                 Connect
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onContactInfo?.();
+              }}
+              className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+            >
+              Contact info
+            </button>
 
             {/*
             <button

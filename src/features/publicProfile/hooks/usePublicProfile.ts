@@ -96,6 +96,8 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         about: user.about || '',
         email: user.email || null,
         mobile_number: user.mobile_number || null,
+        show_email: (user as any).show_email ?? (user as any).showEmail,
+        show_phone: (user as any).show_phone ?? (user as any).showPhone,
         created_at: user.created_at,
         is_identity_verified: user.is_identity_verified,
         skills: Array.isArray(data.skills)

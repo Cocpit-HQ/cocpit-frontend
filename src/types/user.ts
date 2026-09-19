@@ -27,6 +27,10 @@ export interface User {
   cover_image?: string | null;
   email?: string | null;
   mobile_number?: string | null;
+  show_email?: boolean;
+  show_phone?: boolean;
+  showEmail?: boolean;
+  showPhone?: boolean;
   connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
@@ -80,6 +84,10 @@ export interface UserData {
   about: string | null;
   email: string;
   mobile_number?: string;
+  show_email?: boolean;
+  show_phone?: boolean;
+  showEmail?: boolean;
+  showPhone?: boolean;
   account_type?: string | null;
   open_to: string | null;
   availability: string | null;

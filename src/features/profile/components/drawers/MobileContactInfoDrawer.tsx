@@ -49,11 +49,13 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
       (user as any).showPhone !== false &&
       Boolean(user.mobile_number));
 
-  const isVerified = Boolean((user as any).is_verified || (user as any).isVerified);
+  const isVerified = Boolean(
+    (user as any).is_verified || (user as any).isVerified || user.is_identity_verified
+  );
 
   const handleRedirectToSettings = () => {
     onClose();
-    router.push("/settings/account");
+    router.push("/settings/account-phone");
   };
 
   const handleRedirectToVerification = () => {
