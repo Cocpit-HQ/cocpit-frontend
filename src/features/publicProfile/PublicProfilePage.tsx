@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Share2, Flag, Ban, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 import { cn } from "@/lib/utils";
 import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,7 +83,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const isMobile = useIsMobile();
 
   // Fetch Public Profile Data
-  const { data: user, isLoading: isUserLoading } = useProfile(userId);
+  const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
   const { data: publicPosts } = useProfilePosts(userId);
 
   const visiblePosts = useMemo(() => {
@@ -260,7 +261,29 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     );
   }
 
-  const userDataForModal = user as unknown as UserData;
+  const userDataForModal = user as unknown as any;
+
+  if (userError || !user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md mx-auto">
+          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <Ban className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Profile Unavailable</h1>
+          <p className="text-muted-foreground">
+            The user you are looking for could not be found. They may have been removed or the link is incorrect.
+          </p>
+          <button
+            onClick={() => router.push('/feed')}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mt-4 cursor-pointer"
+          >
+            Return to Feed
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center pt-20 sm:pt-[100px] pb-16 px-4 select-text relative">

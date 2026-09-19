@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
     UserPlus,
@@ -23,9 +24,12 @@ import {
     getRelationshipStatus
 } from '@/services/api/social';
 import { companyService } from '@/services/organization.service';
-import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 import { useSocket } from '@/context/SocketContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useConnectionCounts } from '@/features/connection/hooks/useConnectionCounts';
+import { useConnectionStore } from '@/store/connection.store';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface ConnectionButtonProps {
@@ -255,6 +259,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
     if (relationship === 'connected') {
         if (asMenuItem) {
             return (
+                <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                 <DropdownMenuItem
                     className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 dark:focus:bg-[#4A1C1C] focus:text-[#F87171] text-destructive dark:text-[#F87171] rounded-xl outline-none group transition-colors"
                     onClick={handleRemove}
@@ -263,6 +268,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                     <span className="text-sm font-medium group-focus:text-[#F87171]">Remove Connection</span>
                     <UserX className="w-4 h-4 group-focus:text-[#F87171] transition-colors" />
                 </DropdownMenuItem>
+                </FeatureDisabledTooltip>
             );
         }
         return (
@@ -275,6 +281,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                        <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                         <DropdownMenuItem
                             className="text-red-600 focus:text-red-600 cursor-pointer"
                             onClick={handleRemove}
@@ -282,6 +289,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                             <UserX className="w-4 h-4 mr-2" />
                             Remove Connection
                         </DropdownMenuItem>
+                        </FeatureDisabledTooltip>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -291,6 +299,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
     if (relationship === 'pending_sent') {
         if (asMenuItem) {
             return (
+                <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                 <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={handleCancel}
@@ -299,9 +308,11 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                     <Clock className="w-4 h-4 mr-2" />
                     Cancel Request
                 </DropdownMenuItem>
+                </FeatureDisabledTooltip>
             );
         }
         return (
+            <FeatureDisabledTooltip featureKey="enableConnectionManagement">
             <Button
                 variant="secondary"
                 className={`gap-2 ${className}`}
@@ -311,6 +322,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                 <Clock className="w-4 h-4" />
                 Pending
             </Button>
+            </FeatureDisabledTooltip>
         );
     }
 
@@ -318,6 +330,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         if (asMenuItem) {
             return (
                 <>
+                    <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                     <DropdownMenuItem
                         className="text-blue-600 focus:text-blue-600 cursor-pointer"
                         onClick={() => handleAcceptOrReject('connected')}
@@ -326,6 +339,8 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                         <Check className="w-4 h-4 mr-2" />
                         Accept Request
                     </DropdownMenuItem>
+                    </FeatureDisabledTooltip>
+                    <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                     <DropdownMenuItem
                         className="text-red-600 focus:text-red-600 cursor-pointer"
                         onClick={() => handleAcceptOrReject('rejected')}
@@ -334,11 +349,13 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                         <X className="w-4 h-4 mr-2" />
                         Reject Request
                     </DropdownMenuItem>
+                    </FeatureDisabledTooltip>
                 </>
             );
         }
         return (
             <div className={`flex gap-2 ${className}`}>
+                <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                 <Button
                     variant="default"
                     className="gap-1 bg-blue-600 hover:bg-blue-700 text-white"
@@ -348,6 +365,8 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                     <Check className="w-4 h-4" />
                     Accept
                 </Button>
+                </FeatureDisabledTooltip>
+                <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                 <Button
                     variant="outline"
                     size="icon"
@@ -356,6 +375,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                 >
                     <X className="w-4 h-4" />
                 </Button>
+                </FeatureDisabledTooltip>
             </div>
         );
     }
@@ -371,6 +391,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
 
     if (asMenuItem) {
         return (
+            <FeatureDisabledTooltip featureKey="enableConnectionManagement">
             <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={handleConnect}
@@ -379,10 +400,12 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                 <UserPlus className="w-4 h-4 mr-2" />
                 Connect
             </DropdownMenuItem>
+            </FeatureDisabledTooltip>
         );
     }
 
     return (
+        <FeatureDisabledTooltip featureKey="enableConnectionManagement">
         <Button
             variant="default"
             className={`gap-2 ${className}`}
@@ -392,5 +415,6 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
             <UserPlus className="w-4 h-4" />
             Connect
         </Button>
+        </FeatureDisabledTooltip>
     );
 };

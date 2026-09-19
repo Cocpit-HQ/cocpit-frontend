@@ -8,6 +8,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { setInMemorySession } from "@/lib/session-cache";
 import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
+import { FeatureFlagProvider } from "@/context/FeatureFlagContext";
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 
 const THEME_BG_COLORS: Record<string, string> = {
@@ -76,9 +77,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <ThemeColorSync />
           <QueryClientProvider client={queryClient}>
             <ActiveProfileProvider>
-              <TooltipProvider>
-                {children}
-              </TooltipProvider>
+              <FeatureFlagProvider>
+                <TooltipProvider>
+                  {children}
+                </TooltipProvider>
+              </FeatureFlagProvider>
             </ActiveProfileProvider>
           </QueryClientProvider>
         </ThemeProvider>

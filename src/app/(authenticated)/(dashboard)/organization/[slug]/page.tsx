@@ -21,7 +21,7 @@ import { OrgSubOrganizations } from "@/components/organizations/OrgSubOrganizati
 import { recordProfileView } from "@/services/api/dashboard";
 import { useSession } from "next-auth/react";
 import CompanyProfilePage from "@/features/companyprofile/components/view/CompanyProfilePage";
-
+import { FeatureGuard } from "@/components/feature-flags";
 
 export default function CompanyPage() {
     const params = useParams();
@@ -66,10 +66,12 @@ export default function CompanyPage() {
     const isMember = !!company?.viewer_role_data;
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-12">
-            <div className="w-full px-0">
-                <CompanyProfilePage isOwnProfile={isMember} />
+        <FeatureGuard featureKey="enableOrganizations" moduleName="Organizations Showcase">
+            <div className="flex flex-col min-h-screen bg-background pb-12">
+                <div className="w-full px-0">
+                    <CompanyProfilePage isOwnProfile={isMember} />
+                </div>
             </div>
-        </div>
+        </FeatureGuard>
     );
 }

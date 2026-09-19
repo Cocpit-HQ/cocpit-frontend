@@ -6,8 +6,11 @@ import { followUser } from '@/services/api/social';
 import { getConnectionSuggestions } from '@/services/api/connections';
 import { SuggestedUser } from '@/features/connection/types';
 import { toast } from 'sonner';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
+import { useFeatureFlags } from "@/context/FeatureFlagContext";
 
 export function SuggestedPeopleStrip() {
+    const { flags } = useFeatureFlags();
     const [suggestions, setSuggestions] = useState<SuggestedUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
@@ -103,6 +106,7 @@ export function SuggestedPeopleStrip() {
         );
     }
 
+    if (!flags.enableConnectionSuggestions) return null;
     if (suggestions.length === 0) return null;
 
     return (
@@ -150,7 +154,7 @@ export function SuggestedPeopleStrip() {
                                         {user.name?.[0] || '?'}
                                     </div>
                                 )}
-                                
+                                <FeatureDisabledTooltip featureKey="enableUserFollowing">
                                 <button
                                     onClick={(e) => handleFollow(e, user.id)}
                                     disabled={followingIds.has(user.id)}
@@ -166,6 +170,7 @@ export function SuggestedPeopleStrip() {
                                         <Plus className="h-3.5 w-3.5" />
                                     )}
                                 </button>
+                                </FeatureDisabledTooltip>
                             </div>
 
                             <span className="font-['Poppins'] text-[10px] font-normal leading-[15px] text-[#000000] text-center max-w-[74px] overflow-hidden text-ellipsis whitespace-nowrap mt-[8px]">

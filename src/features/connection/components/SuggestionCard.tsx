@@ -8,6 +8,7 @@ import { UserIcon } from '@/components/icons';
 import { useConnectionActions } from '../hooks/useConnectionActions';
 import { useConnectionStore } from '@/store/connection.store';
 import type { SuggestedUser } from '../types';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface SuggestionCardProps {
   user: SuggestedUser;
@@ -179,7 +180,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
         <MetaRow user={user} />
       </div>
 
-      {/* Connect action button sized 89x36px per Figma spec */}
+      <FeatureDisabledTooltip featureKey="enableConnectionManagement">
       <button
         type="button"
         disabled={isLoading || isRequested}
@@ -200,6 +201,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
           'Connect'
         )}
       </button>
+      </FeatureDisabledTooltip>
     </div>
   );
 }

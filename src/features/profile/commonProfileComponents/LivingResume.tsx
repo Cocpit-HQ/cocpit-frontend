@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { Experience } from "@/types/entities";
 import { getResumeOverview } from "../components/ResumeOverview";
 import { useResumeMutations } from "@/hooks/use-my-profile";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 import {
   Dialog,
   DialogContent,
@@ -198,6 +199,7 @@ export function LivingResume({
 
           {/* Add Resume Button - Only show if no resume exists and isOwnProfile is true */}
           {!resumeName && isOwnProfile && (
+            <FeatureDisabledTooltip featureKey="enableResumeParsing">
             <button
               onClick={() => setIsUploadModalOpen(true)}
               className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-card text-primary rounded-[24px] border border-primary hover:bg-secondary transition-all text-[14px] leading-[20px] font-normal font-['DM_Sans'] whitespace-nowrap"
@@ -205,26 +207,29 @@ export function LivingResume({
               <Plus className="w-6 h-6 stroke-[2px]" />
               <span>Add resume</span>
             </button>
+            </FeatureDisabledTooltip>
           )}
 
           {resumeUrl && (
-            isOwnProfile ? (
-              <button
-                onClick={handleDownloadOrView}
-                className="add-button-chip"
-                title="Download PDF"
-              >
-                <Download className="w-6 h-6 stroke-[2px]" />
-              </button>
-            ) : (
-              <button
-                onClick={handleDownloadPublic}
-                className="w-[56px] h-[40px] px-[16px] py-[8px] bg-white dark:bg-[#0B0F19] rounded-[24px] outline outline-1 outline-offset-[-1px] outline-indigo-500 dark:outline-[#818CF8] flex justify-center items-center gap-[10px] transition-colors cursor-pointer hover:bg-indigo-50 dark:hover:bg-[#1C2340]"
-                title="Download Resume"
-              >
-                <Icon icon="fluent:arrow-download-24-regular" className="w-6 h-6 text-indigo-500 dark:text-[#818CF8] flex-shrink-0" />
-              </button>
-            )
+            <FeatureDisabledTooltip featureKey="enableLivingResumeDownload">
+              {isOwnProfile ? (
+                <button
+                  onClick={handleDownloadOrView}
+                  className="add-button-chip"
+                  title="Download PDF"
+                >
+                  <Download className="w-6 h-6 stroke-[2px]" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleDownloadPublic}
+                  className="w-[56px] h-[40px] px-[16px] py-[8px] bg-white dark:bg-[#0B0F19] rounded-[24px] outline outline-1 outline-offset-[-1px] outline-indigo-500 dark:outline-[#818CF8] flex justify-center items-center gap-[10px] transition-colors cursor-pointer hover:bg-indigo-50 dark:hover:bg-[#1C2340]"
+                  title="Download Resume"
+                >
+                  <Icon icon="fluent:arrow-download-24-regular" className="w-6 h-6 text-indigo-500 dark:text-[#818CF8] flex-shrink-0" />
+                </button>
+              )}
+            </FeatureDisabledTooltip>
           )}
         </div>
       </div>

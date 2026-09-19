@@ -1,16 +1,15 @@
-import { Suspense } from 'react';
-import type { Metadata } from 'next';
-import { ConnectionPage } from '@/features/connection/ConnectionPage';
+"use client";
 
-export const metadata: Metadata = {
-  title: 'Connections — Cocpit',
-  description: 'Manage your connection requests and discover people you may know on Cocpit.',
-};
+import { Suspense } from 'react';
+import { ConnectionPage } from '@/features/connection/ConnectionPage';
+import { FeatureGuard } from '@/components/feature-flags';
 
 export default function ConnectionRoute() {
   return (
-    <Suspense fallback={null}>
-      <ConnectionPage view="main" />
-    </Suspense>
+    <FeatureGuard featureKey="enableConnectionsTab" moduleName="Networking & Connections">
+      <Suspense fallback={null}>
+        <ConnectionPage view="main" />
+      </Suspense>
+    </FeatureGuard>
   );
 }

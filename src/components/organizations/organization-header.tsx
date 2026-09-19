@@ -318,7 +318,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">{company?.name}</h1>
-                                    {company?.verification_status === 'DOMAIN_VERIFIED' && (
+                                    {(company?.verification_status === 'DOMAIN_VERIFIED' || company?.verification_status === 'VERIFIED') && (
                                         <BadgeCheck className="h-6 w-6 text-white bg-blue-500 rounded-full p-[2px]" />
                                     )}
                                 </div>

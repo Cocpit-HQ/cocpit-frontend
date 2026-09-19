@@ -7,6 +7,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { getCurrencyIcon } from '../utils/currency.utils';
 import { toast } from 'sonner';
+import { useFeatureFlags } from '@/context/FeatureFlagContext';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface JobCardProps {
   job: Job;
@@ -21,6 +23,8 @@ interface JobCardProps {
 
 export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick, onAccept, onDecline, isSavedTab }) => {
   const router = useRouter();
+  const { flags } = useFeatureFlags();
+
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && activeProfile;
   const badgeText = job.recommended_badge || 'Top 15%';
@@ -101,7 +105,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
           ) : (
             <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
-                <div className={`px-2 py-1 bg-indigo-500/10 ${isCompanyMode ? 'dark:bg-[#4D9CFF]/10' : 'dark:bg-[#818CF8]/10'} rounded-full inline-flex flex-col justify-start items-start`}>
+                <div tabIndex={0} className={`px-2 py-1 bg-indigo-500/10 ${isCompanyMode ? 'dark:bg-[#4D9CFF]/10' : 'dark:bg-[#818CF8]/10'} rounded-full inline-flex flex-col justify-start items-start focus:outline-none`}>
                   <div className={`justify-center text-indigo-500 ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} text-[10px] font-medium font-['Poppins']`}>
                     {badgeText}
                   </div>
@@ -262,33 +266,60 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                   Withdraw
                 </button>
               ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onApply?.(job.id, e);
-                  }}
-                  className={`box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} hover:bg-[#6366F1]/90 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90'} text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5`}
-                >
-                  Apply
-                </button>
+                <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onApply?.(job.id, e);
+                    }}
+                    className={`box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} hover:bg-[#6366F1]/90 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90'} text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5`}
+                  >
+                    Apply
+                  </button>
+                </FeatureDisabledTooltip>
               )}
             </>
           )}
           
           {/* Bookmark Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSave?.(job.id, e);
-            }}
-            className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
-            aria-label="Bookmark job"
-          >
-            <Icon
-              icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-              className={`w-6 h-6 transition-colors ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} hover:text-[#6366F1] ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
-            />
-          </button>
+          {flags?.saved_jobs === false ? (
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <div 
+                  tabIndex={0}
+                  className="w-6 h-6 flex items-center justify-center cursor-not-allowed opacity-50 focus:outline-none"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Icon
+                    icon="solar:bookmark-linear"
+                    className="w-6 h-6 text-gray-500 dark:text-gray-400"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="center"
+                sideOffset={8}
+                className="py-2 px-3 bg-gray-900 dark:bg-gray-800 border-none text-white text-xs font-['Poppins'] z-[9999] shadow-lg rounded-xl"
+              >
+                Feature under maintenance
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSave?.(job.id, e);
+              }}
+              className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
+              aria-label="Bookmark job"
+            >
+              <Icon
+                icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
+                className={`w-6 h-6 transition-colors ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} hover:text-[#6366F1] ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
+              />
+            </button>
+          )}
         </div>
       </div>
     </div>

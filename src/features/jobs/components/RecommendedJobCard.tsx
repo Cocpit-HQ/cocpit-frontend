@@ -45,7 +45,7 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = ({ job, onC
         {job.recommended_badge && (
           <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
-              <div className="px-2 py-1 bg-indigo-500/10 dark:bg-[#818CF8]/10 rounded-full inline-flex flex-col justify-start items-start">
+              <div tabIndex={0} className="px-2 py-1 bg-indigo-500/10 dark:bg-[#818CF8]/10 rounded-full inline-flex flex-col justify-start items-start focus:outline-none">
                 <div className="justify-center text-indigo-500 dark:text-[#818CF8] text-[10px] font-medium font-['Poppins']">
                   {job.recommended_badge}
                 </div>

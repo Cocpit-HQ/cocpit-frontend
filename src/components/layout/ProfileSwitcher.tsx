@@ -28,6 +28,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
+import { useFeatureFlags } from "@/context/FeatureFlagContext";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Wrench } from "lucide-react";
 
 interface ProfileSwitcherProps {
   showArrow?: boolean;
@@ -45,7 +48,11 @@ export function ProfileSwitcher({
   const { logout, user } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { flags } = useFeatureFlags();
   const [showAllOrgs, setShowAllOrgs] = React.useState(false);
+
+  const enableOrgCreation = flags.enableOrgCreation !== false && flags.enableOrganizationsModule !== false;
+  const enableSettings = flags.enableSettingsModule !== false && flags.settings_privacy !== false;
 
   const companies = switchableCompanies.filter(
     (c) => c.entity_type === "COMPANY" || !c.entity_type,
@@ -231,30 +238,53 @@ export function ProfileSwitcher({
         </div>
 
         <div className="pt-2 border-t border-profile-active-border space-y-1">
-          <DropdownMenuItem
-            onClick={() => router.push("/company-onboarding")}
-            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="text-[15px] leading-[22px] font-normal">
-              Create Organization
-            </span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
-                router.push(`/organization/${activeProfile.slug}/settings`);
-              } else {
-                router.push("/settings");
-              }
-            }}
-            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-[15px] leading-[22px] font-normal">
-              Settings
-            </span>
-          </DropdownMenuItem>
+          {!enableOrgCreation ? (
+            <TooltipProvider>
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <div className="px-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <div className="profile-switcher-item flex w-full items-center gap-3 p-2 h-[44px] rounded-[12px] outline-none cursor-not-allowed opacity-50 bg-transparent">
+                      <Plus className="w-5 h-5" />
+                      <span className="text-[15px] leading-[22px] font-normal">
+                        Create Organization
+                      </span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="z-[100] border-amber-500/30 bg-popover text-popover-foreground shadow-xl flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-amber-500" />
+                  <span className="font-medium text-xs">Organization creation is currently disabled.</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <DropdownMenuItem
+              onClick={() => router.push("/company-onboarding")}
+              className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="text-[15px] leading-[22px] font-normal">
+                Create Organization
+              </span>
+            </DropdownMenuItem>
+          )}
+          {enableSettings && (
+            <DropdownMenuItem
+              onClick={() => {
+                if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
+                  router.push(`/organization/${activeProfile.slug}/settings`);
+                } else {
+                  router.push("/settings");
+                }
+              }}
+              className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
+            >
+              <Settings className="w-5 h-5" />
+              <span className="text-[15px] leading-[22px] font-normal">
+                Settings
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={handleLogout}
             className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] text-[#FF6B6B] focus:bg-[#FFF0F0] hover:bg-[#FFF0F0] dark:focus:bg-red-500/10 dark:hover:bg-red-500/10 focus:text-[#FF6B6B] hover:text-[#FF6B6B] transition-colors outline-none"

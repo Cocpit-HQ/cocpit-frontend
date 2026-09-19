@@ -16,6 +16,10 @@
         {
             "name": "@variant",
             "description": "Tailwind CSS v4 variant directive"
+        },
+        {
+            "name": "@custom-variant",
+            "description": "Tailwind CSS v4 custom variant directive"
         }
     ]
 }

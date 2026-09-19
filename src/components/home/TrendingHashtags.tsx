@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getTrendingHashtags, HashtagSuggestion } from '@/services/api/hashtags';
 import { Hash, TrendingUp, Loader2, X } from 'lucide-react';
+import { useFeatureFlags } from '@/context/FeatureFlagContext';
 
 export default function TrendingHashtags() {
+  const { flags } = useFeatureFlags();
   const [hashtags, setHashtags] = useState<HashtagSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
@@ -29,6 +31,7 @@ export default function TrendingHashtags() {
     sessionStorage.setItem('hideTrendingNow', 'true');
   };
 
+  if (!flags.enableTrendingNow) return null;
   if (!isVisible) return null;
 
   if (loading) {

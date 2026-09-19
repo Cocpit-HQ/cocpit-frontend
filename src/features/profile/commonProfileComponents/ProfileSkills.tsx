@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { SkillProofPill } from "../components/SkillProofPill";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 import { StrengthenProfileChips } from "@/features/profile-score/components/StrengthenProfileChips";
 
 interface ProfileSkillsProps {
@@ -56,12 +57,14 @@ export function ProfileSkills({
                 <div className="w-full h-[40px] flex items-center justify-between px-4 md:pl-10 md:pr-4">
                     <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-['DM_Sans']">Skills</h2>
                     {isOwnProfile && onAddSkillClick && (
+                        <FeatureDisabledTooltip featureKey="enableProfileSkills">
                         <button
                             onClick={onAddSkillClick}
                             className="add-button-chip cursor-pointer"
                         >
                             <Plus className="w-6 h-6" />
                         </button>
+                        </FeatureDisabledTooltip>
                     )}
                 </div>
 

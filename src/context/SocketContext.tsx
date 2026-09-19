@@ -12,6 +12,7 @@ import Avatar from '@/components/shared/Avatar';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotificationSettings, NOTIFICATION_SETTINGS_QUERY_KEY } from '@/features/settings/hooks/useNotificationSettings';
 import type { NotificationPreferences } from '@/services/api/settings';
+import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 import type { BackendChat, ChatThread } from '@/types/messaging';
 
@@ -58,6 +59,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const queryClient = useQueryClient();
   useNotificationSettings(); // Eagerly fetch preferences so the cache is always populated
+  const { handleRealtimeUpdate } = useFeatureFlags();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
@@ -184,8 +186,20 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         transportMode: SOCKET_TRANSPORT_MODE,
         transports: selectedTransports,
       });
-      if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
-        console.log("Authentication failed for socket (token likely expired). Requesting session update...");
+      if (err.message.includes("suspended")) {
+        console.log("Account suspended. Forcefully signing out in 4 seconds.");
+        toast({
+          title: "Account Suspended",
+          description: "Your account has been suspended by an administrator. Please contact support.",
+          variant: "destructive",
+          duration: 5000
+        });
+        newSocket.disconnect();
+        setTimeout(() => {
+          signOut({ callbackUrl: '/login' });
+        }, 4000);
+      } else if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
+        console.log("Authentication failed for socket. Forcefully signing out to prevent loop.");
         newSocket.disconnect();
         // The access token expires every 15 minutes. 
         // Do NOT call signOut() here, as the user likely still has a valid 7-day refresh token.
@@ -432,6 +446,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           });
         }
       }
+
+      // Invalidate notifications cache and trigger custom reload event
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     };
 
     const handleNewMessage = (payload: any) => {
@@ -667,21 +685,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Fired by acceptTeamsInvite / declineTeamsInvite / removeMember whenever
-    // membership changes — broadcast to the org room (every active member's
-    // socket is auto-joined to it on connect). Lets an admin's open Team page
-    // pick up the change live instead of needing a manual refresh. Also covers
-    // the Activity Log tab: every action this event fires for (invite accepted/
-    // declined, member removed) is exactly what shows up there, so there's no
-    // need for a separate audit-log-wide socket event just for that tab.
+    const handleAuthSuspended = () => {
+      toast({
+        title: "Account Suspended",
+        description: "Your account has been suspended by an administrator. Please contact support.",
+        variant: "destructive",
+        duration: 5000
+      });
+      console.log("Account suspended. Forcefully signing out in 4 seconds.");
+      
+      // Delay signout so the user has time to read the toast
+      setTimeout(() => {
+        signOut({ callbackUrl: '/login' });
+      }, 4000);
+    };
+
     const handleMemberSync = (payload: any) => {
-      console.log("[Socket] member_sync event received:", payload);
-      if (refreshProfile) {
-        refreshProfile();
-      }
-      queryClient.invalidateQueries({ queryKey: ['team'] });
-      queryClient.invalidateQueries({ queryKey: ['user-companies'] });
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      console.log("[Socket] Member sync event received:", payload);
+      // TODO: Implement member sync logic (e.g., invalidate queries)
     };
 
     const handlePrivacyUpdated = (payload: { userId?: string }) => {
@@ -834,6 +855,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
     newSocket.on('conversation-updated', handleConversationUpdated);
+    newSocket.on('feature_flags_updated', handleRealtimeUpdate);
     newSocket.on('userStatusChanged', handleUserStatus);
     newSocket.on('isTyping', handleTyping);
     newSocket.on('stoppedTyping', handleStopTyping);
@@ -844,6 +866,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('block_confirmed', handleBlock);
     newSocket.on('user_unblocked', handleUnblock);
     newSocket.on('unblock_confirmed', handleUnblock);
+    newSocket.on('auth:suspended', handleAuthSuspended);
+
+    // Also listen for the global Axios 403 interceptor event
+    const handleGlobalSuspendedEvent = () => {
+      handleAuthSuspended();
+    };
+    window.addEventListener('auth:suspended', handleGlobalSuspendedEvent);
     newSocket.on('ORGANIZATION_USER_BLOCKED', handleBlock);
     newSocket.on('ORGANIZATION_USER_UNBLOCKED', handleUnblock);
     newSocket.on('ORGANIZATION_BLOCK_UPDATED', handleOrgBlockUpdated);
@@ -895,6 +924,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('new_message', handleNewMessage);
       newSocket.off('conversation_updated', handleConversationUpdated);
       newSocket.off('conversation-updated', handleConversationUpdated);
+      newSocket.off('feature_flags_updated', handleRealtimeUpdate);
       newSocket.off('userStatusChanged', handleUserStatus);
       newSocket.off('isTyping', handleTyping);
       newSocket.off('stoppedTyping', handleStopTyping);
@@ -905,6 +935,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('block_confirmed', handleBlock);
       newSocket.off('user_unblocked', handleUnblock);
       newSocket.off('unblock_confirmed', handleUnblock);
+      newSocket.off('auth:suspended', handleAuthSuspended);
+      window.removeEventListener('auth:suspended', handleGlobalSuspendedEvent);
       newSocket.off('ORGANIZATION_USER_BLOCKED', handleBlock);
       newSocket.off('ORGANIZATION_USER_UNBLOCKED', handleUnblock);
       newSocket.off('ORGANIZATION_BLOCK_UPDATED', handleOrgBlockUpdated);
@@ -939,7 +971,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.disconnect();
       setTypingConversations({});
     };
-  }, [session?.user?.accessToken, session?.user?.error, session?.user?.id, toast, router, queryClient, refreshProfile, switchProfile]);
+  }, [session?.user?.accessToken, session?.user?.error, session?.user?.id, toast, router, queryClient, refreshProfile, handleRealtimeUpdate, switchProfile]);
 
   useEffect(() => {
     if (!socketRef.current) return;

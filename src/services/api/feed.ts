@@ -71,6 +71,8 @@ export interface BackendPost {
   content: string;
   created_at: string;
   visibility: 'public' | 'private';
+  is_unlisted?: boolean;
+  appeal_status?: 'pending' | 'rejected' | 'approved';
   author_id: string;
   created_by_user_id?: string;
   author_name: string;

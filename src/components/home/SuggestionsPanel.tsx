@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Check, X } from "lucide-react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { usePathname } from "next/navigation";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 
 type Suggestion = {
   id: string;
@@ -160,10 +161,12 @@ export function SuggestionsPanel({ }: SuggestionsPanelProps) {
 
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{person.followers}</span>
-                <button className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90">
-                  <Plus className="h-3 w-3" />
-                  <span>Follow</span>
-                </button>
+                <FeatureDisabledTooltip featureKey="enableUserFollowing">
+                  <button className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90">
+                    <Plus className="h-3 w-3" />
+                    <span>Follow</span>
+                  </button>
+                </FeatureDisabledTooltip>
               </div>
             </div>
           ))}
@@ -214,10 +217,12 @@ export function SuggestionsPanel({ }: SuggestionsPanelProps) {
               >
                 <X className="h-3 w-3" />
               </button>
+              <FeatureDisabledTooltip featureKey="enableUserFollowing">
               <button className="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg hover:opacity-90 transition-all flex items-center gap-1 flex-shrink-0 text-sm">
                 <Plus className="w-4 h-4" />
                 <span>Follow</span>
               </button>
+              </FeatureDisabledTooltip>
             </div>
           </div>
         ))}

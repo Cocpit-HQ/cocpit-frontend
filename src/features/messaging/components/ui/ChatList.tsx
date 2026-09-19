@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 import Avatar from "@/components/shared/Avatar"
 import ConversationListSkeleton from "../skeletons/ConversationListSkeleton"
+import { FeatureDisabledTooltip } from "@/components/feature-flags"
+import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { ChatFilterDropdown, ChatFilterOption } from "./ChatFilterDropdown"
 
 // Reusable exact tag component
@@ -82,6 +84,7 @@ export function ChatList({
   const canJobsChat = !isCompany || companyPermissions.canJobsChat;
   const queryClient = useQueryClient();
   const parentRef = React.useRef<HTMLDivElement>(null);
+  const { flags } = useFeatureFlags();
 
   const { data: session } = useSession();
 
@@ -303,12 +306,14 @@ export function ChatList({
               {isUserActor && (
                 <ChatFilterDropdown value={selectedFilter} onChange={setSelectedFilter} />
               )}
-              <button
-                onClick={onCreateGroup}
-                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
-              >
-                <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
-              </button>
+              <FeatureDisabledTooltip featureKey="enableNewChatCreation" position="left">
+                <button
+                  onClick={onCreateGroup}
+                  className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[56px] h-[40px] bg-[#FFFFFF] border border-[#6B7280] rounded-[24px] flex-none order-1 hover:bg-[#F9FAFB] transition-colors"
+                >
+                  <Plus className="w-[24px] h-[24px] flex-none order-0 text-[#6B7280]" strokeWidth={1.5} />
+                </button>
+              </FeatureDisabledTooltip>
             </div>
           </div>
         )}
@@ -388,12 +393,14 @@ export function ChatList({
                   }}
                 />
               ) : (
-                <TagChip
-                  active={effectiveTab === 'requests'}
-                  label="Requests"
-                  hasIndicator={hasUnreadRequests}
-                  onClick={() => setActiveTab('requests')}
-                />
+                (flags?.enableMessageRequests ?? true) && (
+                  <TagChip
+                    active={effectiveTab === 'requests'}
+                    label="Requests"
+                    hasIndicator={hasUnreadRequests}
+                    onClick={() => setActiveTab('requests')}
+                  />
+                )
               )}
             </div>
 

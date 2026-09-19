@@ -73,7 +73,13 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
- 
+    // Catch 403 Suspended errors globally and dispatch an event
+    if (error.response?.status === 403 && error.response?.data?.message?.toLowerCase().includes("suspended")) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:suspended"));
+      }
+    }
+
     // Do NOT treat 401 as session expiration if it is a password or credential validation failure
     const errorMessage = error.response?.data?.message || error.response?.data?.error || "";
     const isCredentialError = typeof errorMessage === "string" && (
@@ -87,7 +93,6 @@ api.interceptors.response.use(
     if (isCredentialError) {
       return Promise.reject(error);
     }
- 
     // Prevent infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;

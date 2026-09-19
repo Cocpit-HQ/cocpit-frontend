@@ -1,0 +1,65 @@
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *));
+
+@theme {
+  --font-sans: "Twemoji Country Flags", 'Inter', var(--font-geist-sans), sans-serif;
+  --font-heading: "Twemoji Country Flags", 'Sora', var(--font-geist-sans), sans-serif;
+  --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-indigo-xs: var(--feed-card-shadow);
+  --shadow-indigo-sm: var(--feed-card-shadow-sm);
+
+  --shadow-card-inner: var(--card-shadow-inner);
+  --color-card-border-inner: var(--card-border-inner);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-tint-foreground: var(--primary-tint-foreground);
+
+  --radius-card: 24px;
+  --radius-feed-card: 24px;
+
+  --color-profile-hover: var(--profile-hover);
+  --color-profile-active-bg: var(--profile-active-bg);
+  --color-profile-active-border: var(--profile-active-border);
+  --color-profile-text: var(--profile-text);
+  --color-subtle: var(--subtle);
+
+  /* Company Theme Tokens */
+  --color-company-bg: var(--company-bg);
+  --color-company-card: var(--company-card);
+  --color-company-text: var(--company-text);
+  --color-company-secondary: var(--company-secondary);
+  --color-company-border: var(--company-border);
+  --color-company-primary: var(--company-primary);
+  --color-company-primary-dark: var(--company-primary-dark);
+  --color-company-ultra-light: var(--company-ultra-light);
+  --color-company-light-primary: var(--company-light-primary);
+}

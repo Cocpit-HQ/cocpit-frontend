@@ -5,6 +5,7 @@ import { Icon } from '@/components/icons';
 import Link from 'next/link';
 import { NotificationPopover } from '@/features/notification/components/NotificationPopover';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { FeatureGuard } from '@/components/feature-flags/FeatureGuard';
 import { GlobalSearch } from './GlobalSearch';
 
 interface TopHeaderProps {
@@ -34,15 +35,19 @@ export function TopHeader({ className }: TopHeaderProps) {
       </div>
 
       {/* Center Search Column (View Port Perspective Center) */}
-      <GlobalSearch />
+      <FeatureGuard featureKey="enableGlobalSearch" mode="silent">
+        <GlobalSearch />
+      </FeatureGuard>
 
       {/* Right Actions Section */}
       <div className="fixed top-[40px] right-[40px] flex items-center gap-[12px] h-[40px] pointer-events-auto z-50">
         {/* Notification Bell */}
-        <NotificationPopover 
-          className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent hover:bg-ds-surface-1 data-[state=open]:bg-ds-surface-1 rounded-[24px] transition-colors"
-          icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary group-hover:text-ds-accent group-data-[state=open]:text-ds-accent transition-colors" />}
-        />
+        <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
+          <NotificationPopover 
+            className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent hover:bg-ds-surface-1 data-[state=open]:bg-ds-surface-1 rounded-[24px] transition-colors"
+            icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary group-hover:text-ds-accent group-data-[state=open]:text-ds-accent transition-colors" />}
+          />
+        </FeatureGuard>
 
         {/* User Avatar */}
         <Link href={profileHref} className="cursor-pointer block">

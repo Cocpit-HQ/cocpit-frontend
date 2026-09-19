@@ -171,6 +171,8 @@ export interface Post {
   commentData?: Comment[];
   category?: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article';
   visibility?: PostVisibility;
+  is_unlisted?: boolean;
+  appealStatus?: 'pending' | 'rejected' | 'approved';
   poll?: Poll | null;
   shared_post?: Post | null;
   isAvailable?: boolean;

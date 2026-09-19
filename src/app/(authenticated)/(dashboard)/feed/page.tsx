@@ -7,6 +7,7 @@ import { getServerFeed } from '@/lib/server-feed'
 import { getServerActorContext } from '@/lib/server-actor-context'
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper'
 import HomePage from '@/components/home/HomePage'
+import { FeatureGuard } from '@/components/feature-flags'
 
 type ActorType = 'USER' | 'COMPANY'
 
@@ -77,8 +78,10 @@ export default async function FeedRoute() {
   */
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <HomePage />
-    </HydrationBoundary>
+    <FeatureGuard featureKey="enableFeedAccess" moduleName="Feed">
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <HomePage />
+      </HydrationBoundary>
+    </FeatureGuard>
   )
 }

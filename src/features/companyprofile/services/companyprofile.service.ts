@@ -2,9 +2,16 @@ import api from "@/lib/axios";
 
 export const companyProfileService = {
   async getOrgProfile(slug: string): Promise<any> {
-    const res = await api.get(`/organizations/${slug}/profile`);
-    return res.data;
+    const res = await api.get(`/organizations/${slug}`);
+    // Backend returns the org object directly; wrap it so CompanyProfilePage gets { org, links, core_team }
+    const orgData = res.data;
+    return {
+      org: orgData,
+      links: orgData.links || [],
+      core_team: orgData.core_team || [],
+    };
   },
+
 
   async getOrgAbout(slug: string): Promise<any> {
     const res = await api.get(`/organizations/${slug}/about`);

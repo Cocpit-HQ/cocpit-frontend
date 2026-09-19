@@ -3,14 +3,23 @@
 import React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, Briefcase, Users, Plus } from "lucide-react"
+import { Home, Briefcase, Users, Plus, Sparkles, Calendar } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
 import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
 import { Icon } from '@iconify/react'
+import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { useUIStore } from "@/store/ui.store"
+
+const NAV_ROUTES: Record<string, string> = {
+  home: "/feed",
+  jobs: "/jobs",
+  ai: "/ai-assistant",
+  events: "/events",
+  profile: "/profile",
+}
 
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -18,9 +27,10 @@ export function MobileBottomNav() {
   const { activeProfile, isCompany } = useActiveProfile()
   const { user } = useAuth()
   const { canPostJobs, checkPermission } = useCompanyPermissions(activeProfile)
+  const { isFeatureActive } = useFeatureFlags()
   const { setActiveModal } = useUIStore()
 
-  const showJobs = !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS')
+  const showJobs = isFeatureActive('enableJobsBoard') && (!isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS'))
   const canCreatePost = !isCompany || checkPermission('create_post') || checkPermission('CREATE_POST')
 
   const isActive = (route: string) => {
@@ -50,13 +60,15 @@ export function MobileBottomNav() {
     <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 border-border backdrop-blur-md">
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3">
         {/* Home */}
-        <Link
-          href="/feed"
-          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/feed')}
-          className="flex flex-col items-center justify-center flex-1"
-        >
-          <Home className={`w-6 h-6 ${isActive("/feed") ? activeColor : "text-muted-foreground"}`} />
-        </Link>
+        {isFeatureActive('enableFeedAccess') && (
+          <Link
+            href="/feed"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/feed')}
+            className="flex flex-col items-center justify-center flex-1"
+          >
+            <Home className={`w-6 h-6 ${isActive("/feed") ? activeColor : "text-muted-foreground"}`} />
+          </Link>
+        )}
 
         {/* Jobs */}
         {showJobs && (
@@ -107,37 +119,39 @@ export function MobileBottomNav() {
         )}
 
         {/* Profile */}
-        <div className="flex flex-col items-center justify-center flex-1">
-          {isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? (
-            <ProfileSwitcher
-              align="end"
-              customTrigger={
-                <button className="flex flex-col items-center justify-center w-full">
-                  <div className={`relative w-7 h-7 rounded-full overflow-hidden border-2 border-[#EC6229]`}>
-                    <img
-                      src={activeProfile?.avatar_url || user?.image || undefined}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </button>
-              }
-            />
-          ) : (
-            <Link
-              href={activeProfile?.type === "COMPANY" && activeProfile.slug ? `/organization/${activeProfile.slug}` : "/profile"}
-              className="flex flex-col items-center justify-center w-full"
-            >
-              <div className="w-7 h-7 rounded-full overflow-hidden border border-transparent">
-                <img
-                  src={activeProfile?.avatar_url || user?.image || undefined}
-                  alt="Profile"
-                  className="w-full h-full object-cover opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all"
-                />
-              </div>
-            </Link>
-          )}
-        </div>
+        {isFeatureActive('enableProfileTab') && (
+          <div className="flex flex-col items-center justify-center flex-1">
+            {isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? (
+              <ProfileSwitcher
+                align="end"
+                customTrigger={
+                  <button className="flex flex-col items-center justify-center w-full">
+                    <div className={`relative w-7 h-7 rounded-full overflow-hidden border-2 border-[#EC6229]`}>
+                      <img
+                        src={activeProfile?.avatar_url || user?.image || undefined}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </button>
+                }
+              />
+            ) : (
+              <Link
+                href={activeProfile?.type === "COMPANY" && activeProfile.slug ? `/organization/${activeProfile.slug}` : "/profile"}
+                className="flex flex-col items-center justify-center w-full"
+              >
+                <div className="w-7 h-7 rounded-full overflow-hidden border border-transparent">
+                  <img
+                    src={activeProfile?.avatar_url || user?.image || undefined}
+                    alt="Profile"
+                    className="w-full h-full object-cover opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all"
+                  />
+                </div>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   )

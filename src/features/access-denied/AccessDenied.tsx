@@ -15,7 +15,7 @@ export interface AccessiblePagePill {
   alwaysAvailable?: boolean;
 }
 
-const DEFAULT_PAGES: AccessiblePagePill[] = [
+export const DEFAULT_PAGES: AccessiblePagePill[] = [
   { label: 'Feed', path: '/feed', alwaysAvailable: true },
   { label: 'Profile', path: '/profile', alwaysAvailable: true },
   { label: 'Settings', path: '/settings', alwaysAvailable: true },

@@ -11,6 +11,7 @@ import { Check, Loader2, Search, X, Users, Trash2, User, Plus } from "lucide-rea
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGroupChat } from "./groupChat.context";
 import { useRouter } from "next/navigation";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface CreateGroupModalProps {
@@ -311,16 +312,18 @@ export default function CreateGroupModal({
 
                                 {/* GROUP CHAT TOGGLE (Hidden for Org context) */}
                                 {!isOrgContext && (
-                                    <button
-                                        onClick={() => setIsGroupMode(!isGroupMode)}
-                                        className={cn(
-                                            "w-[368px] h-[40px] px-[16px] py-[8px] flex flex-row justify-between items-center rounded-[24px] border transition-all mt-[8px]",
-                                            isGroupMode ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1]" : "bg-white border-[#818CF8] text-[#818CF8]"
-                                        )}
-                                    >
-                                        <span className="font-['Poppins'] font-normal text-[14px]">Group chat</span>
-                                        <Users className="w-5 h-5" />
-                                    </button>
+                                    <FeatureDisabledTooltip featureKey="enableGroupChats">
+                                        <button
+                                            onClick={() => setIsGroupMode(!isGroupMode)}
+                                            className={cn(
+                                                "w-[368px] h-[40px] px-[16px] py-[8px] flex flex-row justify-between items-center rounded-[24px] border transition-all mt-[8px]",
+                                                isGroupMode ? "bg-[#EEF2FF] border-[#6366F1] text-[#6366F1]" : "bg-white border-[#818CF8] text-[#818CF8]"
+                                            )}
+                                        >
+                                            <span className="font-['Poppins'] font-normal text-[14px]">Group chat</span>
+                                            <Users className="w-5 h-5" />
+                                        </button>
+                                    </FeatureDisabledTooltip>
                                 )}
 
                                 {/* USER LIST */}

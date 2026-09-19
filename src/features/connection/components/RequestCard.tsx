@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { UserIcon } from '@/components/icons';
 import type { ConnectionRequest } from '../types';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface RequestCardProps {
   request: ConnectionRequest;
@@ -144,38 +145,41 @@ export function RequestCard({
       {/* Right: Actions */}
       <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end mt-1 sm:mt-0">
         {(mode === 'received' || mode === 'invitations') && (
-          <>
-            <button
-              type="button"
-              disabled={isActing}
-              onClick={() => onAccept?.(request.id)}
-              aria-label={`Accept request from ${user.name}`}
-              className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isActing ? (
-                <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
-              ) : (
-                'Accept'
-              )}
-            </button>
+          <FeatureDisabledTooltip featureKey="enableConnectionManagement">
+            <>
+              <button
+                type="button"
+                disabled={isActing}
+                onClick={() => onAccept?.(request.id)}
+                aria-label={`Accept request from ${user.name}`}
+                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isActing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+                ) : (
+                  'Accept'
+                )}
+              </button>
 
-            <button
-              type="button"
-              disabled={isActing}
-              onClick={() => onDecline?.(request.id)}
-              aria-label={`Decline request from ${user.name}`}
-              className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isActing ? (
-                <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
-              ) : (
-                'Decline'
-              )}
-            </button>
-          </>
+              <button
+                type="button"
+                disabled={isActing}
+                onClick={() => onDecline?.(request.id)}
+                aria-label={`Decline request from ${user.name}`}
+                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isActing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+                ) : (
+                  'Decline'
+                )}
+              </button>
+            </>
+          </FeatureDisabledTooltip>
         )}
 
         {mode === 'sent' && (
+          <FeatureDisabledTooltip featureKey="enableConnectionManagement">
           <button
             type="button"
             disabled={isActing}
@@ -189,6 +193,7 @@ export function RequestCard({
               'Withdraw'
             )}
           </button>
+          </FeatureDisabledTooltip>
         )}
       </div>
     </article>

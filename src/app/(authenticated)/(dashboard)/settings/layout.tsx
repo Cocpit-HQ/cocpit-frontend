@@ -1,6 +1,7 @@
 import React from 'react';
 import { SettingsLayout } from '@/features/settings/components';
 import { RouteGuard } from '@/features/access-denied';
+import { FeatureGuard } from '@/components/feature-flags';
 
 export default function SettingsRootLayout({
   children,
@@ -9,7 +10,9 @@ export default function SettingsRootLayout({
 }) {
   return (
     <RouteGuard requirePersonal>
-      <SettingsLayout>{children}</SettingsLayout>
+      <FeatureGuard featureKey="enableSettingsPage" moduleName="Settings & Privacy">
+        <SettingsLayout>{children}</SettingsLayout>
+      </FeatureGuard>
     </RouteGuard>
   );
 }

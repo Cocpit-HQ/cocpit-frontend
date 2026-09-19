@@ -14,6 +14,7 @@ import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompan
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store'
 import { useQueryClient } from '@tanstack/react-query'
+import { useFeatureFlags } from '@/context/FeatureFlagContext'
 import {
   Tooltip,
   TooltipContent,
@@ -38,6 +39,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
   const { handleNavClick } = useNavigationMemoryLink()
   const { activeProfile, isCompany } = useActiveProfile()
   const { canEdit, checkPermission } = useCompanyPermissions(activeProfile)
+  const { isFeatureActive } = useFeatureFlags()
 
   const settingsHref = isCompany && activeProfile?.slug
     ? `/organization/${activeProfile.slug}/settings`
@@ -59,16 +61,16 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         {
           title: 'Core',
           items: [
-            { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
-          // { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true, disabled: !checkPermission('CHANNEL') },
+            { icon: IconoirHome, label: 'Feed', href: '/feed', show: isFeatureActive('enableFeedAccess') },
+            { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true, disabled: !checkPermission('CHANNEL') },
             { icon: Compass, label: 'Explore', href: '/explore', show: false },
-            { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
+            { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: isFeatureActive('enableAITab') },
           ]
         },
         {
           title: 'Work',
           items: [
-            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: true, disabled: !(checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS')) },
+            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: isFeatureActive('enableJobsBoard'), disabled: !(checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS')) },
             { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
           ]
         },
@@ -82,9 +84,9 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         {
           title: 'Account',
           items: [
-            { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
-            { icon: Settings, label: 'Settings', href: settingsHref, show: true, disabled: !checkPermission('SETTINGS') },
-            { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: true, disabled: !checkPermission('SETTINGS') },
+            { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: isFeatureActive('enableProfileTab') },
+            { icon: Settings, label: 'Settings', href: settingsHref, show: isFeatureActive('enableSettingsModule'), disabled: !checkPermission('SETTINGS') },
+            { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: isFeatureActive('enableSettingsModule'), disabled: !checkPermission('SETTINGS') },
           ]
         }
       ];
@@ -94,17 +96,17 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       {
         title: 'Core',
         items: [
-          { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
-          // { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channels', show: true },
-          { icon: Users, label: 'Connection', href: '/connections', show: true },
+          { icon: IconoirHome, label: 'Feed', href: '/feed', show: isFeatureActive('enableFeedAccess') },
+          { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channels', show: true },
+          { icon: Users, label: 'Connection', href: '/connections', show: isFeatureActive('enableConnectionsTab') },
           { icon: Compass, label: 'Explore', href: '/explore', show: false },
-          { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
+          { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: isFeatureActive('enableAITab') },
         ]
       },
       {
         title: 'Work',
         items: [
-          { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: true },
+          { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: isFeatureActive('enableJobsBoard') },
           { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
         ]
       },
@@ -117,13 +119,13 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       {
         title: 'Account',
         items: [
-          { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
-          { icon: Settings, label: 'Settings', href: settingsHref, show: true },
-          { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: true },
+          { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: isFeatureActive('enableProfileTab') },
+          { icon: Settings, label: 'Settings', href: settingsHref, show: isFeatureActive('enableSettingsModule') },
+          { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: isFeatureActive('enableSettingsModule') },
         ]
       }
     ];
-  }, [isCompany, checkPermission, analyticsHref, profileHref, settingsHref, oldSettingsHref, canEdit]);
+  }, [isCompany, checkPermission, analyticsHref, profileHref, settingsHref, oldSettingsHref, canEdit, isFeatureActive]);
 
   const isActive = (href: string) => {
     const currentPath = optimisticPath || pathname

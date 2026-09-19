@@ -7,6 +7,7 @@ import { AnalyticsTabs } from '@/features/analytics/components/layout/AnalyticsT
 import { CareerTrajectoryHome } from '@/features/analytics/components/career-trajectory/CareerTrajectoryHome'
 import { ProfileAnalyticsHome } from '@/features/analytics/components/profile-analytics/ProfileAnalyticsHome'
 import { useAnalyticsStore } from '@/store/analytics.store'
+import { FeatureGuard } from "@/components/feature-flags"
 
 export default function AnalyticsPage() {
   const [mounted, setMounted] = useState(false)
@@ -26,24 +27,26 @@ export default function AnalyticsPage() {
   const userName = fullName.split(' ')[0] || 'there'
 
   return (
-    <div className="min-h-screen bg-background w-full">
-      <div className="w-full max-w-[998px] mx-auto py-8">
-        <div className="flex flex-col items-start w-full max-w-[960px] gap-6">
-        
-          {/* Header Section */}
-          <AnalyticsHeader userName={userName} />
+    <FeatureGuard featureKey="enableAnalyticsTab" moduleName="Analytics">
+      <div className="min-h-screen bg-background w-full">
+        <div className="w-full max-w-[998px] mx-auto py-8">
+          <div className="flex flex-col items-start w-full max-w-[960px] gap-6">
+          
+            {/* Header Section */}
+            <AnalyticsHeader userName={userName} />
 
-          {/* Top-level Tabs */}
-          <AnalyticsTabs />
+            {/* Top-level Tabs */}
+            <AnalyticsTabs />
 
-          {/* Tab Content */}
-          {mainTab === 'career-trajectory' ? (
-            <CareerTrajectoryHome />
-          ) : (
-            <ProfileAnalyticsHome />
-          )}
+            {/* Tab Content */}
+            {mainTab === 'career-trajectory' ? (
+              <CareerTrajectoryHome />
+            ) : (
+              <ProfileAnalyticsHome />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </FeatureGuard>
   )
 }

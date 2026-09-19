@@ -11,6 +11,9 @@ import { followUser } from "@/services/api/social";
 import { toast } from "sonner";
 import { useStories } from "@/context/StoriesContext";
 import { getStoryThumbnailUrl } from "@/lib/story-media";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
+import { useFeatureFlags } from "@/context/FeatureFlagContext";
+import { useSession } from "next-auth/react";
 
 type StoryRailProps = {
   groups: StoryGroup[];
@@ -56,6 +59,8 @@ export function StoryRail({
   activeAccount,
   variant = "mobile",
 }: StoryRailProps) {
+  const { flags } = useFeatureFlags();
+  const { data: session } = useSession();
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const { isStoryViewerOpen, setIsStoryViewerOpen } = useStories();
@@ -559,7 +564,7 @@ export function StoryRail({
               })}
 
               {/* 3. Suggested People Fallback (Mobile Only) */}
-              {otherGroups.length === 0 &&
+              {flags.enableConnectionSuggestions && otherGroups.length === 0 &&
                 suggestedUsers.length > 0 &&
                 suggestedUsers.map((user) => (
                   <div
@@ -587,6 +592,7 @@ export function StoryRail({
                       </div>
 
                       {/* Follow Button (+) */}
+                      <FeatureDisabledTooltip featureKey="enableUserFollowing">
                       <button
                         onClick={(e) => handleFollow(e, user.id)}
                         disabled={followingIds.has(user.id)}
@@ -602,6 +608,7 @@ export function StoryRail({
                           <Plus className="w-3.5 h-3.5" />
                         )}
                       </button>
+                      </FeatureDisabledTooltip>
                     </div>
 
                     <span className="text-foreground text-[10px] font-medium truncate w-16 text-center">

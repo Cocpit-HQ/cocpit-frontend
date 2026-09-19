@@ -4,6 +4,7 @@ import { JobListing } from '../../types/jobs.types';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import api from '@/lib/axios';
 import { generateJobDescription, getIndustries, parseExperienceRange, resolveExperienceSelection } from '../../services/jobs.service';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import { useJobStore } from '@/store/job.store';
 import { CURRENCIES } from '../../utils/currency.utils';
 import { toast } from 'sonner';
@@ -690,19 +691,21 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
             {/* AI Action Row */}
             <div className="flex items-center justify-between mt-2">
-              <button
-                type="button"
-                onClick={handleRegenerateAi}
-                disabled={isAiGenerating || regenerateCount >= 3}
-                className={`text-sm font-semibold font-['Poppins'] flex items-center gap-1.5 transition-opacity ${
-                  regenerateCount >= 3
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : (isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1] active:scale-95')
-                }`}
-              >
-                <img src="/assets/AI 2.svg" alt="AI" className={`w-4 h-4 ${isAiGenerating ? 'animate-spin' : ''}`} style={{ filter: 'brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(700%) hue-rotate(210deg)' }} />
-                Regenerate with AI
-              </button>
+              <FeatureDisabledTooltip featureKey="enableAiJobDescription" disabledMessage="AI Job Description generation is disabled by admin.">
+                <button
+                  type="button"
+                  onClick={handleRegenerateAi}
+                  disabled={isAiGenerating || regenerateCount >= 3}
+                  className={`text-sm font-semibold font-['Poppins'] flex items-center gap-1.5 transition-opacity ${
+                    regenerateCount >= 3
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : (isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1] active:scale-95')
+                  }`}
+                >
+                  <img src="/assets/AI 2.svg" alt="AI" className={`w-4 h-4 ${isAiGenerating ? 'animate-spin' : ''}`} style={{ filter: 'brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(700%) hue-rotate(210deg)' }} />
+                  Regenerate with AI
+                </button>
+              </FeatureDisabledTooltip>
               <span className="text-xs text-gray-400 dark:text-[#9CA3AF] font-['Poppins']">*{3 - regenerateCount} regenerations max</span>
             </div>
 

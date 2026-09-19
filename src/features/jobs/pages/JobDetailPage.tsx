@@ -11,6 +11,9 @@ import CocpitShareModel from '@/shared/commonComponents/cocpitsharemodel';
 import JobDetailSkeleton from '../components/skeletons/JobDetailSkeleton';
 import { useJobStore } from '@/store/job.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useFeatureFlags } from '@/context/FeatureFlagContext';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface JobDetailPageProps {
   jobId: string;
@@ -54,6 +57,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     respondToOffer,
     toggleFollow
   } = useJobDetail(jobId);
+  const { flags } = useFeatureFlags();
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && activeProfile;
   const { goBack } = useSmartBack();
@@ -589,15 +593,33 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   <Icon icon="solar:share-linear" className="w-5 h-5" />
                 </button>
                 {/* Bookmark button */}
-                <button
-                  onClick={toggleSave}
-                  className={`size-10 rounded-full bg-slate-50 ${isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]'} transition-colors flex items-center justify-center flex-shrink-0`}
-                >
-                  <Icon
-                    icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-                    className={`w-5 h-5 ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} hover:text-indigo-500 ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
-                  />
-                </button>
+                {flags?.saved_jobs === false ? (
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <div tabIndex={0} className="size-10 rounded-full bg-slate-50 opacity-50 cursor-not-allowed flex items-center justify-center flex-shrink-0 focus:outline-none">
+                        <Icon icon="solar:bookmark-linear" className="w-5 h-5 text-gray-500" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="center"
+                      sideOffset={8}
+                      className="py-2 px-3 bg-gray-900 border-none text-white text-xs font-['Poppins'] z-[9999] shadow-lg rounded-xl"
+                    >
+                      Feature under maintenance
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={toggleSave}
+                    className={`size-10 rounded-full bg-slate-50 ${isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]'} transition-colors flex items-center justify-center flex-shrink-0`}
+                  >
+                    <Icon
+                      icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
+                      className={`w-5 h-5 ${job.is_saved ? (isCompanyMode ? 'text-[#4D9CFF] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]') : `text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} hover:text-indigo-500 ${isCompanyMode ? 'dark:hover:text-[#4D9CFF]' : 'dark:hover:text-[#818CF8]'}`}`}
+                    />
+                  </button>
+                )}
               </div>
             )}
             {/* Action buttons section */}
@@ -703,14 +725,16 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       <span className={`w-[68px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#818CF8] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`}>Withdraw</span>
                     </button>
                   ) : (
-                    <button
-                      onClick={() => setShowApplyModal(true)}
-                      className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
-                    >
-                      <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">
-                        Apply
-                      </span>
-                    </button>
+                    <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
+                      <button
+                        onClick={() => setShowApplyModal(true)}
+                        className={`box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] transition-all active:scale-95 cursor-pointer`}
+                      >
+                        <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">
+                          Apply
+                        </span>
+                      </button>
+                    </FeatureDisabledTooltip>
                   )}
                 </div>
               )}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart3, User, Calendar, Briefcase, Users, Rss, ChevronDown, Download, LayoutDashboard } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { FeatureGuard } from "@/components/feature-flags"
 
 import {
     DateRange,
@@ -145,213 +146,219 @@ export default function CompanyAnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* ─── Header ─────────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
-                            <BarChart3 className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                                Company Analytics
-                            </h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">
-                                Track your company&apos;s performance and engagement
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Actions & Filters */}
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <select
-                                title="Date Range"
-                                value={dateRange}
-                                onChange={(e) => setDateRange(e.target.value as DateRange)}
-                                className="appearance-none pl-4 pr-10 py-2.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/20 hover:border-border/80 transition-colors cursor-pointer"
-                            >
-                                {DATE_RANGES.map(range => (
-                                    <option key={range.value} value={range.value}>{range.label}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                        </div>
-
-                        <button
-                            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium rounded-xl transition-colors shadow-sm"
-                            onClick={() => console.log('Export triggered')}
-                        >
-                            <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">Export</span>
-                        </button>
-                    </div>
-                </motion.div>
-
-                {/* ─── Section Tabs ────────────────────────────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className="mb-10"
-                >
-                    <div className="flex items-center p-1 rounded-xl border border-border bg-card shadow-sm w-fit overflow-x-auto smooth-scroll">
-                        {TABS.map((tab) => {
-                            const Icon = tab.icon
-                            const isActive = activeTab === tab.key
-                            return (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap
-                                        ${isActive
-                                            ? `${tab.accent} text-white shadow-sm`
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                                        }`}
-                                >
-                                    <Icon className="w-4 h-4" />
-                                    {tab.label}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </motion.div>
-
-                {/* ─── Tab Content ─────────────────────────────────────────── */}
-                <AnimatePresence mode="wait">
+        <FeatureGuard featureKey="enableAnalyticsTab" moduleName="Analytics">
+            <div className="min-h-screen bg-background">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* ─── Header ─────────────────────────────────────────────── */}
                     <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 16 }}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -16 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.4 }}
+                        className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
                     >
-                        {/* Overview Tab Content */}
-                        {activeTab === 'overview' && (
-                            <div className="space-y-8 flex flex-col w-full">
-                                {/* Row 1: KPI Cards */}
-                                <section>
-                                    <OrganizationKpiCards metrics={kpiMetrics} />
-                                </section>
-
-                                {/* Row 2: Main Chart (Full Width) */}
-                                <section>
-                                    <DailyViewsChart data={dailyViews} />
-                                </section>
-
-                                {/* Row 3: Shares vs Views | Follower Growth */}
-                                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-                                    <SharesVsViewsChart data={weeklyComparison} />
-                                    <FollowerGrowthChart data={followerGrowth} />
-                                </section>
-
-                                {/* Row 4: Activity Heatmap */}
-                                <section>
-                                    <ActivityHeatmap data={activityData} />
-                                </section>
-
-                                {/* Row 5: Insights Panel */}
-                                <section>
-                                    <InsightsPanel insights={insights} />
-                                </section>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
+                                <BarChart3 className="w-5 h-5 text-primary" />
                             </div>
-                        )}
+                            <div>
+                                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                                    Company Analytics
+                                </h1>
+                                <p className="text-sm text-muted-foreground mt-0.5">
+                                    Track your company&apos;s performance and engagement
+                                </p>
+                            </div>
+                        </div>
 
-                        {/* Other Tabs KPI Cards */}
-                        {activeTab !== 'overview' && (
-                            <>
-                                <section className="mb-10">
-                                    {activeTab === 'profile' && <OrganizationKpiCards metrics={kpiMetrics} />}
-                                    {activeTab === 'events' && <EventKpiCards metrics={eventKpis} />}
-                                    {activeTab === 'jobs' && <JobKpiCards metrics={jobKpis} />}
-                                    {activeTab === 'followers' && <FollowerKpiCards metrics={followerKpis} />}
-                                    {activeTab === 'content' && <ContentKpiCards metrics={contentKpis} />}
-                                </section>
-
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.4, delay: 0.2 }}
-                                    className="flex items-center gap-2 mb-6"
+                        {/* Actions & Filters */}
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <select
+                                    title="Date Range"
+                                    value={dateRange}
+                                    onChange={(e) => setDateRange(e.target.value as DateRange)}
+                                    className="appearance-none pl-4 pr-10 py-2.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/20 hover:border-border/80 transition-colors cursor-pointer"
                                 >
-                                    <div className={`w-1 h-6 rounded-full ${sectionAccents[activeTab]}`} />
-                                    <div>
-                                        <h2 className="text-lg font-semibold text-foreground">
-                                            {sectionTitles[activeTab].title}
-                                        </h2>
-                                        <p className="text-xs text-muted-foreground">
-                                            {sectionTitles[activeTab].subtitle}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            </>
-                        )}
+                                    {DATE_RANGES.map(range => (
+                                        <option key={range.value} value={range.value}>{range.label}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                            </div>
 
-                        {/* Charts Grid */}
-                        {activeTab !== 'overview' && (
-                            <section className="mb-8">
-                                {activeTab === 'profile' && (
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <DailyViewsChart data={dailyViews} />
-                                        <WeeklyComparisonChart data={weeklyComparison} />
-                                    </div>
-                                )}
-                                {activeTab === 'events' && (
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <EventPostingTrendChart data={eventPostingTrend} />
-                                        <EventRegistrationChart data={eventRegistrations} />
-                                    </div>
-                                )}
-                                {activeTab === 'jobs' && (
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <JobPostingTrendChart data={jobPostingTrend} />
-                                        <JobApplicationChart data={jobApplications} />
-                                    </div>
-                                )}
-                                {activeTab === 'followers' && (
-                                    <div className="space-y-6">
-                                        <FollowerGrowthChart data={followerGrowth} />
-                                        <AudienceBreakdown
-                                            industry={audienceIndustry}
-                                            location={audienceLocation}
-                                            seniority={audienceSeniority}
-                                        />
-                                    </div>
-                                )}
-                                {activeTab === 'content' && (
-                                    <div className="space-y-6">
-                                        <ContentEngagementChart data={contentEngagement} />
-                                    </div>
-                                )}
-                            </section>
-                        )}
-
-                        {/* Top Performers Tables */}
-                        {activeTab === 'events' && (
-                            <section className="mb-8">
-                                <TopEventsTable data={topEvents} />
-                            </section>
-                        )}
-                        {activeTab === 'jobs' && (
-                            <section className="mb-8">
-                                <TopJobsTable data={topJobs} />
-                            </section>
-                        )}
-                        {activeTab === 'content' && (
-                            <section className="mb-8">
-                                <TopPostsTable data={topPosts} />
-                            </section>
-                        )}
-
+                            <button
+                                className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium rounded-xl transition-colors shadow-sm"
+                                onClick={() => console.log('Export triggered')}
+                            >
+                                <Download className="w-4 h-4" />
+                                <span className="hidden sm:inline">Export</span>
+                            </button>
+                        </div>
                     </motion.div>
-                </AnimatePresence>
+
+                    {/* ─── Section Tabs ────────────────────────────────────────── */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                        className="mb-10"
+                    >
+                        <div className="flex items-center p-1 rounded-xl border border-border bg-card shadow-sm w-fit overflow-x-auto smooth-scroll">
+                            {TABS.map((tab) => {
+                                const Icon = tab.icon
+                                const isActive = activeTab === tab.key
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setActiveTab(tab.key)}
+                                        className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap
+                                            ${isActive
+                                                ? `${tab.accent} text-white shadow-sm`
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                            }`}
+                                    >
+                                        <Icon className="w-4 h-4" />
+                                        {tab.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </motion.div>
+
+                    {/* ─── Tab Content ─────────────────────────────────────────── */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -16 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            {/* Overview Tab Content */}
+                            {activeTab === 'overview' && (
+                                <div className="space-y-8 flex flex-col w-full">
+                                    {/* Row 1: KPI Cards */}
+                                    <section>
+                                        <OrganizationKpiCards metrics={kpiMetrics} />
+                                    </section>
+
+                                    {/* Row 2: Main Chart (Full Width) */}
+                                    <section>
+                                        <DailyViewsChart data={dailyViews} />
+                                    </section>
+
+                                    {/* Row 3: Shares vs Views | Follower Growth */}
+                                    <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                                        <SharesVsViewsChart data={weeklyComparison} />
+                                        <FollowerGrowthChart data={followerGrowth} />
+                                    </section>
+
+                                    {/* Row 4: Activity Heatmap */}
+                                    <section>
+                                        <ActivityHeatmap data={activityData} />
+                                    </section>
+
+                                    {/* Row 5: Insights Panel */}
+                                    <section>
+                                        <InsightsPanel insights={insights} />
+                                    </section>
+                                </div>
+                            )}
+
+                            {/* Other Tabs KPI Cards */}
+                            {activeTab !== 'overview' && (
+                                <>
+                                    <section className="mb-10">
+                                        {activeTab === 'profile' && <OrganizationKpiCards metrics={kpiMetrics} />}
+                                        {activeTab === 'events' && <EventKpiCards metrics={eventKpis} />}
+                                        {activeTab === 'jobs' && <JobKpiCards metrics={jobKpis} />}
+                                        {activeTab === 'followers' && <FollowerKpiCards metrics={followerKpis} />}
+                                        {activeTab === 'content' && <ContentKpiCards metrics={contentKpis} />}
+                                    </section>
+
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.4, delay: 0.2 }}
+                                        className="flex items-center gap-2 mb-6"
+                                    >
+                                        <div className={`w-1 h-6 rounded-full ${sectionAccents[activeTab]}`} />
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-foreground">
+                                                {sectionTitles[activeTab].title}
+                                            </h2>
+                                            <p className="text-xs text-muted-foreground">
+                                                {sectionTitles[activeTab].subtitle}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+
+                            {/* Charts Grid */}
+                            {activeTab !== 'overview' && (
+                                <section className="mb-8">
+                                    {activeTab === 'profile' && (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <DailyViewsChart data={dailyViews} />
+                                            <WeeklyComparisonChart data={weeklyComparison} />
+                                        </div>
+                                    )}
+                                    {activeTab === 'events' && (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <EventPostingTrendChart data={eventPostingTrend} />
+                                            <EventRegistrationChart data={eventRegistrations} />
+                                        </div>
+                                    )}
+                                    {activeTab === 'jobs' && (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <JobPostingTrendChart data={jobPostingTrend} />
+                                            <JobApplicationChart data={jobApplications} />
+                                        </div>
+                                    )}
+                                    {activeTab === 'followers' && (
+                                        <div className="space-y-6">
+                                            <FollowerGrowthChart data={followerGrowth} />
+                                            <AudienceBreakdown
+                                                industry={audienceIndustry}
+                                                location={audienceLocation}
+                                                seniority={audienceSeniority}
+                                            />
+                                        </div>
+                                    )}
+                                    {activeTab === 'content' && (
+                                        <div className="space-y-6">
+                                            <ContentEngagementChart data={contentEngagement} />
+                                        </div>
+                                    )}
+                                </section>
+                            )}
+
+                            {/* Top Performers Tables */}
+                            {activeTab === 'events' && (
+                                <section className="mb-8">
+                                    <TopEventsTable data={topEvents} />
+                                </section>
+                            )}
+                            {activeTab === 'jobs' && (
+                                <section className="mb-8">
+                                    <TopJobsTable data={topJobs} />
+                                </section>
+                            )}
+                            {activeTab === 'content' && (
+                                <section className="mb-8">
+                                    <TopPostsTable data={topPosts} />
+                                </section>
+                            )}
+
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
             </div>
-        </div>
+        </FeatureGuard>
     )
 }
+
+
+
+

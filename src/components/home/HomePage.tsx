@@ -56,7 +56,6 @@ export default function HomePage() {
   const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
 
   // Stories hook commented out — stories are not displayed in the Feed section
-  /*
   const {
     groups,
     isLoading: storyLoading,
@@ -65,7 +64,6 @@ export default function HomePage() {
     handleCreateStory,
     handleStoryUpdate
   } = useStories()
-  */
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setMounted(true))
@@ -103,55 +101,26 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Modals & Overlays (stories not displayed on feed)
-      {mobileSelectedGroupId !== null && (
-        <div className="md:hidden">
-          <MobileStoryViewer
-            groups={groups}
-            initialGroupId={mobileSelectedGroupId || 0}
-            onClose={() => setMobileSelectedGroupId(null)}
-            onStoryUpdate={handleStoryUpdate}
-          />
-        </div>
-      )}
-
-      {selectedStory && (
-        <div className="hidden md:block">
-          <StoryModal
-            story={selectedStory}
-            onClose={() => setSelectedStory(null)}
-          />
-        </div>
-      )}
-      */}
-
-      {/* Commented out for view-only experience
-      {showCreateStory && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-              <h2 className="text-foreground">Create Story</h2>
-              <button
-                onClick={() => setShowCreateStory(false)}
-                className="p-2 rounded-lg transition-colors hover:bg-muted text-muted-foreground"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <CreateStoryForm
-                onCancel={() => setShowCreateStory(false)}
-                onCreated={(newStory) => {
-                  handleCreateStory(newStory);
-                  setShowCreateStory(false);
-                }}
-              />
-            </div>
+        {/* Modals & Overlays */}
+        {mobileSelectedGroupId !== null && (
+          <div className="md:hidden">
+            <MobileStoryViewer
+              groups={groups}
+              initialGroupId={mobileSelectedGroupId || 0}
+              onClose={() => setMobileSelectedGroupId(null)}
+              onStoryUpdate={handleStoryUpdate}
+            />
           </div>
-        </div>
-      )}
-      */}
-    </div>
+        )}
+
+        {selectedStory && (
+          <div className="hidden md:block">
+            <StoryModal
+              story={selectedStory}
+              onClose={() => setSelectedStory(null)}
+            />
+          </div>
+        )}
+      </div>
   )
 }

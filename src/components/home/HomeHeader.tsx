@@ -19,11 +19,11 @@ import { getNotifications } from '@/features/notification/api';
 import { useSocket } from '@/context/SocketContext';
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 import * as channelService from '@/features/channel/services/channel.service';
 import { useQuery } from '@tanstack/react-query';
 import { getConversations } from '@/services/api/messaging';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
-
 
 export const HomeHeader = () => {
     const { activeProfile, isCompany } = useActiveProfile();
@@ -867,33 +867,35 @@ export const HomeHeader = () => {
                     {/* Header Right Section (Action Buttons) */}
                     <div className="flex items-center gap-4 shrink-0 min-w-0 xl:w-[406px] xl:justify-end">
                         {!pathname.startsWith('/channel') && !pathname.startsWith('/team') && (
-                            <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <button
-                                            onClick={(e) => {
-                                                if (isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    return;
-                                                }
-                                                setActiveModal('create-post');
-                                            }}
-                                            className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap ${(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) ? '!cursor-not-allowed' : ''}`}
-                                        >
-                                            <span>Create post</span>
-                                            <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                                <Plus size={12} strokeWidth={3} />
-                                            </div>
-                                        </button>
-                                    </TooltipTrigger>
-                                    {(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) && (
-                                        <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
-                                            <p>You don't have permission to access this</p>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
+                            <FeatureDisabledTooltip featureKey="enablePostCreation" disabledMessage="Content posting is temporarily paused by admin.">
+                                <TooltipProvider delayDuration={0}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                onClick={(e) => {
+                                                    if (isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        return;
+                                                    }
+                                                    setActiveModal('create-post');
+                                                }}
+                                                className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap ${(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) ? '!cursor-not-allowed' : ''}`}
+                                            >
+                                                <span>Create post</span>
+                                                <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
+                                                    <Plus size={12} strokeWidth={3} />
+                                                </div>
+                                            </button>
+                                        </TooltipTrigger>
+                                        {(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) && (
+                                            <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
+                                                <p>You don't have permission to access this</p>
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </FeatureDisabledTooltip>
                         )}
 
                         {/* Icons group — gap-2 (8px) between each, each icon 56×40 */}

@@ -17,6 +17,7 @@ import { SuggestionsGrid } from './components/SuggestionsGrid';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { RequestCardSkeleton } from './components/skeletons/RequestCardSkeleton';
+import { useFeatureFlags } from '@/context/FeatureFlagContext';
 import {
   ConnectionConfirmModal,
   ConnectionConfirmType,
@@ -46,6 +47,7 @@ interface ConnectionPageProps {
 }
 
 export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProps) {
+  const { flags } = useFeatureFlags();
   const {
     activeTab,
     setActiveTab,
@@ -130,8 +132,8 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
   const showEmpty = !isLoading && !isError && allRequests.length === 0;
   const showContent = !isLoading && !isError && allRequests.length > 0;
 
-  // Suggestions: shown on received and sent in main view, hidden on invitations
-  const showSuggestions = !isExpanded && activeTab !== 'invitations';
+  // Suggestions: shown on both tabs in main view, but hidden on invitations
+  const showSuggestions = (flags?.enableConnectionSuggestions ?? true) && (!isExpanded && activeTab !== 'invitations');
 
   let emptyTitle = '';
   let emptySubtitle = '';

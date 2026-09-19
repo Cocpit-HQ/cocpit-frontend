@@ -610,9 +610,13 @@ export function EditPostModal({
       // keeping the user on the page with state preserved and Save button inactive!
       populateData(updatedPostObj);
       onUpdate?.(updatedPostObj);
-    } catch (error: any) {
-      console.error('Failed to update post:', error);
-      toast.error(error?.response?.data?.message || 'Failed to update post. Please try again.');
+    } catch (err: any) {
+      console.error("Failed to update post:", err);
+      if (err?.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Failed to update post");
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -1,12 +1,13 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { PostOptionsMenu } from '@/components/home/PostOptionsMenu';
 import { PostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 import DOMPurify from 'dompurify';
 import { usePostImpression } from '@/hooks/usePostImpression';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, AlertTriangle } from 'lucide-react';
+import { AppealModal } from './AppealModal';
 
 
 interface PostCardProps {
@@ -20,6 +21,7 @@ interface PostCardProps {
 
 export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, companyId }: PostCardProps) {
     const impressionRef = usePostImpression(post.post_id || post.id);
+    const [isAppealModalOpen, setIsAppealModalOpen] = useState(false);
     // Support both backend (post_id, image_url, media[]) and frontend (id, imageSrc, images[])
     const id = post.post_id || post.id;
     const isPoll = Boolean(post.poll);
@@ -50,7 +52,24 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
 
     return (
         <div ref={impressionRef as any} className="relative group h-full">
-            <Link href={href || `/post/${id}`} className="block w-full h-full">
+            {post.is_unlisted && isOwnPost && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 rounded-xl p-4 text-center">
+                    <AlertTriangle className="w-10 h-10 text-red-500 mb-3" />
+                    <h3 className="text-white font-semibold mb-2">Post Removed</h3>
+                    <p className="text-white/80 text-xs mb-4">This post was removed by moderators for violating our guidelines.</p>
+                    <button 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsAppealModalOpen(true);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                        Appeal Decision
+                    </button>
+                </div>
+            )}
+            
+            <Link href={href || `/post/${id}`} className="block w-full h-full" onClick={(e) => post.is_unlisted && e.preventDefault()}>
                 <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative shadow-sm group-hover:shadow-md transition-shadow">
                     {displayImage ? (
                         <img
@@ -109,18 +128,27 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
                 </div>
             </Link>
 
-            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <PostOptionsMenu
+            {!post.is_unlisted && (
+                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <PostOptionsMenu
+                        postId={id.toString()}
+                        isOwnPost={isOwnPost}
+                        onDelete={onDelete}
+                        className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
+                        postType={post.poll ? 'poll' : (displayVideo ? 'video' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text')))}
+                        visibility={post.visibility || 'public'}
+                        companyId={companyId}
+                    />
+                </div>
+            )}
+
+            {isAppealModalOpen && (
+                <AppealModal
+                    isOpen={isAppealModalOpen}
+                    onOpenChange={setIsAppealModalOpen}
                     postId={id.toString()}
-                    isOwnPost={isOwnPost}
-                    menuAccess={menuAccess}
-                    onDelete={onDelete}
-                    className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
-                    postType={post.poll ? 'poll' : (displayVideo ? 'video' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text')))}
-                    visibility={post.visibility || 'public'}
-                    companyId={companyId}
                 />
-            </div>
+            )}
         </div>
     );
 }

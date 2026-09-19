@@ -3,7 +3,10 @@ import { useJobs } from "../hooks/useJobs";
 import { useJobStore } from "@/store/job.store";
 import { useShallow } from "zustand/react/shallow";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useFeatureFlags } from "@/context/FeatureFlagContext";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 import RecommendedJobCard from "../components/RecommendedJobCard";
+import { toast } from 'sonner';
 import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
 import JobCardSkeleton from "../components/skeletons/JobCardSkeleton";
 import JobList from "../components/JobList";
@@ -47,7 +50,9 @@ interface JobsPageProps {
 export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode: propIsCompanyMode = false }) => {
   const router = useRouter();
   const { isCompany, activeProfile } = useActiveProfile();
+  const { flags, isFeatureActive } = useFeatureFlags();
   const isCompanyMode = propIsCompanyMode || (isCompany && !!activeProfile?.id);
+
 
   // Use reactive useSearchParams so the list updates on every client-side navigation
   const urlParams = useSearchParams();
@@ -94,9 +99,13 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   // Sync tab from URL query param to Zustand store
   useEffect(() => {
     if (urlTab && urlTab !== activeTab) {
+      if (urlTab === "Saved" && !isFeatureActive("saved_jobs")) return;
+      if (urlTab === "My Applications" && !isFeatureActive("enableApplicationTracking")) return;
+      if (urlTab === "Offers" && !isFeatureActive("enableJobOffers")) return;
+      
       setActiveTab(urlTab);
     }
-  }, [urlTab, activeTab, setActiveTab]);
+  }, [urlTab, activeTab, setActiveTab, isFeatureActive]);
 
   // Clear search and location filters from the URL on F5 page refresh (reload)
   useEffect(() => {
@@ -111,6 +120,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
       }
     }
   }, [router]);
+
+  // Redirect away from disabled tabs
+  useEffect(() => {
+    if (activeTab === "Saved" && !isFeatureActive("saved_jobs")) {
+      handleTabChange("Explore");
+    }
+    if (activeTab === "My Applications" && !isFeatureActive("enableApplicationTracking")) {
+      handleTabChange("Explore");
+    }
+    if (activeTab === "Offers" && !isFeatureActive("enableJobOffers")) {
+      handleTabChange("Explore");
+    }
+  }, [activeTab, isFeatureActive]);
+
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -291,6 +314,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   }, [jobs]);
 
   const handleApplyClick = (jobId: string) => {
+    if (!isFeatureActive("enableJobApplications")) {
+      toast.error("Job applications are temporarily paused by administration.");
+      return;
+    }
     const jobToApply = jobs.find((j) => j.id === jobId);
     if (jobToApply) {
       setApplyingJob(jobToApply);
@@ -374,10 +401,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   // Tabs layout specification
   const tabs = [
     { id: "Explore", label: "Explore" },
-    { id: "My Applications", label: "My Applications" },
-    { id: "Offers", label: "Offers" },
-    { id: "Saved", label: "Saved" },
+    { id: "My Applications", label: "My Applications", featureKey: "enableApplicationTracking" },
+    { id: "Offers", label: "Offers", featureKey: "enableJobOffers" },
+    { id: "Saved", label: "Saved", featureKey: "saved_jobs" },
   ];
+
 
   // Hide mobile HomeHeader search bar when the create-job wizard is active
   const urlView = urlParams?.get('view');
@@ -427,26 +455,27 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           </div>
         )}
 
-        {/* Mobile Posted Jobs Card (Expected Look) */}
+        {/* Mobile Posted Jobs Card */}
         <div className="w-full flex md:hidden bg-white dark:bg-[#0B0F19] rounded-[16px] border border-gray-200 dark:border-[#2E3445] p-4 flex-col gap-1 shadow-sm mt-2 mb-1">
             <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-[15px] font-['Poppins']">Posted jobs</h4>
             <p className="text-gray-500 dark:text-[#9CA3AF] text-[13px] font-['Poppins'] mb-2">Manage and track your active job postings</p>
-            <button 
-              onClick={() => handleTabChange("My Listings")} 
-              className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
-            >
-              Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4"/>
-            </button>
+            <FeatureDisabledTooltip featureKey="enableMyListings">
+              <button 
+                onClick={() => handleTabChange("My Listings")} 
+                className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
+              >
+                Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4"/>
+              </button>
+            </FeatureDisabledTooltip>
         </div>
 
         {/* Tabs navigation row */}
-        <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white dark:bg-[#0B0F19]">
         <div className="flex overflow-x-auto no-scrollbar md:flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto pb-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
-            return (
+            const tabButton = (
               <button
-                key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
                     ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
@@ -456,20 +485,36 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                 {tab.label}
               </button>
             );
+
+            if (tab.featureKey) {
+              return (
+                <FeatureDisabledTooltip key={tab.id} featureKey={tab.featureKey}>
+                  {tabButton}
+                </FeatureDisabledTooltip>
+              );
+            }
+
+            return (
+              <React.Fragment key={tab.id}>
+                {tabButton}
+              </React.Fragment>
+            );
           })}
         </div>
 
         {/* My Listings tab link */}
-        <button
-          onClick={() => handleTabChange("My Listings")}
-          className={`hidden md:flex h-10 px-4 md:px-5 py-1.5 rounded-3xl justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-auto ${activeTab === "My Listings"
-              ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
-              : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
-            }`}
-        >
-          <span>Posted jobs</span>
-          <Icon icon="lucide:chevron-right" className="w-4 h-4" />
-        </button>
+        <FeatureDisabledTooltip featureKey="enableMyListings">
+          <button
+            onClick={() => handleTabChange("My Listings")}
+            className={`hidden md:flex h-10 px-4 md:px-5 py-1.5 rounded-3xl justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-auto ${activeTab === "My Listings"
+                ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
+                : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
+              }`}
+          >
+            <span>Posted jobs</span>
+            <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+          </button>
+        </FeatureDisabledTooltip>
       </div>
     </div>
 

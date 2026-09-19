@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { EditableEducationItem } from "../components/EditableEducationItem";
 import { ProfileEmptyState } from "./ProfileEmptyState";
+import { FeatureDisabledTooltip } from "@/components/feature-flags";
 
 interface ProfileEducationProps {
     educations: any[];
@@ -30,12 +31,14 @@ export function ProfileEducation({
                 <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                     <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-['DM_Sans']">Education</h2>
                     {isOwnProfile && onAddEducationClick && (
+                        <FeatureDisabledTooltip featureKey="enableProfileEducation">
                         <button
                             onClick={onAddEducationClick}
                             className="add-button-chip cursor-pointer"
                         >
                             <Plus className="w-6 h-6" />
                         </button>
+                        </FeatureDisabledTooltip>
                     )}
                 </div>
 

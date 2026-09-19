@@ -211,27 +211,25 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
           {/* Verified Badge */}
           <div
             style={{
-              width: "63px",
               height: "24px",
               padding: "4px 8px",
-              background: "#DCFCE7",
+              background: data.isVerified ? "#DCFCE7" : "#FFEDD5",
               borderRadius: "9999px",
             }}
             className="flex flex-col justify-center items-center flex-none"
           >
             <span
               style={{
-                width: "47px",
                 height: "16px",
                 fontFamily: "'Poppins', sans-serif",
                 fontWeight: 500,
                 fontSize: "12px",
                 lineHeight: "16px",
-                color: "#22C55E",
+                color: data.isVerified ? "#166534" : "#C2410C",
               }}
-              className="flex items-center flex-none"
+              className="text-center flex-none px-1"
             >
-              Verified
+              {data.isVerified ? "Verified" : "Unverified"}
             </span>
           </div>
         </div>
@@ -249,7 +247,9 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
           }}
           className="flex items-center flex-none self-stretch text-blue-50 max-md:!w-full max-md:!h-auto max-md:!mt-2 max-md:!mb-2"
         >
-          Your profile is verified. Maintain updated documentation to preserve status.
+          {data.isVerified 
+            ? "Your profile is verified. Maintain updated documentation to preserve status." 
+            : "Your profile is not verified. Submit documentation to get verified."}
         </p>
 
         {/* Manage Documents Button */}
@@ -266,17 +266,15 @@ export default function CoreTeamSection({ data, isOwnProfile = true, canManageCo
           >
             <span
               style={{
-                width: "163px",
-                height: "24px",
                 fontFamily: "'Poppins', sans-serif",
-                fontWeight: 400,
-                fontSize: "16px",
+                fontWeight: 500,
+                fontSize: "14px",
                 lineHeight: "24px",
                 color: "#1A73E8",
               }}
-              className="flex items-center justify-center text-center flex-none"
+              className="flex items-center flex-none"
             >
-              Manage Documents
+              {data.isVerified ? "Manage Documents" : "Verify Profile"}
             </span>
           </button>
         )}

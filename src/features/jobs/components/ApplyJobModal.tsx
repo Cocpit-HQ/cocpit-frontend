@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { X, ArrowLeft, Trash2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 export interface Resume {
   id: string;
@@ -251,17 +252,19 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={handleContinue}
-                  disabled={!selectedResumeId && !uploadedFile}
-                  className={`flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] transition-all ${
-                    (selectedResumeId || uploadedFile)
-                      ? 'bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md'
-                      : 'bg-[#C7D2FE] dark:bg-[#2E3445] cursor-not-allowed'
-                  }`}
-                >
-                  Continue
-                </button>
+                <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
+                  <button
+                    onClick={handleContinue}
+                    disabled={!selectedResumeId && !uploadedFile}
+                    className={`flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] transition-all ${
+                      (selectedResumeId || uploadedFile)
+                        ? 'bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md'
+                        : 'bg-[#C7D2FE] dark:bg-[#2E3445] cursor-not-allowed'
+                    }`}
+                  >
+                    Continue
+                  </button>
+                </FeatureDisabledTooltip>
               </div>
 
             </div>
@@ -319,12 +322,14 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 >
                   Back
                 </button>
-                <button
-                  onClick={handleSubmit}
-                  className="flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md transition-colors"
-                >
-                  Submit
-                </button>
+                <FeatureDisabledTooltip featureKey="enableJobApplications" disabledMessage="Job applications are temporarily paused by administration.">
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md transition-colors"
+                  >
+                    Submit
+                  </button>
+                </FeatureDisabledTooltip>
               </div>
 
             </div>

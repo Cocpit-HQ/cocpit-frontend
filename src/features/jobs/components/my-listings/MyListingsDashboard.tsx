@@ -16,6 +16,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobStore } from '@/store/job.store';
 import Image from 'next/image';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface MyListingsDashboardProps {
   onBack: () => void;
@@ -348,21 +349,26 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
               : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
           </p>
-          <button
-            onClick={() => {
-              if (activeSubTab === 'Job listings') {
-                transitionTo('create-job');
-              } else {
-                setInitialOfferJobId(undefined);
-                setIsSendOfferModalOpen(true);
-              }
-            }}
-            className={`w-full md:w-auto px-6 py-2.5 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
-              isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
-            }`}
+          <FeatureDisabledTooltip 
+            featureKey={activeSubTab === 'Job listings' ? "enableJobCreation" : "enableJobOffers"}
+            disabledMessage={activeSubTab === 'Job listings' ? "Job creation is temporarily disabled by admin." : "Sending job offers is temporarily disabled by admin."}
           >
-            {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
-          </button>
+            <button
+              onClick={() => {
+                if (activeSubTab === 'Job listings') {
+                  transitionTo('create-job');
+                } else {
+                  setInitialOfferJobId(undefined);
+                  setIsSendOfferModalOpen(true);
+                }
+              }}
+              className={`w-full md:w-auto px-6 py-2.5 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
+                isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
+              }`}
+            >
+              {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
+            </button>
+          </FeatureDisabledTooltip>
         </div>
         
         {/* Illustration */}

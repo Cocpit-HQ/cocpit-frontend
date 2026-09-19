@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '@/components/icons';
 import { SaveButton } from '@/components/home/SaveButton';
 import { RepostMenu } from './RepostMenu';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface PostActionsProps {
   id: string | number;
@@ -48,6 +49,7 @@ export const PostActions = ({
       {/* Left Aligned Action Group */}
       <div className="flex flex-row items-center gap-[16px]">
         {/* Like */}
+        <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
         <div className="flex flex-row items-center gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); handleLike(); }}
@@ -65,8 +67,10 @@ export const PostActions = ({
             {likeCount}
           </span>
         </div>
+        </FeatureDisabledTooltip>
 
         {/* Comment */}
+        <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
         <div className="flex flex-row items-center gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); handleToggleCommentSection(); }}
@@ -82,10 +86,11 @@ export const PostActions = ({
             {commentsCount}
           </span>
         </div>
+        </FeatureDisabledTooltip>
 
         {/* Repost */}
+        <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
         <div className="flex flex-row items-center">
-          {/* Repost button */}
           <RepostMenu
             onRepost={handleDirectRepost}
             onRepostWithThoughts={handleRepostWithThoughts}
@@ -96,6 +101,7 @@ export const PostActions = ({
             hideRepostWithThoughts={hideRepostWithThoughts}
           />
         </div>
+        </FeatureDisabledTooltip>
 
         {/* Share */}
         <div className="flex flex-row items-center gap-2">

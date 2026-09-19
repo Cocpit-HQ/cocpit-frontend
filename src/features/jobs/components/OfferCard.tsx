@@ -5,6 +5,7 @@ import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
 
 interface OfferCardProps {
   offer: JobOffer;
@@ -293,20 +294,22 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
         {/* Action Buttons */}
         <div className="flex w-full gap-3 mt-1" onClick={(e) => e.stopPropagation()}>
           {offer.status === 'pending' && (
-            <>
-              <button
-                onClick={() => setShowDeclineConfirm(true)}
-                className={`flex-1 h-11 flex justify-center items-center bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#6366F1] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] font-['Poppins'] font-medium text-sm text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} active:scale-95 transition-transform`}
-              >
-                Decline
-              </button>
-              <button
-                onClick={() => setShowAcceptConfirm(true)}
-                className={`flex-1 h-11 flex justify-center items-center bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} rounded-[24px] font-['Poppins'] font-semibold text-sm text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} active:scale-95 transition-transform`}
-              >
-                Accept
-              </button>
-            </>
+            <FeatureDisabledTooltip featureKey="enableJobOffers" disabledMessage="Responding to job offers is temporarily disabled by admin.">
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={() => setShowDeclineConfirm(true)}
+                  className={`flex-1 h-11 flex justify-center items-center bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#6366F1] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] font-['Poppins'] font-medium text-sm text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} active:scale-95 transition-transform`}
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={() => setShowAcceptConfirm(true)}
+                  className={`flex-1 h-11 flex justify-center items-center bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} rounded-[24px] font-['Poppins'] font-semibold text-sm text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} active:scale-95 transition-transform`}
+                >
+                  Accept
+                </button>
+              </div>
+            </FeatureDisabledTooltip>
           )}
           {offer.status === 'accepted' && (
               <button

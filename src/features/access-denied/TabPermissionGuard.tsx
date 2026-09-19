@@ -42,7 +42,7 @@ export default function TabPermissionGuard({
   const currentTab = (activeTab || searchParams.get('tab') || 'home').toLowerCase();
 
   // Determine required permissions
-  let requiredPermissions = permission
+  const requiredPermissions = permission
     ? Array.isArray(permission)
       ? permission
       : [permission]

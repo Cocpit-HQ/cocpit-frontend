@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+// @ts-ignore
 import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -87,12 +88,13 @@ export function PostCarousel({
   slideWidth = 'peek',
   dotsClassName,
 }: PostCarouselProps) {
+  const plugins = typeof WheelGesturesPlugin === 'function' ? [WheelGesturesPlugin()] : [];
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'start',
     containScroll: 'keepSnaps',
     dragFree: true,
-  }, [WheelGesturesPlugin()]);
+  }, plugins);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);

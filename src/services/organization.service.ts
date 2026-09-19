@@ -23,7 +23,7 @@ export interface Company {
     institution_type?: string;
     established_year?: number;
     campus_location?: string;
-    verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED';
+    verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED' | 'VERIFIED';
     is_deleted: boolean;
     created_at: string;
     viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null; // Populated by backend if authenticated

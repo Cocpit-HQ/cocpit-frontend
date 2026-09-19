@@ -1,3 +1,4 @@
+
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Post, Comment } from "@/types/entities";
@@ -363,6 +364,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     commentData: [], // Backend doesn't provide comments in feed list
     category: (backendPost.category_name as any) || undefined,
     visibility: backendPost.visibility,
+    is_unlisted: backendPost.is_unlisted,
+    appealStatus: backendPost.appeal_status,
     poll: poll,
     authorSlug: backendPost.author_slug,
     isCompanyPost: backendPost.is_organization_post,
