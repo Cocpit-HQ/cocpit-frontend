@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import api from "@/lib/axios";
+import { publicApi } from "@/lib/axios";
 
 type FeatureFlags = Record<string, boolean>;
 
@@ -114,8 +114,9 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [error, setError] = useState<string | null>(null);
 
   const fetchFlags = useCallback(async () => {
+    console.log("🚩 [FeatureFlags] fetchFlags called!");
     try {
-      const response = await api.get('/config');
+      const response = await publicApi.get('/config');
       const data = response.data;
       if (data && data.features) {
         console.log("🚩 [FeatureFlags] Loaded flags:", data.features);
