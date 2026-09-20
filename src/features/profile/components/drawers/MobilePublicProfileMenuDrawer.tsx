@@ -50,33 +50,24 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
 
           {/* Action List */}
           <div className="flex flex-col gap-1 w-full">
-            {/* Connection state action */}
-            {isConnected ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onRemoveConnection();
-                }}
-                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-              >
-                Remove connection
-              </button>
-            ) : isPending ? (
-              <div className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-muted)] cursor-default select-none">
-                Pending
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onConnect();
-                }}
-                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-              >
-                Connect
-              </button>
+            {/* Connection state action: Connect or Pending only (when connected, Message is the primary action button) */}
+            {!isConnected && (
+              isPending ? (
+                <div className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-muted)] cursor-default select-none">
+                  Pending
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onConnect();
+                  }}
+                  className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+                >
+                  Connect
+                </button>
+              )
             )}
 
             <button

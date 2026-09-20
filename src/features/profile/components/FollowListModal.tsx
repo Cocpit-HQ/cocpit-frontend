@@ -12,7 +12,9 @@ import {
   unfollowUser,
   removeFollower,
   removeConnection,
+  sendConnectionRequest,
 } from "../services/profile.service";
+import { toast } from "sonner";
 import { companyService } from "@/services/organization.service";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -56,6 +58,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   const [activeTab, setActiveTab] = useState<"following" | "followers" | "connections">(initialTab);
   const [search, setSearch] = useState("");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [pendingConnectUserIds, setPendingConnectUserIds] = useState<Set<string>>(new Set());
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
@@ -330,6 +333,49 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     },
   });
 
+  const connectMutation = useMutation({
+    mutationFn: (targetId: string) => sendConnectionRequest(targetId),
+    onMutate: async (targetId) => {
+      await queryClient.cancelQueries({ queryKey: ["connections", userId] });
+      await queryClient.cancelQueries({ queryKey: ["followers", userId] });
+      await queryClient.cancelQueries({ queryKey: ["following", userId] });
+
+      const updateList = (old: any[]) =>
+        old?.map((u: any) =>
+          (u.user_id === targetId || u.follower_id === targetId || u.following_id === targetId || u.id === targetId)
+            ? { ...u, is_pending: true, connection_status: "pending_sent" }
+            : u
+        );
+
+      queryClient.setQueryData(["connections", userId, search], updateList);
+      queryClient.setQueryData(["followers", userId, search], updateList);
+      queryClient.setQueryData(["following", userId, search], updateList);
+    },
+    onSuccess: () => {
+      toast.success("Connection request sent!");
+    },
+    onError: (err: any, targetId: string) => {
+      setPendingConnectUserIds((prev) => {
+        const next = new Set(prev);
+        next.delete(targetId);
+        return next;
+      });
+      const msg = err?.response?.data?.message || "Failed to send connection request";
+      toast.error(msg);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["connections", userId] });
+      queryClient.invalidateQueries({ queryKey: ["following", userId] });
+      queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus"] });
+    },
+  });
+
+  const handleConnect = (id: string) => {
+    setPendingConnectUserIds((prev) => new Set(prev).add(id));
+    connectMutation.mutate(id);
+  };
+
   const handleFollow = (id: string) => {
     followMutation.mutate(id);
   };
@@ -503,13 +549,40 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     }
 
     if (activeTab === "connections") {
+      if (id === loggedInUserId) {
+        return null; // Cannot connect with yourself
+      }
+
+      const isConnected = !!(user.is_connected || user.connection_status === "connected" || user.is_connection);
+      const isPending = pendingConnectUserIds.has(id) || user.connection_status === "pending_sent" || user.connection_status === "pending" || user.is_pending;
+
+      if (isConnected) {
+        return (
+          <button
+            type="button"
+            onClick={() => handleMessageUser(id)}
+            className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-text-primary)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
+          >
+            Message
+          </button>
+        );
+      }
+
+      if (isPending) {
+        return (
+          <span className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-text-muted)] flex-none cursor-default whitespace-nowrap">
+            Pending
+          </span>
+        );
+      }
+
       return (
         <button
           type="button"
-          onClick={() => handleRemoveConnection(id, name, user.type)}
+          onClick={() => handleConnect(id)}
           className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
         >
-          Remove connection
+          Connect
         </button>
       );
     }

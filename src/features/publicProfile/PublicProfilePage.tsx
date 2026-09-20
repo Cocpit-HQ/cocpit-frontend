@@ -124,12 +124,15 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     enabled: !!targetUserId,
   });
 
+  const [isPendingSent, setIsPendingSent] = useState(false);
+
   const connectionStatus = useMemo(() => {
+    if (isPendingSent) return "pending_sent";
     if (relationshipData?.status) return relationshipData.status;
     if ((user as any)?.connection_status) return (user as any).connection_status;
     if ((user as any)?.is_connected) return "connected";
     return "none";
-  }, [relationshipData, user]);
+  }, [relationshipData, user, isPendingSent]);
 
   const isConnected = connectionStatus === "connected";
   const isPending = connectionStatus === "pending_sent" || connectionStatus === "pending";
@@ -146,6 +149,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   const handleConnect = async () => {
     if (!targetUserId) return;
+    setIsPendingSent(true);
     try {
       await sendConnectionRequest(targetUserId);
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
@@ -153,6 +157,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
       toast.success("Connection request sent!");
     } catch (err: any) {
+      setIsPendingSent(false);
       const msg = err?.response?.data?.message || "Failed to send connection request";
       toast.error(msg);
     }
@@ -354,16 +359,38 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                 </span>
               </button>
 
-              {/* Message button */}
-              <button
-                type="button"
-                onClick={handleMessage}
-                className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-              >
-                <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                  Message
-                </span>
-              </button>
+              {/* Connect / Pending / Message button */}
+              {isConnected ? (
+                <button
+                  type="button"
+                  onClick={handleMessage}
+                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                >
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    Message
+                  </span>
+                </button>
+              ) : isPending ? (
+                <button
+                  type="button"
+                  disabled
+                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 cursor-not-allowed opacity-50"
+                >
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    Pending
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleConnect}
+                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                >
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    Connect
+                  </span>
+                </button>
+              )}
 
               {/* More button: Mobile → Drawer, Desktop → Dropdown */}
               {isMobile ? (
@@ -393,26 +420,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   align="end"
                   sideOffset={8}
                 >
-                  {/* Connect / Pending / Remove connection */}
-                  {isConnected ? (
-                    <DropdownMenuItem
-                      onClick={() => setShowRemoveConnectionDialog(true)}
-                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                    >
-                      Remove connection
-                    </DropdownMenuItem>
-                  ) : isPending ? (
-                    <div className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-muted)] text-sm font-normal font-['DM_Sans'] leading-5 cursor-default select-none pointer-events-none">
-                      Pending
-                    </div>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={handleConnect}
-                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                    >
-                      Connect
-                    </DropdownMenuItem>
-                  )}
+
 
                   <DropdownMenuItem
                     onClick={() => setIsContactInfoModalOpen(true)}
