@@ -69,7 +69,7 @@ export const ProfileEditResumeSection: React.FC<ProfileEditResumeSectionProps> =
     /* AboutSection: 800px width, flex column, gap 12px */
     <div className="w-[800px] max-w-full flex flex-col items-start gap-[12px]">
       {/* Resume Label */}
-      <span className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-primary)]">
+      <span className="w-[45px] h-4 font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-primary)] flex-none order-0 grow-0">
         Resume
       </span>
 
@@ -92,15 +92,15 @@ export const ProfileEditResumeSection: React.FC<ProfileEditResumeSectionProps> =
           </>
         ) : (
           <>
-            <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-muted)]">
+            <span className="w-[136px] h-5 font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-muted)] flex-none order-0 grow-0">
               No resume uploaded
             </span>
-            <span className="w-[4px] h-[4px] rounded-full bg-[var(--ds-text-muted)] shrink-0" />
+            <span className="w-[4px] h-[4px] rounded-full bg-[var(--ds-text-muted)] shrink-0 flex-none order-1 grow-0" />
             <button
               type="button"
               onClick={handleUploadClick}
               disabled={isSaving}
-              className="font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[var(--ds-accent)] hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 focus:outline-none"
+              className="w-[100px] h-5 font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[var(--ds-accent)] hover:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 focus:outline-none flex-none order-2 grow-0"
             >
               Upload resume
             </button>

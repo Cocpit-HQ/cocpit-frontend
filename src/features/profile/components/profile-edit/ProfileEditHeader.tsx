@@ -56,15 +56,19 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
               <UserIcon className="w-4 h-4 text-[var(--ds-text-primary)] flex-none" size={16} />
             )}
           </div>
-          {/* Kat Denis / Name Text + Subtitle (Frame 2609632) */}
-          <div className="flex items-center gap-2 overflow-hidden">
+          {/* Kat Denis / Name Text + Subtitle (Frame 2609632: 24px height, 8px gap) */}
+          <div className="flex flex-row items-center gap-[8px] h-[24px] overflow-hidden">
             <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-[var(--ds-text-primary)] whitespace-nowrap" title={userName}>
               {userName.length > 25 ? `${userName.substring(0, 25)}...` : userName}
             </span>
             {subTitle && (
-              <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-[var(--ds-text-muted)] whitespace-nowrap">
-                • {subTitle}
-              </span>
+              <>
+                {/* Dot (4x4px, #726B67) */}
+                <span className="w-[4px] h-[4px] rounded-full bg-[var(--ds-text-muted)] shrink-0" />
+                <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-[var(--ds-text-muted)] whitespace-nowrap">
+                  {subTitle}
+                </span>
+              </>
             )}
           </div>
         </div>

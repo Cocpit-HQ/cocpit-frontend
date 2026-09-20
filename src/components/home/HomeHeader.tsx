@@ -8,7 +8,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { searchHashtags, HashtagSuggestion } from '@/services/api/hashtags';
 import { SearchedUser } from '@/types/user';
-import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
+import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { ChannelSearchBar } from '../../features/channel/public/components/ChannelSearchBar';
@@ -961,7 +961,7 @@ export const HomeHeader = () => {
                                 </Tooltip>
                             </TooltipProvider>
                             <div className="flex items-center justify-center w-14 h-10 rounded-[24px]">
-                                <ProfileSwitcher showArrow={false} />
+                                <ProfileDropdown />
                             </div>
                         </div>
                     </div>

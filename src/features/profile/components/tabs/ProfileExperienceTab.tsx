@@ -221,7 +221,7 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer hover:opacity-80 transition-opacity mt-2 self-center"
+          className="w-[60px] h-[16px] text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-2 grow-0 cursor-pointer hover:opacity-80 transition-opacity mt-2 self-center flex items-center justify-center p-0 outline-none"
         >
           {isExpanded ? "View less" : "View more"}
         </button>

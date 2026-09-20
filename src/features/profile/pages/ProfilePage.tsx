@@ -614,7 +614,7 @@ export default function ProfilePage() {
         {/* 1. Post Section */}
         <div className="w-full flex flex-col items-start gap-4">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+            <div className="w-[43px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
               Posts
             </div>
             <button
@@ -669,7 +669,7 @@ export default function ProfilePage() {
         {/* 3. Experience Section */}
         <div className="w-full flex flex-col items-start gap-4">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+            <div className="w-[87px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
               Experience
             </div>
             <button
@@ -714,7 +714,7 @@ export default function ProfilePage() {
         {/* 4. Education Section */}
         <div className="w-full flex flex-col items-start gap-4">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
+            <div className="w-[79px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
               Education
             </div>
             <button
@@ -759,8 +759,8 @@ export default function ProfilePage() {
         {/* 5. Project Section */}
         <div className="w-full flex flex-col items-start gap-4">
           <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0">
-              Projects
+            <div className="w-[56px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+              Project
             </div>
             <button
               type="button"

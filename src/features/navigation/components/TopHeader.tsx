@@ -4,24 +4,16 @@ import React from 'react';
 import { Icon } from '@/components/icons';
 import Link from 'next/link';
 import { NotificationPopover } from '@/features/notification/components/NotificationPopover';
-import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { FeatureGuard } from '@/components/feature-flags/FeatureGuard';
 import { GlobalSearch } from './GlobalSearch';
+
+import { ProfileDropdown } from '@/components/layout/ProfileDropdown';
 
 interface TopHeaderProps {
   className?: string;
 }
 
 export function TopHeader({ className }: TopHeaderProps) {
-  const { activeProfile } = useActiveProfile();
-
-  const profileHref = activeProfile?.type === 'COMPANY' && activeProfile.slug
-    ? `/organization/${activeProfile.slug}`
-    : '/profile';
-
-  const avatarUrl = activeProfile?.avatar_url;
-  const initial = activeProfile?.name ? activeProfile.name.charAt(0).toUpperCase() : 'U';
-
   return (
     <header className={`w-full flex items-center justify-between pointer-events-none ${className || ''}`}>
       {/* Full-width top background bar to seamlessly occlude scrolling feed across the entire screen */}
@@ -45,20 +37,12 @@ export function TopHeader({ className }: TopHeaderProps) {
         <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
           <NotificationPopover 
             className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent hover:bg-ds-surface-1 data-[state=open]:bg-ds-surface-1 rounded-[24px] transition-colors"
-            icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary group-hover:text-ds-accent group-data-[state=open]:text-ds-accent transition-colors" />}
+            icon={<Icon name="notification" className="w-[24px] h-[24px] flex-none order-0 grow-0 text-ds-text-primary group-hover:text-ds-accent group-data-[state=open]:text-ds-accent transition-colors" />}
           />
         </FeatureGuard>
 
-        {/* User Avatar */}
-        <Link href={profileHref} className="cursor-pointer block">
-          <div className="w-[24px] h-[24px] rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-ds-surface-1 border border-ds-border text-ds-text-primary cursor-pointer">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
-            )}
-          </div>
-        </Link>
+        {/* User Avatar & Dropdown */}
+        <ProfileDropdown />
       </div>
     </header>
   );

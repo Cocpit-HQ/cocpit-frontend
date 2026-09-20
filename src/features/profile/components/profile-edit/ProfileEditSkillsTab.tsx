@@ -69,8 +69,8 @@ export const ProfileEditSkillsTab: React.FC<ProfileEditSkillsTabProps> = ({
       <div className="w-full h-[24px] flex flex-row items-center justify-between">
         {/* Frame 2609722: Title & Count Group */}
         <div className="flex flex-row items-center gap-[8px]">
-          {/* Title: "Skills" (DM Sans 16px Medium, #FFECE6) */}
-          <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)]">
+          {/* Title: "Skills" (DM Sans 16px Medium, #FFECE6, 38px x 24px) */}
+          <span className="w-[38px] h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none grow-0">
             Skills
           </span>
 

@@ -116,7 +116,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           maxLength={40}
           maxLengthMessage="Full name cannot exceed 40 characters"
           placeholder="Enter full name"
-          className="w-[300px] max-w-full"
+          className="w-[300px] max-w-full flex-none grow-0"
+          labelClassName="w-[54px] text-center"
         />
 
         {/* Username (300px width) */}
@@ -129,7 +130,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           maxLength={25}
           maxLengthMessage="Username cannot exceed 25 characters"
           placeholder="Username"
-          className="w-[300px] max-w-full"
+          className="w-[300px] max-w-full flex-none grow-0"
+          labelClassName="w-[58px] text-center"
           error={isUsernameAvailable === false ? "Username is taken" : undefined}
           statusBadge={
             isCheckingUsername ? (
@@ -145,16 +147,17 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         />
       </div>
 
-      {/* 3. Headline (Frame 2609639: 800px width, counter 0/100) */}
+      {/* 3. Headline (Frame 2609639: 800px width, counter 0/120) */}
       <ProfileEditField
         id="headline"
         label="Headline"
         value={formData.headline}
         onChange={(val) => onChange("headline", val)}
         placeholder="Write a headline"
-        maxLength={100}
+        maxLength={120}
         showCounter={true}
-        className="w-full"
+        className="w-full max-w-[800px]"
+        labelClassName="w-[49px] text-center"
       />
 
       {/* 4. Link (800px width) */}
@@ -165,30 +168,32 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         onChange={(val) => onChange("website", val)}
         placeholder="Paste a link"
         maxLength={255}
-        className="w-full"
+        className="w-full max-w-[800px]"
+        labelClassName="w-[23px] text-center"
       />
 
-      {/* 5. Location & Status (Frame 2609636: 800px width, 40px gap, 300px each) */}
+      {/* 5. Location & Status (Frame 2609636: 800px width, 40px gap, 380px each) */}
       <div className="w-full flex flex-row items-center justify-between sm:justify-start gap-[40px]">
-        {/* Location Autocomplete Input (300px width) */}
+        {/* Location Autocomplete Input (380px width) */}
         <ProfileEditLocationInput
           value={formData.location}
           onChange={(val) => onChange("location", val)}
-          className="w-[300px] max-w-full"
+          className="w-[380px] max-w-full flex-none grow-1"
         />
 
-        {/* Status Dropdown (300px width) */}
+        {/* Status Dropdown (380px width) */}
         <ProfileEditDropdown
           label="Status"
           value={formData.status}
           displayValue={selectedStatusLabel}
           options={STATUS_OPTIONS}
           onSelect={(val) => onChange("status", val)}
-          className="w-[300px] max-w-full"
+          className="w-[380px] max-w-full flex-none grow-1"
+          labelClassName="w-[37px] h-4 text-center"
         />
       </div>
 
-      {/* 6. Looking for & Availability (800px width, 40px gap, 300px each) */}
+      {/* 6. Looking for & Availability (800px width, 40px gap, 380px each) */}
       <div className="w-full flex flex-row items-center justify-between sm:justify-start gap-[40px]">
         <ProfileEditDropdown
           label="Looking for"
@@ -196,7 +201,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           options={LOOKING_FOR_OPTIONS}
           onSelect={(val) => onChange("open_to", val)}
           placeholder="Select"
-          className="w-[300px] max-w-full"
+          className="w-[380px] max-w-full flex-none grow-1"
+          labelClassName="w-[63px] h-4 text-center"
         />
 
         <ProfileEditDropdown
@@ -205,11 +211,12 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           options={AVAILABILITY_OPTIONS}
           onSelect={(val) => onChange("availability", val)}
           placeholder="Select"
-          className="w-[300px] max-w-full"
+          className="w-[380px] max-w-full flex-none grow-1"
+          labelClassName="w-[62px] h-4 text-center"
         />
       </div>
 
-      {/* 7. Work setup & Industry (800px width, 40px gap, 300px each) */}
+      {/* 7. Work setup & Industry (800px width, 40px gap, 380px each) */}
       <div className="w-full flex flex-row items-center justify-between sm:justify-start gap-[40px]">
         <ProfileEditDropdown
           label="Work setup"
@@ -217,7 +224,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           options={WORK_SETUP_OPTIONS}
           onSelect={(val) => onChange("work_preference", val)}
           placeholder="Select"
-          className="w-[300px] max-w-full"
+          className="w-[380px] max-w-full flex-none grow-1"
+          labelClassName="w-[65px] h-4 text-center"
         />
 
         <ProfileEditDropdown
@@ -227,7 +235,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           onSelect={(val) => onChange("industry", val)}
           placeholder="Select"
           emptyText="No industries available"
-          className="w-[300px] max-w-full"
+          className="w-[380px] max-w-full flex-none grow-1"
+          labelClassName="w-[47px] h-4 text-center"
         />
       </div>
 
@@ -242,7 +251,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         rows={1}
         maxLength={500}
         showCounter={true}
-        className="w-full"
+        className="w-full max-w-[800px]"
+        labelClassName="w-[35px] text-center"
       />
 
       {/* 9. Save & Cancel Action Buttons */}

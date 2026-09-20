@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "./image-editor/imageUtils";
 
-const FRAME_SIZE = 192; // 192px x 192px (size-48)
+const FRAME_SIZE = 200; // 200px x 200px
 
 export interface CocpitUserProfileImageEditorProps {
   isOpen: boolean;
@@ -419,10 +419,10 @@ export const CocpitUserProfileImageEditor: React.FC<
           {/* Header Row */}
           <div className="self-stretch flex justify-between items-center pt-1 px-1">
             <div className="flex flex-col justify-center items-start gap-1">
-              <div className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
+              <div className="w-[132px] h-6 text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
                 Add profile photo
               </div>
-              <div className="text-[var(--ds-text-muted)] text-xs font-normal font-['DM_Sans'] leading-4">
+              <div className="w-[199px] h-4 text-left text-[var(--ds-text-secondary)] text-xs font-normal font-['DM_Sans'] leading-4 flex-none order-1 grow-0">
                 Double-click the image to change it
               </div>
             </div>
@@ -454,22 +454,24 @@ export const CocpitUserProfileImageEditor: React.FC<
                 isDragOver && "opacity-80",
               )}
             >
-              <div className="w-48 h-48 rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex flex-col justify-center items-center relative overflow-hidden">
-                <ImagePlaceholderIcon
-                  size={80}
-                  className="w-20 h-20 text-[var(--ds-text-primary)] group-hover:scale-105 transition-transform"
-                />
+              <div className="w-[200px] h-[200px] rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex flex-col justify-center items-center relative overflow-hidden flex-none order-0 grow-0">
+                {/* Media Box: 80px x 80px */}
+                <div className="w-[80px] h-[80px] flex-none order-0 grow-0 relative flex items-center justify-center">
+                  <ImagePlaceholderIcon
+                    className="w-[65px] h-[55px] text-[var(--ds-text-primary)]"
+                  />
+                </div>
               </div>
 
-              <div className="text-center text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 group-hover:opacity-80 transition-opacity">
+              <div className="w-[80px] h-6 text-center text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 group-hover:opacity-80 transition-opacity flex-none order-1 grow-0">
                 Add photo
               </div>
             </div>
           ) : (
             /* Filled State */
             <div className="flex flex-col justify-start items-center gap-2">
-              {/* 192px x 192px Image Area with strict boundary clamping */}
-              <div className="relative w-48 h-48">
+              {/* 200px x 200px Image Area with strict boundary clamping */}
+              <div className="relative w-[200px] h-[200px] flex-none order-0 grow-0">
                 <div
                   ref={containerRef}
                   onMouseDown={handleMouseDown}
@@ -477,7 +479,7 @@ export const CocpitUserProfileImageEditor: React.FC<
                   onDoubleClick={openFilePicker}
                   onWheel={handleWheel}
                   className={cn(
-                    "relative w-48 h-48 rounded-2xl overflow-hidden select-none flex items-center justify-center bg-[var(--ds-surface-2)]",
+                    "relative w-[200px] h-[200px] rounded-2xl overflow-hidden select-none flex items-center justify-center bg-[var(--ds-surface-2)]",
                     isCropMode ? "cursor-grab active:cursor-grabbing" : "cursor-default"
                   )}
                   title={isCropMode ? "Double-click to change photo, drag to reposition, scroll to Adjust" : "Double-click to change photo"}
@@ -527,7 +529,7 @@ export const CocpitUserProfileImageEditor: React.FC<
 
                     {/* Dimension Badge */}
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-[var(--ds-accent)] text-white text-[10px] font-semibold font-['DM_Sans'] rounded shadow-md pointer-events-none select-none tracking-tight whitespace-nowrap">
-                      192 × 192
+                      200 × 200
                     </div>
                   </div>
                 )}
@@ -537,7 +539,7 @@ export const CocpitUserProfileImageEditor: React.FC<
               <button
                 type="button"
                 onClick={handleRemovePhoto}
-                className="text-center text-[var(--ds-error)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity mt-2"
+                className="w-[109px] h-6 text-center text-[var(--ds-error)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity flex-none order-1 grow-0 mt-2"
               >
                 Remove photo
               </button>

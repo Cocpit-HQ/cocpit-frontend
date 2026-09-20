@@ -18,6 +18,14 @@ export const PROFILE_EDIT_TABS: TabItem[] = [
   { key: "project", label: "Project" },
 ];
 
+const TAB_CONFIG: Record<ProfileEditTabKey, { widthClass: string; orderClass: string }> = {
+  profile: { widthClass: "w-[72px]", orderClass: "order-0" },
+  skills: { widthClass: "w-[62px]", orderClass: "order-1" },
+  experience: { widthClass: "w-[109px]", orderClass: "order-2" },
+  education: { widthClass: "w-[101px]", orderClass: "order-3" },
+  project: { widthClass: "w-[78px]", orderClass: "order-4" },
+};
+
 interface ProfileEditTabsProps {
   activeTab: ProfileEditTabKey;
   onTabChange: (tab: ProfileEditTabKey) => void;
@@ -33,22 +41,22 @@ export const ProfileEditTabs: React.FC<ProfileEditTabsProps> = ({
     <div className="w-full md:w-[800px] md:max-w-full h-[36px] flex flex-row items-center gap-[12px] overflow-x-auto scrollbar-hide border-b border-transparent">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
+        const config = TAB_CONFIG[tab.key] || { widthClass: "w-auto", orderClass: "order-0" };
         return (
           <button
             key={tab.key}
             type="button"
             onClick={() => onTabChange(tab.key)}
             className={cn(
-              "relative h-[36px] flex flex-col items-center justify-center px-1 font-['DM_Sans'] font-medium text-[16px] leading-[24px] whitespace-nowrap transition-colors cursor-pointer focus:outline-none",
+              "relative h-[36px] flex flex-col items-center justify-center p-0 flex-none grow-0 font-['DM_Sans'] font-medium text-[16px] leading-[24px] whitespace-nowrap transition-colors cursor-pointer focus:outline-none",
+              config.widthClass,
+              config.orderClass,
               isActive
-                ? "text-[var(--ds-text-primary)]"
-                : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
+                ? "text-[var(--ds-text-primary)] border-b-2 border-[var(--ds-accent)]"
+                : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] border-b-2 border-transparent"
             )}
           >
             {tab.label}
-            {isActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[var(--ds-accent)] rounded-full" />
-            )}
           </button>
         );
       })}

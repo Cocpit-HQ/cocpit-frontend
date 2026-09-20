@@ -151,6 +151,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
   }, [initialProject]);
 
   const isEditing = Boolean(formData.project_id);
+  const hasLink = formData.media.some((item) => item.type === "link");
 
 
   // Handle File Selected for Media / Documents (Store locally, deferred upload on project save)
@@ -607,6 +608,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
           <div className="flex flex-row items-center p-0 gap-[10px] min-h-[36px] h-auto flex-wrap">
             <button
               type="button"
+              disabled={hasLink || formData.media.length >= 5}
               onClick={() => {
                 if (formData.media.length >= 5) {
                   toast.error("You can add a maximum of 5 media items");
@@ -614,10 +616,15 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
                 }
                 setIsLinkModalOpen(true);
               }}
-              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0"
+              className={cn(
+                "w-[111px] h-[36px] px-[12px] py-[6px] rounded-[100px] border border-[var(--ds-border)] flex flex-row justify-center items-center gap-[10px] flex-none order-0 grow-0 transition-all focus:outline-none",
+                hasLink || formData.media.length >= 5
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-[var(--ds-surface-1)] active:scale-95 cursor-pointer"
+              )}
             >
               <Plus className="size-4 text-[var(--ds-text-primary)] shrink-0" />
-              <span className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
+              <span className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
                 Add link
               </span>
             </button>
@@ -863,6 +870,10 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         mode="add"
         onClose={() => setIsLinkModalOpen(false)}
         onConfirm={(title, url) => {
+          if (formData.media.some((item) => item.type === "link")) {
+            toast.error("You can add only 1 link");
+            return;
+          }
           if (formData.media.length >= 5) {
             toast.error("You can add a maximum of 5 media items");
             return;

@@ -19,6 +19,8 @@ interface ProfileEditFieldProps {
   pattern?: string;
   rows?: number;
   className?: string;
+  labelClassName?: string;
+  inputBoxClassName?: string;
   statusBadge?: React.ReactNode;
   error?: string;
   maxLengthMessage?: string;
@@ -39,17 +41,27 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
   pattern,
   rows = 1,
   className,
+  labelClassName,
+  inputBoxClassName,
   statusBadge,
   error,
   maxLengthMessage,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   // Auto-resize textarea height to fit content without artificial empty gaps
   useEffect(() => {
     if (isTextarea && textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.max(20, textareaRef.current.scrollHeight)}px`;
+      textareaRef.current.style.height = "20px";
+      const scrollH = textareaRef.current.scrollHeight;
+      if (value && scrollH > 24) {
+        setIsExpanded(true);
+        textareaRef.current.style.height = `${scrollH}px`;
+      } else {
+        setIsExpanded(false);
+        textareaRef.current.style.height = "20px";
+      }
     }
   }, [value, isTextarea]);
 
@@ -57,20 +69,22 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
     <div className={cn("flex flex-col gap-[8px] w-full", className)}>
       <div
         className={cn(
-          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          "w-full py-[8px] px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] relative box-border self-stretch",
+          isTextarea && isExpanded ? "min-h-[62px] h-auto" : "h-[62px]",
           error
             ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
             : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
-          className
+          inputBoxClassName
         )}
       >
         {/* Label & Status Badge Row */}
-        <div className="w-full flex justify-between items-center">
+        <div className="w-full flex justify-between items-center h-4 flex-none grow-0">
           <label
             htmlFor={id}
             className={cn(
-              "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
-              error ? "text-red-500" : "text-[var(--ds-text-secondary)]"
+              "font-['DM_Sans'] font-medium text-[12px] leading-[16px] flex-none grow-0",
+              error ? "text-red-500" : "text-[var(--ds-text-secondary)]",
+              labelClassName
             )}
           >
             {label}
@@ -79,7 +93,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
         </div>
 
         {/* Input Row */}
-        <div className="w-full flex items-center">
+        <div className={cn("w-full flex items-center", isTextarea && isExpanded ? "min-h-[20px] h-auto" : "h-5")}>
           {prefix && (
             <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-muted)] mr-0.5 select-none">
               {prefix}
@@ -90,7 +104,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
             <textarea
               ref={textareaRef}
               id={id}
-              rows={1}
+              rows={rows}
               value={value}
               onChange={(e) => {
                 const val = e.target.value;
@@ -102,7 +116,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
                 }
               }}
               placeholder={placeholder}
-              className="w-full bg-transparent text-[var(--ds-text-primary)] font-['DM_Sans'] font-normal text-[14px] leading-[20px] placeholder:text-[var(--ds-text-muted)] focus:outline-none resize-none p-0 m-0 min-h-[20px] overflow-hidden"
+              className="block w-full bg-transparent text-[var(--ds-text-primary)] font-['DM_Sans'] font-normal text-[14px] leading-[20px] placeholder:text-[var(--ds-text-muted)] focus:outline-none resize-none p-0 m-0 h-[20px] overflow-hidden"
             />
           ) : (
             <input
@@ -131,7 +145,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
       {showCounter && maxLength && (
         <div className="w-full flex justify-end">
           <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-muted)]">
-            {value.length}/{maxLength}
+            {(value || "").length}/{maxLength}
           </span>
         </div>
       )}

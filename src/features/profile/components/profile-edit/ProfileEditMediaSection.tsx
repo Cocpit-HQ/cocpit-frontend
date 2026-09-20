@@ -25,7 +25,7 @@ export const ProfileEditMediaSection: React.FC<ProfileEditMediaSectionProps> = (
     /* Frame 2609766: Banner and Profile Parent Box (800px width desktop, full width mobile) */
     <div className="w-full md:w-[800px] md:max-w-full h-auto md:h-[256px] flex flex-col items-center select-none relative">
       {/* Frame 2609600: Banner Box (800px width, 200px height, 16px radius) */}
-      <div className="w-full h-[200px] rounded-[16px] overflow-hidden relative bg-[var(--ds-surface-1)] border border-[var(--ds-border)]/40">
+      <div className="w-full md:w-[800px] h-[200px] rounded-[16px] overflow-hidden relative bg-[var(--ds-surface-1)] flex-none order-0 grow-0">
         {coverImage ? (
           <img
             src={coverImage}
@@ -39,7 +39,7 @@ export const ProfileEditMediaSection: React.FC<ProfileEditMediaSectionProps> = (
             onClick={onEditCover}
             className="w-full h-full flex flex-col justify-center items-center gap-2 p-2.5 select-none cursor-pointer"
           >
-            <div className="w-[87px] h-6 text-center text-[var(--ds-text-secondary)] text-base font-normal font-['DM_Sans'] leading-6 flex-none order-0 select-none hover:text-[var(--ds-text-primary)] transition-colors">
+            <div className="w-[89px] h-6 text-center text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 flex-none order-0 select-none">
               Add banner
             </div>
             <div className="w-[303px] max-w-full h-4 text-center text-[var(--ds-text-secondary)] text-xs font-normal font-['DM_Sans'] leading-4 flex-none order-1 select-none">

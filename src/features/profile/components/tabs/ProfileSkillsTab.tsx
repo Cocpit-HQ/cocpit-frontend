@@ -42,7 +42,7 @@ export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
     return (
       <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-center gap-5">
         <div className="w-full max-w-[780px] flex flex-row justify-between items-center gap-5">
-          <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none">
+          <div className="w-[40px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
             Skills
           </div>
           {isOwnProfile && onAddSkills && (
@@ -67,7 +67,7 @@ export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
       <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-center gap-5">
         {/* Frame 2609752: Title Box (w: 780px, h: 24px, justify-between) */}
         <div className="w-full max-w-[780px] flex flex-row justify-between items-center gap-5">
-          <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none">
+          <div className="w-[40px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
             Skills
           </div>
           {isOwnProfile && onAddSkills && (
@@ -98,7 +98,7 @@ export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
     <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-center gap-5">
       {/* Frame 2609752: Title Box (w: 780px, h: 24px, justify-between) */}
       <div className="w-full max-w-[780px] flex flex-row justify-between items-center gap-5">
-        <div className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none">
+        <div className="w-[40px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
           Skills
         </div>
         {isOwnProfile && onAddSkills && (
@@ -147,7 +147,7 @@ export const ProfileSkillsTab: React.FC<ProfileSkillsTabProps> = ({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 hover:underline cursor-pointer transition-opacity"
+          className="w-[60px] h-[16px] text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-2 grow-0 hover:underline cursor-pointer transition-opacity flex items-center justify-center p-0 outline-none"
         >
           {isExpanded ? "Show less" : "View more"}
         </button>

@@ -22,6 +22,8 @@ export interface MonthYearDatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  labelClassName?: string;
+  containerClassName?: string;
   error?: string;
 }
 
@@ -33,6 +35,8 @@ export const MonthYearDatePicker: React.FC<MonthYearDatePickerProps> = ({
   placeholder = "Select",
   disabled = false,
   className,
+  labelClassName,
+  containerClassName,
   error,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -93,11 +97,11 @@ export const MonthYearDatePicker: React.FC<MonthYearDatePickerProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col gap-1">
+    <div className={cn("w-full flex flex-col gap-1", containerClassName)}>
       <div
         ref={containerRef}
         className={cn(
-          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          "w-full h-[62px] py-[8px] px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] relative box-border",
           disabled
             ? "opacity-50 pointer-events-none border-[var(--ds-border)]"
             : error
@@ -112,8 +116,9 @@ export const MonthYearDatePicker: React.FC<MonthYearDatePickerProps> = ({
           <label
             htmlFor={id}
             className={cn(
-              "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
-              error ? "text-red-500" : "text-[var(--ds-text-secondary)]"
+              "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center",
+              error ? "text-red-500" : "text-[var(--ds-text-secondary)]",
+              labelClassName
             )}
           >
             {label}

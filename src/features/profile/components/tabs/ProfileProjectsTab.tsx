@@ -220,11 +220,8 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const docIdx = previewMediaList.findIndex((m) =>
-                              docMedias.includes(m)
-                            );
-                            setPreviewDocs(previewMediaList);
-                            setPreviewInitialIndex(docIdx >= 0 ? docIdx : 0);
+                            setPreviewDocs(docMedias);
+                            setPreviewInitialIndex(0);
                             setIsDocModalOpen(true);
                           }}
                           className="w-20 h-10 bg-[var(--ds-surface-1)] rounded-lg flex flex-col items-center justify-center gap-2.5 overflow-hidden flex-none hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
@@ -240,11 +237,8 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const imgIdx = previewMediaList.findIndex((m) =>
-                              imgMedias.includes(m)
-                            );
-                            setPreviewDocs(previewMediaList);
-                            setPreviewInitialIndex(imgIdx >= 0 ? imgIdx : 0);
+                            setPreviewDocs(imgMedias);
+                            setPreviewInitialIndex(0);
                             setIsDocModalOpen(true);
                           }}
                           className="w-20 h-10 bg-[var(--ds-surface-1)] rounded-lg overflow-hidden flex-none flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
@@ -295,7 +289,7 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer hover:opacity-80 transition-opacity mt-2 self-center"
+          className="w-[60px] h-[16px] text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-2 grow-0 cursor-pointer hover:opacity-80 transition-opacity mt-2 self-center flex items-center justify-center p-0 outline-none"
         >
           {isExpanded ? "View less" : "View more"}
         </button>

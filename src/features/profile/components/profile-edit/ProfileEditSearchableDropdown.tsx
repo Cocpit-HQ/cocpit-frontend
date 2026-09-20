@@ -22,6 +22,8 @@ interface ProfileEditSearchableDropdownProps {
   searchable?: boolean;
   allowCustom?: boolean;
   className?: string;
+  labelClassName?: string;
+  containerClassName?: string;
   maxLength?: number;
   maxLengthMessage?: string;
   emptyText?: string;
@@ -43,6 +45,8 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   maxLength,
   maxLengthMessage,
   className,
+  labelClassName,
+  containerClassName,
   error,
   warning,
 }) => {
@@ -240,16 +244,16 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   };
 
   return (
-    <div className="w-full flex flex-col gap-1">
+    <div className={cn("w-full flex flex-col gap-1", containerClassName)}>
       <div
         ref={containerRef}
         onKeyDown={handleKeyDown}
         className={cn(
-          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          "w-full h-[62px] py-[8px] px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] relative box-border",
           error
             ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
             : warning
-            ? "border-[#EC6229] hover:border-[#EC6229] focus-within:border-[#EC6229]"
+            ? "border-[var(--ds-accent)] hover:border-[var(--ds-accent)] focus-within:border-[var(--ds-accent)]"
             : isOpen
             ? "border-[var(--ds-accent)]"
             : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
@@ -259,8 +263,9 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
         <label
           htmlFor={id}
           className={cn(
-            "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
-            error ? "text-red-500" : warning ? "text-[#EC6229]" : "text-[var(--ds-text-secondary)]"
+            "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center",
+            error ? "text-red-500" : warning ? "text-[var(--ds-accent)]" : "text-[var(--ds-text-secondary)]",
+            labelClassName
           )}
         >
           {label}

@@ -404,15 +404,15 @@ export function ProfileEditScreen({
     }
 
     if (formData.account_name) {
-      const usernameRegex = /^[a-z0-9_.]{3,20}$/;
+      const usernameRegex = /^[a-z0-9_.]{3,25}$/;
       if (!usernameRegex.test(formData.account_name)) {
-        toast.error("Username must be 3-20 characters and contain only lowercase letters, numbers, underscores, or dots");
+        toast.error("Username must be 3-25 characters and contain only lowercase letters, numbers, underscores, or dots");
         return;
       }
     }
 
-    if (formData.headline && formData.headline.length > 100) {
-      toast.error("Headline cannot exceed 100 characters");
+    if (formData.headline && formData.headline.length > 120) {
+      toast.error("Headline cannot exceed 120 characters");
       return;
     }
     if (formData.about && formData.about.length > 500) {

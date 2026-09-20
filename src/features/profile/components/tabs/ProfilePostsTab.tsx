@@ -150,7 +150,7 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
         <button
           type="button"
           onClick={onSeeAll}
-          className="mt-[20px] text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 hover:underline cursor-pointer transition-opacity"
+          className="w-[37px] h-[16px] mt-[20px] text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-2 grow-0 hover:underline cursor-pointer transition-opacity flex items-center justify-center p-0 outline-none"
         >
           See all
         </button>

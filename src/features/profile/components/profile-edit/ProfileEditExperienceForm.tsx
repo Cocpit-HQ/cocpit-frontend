@@ -625,14 +625,14 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   }, [onRegisterBack, handleCancelClick]);
 
   return (
-    <div className="w-full max-w-full flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
-      {/* Form Fields Container */}
-      <div className="self-stretch flex flex-col justify-start items-start gap-10">
+    <div className="w-full max-w-[640px] flex flex-col items-center gap-[40px] p-0 animate-in fade-in duration-200">
+      {/* Form Fields Container (640px width, gap 40px) */}
+      <div className="w-full flex flex-col items-start gap-[40px] p-0">
         {/* Row 1: Role / New role & Organization / Location */}
         {isAddingNewRole ? (
           /* Add New Role Layout: New role + Location in Row 1 */
-          <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-5 sm:gap-10">
-            <div className="w-full sm:w-72 flex-1 flex flex-col gap-2.5">
+          <div className="w-full flex flex-row items-start gap-[40px]">
+            <div className="w-[300px] flex-none flex flex-col gap-2.5">
               <ProfileEditSearchableDropdown
                 id="exp_new_role"
                 label="New role"
@@ -646,6 +646,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 }}
                 maxLength={100}
                 maxLengthMessage="Role cannot exceed 100 characters"
+                labelClassName="w-[49px] h-[16px] text-center"
               />
 
               {/* Checkbox: End current role as "RoleName" */}
@@ -677,18 +678,19 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               )}
             </div>
 
-            <div className="w-full sm:w-72 flex-1">
+            <div className="w-[300px] flex-none">
               <ProfileEditLocationInput
                 value={formData.location}
                 onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
+                className="w-[300px]"
               />
             </div>
           </div>
         ) : (
           /* Standard Edit/Add Layout: Role + Organization in Row 1 */
           <>
-            <div className="self-stretch flex flex-col sm:flex-row justify-start sm:items-center gap-5 sm:gap-10">
-              <div className="w-full sm:w-72 flex-1">
+            <div className="w-full flex flex-row items-center gap-[40px]">
+              <div className="w-[300px] flex-none">
                 <ProfileEditSearchableDropdown
                   id="exp_role"
                   label="Role"
@@ -702,9 +704,10 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   }}
                   maxLength={100}
                   maxLengthMessage="Role cannot exceed 100 characters"
+                  labelClassName="w-[24px] h-[16px] text-center"
                 />
               </div>
-              <div className="w-full sm:w-72 flex-1">
+              <div className="w-[300px] flex-none">
                 <ProfileEditSearchableDropdown
                   id="exp_org"
                   label="Organization"
@@ -716,23 +719,25 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                     setFormData((prev) => ({ ...prev, company_name: val }));
                     setErrors((prev) => ({ ...prev, company_name: "" }));
                   }}
+                  labelClassName="w-[72px] h-[16px] text-center"
                 />
               </div>
             </div>
 
-            {/* Row 2: Location (Full Width) */}
-            <div className="self-stretch">
+            {/* Row 2: Location (Full Width: 640px) */}
+            <div className="w-full max-w-[640px]">
               <ProfileEditLocationInput
                 value={formData.location}
                 onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
+                className="w-full max-w-[640px]"
               />
             </div>
           </>
         )}
 
-        {/* Work type & Work mode */}
-        <div className="self-stretch flex flex-col sm:flex-row justify-start sm:items-center gap-5 sm:gap-10">
-          <div className="w-full sm:w-72 flex-1">
+        {/* Row 3: Work type & Work mode (640px width, 40px gap, 300px each) */}
+        <div className="w-full flex flex-row items-center gap-[40px]">
+          <div className="w-[300px] flex-none">
             <ProfileEditDropdown
               label="Work type"
               value={formData.work_type}
@@ -743,9 +748,10 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 setFormData((prev) => ({ ...prev, work_type: val }));
                 setErrors((prev) => ({ ...prev, work_type: "" }));
               }}
+              labelClassName="w-[59px] h-[16px] text-center"
             />
           </div>
-          <div className="w-full sm:w-72 flex-1">
+          <div className="w-[300px] flex-none">
             <ProfileEditDropdown
               label="Work mode"
               value={formData.work_mode}
@@ -756,14 +762,15 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 setFormData((prev) => ({ ...prev, work_mode: val }));
                 setErrors((prev) => ({ ...prev, work_mode: "" }));
               }}
+              labelClassName="w-[66px] h-[16px] text-center"
             />
           </div>
         </div>
 
-        {/* Start date & End date + Checkbox */}
-        <div className="self-stretch flex flex-col justify-start items-start gap-5">
-          <div className="self-stretch flex flex-col sm:flex-row justify-start sm:items-center gap-5 sm:gap-10">
-            <div className="w-full sm:w-72 flex-1">
+        {/* Row 4: Date Section (640px width, 20px vertical gap) */}
+        <div className="w-full max-w-[640px] flex flex-col items-start gap-[20px] p-0">
+          <div className="w-full flex flex-row items-center gap-[40px]">
+            <div className="w-[300px] flex-none">
               <ProfileEditDatePicker
                 id="exp_start_date"
                 label="Start date"
@@ -774,10 +781,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   setFormData((prev) => ({ ...prev, start_date: val }));
                   setErrors((prev) => ({ ...prev, start_date: "" }));
                 }}
+                labelClassName="w-[57px] h-[16px] text-center"
               />
             </div>
             {!formData.is_current ? (
-              <div className="w-full sm:w-72 flex-1">
+              <div className="w-[300px] flex-none">
                 <ProfileEditDatePicker
                   id="exp_end_date"
                   label="End date"
@@ -788,10 +796,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                     setFormData((prev) => ({ ...prev, end_date: val }));
                     setErrors((prev) => ({ ...prev, end_date: "" }));
                   }}
+                  labelClassName="w-[51px] h-[16px] text-center"
                 />
               </div>
             ) : (
-              <div className="w-72 flex-1 hidden sm:block" />
+              <div className="w-[300px] flex-none" />
             )}
           </div>
 
@@ -804,16 +813,16 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 end_date: !prev.is_current ? "" : prev.end_date,
               }))
             }
-            className="inline-flex justify-start items-center gap-2 cursor-pointer select-none group focus:outline-none"
+            className="flex flex-row items-center gap-[8px] h-[16px] cursor-pointer select-none group focus:outline-none"
             role="checkbox"
             aria-checked={formData.is_current}
           >
             <div
               className={cn(
-                "size-4 rounded-sm inline-flex items-center justify-center border transition-colors shrink-0",
+                "w-[16px] h-[16px] rounded-[4px] inline-flex items-center justify-center border transition-colors shrink-0",
                 formData.is_current
                   ? "bg-[var(--ds-accent)] border-[var(--ds-accent)]"
-                  : "bg-[var(--ds-surface-1)] border-[var(--ds-border)] group-hover:border-[var(--ds-text-secondary)]"
+                  : "bg-transparent border-[var(--ds-border)] group-hover:border-[var(--ds-text-secondary)]"
               )}
             >
               {formData.is_current && (
@@ -822,68 +831,64 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 </svg>
               )}
             </div>
-            <div className="justify-start text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4">
+            <span className="w-[114px] h-[16px] font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)]">
               I currently work here
-            </div>
+            </span>
           </div>
         </div>
 
-        {/* Skills used (only shown when not adding nested role, or shown on both) */}
+        {/* Row 5: Skills used (640px full width) */}
         {!isAddingNewRole && (
-          <div className="self-stretch">
+          <div className="w-full max-w-[640px]">
             <ProfileEditSkillsPicker
               label="Skills used"
               placeholder="Search and add skills (e.g. Figma, Project Management)"
               selectedSkills={formData.skills}
               onChange={(skills) => setFormData((prev) => ({ ...prev, skills }))}
+              labelClassName="w-[60px] h-[16px] text-center"
             />
           </div>
         )}
 
-        {/* About (Max 500 characters) */}
-        <div className="self-stretch flex flex-col justify-start items-end gap-2">
-          <ProfileEditField
-            id="exp_about"
-            label="About"
-            isTextarea={true}
-            maxLength={500}
-            placeholder="Describe your work, impact, or achievements"
-            value={formData.description}
-            onChange={(val) => setFormData((prev) => ({ ...prev, description: val }))}
-          />
-          <div className="text-center justify-start text-[var(--ds-text-muted)] text-xs font-normal font-['DM_Sans'] leading-4">
-            {formData.description.length}/500
-          </div>
-        </div>
+        {/* Row 6: About (640px full width, counter 0/500) */}
+        <ProfileEditField
+          id="exp_about"
+          label="About"
+          isTextarea={true}
+          rows={1}
+          maxLength={500}
+          showCounter={true}
+          placeholder="Describe your work, impact, or achievements"
+          value={formData.description}
+          onChange={(val) => setFormData((prev) => ({ ...prev, description: val }))}
+          className="w-full max-w-[640px]"
+          labelClassName="w-[35px] h-[16px] text-center"
+        />
       </div>
 
-      {/* Buttons: Add/Save and Cancel */}
-      <div className="inline-flex justify-center items-start gap-2 pt-2 pb-8">
+      {/* Buttons: Add/Save and Cancel (Centered) */}
+      <div className="w-full flex flex-row items-center justify-center gap-[8px] h-[36px] pt-[20px] pb-[60px]">
         <button
           type="button"
           disabled={!canSubmit || isSaving || isDeleting}
           onClick={handleSave}
           className={cn(
-            "w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all focus:outline-none",
+            "w-[77px] h-[36px] px-[12px] py-[6px] rounded-full font-['DM_Sans'] font-medium text-[16px] leading-[24px] flex items-center justify-center transition-all focus:outline-none",
             !canSubmit || isSaving || isDeleting
-              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-90"
+              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-90"
               : "bg-[var(--ds-accent)] text-white hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
           )}
         >
-          <div className="justify-start text-base font-medium font-['DM_Sans'] leading-6">
-            {isSaving ? "Saving..." : isEditing ? "Save" : "Add"}
-          </div>
+          {isSaving ? "..." : isEditing ? "Save" : "Add"}
         </button>
 
         <button
           type="button"
           disabled={isDeleting || isSaving}
           onClick={isEditing ? handleDelete : handleCancelClick}
-          className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-2.5 transition-all cursor-pointer focus:outline-none disabled:opacity-50"
+          className="w-[77px] h-[36px] px-[12px] py-[6px] rounded-full border border-[var(--ds-border)] bg-transparent hover:bg-[var(--ds-surface-1)] text-[var(--ds-text-primary)] font-['DM_Sans'] font-medium text-[16px] leading-[24px] flex items-center justify-center transition-all cursor-pointer focus:outline-none disabled:opacity-50"
         >
-          <div className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
-            {isDeleting ? "Deleting..." : isEditing ? "Delete" : "Cancel"}
-          </div>
+          {isDeleting ? "..." : isEditing ? "Delete" : "Cancel"}
         </button>
       </div>
 

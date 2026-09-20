@@ -31,16 +31,16 @@ export const ProfileEditExperienceList: React.FC<ProfileEditExperienceListProps>
       <div className="w-full max-w-full h-[24px] flex flex-row justify-between items-center px-0 gap-5 flex-none order-0 self-stretch flex-grow-0">
         {/* Frame 2609722: Left Title & Count Box (gap: 8px, h: 24px) */}
         <div className="flex flex-row items-center p-0 gap-2 h-[24px] flex-none order-0 flex-grow-0">
-          {/* Experience Heading (DM Sans 16px Semibold, #FFECE6) */}
-          <span className="font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none order-0 flex-grow-0">
+          {/* Experience Heading (DM Sans 16px Semibold, #FFECE6, 87x24px) */}
+          <span className="w-[87px] h-[24px] font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none order-0 flex-grow-0">
             Experience
           </span>
 
           {/* Ellipse 12: Dot Badge (4x4px, #726B67) */}
           <span className="w-1 h-1 rounded-full bg-[var(--ds-text-muted)] flex-none order-1 flex-grow-0" />
 
-          {/* Count Text (DM Sans 14px Regular, #B8ADA8) */}
-          <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-secondary)] flex-none order-2 flex-grow-0">
+          {/* Count Text (DM Sans 14px Regular, #B8ADA8, 84x20px) */}
+          <span className="w-[84px] h-[20px] font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-secondary)] flex-none order-2 flex-grow-0">
             {experiences.length} {experiences.length === 1 ? "experience" : "experience"}
           </span>
         </div>

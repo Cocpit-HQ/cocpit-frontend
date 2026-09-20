@@ -10,6 +10,7 @@ export type ConfirmPresetType =
   | "block_profile"
   | "remove_follower"
   | "delete_post"
+  | "logout"
   | "custom";
 
 export interface ActionConfirmModalProps {
@@ -70,6 +71,12 @@ const PRESETS: Record<
     getTitle: () => "Delete post?",
     description: "This action cannot be undone and will permanently remove this post",
     confirmText: "Delete",
+    buttonWidthClass: "w-[84px]",
+  },
+  logout: {
+    getTitle: () => "Log out?",
+    description: "Are you sure you want to log out of your account?",
+    confirmText: "Log out",
     buttonWidthClass: "w-[84px]",
   },
 };

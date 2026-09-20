@@ -17,6 +17,7 @@ interface ProfileEditDropdownProps {
   onSelect: (value: string) => void;
   placeholder?: string;
   className?: string;
+  labelClassName?: string;
   emptyText?: string;
   error?: string;
 }
@@ -29,6 +30,7 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
   onSelect,
   placeholder = "Select",
   className,
+  labelClassName,
   emptyText = "No options available",
   error,
 }) => {
@@ -55,34 +57,34 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
     (value ? value : placeholder);
 
   return (
-    <div className="w-full flex flex-col gap-1">
+    <div className={cn("w-full flex flex-col gap-1", className)}>
       <div
         ref={containerRef}
         className={cn(
-          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          "w-full h-[62px] py-2 px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] relative box-border flex-none order-0 grow-0",
           error
             ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
             : isOpen
             ? "border-[var(--ds-accent)]"
-            : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
-          className
+            : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]"
         )}
       >
         <label
           className={cn(
-            "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
-            error ? "text-red-500" : "text-[var(--ds-text-secondary)]"
+            "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center flex-none order-0 grow-0",
+            error ? "text-red-500" : "text-[var(--ds-text-secondary)]",
+            labelClassName
           )}
         >
           {label}
         </label>
 
-      {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between text-left cursor-pointer focus:outline-none bg-transparent"
-      >
+        {/* Trigger */}
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="w-full flex items-center justify-between text-left cursor-pointer focus:outline-none bg-transparent h-5 flex-none order-1 grow-0"
+        >
         <span
           className={cn(
             "font-['DM_Sans'] font-normal text-[14px] leading-[20px] truncate max-w-[260px]",

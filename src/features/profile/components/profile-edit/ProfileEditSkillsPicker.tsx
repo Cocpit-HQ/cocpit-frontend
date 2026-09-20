@@ -15,6 +15,7 @@ interface ProfileEditSkillsPickerProps {
   placeholder?: string;
   className?: string;
   showBulbIcon?: boolean;
+  labelClassName?: string;
 }
 
 export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = ({
@@ -24,6 +25,7 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
   placeholder = "Search and add skills (e.g. Figma, Project Management)",
   className,
   showBulbIcon = true,
+  labelClassName,
 }) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -116,13 +118,18 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
       {/* Input container with bottom border */}
       <div
         className={cn(
-          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5",
+          "w-full h-[62px] py-[8px] px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] box-border relative",
           isOpen
             ? "border-[var(--ds-accent)]"
             : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]"
         )}
       >
-        <label className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]">
+        <label
+          className={cn(
+            "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center text-[var(--ds-text-secondary)]",
+            labelClassName
+          )}
+        >
           {label}
         </label>
 

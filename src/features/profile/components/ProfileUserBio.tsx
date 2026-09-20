@@ -53,15 +53,15 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
   return (
     /* Frame 2609603: Main Parent Box (w: 800px, pl: 20px / px-4 mobile, gap: 16px) */
     <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-start gap-4">
-      {/* Stats Row - Mobile: stacked columns, Desktop: inline horizontal */}
-      <div className="w-full max-w-[780px] flex flex-row items-center justify-between gap-3">
+      {/* StatsRow: Auto layout (w: 780px, h: 44px, p: 12px, gap: 24px, justify-between, items-center, left: 20px) */}
+      <div className="w-full max-w-[780px] h-[44px] p-3 flex flex-row items-center justify-between gap-6 self-stretch flex-none order-0 grow-0">
         {/* Following */}
         <button
           type="button"
           onClick={onOpenFollowing}
           disabled={!onOpenFollowing}
           className={cn(
-            "flex-1 flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 text-center text-[var(--ds-text-primary)] font-['DM_Sans']",
+            "flex-1 flex flex-row items-center justify-center gap-1.5 text-center text-[var(--ds-text-primary)] font-['DM_Sans']",
             onOpenFollowing ? "cursor-pointer hover:opacity-85 transition-opacity" : "cursor-default"
           )}
         >
@@ -75,7 +75,7 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
           onClick={onOpenFollowers}
           disabled={!onOpenFollowers}
           className={cn(
-            "flex-1 flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 text-center text-[var(--ds-text-primary)] font-['DM_Sans']",
+            "flex-1 flex flex-row items-center justify-center gap-1.5 text-center text-[var(--ds-text-primary)] font-['DM_Sans']",
             onOpenFollowers ? "cursor-pointer hover:opacity-85 transition-opacity" : "cursor-default"
           )}
         >
@@ -89,7 +89,7 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
           onClick={onOpenConnections}
           disabled={!onOpenConnections}
           className={cn(
-            "flex-1 flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 text-center text-[var(--ds-text-primary)] font-['DM_Sans']",
+            "flex-1 flex flex-row items-center justify-center gap-1.5 text-center text-[var(--ds-text-primary)] font-['DM_Sans']",
             onOpenConnections ? "cursor-pointer hover:opacity-85 transition-opacity" : "cursor-default"
           )}
         >

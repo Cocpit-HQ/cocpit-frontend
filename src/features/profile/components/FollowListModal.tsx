@@ -530,26 +530,28 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     (activeTab === "connections" && isLoadingConnections);
 
   const emptyStateConfig = useMemo(() => {
+    const name = isOwnProfile ? "You" : (userName || "This user");
+    const doesnt = isOwnProfile ? "don't" : "doesn't";
     if (activeTab === "following") {
       return {
         title: "Not Following Yet",
-        description: "This profile isn't following anyone yet.",
+        description: `${name} ${isOwnProfile ? "aren't" : "isn't"} following anyone yet.`,
         Icon: EmptyFollowIcon,
       };
     }
     if (activeTab === "followers") {
       return {
         title: "No Followers Yet",
-        description: "This profile doesn't have any followers yet.",
+        description: `${name} ${doesnt} have any followers yet.`,
         Icon: EmptyFollowIcon,
       };
     }
     return {
       title: "No Connections Yet",
-      description: "This profile doesn't have any connections yet.",
+      description: `${name} ${doesnt} have any connections yet.`,
       Icon: EmptyConnectionIcon,
     };
-  }, [activeTab]);
+  }, [activeTab, isOwnProfile, userName]);
 
   return (
     <>
@@ -559,23 +561,25 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
           onPointerDownOutside={(e) => e.preventDefault()}
           className="w-full h-full sm:w-[400px] sm:max-w-[400px] sm:h-[434px] sm:max-h-[434px] p-4 sm:p-3 bg-[var(--ds-bg)] border-0 sm:border border-[var(--ds-border)] rounded-none sm:rounded-[16px] overflow-hidden shadow-2xl gap-0 outline-none [&>button:last-child]:hidden select-text flex flex-col justify-start"
         >
-          {/* Top Close Row & Title */}
-          <div className="w-full flex justify-between items-center h-5 relative">
-            <DialogTitle className="absolute left-1/2 -translate-x-1/2 font-['DM_Sans'] text-base font-medium text-[var(--ds-text-primary)]">
-              People
-            </DialogTitle>
+          {/* Row 1: Close button (right-aligned, 20px height) */}
+          <div className="w-full flex flex-row justify-end items-center h-5 gap-[10px]">
             <button
               type="button"
               onClick={onClose}
-              className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none ml-auto"
+              className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer"
               title="Close"
             >
               <CloseCrossIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
             </button>
           </div>
 
-          {/* Tabs: Following, Followers, Connection */}
-          <div className="w-full grid grid-cols-3 border-b border-[var(--ds-border)] mt-3">
+          {/* Row 2: Title */}
+          <DialogTitle className="w-full text-center font-['DM_Sans'] text-base font-medium text-[var(--ds-text-primary)] mt-3">
+            People
+          </DialogTitle>
+
+          {/* Row 3: Tabs */}
+          <div className="w-full flex flex-row mt-3">
             {(["following", "followers", "connections"] as const).map((tabKey) => {
               const isActive = activeTab === tabKey;
               const label =
@@ -594,18 +598,13 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     setSearch("");
                   }}
                   className={cn(
-                    "pb-2.5 flex justify-center items-center text-center font-['DM_Sans'] text-base font-medium leading-6 transition-all relative cursor-pointer",
+                    "flex-1 flex flex-col items-center justify-center h-[36px] px-0 py-0 border-b-[1.5px] transition-all cursor-pointer focus:outline-none font-['DM_Sans'] text-base font-medium leading-6",
                     isActive
-                      ? "text-[var(--ds-text-primary)]"
-                      : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
+                      ? "border-b-[var(--ds-accent)] text-[var(--ds-text-primary)]"
+                      : "border-b-transparent text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
                   )}
                 >
-                  <div className="relative">
-                    {label}
-                    {isActive && (
-                      <div className="absolute -bottom-2.5 left-0 right-0 h-[1.5px] bg-[var(--ds-accent)]" />
-                    )}
-                  </div>
+                  {label}
                 </button>
               );
             })}

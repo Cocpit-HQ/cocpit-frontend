@@ -213,19 +213,19 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
     <div
       ref={wrapperRef}
       className={cn(
-        "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+        "w-full max-w-full h-[62px] py-[8px] px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] relative box-border",
         open
           ? "border-[var(--ds-accent)]"
           : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
         className
       )}
     >
-      <label className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]">
+      <label className="w-[49px] h-4 text-center font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)] flex-none order-0 grow-0">
         Location
       </label>
 
       {/* Input row */}
-      <div className="w-full flex items-center justify-between">
+      <div className="w-full flex items-center justify-between h-5 flex-none order-1 grow-0">
         <input
           ref={inputRef}
           type="text"

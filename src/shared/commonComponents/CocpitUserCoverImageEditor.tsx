@@ -11,7 +11,7 @@ import {
   CropIcon,
   FlipIcon,
   RotateIcon,
-  ImageIcon,
+  ImagePlaceholderIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "./image-editor/imageUtils";
@@ -444,10 +444,10 @@ export const CocpitUserCoverImageEditor: React.FC<
           {/* Header Row */}
           <div className="self-stretch flex justify-between items-center px-1">
             <div className="flex flex-col justify-center items-start gap-1">
-              <div className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
+              <div className="w-[89px] h-6 text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
                 {title}
               </div>
-              <div className="text-[var(--ds-text-secondary)] text-xs font-normal font-['DM_Sans'] leading-4">
+              <div className="w-[199px] h-4 text-center text-[var(--ds-text-secondary)] text-xs font-normal font-['DM_Sans'] leading-4 flex-none order-1 grow-0">
                 {subtitle}
               </div>
             </div>
@@ -481,17 +481,17 @@ export const CocpitUserCoverImageEditor: React.FC<
                     isDragOver && "opacity-80"
                   )}
                 >
-                  <div className="size-20 relative overflow-hidden flex items-center justify-center">
-                    <ImageIcon
-                      size={64}
-                      className="w-16 h-16 text-[var(--ds-text-primary)] group-hover:scale-105 transition-transform"
+                  {/* Media Box: 80px x 80px */}
+                  <div className="w-[80px] h-[80px] flex-none order-0 grow-0 relative flex items-center justify-center">
+                    <ImagePlaceholderIcon
+                      className="w-[65px] h-[55px] text-[var(--ds-text-primary)]"
                     />
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={openFilePicker}
-                  className="text-center justify-start text-[var(--ds-text-primary)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity"
+                  className="w-[80px] h-6 text-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity flex-none order-1 grow-0"
                 >
                   Add photo
                 </button>
@@ -508,23 +508,16 @@ export const CocpitUserCoverImageEditor: React.FC<
                     onDoubleClick={openFilePicker}
                     onWheel={handleWheel}
                     className={cn(
-                      "relative w-full h-[150px] rounded-2xl overflow-hidden select-none flex items-center justify-center bg-[var(--ds-surface-2)]",
-                      isCropMode
-                        ? "cursor-grab active:cursor-grabbing"
-                        : "cursor-default"
+                      "w-full h-full rounded-2xl overflow-hidden relative select-none",
+                      isCropMode ? "cursor-grab active:cursor-grabbing" : "cursor-default"
                     )}
-                    title={
-                      isCropMode
-                        ? "Double-click to change banner, drag to reposition, scroll to Adjust"
-                        : "Double-click to change banner"
-                    }
                   >
                     {/* Perfectly Sized and Centered Banner Image */}
                     <img
                       src={previewUrl}
                       alt="Banner Preview"
                       draggable={false}
-                      className="absolute select-none pointer-events-none transition-none"
+                      className="absolute max-w-none origin-center select-none pointer-events-none transition-transform duration-75"
                       style={{
                         width: `${geometry.imgWidth}px`,
                         height: `${geometry.imgHeight}px`,
@@ -533,29 +526,38 @@ export const CocpitUserCoverImageEditor: React.FC<
                         transform: `translate(${positionX}px, ${positionY}px) rotate(${rotation}deg) scaleX(${
                           flipH ? -1 : 1
                         }) scaleY(${flipV ? -1 : 1})`,
+                        transformOrigin: "center center",
                       }}
                     />
                   </div>
 
-                  {/* Figma-Style Crop Overlay (Accent Border + 8 Handles + Dimension Badge) */}
+                  {/* Crop / Pan Visual Frame Indicator */}
                   {isCropMode && (
-                    <div className="absolute inset-0 pointer-events-none z-20 border border-dashed border-[var(--ds-accent)] rounded-2xl">
-                      {/* 4 Corner Handles */}
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
-                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
-                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
+                    <div className="absolute inset-0 border-2 border-[var(--ds-accent)] rounded-2xl pointer-events-none">
+                      {/* Corner Handles */}
+                      <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-[var(--ds-accent)]" />
+                      <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-[var(--ds-accent)]" />
+                      <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-[var(--ds-accent)]" />
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-[var(--ds-accent)]" />
 
-                      {/* 4 Edge Center Handles */}
+                      {/* Center Crosshairs / Rule-of-Thirds */}
+                      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-30">
+                        <div className="border-r border-b border-[var(--ds-accent)]" />
+                        <div className="border-r border-b border-[var(--ds-accent)]" />
+                        <div className="border-b border-[var(--ds-accent)]" />
+                        <div className="border-r border-b border-[var(--ds-accent)]" />
+                        <div className="border-r border-b border-[var(--ds-accent)]" />
+                        <div className="border-b border-[var(--ds-accent)]" />
+                        <div className="border-r border-[var(--ds-accent)]" />
+                        <div className="border-r border-[var(--ds-accent)]" />
+                        <div />
+                      </div>
+
+                      {/* Edge Tick Marks */}
                       <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-1 bg-[var(--ds-accent)]" />
                       <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-1 bg-[var(--ds-accent)]" />
                       <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-4 bg-[var(--ds-accent)]" />
                       <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-4 bg-[var(--ds-accent)]" />
-
-                      {/* Dimension Badge */}
-                      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-[var(--ds-accent)] text-white text-[10px] font-semibold font-['DM_Sans'] rounded shadow-md pointer-events-none select-none tracking-tight whitespace-nowrap">
-                        1200 × 300
-                      </div>
                     </div>
                   )}
                 </div>
@@ -564,7 +566,7 @@ export const CocpitUserCoverImageEditor: React.FC<
                 <button
                   type="button"
                   onClick={handleRemovePhoto}
-                  className="text-center text-[var(--ds-error)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity"
+                  className="w-[109px] h-6 text-center text-[var(--ds-error)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity flex-none order-1 grow-0"
                 >
                   Remove photo
                 </button>
@@ -591,7 +593,7 @@ export const CocpitUserCoverImageEditor: React.FC<
               <div className="size-5 relative overflow-hidden flex items-center justify-center">
                 <CropIcon size={20} className="w-5 h-5" />
               </div>
-              <span className="text-center text-[var(--ds-text-primary)] text-xs font-medium font-['DM_Sans'] leading-4">
+              <span className="w-[37px] h-4 text-center text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-1 grow-0">
                 Adjust
               </span>
             </button>
@@ -611,7 +613,7 @@ export const CocpitUserCoverImageEditor: React.FC<
               <div className="size-5 relative overflow-hidden flex items-center justify-center">
                 <FlipIcon size={20} className="w-5 h-5" />
               </div>
-              <span className="text-center text-[var(--ds-text-primary)] text-xs font-medium font-['DM_Sans'] leading-4">
+              <span className="h-4 text-center text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-1 grow-0">
                 Flip
               </span>
             </button>
@@ -631,7 +633,7 @@ export const CocpitUserCoverImageEditor: React.FC<
               <div className="size-5 relative overflow-hidden flex items-center justify-center">
                 <RotateIcon size={20} className="w-5 h-5" />
               </div>
-              <span className="text-center text-[var(--ds-text-primary)] text-xs font-medium font-['DM_Sans'] leading-4">
+              <span className="h-4 text-center text-xs font-medium font-['DM_Sans'] leading-4 flex-none order-1 grow-0">
                 Rotate
               </span>
             </button>
@@ -644,7 +646,7 @@ export const CocpitUserCoverImageEditor: React.FC<
               onClick={handleSave}
               disabled={isSaving || !canSave}
               className={cn(
-                "w-16 px-3 py-1.5 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-all",
+                "w-[68px] h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] flex justify-center items-center flex-none order-0 grow-0 transition-all",
                 canSave
                   ? "bg-[var(--ds-accent)] text-[var(--ds-text-primary)] hover:opacity-90 cursor-pointer"
                   : "bg-zinc-900 text-stone-500 cursor-not-allowed"
