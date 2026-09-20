@@ -99,7 +99,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         show_email: (user as any).show_email ?? (user as any).showEmail,
         show_phone: (user as any).show_phone ?? (user as any).showPhone,
         created_at: user.created_at,
-        is_identity_verified: user.is_identity_verified,
+        is_identity_verified: Boolean(user.is_identity_verified || (user as any).is_verified || (user as any).isVerified),
         skills: Array.isArray(data.skills)
             ? data.skills.map((s: any) => typeof s === 'string' ? s : s.name)
             : [],

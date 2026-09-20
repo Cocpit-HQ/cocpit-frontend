@@ -8,6 +8,7 @@ import { UserData } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileContactInfoDrawer } from "./drawers/MobileContactInfoDrawer";
+import { VerifyIdentityModal } from "@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal";
 
 export interface ContactInfoModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
   const router = useRouter();
   const isMobile = useIsMobile();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const handleCopy = (key: string, text?: string | null) => {
     if (!text) return;
@@ -65,14 +67,21 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
       (user as any).showPhone !== false &&
       Boolean(user.mobile_number));
 
+  const isVerified = Boolean(
+    user.is_identity_verified ||
+    (user as any).is_verified ||
+    (user as any).isVerified ||
+    (user as any).verification_status === "VERIFIED" ||
+    (user as any).verification_status === "approved"
+  );
+
   const handleRedirectToSettings = () => {
     onClose();
     router.push("/settings/account-phone");
   };
 
   const handleRedirectToVerification = () => {
-    onClose();
-    router.push("/settings/privacy");
+    setIsVerifyModalOpen(true);
   };
 
   return (
@@ -197,7 +206,7 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
               </div>
 
               <div className="self-stretch inline-flex justify-start items-center gap-2">
-                {user.is_identity_verified ? (
+                {isVerified ? (
                   <>
                     <div className="text-center justify-start text-[var(--ds-text-primary)] text-sm font-normal font-['DM_Sans'] leading-5">
                       {isOwnProfile ? "You are verified" : "User is verified"}
@@ -213,12 +222,12 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                   <button
                     type="button"
                     onClick={handleRedirectToVerification}
-                    className="text-center justify-start text-[var(--ds-accent)] hover:opacity-80 text-sm font-normal font-['DM_Sans'] leading-5 transition-opacity cursor-pointer"
+                    className="text-center justify-start text-[var(--ds-accent)] hover:opacity-80 text-sm font-normal font-['DM_Sans'] leading-5 transition-opacity cursor-pointer outline-none"
                   >
-                    Verify Now
+                    Verify account
                   </button>
                 ) : (
-                  <div className="text-center justify-start text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5">
+                  <div className="text-center justify-start text-[var(--ds-text-muted)] text-sm font-normal font-['DM_Sans'] leading-5">
                     User is not verified
                   </div>
                 )}
@@ -227,6 +236,10 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
           </div>
         </div>
       </BareDialogContent>
+      <VerifyIdentityModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+      />
     </Dialog>
   );
 };

@@ -53,8 +53,10 @@ export const useSearchHistory = () => {
                     setHistory(dbHistory);
                     localStorage.setItem(storageKey, JSON.stringify(dbHistory));
                 }
-            } catch (error) {
-                console.error("Failed to fetch search history from DB:", error);
+            } catch (error: any) {
+                if (error?.response?.status !== 404) {
+                    console.error("Failed to fetch search history from DB:", error);
+                }
             } finally {
                 setIsLoading(false);
                 hasFetchedRef.current = true;
@@ -115,7 +117,11 @@ export const useSearchHistory = () => {
                         });
                     }
                 })
-                .catch(err => console.error("Failed to save search to DB:", err));
+                .catch(err => {
+                    if (err?.response?.status !== 404) {
+                        console.error("Failed to save search to DB:", err);
+                    }
+                });
         }
     };
 
@@ -131,7 +137,11 @@ export const useSearchHistory = () => {
         // Background API Sync
         if (userId !== 'guest' && !id.startsWith('temp-')) {
             api.delete(`/users/search-history/${id}`)
-                .catch(err => console.error("Failed to remove search from DB:", err));
+                .catch(err => {
+                    if (err?.response?.status !== 404) {
+                        console.error("Failed to remove search from DB:", err);
+                    }
+                });
         }
     };
 
@@ -144,7 +154,11 @@ export const useSearchHistory = () => {
         // Background API Sync
         if (userId !== 'guest') {
             api.delete('/users/search-history')
-                .catch(err => console.error("Failed to clear search history in DB:", err));
+                .catch(err => {
+                    if (err?.response?.status !== 404) {
+                        console.error("Failed to clear search history in DB:", err);
+                    }
+                });
         }
     };
 

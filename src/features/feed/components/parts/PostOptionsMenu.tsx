@@ -95,7 +95,7 @@ export const PostOptionsMenu = ({
     <div
       ref={menuRef}
       style={menuStyle}
-      className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : 'min-w-[107px] rounded-[8px] p-[12px] gap-[16px]'}`}
+      className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : `${isMe ? 'w-[99px] h-[80px]' : 'w-[135px] h-auto'} rounded-[8px] p-[12px] gap-[16px]`}`}
       onClick={(e) => e.stopPropagation()}
     >
       {isMobile && (
@@ -108,7 +108,7 @@ export const PostOptionsMenu = ({
           {onEdit && !isPollPost && (
             <button
               onClick={(e) => { e.stopPropagation(); handleAction(onEdit); }}
-              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
+              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
             >
               Edit post
             </button>
@@ -123,7 +123,7 @@ export const PostOptionsMenu = ({
           */}
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onDelete); }}
-            className="ds-text-secondary text-[var(--ds-error)] hover:opacity-80 transition-opacity outline-none w-full text-left"
+            className="ds-text-secondary text-[var(--ds-error)] hover:opacity-80 transition-opacity outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
           >
             Delete post
           </button>
@@ -134,34 +134,34 @@ export const PostOptionsMenu = ({
           {isReported ? (
             <button
               disabled
-              className="ds-text-secondary text-ds-text-muted outline-none w-full text-left cursor-default"
+              className="ds-text-secondary text-ds-text-muted outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px] cursor-default"
             >
               Reported
             </button>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); handleAction(onReport); }}
-              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
+              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
             >
               Report post
             </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onInterested); }}
-            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
+            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
           >
             Interested
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onNotInterested); }}
-            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
+            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
           >
             Not interested
           </button>
           {isMentioned && (
             <button
               onClick={(e) => { e.stopPropagation(); handleAction(onRemoveMention); }}
-              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
+              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
             >
               Remove mention
             </button>

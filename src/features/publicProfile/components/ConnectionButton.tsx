@@ -280,7 +280,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                             Connected
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="bg-[var(--ds-bg)] border border-[var(--ds-border)]">
                         <FeatureDisabledTooltip featureKey="enableConnectionManagement">
                         <DropdownMenuItem
                             className="text-red-600 focus:text-red-600 cursor-pointer"

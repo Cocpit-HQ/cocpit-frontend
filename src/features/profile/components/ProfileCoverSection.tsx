@@ -341,7 +341,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="p-3 !bg-[var(--ds-surface-1)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[150px]"
+                className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none w-[135px] h-[82px]"
                 align="end"
                 sideOffset={8}
               >

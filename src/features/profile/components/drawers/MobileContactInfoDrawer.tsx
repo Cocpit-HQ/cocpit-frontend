@@ -5,6 +5,7 @@ import { Drawer } from "vaul";
 import { BadgeCheck, Check } from "lucide-react";
 import { UserData } from "@/types/user";
 import { useRouter } from "next/navigation";
+import { VerifyIdentityModal } from "@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal";
 
 interface MobileContactInfoDrawerProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
 }) => {
   const router = useRouter();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
   const handleCopy = (key: string, text?: string | null) => {
     if (!text) return;
@@ -50,7 +52,11 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
       Boolean(user.mobile_number));
 
   const isVerified = Boolean(
-    (user as any).is_verified || (user as any).isVerified || user.is_identity_verified
+    (user as any).is_verified ||
+    (user as any).isVerified ||
+    user.is_identity_verified ||
+    (user as any).verification_status === "VERIFIED" ||
+    (user as any).verification_status === "approved"
   );
 
   const handleRedirectToSettings = () => {
@@ -59,8 +65,7 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
   };
 
   const handleRedirectToVerification = () => {
-    onClose();
-    router.push("/settings/privacy");
+    setIsVerifyModalOpen(true);
   };
 
   return (
@@ -158,24 +163,28 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
               <span className="text-[var(--ds-text-secondary)] text-sm font-medium">Verifications</span>
               {isVerified ? (
                 <div className="flex items-center gap-1.5 text-sm font-normal text-[var(--ds-text-primary)]">
-                  <span>User is verified</span>
-                  <BadgeCheck className="w-4 h-4 text-[var(--ds-accent)] fill-[var(--ds-accent)]/20" />
+                  <span>{isOwnProfile ? "You are verified" : "User is verified"}</span>
+                  <BadgeCheck className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" />
                 </div>
               ) : isOwnProfile ? (
                 <button
                   type="button"
                   onClick={handleRedirectToVerification}
-                  className="text-left text-[var(--ds-accent)] hover:underline text-sm font-normal cursor-pointer"
+                  className="text-left text-[var(--ds-accent)] hover:opacity-80 text-sm font-normal cursor-pointer outline-none"
                 >
-                  Verify Now
+                  Verify account
                 </button>
               ) : (
-                <span className="text-[var(--ds-text-muted)] text-sm font-normal">User is unverified</span>
+                <span className="text-[var(--ds-text-muted)] text-sm font-normal">User is not verified</span>
               )}
             </div>
           </div>
         </Drawer.Content>
       </Drawer.Portal>
+      <VerifyIdentityModal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+      />
     </Drawer.Root>
   );
 };

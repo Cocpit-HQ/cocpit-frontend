@@ -557,7 +557,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
-          className="w-full h-full sm:h-auto sm:max-w-[384px] max-h-[100dvh] sm:max-h-[640px] p-4 sm:p-3 bg-[var(--ds-bg)] border-0 sm:border border-[var(--ds-border)] rounded-none sm:rounded-[16px] overflow-hidden shadow-2xl gap-0 outline-none [&>button:last-child]:hidden select-text flex flex-col justify-start"
+          className="w-full h-full sm:w-[400px] sm:max-w-[400px] sm:h-[434px] sm:max-h-[434px] p-4 sm:p-3 bg-[var(--ds-bg)] border-0 sm:border border-[var(--ds-border)] rounded-none sm:rounded-[16px] overflow-hidden shadow-2xl gap-0 outline-none [&>button:last-child]:hidden select-text flex flex-col justify-start"
         >
           {/* Top Close Row & Title */}
           <div className="w-full flex justify-between items-center h-5 relative">
@@ -614,7 +614,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
           {/* Content Area */}
           {isCurrentTabPrivate ? (
             /* Private Profile State */
-            <div className="w-full py-12 px-2 flex flex-col items-center justify-center text-center gap-4">
+            <div className="w-full flex-1 px-2 flex flex-col items-center justify-center text-center gap-4">
               <div className="w-14 h-14 rounded-full bg-[var(--ds-surface-1)] p-3 flex items-center justify-center text-[var(--ds-text-muted)] shrink-0">
                 <LockPrivateIcon className="w-8 h-8 text-[var(--ds-text-muted)] shrink-0" />
               </div>
@@ -629,12 +629,12 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             </div>
           ) : isLoadingCurrentTab && !search ? (
             /* Loading indicator when switching tabs */
-            <div className="w-full h-[304px] flex justify-center items-center">
+            <div className="w-full flex-1 flex justify-center items-center">
               <div className="w-6 h-6 rounded-full border-2 border-[var(--ds-accent)] border-t-transparent animate-spin" />
             </div>
           ) : !search && currentUsers.length === 0 ? (
             /* Pixel-perfect Empty State */
-            <div className="w-full h-[304px] flex flex-col justify-center items-center p-0 gap-3 self-stretch flex-none">
+            <div className="w-full flex-1 flex flex-col justify-center items-center p-0 gap-3 self-stretch">
               {/* IconFrame: 56x56 Circle */}
               <div className="w-14 h-14 rounded-full bg-[var(--ds-surface-1)] p-3 flex items-center justify-center flex-none">
                 <emptyStateConfig.Icon className="w-8 h-8 text-[var(--ds-text-muted)] shrink-0" fill="currentColor" />
@@ -666,7 +666,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
               </div>
 
               {/* User List */}
-              <div className="w-full flex-1 sm:flex-none flex flex-col gap-3 mt-3 sm:max-h-[300px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-2 self-stretch">
+              <div className="w-full flex-1 flex flex-col gap-3 mt-3 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-2 self-stretch">
                 {isLoadingCurrentTab ? (
                   <div className="w-full py-8 flex justify-center items-center">
                     <div className="w-6 h-6 rounded-full border-2 border-[var(--ds-accent)] border-t-transparent animate-spin" />

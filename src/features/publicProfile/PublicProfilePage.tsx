@@ -389,7 +389,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="p-3 !bg-[var(--ds-surface-1)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[150px]"
+                  className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[155px]"
                   align="end"
                   sideOffset={8}
                 >
@@ -678,7 +678,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         isLoading={isBlockLoading}
         type={blocked ? "custom" : "block_profile"}
         targetName={user?.name || "this user"}
-        title={blocked ? `Unblock ${user?.name || "this user"}?` : undefined}
+        title={
+          blocked ? (
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px]">
+              Unblock <span className="font-['DM_Sans'] font-semibold text-[14px] leading-[20px]">{user?.name || "this user"}</span>?
+            </span>
+          ) : undefined
+        }
+        titleClassName={blocked ? "font-['Poppins'] font-normal text-[14px] leading-[20px]" : undefined}
         description={
           blocked
             ? "They will be able to see your profile and posts again"

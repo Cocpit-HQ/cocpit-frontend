@@ -7,6 +7,7 @@ import "./newGlobal.css"; // New design system — typography, motion, spacing t
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import MobileUnsupported from "@/components/shared/MobileUnsupported";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -110,7 +111,12 @@ export default function RootLayout({
         className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide bg-background text-foreground`}
       >
         <Providers>
-          {children}
+          <div className="hidden lg:contents">
+            {children}
+          </div>
+          <div className="block lg:hidden">
+            <MobileUnsupported />
+          </div>
           <Toaster />
           <Sonner />
         </Providers>

@@ -398,7 +398,7 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
             <button
               type="button"
               onClick={handleRemove}
-              className="h-[16px] flex items-center justify-center font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-error)] hover:underline cursor-pointer focus:outline-none flex-none order-1"
+              className="h-[16px] flex items-center justify-center font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-error)] no-underline cursor-pointer focus:outline-none flex-none order-1"
             >
               Remove
             </button>

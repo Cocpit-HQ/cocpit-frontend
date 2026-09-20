@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Dialog, BareDialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export type ConfirmPresetType =
   | "unfollow"
@@ -23,6 +24,7 @@ export interface ActionConfirmModalProps {
   cancelText?: string;
   isLoading?: boolean;
   buttonWidthClass?: string;
+  titleClassName?: string;
 }
 
 const PRESETS: Record<
@@ -32,6 +34,7 @@ const PRESETS: Record<
     description: string;
     confirmText: string;
     buttonWidthClass?: string;
+    titleClassName?: string;
   }
 > = {
   unfollow: {
@@ -48,13 +51,14 @@ const PRESETS: Record<
   },
   block_profile: {
     getTitle: (name) => (
-      <>
-        Block <span className="font-bold">{name || "user"}</span>?
-      </>
+      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px]">
+        Block <span className="font-['DM_Sans'] font-semibold text-[14px] leading-[20px]">{name || "user"}</span>?
+      </span>
     ),
     description: "They won’t be able to view your profile, follow you, or connect with you",
     confirmText: "Block",
     buttonWidthClass: "w-[84px]",
+    titleClassName: "font-['Poppins'] font-normal text-[14px] leading-[20px]",
   },
   remove_follower: {
     getTitle: () => "Remove follower?",
@@ -82,6 +86,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   cancelText = "Cancel",
   isLoading = false,
   buttonWidthClass: customButtonWidthClass,
+  titleClassName: customTitleClassName,
 }) => {
   const preset = type !== "custom" ? PRESETS[type] : null;
 
@@ -100,7 +105,12 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
       >
         {/* Frame 2609475: Text Container */}
         <div className="w-[211px] self-stretch flex flex-col items-center gap-[8px]">
-          <DialogTitle className="font-['DM_Sans'] text-[16px] font-medium leading-[24px] text-[var(--ds-text-primary)] text-center w-full m-0 p-0">
+          <DialogTitle
+            className={cn(
+              "text-[var(--ds-text-primary)] text-center w-full m-0 p-0",
+              customTitleClassName || preset?.titleClassName || "font-['DM_Sans'] text-[16px] font-medium leading-[24px]"
+            )}
+          >
             {resolvedTitle}
           </DialogTitle>
           {resolvedDescription && (
