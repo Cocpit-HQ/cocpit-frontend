@@ -5,6 +5,7 @@ import { AddIcon, ProfileEditIcon } from "@/components/icons";
 import type { Experience } from "@/types/entities";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
+import { ProfileExperienceEmptyState } from "../ProfileEmptyStates";
 
 function formatMonthYear(dateStr?: string | null): string {
   if (!dateStr) return "";
@@ -25,9 +26,9 @@ export const ProfileEditExperienceList: React.FC<ProfileEditExperienceListProps>
 }) => {
   return (
     /* Frame 2609638: Main Box (w: 640px, gap: 16px, padding: 0px) */
-    <div className="w-[640px] max-w-full flex flex-col items-center p-0 gap-4 flex-none order-2 self-stretch flex-grow-0 animate-in fade-in duration-200">
+    <div className="w-full max-w-full flex flex-col items-center p-0 gap-4 flex-none order-2 self-stretch flex-grow-0 animate-in fade-in duration-200">
       {/* Frame 2609752: First Title Box (w: 640px, h: 24px, px: 12px, justify-between) */}
-      <div className="w-[640px] max-w-full h-[24px] flex flex-row justify-between items-center px-3 gap-5 flex-none order-0 self-stretch flex-grow-0">
+      <div className="w-full max-w-full h-[24px] flex flex-row justify-between items-center px-0 gap-5 flex-none order-0 self-stretch flex-grow-0">
         {/* Frame 2609722: Left Title & Count Box (gap: 8px, h: 24px) */}
         <div className="flex flex-row items-center p-0 gap-2 h-[24px] flex-none order-0 flex-grow-0">
           {/* Experience Heading (DM Sans 16px Semibold, #FFECE6) */}
@@ -57,7 +58,7 @@ export const ProfileEditExperienceList: React.FC<ProfileEditExperienceListProps>
       </div>
 
       {/* List Container with 16px gap between items */}
-      <div className="w-[640px] max-w-full flex flex-col gap-4">
+      <div className="w-full max-w-full flex flex-col gap-4">
         {experiences.map((exp) => {
           const startDateStr = formatMonthYear(exp.start_date);
           const endDateStr = exp.is_current || !exp.end_date ? "Present" : formatMonthYear(exp.end_date);
@@ -67,20 +68,20 @@ export const ProfileEditExperienceList: React.FC<ProfileEditExperienceListProps>
             <div
               key={exp.experience_id}
               className={cn(
-                "w-[640px] max-w-full min-h-[104px] flex flex-row justify-between items-start py-2 px-3 gap-3 rounded-[8px] transition-colors group bg-transparent hover:bg-[var(--ds-surface-1)]"
+                "w-full max-w-full min-h-[104px] flex flex-row justify-between items-start py-2 px-0 gap-3 rounded-[8px] transition-colors group bg-transparent hover:bg-[var(--ds-surface-1)]"
               )}
             >
               {/* Frame 2609612: Exp Details Box (gap: 4px) */}
-              <div className="flex flex-col items-start p-0 gap-1 flex-none order-0 flex-grow-0">
+              <div className="flex flex-col items-start p-0 gap-1 flex-1 min-w-0">
                 {/* Role Title: DM Sans 16px Medium, #FFECE6 */}
-                <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none order-0 flex-grow-0">
+                <span className="w-full font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] break-words block">
                   {exp.title}
                 </span>
 
                 {/* Frame 2608555: Org Name and Job Type Box (gap: 8px, h: 20px) */}
-                <div className="flex flex-row items-center p-0 gap-2 h-[20px] flex-none order-1 flex-grow-0">
+                <div className="flex flex-row items-center p-0 gap-2 h-[20px] max-w-full">
                   {/* Organization: DM Sans 14px Regular, #FFECE6 */}
-                  <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] flex-none order-0 flex-grow-0">
+                  <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] truncate block max-w-[200px] sm:max-w-[300px]">
                     {exp.company_name}
                   </span>
 
@@ -154,26 +155,7 @@ export const ProfileEditExperienceList: React.FC<ProfileEditExperienceListProps>
         })}
 
         {experiences.length === 0 && (
-          <div className="w-full py-16 flex flex-col items-center justify-center gap-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center text-[var(--ds-text-secondary)]">
-              <AddIcon className="w-6 h-6 text-[var(--ds-text-secondary)]" />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <h3 className="text-[16px] font-semibold text-[var(--ds-text-primary)] font-['DM_Sans'] leading-[24px]">
-                No experience added yet
-              </h3>
-              <p className="text-[14px] text-[var(--ds-text-secondary)] font-['DM_Sans'] leading-[20px] max-w-sm">
-                Add your previous and current roles to showcase your career journey and experience.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onAddNew}
-              className="mt-2 px-4 py-1.5 rounded-[100px] bg-[var(--ds-accent)] text-[#030303] text-[16px] font-medium font-['DM_Sans'] leading-[24px] hover:opacity-90 active:scale-95 transition-all cursor-pointer focus:outline-none"
-            >
-              Add experience
-            </button>
-          </div>
+          <ProfileExperienceEmptyState />
         )}
       </div>
     </div>

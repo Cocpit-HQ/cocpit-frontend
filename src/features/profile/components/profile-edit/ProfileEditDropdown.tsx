@@ -18,6 +18,7 @@ interface ProfileEditDropdownProps {
   placeholder?: string;
   className?: string;
   emptyText?: string;
+  error?: string;
 }
 
 export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
@@ -29,6 +30,7 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
   placeholder = "Select",
   className,
   emptyText = "No options available",
+  error,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,19 +55,27 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
     (value ? value : placeholder);
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
-        isOpen
-          ? "border-[var(--ds-accent)]"
-          : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
-        className
-      )}
-    >
-      <label className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]">
-        {label}
-      </label>
+    <div className="w-full flex flex-col gap-1">
+      <div
+        ref={containerRef}
+        className={cn(
+          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          error
+            ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
+            : isOpen
+            ? "border-[var(--ds-accent)]"
+            : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
+          className
+        )}
+      >
+        <label
+          className={cn(
+            "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
+            error ? "text-red-500" : "text-[var(--ds-text-secondary)]"
+          )}
+        >
+          {label}
+        </label>
 
       {/* Trigger */}
       <button
@@ -126,6 +136,12 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
             )}
           </div>
         </div>
+      )}
+      </div>
+      {error && (
+        <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">
+          {error}
+        </span>
       )}
     </div>
   );

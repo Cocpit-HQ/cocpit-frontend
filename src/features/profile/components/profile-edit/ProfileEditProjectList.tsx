@@ -3,6 +3,7 @@
 import React from "react";
 import { AddIcon, ProfileEditIcon } from "@/components/icons";
 import type { Project } from "@/types/entities";
+import { ProfileProjectsEmptyState } from "../ProfileEmptyStates";
 
 function formatProjectDate(month?: string | null, year?: string | null): string {
   if (!year && !month) return "";
@@ -35,9 +36,9 @@ export const ProfileEditProjectList: React.FC<ProfileEditProjectListProps> = ({
 }) => {
   return (
     /* Frame 2609638: Main Box (w: 640px, gap: 16px, padding: 0px) */
-    <div className="w-[640px] max-w-full flex flex-col items-center p-0 gap-4 flex-none order-2 self-stretch flex-grow-0 animate-in fade-in duration-200">
+    <div className="w-full max-w-full flex flex-col items-center p-0 gap-4 flex-none order-2 self-stretch flex-grow-0 animate-in fade-in duration-200">
       {/* Frame 2609752: First Title Box (w: 640px, h: 24px, px: 12px, justify-between) */}
-      <div className="w-[640px] max-w-full h-[24px] flex flex-row justify-between items-center px-3 gap-5 flex-none order-0 self-stretch flex-grow-0">
+      <div className="w-full max-w-full h-[24px] flex flex-row justify-between items-center px-0 gap-5 flex-none order-0 self-stretch flex-grow-0">
         {/* Frame 2609722: Left Title & Count Box (gap: 8px, h: 24px) */}
         <div className="flex flex-row items-center p-0 gap-2 h-[24px] flex-none order-0 flex-grow-0">
           {/* Project Heading (DM Sans 16px Semibold, #FFECE6) */}
@@ -67,7 +68,7 @@ export const ProfileEditProjectList: React.FC<ProfileEditProjectListProps> = ({
       </div>
 
       {/* List Container with 16px gap between items */}
-      <div className="w-[640px] max-w-full flex flex-col gap-4 flex-none order-1 self-stretch flex-grow-0">
+      <div className="w-full max-w-full flex flex-col gap-4 flex-none order-1 self-stretch flex-grow-0">
         {projects.map((proj) => {
           const startDateFormatted = formatProjectDate(proj.start_month, proj.start_year);
           const endDateFormatted = proj.is_current
@@ -78,12 +79,12 @@ export const ProfileEditProjectList: React.FC<ProfileEditProjectListProps> = ({
             /* Frame 2608627: Item Box (w: 640px, min-h: 64px, p: 8px 12px, gap: 12px, rounded: 8px) */
             <div
               key={proj.project_id}
-              className="w-[640px] max-w-full min-h-[64px] px-3 py-2 rounded-lg flex flex-row justify-between items-start gap-3 hover:bg-[var(--ds-surface-1)] transition-colors group flex-none order-1 self-stretch flex-grow-0"
+              className="w-full max-w-full min-h-[64px] px-0 py-2 rounded-lg flex flex-row justify-between items-start gap-3 hover:bg-[var(--ds-surface-1)] transition-colors group flex-none order-1 self-stretch flex-grow-0"
             >
               {/* Frame 2609618: Details Box (flex column, gap: 8px) */}
-              <div className="flex flex-col items-start p-0 gap-2 flex-1 min-w-0 flex-none order-0 flex-grow-1">
+              <div className="flex flex-col items-start p-0 gap-2 flex-1 min-w-0">
                 {/* Project Title (DM Sans 16px Medium, #FFECE6) */}
-                <div className="text-left font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] truncate max-w-full flex-none order-0 flex-grow-0">
+                <div className="w-full text-left font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] break-words">
                   {proj.title}
                 </div>
 
@@ -121,11 +122,7 @@ export const ProfileEditProjectList: React.FC<ProfileEditProjectListProps> = ({
         })}
 
         {projects.length === 0 && (
-          <div className="w-full py-12 flex flex-col items-center justify-center gap-3 text-center">
-            <p className="text-sm text-[var(--ds-text-secondary)] font-['DM_Sans']">
-              No projects added yet. Click + to add your first project.
-            </p>
-          </div>
+          <ProfileProjectsEmptyState />
         )}
       </div>
     </div>

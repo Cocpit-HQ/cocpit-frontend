@@ -868,6 +868,7 @@ export default function ProfilePage() {
           onClose={() => setIsFollowListModalOpen(false)}
           initialTab={activeFollowTab}
           userId={user?.id || ""}
+          userName={user?.name || user?.account_name || ""}
         />
       )}
 

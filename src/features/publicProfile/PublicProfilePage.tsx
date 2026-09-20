@@ -594,6 +594,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           onClose={() => setIsFollowListModalOpen(false)}
           initialTab={activeFollowTab}
           userId={targetUserId}
+          userName={user?.name || user?.account_name || ""}
         />
       )}
 

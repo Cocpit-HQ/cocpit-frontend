@@ -75,6 +75,11 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
     router.push("/settings/privacy");
   };
 
+  const handleRedirectToVerification = () => {
+    onClose();
+    router.push("/settings/privacy");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <BareDialogContent
@@ -215,7 +220,7 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                     onClick={handleRedirectToVerification}
                     className="text-center justify-start text-[var(--ds-accent)] hover:opacity-80 text-sm font-normal font-['DM_Sans'] leading-5 transition-opacity cursor-pointer"
                   >
-                    Verify account
+                    Verify Now
                   </button>
                 ) : (
                   <div className="text-center justify-start text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5">

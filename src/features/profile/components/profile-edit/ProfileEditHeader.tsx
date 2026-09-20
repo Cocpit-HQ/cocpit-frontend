@@ -37,7 +37,7 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
       {/* Frame 2609631: User Info Row (640px in form mode, 800px in tab mode, 32px/36px height, justify-between) */}
       <div
         className={cn(
-          "w-full md:max-w-full min-h-[32px] flex flex-row items-center justify-between gap-[8px] transition-all",
+          "w-full md:max-w-full min-h-[32px] flex flex-row items-center justify-between gap-[8px] transition-opacity",
           subTitle ? "md:w-[640px]" : "md:w-[800px]"
         )}
       >
@@ -58,8 +58,8 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
           </div>
           {/* Kat Denis / Name Text + Subtitle (Frame 2609632) */}
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-[var(--ds-text-primary)] whitespace-nowrap">
-              {userName}
+            <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-[var(--ds-text-primary)] whitespace-nowrap" title={userName}>
+              {userName.length > 25 ? `${userName.substring(0, 25)}...` : userName}
             </span>
             {subTitle && (
               <span className="font-['DM_Sans'] font-normal text-[16px] leading-[24px] text-[var(--ds-text-muted)] whitespace-nowrap">

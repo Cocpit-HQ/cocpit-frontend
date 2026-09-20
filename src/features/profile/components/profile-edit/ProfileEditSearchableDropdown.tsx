@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronDownIcon, LoadingIcon } from "@/components/icons";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export interface SearchableDropdownOption {
   id: string;
@@ -21,7 +22,11 @@ interface ProfileEditSearchableDropdownProps {
   searchable?: boolean;
   allowCustom?: boolean;
   className?: string;
+  maxLength?: number;
+  maxLengthMessage?: string;
   emptyText?: string;
+  error?: string;
+  warning?: string;
 }
 
 export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdownProps> = ({
@@ -34,8 +39,12 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   placeholder = "Select",
   searchable = true,
   allowCustom = true,
-  className,
   emptyText = "No options found",
+  maxLength,
+  maxLengthMessage,
+  className,
+  error,
+  warning,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState(value || "");
@@ -156,6 +165,12 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    if (maxLength && val.length > maxLength) {
+      if (maxLengthMessage) {
+        toast.error(maxLengthMessage);
+      }
+      return;
+    }
     setQuery(val);
     onSelect(val);
     setIsOpen(true);
@@ -225,23 +240,31 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   };
 
   return (
-    <div
-      ref={containerRef}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
-        isOpen
-          ? "border-[var(--ds-accent)]"
-          : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
-        className
-      )}
-    >
-      <label
-        htmlFor={id}
-        className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]"
+    <div className="w-full flex flex-col gap-1">
+      <div
+        ref={containerRef}
+        onKeyDown={handleKeyDown}
+        className={cn(
+          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          error
+            ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
+            : warning
+            ? "border-[#EC6229] hover:border-[#EC6229] focus-within:border-[#EC6229]"
+            : isOpen
+            ? "border-[var(--ds-accent)]"
+            : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
+          className
+        )}
       >
-        {label}
-      </label>
+        <label
+          htmlFor={id}
+          className={cn(
+            "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
+            error ? "text-red-500" : warning ? "text-[#EC6229]" : "text-[var(--ds-text-secondary)]"
+          )}
+        >
+          {label}
+        </label>
 
       {/* Input / Trigger Row */}
       <div className="w-full flex items-center justify-between h-[20px]">
@@ -359,6 +382,16 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
           </div>
         </div>
       )}
+      </div>
+      {error ? (
+        <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">
+          {error}
+        </span>
+      ) : warning ? (
+        <span className="font-['DM_Sans'] text-[12px] text-[#EC6229] leading-tight">
+          {warning}
+        </span>
+      ) : null}
     </div>
   );
 };

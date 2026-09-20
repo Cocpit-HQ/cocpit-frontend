@@ -63,7 +63,7 @@ export const ProfileEditMediaSection: React.FC<ProfileEditMediaSectionProps> = (
       </div>
 
       {/* Frame 2609490: Profile Avatar Box (116px width, 116px height, rounded-full, -mt-60px) */}
-      <div className="relative -mt-[60px] w-[116px] h-[116px] rounded-full border-4 border-[var(--ds-bg)] bg-[var(--ds-surface-2)] shrink-0 flex items-center justify-center shadow-lg">
+      <div className="relative -mt-[60px] w-[116px] h-[116px] rounded-full bg-[var(--ds-surface-2)] shrink-0 flex items-center justify-center shadow-lg">
         <div className="w-full h-full rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)]">
           {displayAvatar ? (
             <img

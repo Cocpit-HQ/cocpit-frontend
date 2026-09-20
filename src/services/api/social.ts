@@ -73,6 +73,12 @@ export const getMyConnections = async (search?: string): Promise<Connection[]> =
     return response.data;
 };
 
+export const getConnections = async (userId: string, search?: string): Promise<Connection[]> => {
+    const params = search ? { search } : {};
+    const response = await api.get(`/users/${userId}/connections`, { params });
+    return response.data;
+};
+
 export const removeConnection = async (userId: string) => {
     const response = await api.delete(`/connections/user/${userId}`);
     return response.data;

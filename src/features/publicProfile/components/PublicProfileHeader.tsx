@@ -358,8 +358,10 @@ export const PublicProfileHeader = React.memo(function PublicProfileHeader({
                                 </div>
                             )}
                             {user?.website && (
-                                <div className="flex items-center gap-2 text-[12px] font-normal text-[#6366F1] dark:text-[#818CF8] leading-[16px] font-['DM_Sans'] hover:underline">
-                                    <a href={user.website} target="_blank" rel="noopener noreferrer" className="text-inherit">{user.website}</a>
+                                <div className="flex items-center gap-2 text-[12px] font-normal text-[#6366F1] dark:text-[#818CF8] leading-[16px] font-['DM_Sans'] hover:underline max-w-full min-w-0">
+                                    <a href={user.website} target="_blank" rel="noopener noreferrer" className="truncate block max-w-full text-inherit">
+                                        {user.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                                    </a>
                                 </div>
                             )}
                         </div>

@@ -42,6 +42,7 @@ interface ProfileEditEducationFormProps {
   onSaved: (id?: string) => void;
   onDeleted: () => void;
   onRegisterBack?: (fn: () => void) => void;
+  allEducations?: Education[];
 }
 
 export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> = ({
@@ -51,6 +52,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   onSaved,
   onDeleted,
   onRegisterBack,
+  allEducations = [],
 }) => {
   const eduMutations = useEducationMutations();
   const [formData, setFormData] = useState<EducationFormData>(EMPTY_FORM);
@@ -58,6 +60,8 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [warnings, setWarnings] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let initialData: EducationFormData;
@@ -96,6 +100,44 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     setFormData(initialData);
     setInitialSnapshot(initialData);
   }, [initialEducation]);
+
+  // Real-time date validation
+  // Real-time date and duplicate validation
+  useEffect(() => {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      if (newErrors.end_date === "End date must be on or after start date") delete newErrors.end_date;
+
+      if (!formData.is_current && formData.start_date && formData.end_date) {
+        if (new Date(formData.end_date) < new Date(formData.start_date)) {
+          newErrors.end_date = "End date must be on or after start date";
+        }
+      }
+      return newErrors;
+    });
+
+    setWarnings((prev) => {
+      const newWarnings = { ...prev };
+      if (newWarnings.degree === "This degree from this school already exists on your profile") delete newWarnings.degree;
+      if (newWarnings.school_name === "This degree from this school already exists on your profile") delete newWarnings.school_name;
+
+      const degree = formData.degree.trim().toLowerCase();
+      const school = formData.school_name.trim().toLowerCase();
+      if (degree && school) {
+        const isDuplicate = allEducations.some(
+          (e) =>
+            e.education_id !== formData.education_id &&
+            e.degree?.toLowerCase().trim() === degree &&
+            e.school_name?.toLowerCase().trim() === school
+        );
+        if (isDuplicate) {
+          newWarnings.degree = "This degree from this school already exists on your profile";
+          newWarnings.school_name = "This degree from this school already exists on your profile";
+        }
+      }
+      return newWarnings;
+    });
+  }, [formData.start_date, formData.end_date, formData.is_current, formData.degree, formData.school_name, formData.education_id, allEducations]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && formData) {
@@ -172,23 +214,29 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   }, []);
 
   const handleSave = async () => {
+    const newErrors: Record<string, string> = {};
+
     if (!formData.school_name.trim()) {
-      toast.error("Please enter a school or university name");
-      return;
+      newErrors.school_name = "Please enter an institute name";
     }
     if (!formData.degree.trim()) {
-      toast.error("Please enter a program or degree");
-      return;
+      newErrors.degree = "Please enter your degree";
     }
     if (!formData.start_date) {
-      toast.error("Please select a start date");
-      return;
+      newErrors.start_date = "Please select a start date";
+    }
+    if (!formData.is_current && !formData.end_date) {
+      newErrors.end_date = "Please select an end date or check present";
     }
     if (!formData.is_current && formData.end_date && formData.start_date) {
       if (new Date(formData.end_date) < new Date(formData.start_date)) {
-        toast.error("End date must be on or after start date");
-        return;
+        newErrors.end_date = "End date must be on or after start date";
       }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
 
     setIsSaving(true);
@@ -294,20 +342,28 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   }, [onRegisterBack, handleCancelClick]);
 
   return (
-    <div className="w-[616px] max-w-full flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
+    <div className="w-full max-w-full flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
       {/* Form Fields Container */}
       <div className="self-stretch flex flex-col justify-start items-start gap-10">
         {/* Row 1: School or university & Program */}
         <div className="self-stretch flex flex-col sm:flex-row justify-start sm:items-center gap-5 sm:gap-10">
           <div className="w-full sm:w-72 flex-1">
-            <ProfileEditSearchableDropdown
-              id="edu_school"
-              label="School or university"
-              placeholder="Select"
-              value={formData.school_name}
-              loadOptions={loadSchools}
-              onSelect={(val) => setFormData((prev) => ({ ...prev, school_name: val }))}
-            />
+              <ProfileEditSearchableDropdown
+                id="edu_school"
+                label="School or university"
+                placeholder="Select"
+                value={formData.school_name}
+                loadOptions={loadSchools}
+                error={errors.school_name}
+                warning={warnings.school_name}
+                onSelect={(val) => {
+                  setFormData((prev) => ({ ...prev, school_name: val }));
+                  setErrors((prev) => ({ ...prev, school_name: "" }));
+                  setWarnings((prev) => ({ ...prev, school_name: "" }));
+                }}
+                maxLength={255}
+                maxLengthMessage="School/University cannot exceed 255 characters"
+              />
           </div>
           <div className="w-full sm:w-72 flex-1">
             <ProfileEditSearchableDropdown
@@ -316,7 +372,13 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
               placeholder="Select"
               value={formData.degree}
               loadOptions={loadDegrees}
-              onSelect={(val) => setFormData((prev) => ({ ...prev, degree: val }))}
+              error={errors.degree}
+              warning={warnings.degree}
+              onSelect={(val) => {
+                setFormData((prev) => ({ ...prev, degree: val }));
+                setErrors((prev) => ({ ...prev, degree: "" }));
+                setWarnings((prev) => ({ ...prev, degree: "" }));
+              }}
             />
           </div>
         </div>
@@ -350,7 +412,11 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
                 label="Start date"
                 value={formData.start_date}
                 placeholder="Select"
-                onChange={(val) => setFormData((prev) => ({ ...prev, start_date: val }))}
+                error={errors.start_date}
+                onChange={(val) => {
+                  setFormData((prev) => ({ ...prev, start_date: val }));
+                  setErrors((prev) => ({ ...prev, start_date: "" }));
+                }}
               />
             </div>
             {!formData.is_current ? (
@@ -360,7 +426,11 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
                   label="End date"
                   value={formData.end_date}
                   placeholder="Select"
-                  onChange={(val) => setFormData((prev) => ({ ...prev, end_date: val }))}
+                  error={errors.end_date}
+                  onChange={(val) => {
+                    setFormData((prev) => ({ ...prev, end_date: val }));
+                    setErrors((prev) => ({ ...prev, end_date: "" }));
+                  }}
                 />
               </div>
             ) : null}

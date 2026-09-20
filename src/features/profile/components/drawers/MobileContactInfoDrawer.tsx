@@ -167,7 +167,7 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
                   onClick={handleRedirectToVerification}
                   className="text-left text-[var(--ds-accent)] hover:underline text-sm font-normal cursor-pointer"
                 >
-                  Verify account
+                  Verify Now
                 </button>
               ) : (
                 <span className="text-[var(--ds-text-muted)] text-sm font-normal">User is unverified</span>

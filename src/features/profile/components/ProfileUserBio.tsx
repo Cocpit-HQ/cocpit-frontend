@@ -43,7 +43,7 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
     : "@user";
 
   // Normalize website URL
-  const displayWebsite = website?.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const displayWebsite = website?.replace(/^https?:\/\/(www\.)?/, "").split('/')[0];
   const websiteHref = website
     ? website.startsWith("http://") || website.startsWith("https://")
       ? website
@@ -153,14 +153,16 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
 
         {/* Website */}
         {website && (
-          <a
-            href={websiteHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="profile-website-link justify-start text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:underline cursor-pointer transition-colors"
-          >
-            {displayWebsite || website}
-          </a>
+          <div className="max-w-full min-w-0 w-full">
+            <a
+              href={websiteHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="profile-website-link block truncate max-w-full justify-start text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:underline cursor-pointer transition-colors"
+            >
+              {displayWebsite || website}
+            </a>
+          </div>
         )}
       </div>
     </div>

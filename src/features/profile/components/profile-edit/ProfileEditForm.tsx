@@ -113,6 +113,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           label="Full name"
           value={formData.name}
           onChange={(val) => onChange("name", val)}
+          maxLength={40}
+          maxLengthMessage="Full name cannot exceed 40 characters"
           placeholder="Enter full name"
           className="w-[300px] max-w-full"
         />
@@ -124,9 +126,11 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           prefix="@"
           value={formData.account_name}
           onChange={(val) => onChange("account_name", val.replace(/^@/, "").trim())}
+          maxLength={25}
+          maxLengthMessage="Username cannot exceed 25 characters"
           placeholder="Username"
           className="w-[300px] max-w-full"
-          isError={isUsernameAvailable === false}
+          error={isUsernameAvailable === false ? "Username is taken" : undefined}
           statusBadge={
             isCheckingUsername ? (
               <span className="text-[10px] text-[var(--ds-text-muted)] font-['DM_Sans']">
@@ -252,7 +256,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           isCheckingUsername ||
           !formData.name?.trim() ||
           formData.name.trim().length < 3 ||
-          (Boolean(formData.account_name) && !/^[a-z0-9_.]{3,20}$/.test(formData.account_name))
+          (Boolean(formData.account_name) && !/^[a-z0-9_.]{3,25}$/.test(formData.account_name))
         }
       />
     </div>

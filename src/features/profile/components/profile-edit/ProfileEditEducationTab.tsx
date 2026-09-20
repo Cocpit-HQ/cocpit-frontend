@@ -130,6 +130,7 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
 
   return (
     <ProfileEditEducationForm
+      allEducations={educations}
       initialEducation={activeEducation}
       onBackToList={() => {
         if (educations.length === 0) {

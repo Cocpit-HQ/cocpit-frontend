@@ -258,7 +258,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         is_reported: (sp as any).is_reported,
         isReported: (sp as any).is_reported,
         likedUsers: (sp as any).liked_users || [],
-        sampleLikerUsername: ((sp as any).liked_users && (sp as any).liked_users.length > 0) ? (sp as any).liked_users[0].username : null,
+        sampleLikerUsername: (sp as any).sample_liker_username || (((sp as any).liked_users && (sp as any).liked_users.length > 0) ? (sp as any).liked_users[0].username : null),
         comments: (sp.comment_count || 0).toString(),
         shares: ((sp as any).rePostCount || 0).toString(),
         externalShares: (sp as any).sharePostCount || 0,

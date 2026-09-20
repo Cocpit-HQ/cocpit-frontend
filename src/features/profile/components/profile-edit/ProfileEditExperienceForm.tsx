@@ -57,6 +57,7 @@ interface ProfileEditExperienceFormProps {
   onDeleted: () => void;
   onRegisterBack?: (fn: () => void) => void;
   onDisableAddRole?: (disabled: boolean) => void;
+  allExperiences?: Experience[];
 }
 
 const extractSkills = (exp: any): string[] => {
@@ -107,6 +108,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   onDeleted,
   onRegisterBack,
   onDisableAddRole,
+  allExperiences = [],
 }) => {
   const expMutations = useExperienceMutations();
   const skillMutations = useSkillMutations();
@@ -117,6 +119,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let initialData: ExperienceFormData;
@@ -178,6 +181,132 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
     setInitialEndCurrentRole(initialEnd);
   }, [initialExperience, isAddingNewRole]);
 
+  // Real-time date and conflict validation
+  useEffect(() => {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      
+      // Clear previous validation errors from this hook
+      if (newErrors.start_date === "Date cannot be in the future" || newErrors.start_date?.includes("overlaps") || newErrors.start_date === "The new role's start date cannot be before the current role's start date.") delete newErrors.start_date;
+      if (newErrors.end_date === "End date must be on or after start date" || newErrors.end_date === "Date cannot be in the future" || newErrors.end_date?.includes("overlaps")) delete newErrors.end_date;
+      if (newErrors.title === "This role already exists on your profile") delete newErrors.title;
+      if (newErrors.company_name === "This role already exists on your profile") delete newErrors.company_name;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const start = formData.start_date ? new Date(formData.start_date) : null;
+      const end = formData.end_date ? new Date(formData.end_date) : null;
+
+      // 1. Future date check
+      if (start && start > today) {
+        newErrors.start_date = "Date cannot be in the future";
+      }
+      if (!formData.is_current && end && end > today) {
+        newErrors.end_date = "Date cannot be in the future";
+      }
+
+      // 2. Start vs End date check
+      if (!formData.is_current && start && end && end < start) {
+        newErrors.end_date = "End date must be on or after start date";
+      }
+
+      // 3. Duplicate Role Check
+      const title = formData.title.trim().toLowerCase();
+      const rawCompany = formData.company_name.trim() || (isAddingNewRole && initialExperience ? initialExperience.company_name : "");
+      const company = (rawCompany || "").toLowerCase();
+      if (title && company) {
+        const isDuplicate = allExperiences.some(
+          (e) =>
+            e.experience_id !== formData.experience_id &&
+            e.title?.toLowerCase().trim() === title &&
+            e.company_name?.toLowerCase().trim() === company
+        );
+        if (isDuplicate) {
+          newErrors.title = "This role already exists on your profile";
+          newErrors.company_name = "This role already exists on your profile";
+        }
+      }
+
+      // 3.5. Same Company Date Overlap Check (Backend hard block)
+      if (company && start) {
+        const sameCompanyOverlap = allExperiences.find((e) => {
+          if (e.experience_id === formData.experience_id) return false;
+          // Ignore the role being ended in "Add new role" sequence
+          if (isAddingNewRole && endCurrentRole && e.experience_id === (initialExperience as any)?.experience_id) return false;
+          
+          if (e.company_name?.trim().toLowerCase() !== company) return false;
+
+          const eStart = e.start_date ? new Date(e.start_date) : null;
+          const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
+          const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
+
+          if (!eStart) return false;
+          return start < eEnd && currentEnd > eStart;
+        });
+
+        if (sameCompanyOverlap) {
+          const overlapMsg = `Date range overlaps with your existing "${sameCompanyOverlap.title}" role at "${sameCompanyOverlap.company_name}". Adjust your dates or edit the existing record first.`;
+          newErrors.start_date = overlapMsg;
+          if (!formData.is_current) {
+            newErrors.end_date = overlapMsg;
+          }
+        }
+      }
+
+      // 4. Overlap Check (Full-time On-site only)
+      if (
+        formData.work_type === "Full time" &&
+        formData.work_mode === "On-site" &&
+        start
+      ) {
+        const overlap = allExperiences.find((e) => {
+          if (e.experience_id === formData.experience_id) return false;
+          if (e.work_type !== "Full time" || e.work_mode !== "On-site") return false;
+
+          const eStart = e.start_date ? new Date(e.start_date) : null;
+          const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
+          const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
+
+          if (!eStart) return false;
+          
+          return start < eEnd && currentEnd > eStart;
+        });
+
+        if (overlap) {
+          const overlapMsg = `Date range overlaps with your existing '${overlap.title}' role at '${overlap.company_name}'.`;
+          newErrors.start_date = overlapMsg;
+          if (!formData.is_current) {
+            newErrors.end_date = overlapMsg;
+          }
+        }
+      }
+      // 5. Sequential Roles Check
+      if (isAddingNewRole && endCurrentRole && start && initialExperience?.start_date) {
+        const oldStart = new Date(initialExperience.start_date);
+        oldStart.setHours(0, 0, 0, 0);
+        if (start < oldStart) {
+          newErrors.start_date = "The new role's start date cannot be before the current role's start date.";
+        }
+      }
+
+      return newErrors;
+    });
+  }, [
+    formData.start_date,
+    formData.end_date,
+    formData.is_current,
+    formData.work_type,
+    formData.work_mode,
+    formData.title,
+    formData.company_name,
+    formData.experience_id,
+    allExperiences,
+    isAddingNewRole,
+    endCurrentRole,
+    initialExperience,
+  ]);
+
   useEffect(() => {
     if (typeof window !== "undefined" && formData) {
       const draftKey = `profile_draft_exp_${initialExperience?.experience_id || "new"}`;
@@ -238,28 +367,123 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   }, []);
 
   const handleSave = async () => {
+    const newErrors: Record<string, string> = {};
+
     if (!formData.title.trim()) {
-      toast.error("Please enter a role title");
-      return;
+      newErrors.title = "Please enter a role title";
     }
     const company = formData.company_name.trim() || initialExperience?.company_name || "";
     if (!company) {
-      toast.error("Please enter an organization name");
-      return;
+      newErrors.company_name = "Please enter an organization name";
+    }
+    if (!formData.work_type) {
+      newErrors.work_type = "Please select a work type";
+    }
+    if (!formData.work_mode) {
+      newErrors.work_mode = "Please select a work mode";
     }
     if (!formData.start_date) {
-      toast.error("Please select a start date");
-      return;
+      newErrors.start_date = "Please select a start date";
     }
     if (!formData.is_current && !formData.end_date) {
-      toast.error("Please select an end date or check present");
-      return;
+      newErrors.end_date = "Please select an end date or check present";
     }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = formData.start_date ? new Date(formData.start_date) : null;
+    const end = formData.end_date ? new Date(formData.end_date) : null;
+
+    if (start && start > today) {
+      newErrors.start_date = "Date cannot be in the future";
+    }
+    if (!formData.is_current && end && end > today) {
+      newErrors.end_date = "Date cannot be in the future";
+    }
+
     if (!formData.is_current && formData.end_date && formData.start_date) {
       if (new Date(formData.end_date) < new Date(formData.start_date)) {
-        toast.error("End date must be on or after start date");
-        return;
+        newErrors.end_date = "End date must be on or after start date";
       }
+    }
+
+    if (isAddingNewRole && endCurrentRole && start && initialExperience?.start_date) {
+      const oldStart = new Date(initialExperience.start_date);
+      oldStart.setHours(0, 0, 0, 0);
+      if (start < oldStart) {
+        newErrors.start_date = "The new role's start date cannot be before the current role's start date.";
+      }
+    }
+
+
+    const titleLower = formData.title.trim().toLowerCase();
+    const companyLower = company.trim().toLowerCase();
+    if (titleLower && companyLower) {
+      const isDuplicate = allExperiences.some(
+        (e) =>
+          e.experience_id !== formData.experience_id &&
+          e.title?.toLowerCase().trim() === titleLower &&
+          e.company_name?.toLowerCase().trim() === companyLower
+      );
+      if (isDuplicate) {
+        newErrors.title = "This role already exists on your profile";
+        newErrors.company_name = "This role already exists on your profile";
+      }
+    }
+
+    if (companyLower && start) {
+      const sameCompanyOverlap = allExperiences.find((e) => {
+        if (e.experience_id === formData.experience_id) return false;
+        if (isAddingNewRole && endCurrentRole && e.experience_id === (initialExperience as any)?.experience_id) return false;
+        
+        if (e.company_name?.trim().toLowerCase() !== companyLower) return false;
+
+        const eStart = e.start_date ? new Date(e.start_date) : null;
+        const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
+        const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
+
+        if (!eStart) return false;
+        return start < eEnd && currentEnd > eStart;
+      });
+
+      if (sameCompanyOverlap) {
+        const overlapMsg = `Date range overlaps with your existing "${sameCompanyOverlap.title}" role at "${sameCompanyOverlap.company_name}". Adjust your dates or edit the existing record first.`;
+        newErrors.start_date = overlapMsg;
+        if (!formData.is_current) {
+          newErrors.end_date = overlapMsg;
+        }
+      }
+    }
+
+    if (
+      formData.work_type === "Full time" &&
+      formData.work_mode === "On-site" &&
+      start
+    ) {
+      const overlap = allExperiences.find((e) => {
+        if (e.experience_id === formData.experience_id) return false;
+        if (e.work_type !== "Full time" || e.work_mode !== "On-site") return false;
+
+        const eStart = e.start_date ? new Date(e.start_date) : null;
+        const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
+        const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
+
+        if (!eStart) return false;
+        
+        return start < eEnd && currentEnd > eStart;
+      });
+
+      if (overlap) {
+        const overlapMsg = `Date range overlaps with your existing '${overlap.title}' role at '${overlap.company_name}'.`;
+        newErrors.start_date = overlapMsg;
+        if (!formData.is_current) {
+          newErrors.end_date = overlapMsg;
+        }
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
 
     setIsSaving(true);
@@ -373,9 +597,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
     (formData.is_current || Boolean(formData.end_date))
   );
 
+  const hasNoErrors = Object.values(errors).filter(Boolean).length === 0;
+
   const canSubmit = isEditing
-    ? hasChanges && isRequiredFilled && !isSaving && !isDeleting
-    : isRequiredFilled && !isSaving && !isDeleting;
+    ? hasChanges && isRequiredFilled && hasNoErrors && !isSaving && !isDeleting
+    : isRequiredFilled && hasNoErrors && !isSaving && !isDeleting;
 
   const currentRoleName = initialExperience?.title || previousRoleTitle || "";
 
@@ -399,7 +625,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   }, [onRegisterBack, handleCancelClick]);
 
   return (
-    <div className="w-[616px] max-w-full flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
+    <div className="w-full max-w-full flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
       {/* Form Fields Container */}
       <div className="self-stretch flex flex-col justify-start items-start gap-10">
         {/* Row 1: Role / New role & Organization / Location */}
@@ -413,7 +639,13 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 placeholder="Select"
                 value={formData.title}
                 loadOptions={loadRoles}
-                onSelect={(val) => setFormData((prev) => ({ ...prev, title: val }))}
+                error={errors.title}
+                onSelect={(val) => {
+                  setFormData((prev) => ({ ...prev, title: val }));
+                  setErrors((prev) => ({ ...prev, title: "" }));
+                }}
+                maxLength={100}
+                maxLengthMessage="Role cannot exceed 100 characters"
               />
 
               {/* Checkbox: End current role as "RoleName" */}
@@ -463,7 +695,13 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   placeholder="Select"
                   value={formData.title}
                   loadOptions={loadRoles}
-                  onSelect={(val) => setFormData((prev) => ({ ...prev, title: val }))}
+                  error={errors.title}
+                  onSelect={(val) => {
+                    setFormData((prev) => ({ ...prev, title: val }));
+                    setErrors((prev) => ({ ...prev, title: "" }));
+                  }}
+                  maxLength={100}
+                  maxLengthMessage="Role cannot exceed 100 characters"
                 />
               </div>
               <div className="w-full sm:w-72 flex-1">
@@ -473,7 +711,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   placeholder="Select"
                   value={formData.company_name}
                   loadOptions={loadCompanies}
-                  onSelect={(val) => setFormData((prev) => ({ ...prev, company_name: val }))}
+                  error={errors.company_name}
+                  onSelect={(val) => {
+                    setFormData((prev) => ({ ...prev, company_name: val }));
+                    setErrors((prev) => ({ ...prev, company_name: "" }));
+                  }}
                 />
               </div>
             </div>
@@ -496,7 +738,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               value={formData.work_type}
               options={WORK_TYPES}
               placeholder="Select"
-              onSelect={(val) => setFormData((prev) => ({ ...prev, work_type: val }))}
+              error={errors.work_type}
+              onSelect={(val) => {
+                setFormData((prev) => ({ ...prev, work_type: val }));
+                setErrors((prev) => ({ ...prev, work_type: "" }));
+              }}
             />
           </div>
           <div className="w-full sm:w-72 flex-1">
@@ -505,7 +751,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               value={formData.work_mode}
               options={WORK_MODES}
               placeholder="Select"
-              onSelect={(val) => setFormData((prev) => ({ ...prev, work_mode: val }))}
+              error={errors.work_mode}
+              onSelect={(val) => {
+                setFormData((prev) => ({ ...prev, work_mode: val }));
+                setErrors((prev) => ({ ...prev, work_mode: "" }));
+              }}
             />
           </div>
         </div>
@@ -519,7 +769,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 label="Start date"
                 value={formData.start_date}
                 placeholder="Select"
-                onChange={(val) => setFormData((prev) => ({ ...prev, start_date: val }))}
+                error={errors.start_date}
+                onChange={(val) => {
+                  setFormData((prev) => ({ ...prev, start_date: val }));
+                  setErrors((prev) => ({ ...prev, start_date: "" }));
+                }}
               />
             </div>
             {!formData.is_current ? (
@@ -529,7 +783,11 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   label="End date"
                   value={formData.end_date}
                   placeholder="Select"
-                  onChange={(val) => setFormData((prev) => ({ ...prev, end_date: val }))}
+                  error={errors.end_date}
+                  onChange={(val) => {
+                    setFormData((prev) => ({ ...prev, end_date: val }));
+                    setErrors((prev) => ({ ...prev, end_date: "" }));
+                  }}
                 />
               </div>
             ) : (

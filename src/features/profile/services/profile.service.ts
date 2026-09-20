@@ -47,6 +47,7 @@ export {
   getProfileStats,
   getFollowing,
   getMyConnections,
+  getConnections,
   getFollowers,
   sendConnectionRequest,
   cancelConnectionRequest,

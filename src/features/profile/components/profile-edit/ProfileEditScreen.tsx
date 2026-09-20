@@ -605,7 +605,7 @@ export function ProfileEditScreen({
       {/* Frame 2609633: Centered Main Container (640px in form mode / 800px in tab mode, top 60px padding desktop / 16px mobile, 20px gap) */}
       <div
         className={cn(
-          "max-w-full px-4 sm:px-0 pt-4 md:pt-[60px] pb-[60px] flex flex-col items-center gap-[20px] relative transition-all",
+          "max-w-full px-4 sm:px-0 pt-4 md:pt-[60px] pb-[60px] flex flex-col items-center gap-[20px] relative transition-opacity",
           tabSubtitle ? "w-full md:w-[640px]" : "w-full md:w-[800px]"
         )}
       >

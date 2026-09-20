@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ProfileEditFieldProps {
   id: string;
@@ -19,7 +20,8 @@ interface ProfileEditFieldProps {
   rows?: number;
   className?: string;
   statusBadge?: React.ReactNode;
-  isError?: boolean;
+  error?: string;
+  maxLengthMessage?: string;
 }
 
 export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
@@ -38,7 +40,8 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
   rows = 1,
   className,
   statusBadge,
-  isError = false,
+  error,
+  maxLengthMessage,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -52,20 +55,23 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
 
   return (
     <div className={cn("flex flex-col gap-[8px] w-full", className)}>
-      {/* Input container with bottom border and exact 10px gap from label */}
       <div
         className={cn(
-          "w-full border-b pb-[8px] pt-0 transition-colors flex flex-col justify-center items-start gap-[10px]",
-          isError
-            ? "border-[var(--ds-error)]"
-            : "border-[var(--ds-border)] focus-within:border-[var(--ds-text-secondary)]"
+          "w-full py-2 border-b transition-colors flex flex-col justify-center items-start gap-2.5 relative box-sizing-border",
+          error
+            ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
+            : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
+          className
         )}
       >
         {/* Label & Status Badge Row */}
-        <div className="w-full flex items-center justify-between">
+        <div className="w-full flex justify-between items-center">
           <label
             htmlFor={id}
-            className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]"
+            className={cn(
+              "font-['DM_Sans'] font-medium text-[12px] leading-[16px]",
+              error ? "text-red-500" : "text-[var(--ds-text-secondary)]"
+            )}
           >
             {label}
           </label>
@@ -85,9 +91,16 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
               ref={textareaRef}
               id={id}
               rows={1}
-              maxLength={maxLength}
               value={value}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (maxLength && val.length > maxLength) {
+                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`);
+                  onChange(val.slice(0, maxLength));
+                } else {
+                  onChange(val);
+                }
+              }}
               placeholder={placeholder}
               className="w-full bg-transparent text-[var(--ds-text-primary)] font-['DM_Sans'] font-normal text-[14px] leading-[20px] placeholder:text-[var(--ds-text-muted)] focus:outline-none resize-none p-0 m-0 min-h-[20px] overflow-hidden"
             />
@@ -97,9 +110,16 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
               type={type}
               inputMode={inputMode}
               pattern={pattern}
-              maxLength={maxLength}
               value={value}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (maxLength && val.length > maxLength) {
+                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`);
+                  onChange(val.slice(0, maxLength));
+                } else {
+                  onChange(val);
+                }
+              }}
               placeholder={placeholder}
               className="w-full bg-transparent text-[var(--ds-text-primary)] font-['DM_Sans'] font-normal text-[14px] leading-[20px] placeholder:text-[var(--ds-text-muted)] focus:outline-none p-0 m-0 h-[20px]"
             />
@@ -114,6 +134,11 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
             {value.length}/{maxLength}
           </span>
         </div>
+      )}
+      {error && (
+        <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">
+          {error}
+        </span>
       )}
     </div>
   );

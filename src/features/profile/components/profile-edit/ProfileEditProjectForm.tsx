@@ -71,6 +71,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Link dialog state
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -173,8 +174,8 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
           : null
       );
     } else {
-      if (formData.media.length >= 3) {
-        toast.error("You can add a maximum of 3 media items");
+      if (formData.media.length >= 5) {
+        toast.error("You can add a maximum of 5 media items");
         e.target.value = "";
         return;
       }
@@ -198,27 +199,34 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
   };
 
   const handleSave = async () => {
+    const newErrors: Record<string, string> = {};
+
     if (!formData.title.trim()) {
-      toast.error("Please enter a project title");
-      return;
+      newErrors.title = "Please enter a project title";
     }
     if (!formData.organization.trim()) {
-      toast.error("Please enter an organization name");
-      return;
+      newErrors.organization = "Please enter an organization name";
     }
     if (!formData.start_date) {
-      toast.error("Please select a start date");
-      return;
+      newErrors.start_date = "Please select a start date";
     }
     if (!formData.is_current && !formData.end_date) {
-      toast.error("Please select an end date or mark project as ongoing");
-      return;
+      newErrors.end_date = "Please select an end date or mark project as ongoing";
     }
     if (!formData.is_current && formData.end_date && formData.start_date) {
       if (new Date(formData.end_date) < new Date(formData.start_date)) {
-        toast.error("End date must be on or after start date");
-        return;
+        newErrors.end_date = "End date must be on or after start date";
       }
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    if (formData.media.length > 5) {
+      toast.error("You can add a maximum of 5 media items");
+      return;
     }
 
     setIsSaving(true);
@@ -382,10 +390,10 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
   );
 
   return (
-    <div className="w-[640px] max-w-full inline-flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
+    <div className="w-full max-w-full inline-flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
       {/* Strengthen your profile banner (Edit mode) */}
       {isEditing && !isAllThreeAdded && (
-        <div className="w-[640px] max-w-full min-h-[40px] px-[12px] py-[6px] bg-[var(--ds-surface-2)] rounded-[8px] flex flex-row items-center gap-[8px] shrink-0 self-stretch overflow-x-auto scrollbar-hide">
+        <div className="w-full max-w-full min-h-[40px] px-[12px] py-[6px] bg-[var(--ds-surface-2)] rounded-[8px] flex flex-row items-center gap-[8px] shrink-0 self-stretch overflow-x-auto scrollbar-hide">
           <div className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-secondary)] flex items-center shrink-0">
             Strengthen your profile:
           </div>
@@ -451,8 +459,13 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
               placeholder="e.g. Website Redesign"
               value={formData.title}
               maxLength={255}
+              maxLengthMessage="Project title cannot exceed 255 characters"
               showCounter={true}
-              onChange={(val) => setFormData((prev) => ({ ...prev, title: val }))}
+              error={errors.title}
+              onChange={(val) => {
+                setFormData((prev) => ({ ...prev, title: val }));
+                setErrors((prev) => ({ ...prev, title: "" }));
+              }}
             />
           </div>
           <div className="w-full sm:w-[300px] flex-1 inline-flex flex-col justify-start items-end gap-2">
@@ -463,7 +476,11 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
               value={formData.organization}
               maxLength={255}
               showCounter={true}
-              onChange={(val) => setFormData((prev) => ({ ...prev, organization: val }))}
+              error={errors.organization}
+              onChange={(val) => {
+                setFormData((prev) => ({ ...prev, organization: val }));
+                setErrors((prev) => ({ ...prev, organization: "" }));
+              }}
             />
           </div>
         </div>
@@ -491,7 +508,11 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
                 label="Start date"
                 value={formData.start_date}
                 placeholder="Select"
-                onChange={(val) => setFormData((prev) => ({ ...prev, start_date: val }))}
+                error={errors.start_date}
+                onChange={(val) => {
+                  setFormData((prev) => ({ ...prev, start_date: val }));
+                  setErrors((prev) => ({ ...prev, start_date: "" }));
+                }}
               />
             </div>
             {!formData.is_current && (
@@ -501,7 +522,11 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
                   label="End date"
                   value={formData.end_date}
                   placeholder="Select"
-                  onChange={(val) => setFormData((prev) => ({ ...prev, end_date: val }))}
+                  error={errors.end_date}
+                  onChange={(val) => {
+                    setFormData((prev) => ({ ...prev, end_date: val }));
+                    setErrors((prev) => ({ ...prev, end_date: "" }));
+                  }}
                 />
               </div>
             )}
@@ -582,9 +607,14 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
           <div className="flex flex-row items-center p-0 gap-[10px] min-h-[36px] h-auto flex-wrap">
             <button
               type="button"
-              disabled={formData.media.length >= 5}
-              onClick={() => setIsLinkModalOpen(true)}
-              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => {
+                if (formData.media.length >= 5) {
+                  toast.error("You can add a maximum of 5 media items");
+                  return;
+                }
+                setIsLinkModalOpen(true);
+              }}
+              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0"
             >
               <Plus className="size-4 text-[var(--ds-text-primary)] shrink-0" />
               <span className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
@@ -594,9 +624,14 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
 
             <button
               type="button"
-              disabled={formData.media.length >= 5}
-              onClick={() => mediaInputRef.current?.click()}
-              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => {
+                if (formData.media.length >= 5) {
+                  toast.error("You can add a maximum of 5 media items");
+                  return;
+                }
+                mediaInputRef.current?.click();
+              }}
+              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0"
             >
               <Plus className="size-4 text-[var(--ds-text-primary)] shrink-0" />
               <span className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
@@ -606,9 +641,14 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
 
             <button
               type="button"
-              disabled={formData.media.length >= 5}
-              onClick={() => docInputRef.current?.click()}
-              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => {
+                if (formData.media.length >= 5) {
+                  toast.error("You can add a maximum of 5 media items");
+                  return;
+                }
+                docInputRef.current?.click();
+              }}
+              className="h-[36px] px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-[10px] transition-all cursor-pointer focus:outline-none shrink-0"
             >
               <Plus className="size-4 text-[var(--ds-text-primary)] shrink-0" />
               <span className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
@@ -823,8 +863,8 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         mode="add"
         onClose={() => setIsLinkModalOpen(false)}
         onConfirm={(title, url) => {
-          if (formData.media.length >= 3) {
-            toast.error("You can add a maximum of 3 media items");
+          if (formData.media.length >= 5) {
+            toast.error("You can add a maximum of 5 media items");
             return;
           }
           const newLink: ProjectMedia = {
@@ -878,8 +918,8 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         onClose={() => setMediaModal(null)}
         onConfirm={(data) => {
           if (data.mode === "add") {
-            if (formData.media.length >= 3) {
-              toast.error("You can add a maximum of 3 media items");
+            if (formData.media.length >= 5) {
+              toast.error("You can add a maximum of 5 media items");
               return;
             }
             const newItem: ProjectMedia = {

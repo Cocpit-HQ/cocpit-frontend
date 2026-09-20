@@ -7,6 +7,7 @@ import {
   getFollowers,
   getFollowing,
   getMyConnections,
+  getConnections,
   followUser,
   unfollowUser,
   removeFollower,
@@ -24,6 +25,7 @@ import {
   LockPrivateIcon,
   EmptyFollowIcon,
   EmptyConnectionIcon,
+  UserIcon,
 } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { cn } from "@/lib/utils";
@@ -33,6 +35,7 @@ interface FollowListModalProps {
   onClose: () => void;
   initialTab?: "followers" | "following" | "connections";
   userId: string;
+  userName?: string;
 }
 
 interface ConfirmAction {
@@ -47,6 +50,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   onClose,
   initialTab = "followers",
   userId,
+  userName,
 }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"following" | "followers" | "connections">(initialTab);
@@ -99,8 +103,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     error: connectionsError,
   } = useQuery({
     queryKey: ["connections", userId, search],
-    queryFn: () => getMyConnections(search),
-    enabled: isOpen && activeTab === "connections" && isOwnProfile,
+    queryFn: () => isOwnProfile ? getMyConnections(search) : getConnections(userId, search),
+    enabled: isOpen && activeTab === "connections",
     retry: false,
   });
 
@@ -121,8 +125,9 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
   const isConnectionsPrivate = useMemo(() => {
     if (isOwnProfile) return false;
-    return true; // Connections list is private on public profile
-  }, [isOwnProfile]);
+    if ((connectionsError as any)?.response?.status === 403) return true;
+    return false;
+  }, [isOwnProfile, connectionsError]);
 
   const isCurrentTabPrivate = useMemo(() => {
     if (activeTab === "following") return isFollowingPrivate;
@@ -384,24 +389,30 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   // Private empty state texts
   const privateStateInfo = useMemo(() => {
     switch (activeTab) {
-      case "following":
-        return {
-          title: "Following is private",
-          description: "This person has chosen to keep their following list private",
-        };
-      case "followers":
-        return {
-          title: "Followers are private",
-          description: "This person has chosen to keep their followers private",
-        };
-      case "connections":
-      default:
-        return {
-          title: "Connections are private",
-          description: "This person has chosen to keep their connections private",
-        };
-    }
-  }, [activeTab]);
+        case "following":
+          return {
+            title: "Following is private",
+            description: userName 
+              ? `${userName}${userName.endsWith('s') || userName.endsWith('S') ? "'" : "'s"} following list is private`
+              : "This person has chosen to keep their following list private",
+          };
+        case "followers":
+          return {
+            title: "Followers are private",
+            description: userName 
+              ? `${userName}${userName.endsWith('s') || userName.endsWith('S') ? "'" : "'s"} followers are private`
+              : "This person has chosen to keep their followers private",
+          };
+        case "connections":
+        default:
+          return {
+            title: "Connections are private",
+            description: userName 
+              ? `${userName}${userName.endsWith('s') || userName.endsWith('S') ? "'" : "'s"} connections are private`
+              : "This person has chosen to keep their connections private",
+          };
+      }
+  }, [activeTab, userName]);
 
   const renderAction = (user: any, id: string, name: string) => {
     if (activeTab === "following") {
@@ -546,27 +557,25 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
-        className="w-full h-full sm:h-auto sm:max-w-[384px] max-h-[100dvh] sm:max-h-[640px] p-4 sm:p-3 bg-[var(--ds-bg)] border-0 sm:border border-[var(--ds-border)] rounded-none sm:rounded-[16px] overflow-hidden shadow-2xl gap-0 outline-none [&>button:last-child]:hidden select-text flex flex-col justify-start"
+        className="w-full h-full sm:h-auto sm:max-w-[384px] max-h-[100dvh] sm:max-h-[640px] px-4 pb-4 pt-8 sm:px-3 sm:pb-3 sm:pt-8 bg-[var(--ds-bg)] border-0 sm:border border-[var(--ds-border)] rounded-none sm:rounded-[16px] overflow-hidden shadow-2xl gap-0 outline-none [&>button:last-child]:hidden select-text flex flex-col justify-start"
       >
-        {/* Top Close Row */}
-        <div className="w-full flex justify-end items-center h-5">
+        {/* Top Close Row & Title */}
+        <div className="w-full flex justify-between items-center h-5 relative">
+          <DialogTitle className="absolute left-1/2 -translate-x-1/2 font-['DM_Sans'] text-base font-medium text-[var(--ds-text-primary)]">
+            People
+          </DialogTitle>
           <button
             type="button"
             onClick={onClose}
-            className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none"
+            className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none ml-auto"
             title="Close"
           >
             <CloseCrossIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
           </button>
         </div>
 
-        {/* Accessible Dialog Title for screen readers */}
-        <DialogTitle className="sr-only">
-          Connections and Followers
-        </DialogTitle>
-
         {/* Tabs: Following, Followers, Connection */}
-        <div className="w-full grid grid-cols-3 border-b border-[var(--ds-border)] mt-4">
+        <div className="w-full grid grid-cols-3 border-b border-[var(--ds-border)] mt-3">
           {(["following", "followers", "connections"] as const).map((tabKey) => {
             const isActive = activeTab === tabKey;
             const label =
@@ -585,16 +594,18 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                   setSearch("");
                 }}
                 className={cn(
-                  "pb-2.5 text-center font-['DM_Sans'] text-base font-medium leading-6 transition-all relative cursor-pointer",
+                  "pb-2.5 flex justify-center items-center text-center font-['DM_Sans'] text-base font-medium leading-6 transition-all relative cursor-pointer",
                   isActive
                     ? "text-[var(--ds-text-primary)]"
                     : "text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)]"
                 )}
               >
-                {label}
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[var(--ds-accent)]" />
-                )}
+                <div className="relative">
+                  {label}
+                  {isActive && (
+                    <div className="absolute -bottom-2.5 left-0 right-0 h-[1.5px] bg-[var(--ds-accent)]" />
+                  )}
+                </div>
               </button>
             );
           })}
@@ -643,7 +654,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
           /* Public / Accessible State with Search & User List */
           <div className="w-full flex-1 flex flex-col self-stretch overflow-hidden">
             {/* Component 10: Search Bar */}
-            <div className="w-full h-9 flex flex-row justify-between items-center py-2 px-0 gap-1 border-b border-[var(--ds-text-primary)] self-stretch mt-1">
+            <div className="w-full h-9 flex flex-row justify-between items-center py-2 px-0 gap-1 border-b border-[var(--ds-text-primary)] self-stretch mt-3">
               <input
                 type="text"
                 placeholder="Search"
@@ -654,8 +665,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
               <SearchIcon className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0 flex-none order-1" />
             </div>
 
-            {/* User List: Frame 2609539 with 8px gap between items and 12px margin below search */}
-            <div className="w-full flex-1 sm:flex-none flex flex-col gap-2 mt-3 sm:max-h-[300px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-2 self-stretch">
+            {/* User List: Frame 2609539 with 12px gap between items and 12px margin below search */}
+            <div className="w-full flex-1 sm:flex-none flex flex-col gap-3 mt-3 sm:max-h-[300px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-2 self-stretch">
               {isLoadingCurrentTab ? (
                 <div className="w-full py-8 flex justify-center items-center">
                   <div className="w-6 h-6 rounded-full border-2 border-[var(--ds-accent)] border-t-transparent animate-spin" />
@@ -684,20 +695,18 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                       <Link
                         href={linkHref}
                         onClick={onClose}
-                        className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1 hover:opacity-80 transition-opacity flex-none"
+                        className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1 hover:opacity-80 transition-opacity"
                       >
                         {/* Rectangle 31: Avatar 20x20 */}
-                        <div className="w-5 h-5 rounded-full overflow-hidden bg-[var(--ds-surface-1)] flex items-center justify-center shrink-0 flex-none">
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-[var(--ds-surface-1)] flex items-center justify-center shrink-0">
                           {avatar ? (
                             <img src={avatar} alt={name} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-[10px] font-semibold text-[var(--ds-text-primary)] uppercase">
-                              {name[0]}
-                            </span>
+                            <UserIcon className="w-full h-full text-[var(--ds-text-secondary)]" />
                           )}
                         </div>
                         {/* Name Text: 14px / 20px Regular */}
-                        <span className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[var(--ds-text-primary)] truncate flex-none order-1">
+                        <span className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-[var(--ds-text-primary)] max-w-[50%] truncate">
                           {name}
                         </span>
                       </Link>

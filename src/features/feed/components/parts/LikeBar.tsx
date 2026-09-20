@@ -90,7 +90,7 @@ export const LikeBar: React.FC<LikeBarProps> = ({
                 key={idx}
                 className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-ds-surface-1 text-ds-text-primary font-medium text-[8px] items-center justify-center flex-shrink-0 select-none"
               >
-                {(user.username || '?').charAt(0).toUpperCase()}
+                <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
               </div>
             );
           })}

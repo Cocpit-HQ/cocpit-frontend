@@ -189,6 +189,7 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
 
   return (
     <ProfileEditExperienceForm
+      allExperiences={experiences}
       initialExperience={activeExperience}
       previousRoleTitle={previousRoleTitle}
       isInitialAdd={experiences.length === 0}
