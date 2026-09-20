@@ -15,6 +15,8 @@ export interface ProfilePostMedia {
   url: string;
   media_type: 'image' | 'video';
   aspect_ratio: string | null;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface ProfilePostPollOption {

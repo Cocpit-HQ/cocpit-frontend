@@ -7,6 +7,7 @@ import { followUser } from "@/services/api/social";
 import { followCompany } from "@/services/api/social";
 import Link from "next/link";
 import { X, Loader2 } from "lucide-react";
+import { UserIcon } from "@/components/icons";
 
 interface LikesModalProps {
   isOpen: boolean;
@@ -108,15 +109,7 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
                         />
                       ) : (
                         <div className="w-full h-full border border-ds-border bg-ds-surface-1 flex items-center justify-center text-ds-text-secondary">
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={1.5}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                          </svg>
+                          <UserIcon className="w-[60%] h-[60%] text-current" />
                         </div>
                       )}
                     </div>

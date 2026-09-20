@@ -71,6 +71,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const queryClient = useQueryClient();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [isBlockLoading, setIsBlockLoading] = useState(false);
   const [showRemoveConnectionDialog, setShowRemoveConnectionDialog] = useState(false);
   const [showUnfollowDialog, setShowUnfollowDialog] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -219,17 +220,19 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleBlockToggle = async () => {
+    if (isBlockLoading) return;
+    setIsBlockLoading(true);
     try {
       if (blocked) {
         await unblockUser(targetUserId);
-        toast.success("User unblocked");
       } else {
         await blockUser(targetUserId);
-        toast.success("User blocked");
       }
       setShowBlockDialog(false);
     } catch {
-      toast.error("Failed to update block status");
+      // Error toast is handled by SocialContext
+    } finally {
+      setIsBlockLoading(false);
     }
   };
 
@@ -495,7 +498,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         )}
 
         {blocked ? (
-          <ProfileBlockedState onUnblock={handleBlockToggle} />
+          <ProfileBlockedState onUnblock={handleBlockToggle} isLoading={isBlockLoading} />
         ) : (
           <>
             {/* Divider */}
@@ -672,6 +675,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         isOpen={showBlockDialog}
         onClose={() => setShowBlockDialog(false)}
         onConfirm={handleBlockToggle}
+        isLoading={isBlockLoading}
         type={blocked ? "custom" : "block_profile"}
         targetName={user?.name || "this user"}
         title={blocked ? `Unblock ${user?.name || "this user"}?` : undefined}

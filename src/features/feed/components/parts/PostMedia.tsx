@@ -27,6 +27,7 @@ interface PostMediaProps {
   onShowLikes?: (e: React.MouseEvent) => void;
   hideOverlayLikeBar?: boolean;
   isFullContent?: boolean;
+  isProfileView?: boolean;
   // Video overlay mode props
   videoOverlay?: boolean;
   overlayHeader?: React.ReactNode;
@@ -36,7 +37,7 @@ interface PostMediaProps {
 export const PostMedia = ({
   imageSrc, images = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
-  hideOverlayLikeBar = false, isFullContent = false,
+  hideOverlayLikeBar = false, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
@@ -157,6 +158,8 @@ export const PostMedia = ({
             onImageLoad={onLoad}
             imageFit="cover"
             showDots={true}
+            arrowPlacement={isProfileView ? 'inside' : 'outside'}
+            dotsClassName="mt-[12px]"
             overlay={
               showTagBadge && (
                 <div className="absolute bottom-3 right-3 w-[32px] h-[32px] rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm pointer-events-auto hover:bg-black/80 transition-colors z-20">

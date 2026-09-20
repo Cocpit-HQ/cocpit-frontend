@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { UserIcon } from "@/components/icons";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -139,8 +140,8 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                         <div className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1">
                             {/* Avatar: 20px × 20px, rounded-[100px] */}
                             <div className="relative w-5 h-5 rounded-[100px] shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[10px] font-medium">
-                                {/* Fallback Letter */}
-                                <span>{(user.full_name || user.account_name || "U").charAt(0).toUpperCase()}</span>
+                                {/* Fallback Icon */}
+                                <UserIcon className="w-[60%] h-[60%] text-current" />
                                 
                                 {/* Image overlay */}
                                 {user.avatar_url && (

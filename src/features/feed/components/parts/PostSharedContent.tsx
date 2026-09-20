@@ -97,9 +97,9 @@ export const PostSharedContent = ({
               {/* Header */}
               <div className="flex flex-row items-center gap-[8px] w-full">
                 <div className="flex flex-row items-center gap-[8px]">
-                  <div className="relative w-[32px] h-[32px] min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] shrink-0 flex-shrink-0 aspect-square rounded-full overflow-hidden bg-ds-surface-1 text-ds-text-primary flex items-center justify-center font-semibold text-xs select-none p-1 border border-ds-border">
+                  <div className={`relative w-[32px] h-[32px] min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] shrink-0 flex-shrink-0 aspect-square ${shared_post.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 text-ds-text-primary flex items-center justify-center font-semibold text-xs select-none p-1 border border-ds-border`}>
                     {shared_post.authorAvatar && shared_post.authorAvatar !== '/assets/pngegg.png' ? (
-                      <img src={shared_post.authorAvatar} alt={shared_post.author} className="absolute inset-0 w-full h-full object-cover rounded-full aspect-square z-10 block" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      <img src={shared_post.authorAvatar} alt={shared_post.author} className={`absolute inset-0 w-full h-full object-cover ${shared_post.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} aspect-square z-10 block`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
                       <UserIcon className="w-full h-full text-ds-text-primary" />
                     )}

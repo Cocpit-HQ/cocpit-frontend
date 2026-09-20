@@ -29,7 +29,7 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
       const savedMode = sessionStorage.getItem("profile_edit_edu_mode") as "list" | "form";
       if (savedMode) return savedMode;
     }
-    return educations.length === 0 ? "form" : initialMode;
+    return initialMode;
   });
   
   const [activeEduId, setActiveEduId] = useState<string | "new">(() => {
@@ -44,7 +44,7 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
       const saved = sessionStorage.getItem("profile_edit_edu_has_visited");
       if (saved) return saved === "true";
     }
-    return initialMode === "list" && educations.length > 0;
+    return initialMode === "list";
   });
 
   useEffect(() => {
@@ -53,11 +53,10 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
       setActiveEduId(selectedId || "new");
       setHasVisitedList(false);
     } else if (typeof window !== "undefined" && !sessionStorage.getItem("profile_edit_edu_mode")) {
-      const mode = educations.length === 0 ? "form" : "list";
-      setViewMode(mode);
-      setHasVisitedList(mode === "list");
+      setViewMode(initialMode);
+      setHasVisitedList(initialMode === "list");
     }
-  }, [initialMode, selectedId, educations.length]);
+  }, [initialMode, selectedId]);
 
   useEffect(() => {
     sessionStorage.setItem("profile_edit_edu_mode", viewMode);
@@ -110,9 +109,6 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
     onSuccess?.();
     if (!hasVisitedList) {
       onCancel?.();
-    } else if (educations.length <= 1) {
-      setViewMode("form");
-      setActiveEduId("new");
     } else {
       setViewMode("list");
     }
@@ -133,10 +129,6 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
       allEducations={educations}
       initialEducation={activeEducation}
       onBackToList={() => {
-        if (educations.length === 0) {
-          onCancel?.();
-          return;
-        }
         if (!hasVisitedList) {
           onCancel?.();
         } else {

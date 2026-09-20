@@ -14,6 +14,7 @@ interface ProfileEditSkillsPickerProps {
   onChange: (skills: string[]) => void;
   placeholder?: string;
   className?: string;
+  showBulbIcon?: boolean;
 }
 
 export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = ({
@@ -22,6 +23,7 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
   onChange,
   placeholder = "Search and add skills (e.g. Figma, Project Management)",
   className,
+  showBulbIcon = true,
 }) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -195,7 +197,7 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
             <SkillChip
               key={`selected-skill-${idx}-${skill}`}
               name={skill}
-              showBulbIcon={false}
+              showBulbIcon={showBulbIcon}
               deletable={true}
               onDelete={(skillToRemove) => handleRemoveSkill(skillToRemove)}
             />

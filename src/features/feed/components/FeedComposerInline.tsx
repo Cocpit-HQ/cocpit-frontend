@@ -697,14 +697,14 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           {/* Header */}
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-[12px]">
-              <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none select-none">
+              <div className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none select-none`}>
                 {avatarUrl ? (
                   <img 
                     src={avatarUrl} 
                     alt="Avatar" 
                     draggable={false}
                     onDragStart={(e) => e.preventDefault()}
-                    className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
+                    className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} select-none pointer-events-none`} 
                   />
                 ) : (
                   <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
@@ -809,7 +809,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
           <div className="flex flex-row items-start gap-[12px] w-full">
             {/* Avatar */}
             <div 
-              className="w-[32px] h-[32px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none cursor-pointer select-none"
+              className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none cursor-pointer select-none`}
               onClick={() => textareaRef.current?.focus()}
             >
               {avatarUrl ? (
@@ -818,7 +818,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   alt="Avatar" 
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
-                  className="w-full h-full object-cover rounded-full select-none pointer-events-none" 
+                  className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} select-none pointer-events-none`} 
                 />
               ) : (
                 <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />

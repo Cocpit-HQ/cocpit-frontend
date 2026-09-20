@@ -584,7 +584,7 @@ export const FeedPost = (props: FeedPostProps) => {
           props.isFullContent
             ? "w-full max-w-[442px] mx-auto bg-ds-bg flex flex-col gap-[16px] cursor-default box-border"
             : props.isProfileView
-            ? "w-full max-w-[442px] mx-auto flex flex-col gap-[12px] bg-ds-bg cursor-pointer"
+            ? "w-full max-w-[442px] mx-auto flex flex-col gap-[12px] bg-ds-bg cursor-pointer group"
             : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-[var(--ds-media-border)]'}`
         }
       >
@@ -686,6 +686,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 onShowLikes={() => handleOpenLikesModal()}
                 hideOverlayLikeBar={true}
                 isFullContent={props.isFullContent}
+                isProfileView={props.isProfileView}
               />
             ) : null}
           </>
@@ -760,6 +761,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 onShowLikes={() => handleOpenLikesModal()}
                 hideOverlayLikeBar={isVideoFeedCard}
                 isFullContent={props.isFullContent}
+                isProfileView={props.isProfileView}
               />
             )}
           </>
@@ -885,20 +887,20 @@ export const FeedPost = (props: FeedPostProps) => {
           isOpen={showOptions}
           onClose={() => setShowOptions(false)}
           position={optionsPos}
-          isMe={isRepostWithoutThoughts ? false : isTargetAuthorMe}
+          isMe={isTargetAuthorMe}
           isPollPost={!!pollData}
           visibility={targetVisibility}
           onEdit={() => {
             setShowOptions(false);
             if (isArticlePost) {
-              saveScrollPosition(props.isProfileView ? "profile" : "post", id.toString());
-              router.push(`/article/edit/${id}`);
+              saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
+              router.push(`/article/edit/${targetId}`);
             } else {
-              saveScrollPosition(props.isProfileView ? "profile" : "post", id.toString());
+              saveScrollPosition(props.isProfileView ? "profile" : "post", targetId.toString());
               if (props.onEdit) {
-                props.onEdit(props);
+                props.onEdit(interactionTargetProps);
               } else {
-                useUIStore.getState().setEditMode(true, id.toString(), props);
+                useUIStore.getState().setEditMode(true, targetId.toString(), interactionTargetProps as any);
               }
             }
           }}

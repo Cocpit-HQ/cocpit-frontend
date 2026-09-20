@@ -25,6 +25,7 @@ import { UserMention } from '@/services/api/users';
 import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationModal';
 import DiscardConfirmOverlay from '@/features/feed/components/create-post/shared/DiscardConfirmOverlay';
 import { cn } from '@/lib/utils';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
 const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit (up to 12 images x 10MB)
@@ -68,6 +69,7 @@ export function EditPostModal({
 }: EditPostModalProps) {
   const { data: session } = useSession();
   const currentUser = session?.user;
+  const { activeProfile } = useActiveProfile();
   const { updatePostInFeed, deletePost } = useFeed(false);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -712,6 +714,8 @@ export function EditPostModal({
 
   if (!isOpen) return null;
 
+  const isCompanyPost = activeProfile?.type === 'COMPANY' || Boolean(originalPost?.isCompanyPost || originalPost?.author_org_id || originalPost?.companyId);
+
   const displayAvatar =
     originalPost?.authorAvatar ||
     originalPost?.avatar ||
@@ -793,11 +797,11 @@ export function EditPostModal({
                       <img
                         src={displayAvatar}
                         alt={displayName}
-                        className="h-[32px] w-[32px] shrink-0 rounded-full object-cover"
+                        className={`h-[32px] w-[32px] shrink-0 ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} object-cover`}
                       />
                     ) : (
                       <div
-                        className="h-[32px] w-[32px] shrink-0 rounded-full flex items-center justify-center text-sm font-medium"
+                        className={`h-[32px] w-[32px] shrink-0 ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} flex items-center justify-center text-sm font-medium`}
                         style={{
                           backgroundColor: 'var(--ds-surface-2)',
                           color: 'var(--ds-text-primary)',

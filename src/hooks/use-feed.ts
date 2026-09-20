@@ -79,7 +79,7 @@ export const useFeed = (enableInitialFetch = true) => {
         ...oldData,
         pages: oldData.pages.map((page: any) => ({
           ...page,
-          posts: page.posts.filter((p: Post) => p.id !== id)
+          posts: page.posts.filter((p: Post) => p.id !== id && p.shared_post?.id !== id && (p as any).shared_post_id !== id)
         }))
       };
     });
@@ -153,7 +153,7 @@ export const useFeed = (enableInitialFetch = true) => {
         ...oldData,
         pages: oldData.pages.map((page: any) => ({
           ...page,
-          posts: page.posts.filter((post: Post) => post.id !== id)
+          posts: page.posts.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id)
         }))
       };
     });

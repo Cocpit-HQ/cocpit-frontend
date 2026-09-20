@@ -156,15 +156,15 @@ export const PostHeader = ({
     <div className="flex flex-row justify-between items-center w-full min-h-[40px]">
       <div className="flex flex-row items-center gap-2 flex-grow min-w-0 pr-2">
         {/* Avatar */}
-        <Link href={profileHref} className="shrink-0 flex-none block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded-full">
-          <div className={`w-[32px] h-[32px] rounded-full overflow-hidden flex items-center justify-center shrink-0 flex-none ${
+        <Link href={profileHref} className={`shrink-0 flex-none block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}>
+          <div className={`w-[32px] h-[32px] overflow-hidden flex items-center justify-center shrink-0 flex-none ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} ${
             variant === 'overlay' ? 'bg-black/40 border border-white/30 shadow-md' : 'bg-ds-surface-2'
           }`}>
             {authorAvatar && !imgError ? (
               <img 
                 src={authorAvatar} 
                 alt={author} 
-                className="w-full h-full object-cover rounded-full" 
+                className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 onError={() => setImgError(true)} 
               />
             ) : (

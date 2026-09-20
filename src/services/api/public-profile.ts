@@ -5,6 +5,8 @@ export interface PublicPostMedia {
   url: string;
   media_type: 'image' | 'video';
   aspect_ratio?: string;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface PublicPostPollOption {

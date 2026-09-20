@@ -32,25 +32,35 @@ const splitArticleContent = (content?: string | null, postType?: string) => {
 export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
   // Extract images and video
   const images: string[] = [];
+  const imageDimensions: Array<{ width: number; height: number } | null> = [];
   let videoSrc: string | undefined = undefined;
+  let mediaWidth: number | undefined;
+  let mediaHeight: number | undefined;
 
   // Ensure media is an array before iterating
   const mediaList = Array.isArray(backendPost.media) ? backendPost.media : [];
 
-  mediaList.forEach((item) => {
+  mediaList.forEach((item: any) => {
     const isActuallyVideo =
       item.media_type === "video" ||
-      (item as any).type === "video" ||
+      item.type === "video" ||
       item.url?.toLowerCase()?.match(/\.(mp4|webm|mov|m4v)(\?|#|$)/);
 
     if (isActuallyVideo) {
       videoSrc = item.url;
+      if (!mediaWidth && item.width) mediaWidth = item.width;
+      if (!mediaHeight && item.height) mediaHeight = item.height;
     } else if (
       item.media_type === "image" ||
-      (item as any).type === "image" ||
+      item.type === "image" ||
       item.url?.toLowerCase()?.match(/\.(jpg|jpeg|png|webp|gif|svg|avif)(\?|#|$)/)
     ) {
       images.push(item.url);
+      imageDimensions.push(
+        item.width && item.height ? { width: item.width, height: item.height } : null
+      );
+      if (!mediaWidth && item.width) mediaWidth = item.width;
+      if (!mediaHeight && item.height) mediaHeight = item.height;
     }
   });
 
@@ -127,6 +137,9 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     content: content,
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
+    imageDimensions: imageDimensions.length > 0 ? imageDimensions : undefined,
+    mediaWidth,
+    mediaHeight,
     videoSrc: videoSrc,
     likes: backendPost.like_count || 0,
     isLiked: backendPost.is_liked,
@@ -192,8 +205,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
           is_commented: (sp as any).is_commented,
           is_saved: (sp as any).is_saved,
           likedUsers: (sp as any).liked_users || [],
-          images: sp.media?.filter(m => m.media_type === 'image').map(m => m.url),
-          videoSrc: sp.media?.find(m => m.media_type === 'video')?.url,
+          images: sp.media?.filter(m => m.media_type === 'image' || (m as any).type === 'image').map(m => m.url),
+          imageDimensions: sp.media
+            ?.filter(m => m.media_type === 'image' || (m as any).type === 'image')
+            .map(m => ((m as any).width && (m as any).height ? { width: (m as any).width, height: (m as any).height } : null)),
+          videoSrc: sp.media?.find(m => m.media_type === 'video' || (m as any).type === 'video')?.url,
           isAvailable: true,
           poll: sp.poll ? {
             poll_id: sp.poll.poll_id,

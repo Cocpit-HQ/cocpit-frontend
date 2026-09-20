@@ -503,6 +503,11 @@ function RoleSection({
               </button>
             ))}
           </div>
+          {fieldErrors.work_type && (
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
+              <AlertTriangle className="w-3 h-3" />{fieldErrors.work_type}
+            </p>
+          )}
         </div>
 
         {/* Work mode */}
@@ -525,6 +530,11 @@ function RoleSection({
               </button>
             ))}
           </div>
+          {fieldErrors.work_mode && (
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
+              <AlertTriangle className="w-3 h-3" />{fieldErrors.work_mode}
+            </p>
+          )}
         </div>
 
         {/* Start date */}
@@ -930,6 +940,18 @@ export default function AddExperienceForm({
         valid = false
       }
 
+      // Work type required
+      if (!role.work_type) {
+        roleErrors.work_type = "Please select a work type"
+        valid = false
+      }
+
+      // Work mode required
+      if (!role.work_mode) {
+        roleErrors.work_mode = "Please select a work mode"
+        valid = false
+      }
+
       // Start date required
       if (!role.startMonth || !role.startYear) {
         roleErrors.startDate = "Start date is required"
@@ -1191,12 +1213,14 @@ export default function AddExperienceForm({
   /** Disable "Add new role" if it's a brand new company record (not editing, not existing) */
   const canAddRole = isEditing || isExistingCompany;
 
-  // Form requires at minimum: company + each role has title + start date + (end date if not current)
+  // Form requires at minimum: company + each role has title + work_type + work_mode + start date + (end date if not current)
   const isFormValid =
     company.trim() !== "" &&
     roles.every(
       (r) =>
         r.title.trim() !== "" &&
+        r.work_type !== "" &&
+        r.work_mode !== "" &&
         r.startMonth !== "" &&
         r.startYear !== "" &&
         (r.is_current || (r.endMonth !== "" && r.endYear !== ""))

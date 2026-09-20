@@ -5,10 +5,12 @@ import { BlockIcon } from "@/components/icons";
 
 interface ProfileBlockedStateProps {
   onUnblock: () => void;
+  isLoading?: boolean;
 }
 
 export const ProfileBlockedState: React.FC<ProfileBlockedStateProps> = ({
   onUnblock,
+  isLoading = false,
 }) => {
   return (
     /* FullPageError: w: 800px, h: 306px, p: 40px 20px, gap: 24px */
@@ -38,11 +40,12 @@ export const ProfileBlockedState: React.FC<ProfileBlockedStateProps> = ({
       {/* Primary emphasis button: w: 86px, h: 36px, p: 6px 12px, gap: 10px, bg: #EC6229, rounded: 100px */}
       <button
         type="button"
+        disabled={isLoading}
         onClick={onUnblock}
-        className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 transition-all flex flex-row justify-center items-center gap-[10px] cursor-pointer focus:outline-none flex-none shadow-md"
+        className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 transition-all flex flex-row justify-center items-center gap-[10px] cursor-pointer focus:outline-none flex-none shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
       >
         <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none text-center">
-          Unblock
+          {isLoading ? "..." : "Unblock"}
         </span>
       </button>
     </div>

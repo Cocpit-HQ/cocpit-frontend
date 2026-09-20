@@ -105,57 +105,70 @@ export function PostCarousel({
     if (!emblaApi) return 0;
 
     const slidesInView = emblaApi.slidesInView();
-    if (slidesInView && slidesInView.length > 0) {
-      if (slidesInView.length === 1) {
-        return slidesInView[0];
-      }
+    if (!slidesInView || slidesInView.length === 0) {
+      return Math.min(images.length - 1, Math.max(0, emblaApi.selectedScrollSnap()));
+    }
 
-      const rootNode = emblaApi.rootNode();
-      const slideNodes = emblaApi.slideNodes();
-
-      if (rootNode && slideNodes && slideNodes.length > 0) {
-        const rootRect = rootNode.getBoundingClientRect();
-        const rootCenter = rootRect.left + rootRect.width / 2;
-
-        let maxOverlap = -1;
-        let minCenterDist = Infinity;
-        let bestIndex = slidesInView[0];
-
-        for (const idx of slidesInView) {
-          const slideNode = slideNodes[idx];
-          if (!slideNode) continue;
-
-          const slideRect = slideNode.getBoundingClientRect();
-          const overlap = Math.max(
-            0,
-            Math.min(slideRect.right, rootRect.right) - Math.max(slideRect.left, rootRect.left)
-          );
-          const slideCenter = slideRect.left + slideRect.width / 2;
-          const dist = Math.abs(slideCenter - rootCenter);
-
-          if (
-            overlap > maxOverlap ||
-            (Math.abs(overlap - maxOverlap) < 1 && dist < minCenterDist)
-          ) {
-            maxOverlap = overlap;
-            minCenterDist = dist;
-            bestIndex = idx;
-          }
-        }
-        return bestIndex;
-      }
+    if (slidesInView.length === 1) {
       return slidesInView[0];
     }
 
-    return Math.min(images.length - 1, Math.max(0, emblaApi.selectedScrollSnap()));
+    // 1. If at the end of the scroll track and the final slide is in view, activate the final slide
+    if (!emblaApi.canScrollNext() && slidesInView.includes(images.length - 1)) {
+      return images.length - 1;
+    }
+
+    // 2. If at the beginning of the scroll track and the first slide is in view, activate the first slide
+    if (!emblaApi.canScrollPrev() && slidesInView.includes(0)) {
+      return 0;
+    }
+
+    const rootNode = emblaApi.rootNode();
+    const slideNodes = emblaApi.slideNodes();
+
+    if (rootNode && slideNodes && slideNodes.length > 0) {
+      const rootRect = rootNode.getBoundingClientRect();
+      const rootCenter = rootRect.left + rootRect.width / 2;
+
+      let bestScore = -Infinity;
+      let minCenterDist = Infinity;
+      let bestIndex = slidesInView[0];
+
+      for (const idx of slidesInView) {
+        const slideNode = slideNodes[idx];
+        if (!slideNode) continue;
+
+        const slideRect = slideNode.getBoundingClientRect();
+        const overlap = Math.max(
+          0,
+          Math.min(slideRect.right, rootRect.right) - Math.max(slideRect.left, rootRect.left)
+        );
+        const slideW = slideRect.width || 1;
+        const visibleRatio = overlap / slideW;
+        const slideCenter = slideRect.left + slideRect.width / 2;
+        const dist = Math.abs(slideCenter - rootCenter);
+
+        if (
+          visibleRatio > bestScore + 0.1 ||
+          (Math.abs(visibleRatio - bestScore) <= 0.1 && dist < minCenterDist)
+        ) {
+          bestScore = visibleRatio;
+          minCenterDist = dist;
+          bestIndex = idx;
+        }
+      }
+      return bestIndex;
+    }
+
+    return slidesInView[0];
   }, [emblaApi, images.length]);
 
   const updateActiveState = useCallback(() => {
     if (!emblaApi) return;
     const activeIdx = getActiveIndex();
     setSelectedIndex(activeIdx);
-    setCanScrollPrev(activeIdx > 0);
-    setCanScrollNext(activeIdx < images.length - 1);
+    setCanScrollPrev(emblaApi.canScrollPrev() && activeIdx > 0);
+    setCanScrollNext(emblaApi.canScrollNext() && activeIdx < images.length - 1);
   }, [emblaApi, getActiveIndex, images.length]);
 
   const onScroll = useCallback(() => {
@@ -260,10 +273,10 @@ export function PostCarousel({
             {images.map((src, index) => {
               const sw = slideWidths[index];
               const slideStyle: React.CSSProperties = sw
-                ? { width: `${sw}px`, flexShrink: 0, flexGrow: 0 }
+                ? { width: `${sw}px`, maxWidth: '100%', flexShrink: 0, flexGrow: 0 }
                 : {};
               const slideCls = sw
-                ? "relative h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                ? "relative max-w-full h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
                 : slideWidth === 'full'
                   ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
                   : "relative flex-[0_0_80%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out";
@@ -314,7 +327,7 @@ export function PostCarousel({
                 onClick={scrollPrev}
                 className={
                   arrowPlacement === 'inside'
-                    ? "absolute left-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-150 cursor-pointer outline-none active:scale-95"
+                    ? "absolute left-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-200 cursor-pointer outline-none active:scale-95 opacity-0 group-hover:opacity-100"
                     : "absolute -left-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
                 }
                 aria-label="Previous photo"
@@ -328,7 +341,7 @@ export function PostCarousel({
                 onClick={scrollNext}
                 className={
                   arrowPlacement === 'inside'
-                    ? "absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-150 cursor-pointer outline-none active:scale-95"
+                    ? "absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm shadow-md transition-all duration-200 cursor-pointer outline-none active:scale-95 opacity-0 group-hover:opacity-100"
                     : "absolute -right-[44px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full text-ds-text-primary hover:bg-ds-surface-2 transition-all duration-150 cursor-pointer outline-none"
                 }
                 aria-label="Next photo"

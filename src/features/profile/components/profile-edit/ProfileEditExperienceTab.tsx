@@ -34,7 +34,7 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
       const savedMode = sessionStorage.getItem("profile_edit_exp_mode") as "list" | "form";
       if (savedMode) return savedMode;
     }
-    return experiences.length === 0 ? "form" : initialMode;
+    return initialMode;
   });
   
   const [activeExpId, setActiveExpId] = useState<string | "new">(() => {
@@ -55,7 +55,7 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
       const saved = sessionStorage.getItem("profile_edit_exp_has_visited");
       if (saved) return saved === "true";
     }
-    return initialMode === "list" && experiences.length > 0;
+    return initialMode === "list";
   });
   const [disableAddRole, setDisableAddRole] = useState(false);
 
@@ -66,12 +66,11 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
       setIsAddingNewRole(false);
       setHasVisitedList(false);
     } else if (typeof window !== "undefined" && !sessionStorage.getItem("profile_edit_exp_mode")) {
-      const mode = experiences.length === 0 ? "form" : "list";
-      setViewMode(mode);
+      setViewMode(initialMode);
       setIsAddingNewRole(false);
-      setHasVisitedList(mode === "list");
+      setHasVisitedList(initialMode === "list");
     }
-  }, [initialMode, selectedId, experiences.length]);
+  }, [initialMode, selectedId]);
 
   useEffect(() => {
     sessionStorage.setItem("profile_edit_exp_mode", viewMode);
@@ -166,9 +165,6 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
     onSuccess?.();
     if (!hasVisitedList) {
       onCancel?.();
-    } else if (experiences.length <= 1) {
-      setViewMode("form");
-      setActiveExpId("new");
     } else {
       setViewMode("list");
     }
@@ -196,10 +192,6 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
       isAddingNewRole={isAddingNewRole}
       onToggleAddNewRole={(adding) => setIsAddingNewRole(adding)}
       onBackToList={() => {
-        if (experiences.length === 0) {
-          onCancel?.();
-          return;
-        }
         if (isAddingNewRole) {
           setIsAddingNewRole(false);
         } else {

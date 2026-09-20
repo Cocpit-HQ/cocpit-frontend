@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { Icon as CustomIcon, IconName } from '@/components/icons';
+import { Icon as CustomIcon, IconName, UserIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 
 interface SidebarProps {
@@ -141,11 +141,11 @@ export function Sidebar({ className }: SidebarProps) {
                 }}
                 className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-[180px] h-[33px] rounded-full transition-[var(--motion-quick)] group"
               >
-                <div className="w-[20px] h-[20px] rounded-full shrink-0 bg-[#6366F1] flex items-center justify-center overflow-hidden">
+                <div className={`w-[20px] h-[20px] rounded-full shrink-0 flex items-center justify-center overflow-hidden ${(user.image || activeProfile?.avatar_url) ? 'bg-[#6366F1]' : 'bg-ds-surface-1 border border-ds-border'}`}>
                   {user.image || activeProfile?.avatar_url ? (
                     <img src={user.image || activeProfile?.avatar_url} alt={user.name || "Personal"} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[10px] text-white font-bold">{(user.name || 'P').charAt(0).toUpperCase()}</span>
+                    <UserIcon className="w-[60%] h-[60%] text-ds-text-secondary" />
                   )}
                 </div>
                 <span className={`font-['DM_Sans'] truncate text-[16px] leading-[24px] ${!isCompany && activeProfile?.type === 'USER' ? 'font-medium text-ds-text-primary' : 'font-normal text-ds-text-secondary group-hover:text-ds-text-primary'}`}>

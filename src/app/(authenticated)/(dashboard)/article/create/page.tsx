@@ -34,11 +34,11 @@ export default function CreateArticlePage() {
 
   const handleClose = () => {
     useUIStore.getState().setArticleMode(false);
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
+    const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_scroll_path') : null;
+    if (savedPath && savedPath !== window.location.pathname) {
+      router.push(savedPath);
     } else {
-      const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_scroll_path') : null;
-      router.push(savedPath || '/feed');
+      router.push('/feed');
     }
   };
 

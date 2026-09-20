@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +39,6 @@ interface SocialProviderProps {
 
 export const SocialProvider = ({ children }: SocialProviderProps) => {
   const router = useRouter();
-  const { toast } = useToast();
   const { activeProfile, isCompany } = useActiveProfile();
   const { data: session, status } = useSession();
   const [followingIds, setFollowingIds] = useState<string[]>([]);
@@ -165,11 +164,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         return next;
       });
 
-      toast({
-        title: "Error",
-        description: "Failed to follow user. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to follow user. Please try again.");
     }
   };
 
@@ -231,11 +226,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         return next;
       });
 
-      toast({
-        title: "Error",
-        description: "Failed to unfollow user. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to unfollow user. Please try again.");
     }
   };
 
@@ -309,15 +300,14 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       setBlockedIds((prev) => [...prev, id]);
       setFollowingIds((prev) => prev.filter((uid) => uid !== id));
       notifyBlockEvent(id, true);
-      toast({
-        title: "User blocked",
+      toast.success("User blocked", {
         description: "You will no longer see their content.",
       });
       return { success: true };
     } catch (error: any) {
       console.error("Block failed", error);
       const errorMsg = error?.response?.data?.message || "Failed to block user";
-      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      toast.error(errorMsg);
       return { success: false, message: errorMsg };
     }
   };
@@ -327,13 +317,13 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       await api.delete(`/users/${id}/unblock`);
       setBlockedIds((prev) => prev.filter((uid) => uid !== id));
       notifyBlockEvent(id, false);
-      toast({ title: "User unblocked" });
+      toast.success("User unblocked");
       return { success: true };
     } catch (error: any) {
       console.error("Unblock failed", error);
       const errorMsg =
         error?.response?.data?.message || "Failed to unblock user";
-      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+      toast.error(errorMsg);
       return { success: false, message: errorMsg };
     }
   };

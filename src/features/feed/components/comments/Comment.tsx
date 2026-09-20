@@ -94,7 +94,6 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const handleBlock = async () => {
     try {
       await blockUser(String(authorId));
-      toast.success(`You have blocked ${author?.name || 'User'}`);
     } catch (err: any) {
       console.error("Block failed", err);
     }

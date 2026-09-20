@@ -7,6 +7,7 @@ import { companyProfileService } from '@/features/companyprofile/services/compan
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
 import { PostBody } from '../parts/PostBody';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
+import { UserIcon } from '@/components/icons';
 interface SharedPreviewProps {
   sharedPost: any;
   sharedPostId?: string;
@@ -283,16 +284,16 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
       >
         {/* Author row */}
         <div className="flex flex-row items-center gap-[8px] w-full">
-          <div className="w-[32px] h-[32px] rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-[14px] overflow-hidden flex-shrink-0 font-dmsans select-none">
+          <div className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-[14px] overflow-hidden flex-shrink-0 font-dmsans select-none`}>
             {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' ? (
               <img
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 src={sharedAvatar}
                 alt={sharedName || 'avatar'}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             ) : (
-              <span>{(sharedName || 'U').charAt(0).toUpperCase()}</span>
+              <UserIcon className="w-[60%] h-[60%] text-current" />
             )}
           </div>
           <div className="flex flex-col flex-1 min-w-0">

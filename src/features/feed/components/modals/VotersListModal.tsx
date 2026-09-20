@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
-import { CloseCrossIcon } from '@/components/icons';
+import { CloseCrossIcon, UserIcon } from '@/components/icons';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { getPollAnalytics } from '@/services/api/posts';
 import { PollOptionItem } from '../parts/PostPoll';
@@ -48,7 +48,7 @@ const VoterAvatar: React.FC<{ avatarUrl?: string; name: string }> = ({ avatarUrl
           onError={() => setImgError(true)}
         />
       ) : (
-        <span>{initial}</span>
+        <UserIcon className="w-[60%] h-[60%] text-current" />
       )}
     </div>
   );

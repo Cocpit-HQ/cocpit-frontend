@@ -29,7 +29,7 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
       const savedMode = sessionStorage.getItem("profile_edit_proj_mode") as "list" | "form";
       if (savedMode) return savedMode;
     }
-    return projects.length === 0 ? "form" : initialMode;
+    return initialMode;
   });
   
   const [activeProjId, setActiveProjId] = useState<string | "new">(() => {
@@ -44,7 +44,7 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
       const saved = sessionStorage.getItem("profile_edit_proj_has_visited");
       if (saved) return saved === "true";
     }
-    return initialMode === "list" && projects.length > 0;
+    return initialMode === "list";
   });
 
   useEffect(() => {
@@ -53,11 +53,10 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
       setActiveProjId(selectedId || "new");
       setHasVisitedList(false);
     } else if (typeof window !== "undefined" && !sessionStorage.getItem("profile_edit_proj_mode")) {
-      const mode = projects.length === 0 ? "form" : "list";
-      setViewMode(mode);
-      setHasVisitedList(mode === "list");
+      setViewMode(initialMode);
+      setHasVisitedList(initialMode === "list");
     }
-  }, [initialMode, selectedId, projects.length]);
+  }, [initialMode, selectedId]);
 
   useEffect(() => {
     sessionStorage.setItem("profile_edit_proj_mode", viewMode);
@@ -110,9 +109,6 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
     onSuccess?.();
     if (!hasVisitedList) {
       onCancel?.();
-    } else if (projects.length <= 1) {
-      setViewMode("form");
-      setActiveProjId("new");
     } else {
       setViewMode("list");
     }
@@ -132,10 +128,6 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
     <ProfileEditProjectForm
       initialProject={activeProject}
       onBackToList={() => {
-        if (projects.length === 0) {
-          onCancel?.();
-          return;
-        }
         if (!hasVisitedList) {
           onCancel?.();
         } else {

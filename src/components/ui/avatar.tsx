@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import { UserIcon } from "@/components/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -34,12 +35,14 @@ AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 const AvatarFallback = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Fallback>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <AvatarPrimitive.Fallback
     ref={ref}
-    className={cn("flex h-full w-full items-center justify-center rounded-full bg-[#EEF2FF] text-[#6366F1] font-semibold font-['Poppins'] select-none", className)}
+    className={cn("flex h-full w-full items-center justify-center rounded-full bg-ds-surface-1 border border-ds-border text-ds-text-secondary font-semibold font-['Poppins'] select-none", className)}
     {...props}
-  />
+  >
+    <UserIcon className="w-[60%] h-[60%] text-current" />
+  </AvatarPrimitive.Fallback>
 ));
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
