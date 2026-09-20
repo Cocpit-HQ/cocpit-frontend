@@ -75,11 +75,6 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
     router.push("/settings/privacy");
   };
 
-  const handleRedirectToVerification = () => {
-    onClose();
-    router.push("/settings/privacy");
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <BareDialogContent
