@@ -9,6 +9,7 @@ import {
 import type { Project, ProjectMedia } from "@/types/entities";
 import { ProfileProjectsEmptyState, ProfileProjectsErrorState } from "../ProfileEmptyStates";
 import { ProjectDocPreviewModal } from "@/features/profile/commonProfileComponents/ProjectDocPreviewModal";
+import { ExpandableText } from "@/hooks";
 
 interface ProfileProjectsTabProps {
   projects: Project[];
@@ -19,7 +20,25 @@ interface ProfileProjectsTabProps {
   onAddProject?: () => void;
 }
 
-import { ExpandableText } from "@/hooks";
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const formatMonthYear = (monthStr?: string | null, yearStr?: string | null): string => {
+  if (!monthStr && !yearStr) return "";
+  if (!monthStr) return yearStr ? String(yearStr).trim() : "";
+  
+  let formattedMonth = String(monthStr).trim();
+  const numericMonth = parseInt(formattedMonth, 10);
+  if (!isNaN(numericMonth) && numericMonth >= 1 && numericMonth <= 12) {
+    formattedMonth = MONTHS[numericMonth - 1];
+  } else {
+    const cleanStr = formattedMonth.replace(/\./g, "").trim();
+    const foundIdx = MONTHS.findIndex((m) => m.toLowerCase() === cleanStr.toLowerCase() || cleanStr.toLowerCase().startsWith(m.toLowerCase()));
+    if (foundIdx !== -1) {
+      formattedMonth = MONTHS[foundIdx];
+    }
+  }
+  return yearStr ? `${formattedMonth} ${yearStr}` : formattedMonth;
+};
 
 export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
   projects = [],
@@ -48,26 +67,15 @@ export const ProfileProjectsTab: React.FC<ProfileProjectsTabProps> = ({
   }
 
   const displayedProjects = isExpanded ? projects : projects.slice(0, 2);
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  const formatMonth = (m?: string | null) => {
-    if (!m) return "";
-    const idx = parseInt(m, 10) - 1;
-    return MONTHS[idx] || m;
-  };
 
   return (
     <div className="w-full flex flex-col items-center gap-5">
       <div className="w-full flex flex-col items-start gap-5">
         {displayedProjects.map((proj, idx) => {
-          const startDateFormatted = proj.start_month
-            ? `${formatMonth(proj.start_month)} ${proj.start_year || ""}`.trim()
-            : proj.start_year || "";
+          const startDateFormatted = formatMonthYear(proj.start_month, proj.start_year);
           const endDateFormatted = proj.is_current
             ? "Present"
-            : proj.end_month
-            ? `${formatMonth(proj.end_month)} ${proj.end_year || ""}`.trim()
-            : proj.end_year || "Present";
+            : formatMonthYear(proj.end_month, proj.end_year) || "Present";
 
           const skills = proj.skills || [];
           const isSkillsExpanded = expandedSkills[proj.project_id || `${idx}`];
@@ -305,4 +313,3 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 };
 
 export default ProfileProjectsTab;
-

@@ -84,8 +84,8 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
       >
         <DialogTitle className="sr-only">Contact info</DialogTitle>
 
-        {/* Modal Container: w-96 (384px), p-3, bg-[var(--ds-bg)], rounded-2xl, border */}
-        <div className="w-96 max-w-[95vw] p-3 bg-[var(--ds-bg)] rounded-2xl border border-[var(--ds-border)] flex flex-col justify-start items-center overflow-hidden text-[var(--ds-text-primary)] select-none font-['DM_Sans'] shadow-2xl relative z-10">
+        {/* Modal Container: w-[400px] h-[380px], p-3, bg-[var(--ds-bg)], rounded-2xl, border */}
+        <div className="w-[400px] h-[380px] max-w-[95vw] p-3 bg-[var(--ds-bg)] rounded-2xl border border-[var(--ds-border)] flex flex-col justify-start items-center overflow-hidden text-[var(--ds-text-primary)] select-none font-['DM_Sans'] shadow-2xl relative z-10">
           {/* Top Row: Close button right-aligned */}
           <div className="self-stretch flex justify-end items-center gap-2.5">
             <button

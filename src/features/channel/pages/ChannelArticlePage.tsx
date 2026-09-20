@@ -106,8 +106,22 @@ export default function ChannelArticlePage() {
           </h1>
 
           {/* Article HTML Content */}
+          <style dangerouslySetInnerHTML={{
+            __html: `
+            .article-content a,
+            [data-theme="dark"] .article-content a,
+            [data-theme="navy"] .article-content a {
+              color: #EC6229 !important;
+              transition: opacity 0.2s;
+            }
+            .article-content a:hover,
+            [data-theme="dark"] .article-content a:hover,
+            [data-theme="navy"] .article-content a:hover {
+              opacity: 0.8 !important;
+            }
+          `}} />
           <div
-            className="article-content prose prose-gray dark:prose-invert max-w-none font-['Poppins'] text-gray-800 dark:text-[#FFFFFF] mt-2"
+            className="article-content prose prose-gray dark:prose-invert max-w-none font-['Poppins'] text-gray-800 dark:text-[#FFFFFF] mt-2 [&_a]:!text-[#EC6229] [&_a]:!underline [&_a_*]:!text-[#EC6229]"
             dangerouslySetInnerHTML={{ __html: sanitizeArticleHtmlForDisplay(article.content) }}
           />
         </div>

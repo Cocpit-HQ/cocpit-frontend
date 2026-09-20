@@ -16,10 +16,12 @@ const formatDate = (dateStr?: string | null): string => {
   if (!dateStr) return "";
   try {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    if (isNaN(d.getTime())) return "";
+    const month = d.toLocaleDateString("en-US", { month: "short" }).replace(/\./g, "");
+    const year = d.getFullYear();
+    return `${month} ${year}`;
   } catch {
-    return dateStr;
+    return "";
   }
 };
 

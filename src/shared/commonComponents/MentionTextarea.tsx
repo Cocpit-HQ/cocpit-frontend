@@ -582,10 +582,10 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     onTouchMove={(e) => e.stopPropagation()}
                     className="fixed z-[99999] pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
                     style={{
-                        top: suggestionPosition.top 
+                        top: typeof suggestionPosition.top === 'number'
                             ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
                             : '40px',
-                        left: suggestionPosition.left 
+                        left: typeof suggestionPosition.left === 'number'
                             ? `${(textareaRef.current?.getBoundingClientRect().left || 0) + suggestionPosition.left}px` 
                             : '10px',
                     }}
@@ -619,10 +619,10 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     }}
                     className="fixed z-[99999] pointer-events-auto animate-in fade-in-0 zoom-in-95 shadow-2xl bg-ds-surface-2 border border-ds-border rounded-xl flex flex-col items-start p-4 gap-2 w-[280px] max-h-[232px] overflow-x-hidden overflow-y-auto custom-scrollbar mb-2 box-border"
                     style={{
-                        top: suggestionPosition.top 
+                        top: typeof suggestionPosition.top === 'number'
                             ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
                             : '40px',
-                        left: suggestionPosition.left 
+                        left: typeof suggestionPosition.left === 'number'
                             ? `${(textareaRef.current?.getBoundingClientRect().left || 0) + suggestionPosition.left}px` 
                             : '10px',
                     }}

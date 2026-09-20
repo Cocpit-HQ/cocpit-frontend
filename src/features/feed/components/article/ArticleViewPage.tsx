@@ -404,7 +404,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
               .article-content a,
               [data-theme="dark"] .article-content a,
               [data-theme="navy"] .article-content a {
-                color: var(--ds-accent) !important;
+                color: #EC6229 !important;
                 transition: opacity 0.2s;
               }
               .article-content a:hover,
@@ -417,7 +417,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
             {/* Article Rich Text Body */}
             <div
               ref={contentRef}
-              className="article-content prose prose-invert max-w-none w-full text-[var(--ds-text-primary)]"
+              className="article-content prose prose-invert max-w-none w-full text-[var(--ds-text-primary)] [&_a]:!text-[#EC6229] [&_a]:!underline [&_a_*]:!text-[#EC6229]"
               dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
           </div>

@@ -1239,13 +1239,18 @@ const ArticleFlow = ({
     <div className="relative flex flex-col flex-1 bg-[#030303] text-ds-text-primary font-dm-sans select-none h-full w-full overflow-hidden">
       {/* Custom Styles */}
       <style>{`
-        .article-title-editor[contenteditable]:empty:before {
+        /* Fix ID-XXXX: Add :has(> br:only-child) to handle cases where browsers leave a stray <br> 
+           tag inside the empty contenteditable when deleting text, causing :empty to fail and 
+           the placeholder to disappear indefinitely. */
+        .article-title-editor[contenteditable]:empty:before,
+        .article-title-editor[contenteditable]:has(> br:only-child):before {
           content: attr(placeholder);
           color: #726B67;
           font-weight: 700;
           cursor: text;
         }
-        [contenteditable]:not(.article-title-editor):empty:before {
+        [contenteditable]:not(.article-title-editor):empty:before,
+        [contenteditable]:not(.article-title-editor):has(> br:only-child):before {
           content: attr(placeholder);
           color: #726B67;
           font-weight: 400;
@@ -1589,6 +1594,14 @@ const ArticleFlow = ({
           contentEditable
           role="textbox"
           onInput={(e) => {
+            const text = e.currentTarget.innerText || '';
+            if (text.trim() === '' && e.currentTarget.innerHTML !== '') {
+              // Clear stray <br> tags left by browser when deleting all text
+              // This ensures the :empty CSS pseudoclass works for the placeholder
+              if (text === '' || text === '\n') {
+                e.currentTarget.innerHTML = '';
+              }
+            }
             onTitleChange(e.currentTarget.innerText || '');
           }}
           onKeyDown={(e) => {

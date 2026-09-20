@@ -6,11 +6,10 @@ import { DownloadProfileScreen } from "@/features/profile/components/download-pr
 
 export default function DownloadProfilePage() {
   const router = useRouter();
+  
+  React.useEffect(() => {
+    router.replace("/profile");
+  }, [router]);
 
-  return (
-    <DownloadProfileScreen
-      isOpen={true}
-      onClose={() => router.push("/profile")}
-    />
-  );
+  return null;
 }

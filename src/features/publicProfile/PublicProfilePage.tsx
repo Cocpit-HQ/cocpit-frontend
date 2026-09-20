@@ -76,6 +76,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDownloadProfileOpen, setIsDownloadProfileOpen] = useState(false);
+  const [downloadPdfUrl, setDownloadPdfUrl] = useState<string | null>(null);
   const [isFollowListModalOpen, setIsFollowListModalOpen] = useState(false);
   const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
   const [isSendOfferOpen, setIsSendOfferOpen] = useState(false);
@@ -177,6 +178,33 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       window.open(user.resume.url, "_blank");
     } else {
       toast.info("No resume uploaded yet");
+    }
+  };
+
+  const handleDownloadProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const toastId = toast.loading("Generating your resume...");
+      
+      const { downloadProfileResumePdf } = await import("@/services/api/profile");
+      const { blob } = await downloadProfileResumePdf(user.id);
+      
+      const url = window.URL.createObjectURL(blob);
+      setDownloadPdfUrl(url);
+      setIsDownloadProfileOpen(true);
+      
+      // Automatically trigger the download
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = `resume-${(user as any)?.first_name || (user as any)?.username || "profile"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      toast.dismiss(toastId);
+    } catch (error) {
+      console.error("Failed to fetch resume:", error);
+      toast.error("Failed to load resume preview.");
     }
   };
 
@@ -406,12 +434,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                     View resume
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={() => setIsDownloadProfileOpen(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Download profile
-                  </DropdownMenuItem>
+                  {user?.profile_score?.score === 100 && (
+                    <DropdownMenuItem
+                      onClick={handleDownloadProfile}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                    >
+                      Download profile
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuItem
                     onClick={() => setIsShareModalOpen(true)}
@@ -598,15 +628,17 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         />
       )}
 
-      {isDownloadProfileOpen && (
+      {isDownloadProfileOpen && downloadPdfUrl && (
         <DownloadProfileScreen
           isOpen={isDownloadProfileOpen}
-          onClose={() => setIsDownloadProfileOpen(false)}
-          user={user}
-          experiences={experiences}
-          educations={educations}
-          projects={projects}
-          skills={skills}
+          onClose={() => {
+            setIsDownloadProfileOpen(false);
+            if (downloadPdfUrl) {
+              window.URL.revokeObjectURL(downloadPdfUrl);
+              setDownloadPdfUrl(null);
+            }
+          }}
+          pdfUrl={downloadPdfUrl}
         />
       )}
 
@@ -691,9 +723,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         }}
         onSendOffer={() => setIsSendOfferOpen(true)}
         onViewResume={handleViewResume}
+        onDownloadProfile={handleDownloadProfile}
         onShareProfile={() => setIsShareModalOpen(true)}
         onBlockProfile={() => setShowBlockDialog(true)}
         onReportProfile={() => setIsReportModalOpen(true)}
+        profileScore={user?.profile_score?.score}
       />
     </div>
   );

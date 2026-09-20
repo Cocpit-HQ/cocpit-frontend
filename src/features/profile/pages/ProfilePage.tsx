@@ -107,6 +107,7 @@ export default function ProfilePage() {
   const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
   const [isShareProfileModalOpen, setIsShareProfileModalOpen] = useState(false);
   const [isDownloadProfileOpen, setIsDownloadProfileOpen] = useState(false);
+  const [downloadPdfUrl, setDownloadPdfUrl] = useState<string | null>(null);
 
   const [editingExperiences, setEditingExperiences] = useState<Experience[] | undefined>(undefined);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
@@ -485,8 +486,31 @@ export default function ProfilePage() {
     setIsShareProfileModalOpen(true);
   };
 
-  const handleDownloadProfile = () => {
-    setIsDownloadProfileOpen(true);
+  const handleDownloadProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const toastId = toast.loading("Generating your resume...");
+      
+      const { downloadProfileResumePdf } = await import("@/services/api/profile");
+      const { blob } = await downloadProfileResumePdf(user.id);
+      
+      const url = window.URL.createObjectURL(blob);
+      setDownloadPdfUrl(url);
+      setIsDownloadProfileOpen(true);
+      
+      // Automatically trigger the download
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = `resume-${(user as any)?.first_name || (user as any)?.username || "profile"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      toast.dismiss(toastId);
+    } catch (error) {
+      console.error("Failed to fetch resume:", error);
+      toast.error("Failed to load resume preview.");
+    }
   };
 
   const handleScoreActionClick = (action: string) => {
@@ -776,16 +800,17 @@ export default function ProfilePage() {
       </div>
 
       {/* Modals & Dialogs */}
-      {isDownloadProfileOpen && (
+      {isDownloadProfileOpen && downloadPdfUrl && (
         <DownloadProfileScreen
           isOpen={isDownloadProfileOpen}
-          onClose={() => setIsDownloadProfileOpen(false)}
-          profileData={profileData}
-          user={user}
-          experiences={flatExperiences}
-          educations={educations}
-          projects={projects}
-          skills={skills}
+          onClose={() => {
+            setIsDownloadProfileOpen(false);
+            if (downloadPdfUrl) {
+              window.URL.revokeObjectURL(downloadPdfUrl);
+              setDownloadPdfUrl(null);
+            }
+          }}
+          pdfUrl={downloadPdfUrl}
         />
       )}
 

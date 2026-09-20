@@ -109,4 +109,5 @@ export interface PublicUserProfileResponse {
     is_role_visible?: boolean; // Optional as public profile filters hidden ones
     priority?: number;
   }[];
+  profile_score?: import('@/features/profile-score/types/profileScore.types').ProfileScoreResponse;
 }

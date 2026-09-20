@@ -43,6 +43,7 @@ export interface User {
   created_at?: string;
   is_identity_verified?: boolean;
   is_blocked_by_me?: boolean;
+  profile_score?: ProfileScoreResponse;
 }
 
 export interface CompanyRole {

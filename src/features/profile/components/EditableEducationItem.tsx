@@ -42,7 +42,10 @@ export function EditableEducationItem({
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
         const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00Z`);
-        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        if (isNaN(date.getTime())) return "";
+        const month = date.toLocaleDateString('en-US', { month: 'short' }).replace(/\./g, "");
+        const year = date.getFullYear();
+        return `${month} ${year}`;
     };
 
     return (

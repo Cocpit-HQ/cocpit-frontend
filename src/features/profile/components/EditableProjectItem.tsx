@@ -35,20 +35,23 @@ export function EditableProjectItem({
     return truncated;
   }, [project.details, isDescExpanded, isLongDescription]);
 
-  const formatDate = (month: string | undefined | null, year: string | undefined | null) => {
-    if (!month && !year) return "";
-    const dateStr = `${month || "January"} 1, ${year || new Date().getFullYear()}`;
-    const date = new Date(dateStr);
+  const formatDate = (monthStr: string | undefined | null, yearStr: string | undefined | null) => {
+    if (!monthStr && !yearStr) return "";
+    if (!monthStr) return yearStr ? String(yearStr).trim() : "";
     
-    if (isNaN(date.getTime())) {
-      return `${month ? month.slice(0, 3) : ""} ${year || ""}`.trim();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let formattedMonth = String(monthStr).trim();
+    const numericMonth = parseInt(formattedMonth, 10);
+    if (!isNaN(numericMonth) && numericMonth >= 1 && numericMonth <= 12) {
+      formattedMonth = months[numericMonth - 1];
+    } else {
+      const cleanStr = formattedMonth.replace(/\./g, "").trim();
+      const foundIdx = months.findIndex((m) => m.toLowerCase() === cleanStr.toLowerCase() || cleanStr.toLowerCase().startsWith(m.toLowerCase()));
+      if (foundIdx !== -1) {
+        formattedMonth = months[foundIdx];
+      }
     }
-    
-    const options: Intl.DateTimeFormatOptions = {};
-    if (month) options.month = "short";
-    if (year) options.year = "numeric";
-    
-    return date.toLocaleDateString("en-US", options);
+    return yearStr ? `${formattedMonth} ${yearStr}` : formattedMonth;
   };
 
   const formattedStart = useMemo(() => {
@@ -56,7 +59,8 @@ export function EditableProjectItem({
   }, [project.start_month, project.start_year]);
 
   const formattedEnd = useMemo(() => {
-    return project.is_current || !project.end_year ? "Present" : formatDate(project.end_month, project.end_year);
+    if (project.is_current) return "Present";
+    return formatDate(project.end_month, project.end_year);
   }, [project.is_current, project.end_month, project.end_year]);
 
   const formattedTeamSize = useMemo(() => {

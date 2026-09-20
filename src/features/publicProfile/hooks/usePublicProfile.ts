@@ -124,6 +124,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         company_roles: (data as any).organization_roles || data.company_roles || [],
         resume: data.resume || null,
         is_blocked_by_me: user.is_blocked_by_me || false,
+        profile_score: data.profile_score,
     };
 };
 

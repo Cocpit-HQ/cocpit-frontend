@@ -2751,8 +2751,9 @@
 .article-content strong, .article-editor strong {
   font-weight: 700 !important;
 }
-.article-content a, .article-editor a {
-  color: #4f46e5;
+.article-content a, .article-editor a,
+.article-content a *, .article-editor a * {
+  color: #EC6229 !important;
   text-decoration: underline;
 }
 .article-content img, .article-editor img {
