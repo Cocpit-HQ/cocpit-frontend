@@ -11,23 +11,19 @@ export function AppearanceSettingsPage() {
   const { theme, setTheme } = useTheme();
   const { isCompany } = useActiveProfile();
 
-  const handleThemeChange = (newTheme: 'system' | 'light' | 'dark') => {
-    if (newTheme === 'system') {
-      const isDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(isDark ? 'dark' : 'light');
-    } else {
-      setTheme(newTheme);
-    }
+  const handleThemeChange = (newTheme: 'dark') => {
+    setTheme(newTheme);
     toast.success('Appearance settings updated');
   };
 
   const themes = [
     {
-      id: 'system',
-      title: 'System',
-      description: 'Optimal for long focus sessions',
-      icon: Monitor,
+      id: 'dark',
+      title: 'Dark mode',
+      description: 'Pure black for OLED efficiency (Default)',
+      icon: Moon,
     },
+    /*
     {
       id: 'light',
       title: 'Light mode',
@@ -35,11 +31,12 @@ export function AppearanceSettingsPage() {
       icon: Sun,
     },
     {
-      id: 'dark',
-      title: 'Dark mode',
-      description: 'Pure black for OLED efficiency',
-      icon: Moon,
-    }
+      id: 'system',
+      title: 'System',
+      description: 'Sync with your operating system',
+      icon: Monitor,
+    },
+    */
   ] as const;
 
   return (
@@ -61,12 +58,13 @@ export function AppearanceSettingsPage() {
           <div className="flex flex-col w-full border border-[#E5E7EB] dark:border-border rounded-[16px] bg-white dark:bg-card">
             {themes.map((t, index) => {
               const Icon = t.icon;
-              const isSelected = theme === t.id;
+              const currentTheme = theme || 'dark';
+              const isSelected = currentTheme === t.id || (t.id === 'dark' && currentTheme === 'navy');
               
               return (
                 <div 
                   key={t.id}
-                  onClick={() => handleThemeChange(t.id as 'system' | 'light' | 'dark')}
+                  onClick={() => handleThemeChange(t.id as 'dark')}
                   className={`flex flex-row items-center justify-between p-4 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-secondary ${
                     index === 0 ? 'rounded-t-[16px]' : ''
                   } ${

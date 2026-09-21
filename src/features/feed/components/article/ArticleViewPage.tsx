@@ -191,16 +191,18 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
 
   // Navigation handlers
   const handleClose = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
+    const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+    if (savedPath && savedPath !== window.location.pathname && !savedPath.includes('/article/')) {
+      router.push(savedPath);
     } else {
-      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
-      router.push(savedPath || '/feed');
+      router.push('/feed');
     }
   };
 
   const handleEdit = () => {
-    saveScrollPosition("article", id);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('cocpit_article_source_path', `/article/${id}`);
+    }
     router.push(`/article/edit/${id}`);
   };
 
@@ -212,8 +214,9 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
       toast.success('Article deleted successfully');
-      if (window.history.length > 1) {
-        router.back();
+      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+      if (savedPath && savedPath !== window.location.pathname && !savedPath.includes('/article/')) {
+        router.push(savedPath);
       } else {
         router.push('/feed');
       }

@@ -336,7 +336,7 @@ export default function SettingsPage() {
   const [showMobileDetail, setShowMobileDetail] = useState(false)
 
   // Fix hydration mismatch: Initialize with a deterministic value
-  const [pendingTheme, setPendingTheme] = useState<Theme>("navy")
+  const [pendingTheme, setPendingTheme] = useState<Theme>("dark")
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -515,6 +515,8 @@ export default function SettingsPage() {
                     <h3 className="text-foreground mb-4">Theme</h3>
 
                     <div className="space-y-3">
+                      {/* Navy Mode and Light Mode commented out - only dark theme is supported */}
+                      {/*
                       <ThemeOption
                         icon={<Zap className="w-5 h-5" />}
                         title="Navy Mode"
@@ -529,6 +531,7 @@ export default function SettingsPage() {
                         isSelected={pendingTheme === "light"}
                         onClick={() => setPendingTheme("light")}
                       />
+                      */}
                       <ThemeOption
                         icon={<Moon className="w-5 h-5" />}
                         title="Dark Mode"

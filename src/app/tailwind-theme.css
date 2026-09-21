@@ -1,4 +1,4 @@
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *));
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *, :root:not([data-theme=light]), :root:not([data-theme=light]) *));
 
 @theme {
   --font-sans: "Twemoji Country Flags", 'Inter', var(--font-geist-sans), sans-serif;

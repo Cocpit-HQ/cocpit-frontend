@@ -126,6 +126,8 @@ export function ProfileSwitcher({
             </div>
           </DropdownMenuLabel>
 
+          {/* Light mode toggle commented out - only dark theme is active */}
+          {/*
           <div className="flex items-center gap-1 p-1 bg-profile-hover rounded-full h-[36px] w-[72px]">
             <button
               onClick={() => setTheme("light")}
@@ -142,7 +144,7 @@ export function ProfileSwitcher({
               onClick={() => setTheme("dark")}
               className={cn(
                 "flex items-center justify-center w-7 h-7 rounded-full transition-all",
-                theme === "dark"
+                theme !== "light"
                   ? "bg-white text-[#6366F1] shadow-sm"
                   : "text-[#6B7280] hover:text-[#6366F1]",
               )}
@@ -150,6 +152,7 @@ export function ProfileSwitcher({
               <Moon className="w-4 h-4" />
             </button>
           </div>
+          */}
         </div>
 
         <div className="space-y-2">

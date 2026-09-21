@@ -28,7 +28,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *));
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *, :root:not([data-theme=light]), :root:not([data-theme=light]) *));
 
 @layer base {
 

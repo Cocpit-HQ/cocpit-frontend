@@ -241,7 +241,7 @@ export function ProfileAllPostsScreen({
       onClose();
       return;
     }
-    router.push(userId && !isOwner ? `/profile/${userId}` : "/profile");
+    router.replace(userId && !isOwner ? `/profile/${userId}` : "/profile");
   };
 
   // Client-side filtering per active sub-tab

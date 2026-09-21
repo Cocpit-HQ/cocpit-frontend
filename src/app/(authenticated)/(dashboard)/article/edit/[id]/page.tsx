@@ -27,11 +27,18 @@ export default function EditArticlePage() {
   };
 
   const handleClose = () => {
+    const sourcePath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_article_source_path') : null;
     const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_scroll_path') : null;
-    if (savedPath && savedPath !== window.location.pathname) {
-      router.push(savedPath);
+
+    if (sourcePath && sourcePath !== window.location.pathname) {
+      try {
+        sessionStorage.removeItem('cocpit_article_source_path');
+      } catch (e) {}
+      router.replace(sourcePath);
+    } else if (savedPath && savedPath !== window.location.pathname && !savedPath.includes('/article/edit')) {
+      router.replace(savedPath);
     } else {
-      router.push('/feed');
+      router.replace('/feed');
     }
   };
 

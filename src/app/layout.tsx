@@ -60,13 +60,21 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                // Only 'dark' theme is valid. 'navy' and 'light' are commented out.
+                var validThemes = ['dark'];
+                /* var validThemes = ['dark', 'navy', 'light']; */
                 var themeColors = {
                   'dark':  '#030303',
-                  'navy':  '#030303',
-                  'light': '#FFF9F6',
+                  // 'navy':  '#030303',
+                  // 'light': '#FFF9F6',
                 };
                 try {
-                  var saved = localStorage.getItem('theme') || 'dark';
+                  var saved = localStorage.getItem('theme');
+                  // Ensure default is strictly 'dark' if unset, 'system', or invalid
+                  if (!saved || validThemes.indexOf(saved) === -1) {
+                    saved = 'dark';
+                    localStorage.setItem('theme', 'dark');
+                  }
                   var color = themeColors[saved] || '#030303';
                   document.documentElement.setAttribute('data-theme', saved);
                   // Apply bg directly on <html> so Safari overscroll / pull-to-refresh

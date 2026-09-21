@@ -13,8 +13,8 @@ import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 
 const THEME_BG_COLORS: Record<string, string> = {
   dark:  '#030303',
-  navy:  '#030303',
-  light: '#FFF9F6',
+  // navy:  '#030303',
+  // light: '#FFF9F6',
 };
 
 /**
@@ -72,7 +72,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           defaultTheme="dark"
           enableSystem={false}
           storageKey="theme"
-          themes={['light', 'dark', 'navy']}
+          themes={['dark']}
         >
           <ThemeColorSync />
           <QueryClientProvider client={queryClient}>
