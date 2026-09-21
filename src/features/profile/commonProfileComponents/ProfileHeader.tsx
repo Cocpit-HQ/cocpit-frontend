@@ -151,11 +151,6 @@ export const ProfileHeader = React.memo(function ProfileHeader({
         <div
             className={cn("h-[160px] relative rounded-b-[24px] overflow-hidden", coverImage && "cursor-pointer")}
             onClick={() => {
-                if (coverImage && typeof window !== "undefined" && window.innerWidth < 768) {
-                    setMediaModal({ isOpen: true, type: "banner", url: coverImage });
-                }
-            }}
-            onDoubleClick={() => {
                 if (coverImage) {
                     setMediaModal({ isOpen: true, type: "banner", url: coverImage });
                 }
@@ -222,17 +217,11 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                         <div
                             className="w-[98px] h-[98px] relative cursor-pointer"
                             onClick={(e) => {
-                                if (typeof window !== "undefined" && window.innerWidth < 768 && hasValidAvatar) {
+                                if (hasValidAvatar) {
                                     e.stopPropagation();
                                     setMediaModal({ isOpen: true, type: "avatar", url: user.avatar });
-                                    return;
-                                }
-                                onAvatarClick?.();
-                            }}
-                            onDoubleClick={(e) => {
-                                e.stopPropagation();
-                                if (hasValidAvatar) {
-                                    setMediaModal({ isOpen: true, type: "avatar", url: user.avatar });
+                                } else {
+                                    onAvatarClick?.();
                                 }
                             }}
                         >

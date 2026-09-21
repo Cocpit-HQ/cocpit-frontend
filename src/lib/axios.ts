@@ -87,17 +87,25 @@ api.interceptors.response.use(
       errorMessage.toLowerCase().includes("google account") ||
       errorMessage.toLowerCase().includes("credentials") ||
       errorMessage.toLowerCase().includes("otp") ||
-      errorMessage.toLowerCase().includes("verification")
+      errorMessage.toLowerCase().includes("verification") ||
+      (errorMessage.toLowerCase().includes("suspended") && originalRequest.url?.includes("/login"))
     );
  
     if (isCredentialError) {
       return Promise.reject(error);
     }
+    
     // Prevent infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
  
       try {
+        // Handle suspension explicitly
+        if (errorMessage.toLowerCase().includes("suspended")) {
+          console.error("Account suspended. Triggering hard logout.");
+          await hardLogout("suspended");
+          return Promise.reject(error);
+        }
         // 1. Detect deterministic SESSION_INVALID signal from backend
         if (error.response?.data?.error === "SESSION_INVALID") {
           console.error("Critical: Session revoked or invalidated. Triggering hard logout.");

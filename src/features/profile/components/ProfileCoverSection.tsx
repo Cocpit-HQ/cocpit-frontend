@@ -101,57 +101,16 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
 
   const showProgressRing = isOwnProfile && Math.round(completionPercentage) < 100;
 
-  const lastBannerTapRef = useRef<number>(0);
-  const lastAvatarTapRef = useRef<number>(0);
-
   const handleBannerClick = () => {
-    if (!displayCover) return;
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setMediaModal({ isOpen: true, type: "banner", url: displayCover });
-    }
-  };
-
-  const handleBannerDoubleClick = () => {
     if (displayCover) {
       setMediaModal({ isOpen: true, type: "banner", url: displayCover });
     }
   };
 
-  const handleBannerTouchEnd = () => {
-    if (!displayCover) return;
-    const now = Date.now();
-    if (now - lastBannerTapRef.current < 350) {
-      setMediaModal({ isOpen: true, type: "banner", url: displayCover });
-      lastBannerTapRef.current = 0;
-    } else {
-      lastBannerTapRef.current = now;
-    }
-  };
-
   const handleAvatarClick = (e: React.MouseEvent) => {
-    if (!displayAvatar) return;
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      e.stopPropagation();
-      setMediaModal({ isOpen: true, type: "avatar", url: displayAvatar });
-    }
-  };
-
-  const handleAvatarDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
     if (displayAvatar) {
-      setMediaModal({ isOpen: true, type: "avatar", url: displayAvatar });
-    }
-  };
-
-  const handleAvatarTouchEnd = (e: React.TouchEvent) => {
-    if (!displayAvatar) return;
-    const now = Date.now();
-    if (now - lastAvatarTapRef.current < 350) {
       e.stopPropagation();
       setMediaModal({ isOpen: true, type: "avatar", url: displayAvatar });
-      lastAvatarTapRef.current = 0;
-    } else {
-      lastAvatarTapRef.current = now;
     }
   };
 
@@ -164,8 +123,6 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
           displayCover && "cursor-pointer"
         )}
         onClick={handleBannerClick}
-        onTouchEnd={handleBannerTouchEnd}
-        onDoubleClick={handleBannerDoubleClick}
       >
         {displayCover ? (
           <img
@@ -222,8 +179,6 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
             {/* Frame 2609490: Inner Avatar Image */}
             <div
               onClick={handleAvatarClick}
-              onTouchEnd={handleAvatarTouchEnd}
-              onDoubleClick={handleAvatarDoubleClick}
               className={cn(
                 "w-[76px] h-[76px] md:w-[102px] md:h-[102px] left-[6px] top-[6px] md:left-[7px] md:top-[7px] absolute rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)] z-10",
                 displayAvatar && "cursor-pointer"
@@ -254,8 +209,6 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
           /* Standalone Avatar Circle */
           <div
             onClick={handleAvatarClick}
-            onTouchEnd={handleAvatarTouchEnd}
-            onDoubleClick={handleAvatarDoubleClick}
             className={cn(
               "w-[88px] h-[88px] md:w-[116px] md:h-[116px] rounded-full overflow-hidden flex flex-col justify-center items-center select-none bg-[var(--ds-surface-2)]",
               displayAvatar && "cursor-pointer"

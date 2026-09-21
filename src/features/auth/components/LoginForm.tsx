@@ -358,6 +358,19 @@ const LoginForm = () => {
         </div>
       )}
 
+      {/* Suspended Alert */}
+      {reason === "suspended" && (
+        <div className="w-full sm:w-[260px] p-3 bg-[#3a1a1a] border border-[#5c2424] rounded-xl flex items-start gap-2 text-xs mb-4">
+          <AlertCircleIcon className="w-4 h-4 text-[#ff4d4d] shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-white">YOUR ACCOUNT HAS BEEN SUSPENDED.</p>
+            <p className="text-[#ff9999] text-[11px] mt-0.5">
+              Please contact support if you believe this is a mistake.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Deactivated Alert */}
       {reason === "deactivated" && (
         <div className="w-full sm:w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">

@@ -43,17 +43,7 @@ export function ViewMediaModal({
   if (!isOpen || !activeUrl || !mounted) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center w-screen h-screen select-none media-modal-backdrop bg-[#030303] md:bg-[#030303]/60">
-      <style>{`
-        .media-modal-backdrop {
-          background-color: #030303;
-        }
-        @media (min-width: 768px) {
-          .media-modal-backdrop {
-            background-color: rgba(3, 3, 3, 0.6);
-          }
-        }
-      `}</style>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center w-screen h-screen select-none bg-[#030303]">
       {/* Cancel Cross Icon at top right: right: 16px on mobile (right-4), 40px on desktop (md:right-10); top: 40px (top-10) */}
       <button
         type="button"
