@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
+import { useUIStore } from "@/store/ui.store";
 import { CloseIcon, ProfileEditIcon } from "@/components/icons";
 import { FeedPost } from "@/features/feed/components/FeedPost";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
@@ -240,11 +241,7 @@ export function ProfileAllPostsScreen({
       onClose();
       return;
     }
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push(userId && !isOwner ? `/profile/${userId}` : "/profile");
-    }
+    router.push(userId && !isOwner ? `/profile/${userId}` : "/profile");
   };
 
   // Client-side filtering per active sub-tab
@@ -364,6 +361,14 @@ export function ProfileAllPostsScreen({
                     onDelete={isOwner ? handleDeletePost : undefined}
                     onToggleVisibility={isOwner ? handleToggleVisibility : undefined}
                     priority={false}
+                    onRepostWithThoughts={(postToQuote) => {
+                      useUIStore.getState().setSharedPostData(postToQuote);
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        useUIStore.getState().setActiveModal('create-post');
+                      } else {
+                        router.push('/feed');
+                      }
+                    }}
                   />
                 </div>
               ))}

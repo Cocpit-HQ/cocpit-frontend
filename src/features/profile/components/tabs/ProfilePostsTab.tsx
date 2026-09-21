@@ -2,7 +2,9 @@
 
 import React, { useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useUIStore } from "@/store/ui.store";
 import { FeedPost } from "@/features/feed/components/FeedPost";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 import type { Post } from "@/types/entities";
@@ -85,6 +87,7 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
   onCreatePost,
   onSeeAll,
 }) => {
+  const router = useRouter();
   const { data: session } = useSession();
   const { isCompany, activeProfile, userCompanies } = useActiveProfile();
 
@@ -140,6 +143,14 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
               onDelete={isOwnProfile ? onDeletePost : undefined}
               onToggleVisibility={isOwnProfile ? onToggleVisibility : undefined}
               priority={false}
+              onRepostWithThoughts={(postToQuote) => {
+                useUIStore.getState().setSharedPostData(postToQuote);
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  useUIStore.getState().setActiveModal('create-post');
+                } else {
+                  router.push('/feed');
+                }
+              }}
             />
           </div>
         ))}

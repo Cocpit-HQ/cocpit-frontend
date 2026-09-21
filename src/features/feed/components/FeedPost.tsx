@@ -812,7 +812,7 @@ export const FeedPost = (props: FeedPostProps) => {
           isSaved={!!isSaved}
           setIsSaved={setIsSaved}
           handleSaveToggle={() => setIsSaveModalOpen(true)}
-          onShowLikes={() => setIsLikesModalOpen(true)}
+          onShowLikes={() => handleOpenLikesModal()}
           isSharedPost={isRepostWithoutThoughts}
           hideRepostWithThoughts={isTargetPostRepostWithThoughts}
         />

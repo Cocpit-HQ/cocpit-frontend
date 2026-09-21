@@ -95,7 +95,7 @@ export const PostOptionsMenu = ({
     <div
       ref={menuRef}
       style={menuStyle}
-      className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : `${isMe ? 'w-[99px] h-[80px]' : 'w-[135px] h-auto'} rounded-[8px] p-[12px] gap-[16px]`}`}
+      className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : `${isMe ? 'w-[99px]' : 'w-[135px]'} h-auto rounded-[8px] p-[12px] gap-[16px]`}`}
       onClick={(e) => e.stopPropagation()}
     >
       {isMobile && (
