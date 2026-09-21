@@ -247,6 +247,9 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         profileId={orgId}
+        entityType="company"
+        entityId={orgId}
+        customUrl={`/organization/${slug}`}
         onShare={(selectedIds) => {
           console.log("Shared profile with:", selectedIds);
           setIsShareModalOpen(false);

@@ -35,6 +35,7 @@ export interface CocpitShareModelProps {
   jobId?: string;
   entityType?: "post" | "profile" | "company" | "job" | "event" | "offer" | "channel" | "community" | "article";
   entityId?: string;
+  customUrl?: string;
 }
 
 export default function CocpitShareModel({
@@ -47,6 +48,7 @@ export default function CocpitShareModel({
   jobId,
   entityType,
   entityId,
+  customUrl,
 }: CocpitShareModelProps) {
   const { startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
@@ -59,6 +61,11 @@ export default function CocpitShareModel({
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     const origin = window.location.origin;
+    if (customUrl) {
+      return customUrl.startsWith("http")
+        ? customUrl
+        : `${origin}${customUrl.startsWith("/") ? "" : "/"}${customUrl}`;
+    }
     if (postId) return `${origin}/post/${postId}`;
     if (profileId) return `${origin}/profile/${profileId}`;
     if (jobId) return `${origin}/jobs/${jobId}`;
@@ -72,7 +79,7 @@ export default function CocpitShareModel({
       return `${origin}/${entityType}/${entityId}`;
     }
     return window.location.href;
-  }, [postId, profileId, jobId, entityType, entityId]);
+  }, [customUrl, postId, profileId, jobId, entityType, entityId]);
 
   // Pagination states
   const [searchResults, setSearchResults] = useState<any[]>([]);

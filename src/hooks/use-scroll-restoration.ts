@@ -64,6 +64,24 @@ export const saveScrollPosition = (source = "post", postId?: string) => {
   }
 };
 
+// Purge all stale scroll restoration data if the browser reloaded (refresh / F5)
+if (typeof window !== "undefined") {
+  try {
+    const navEntry = window.performance?.getEntriesByType?.("navigation")?.[0] as PerformanceNavigationTiming | undefined;
+    const isReload = navEntry?.type === "reload" || (window.performance as any)?.navigation?.type === 1;
+    if (isReload) {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key && (key.startsWith("scroll-") || key.startsWith("cocpit_"))) {
+          sessionStorage.removeItem(key);
+        }
+      }
+    }
+  } catch {
+    // Ignore storage or performance navigation errors
+  }
+}
+
 let isInitialMount = true;
 
 export function useScrollRestoration(isReady: boolean, containerId?: string) {
@@ -95,26 +113,54 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         return;
       }
 
-      let saved = sessionStorage.getItem(`scroll-${pathname}`);
-      if (!saved && pathname.startsWith('/profile')) {
-        saved = sessionStorage.getItem("cocpit_profile_scroll_y");
-      }
-      
       if (isInitialMount && typeof window !== "undefined") {
-        const navEntry = window.performance?.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
-        const isReload = navEntry?.type === "reload" || window.performance?.navigation?.type === 1;
-        if (isReload) {
-          saved = null;
-          sessionStorage.removeItem(`scroll-${pathname}`);
+        try {
+          const navEntry = window.performance?.getEntriesByType?.("navigation")?.[0] as PerformanceNavigationTiming | undefined;
+          const isReload = navEntry?.type === "reload" || (window.performance as any)?.navigation?.type === 1;
+          if (isReload) {
+            for (let i = sessionStorage.length - 1; i >= 0; i--) {
+              const key = sessionStorage.key(i);
+              if (key && (key.startsWith("scroll-") || key.startsWith("cocpit_"))) {
+                sessionStorage.removeItem(key);
+              }
+            }
+          }
+        } catch {
+          // Ignore
         }
         isInitialMount = false;
       }
+
+      const isProfile = pathname === '/profile' || pathname.startsWith('/profile');
+      const lastPostId = sessionStorage.getItem("cocpit_last_interacted_post_id");
+      const profileScrollSource = sessionStorage.getItem("cocpit_profile_scroll_source");
+
+      let saved = sessionStorage.getItem(`scroll-${pathname}`);
+
+      // For profile: only restore scroll if returning from an explicit post interaction (e.g. Back button)
+      if (isProfile) {
+        const isReturningFromPost = Boolean(lastPostId || profileScrollSource === "profile");
+        if (!isReturningFromPost) {
+          saved = null;
+        } else if (!saved) {
+          saved = sessionStorage.getItem("cocpit_profile_scroll_y");
+        }
+      }
+
+      const consumeProfileTokens = () => {
+        if (isProfile) {
+          sessionStorage.removeItem("cocpit_last_interacted_post_id");
+          sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+          sessionStorage.removeItem("cocpit_profile_scroll_source");
+          sessionStorage.removeItem(`scroll-${pathname}`);
+          sessionStorage.removeItem("cocpit_profile_scroll_y");
+        }
+      };
 
       const getScrollElement = () => containerId ? document.getElementById(containerId) : null;
 
       if (saved) {
         const initialTargetScroll = parseInt(saved, 10);
-        const lastPostId = sessionStorage.getItem("cocpit_last_interacted_post_id");
         const lastViewportTopStr = sessionStorage.getItem("cocpit_last_interacted_post_viewport_top");
         const lastViewportTop = lastViewportTopStr ? parseFloat(lastViewportTopStr) : null;
         let retries = 0;
@@ -145,12 +191,14 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
           // 3. Evaluate success (within small fractional margin)
           if (Math.abs(currentScroll - targetScroll) < 5) {
+            consumeProfileTokens();
             setTimeout(() => setHasRestored(true), 150);
             return;
           }
 
           // 4. Retry conditions
           if (retries >= maxRetries) {
+             consumeProfileTokens();
              setTimeout(() => setHasRestored(true), 150);
              return;
           }
@@ -169,6 +217,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         } else {
           window.scrollTo({ top: 0, behavior: 'instant' });
         }
+        consumeProfileTokens();
         setTimeout(() => setHasRestored(true), 150);
       }
       
@@ -198,9 +247,10 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       }
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        sessionStorage.setItem(`scroll-${pathname}`, currentScroll.toString());
-        if (pathname.startsWith('/profile')) {
-          sessionStorage.setItem("cocpit_profile_scroll_y", currentScroll.toString());
+        // Only continuously save general scroll position for non-profile routes (e.g. feed).
+        // Profile scroll position is deliberately only captured via saveScrollPosition when interacting with posts.
+        if (!pathname.startsWith('/profile')) {
+          sessionStorage.setItem(`scroll-${pathname}`, currentScroll.toString());
         }
       }, 150); 
     };

@@ -38,6 +38,7 @@ interface FollowListModalProps {
   initialTab?: "followers" | "following" | "connections";
   userId: string;
   userName?: string;
+  isOwnProfile?: boolean;
 }
 
 interface ConfirmAction {
@@ -53,6 +54,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   initialTab = "followers",
   userId,
   userName,
+  isOwnProfile: isOwnProfileProp,
 }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"following" | "followers" | "connections">(initialTab);
@@ -66,7 +68,9 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   const { activeProfile } = useActiveProfile();
 
   const loggedInUserId = currentUser?.id?.toString();
-  const isOwnProfile = activeProfile?.type === "USER" && (loggedInUserId === userId?.toString() || (currentUser as any)?.username === userId);
+  const isOwnProfile = isOwnProfileProp !== undefined
+    ? isOwnProfileProp
+    : (activeProfile?.type === "USER" && (loggedInUserId === userId?.toString() || (currentUser as any)?.username === userId));
 
   useEffect(() => {
     if (isOpen) {
@@ -549,6 +553,18 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     }
 
     if (activeTab === "connections") {
+      if (isOwnProfile) {
+        return (
+          <button
+            type="button"
+            onClick={() => handleRemoveConnection(id, name, user.type)}
+            className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
+          >
+            Remove connection
+          </button>
+        );
+      }
+
       if (id === loggedInUserId) {
         return null; // Cannot connect with yourself
       }

@@ -636,6 +636,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           initialTab={activeFollowTab}
           userId={targetUserId}
           userName={user?.name || user?.account_name || ""}
+          isOwnProfile={false}
         />
       )}
 
@@ -657,7 +658,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         <CocpitShareModel
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
-          postId={targetUserId}
+          profileId={targetUserId}
+          entityType="profile"
+          entityId={targetUserId}
+          customUrl={`/profile/${user?.account_name || targetUserId}`}
           onShare={() => {}}
         />
       )}

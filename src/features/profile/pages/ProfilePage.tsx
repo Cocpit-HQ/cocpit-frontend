@@ -894,6 +894,7 @@ export default function ProfilePage() {
           initialTab={activeFollowTab}
           userId={user?.id || ""}
           userName={user?.name || user?.account_name || ""}
+          isOwnProfile={true}
         />
       )}
 
@@ -978,7 +979,10 @@ export default function ProfilePage() {
         <CocpitShareModel
           isOpen={isShareProfileModalOpen}
           onClose={() => setIsShareProfileModalOpen(false)}
-          profileId={user?.account_name || user?.id}
+          profileId={user?.id}
+          entityType="profile"
+          entityId={user?.id}
+          customUrl={`/profile/${user?.account_name || user?.id}`}
         />
       )}
     </div>
