@@ -38,6 +38,7 @@ const formatShortTime = (dateString?: string) => {
 import { useSocket } from "@/context/SocketContext"
 import Avatar from "@/components/shared/Avatar"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useFeatureFlags } from "@/context/FeatureFlagContext"
 
 export function NotificationPopover({
   className = "relative p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground",
@@ -57,9 +58,12 @@ export function NotificationPopover({
   const { socket } = useSocket()
   const { activeProfile, isCompany } = useActiveProfile()
   const { toast } = useToast();
+  const { isFeatureActive } = useFeatureFlags();
+  const isNotificationsActive = isFeatureActive("enableNotificationsModule");
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      if (!isNotificationsActive) return;
       try {
         const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
         const rawData = await getNotifications(companyId)
@@ -440,6 +444,10 @@ export function NotificationPopover({
   };
 
   const handleOpenChange = (open: boolean) => {
+    if (!isNotificationsActive && open) {
+      router.push('/notifications');
+      return;
+    }
     setIsOpen(open);
     onOpenChange?.(open);
   };
@@ -449,10 +457,18 @@ export function NotificationPopover({
       <PopoverTrigger asChild>
         <button
           className={className}
+          onClick={(e) => {
+            if (!isNotificationsActive) {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpen(false);
+              router.push('/notifications');
+            }
+          }}
         >
           <div className="relative inline-flex">
             {icon}
-            {unreadCount > 0 && (
+            {unreadCount > 0 && isNotificationsActive && (
               /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
               <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[var(--ds-accent)] rounded-full border-background" />
             )}

@@ -352,11 +352,23 @@ export function useProfileMutation() {
                 visible_role_ids: payload.visible_role_ids,
                 industry: payload.industry,
             });
+            const ROLE_ID_TO_ACCOUNT_TYPE: Record<string, string> = {
+                student: "Student",
+                fresher: "Fresher",
+                intern: "Intern",
+                self_employed: "Self-employed",
+                employed: "Employed",
+                unemployed: "Currently not working",
+            };
+            const mappedAccountType = payload.status
+                ? ROLE_ID_TO_ACCOUNT_TYPE[payload.status] || payload.status
+                : undefined;
+
             await updateIdentity({
                 open_to: Array.isArray(payload.open_to) ? payload.open_to[0] : payload.open_to,
                 availability: Array.isArray(payload.availability) ? payload.availability[0] : payload.availability,
                 work_preference: Array.isArray(payload.work_preference) ? payload.work_preference[0] : payload.work_preference,
-                account_type: payload.status,
+                account_type: mappedAccountType,
             });
         },
         onSuccess: (data, variables) => {

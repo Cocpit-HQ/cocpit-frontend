@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { NotificationCard } from '@/features/notification/components/NotificationCard'
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { ArrowLeft, Bell, CircleAlert } from 'lucide-react'
+import { FeatureGuard } from "@/components/feature-flags/FeatureGuard"
 
 type EmptyStateProps = {
   title: string
@@ -132,7 +133,8 @@ export default function NotificationsPage() {
     (activeTab === 'jobs' && jobs.some(n => !n.is_read))
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-128px)] md:h-[calc(100dvh-56px)] bg-white dark:bg-background text-foreground overflow-hidden font-poppins">
+    <FeatureGuard featureKey="enableNotificationsModule" moduleName="Notifications">
+      <div className="flex flex-col h-[calc(100dvh-128px)] md:h-[calc(100dvh-56px)] bg-white dark:bg-background text-foreground overflow-hidden font-poppins">
       <div className="max-w-4xl mx-auto w-full flex flex-col h-full">
 
         {/* Tabs with Fixed Header */}
@@ -362,7 +364,8 @@ export default function NotificationsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FeatureGuard>
   )
 }
 

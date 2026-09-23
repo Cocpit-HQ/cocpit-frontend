@@ -81,7 +81,10 @@ const MODULE_DEPENDENCY_MAP: Record<string, string> = {
 
   // Notifications Sub-features
   notifications: "enableNotificationsModule",
+  enableNotifications: "enableNotificationsModule",
   enableNotificationsModule: "enableNotificationsModule",
+  enable_notifications: "enableNotificationsModule",
+  enable_notifications_module: "enableNotificationsModule",
 
   // Auth & Onboarding Sub-features
   auth: "enableAuthModule",
@@ -89,6 +92,14 @@ const MODULE_DEPENDENCY_MAP: Record<string, string> = {
   onboarding: "enableOnboardingModule",
   enableOnboardingModule: "enableOnboardingModule",
 };
+
+const NOTIFICATION_KEYS = new Set([
+  "notifications",
+  "enableNotifications",
+  "enableNotificationsModule",
+  "enable_notifications",
+  "enable_notifications_module",
+]);
 
 interface FeatureFlagContextProps {
   flags: FeatureFlags;
@@ -148,6 +159,15 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   const isFeatureActive = useCallback((flagKey: string): boolean => {
+    // Special handling for notifications aliases: if any notification flag is false, disable
+    if (NOTIFICATION_KEYS.has(flagKey)) {
+      for (const k of NOTIFICATION_KEYS) {
+        if (isValueFalse(flags[k])) {
+          return false;
+        }
+      }
+    }
+
     // 1. Check parent module dependency
     const parentModule = MODULE_DEPENDENCY_MAP[flagKey];
     if (parentModule) {
