@@ -126,7 +126,14 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           label="Username"
           prefix="@"
           value={formData.account_name}
-          onChange={(val) => onChange("account_name", val.replace(/^@/, "").trim())}
+          onChange={(val) => onChange("account_name", val)}
+          formatValue={(val) =>
+            val
+              .replace(/^@/, "")
+              .replace(/\s/g, "_")
+              .replace(/[^a-zA-Z0-9_.]/g, "")
+              .toLowerCase()
+          }
           maxLength={25}
           maxLengthMessage="Username cannot exceed 25 characters"
           placeholder="Username"

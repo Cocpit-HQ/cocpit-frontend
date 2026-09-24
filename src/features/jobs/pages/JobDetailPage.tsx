@@ -170,32 +170,32 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   </div>
                 )}
               </div>
-              {job.is_offer && job.offer_days_left !== undefined && 
-               !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
-                <div className="flex flex-row items-center gap-2 h-8">
-                  <Icon
-                    icon="solar:calendar-linear"
-                    className="w-6 h-6 flex-shrink-0"
-                    style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                  />
-                  <span
-                    className="font-['Poppins'] font-normal text-sm leading-5 text-center py-1.5"
-                    style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                  >
-                    Offer ends in {job.offer_days_left} {job.offer_days_left === 1 ? 'day' : 'days'}
-                  </span>
-                </div>
-              )}
+              {job.is_offer && job.offer_days_left !== undefined &&
+                !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
+                  <div className="flex flex-row items-center gap-2 h-8">
+                    <Icon
+                      icon="solar:calendar-linear"
+                      className="w-6 h-6 flex-shrink-0"
+                      style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
+                    />
+                    <span
+                      className="font-['Poppins'] font-normal text-sm leading-5 text-center py-1.5"
+                      style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
+                    >
+                      Offer ends in {job.offer_days_left} {job.offer_days_left === 1 ? 'day' : 'days'}
+                    </span>
+                  </div>
+                )}
             </div>
-            
-            <div 
-                className="hidden md:flex flex-row items-center justify-start p-0 gap-[12px] flex-grow flex-shrink-0 min-w-0 w-full sm:w-auto mt-2 sm:mt-0 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => {
-                  if (job.recruiter_id) {
-                    router.push(`/profile/${job.recruiter_id}`);
-                  }
-                }}
-              >
+
+            <div
+              className="hidden md:flex flex-row items-center justify-start p-0 gap-[12px] flex-grow flex-shrink-0 min-w-0 w-full sm:w-auto mt-2 sm:mt-0 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                if (job.recruiter_id) {
+                  router.push(`/profile/${job.recruiter_id}`);
+                }
+              }}
+            >
               <div className="flex">
                 {isLoading ? (
                   <div className={`relative w-8 h-8 ${isJobCompany ? 'rounded-md' : 'rounded-full'} border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50`}>
@@ -227,7 +227,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             {/* Mobile View (logo -> title -> company name -> badges) */}
             <div className="flex md:hidden flex-col items-start gap-3 w-full">
               {/* Logo */}
-              <div 
+              <div
                 className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => {
                   if (job.recruiter_id) router.push(`/profile/${job.recruiter_id}`);
@@ -277,22 +277,22 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   </div>
                 )}
 
-                {job.is_offer && job.offer_days_left !== undefined && 
-                 !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
-                  <div className="flex flex-row items-center gap-1.5 h-8">
-                    <Icon
-                      icon="solar:calendar-linear"
-                      className="w-5 h-5 flex-shrink-0"
-                      style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                    />
-                    <span
-                      className="font-['Poppins'] font-normal text-xs"
-                      style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
-                    >
-                      Offer ends in {job.offer_days_left}d
-                    </span>
-                  </div>
-                )}
+                {job.is_offer && job.offer_days_left !== undefined &&
+                  !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
+                    <div className="flex flex-row items-center gap-1.5 h-8">
+                      <Icon
+                        icon="solar:calendar-linear"
+                        className="w-5 h-5 flex-shrink-0"
+                        style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
+                      />
+                      <span
+                        className="font-['Poppins'] font-normal text-xs"
+                        style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
+                      >
+                        Offer ends in {job.offer_days_left}d
+                      </span>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -314,7 +314,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 }
               </div>
             </div>
-            
+
             {/* Experience Column */}
             <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-1.5 md:gap-2 min-w-[120px] h-auto order-2 md:order-1">
               <div className="flex flex-row items-center p-0 gap-1.5 md:gap-2 h-5">
@@ -455,7 +455,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                           />
                         )}
                       </div>
-                      
+
                       {/* Connector Line Mobile */}
                       {idx < steps.length - 1 && (
                         <div
@@ -555,7 +555,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               <JobDetailMap location={job.location || ''} />
             </div>
 
-            <a 
+            <a
               href={job.location ? `https://maps.google.com/maps?q=${encodeURIComponent(job.location)}` : '#'}
               target={job.location ? "_blank" : undefined}
               rel={job.location ? "noopener noreferrer" : undefined}
@@ -596,7 +596,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 {flags?.saved_jobs === false ? (
                   <Tooltip delayDuration={100}>
                     <TooltipTrigger asChild>
-                      <div tabIndex={0} className="size-10 rounded-full bg-slate-50 opacity-50 cursor-not-allowed flex items-center justify-center flex-shrink-0 focus:outline-none">
+                      <div tabIndex={0} className="size-10 rounded-full bg-slate-50 opacity-50 cursor-default flex items-center justify-center flex-shrink-0 focus:outline-none">
                         <Icon icon="solar:bookmark-linear" className="w-5 h-5 text-gray-500" />
                       </div>
                     </TooltipTrigger>

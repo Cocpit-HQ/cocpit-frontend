@@ -105,7 +105,7 @@ export default function EditRoleModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-4">
-          
+
           <div className="flex flex-col gap-4 pt-2">
             {/* Role name */}
             <div className="flex flex-col gap-[11.5px]">
@@ -132,14 +132,13 @@ export default function EditRoleModal({
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
-                    className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${
-                      color === c
+                    className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${color === c
                         ? 'border border-[#000000] dark:border-white'
                         : ''
-                    }`}
+                      }`}
                   >
-                    <div 
-                      className="w-[24px] h-[24px] rounded-full" 
+                    <div
+                      className="w-[24px] h-[24px] rounded-full"
                       style={{ backgroundColor: c }}
                     />
                   </button>
@@ -203,7 +202,7 @@ export default function EditRoleModal({
               type="submit"
               onClick={handleSubmit}
               disabled={!name.trim() || isSubmitting || showLimitError}
-              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] dark:border-transparent bg-[#1A73E8] dark:bg-[#4D9CFF] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] dark:border-transparent bg-[#1A73E8] dark:bg-[#4D9CFF] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-default"
             >
               {isSubmitting ? 'Saving...' : 'Save'}
             </button>

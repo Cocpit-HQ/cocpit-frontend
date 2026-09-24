@@ -385,7 +385,7 @@ export default function ChannelBannerEditorModal({
                   }}
                 />
               ) : (
-                <div 
+                <div
                   onClick={() => fileInputRef.current?.click()}
                   className="flex flex-col items-center justify-center p-4 text-center cursor-pointer w-full h-full"
                 >
@@ -396,7 +396,7 @@ export default function ChannelBannerEditorModal({
 
               {/* Hover Overlay */}
               {hasImage && !isDraggingImage && (
-                <div 
+                <div
                   onClick={() => fileInputRef.current?.click()}
                   className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
                 >
@@ -442,7 +442,7 @@ export default function ChannelBannerEditorModal({
               type="button"
               onClick={handleSave}
               disabled={isUploading || !hasImage}
-              className="w-[140px] h-[40px] rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="w-[140px] h-[40px] rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-default transition-colors flex items-center justify-center gap-2"
             >
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               <span>{isUploading ? "Saving..." : "Apply"}</span>

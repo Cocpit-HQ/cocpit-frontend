@@ -34,11 +34,10 @@ const PostTypeSelector = ({
             key={type.id}
             onClick={() => !isEdit && onTypeChange(type.id as PostType)}
             disabled={isEdit}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all whitespace-nowrap ${
-              activeType === type.id 
-                ? 'bg-primary border-primary text-primary-foreground shadow-sm' 
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all whitespace-nowrap ${activeType === type.id
+                ? 'bg-primary border-primary text-primary-foreground shadow-sm'
                 : 'bg-muted border-border text-muted-foreground'
-            } ${isEdit && activeType !== type.id ? 'opacity-50' : ''}`}
+              } ${isEdit && activeType !== type.id ? 'opacity-50' : ''}`}
           >
             <type.icon className="w-4 h-4" />
             <span className="text-xs font-bold">{type.label}</span>
@@ -55,11 +54,10 @@ const PostTypeSelector = ({
           key={type.id}
           onClick={() => !isEdit && onTypeChange(type.id as PostType)}
           disabled={isEdit}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-            activeType === type.id 
-              ? 'bg-primary/10 text-primary' 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeType === type.id
+              ? 'bg-primary/10 text-primary'
               : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-          } ${isEdit && activeType !== type.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isEdit && activeType !== type.id ? 'opacity-50 cursor-default' : ''}`}
         >
           <type.icon className={`w-5 h-5 ${activeType === type.id ? 'text-primary' : type.color}`} />
           <span className="text-sm font-bold">{type.label}</span>

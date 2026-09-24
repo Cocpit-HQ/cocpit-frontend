@@ -181,7 +181,7 @@ export const ProjectLinkModal: React.FC<ProjectLinkModalProps> = ({
               "w-[77px] h-[36px] px-[12px] py-[6px] rounded-full flex flex-row justify-center items-center gap-[10px] transition-all focus:outline-none flex-none",
               isFormValid
                 ? "bg-[var(--ds-accent)] cursor-pointer hover:opacity-90 active:scale-95"
-                : "bg-[var(--ds-surface-1)] cursor-not-allowed opacity-100"
+                : "bg-[var(--ds-surface-1)] cursor-default opacity-100"
             )}
           >
             <span
@@ -426,7 +426,7 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
               "w-[77px] h-[36px] px-[12px] py-[6px] rounded-full flex flex-row justify-center items-center gap-[10px] transition-all focus:outline-none flex-none",
               isFormValid
                 ? "bg-[var(--ds-accent)] cursor-pointer hover:opacity-90 active:scale-95"
-                : "bg-[var(--ds-surface-1)] cursor-not-allowed opacity-100"
+                : "bg-[var(--ds-surface-1)] cursor-default opacity-100"
             )}
           >
             <span

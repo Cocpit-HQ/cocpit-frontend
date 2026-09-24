@@ -50,7 +50,7 @@ export const HomeHeader = () => {
         staleTime: 0,
         refetchOnWindowFocus: false,
     });
-    
+
     const hasUnreadMessages = rawChatsQuery.data?.some((c: any) => c.unread > 0 || c.is_read === false) || false;
     // Reset popover-open state when navigating away from /notifications
     // so the active pill style doesn't get stuck after "See all" navigation
@@ -327,7 +327,7 @@ export const HomeHeader = () => {
     if (pathname.includes('/article/') || pathname.includes('/settings')) {
         return null;
     }
- 
+
     return (
         <header
             className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-0 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
@@ -337,7 +337,7 @@ export const HomeHeader = () => {
                 {isChannelPage && (
                     <div className="hidden md:flex w-full max-w-[960px] mx-auto items-center justify-between h-full px-4 xl:px-0">
                         <div className="flex items-center gap-[16px]">
-                            <button 
+                            <button
                                 onClick={() => router.back()}
                                 className="w-[48px] h-[48px] rounded-[100px] border border-[#DADADA] dark:border-[#2E3445] backdrop-blur-[12px] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#1C2340] transition-colors shrink-0"
                             >
@@ -348,9 +348,9 @@ export const HomeHeader = () => {
                                     {isChannelSearchPage ? 'Search channel' : 'Channel'}
                                 </h1>
                                 <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-normal font-['Poppins'] leading-[16px] hidden sm:block">
-                                    {isChannelSearchPage ? 'Find the channel you want' : 
-                                     isChannelDetailPage ? 'Explore articles, insights, and updates shared by the channel' : 
-                                     'Explore channels that match your interests'}
+                                    {isChannelSearchPage ? 'Find the channel you want' :
+                                        isChannelDetailPage ? 'Explore articles, insights, and updates shared by the channel' :
+                                            'Explore channels that match your interests'}
                                 </p>
                             </div>
                         </div>
@@ -394,11 +394,10 @@ export const HomeHeader = () => {
                                                             setFilterDropdownOpen(false);
                                                             navigateChannelSearch(urlSearchParams?.get('q') || '', f);
                                                         }}
-                                                        className={`w-full text-left px-[20px] py-[12px] font-['Poppins'] text-[15px] leading-[22px] transition-colors ${
-                                                            channelFilter === f
+                                                        className={`w-full text-left px-[20px] py-[12px] font-['Poppins'] text-[15px] leading-[22px] transition-colors ${channelFilter === f
                                                                 ? 'text-[#6366F1] dark:text-[#818CF8] font-medium bg-[#EEF2FF] dark:bg-[#1e1b4b]'
                                                                 : 'text-black dark:text-white hover:bg-gray-50 dark:hover:bg-[#232D3F]'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {f}
                                                     </button>
@@ -411,304 +410,378 @@ export const HomeHeader = () => {
                         )}
                     </div>
                 )}
-                
+
                 {!isChannelPage && (
                     <>
                         {/* --- Desktop Header (Visible from md screens up) --- */}
                         <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-auto max-w-[998px] h-full gap-4">
-                    {/* Header Left Section — route-aware search */}
-                    {isJobsPage ? (
-                        /* === JOB SEARCH UI === */
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* Job title / keywords pill */}
-                            <div className="w-36 md:w-40 lg:w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
-                                <Search className="w-[18px] h-[18px] text-[#6B7280] flex-shrink-0" />
-                                <input
-                                    type="text"
-                                    placeholder="Job title, keywords"
-                                    value={jobTitleQuery}
-                                    onChange={(e) => setJobTitleQuery(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
-                                        }
-                                    }}
-                                    className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
-                                />
-                            </div>
-
-                            {/* City / remote pill */}
-                            <div className="w-36 md:w-40 lg:w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
-                                {/* Location pin icon — SVG matching Figma design */}
-                                <svg className="w-[18px] h-[18px] flex-shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                                    <circle cx="12" cy="9" r="2.5" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="City or remote"
-                                    value={jobLocationQuery}
-                                    onChange={(e) => setJobLocationQuery(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
-                                        }
-                                    }}
-                                    className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
-                                />
-                            </div>
-
-                            {/* Find jobs button */}
-                            <button
-                                onClick={() => {
-                                    router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
-                                }}
-                                className="px-4 py-2 h-10 rounded-[24px] border border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-[#6366F1] hover:text-white text-[16px] font-medium leading-[24px] font-poppins transition-all duration-200 flex-shrink-0"
-                            >
-                                Find jobs
-                            </button>
-                        </div>
-                    ) : (
-                        /* === DEFAULT FEED / OTHER SEARCH === */
-                        <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
-                            <input
-                                type="text"
-                                placeholder="Search"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onFocus={() => setIsSearchFocused(true)}
-                                onBlur={() => {
-                                    setTimeout(() => setIsSearchFocused(false), 200);
-                                }}
-                                onKeyDown={handleKeyDown}
-                                className="flex-grow min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
-                            />
-                            <Search
-                                className="w-6 h-6 text-[#6B7280] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                                onClick={() => {
-                                    if (searchQuery.trim()) {
-                                        saveSearch(searchQuery);
-                                        setIsSearchFocused(false);
-                                    }
-                                }}
-                            />
-
-                            {/* Search Dropdown */}
-                            {isSearchFocused && searchQuery && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-y-auto max-h-[320px] z-50 scrollbar-hide">
-                                    {hashtagResults.length > 0 && (
-                                        <>
-                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
-                                                Hashtags
-                                            </div>
-                                            {hashtagResults.slice(0, 5).map((h, idx) => (
-                                                <Link
-                                                    key={h.tag}
-                                                    href={`/hashtag/${h.tag.toLowerCase()}`}
-                                                    className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-[#6366F1] dark:text-[#818CF8]' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
-                                                    onClick={() => {
-                                                        saveSearch(`#${h.tag}`);
-                                                        setIsSearchFocused(false);
-                                                        setSearchQuery("");
-                                                    }}
-                                                >
-                                                    <div className="w-10 h-10 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
-                                                        <Hash className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-semibold text-foreground truncate">
-                                                            #{highlightMatch(h.tag, searchQuery)}
-                                                        </p>
-                                                        <p className="text-[10px] text-muted-foreground truncate uppercase font-medium mt-0.5 tracking-tight">{h.usage_count} Posts</p>
-                                                    </div>
-                                                </Link>
-                                            ))}
-                                            {hashtagResults.length > 5 && (
-                                                <button
-                                                    onClick={() => {
-                                                        setIsSearchFocused(false);
-                                                        router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-                                                    }}
-                                                    className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
-                                                >
-                                                    See more results for &quot;{searchQuery}&quot;
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
-
-                                    {searchResults.length > 0 && (
-                                        <>
-                                            {searchResults.map((user, idx) => {
-                                                const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
-                                                const hasSeeMore = hashtagResults.length > 5;
-                                                const adjustedIdx = idx + visibleHashtagsCount + (hasSeeMore ? 1 : 0);
-                                                return (
-                                                    <Link
-                                                        key={user.type === 'COMPANY' ? user.slug : user.id}
-                                                        href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
-                                                        className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === adjustedIdx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-foreground' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
-                                                        onClick={() => {
-                                                            saveSearch(user);
-                                                            setIsSearchFocused(false);
-                                                            setSearchQuery("");
-                                                        }}
-                                                    >
-                                                        {user.avatar || user.avatar_url ? (
-                                                            <img src={(user.avatar || user.avatar_url)!} alt={user.full_name} className={`w-10 h-10 object-cover flex-shrink-0 ${user.type === 'COMPANY' ? 'rounded-md' : 'rounded-full'}`} />
-                                                        ) : user.type === 'COMPANY' ? (
-                                                            <img src="/assets/company-placeholder.png" alt={user.full_name} className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
-                                                        ) : (
-                                                            <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] font-light text-xl flex items-center justify-center font-[family-name:var(--font-poppins)] flex-shrink-0 select-none">
-                                                                {(user.full_name || user.name || "C").charAt(0).toUpperCase()}
-                                                            </div>
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
-                                                                {user.type === 'COMPANY' && (
-                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">{user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1).toLowerCase() : 'Company'}</span>
-                                                                )}
-                                                            </div>
-                                                            {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
-                                                                <div className="flex items-center gap-1 text-xs text-muted-foreground truncate font-normal mt-0.5">
-                                                                    {user.headline && <span className="truncate">{user.headline}</span>}
-                                                                    {user.headline && user.type === 'COMPANY' && user.industry && <span className="flex-shrink-0">·</span>}
-                                                                    {user.type === 'COMPANY' && user.industry && <span className="truncate text-primary/70">{user.industry}</span>}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </Link>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-
-                                    {!searchLoading && searchResults.length === 0 && hashtagResults.length === 0 && (
-                                        <div className="p-4 text-center text-muted-foreground">No matches found.</div>
-                                    )}
-
-                                    {searchLoading && (
-                                        <div className="p-4 text-center text-muted-foreground">Loading matches...</div>
-                                    )}
-                                </div>
-                            )}
-                            {isSearchFocused && !searchQuery && (
-                                <div
-                                    className="absolute top-full left-0 mt-2 notification-popover-custom border rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
-                                    style={{
-                                        boxSizing: 'border-box',
-                                        width: '100%',
-                                        maxHeight: '410px',
-                                        gap: '16px',
-                                    }}
-                                >
-                                    {/* Frame 2608712 */}
-                                    <div
-                                        className="w-full flex flex-row items-center px-4"
-                                        style={{
-                                            height: '26px',
-                                            gap: '10px',
-                                            flex: 'none',
-                                            order: 0,
-                                            alignSelf: 'stretch',
-                                            flexGrow: 0,
-                                        }}
-                                    >
-                                        <span
-                                            className="font-poppins text-black dark:text-white"
-                                            style={{
-                                                width: '63px',
-                                                height: '26px',
-                                                fontStyle: 'normal',
-                                                fontWeight: 500,
-                                                fontSize: '18px',
-                                                lineHeight: '26px',
-                                                color: 'currentColor',
-                                                flex: 'none',
-                                                order: 0,
-                                                flexGrow: 0,
+                            {/* Header Left Section — route-aware search */}
+                            {isJobsPage ? (
+                                /* === JOB SEARCH UI === */
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    {/* Job title / keywords pill */}
+                                    <div className="w-36 md:w-40 lg:w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
+                                        <Search className="w-[18px] h-[18px] text-[#6B7280] flex-shrink-0" />
+                                        <input
+                                            type="text"
+                                            placeholder="Job title, keywords"
+                                            value={jobTitleQuery}
+                                            onChange={(e) => setJobTitleQuery(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                                }
                                             }}
-                                        >
-                                            Recent
-                                        </span>
+                                            className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
+                                        />
                                     </div>
 
-                                    {/* Scrollable list */}
-                                    <div className="w-full flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-2">
-                                        {history.length > 0 ? (
-                                            history.map((item, idx) => (
-                                                <div
-                                                    key={item.id}
-                                                    className="relative group/history w-full"
-                                                >
-                                                    {item.type === 'USER' ? (
-                                                        /* Frame 2608727 */
+                                    {/* City / remote pill */}
+                                    <div className="w-36 md:w-40 lg:w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
+                                        {/* Location pin icon — SVG matching Figma design */}
+                                        <svg className="w-[18px] h-[18px] flex-shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                            <circle cx="12" cy="9" r="2.5" />
+                                        </svg>
+                                        <input
+                                            type="text"
+                                            placeholder="City or remote"
+                                            value={jobLocationQuery}
+                                            onChange={(e) => setJobLocationQuery(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                                }
+                                            }}
+                                            className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
+                                        />
+                                    </div>
+
+                                    {/* Find jobs button */}
+                                    <button
+                                        onClick={() => {
+                                            router.push(`/jobs/search?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                        }}
+                                        className="px-4 py-2 h-10 rounded-[24px] border border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-[#6366F1] hover:text-white text-[16px] font-medium leading-[24px] font-poppins transition-all duration-200 flex-shrink-0"
+                                    >
+                                        Find jobs
+                                    </button>
+                                </div>
+                            ) : (
+                                /* === DEFAULT FEED / OTHER SEARCH === */
+                                <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
+                                    <input
+                                        type="text"
+                                        placeholder="Search"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onFocus={() => setIsSearchFocused(true)}
+                                        onBlur={() => {
+                                            setTimeout(() => setIsSearchFocused(false), 200);
+                                        }}
+                                        onKeyDown={handleKeyDown}
+                                        className="flex-grow min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
+                                    />
+                                    <Search
+                                        className="w-6 h-6 text-[#6B7280] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                                        onClick={() => {
+                                            if (searchQuery.trim()) {
+                                                saveSearch(searchQuery);
+                                                setIsSearchFocused(false);
+                                            }
+                                        }}
+                                    />
+
+                                    {/* Search Dropdown */}
+                                    {isSearchFocused && searchQuery && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-y-auto max-h-[320px] z-50 scrollbar-hide">
+                                            {hashtagResults.length > 0 && (
+                                                <>
+                                                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
+                                                        Hashtags
+                                                    </div>
+                                                    {hashtagResults.slice(0, 5).map((h, idx) => (
                                                         <Link
-                                                            href={item.value.type === 'COMPANY' ? `/organization/${item.value.slug}` : `/profile/${item.value.account_name || item.value.id}`}
-                                                            className="w-full flex flex-row items-start px-4 py-2 transition-colors hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
-                                                            style={{
-                                                                height: '56px',
-                                                                gap: '16px',
-                                                                backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
-                                                                flex: 'none',
-                                                                alignSelf: 'stretch',
-                                                                flexGrow: 0,
+                                                            key={h.tag}
+                                                            href={`/hashtag/${h.tag.toLowerCase()}`}
+                                                            className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-[#6366F1] dark:text-[#818CF8]' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
+                                                            onClick={() => {
+                                                                saveSearch(`#${h.tag}`);
+                                                                setIsSearchFocused(false);
+                                                                setSearchQuery("");
                                                             }}
-                                                            onClick={() => saveSearch(item.value)}
                                                         >
-                                                            {/* Frame 2608720 */}
-                                                            <div
-                                                                style={{
-                                                                    display: 'flex',
-                                                                    flexDirection: 'row',
-                                                                    alignItems: 'center',
-                                                                    padding: '0px',
-                                                                    gap: '8px',
-                                                                    width: '100%',
-                                                                    height: '40px',
-                                                                    flex: 'none',
-                                                                    order: 0,
-                                                                    flexGrow: 1,
+                                                            <div className="w-10 h-10 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
+                                                                <Hash className="w-5 h-5 text-primary" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-foreground truncate">
+                                                                    #{highlightMatch(h.tag, searchQuery)}
+                                                                </p>
+                                                                <p className="text-[10px] text-muted-foreground truncate uppercase font-medium mt-0.5 tracking-tight">{h.usage_count} Posts</p>
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                    {hashtagResults.length > 5 && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setIsSearchFocused(false);
+                                                                router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                                                            }}
+                                                            className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
+                                                        >
+                                                            See more results for &quot;{searchQuery}&quot;
+                                                        </button>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {searchResults.length > 0 && (
+                                                <>
+                                                    {searchResults.map((user, idx) => {
+                                                        const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
+                                                        const hasSeeMore = hashtagResults.length > 5;
+                                                        const adjustedIdx = idx + visibleHashtagsCount + (hasSeeMore ? 1 : 0);
+                                                        return (
+                                                            <Link
+                                                                key={user.type === 'COMPANY' ? user.slug : user.id}
+                                                                href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                                                className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === adjustedIdx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-foreground' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
+                                                                onClick={() => {
+                                                                    saveSearch(user);
+                                                                    setIsSearchFocused(false);
+                                                                    setSearchQuery("");
                                                                 }}
                                                             >
-                                                                <div
-                                                                    className={`relative bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm flex items-center justify-center font-['Poppins'] select-none shrink-0 overflow-hidden ${item.value.type === 'COMPANY' ? 'rounded-md' : 'rounded-full'}`}
-                                                                    style={{
-                                                                        width: '40px',
-                                                                        height: '40px',
-                                                                        flex: 'none',
-                                                                        order: 0,
-                                                                        flexGrow: 0,
-                                                                    }}
-                                                                >
-                                                                    <span>{(item.value.full_name || item.value.name || "U").charAt(0).toUpperCase()}</span>
-                                                                    {(item.value.avatar || item.value.avatar_url) && (item.value.avatar || item.value.avatar_url) !== '/assets/pngegg.png' ? (
-                                                                        <img
-                                                                            src={(item.value.avatar || item.value.avatar_url)!}
-                                                                            alt={item.value.full_name}
-                                                                            className="absolute inset-0 w-full h-full object-cover"
-                                                                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                                                                        />
-                                                                    ) : null}
+                                                                {user.avatar || user.avatar_url ? (
+                                                                    <img src={(user.avatar || user.avatar_url)!} alt={user.full_name} className={`w-10 h-10 object-cover flex-shrink-0 ${user.type === 'COMPANY' ? 'rounded-md' : 'rounded-full'}`} />
+                                                                ) : user.type === 'COMPANY' ? (
+                                                                    <img src="/assets/company-placeholder.png" alt={user.full_name} className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+                                                                ) : (
+                                                                    <div className="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] font-light text-xl flex items-center justify-center font-[family-name:var(--font-poppins)] flex-shrink-0 select-none">
+                                                                        {(user.full_name || user.name || "C").charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
+                                                                        {user.type === 'COMPANY' && (
+                                                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">{user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1).toLowerCase() : 'Company'}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
+                                                                        <div className="flex items-center gap-1 text-xs text-muted-foreground truncate font-normal mt-0.5">
+                                                                            {user.headline && <span className="truncate">{user.headline}</span>}
+                                                                            {user.headline && user.type === 'COMPANY' && user.industry && <span className="flex-shrink-0">·</span>}
+                                                                            {user.type === 'COMPANY' && user.industry && <span className="truncate text-primary/70">{user.industry}</span>}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </>
+                                            )}
 
-                                                                {/* Frame 2608728 */}
-                                                                <div
+                                            {!searchLoading && searchResults.length === 0 && hashtagResults.length === 0 && (
+                                                <div className="p-4 text-center text-muted-foreground">No matches found.</div>
+                                            )}
+
+                                            {searchLoading && (
+                                                <div className="p-4 text-center text-muted-foreground">Loading matches...</div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {isSearchFocused && !searchQuery && (
+                                        <div
+                                            className="absolute top-full left-0 mt-2 notification-popover-custom border rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
+                                            style={{
+                                                boxSizing: 'border-box',
+                                                width: '100%',
+                                                maxHeight: '410px',
+                                                gap: '16px',
+                                            }}
+                                        >
+                                            {/* Frame 2608712 */}
+                                            <div
+                                                className="w-full flex flex-row items-center px-4"
+                                                style={{
+                                                    height: '26px',
+                                                    gap: '10px',
+                                                    flex: 'none',
+                                                    order: 0,
+                                                    alignSelf: 'stretch',
+                                                    flexGrow: 0,
+                                                }}
+                                            >
+                                                <span
+                                                    className="font-poppins text-black dark:text-white"
+                                                    style={{
+                                                        width: '63px',
+                                                        height: '26px',
+                                                        fontStyle: 'normal',
+                                                        fontWeight: 500,
+                                                        fontSize: '18px',
+                                                        lineHeight: '26px',
+                                                        color: 'currentColor',
+                                                        flex: 'none',
+                                                        order: 0,
+                                                        flexGrow: 0,
+                                                    }}
+                                                >
+                                                    Recent
+                                                </span>
+                                            </div>
+
+                                            {/* Scrollable list */}
+                                            <div className="w-full flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-2">
+                                                {history.length > 0 ? (
+                                                    history.map((item, idx) => (
+                                                        <div
+                                                            key={item.id}
+                                                            className="relative group/history w-full"
+                                                        >
+                                                            {item.type === 'USER' ? (
+                                                                /* Frame 2608727 */
+                                                                <Link
+                                                                    href={item.value.type === 'COMPANY' ? `/organization/${item.value.slug}` : `/profile/${item.value.account_name || item.value.id}`}
+                                                                    className="w-full flex flex-row items-start px-4 py-2 transition-colors hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
                                                                     style={{
-                                                                        display: 'flex',
-                                                                        flexDirection: 'column',
-                                                                        justifyContent: 'center',
-                                                                        alignItems: 'flex-start',
-                                                                        padding: '0px',
-                                                                        width: '144px',
-                                                                        height: '40px',
+                                                                        height: '56px',
+                                                                        gap: '16px',
+                                                                        backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
                                                                         flex: 'none',
-                                                                        order: 1,
+                                                                        alignSelf: 'stretch',
                                                                         flexGrow: 0,
                                                                     }}
+                                                                    onClick={() => saveSearch(item.value)}
                                                                 >
-                                                                    {/* Amara okafor / Sara chen */}
+                                                                    {/* Frame 2608720 */}
+                                                                    <div
+                                                                        style={{
+                                                                            display: 'flex',
+                                                                            flexDirection: 'row',
+                                                                            alignItems: 'center',
+                                                                            padding: '0px',
+                                                                            gap: '8px',
+                                                                            width: '100%',
+                                                                            height: '40px',
+                                                                            flex: 'none',
+                                                                            order: 0,
+                                                                            flexGrow: 1,
+                                                                        }}
+                                                                    >
+                                                                        <div
+                                                                            className={`relative bg-[#EEF2FF] text-[#6366F1] font-semibold text-sm flex items-center justify-center font-['Poppins'] select-none shrink-0 overflow-hidden ${item.value.type === 'COMPANY' ? 'rounded-md' : 'rounded-full'}`}
+                                                                            style={{
+                                                                                width: '40px',
+                                                                                height: '40px',
+                                                                                flex: 'none',
+                                                                                order: 0,
+                                                                                flexGrow: 0,
+                                                                            }}
+                                                                        >
+                                                                            <span>{(item.value.full_name || item.value.name || "U").charAt(0).toUpperCase()}</span>
+                                                                            {(item.value.avatar || item.value.avatar_url) && (item.value.avatar || item.value.avatar_url) !== '/assets/pngegg.png' ? (
+                                                                                <img
+                                                                                    src={(item.value.avatar || item.value.avatar_url)!}
+                                                                                    alt={item.value.full_name}
+                                                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                                                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                                                />
+                                                                            ) : null}
+                                                                        </div>
+
+                                                                        {/* Frame 2608728 */}
+                                                                        <div
+                                                                            style={{
+                                                                                display: 'flex',
+                                                                                flexDirection: 'column',
+                                                                                justifyContent: 'center',
+                                                                                alignItems: 'flex-start',
+                                                                                padding: '0px',
+                                                                                width: '144px',
+                                                                                height: '40px',
+                                                                                flex: 'none',
+                                                                                order: 1,
+                                                                                flexGrow: 0,
+                                                                            }}
+                                                                        >
+                                                                            {/* Amara okafor / Sara chen */}
+                                                                            <span
+                                                                                className="font-poppins text-black dark:text-white truncate"
+                                                                                style={{
+                                                                                    height: '24px',
+                                                                                    fontStyle: 'normal',
+                                                                                    fontWeight: 400,
+                                                                                    fontSize: '16px',
+                                                                                    lineHeight: '24px',
+                                                                                    color: 'currentColor',
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    flex: 'none',
+                                                                                    order: 0,
+                                                                                    flexGrow: 0,
+                                                                                }}
+                                                                            >
+                                                                                {item.value.full_name}
+                                                                            </span>
+
+                                                                            {/* Senior product designer */}
+                                                                            <span
+                                                                                className="font-poppins text-muted-foreground truncate"
+                                                                                style={{
+                                                                                    width: '144px',
+                                                                                    height: '16px',
+                                                                                    fontStyle: 'normal',
+                                                                                    fontWeight: 400,
+                                                                                    fontSize: '12px',
+                                                                                    lineHeight: '16px',
+                                                                                    color: '#6B7280',
+                                                                                    display: 'flex',
+                                                                                    alignItems: 'center',
+                                                                                    flex: 'none',
+                                                                                    order: 1,
+                                                                                    flexGrow: 0,
+                                                                                }}
+                                                                            >
+                                                                                {item.value.headline || (item.value.type === 'COMPANY' ? item.value.industry : 'Product Designer')}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </Link>
+                                                            ) : (
+                                                                /* Frame 2608724 */
+                                                                <div
+                                                                    className="w-full flex flex-row items-center px-4 py-2 transition-colors cursor-pointer hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
+                                                                    style={{
+                                                                        height: '40px',
+                                                                        gap: '10px',
+                                                                        backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
+                                                                        flex: 'none',
+                                                                        alignSelf: 'stretch',
+                                                                        flexGrow: 0,
+                                                                    }}
+                                                                    onClick={() => {
+                                                                        const queryText = item.value as string;
+                                                                        setSearchQuery(queryText);
+                                                                        saveSearch(queryText);
+                                                                    }}
+                                                                >
+                                                                    {/* Recent Icon */}
+                                                                    <div
+                                                                        style={{
+                                                                            width: '24px',
+                                                                            height: '24px',
+                                                                            flex: 'none',
+                                                                            order: 0,
+                                                                            flexGrow: 0,
+                                                                        }}
+                                                                    >
+                                                                        <Clock className="w-6 h-6 text-black dark:text-white" />
+                                                                    </div>
+
+                                                                    {/* UI UX job */}
                                                                     <span
                                                                         className="font-poppins text-black dark:text-white truncate"
                                                                         style={{
@@ -718,255 +791,181 @@ export const HomeHeader = () => {
                                                                             fontSize: '16px',
                                                                             lineHeight: '24px',
                                                                             color: 'currentColor',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            flex: 'none',
-                                                                            order: 0,
-                                                                            flexGrow: 0,
-                                                                        }}
-                                                                    >
-                                                                        {item.value.full_name}
-                                                                    </span>
-
-                                                                    {/* Senior product designer */}
-                                                                    <span
-                                                                        className="font-poppins text-muted-foreground truncate"
-                                                                        style={{
-                                                                            width: '144px',
-                                                                            height: '16px',
-                                                                            fontStyle: 'normal',
-                                                                            fontWeight: 400,
-                                                                            fontSize: '12px',
-                                                                            lineHeight: '16px',
-                                                                            color: '#6B7280',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
                                                                             flex: 'none',
                                                                             order: 1,
                                                                             flexGrow: 0,
                                                                         }}
                                                                     >
-                                                                        {item.value.headline || (item.value.type === 'COMPANY' ? item.value.industry : 'Product Designer')}
+                                                                        {item.value as string}
                                                                     </span>
                                                                 </div>
-                                                            </div>
-                                                        </Link>
-                                                    ) : (
-                                                        /* Frame 2608724 */
-                                                        <div
-                                                            className="w-full flex flex-row items-center px-4 py-2 transition-colors cursor-pointer hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
-                                                            style={{
-                                                                height: '40px',
-                                                                gap: '10px',
-                                                                backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
-                                                                flex: 'none',
-                                                                alignSelf: 'stretch',
-                                                                flexGrow: 0,
-                                                            }}
-                                                            onClick={() => {
-                                                                const queryText = item.value as string;
-                                                                setSearchQuery(queryText);
-                                                                saveSearch(queryText);
-                                                            }}
-                                                        >
-                                                            {/* Recent Icon */}
-                                                            <div
-                                                                style={{
-                                                                    width: '24px',
-                                                                    height: '24px',
-                                                                    flex: 'none',
-                                                                    order: 0,
-                                                                    flexGrow: 0,
+                                                            )}
+                                                            <button
+                                                                onMouseDown={(e) => e.preventDefault()}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    removeSearch(item.id);
                                                                 }}
+                                                                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/history:opacity-100 hover:bg-muted/10 transition-all text-xs"
+                                                                title="Remove from history"
                                                             >
-                                                                <Clock className="w-6 h-6 text-black dark:text-white" />
-                                                            </div>
-
-                                                        {/* UI UX job */}
-                                                        <span
-                                                            className="font-poppins text-black dark:text-white truncate"
-                                                            style={{
-                                                                height: '24px',
-                                                                fontStyle: 'normal',
-                                                                fontWeight: 400,
-                                                                fontSize: '16px',
-                                                                lineHeight: '24px',
-                                                                color: 'currentColor',
-                                                                flex: 'none',
-                                                                order: 1,
-                                                                flexGrow: 0,
-                                                            }}
-                                                        >
-                                                            {item.value as string}
-                                                        </span>
+                                                                ❌
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="py-8 text-center text-sm text-muted-foreground w-full">
+                                                        No recent searches yet.
                                                     </div>
                                                 )}
-                                                <button
-                                                    onMouseDown={(e) => e.preventDefault()}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        removeSearch(item.id);
-                                                    }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/history:opacity-100 hover:bg-muted/10 transition-all text-xs"
-                                                    title="Remove from history"
-                                                >
-                                                    ❌
-                                                </button>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="py-8 text-center text-sm text-muted-foreground w-full">
-                                            No recent searches yet.
-                                        </div>
-                                    )}
-                                </div>
 
-                                    {/* Frame 2608719 */}
-                                    {history.length > 0 && (
-                                        <div
-                                            className="w-full flex flex-row justify-center items-center px-4"
-                                            style={{
-                                                height: '24px',
-                                                gap: '10px',
-                                                flex: 'none',
-                                                order: 6,
-                                                alignSelf: 'stretch',
-                                                flexGrow: 0,
-                                            }}
-                                        >
-                                            <button
-                                                onMouseDown={(e) => e.preventDefault()}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    clearAll();
-                                                }}
-                                                className="font-poppins text-[#6366F1] hover:text-[#6366F1]/80 transition-colors"
-                                                style={{
-                                                    width: '67px',
-                                                    height: '24px',
-                                                    fontStyle: 'normal',
-                                                    fontWeight: 500,
-                                                    fontSize: '16px',
-                                                    lineHeight: '24px',
-                                                    color: '#6366F1',
-                                                    flex: 'none',
-                                                    order: 0,
-                                                    flexGrow: 0,
-                                                }}
-                                            >
-                                                Clear all
-                                            </button>
+                                            {/* Frame 2608719 */}
+                                            {history.length > 0 && (
+                                                <div
+                                                    className="w-full flex flex-row justify-center items-center px-4"
+                                                    style={{
+                                                        height: '24px',
+                                                        gap: '10px',
+                                                        flex: 'none',
+                                                        order: 6,
+                                                        alignSelf: 'stretch',
+                                                        flexGrow: 0,
+                                                    }}
+                                                >
+                                                    <button
+                                                        onMouseDown={(e) => e.preventDefault()}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            clearAll();
+                                                        }}
+                                                        className="font-poppins text-[#6366F1] hover:text-[#6366F1]/80 transition-colors"
+                                                        style={{
+                                                            width: '67px',
+                                                            height: '24px',
+                                                            fontStyle: 'normal',
+                                                            fontWeight: 500,
+                                                            fontSize: '16px',
+                                                            lineHeight: '24px',
+                                                            color: '#6366F1',
+                                                            flex: 'none',
+                                                            order: 0,
+                                                            flexGrow: 0,
+                                                        }}
+                                                    >
+                                                        Clear all
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
                             )}
-                        </div>
-                    )}
 
-                    {/* Header Right Section (Action Buttons) */}
-                    <div className="flex items-center gap-4 shrink-0 min-w-0 xl:w-[406px] xl:justify-end">
-                        {!pathname.startsWith('/channel') && !pathname.startsWith('/team') && (
-                            <FeatureDisabledTooltip featureKey="enablePostCreation" disabledMessage="Content posting is temporarily paused by admin.">
-                                <TooltipProvider delayDuration={0}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                onClick={(e) => {
-                                                    if (isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        return;
-                                                    }
-                                                    setActiveModal('create-post');
-                                                }}
-                                                className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap ${(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) ? '!cursor-not-allowed' : ''}`}
-                                            >
-                                                <span>Create post</span>
-                                                <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                                    <Plus size={12} strokeWidth={3} />
-                                                </div>
-                                            </button>
-                                        </TooltipTrigger>
-                                        {(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) && (
-                                            <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
-                                                <p>You don't have permission to access this</p>
-                                            </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </FeatureDisabledTooltip>
-                        )}
-
-                        {/* Icons group — gap-2 (8px) between each, each icon 56×40 */}
-                        <div className="flex items-center gap-2">
-                            <Link
-                                href="/notifications"
-                                className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${isNotificationsActive ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
-                            >
-                                <div className="relative">
-                                    <Bell width={24} height={24} strokeWidth={1.5} />
-                                    {unreadNotificationsCount > 0 && (
-                                        /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
-                                        <span 
-                                            style={{
-                                                position: 'absolute',
-                                                width: '6px',
-                                                height: '6px',
-                                                left: '19px',
-                                                top: '-3px',
-                                                backgroundColor: isCompany ? '#1A73E8' : '#EC6229',
-                                                borderRadius: '50%'
-                                            }}
-                                        />
-                                    )}
-                                </div>
-                            </Link>
-                            <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href="/messaging"
-                                            onClick={(e) => {
-                                                if (isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                }
-                                            }}
-                                            className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'} ${(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) ? '!cursor-not-allowed' : ''}`}
-                                        >
-                                            <div className="relative">
-                                                <Icon icon="proicons:chat" style={{ width: '24px', height: '24px' }} />
-                                                {hasUnreadMessages && (
-                                                    <span 
-                                                        style={{
-                                                            position: 'absolute',
-                                                            width: '6px',
-                                                            height: '6px',
-                                                            left: '19px',
-                                                            top: '-3px',
-                                                            backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
-                                                            borderRadius: '50%'
+                            {/* Header Right Section (Action Buttons) */}
+                            <div className="flex items-center gap-4 shrink-0 min-w-0 xl:w-[406px] xl:justify-end">
+                                {!pathname.startsWith('/channel') && !pathname.startsWith('/team') && (
+                                    <FeatureDisabledTooltip featureKey="enablePostCreation" disabledMessage="Content posting is temporarily paused by admin.">
+                                        <TooltipProvider delayDuration={0}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            if (isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                return;
+                                                            }
+                                                            setActiveModal('create-post');
                                                         }}
-                                                    />
+                                                        className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap ${(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) ? '!cursor-default' : ''}`}
+                                                    >
+                                                        <span>Create post</span>
+                                                        <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
+                                                            <Plus size={12} strokeWidth={3} />
+                                                        </div>
+                                                    </button>
+                                                </TooltipTrigger>
+                                                {(isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')) && (
+                                                    <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
+                                                        <p>You don't have permission to access this</p>
+                                                    </TooltipContent>
                                                 )}
-                                            </div>
-                                        </Link>
-                                    </TooltipTrigger>
-                                    {(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) && (
-                                        <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
-                                            <p>You don't have permission to access this</p>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
-                            <div className="flex items-center justify-center w-14 h-10 rounded-[24px]">
-                                <ProfileDropdown />
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </FeatureDisabledTooltip>
+                                )}
+
+                                {/* Icons group — gap-2 (8px) between each, each icon 56×40 */}
+                                <div className="flex items-center gap-2">
+                                    <Link
+                                        href="/notifications"
+                                        className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${isNotificationsActive ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
+                                    >
+                                        <div className="relative">
+                                            <Bell width={24} height={24} strokeWidth={1.5} />
+                                            {unreadNotificationsCount > 0 && (
+                                                /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
+                                                <span
+                                                    style={{
+                                                        position: 'absolute',
+                                                        width: '6px',
+                                                        height: '6px',
+                                                        left: '19px',
+                                                        top: '-3px',
+                                                        backgroundColor: isCompany ? '#1A73E8' : '#EC6229',
+                                                        borderRadius: '50%'
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+                                    </Link>
+                                    <TooltipProvider delayDuration={0}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Link
+                                                    href="/messaging"
+                                                    onClick={(e) => {
+                                                        if (isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                        }
+                                                    }}
+                                                    className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'} ${(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) ? '!cursor-default' : ''}`}
+                                                >
+                                                    <div className="relative">
+                                                        <Icon icon="proicons:chat" style={{ width: '24px', height: '24px' }} />
+                                                        {hasUnreadMessages && (
+                                                            <span
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    width: '6px',
+                                                                    height: '6px',
+                                                                    left: '19px',
+                                                                    top: '-3px',
+                                                                    backgroundColor: isCompany ? '#1A73E8' : '#6366F1',
+                                                                    borderRadius: '50%'
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </Link>
+                                            </TooltipTrigger>
+                                            {(isCompany && !checkPermission('chat') && !checkPermission('MESSAGES') && !checkPermission('jobs_chat') && !checkPermission('JOBS_CHAT')) && (
+                                                <TooltipContent side="bottom" className="bg-gray-800 text-white border-gray-700">
+                                                    <p>You don't have permission to access this</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <div className="flex items-center justify-center w-14 h-10 rounded-[24px]">
+                                        <ProfileDropdown />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                </>
+                    </>
                 )}
 
                 {/* --- Mobile Header (Hidden from md screens up) --- */}
@@ -986,214 +985,214 @@ export const HomeHeader = () => {
                     ) : (
                         <div className="flex-1 flex items-center gap-3 relative">
                             <input
-                            type="text"
-                            placeholder={pathname === '/jobs' || pathname.startsWith('/jobs/') ? "Search jobs" : "Search"}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            onKeyDown={handleKeyDown}
-                            className="w-full pl-4 pr-10 py-2.5 bg-transparent border border-border focus:border-primary rounded-full text-sm transition-all outline-none text-foreground"
-                        />
-                        <Search
-                            className="w-4 h-4 text-primary absolute right-3 cursor-pointer"
-                            onClick={() => {
-                                if (searchQuery.trim()) {
-                                    saveSearch(searchQuery);
-                                    setIsSearchFocused(false);
-                                }
-                            }}
-                        />
-                        {/* Mobile Search Dropdown */}
-                        {isSearchFocused && searchQuery && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                                {hashtagResults.length > 0 && (
-                                    <>
-                                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
-                                            Hashtags
-                                        </div>
-                                        {hashtagResults.slice(0, 5).map((h, idx) => (
-                                            <Link
-                                                key={h.tag}
-                                                href={`/hashtag/${h.tag.toLowerCase()}`}
-                                                className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
-                                                onClick={() => {
-                                                    saveSearch(`#${h.tag}`);
-                                                    setIsSearchFocused(false);
-                                                    setSearchQuery("");
-                                                }}
-                                            >
-                                                <div className="w-8 h-8 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
-                                                    <Hash className="w-4 h-4 text-primary" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-foreground truncate">
-                                                        #{highlightMatch(h.tag, searchQuery)}
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground truncate uppercase font-medium mt-0.5 tracking-tight">{h.usage_count} Posts</p>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                        {hashtagResults.length > 5 && (
-                                            <button
-                                                onClick={() => {
-                                                    setIsSearchFocused(false);
-                                                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-                                                }}
-                                                className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
-                                            >
-                                                See more results for &quot;{searchQuery}&quot;
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-
-                                {searchResults.length > 0 && (
-                                    <>
-                                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
-                                            People
-                                        </div>
-                                        {searchResults.map((user, idx) => {
-                                            const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
-                                            const hasSeeMore = hashtagResults.length > 5;
-                                            const adjustedIdx = idx + visibleHashtagsCount + (hasSeeMore ? 1 : 0);
-                                            return (
+                                type="text"
+                                placeholder={pathname === '/jobs' || pathname.startsWith('/jobs/') ? "Search jobs" : "Search"}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                onKeyDown={handleKeyDown}
+                                className="w-full pl-4 pr-10 py-2.5 bg-transparent border border-border focus:border-primary rounded-full text-sm transition-all outline-none text-foreground"
+                            />
+                            <Search
+                                className="w-4 h-4 text-primary absolute right-3 cursor-pointer"
+                                onClick={() => {
+                                    if (searchQuery.trim()) {
+                                        saveSearch(searchQuery);
+                                        setIsSearchFocused(false);
+                                    }
+                                }}
+                            />
+                            {/* Mobile Search Dropdown */}
+                            {isSearchFocused && searchQuery && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                                    {hashtagResults.length > 0 && (
+                                        <>
+                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
+                                                Hashtags
+                                            </div>
+                                            {hashtagResults.slice(0, 5).map((h, idx) => (
                                                 <Link
-                                                    key={user.type === 'COMPANY' ? user.slug : user.id}
-                                                    href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
-                                                    className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === adjustedIdx ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                                                    key={h.tag}
+                                                    href={`/hashtag/${h.tag.toLowerCase()}`}
+                                                    className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
                                                     onClick={() => {
-                                                        saveSearch(user);
+                                                        saveSearch(`#${h.tag}`);
                                                         setIsSearchFocused(false);
                                                         setSearchQuery("");
                                                     }}
                                                 >
-                                                    <div className="relative w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
-                                                        <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
-                                                        {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
-                                                            <img
-                                                                src={user.avatar_url}
-                                                                alt={user.full_name}
-                                                                className="absolute inset-0 w-full h-full object-cover"
-                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                            />
-                                                        ) : null}
+                                                    <div className="w-8 h-8 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
+                                                        <Hash className="w-4 h-4 text-primary" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
-                                                            {user.type === 'COMPANY' && (
-                                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">{user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1).toLowerCase() : 'Company'}</span>
-                                                            )}
-                                                        </div>
-                                                        {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
-                                                            <p className="text-xs text-muted-foreground truncate font-normal mt-0.5">
-                                                                {user.headline || user.industry}
-                                                            </p>
-                                                        )}
+                                                        <p className="text-sm font-semibold text-foreground truncate">
+                                                            #{highlightMatch(h.tag, searchQuery)}
+                                                        </p>
+                                                        <p className="text-[10px] text-muted-foreground truncate uppercase font-medium mt-0.5 tracking-tight">{h.usage_count} Posts</p>
                                                     </div>
                                                 </Link>
-                                            );
-                                        })}
-                                    </>
-                                )}
-
-                                {searchLoading && (
-                                    <div className="p-4 text-center text-muted-foreground animate-pulse">Searching...</div>
-                                )}
-
-                                {!searchLoading && searchResults.length === 0 && hashtagResults.length === 0 && (
-                                    <div className="p-4 text-center text-muted-foreground">No matches found.</div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Mobile Search History Dropdown */}
-                        {isSearchFocused && !searchQuery && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                                <div className="px-4 py-2 border-b border-border flex justify-between items-center bg-muted/30">
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recent</span>
-                                    {history.length > 0 && (
-                                        <button
-                                            onMouseDown={(e) => e.preventDefault()}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                clearAll();
-                                            }}
-                                            className="text-[10px] font-bold text-primary hover:underline"
-                                        >
-                                            Clear
-                                        </button>
+                                            ))}
+                                            {hashtagResults.length > 5 && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsSearchFocused(false);
+                                                        router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                                                    }}
+                                                    className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
+                                                >
+                                                    See more results for &quot;{searchQuery}&quot;
+                                                </button>
+                                            )}
+                                        </>
                                     )}
-                                </div>
-                                <div className="max-h-[250px] overflow-y-auto">
-                                    {history.length > 0 ? (
-                                        history.map((item, idx) => (
-                                            <div key={item.id} className={`relative group/history transition-colors ${activeIndex === idx ? 'bg-primary/5' : ''}`}>
-                                                {item.type === 'USER' ? (
+
+                                    {searchResults.length > 0 && (
+                                        <>
+                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
+                                                People
+                                            </div>
+                                            {searchResults.map((user, idx) => {
+                                                const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
+                                                const hasSeeMore = hashtagResults.length > 5;
+                                                const adjustedIdx = idx + visibleHashtagsCount + (hasSeeMore ? 1 : 0);
+                                                return (
                                                     <Link
-                                                        href={item.value.type === 'COMPANY' ? `/organization/${item.value.slug}` : `/profile/${item.value.account_name || item.value.id}`}
-                                                        className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? '' : 'hover:bg-muted/50'}`}
-                                                        onClick={() => saveSearch(item.value)}
+                                                        key={user.type === 'COMPANY' ? user.slug : user.id}
+                                                        href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                                        className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === adjustedIdx ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                                                        onClick={() => {
+                                                            saveSearch(user);
+                                                            setIsSearchFocused(false);
+                                                            setSearchQuery("");
+                                                        }}
                                                     >
                                                         <div className="relative w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
-                                                            <span>{(item.value.full_name || 'U').charAt(0).toUpperCase()}</span>
-                                                            {(item.value.avatar || item.value.avatar_url) && (item.value.avatar || item.value.avatar_url) !== '/assets/pngegg.png' ? (
+                                                            <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                            {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
                                                                 <img
-                                                                    src={(item.value.avatar || item.value.avatar_url)!}
-                                                                    alt={item.value.full_name}
+                                                                    src={user.avatar_url}
+                                                                    alt={user.full_name}
                                                                     className="absolute inset-0 w-full h-full object-cover"
-                                                                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                                 />
                                                             ) : null}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-semibold text-foreground truncate">{item.value.full_name}</p>
-                                                            <p className="text-[10px] text-muted-foreground truncate uppercase font-medium">Recent Profile</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
+                                                                {user.type === 'COMPANY' && (
+                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">{user.account_type ? user.account_type.charAt(0).toUpperCase() + user.account_type.slice(1).toLowerCase() : 'Company'}</span>
+                                                                )}
+                                                            </div>
+                                                            {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
+                                                                <p className="text-xs text-muted-foreground truncate font-normal mt-0.5">
+                                                                    {user.headline || user.industry}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </Link>
-                                                ) : (
-                                                    <div
-                                                        className={`flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer ${activeIndex === idx ? '' : 'hover:bg-muted/50'}`}
-                                                        onClick={() => {
-                                                            const queryText = item.value as string;
-                                                            setSearchQuery(queryText);
-                                                            saveSearch(queryText);
-                                                        }}
-                                                    >
-                                                        <div className="w-8 h-8 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
-                                                            <Clock className="w-4 h-4 text-muted-foreground" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-semibold text-foreground truncate">{item.value as string}</p>
-                                                            <p className="text-[10px] text-muted-foreground truncate uppercase font-medium">Recent Search</p>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <button
-                                                    onMouseDown={(e) => e.preventDefault()}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        removeSearch(item.id);
-                                                    }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-100 bg-muted/50 text-xs"
-                                                    title="Remove from history"
-                                                >
-                                                    ❌
-                                                </button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-8 text-center">
-                                            <Clock className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                                            <p className="text-sm text-muted-foreground">No recent searches yet.</p>
-                                        </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+
+                                    {searchLoading && (
+                                        <div className="p-4 text-center text-muted-foreground animate-pulse">Searching...</div>
+                                    )}
+
+                                    {!searchLoading && searchResults.length === 0 && hashtagResults.length === 0 && (
+                                        <div className="p-4 text-center text-muted-foreground">No matches found.</div>
                                     )}
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+
+                            {/* Mobile Search History Dropdown */}
+                            {isSearchFocused && !searchQuery && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                                    <div className="px-4 py-2 border-b border-border flex justify-between items-center bg-muted/30">
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recent</span>
+                                        {history.length > 0 && (
+                                            <button
+                                                onMouseDown={(e) => e.preventDefault()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    clearAll();
+                                                }}
+                                                className="text-[10px] font-bold text-primary hover:underline"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="max-h-[250px] overflow-y-auto">
+                                        {history.length > 0 ? (
+                                            history.map((item, idx) => (
+                                                <div key={item.id} className={`relative group/history transition-colors ${activeIndex === idx ? 'bg-primary/5' : ''}`}>
+                                                    {item.type === 'USER' ? (
+                                                        <Link
+                                                            href={item.value.type === 'COMPANY' ? `/organization/${item.value.slug}` : `/profile/${item.value.account_name || item.value.id}`}
+                                                            className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? '' : 'hover:bg-muted/50'}`}
+                                                            onClick={() => saveSearch(item.value)}
+                                                        >
+                                                            <div className="relative w-10 h-10 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden font-['Poppins'] select-none">
+                                                                <span>{(item.value.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                                {(item.value.avatar || item.value.avatar_url) && (item.value.avatar || item.value.avatar_url) !== '/assets/pngegg.png' ? (
+                                                                    <img
+                                                                        src={(item.value.avatar || item.value.avatar_url)!}
+                                                                        alt={item.value.full_name}
+                                                                        className="absolute inset-0 w-full h-full object-cover"
+                                                                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                                    />
+                                                                ) : null}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-foreground truncate">{item.value.full_name}</p>
+                                                                <p className="text-[10px] text-muted-foreground truncate uppercase font-medium">Recent Profile</p>
+                                                            </div>
+                                                        </Link>
+                                                    ) : (
+                                                        <div
+                                                            className={`flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer ${activeIndex === idx ? '' : 'hover:bg-muted/50'}`}
+                                                            onClick={() => {
+                                                                const queryText = item.value as string;
+                                                                setSearchQuery(queryText);
+                                                                saveSearch(queryText);
+                                                            }}
+                                                        >
+                                                            <div className="w-8 h-8 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
+                                                                <Clock className="w-4 h-4 text-muted-foreground" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-foreground truncate">{item.value as string}</p>
+                                                                <p className="text-[10px] text-muted-foreground truncate uppercase font-medium">Recent Search</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        onMouseDown={(e) => e.preventDefault()}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            removeSearch(item.id);
+                                                        }}
+                                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-100 bg-muted/50 text-xs"
+                                                        title="Remove from history"
+                                                    >
+                                                        ❌
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="p-8 text-center">
+                                                <Clock className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                                                <p className="text-sm text-muted-foreground">No recent searches yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* Mobile Icons */}
@@ -1207,7 +1206,7 @@ export const HomeHeader = () => {
                                     <Bell className="w-5 h-5" />
                                     {unreadNotificationsCount > 0 && (
                                         /* Bug fix: Notification indicator color updated to #EC6229 (var(--ds-accent)) */
-                                        <span 
+                                        <span
                                             style={{
                                                 position: 'absolute',
                                                 width: '6px',
@@ -1228,7 +1227,7 @@ export const HomeHeader = () => {
                                 <div className="relative">
                                     <Icon icon="proicons:chat" className="w-6 h-6 text-black dark:text-white" />
                                     {hasUnreadMessages && (
-                                        <span 
+                                        <span
                                             style={{
                                                 position: 'absolute',
                                                 width: '6px',

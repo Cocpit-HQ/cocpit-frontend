@@ -281,7 +281,7 @@ export function ProjectMediaModal({
             type="button"
             onClick={handleSubmit}
             disabled={!isFormValid}
-            className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-['DM_Sans'] cursor-pointer shadow-sm"
+            className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-default font-['DM_Sans'] cursor-pointer shadow-sm"
           >
             {isEditing ? "Save" : "Add"}
           </Button>

@@ -68,7 +68,7 @@ export default function CreateChannelModal({
 
           {/* Modal Content (Scrollable) */}
           <div className="w-full max-w-[648px] h-[533.5px] px-[24px] flex flex-col items-start gap-[16px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            
+
             {/* Container: Channel name* */}
             <div className="w-full max-w-[600px] flex flex-col items-start gap-[11.5px] flex-shrink-0">
               <label className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-[#000000] dark:text-[#FFFFFF]">
@@ -88,7 +88,7 @@ export default function CreateChannelModal({
               <label className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-[#000000] dark:text-[#FFFFFF] text-left">
                 Channel banner*
               </label>
-              
+
               {bannerUrl ? (
                 <div className="w-full max-w-[600px] h-[100px] sm:h-[113px] rounded-[12px] overflow-hidden relative select-none bg-gray-100 dark:bg-[#1A2435] flex items-center justify-center flex-shrink-0">
                   <img src={bannerUrl} alt="Channel banner" className="w-full h-full object-cover" />
@@ -149,7 +149,7 @@ export default function CreateChannelModal({
                 type="button"
                 onClick={() => isValid && onSubmit({ name: name.trim(), description: description.trim(), bannerUrl })}
                 disabled={!isValid || isSubmitting}
-                className="w-[140px] sm:w-auto min-w-[140px] px-6 h-[40px] flex items-center justify-center gap-2 rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-[140px] sm:w-auto min-w-[140px] px-6 h-[40px] flex items-center justify-center gap-2 rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-default transition-colors"
               >
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>{submitLabel}</span>

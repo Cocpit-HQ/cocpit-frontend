@@ -125,7 +125,7 @@ export const EventRegistrationModal = ({
     const originalColorScheme = document.body.style.colorScheme;
     document.body.style.colorScheme = "light";
 
-    const canvas = await html2canvas(element, { 
+    const canvas = await html2canvas(element, {
       scale: 2,
       backgroundColor: "#ffffff",
       onclone: (clonedDoc) => {
@@ -134,14 +134,14 @@ export const EventRegistrationModal = ({
         for (let i = 0; i < elements.length; i++) {
           const el = elements[i] as HTMLElement;
           const style = window.getComputedStyle(el);
-          
+
           if (el.classList?.contains('animate-pulse')) {
-             el.style.display = 'none'; // Pulse often uses complex gradients
+            el.style.display = 'none'; // Pulse often uses complex gradients
           }
-          
+
           // Force fallback for common properties
           if (el.style.backgroundColor?.includes('okl') || style.backgroundColor?.includes('okl')) {
-            el.style.backgroundColor = "#1f2937"; 
+            el.style.backgroundColor = "#1f2937";
           }
           if (el.style.color?.includes('okl') || style.color?.includes('okl')) {
             el.style.color = "#ffffff";
@@ -162,11 +162,11 @@ export const EventRegistrationModal = ({
       unit: "mm",
       format: "a4"
     });
-    
+
     // A4 width is 210mm. Let's make the ticket 100mm wide
     const pdfWidth = 100;
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    
+
     pdf.addImage(imgData, "PNG", (210 - pdfWidth) / 2, 20, pdfWidth, pdfHeight);
     pdf.save(`ticket-${event?.title.substring(0, 10).replace(/\s/g, '') || 'event'}.pdf`);
   };
@@ -193,13 +193,13 @@ export const EventRegistrationModal = ({
             <p className="text-sm text-muted-foreground mb-6 text-center">
               A confirmation email has been sent to {form.getValues().email}.
             </p>
-            
+
             {ticket && (
               <div className="w-full flex justify-center mb-6">
                 <TicketCard ticket={ticket} />
               </div>
             )}
-            
+
             <div className="mt-2 flex w-full max-w-[380px] gap-3">
               {ticket && (
                 <Button type="button" variant="outline" className="flex-1" onClick={downloadTicket}>
@@ -232,7 +232,7 @@ export const EventRegistrationModal = ({
                 {...form.register("name")}
                 placeholder="Your Name"
                 readOnly
-                className="bg-muted cursor-not-allowed opacity-70 border-border text-foreground"
+                className="bg-muted cursor-default opacity-70 border-border text-foreground"
               />
               {form.formState.errors.name && <p className="text-red-500 text-xs">{form.formState.errors.name.message}</p>}
             </div>
@@ -245,7 +245,7 @@ export const EventRegistrationModal = ({
                 {...form.register("email")}
                 placeholder="Your Email"
                 readOnly
-                className="bg-muted cursor-not-allowed opacity-70 border-border text-foreground"
+                className="bg-muted cursor-default opacity-70 border-border text-foreground"
               />
               {form.formState.errors.email && <p className="text-red-500 text-xs">{form.formState.errors.email.message}</p>}
             </div>

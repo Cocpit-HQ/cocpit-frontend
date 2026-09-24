@@ -38,10 +38,10 @@ export function LivingResume({
 }: LivingResumeProps) {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [tempFile, setTempFile] = useState<File | null>(null);
-  
+
   const { activeProfile } = useActiveProfile();
   const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-  
+
   // Only call hooks if it's own profile, or call them but don't use them (React hook rules require calling unconditionally)
   const resumeMutations = useResumeMutations();
   const { upload, remove } = resumeMutations;
@@ -62,7 +62,7 @@ export function LivingResume({
     const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
     totalMonths += Math.max(0, months);
   });
-  
+
   let totalYears = 0;
   if (experiences.length > 0) {
     totalYears = Math.round(totalMonths / 12);
@@ -97,7 +97,7 @@ export function LivingResume({
       } catch (err) {
         console.error("Failed to record resume event:", err);
       }
-      
+
       try {
         const response = await fetch(resumeUrl);
         if (!response.ok) throw new Error('Network response was not ok');
@@ -172,7 +172,7 @@ export function LivingResume({
         <div className="flex items-center gap-3">
           {/* PDF File Chip */}
           {resumeName && (
-            <div 
+            <div
               onClick={handleDownloadOrView}
               className="flex flex-row items-center justify-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border transition-colors box-border flex-none order-0 flex-grow-0 cursor-pointer hover:bg-secondary/30"
               title={isOwnProfile ? "Download PDF" : "View Resume"}
@@ -200,13 +200,13 @@ export function LivingResume({
           {/* Add Resume Button - Only show if no resume exists and isOwnProfile is true */}
           {!resumeName && isOwnProfile && (
             <FeatureDisabledTooltip featureKey="enableResumeParsing">
-            <button
-              onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-card text-primary rounded-[24px] border border-primary hover:bg-secondary transition-all text-[14px] leading-[20px] font-normal font-['DM_Sans'] whitespace-nowrap"
-            >
-              <Plus className="w-6 h-6 stroke-[2px]" />
-              <span>Add resume</span>
-            </button>
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-card text-primary rounded-[24px] border border-primary hover:bg-secondary transition-all text-[14px] leading-[20px] font-normal font-['DM_Sans'] whitespace-nowrap"
+              >
+                <Plus className="w-6 h-6 stroke-[2px]" />
+                <span>Add resume</span>
+              </button>
             </FeatureDisabledTooltip>
           )}
 
@@ -325,7 +325,7 @@ export function LivingResume({
                 disabled={!tempFile || upload.isPending}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tempFile && !upload.isPending
                   ? "bg-primary text-primary-foreground hover:opacity-90"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-muted text-muted-foreground cursor-default"
                   }`}
               >
                 {upload.isPending ? "Uploading..." : "Save"}

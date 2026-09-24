@@ -265,13 +265,12 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                         setViewMonth(idx);
                         setIsMonthSelectOpen(false);
                       }}
-                      className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${
-                        isSelected
+                      className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${isSelected
                           ? "text-ds-text-primary font-semibold"
                           : isMonthDisabled
-                          ? "text-ds-text-muted opacity-40 cursor-not-allowed"
-                          : "text-ds-text-primary"
-                      }`}
+                            ? "text-ds-text-muted opacity-40 cursor-default"
+                            : "text-ds-text-primary"
+                        }`}
                     >
                       {mName}
                     </button>
@@ -314,11 +313,10 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                         }
                         setIsYearSelectOpen(false);
                       }}
-                      className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${
-                        isSelected
+                      className={`text-left px-2.5 py-1 text-sm rounded-md font-['DM_Sans'] transition-colors ${isSelected
                           ? "text-ds-text-primary font-semibold"
                           : "text-ds-text-primary"
-                      }`}
+                        }`}
                     >
                       {y}
                     </button>
@@ -380,7 +378,7 @@ export const DarkCalendar: React.FC<DarkCalendarProps> = ({
                     <div
                       key={cIdx}
                       data-state="Disabled"
-                      className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center cursor-not-allowed"
+                      className="flex-1 h-8 p-1 rounded-lg flex justify-center items-center cursor-default"
                     >
                       <div className="text-center justify-center text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 opacity-40">
                         {cell.day}

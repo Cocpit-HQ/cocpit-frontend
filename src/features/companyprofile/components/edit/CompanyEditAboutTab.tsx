@@ -113,7 +113,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
   useEffect(() => {
     if (!activeCitySearchOfficeId) return;
     const query = citySearchQueries[activeCitySearchOfficeId] || "";
-    
+
     const delay = setTimeout(async () => {
       if (query.trim().length > 1) {
         setIsSearchingCity(true);
@@ -139,11 +139,11 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
   const handleCitySelect = async (officeId: string, placeId: string, displayName: string) => {
     setActiveCitySearchOfficeId(null);
     setCitySearchQueries(prev => ({ ...prev, [officeId]: "" }));
-    
+
     // Immediately update the UI to make it feel responsive and ensure it "takes"
     // Even if the backend fails to resolve a specific 'city' field for this placeId
     handleOfficeChange(officeId, "city", displayName);
-    
+
     try {
       const res = await getPlaceDetails(placeId, sessionToken.current);
       if (res.success && res.data) {
@@ -285,7 +285,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 font-poppins">
-      
+
       {/* Description */}
       <div className="flex flex-col gap-2 w-full">
         <label className="text-[14px] font-medium text-[#000000] dark:text-white">
@@ -351,7 +351,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
                     type="text"
                     value="India"
                     readOnly
-                    className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-not-allowed"
+                    className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-default"
                   />
                 </div>
               </div>
@@ -361,7 +361,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
                 <label className="text-[14px] font-medium text-[#000000] dark:text-white">
                   City
                 </label>
-                <div 
+                <div
                   className="relative w-full h-11"
                   ref={(el) => { cityRefs.current[office.id] = el; }}
                 >
@@ -383,7 +383,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
                     className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] placeholder-gray-400"
                   />
                   <Icon icon="mynaui:search" className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
-                  
+
                   {activeCitySearchOfficeId === office.id && (citySearchQueries[office.id]?.length > 1 || isSearchingCity) && (
                     <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[200px] overflow-y-auto no-scrollbar">
                       {isSearchingCity ? (
@@ -590,11 +590,10 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         <button
           type="submit"
           disabled={!isDirty || updateMutation.isPending}
-          className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center cursor-pointer ${
-            isDirty && !updateMutation.isPending
+          className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center cursor-pointer ${isDirty && !updateMutation.isPending
               ? "bg-[#1A73E8] text-white hover:bg-blue-700"
-              : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
-          }`}
+              : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-default"
+            }`}
         >
           {updateMutation.isPending ? "Saving..." : "Save"}
         </button>

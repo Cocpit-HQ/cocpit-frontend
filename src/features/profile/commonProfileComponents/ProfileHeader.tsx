@@ -38,7 +38,7 @@ interface ProfileHeaderProps {
     profileStats: any;
     latestExperience?: any;
     latestEducation?: any;
-    
+
     // Callbacks for parents
     onAvatarClick?: () => void;
     onEditAvatarClick?: () => void;
@@ -54,7 +54,7 @@ interface ProfileHeaderProps {
     // Public actions & dropdown slots (optional, from publicProfile feature)
     publicActions?: React.ReactNode;
     dropdownActions?: React.ReactNode;
-    
+
     // Score for download restriction
     profileScore?: number;
 }
@@ -106,7 +106,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
 
     const { isFeatureActive } = useFeatureFlags();
     const [isDownloadingResume, setIsDownloadingResume] = useState(false);
-    
+
     const { activeProfile } = useActiveProfile();
     const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
 
@@ -115,11 +115,11 @@ export const ProfileHeader = React.memo(function ProfileHeader({
         try {
             setIsDownloadingResume(true);
             const loadingToast = toast.loading("Generating your resume...");
-            
+
             const { downloadProfileResumePdf } = await import("@/services/api/profile");
-            
+
             const { blob, filename } = await downloadProfileResumePdf(user.id);
-            
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.style.display = "none";
@@ -128,7 +128,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
-            
+
             toast.dismiss(loadingToast);
             toast.success("Resume downloaded successfully!");
         } catch (error) {
@@ -175,35 +175,35 @@ export const ProfileHeader = React.memo(function ProfileHeader({
         <div className="w-full">
             {isOwnProfile && setCoverImage ? (
                 <FeatureDisabledTooltip featureKey="enableCoverImageUpload">
-                <EditCoverPhoto coverImage={coverImage || null} setCoverImage={setCoverImage} portalContainerId="profile-card">
-                    <div className="absolute top-3 right-3 md:hidden z-10">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
-                                    <MoreVertical className="w-5 h-5" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-card border-border text-foreground">
-                                <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                                    Settings
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => router.push("/analytics")}>
-                                    Analytics
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleLogoutClick}>
-                                    <LogOut className="w-4 h-4 mr-2" />
-                                    Log out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                    <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
-                        <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                            View Analytics
-                        </button>
-                    </div>
-                    {coverContent}
-                </EditCoverPhoto>
+                    <EditCoverPhoto coverImage={coverImage || null} setCoverImage={setCoverImage} portalContainerId="profile-card">
+                        <div className="absolute top-3 right-3 md:hidden z-10">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
+                                        <MoreVertical className="w-5 h-5" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-card border-border text-foreground">
+                                    <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                                        Settings
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => router.push("/analytics")}>
+                                        Analytics
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={handleLogoutClick}>
+                                        <LogOut className="w-4 h-4 mr-2" />
+                                        Log out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
+                            <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                                View Analytics
+                            </button>
+                        </div>
+                        {coverContent}
+                    </EditCoverPhoto>
                 </FeatureDisabledTooltip>
             ) : (
                 <div className="relative w-full">
@@ -270,45 +270,45 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                     {!isOwnProfile ? (
                         <div className="mt-12 mr-4 flex items-center gap-2 md:hidden">
                             <FeatureDisabledTooltip featureKey="enableContactInfo">
-                            <button
-                                onClick={onContactInfoClick}
-                                className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
-                            >
-                                <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
-                            </button>
+                                <button
+                                    onClick={onContactInfoClick}
+                                    className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
+                                >
+                                    <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
+                                </button>
                             </FeatureDisabledTooltip>
                             {publicActions}
                         </div>
                     ) : (
                         <FeatureDisabledTooltip featureKey="enableContactInfo">
-                        <button
-                            onClick={onContactInfoClick}
-                            className="md:hidden mt-12 mr-4 text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
-                        >
-                            <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
-                        </button>
+                            <button
+                                onClick={onContactInfoClick}
+                                className="md:hidden mt-12 mr-4 text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
+                            >
+                                <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
+                            </button>
                         </FeatureDisabledTooltip>
                     )}
 
                     <div className="hidden md:flex flex-col items-end mt-[59px] pr-[16px] gap-2">
                         {isOwnProfile ? (
                             <FeatureDisabledTooltip featureKey="enableContactInfo">
-                            <button
-                                onClick={onContactInfoClick}
-                                className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-['DM_Sans']"
-                            >
-                                Contact Info
-                            </button>
-                            </FeatureDisabledTooltip>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <FeatureDisabledTooltip featureKey="enableContactInfo">
                                 <button
                                     onClick={onContactInfoClick}
                                     className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-['DM_Sans']"
                                 >
                                     Contact Info
                                 </button>
+                            </FeatureDisabledTooltip>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <FeatureDisabledTooltip featureKey="enableContactInfo">
+                                    <button
+                                        onClick={onContactInfoClick}
+                                        className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-['DM_Sans']"
+                                    >
+                                        Contact Info
+                                    </button>
                                 </FeatureDisabledTooltip>
                                 {publicActions}
                             </div>
@@ -410,22 +410,22 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                     {isOwnProfile ? (
                                         <>
                                             <FeatureDisabledTooltip featureKey="enableProfileEditing">
-                                            <DropdownMenuItem
-                                                onClick={onEditProfileClick}
-                                                className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-xl outline-none group transition-colors"
-                                            >
-                                                <span className="text-sm font-medium text-foreground group-focus:text-primary-tint-foreground">Edit profile</span>
-                                                <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-foreground group-focus:text-primary-tint-foreground transition-colors" style={{ strokeWidth: '1.5px' }} />
-                                            </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={onEditProfileClick}
+                                                    className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-xl outline-none group transition-colors"
+                                                >
+                                                    <span className="text-sm font-medium text-foreground group-focus:text-primary-tint-foreground">Edit profile</span>
+                                                    <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-foreground group-focus:text-primary-tint-foreground transition-colors" style={{ strokeWidth: '1.5px' }} />
+                                                </DropdownMenuItem>
                                             </FeatureDisabledTooltip>
                                             <FeatureDisabledTooltip featureKey="enableProfileSharing">
-                                            <DropdownMenuItem
-                                                onClick={onShareProfileClick}
-                                                className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
-                                            >
-                                                <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
-                                                <Icon icon="fluent:share-16-regular" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
-                                            </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={onShareProfileClick}
+                                                    className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+                                                >
+                                                    <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
+                                                    <Icon icon="fluent:share-16-regular" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
+                                                </DropdownMenuItem>
                                             </FeatureDisabledTooltip>
                                             <DropdownMenuItem
                                                 onClick={handleCopyLink}
@@ -550,22 +550,22 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                 {isOwnProfile ? (
                                     <>
                                         <FeatureDisabledTooltip featureKey="enableProfileEditing">
-                                        <DropdownMenuItem
-                                            onClick={onEditProfileClick}
-                                            className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-xl outline-none group transition-colors"
-                                        >
-                                            <span className="text-sm font-medium text-foreground group-focus:text-primary-tint-foreground">Edit profile</span>
-                                            <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-foreground group-focus:text-primary-tint-foreground transition-colors" style={{ strokeWidth: '1.5px' }} />
-                                        </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={onEditProfileClick}
+                                                className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-xl outline-none group transition-colors"
+                                            >
+                                                <span className="text-sm font-medium text-foreground group-focus:text-primary-tint-foreground">Edit profile</span>
+                                                <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-foreground group-focus:text-primary-tint-foreground transition-colors" style={{ strokeWidth: '1.5px' }} />
+                                            </DropdownMenuItem>
                                         </FeatureDisabledTooltip>
                                         <FeatureDisabledTooltip featureKey="enableProfileSharing">
-                                        <DropdownMenuItem
-                                            onClick={onShareProfileClick}
-                                            className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
-                                        >
-                                            <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
-                                            <Icon icon="fluent:share-16-regular" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
-                                        </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={onShareProfileClick}
+                                                className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+                                            >
+                                                <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
+                                                <Icon icon="fluent:share-16-regular" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
+                                            </DropdownMenuItem>
                                         </FeatureDisabledTooltip>
                                         <DropdownMenuItem
                                             onClick={handleCopyLink}
@@ -586,7 +586,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                                                 }
                                                                 handleDownloadResume();
                                                             }}
-                                                            className={`flex items-center justify-between px-3 py-1.5 cursor-pointer rounded-xl outline-none group transition-colors ${(profileScore < 100 || isDownloadingResume) ? 'opacity-50 cursor-not-allowed' : 'focus:bg-[#EEF2FF] focus:text-[#6366F1]'}`}
+                                                            className={`flex items-center justify-between px-3 py-1.5 cursor-pointer rounded-xl outline-none group transition-colors ${(profileScore < 100 || isDownloadingResume) ? 'opacity-50 cursor-default' : 'focus:bg-[#EEF2FF] focus:text-[#6366F1]'}`}
                                                             title="" // Removed native title in favor of Tooltip component
                                                         >
                                                             <span className={`text-sm font-medium text-foreground ${!(profileScore < 100 || isDownloadingResume) && 'group-focus:text-[#6366F1]'}`}>{isDownloadingResume ? 'Downloading...' : 'Download profile'}</span>

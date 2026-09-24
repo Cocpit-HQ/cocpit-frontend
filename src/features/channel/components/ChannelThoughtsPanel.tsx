@@ -44,7 +44,7 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
   const { rootThoughts, replyMap } = useMemo(() => {
     const roots: ChannelThought[] = [];
     const replies = new Map<string, ChannelThought[]>();
- 
+
     thoughts.forEach((t) => {
       if (!t.parentId) {
         roots.push(t);
@@ -55,7 +55,7 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
         replies.get(t.parentId)!.push(t);
       }
     });
- 
+
     return { rootThoughts: roots, replyMap: replies };
   }, [thoughts]);
 
@@ -64,7 +64,7 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
     return rootThoughts.filter((root) => {
       const rootMatches = matchesSearch(root.text) || matchesSearch(root.authorName);
       if (rootMatches) return true;
- 
+
       const children = replyMap.get(root.id) || [];
       return children.some((child) => matchesSearch(child.text) || matchesSearch(child.authorName));
     });
@@ -100,7 +100,7 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
               <button
                 onClick={handleSubmit}
                 disabled={!draft.trim() || addThought.isPending}
-                className="absolute right-[8px] top-1/2 -translate-y-1/2 w-[56px] h-[40px] flex items-center justify-center text-[#000000] dark:text-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-40"
+                className="absolute right-[8px] top-1/2 -translate-y-1/2 w-[56px] h-[40px] flex items-center justify-center text-[#000000] dark:text-[#FFFFFF] disabled:cursor-default disabled:opacity-40"
               >
                 <Icon icon="lucide:send" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px' }} />
               </button>

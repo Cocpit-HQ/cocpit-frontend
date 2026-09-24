@@ -315,6 +315,15 @@ export function ProfileEditScreen({
 
   // Form input change handler
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
+    if (field === "account_name") {
+      const sanitized = value
+        .replace(/^@/, "")
+        .replace(/\s/g, "_")
+        .replace(/[^a-zA-Z0-9_.]/g, "")
+        .toLowerCase();
+      setFormData((prev) => ({ ...prev, account_name: sanitized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

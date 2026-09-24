@@ -253,7 +253,7 @@ export function UniversalShareModal({
                     <button
                         onClick={handleRepost}
                         disabled={postCategory === 'Personal'}
-                        className={`flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors ${postCategory === 'Personal' ? 'opacity-50 cursor-default' : ''}`}
                     >
                         <Icon icon="solar:feed-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
                         <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share to Feed</span>

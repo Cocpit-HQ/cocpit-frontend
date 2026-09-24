@@ -33,7 +33,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
       setCountdown(30);
     }
   }, [step]);
-  
+
   const queryClient = useQueryClient();
   const setPhoneMutation = useSetPhone();
   const confirmPhoneMutation = useConfirmPhone();
@@ -67,7 +67,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
         setErrorMsg('Please enter a valid phone number.');
         return;
       }
-      
+
       setPhoneMutation.mutate(
         { phone },
         {
@@ -153,7 +153,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
       return (
         <div className="flex flex-col items-start gap-2 w-full">
           <label className="text-[14px] font-normal text-black">Phone number</label>
-          <input 
+          <input
             type="tel"
             value={phone}
             onChange={(e) => {
@@ -177,7 +177,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
         <div className="flex flex-col items-start gap-2 w-full">
           <label className="text-[14px] font-normal text-black">Enter code</label>
           <div className="relative w-full">
-            <input 
+            <input
               type="text"
               maxLength={6}
               value={code}
@@ -215,10 +215,10 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
             <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully.</p>
           )}
           <div className="w-full text-right mt-1">
-            <button 
+            <button
               onClick={handleResend}
               disabled={countdown > 0}
-              className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6366F1] hover:underline'}`}
+              className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-default' : 'text-[#6366F1] hover:underline'}`}
             >
               {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
             </button>
@@ -240,7 +240,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
       <div className={`relative flex flex-col items-center p-4 bg-white rounded-[24px] ${isDelete ? 'w-[360px]' : 'w-[450px]'} shadow-lg`}>
-        
+
         {!isDelete && (
           <div className="w-full flex justify-end">
             <button onClick={handleClose} className="p-1">
@@ -250,7 +250,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
         )}
 
         <div className={`flex flex-col items-center w-full max-w-[360px] gap-4 ${isDelete ? 'mt-4 mb-2' : 'mt-2 mb-4'}`}>
-          
+
           <div className="flex flex-col items-center gap-2 w-full text-center">
             <h2 className={`${isDelete ? 'text-[16px] max-w-[250px]' : 'text-[18px]'} font-medium text-black leading-snug`}>
               {getTitle()}
@@ -269,13 +269,13 @@ export function ManagePhoneModal({ isOpen, onClose, mode }: ManagePhoneModalProp
           )}
 
           <div className="flex flex-row justify-between items-center gap-4 w-full h-[40px] mt-2">
-            <button 
+            <button
               onClick={handleClose}
               className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-[#6366F1] bg-white text-[#6366F1] text-[14px] font-normal transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleNext}
               disabled={getIsDisabled()}
               className={`flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-white text-white text-[14px] font-normal transition-colors ${isDelete ? 'bg-[#FF6B6B]' : 'bg-[#6366F1]'} disabled:opacity-50`}

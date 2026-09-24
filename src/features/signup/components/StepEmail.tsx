@@ -191,11 +191,11 @@ export const StepEmail: React.FC<StepEmailProps> = ({
       {/* Terms & Conditions / User Policy Notice */}
       <div className="w-[298px] text-center text-[10px] font-['DM_Sans'] leading-3 text-ds-text-secondary">
         <span>By continuing, you agree to our </span>
-        <Link href="/terms" className="!text-ds-text-primary hover:opacity-80 transition-opacity">
+        <Link href="https://cocpit.in/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="!text-ds-text-primary hover:opacity-80 transition-opacity">
           Terms &amp; Conditions
         </Link>
         <span> and acknowledge our </span>
-        <Link href="/user-agreement" className="!text-ds-text-primary hover:opacity-80 transition-opacity">
+        <Link href="https://cocpit.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="!text-ds-text-primary hover:opacity-80 transition-opacity">
           User Policy
         </Link>
       </div>

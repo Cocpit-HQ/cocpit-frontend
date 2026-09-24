@@ -32,7 +32,7 @@ export const ProfileEditActions: React.FC<ProfileEditActionsProps> = ({
           "w-[77px] h-[36px] px-[12px] py-[6px] rounded-full font-['DM_Sans'] font-medium text-[16px] leading-[24px] flex items-center justify-center transition-all",
           !disabled && !isSaving
             ? "bg-[var(--ds-accent)] text-white hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
-            : "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-90"
+            : "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-90"
         )}
       >
         {isSaving ? "..." : saveLabel}

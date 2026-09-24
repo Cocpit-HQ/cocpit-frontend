@@ -22,10 +22,10 @@ const documentOptions = [
 export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProps) {
   const { isCompany } = useActiveProfile();
   const { mutate: verifyIdentity, isPending } = useIdentityVerification();
-  
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [documentType, setDocumentType] = useState<string>('DRIVING_LICENSE');
-  
+
   const [frontImage, setFrontImage] = useState<File | null>(null);
   const [backImage, setBackImage] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,8 +72,8 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
             alt={`${side} side preview`}
             className="w-full h-full object-contain rounded-[8px]"
           />
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setFile(null)}
             className={`absolute top-2 right-2 p-1.5 rounded-full bg-black/40 hover:bg-black/60 transition-colors`}
             disabled={isPending}
@@ -94,10 +94,10 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
               </span>
             </div>
           </div>
-          <input 
-            type="file" 
-            className="hidden" 
-            accept="image/jpeg,image/png,image/jpg" 
+          <input
+            type="file"
+            className="hidden"
+            accept="image/jpeg,image/png,image/jpg"
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
                 const selectedFile = e.target.files[0];
@@ -132,8 +132,8 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <BareDialogContent 
-        className={step === 3 
+      <BareDialogContent
+        className={step === 3
           ? `p-0 bg-white dark:bg-[#1F2937] w-[300px] h-[92px] rounded-[24px] max-w-none border-none flex flex-col items-center justify-center outline-none shadow-[0px_4px_20px_rgba(0,0,0,0.05)]`
           : `p-0 overflow-y-auto bg-white ${isCompany ? 'dark:bg-company-card' : 'dark:bg-[#1F2937]'} w-screen h-screen max-w-none border-none flex flex-col items-center justify-center`
         }
@@ -141,7 +141,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
         <DialogTitle className="sr-only">
           {step === 1 ? 'Verify your identity' : step === 2 ? 'Upload document' : 'Verification under review'}
         </DialogTitle>
-        
+
         {step !== 3 && (
           <div className="flex flex-row justify-end items-center w-full pt-[24px] pr-[24px] absolute top-0 right-0">
             <button onClick={handleClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
@@ -152,7 +152,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
 
         {step === 1 ? (
           <div className="flex flex-col justify-center items-center w-full max-w-[412px] flex-1 pb-16 gap-[40px]">
-            
+
             {/* Header */}
             <div className="flex flex-col items-center gap-[8px]">
               <h1 className={`text-[24px] font-semibold text-center leading-[32px] ${isCompany ? 'dark:text-company-text' : 'text-black dark:text-white'}`}>
@@ -181,16 +181,15 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                       {option.label}
                     </span>
                   </div>
-                  
+
                   {/* Radio indicator */}
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setDocumentType(option.id)}
-                    className={`flex flex-col items-center justify-center w-[24px] h-[24px] rounded-full border-2 cursor-pointer transition-colors ${
-                      documentType === option.id 
-                        ? 'border-[#6366F1]' 
+                    className={`flex flex-col items-center justify-center w-[24px] h-[24px] rounded-full border-2 cursor-pointer transition-colors ${documentType === option.id
+                        ? 'border-[#6366F1]'
                         : 'border-[#6B7280]'
-                    }`}>
+                      }`}>
                     {documentType === option.id && (
                       <div className="w-[12px] h-[12px] rounded-full bg-[#6366F1]" />
                     )}
@@ -262,7 +261,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
               <button
                 type="submit"
                 disabled={isPending}
-                className="flex items-center justify-center w-[140px] h-[40px] border border-[#FFFFFF] text-[#FFFFFF] rounded-[24px] text-[14px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center w-[140px] h-[40px] border border-[#FFFFFF] text-[#FFFFFF] rounded-[24px] text-[14px] font-medium transition-colors disabled:opacity-50 disabled:cursor-default"
                 style={{ background: isPending ? '#C7D2FE' : '#6366F1' }}
               >
                 {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit'}

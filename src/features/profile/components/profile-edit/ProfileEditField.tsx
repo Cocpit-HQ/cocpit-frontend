@@ -9,6 +9,7 @@ interface ProfileEditFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  formatValue?: (value: string) => string;
   placeholder?: string;
   maxLength?: number;
   showCounter?: boolean;
@@ -26,11 +27,15 @@ interface ProfileEditFieldProps {
   maxLengthMessage?: string;
 }
 
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
   id,
   label,
   value,
   onChange,
+  formatValue,
   placeholder,
   maxLength,
   showCounter = false,
@@ -48,7 +53,18 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
   maxLengthMessage,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const cursorRef = useRef<{ start: number; end: number } | null>(null);
   const [isExpanded, setIsExpanded] = React.useState(false);
+
+  // Restore cursor position when value updates to prevent jumping to end
+  useIsomorphicLayoutEffect(() => {
+    if (cursorRef.current && inputRef.current) {
+      const { start, end } = cursorRef.current;
+      inputRef.current.setSelectionRange(start, end);
+      cursorRef.current = null;
+    }
+  }, [value]);
 
   // Auto-resize textarea height to fit content without artificial empty gaps
   useEffect(() => {
@@ -83,7 +99,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
             htmlFor={id}
             className={cn(
               "font-['DM_Sans'] font-medium text-[12px] leading-[16px] flex-none grow-0",
-              error ? "text-red-500" : "text-[var(--ds-text-secondary)]",
+              "text-[var(--ds-text-secondary)]",
               labelClassName
             )}
           >
@@ -120,19 +136,48 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
             />
           ) : (
             <input
+              ref={inputRef}
               id={id}
               type={type}
               inputMode={inputMode}
               pattern={pattern}
               value={value}
               onChange={(e) => {
-                const val = e.target.value;
-                if (maxLength && val.length > maxLength) {
-                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`);
-                  onChange(val.slice(0, maxLength));
-                } else {
-                  onChange(val);
+                const rawVal = e.target.value;
+                const rawCursor = e.target.selectionStart;
+
+                let targetVal = rawVal;
+                let targetCursor = rawCursor;
+
+                if (formatValue) {
+                  if (rawCursor !== null) {
+                    const rawBeforeCursor = rawVal.slice(0, rawCursor);
+                    const formattedBefore = formatValue(rawBeforeCursor);
+                    targetCursor = formattedBefore.length;
+                  }
+                  targetVal = formatValue(rawVal);
                 }
+
+                if (maxLength && targetVal.length > maxLength) {
+                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`);
+                  targetVal = targetVal.slice(0, maxLength);
+                  if (targetCursor !== null) {
+                    targetCursor = Math.min(targetCursor, maxLength);
+                  }
+                }
+
+                if (targetCursor !== null) {
+                  cursorRef.current = { start: targetCursor, end: targetCursor };
+                }
+
+                if (inputRef.current) {
+                  inputRef.current.value = targetVal;
+                  if (targetCursor !== null) {
+                    inputRef.current.setSelectionRange(targetCursor, targetCursor);
+                  }
+                }
+
+                onChange(targetVal);
               }}
               placeholder={placeholder}
               className="w-full bg-transparent text-[var(--ds-text-primary)] font-['DM_Sans'] font-normal text-[14px] leading-[20px] placeholder:text-[var(--ds-text-muted)] focus:outline-none p-0 m-0 h-[20px]"

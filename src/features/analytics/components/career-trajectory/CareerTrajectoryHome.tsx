@@ -27,13 +27,13 @@ const JourneyTimeline = ({ data, isStudent }: { data: any[], isStudent: boolean 
       {data.map((item, idx) => (
         <div key={item.id} className="flex flex-col relative">
           <div className={`absolute -left-[21px] w-3 h-3 rounded-full border-2 flex items-center justify-center ${item.isCurrent ? 'border-[#6366F1] bg-[#6366F1]' : idx === data.length - 1 ? 'border-[#818CF8] bg-white' : 'border-gray-400 bg-white'}`}>
-             {item.isCurrent && (
-               isStudent ? (
-                 <Icon icon="lucide:trending-up" className="w-2 h-2 text-white" strokeWidth={3} />
-               ) : (
-                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
-               )
-             )}
+            {item.isCurrent && (
+              isStudent ? (
+                <Icon icon="lucide:trending-up" className="w-2 h-2 text-white" strokeWidth={3} />
+              ) : (
+                <div className="w-1.5 h-1.5 bg-white rounded-full" />
+              )
+            )}
           </div>
           <div className="flex flex-col -mt-1">
             <span className={`text-[12px] font-['Poppins'] ${item.isCurrent ? 'text-[#818CF8]' : 'text-gray-500'}`}>{item.dateRange}</span>
@@ -62,12 +62,12 @@ const SkillAlignmentCard = ({ data, targetRoleName }: { data: any, targetRoleNam
         <line x1="100" y1="100" x2="100" y2="180" stroke="#EEF2FF" />
         <line x1="100" y1="100" x2="30.72" y2="140" stroke="#EEF2FF" />
         <line x1="100" y1="100" x2="30.72" y2="60" stroke="#EEF2FF" />
-        
+
         {/* Target Red dashed shape */}
         <polygon points="100,28 160,65 160,135 100,172 40,135 40,65" fill="#fef2f2" fillOpacity="0.5" stroke="#fca5a5" strokeWidth="1" strokeDasharray="4 2" />
         {/* Current Blue solid shape */}
         <polygon points="100,50 145,80 135,130 100,150 55,130 60,75" fill="#EEF2FF" fillOpacity="0.8" stroke="#6366F1" strokeWidth="1.5" />
-        
+
         {/* Labels */}
         <text x="100" y="10" fontSize="8" fill="#818CF8" textAnchor="middle">{data[0]?.skillName || 'Skill 1'}</text>
         <text x="175" y="60" fontSize="8" fill="#6B7280" textAnchor="start">{data[1]?.skillName || 'Skill 2'}</text>
@@ -146,10 +146,10 @@ const NextBestAction = ({ data }: { data: any }) => {
 
 export function CareerTrajectoryHome() {
   const { selectedRole, setSelectedRole } = useAnalyticsStore();
-  
+
   const { data: results, isFetching: analyzing, refetch } = useCareerTrajectory(selectedRole);
   const { data: overviewData } = useAnalyticsOverview('Last 30 days');
-  
+
   const roleLabels: Record<string, string> = {
     'vp-marketing': 'VP of Marketing',
     'junior-designer': 'Junior UI Designer',
@@ -178,7 +178,7 @@ export function CareerTrajectoryHome() {
           </div>
           <div className="flex flex-row gap-3 items-center">
             <div className="relative">
-              <select 
+              <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
                 className="border border-gray-400 rounded-[20px] pl-4 pr-8 py-1.5 text-[14px] font-['Poppins'] text-black bg-white appearance-none focus:outline-none h-[32px] flex items-center"
@@ -191,14 +191,13 @@ export function CareerTrajectoryHome() {
                 <Icon icon="lucide:chevron-down" className="w-4 h-4 text-black" />
               </div>
             </div>
-            <button 
+            <button
               onClick={handleRunAnalysis}
               disabled={analyzing || !isReady}
-              className={`transition-colors text-white px-6 h-[32px] rounded-[24px] text-[14px] font-['Poppins'] flex items-center justify-center gap-2 ${
-                !isReady || analyzing
-                  ? 'bg-[#C7D2FE] cursor-not-allowed'
+              className={`transition-colors text-white px-6 h-[32px] rounded-[24px] text-[14px] font-['Poppins'] flex items-center justify-center gap-2 ${!isReady || analyzing
+                  ? 'bg-[#C7D2FE] cursor-default'
                   : 'bg-[#6366F1] hover:bg-[#4F46E5] cursor-pointer'
-              }`}
+                }`}
             >
               {analyzing ? (
                 <>
@@ -213,7 +212,7 @@ export function CareerTrajectoryHome() {
         </div>
 
         <TrajectorySummary data={results.trajectorySummary} />
-        
+
         <div className="grid grid-cols-2 gap-12 w-full mt-4">
           <div className="flex flex-col">
             <JourneyTimeline data={results.journey} isStudent={isStudent} />
@@ -239,7 +238,7 @@ export function CareerTrajectoryHome() {
     <div className="flex flex-col items-center w-full max-w-[960px] mx-auto gap-4 mt-8">
       {/* Centralized Setup Card */}
       <div className="flex flex-col items-start p-6 gap-4 w-full max-w-[512px] bg-white rounded-[16px]">
-        
+
         {/* Header */}
         <div className="flex flex-col items-start w-full">
           <h2 className="text-[24px] font-semibold text-black font-['Poppins'] leading-[32px]">
@@ -256,12 +255,11 @@ export function CareerTrajectoryHome() {
             Choose target role
           </label>
           <div className="relative w-full">
-            <select 
+            <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className={`w-full h-[48px] bg-white border border-[#DADADA] rounded-[24px] px-4 py-[8px] text-[14px] font-normal font-['Poppins'] leading-[20px] appearance-none focus:outline-none focus:ring-1 focus:ring-[#6366F1] ${
-                selectedRole ? 'text-black' : 'text-[#6B7280]'
-              }`}
+              className={`w-full h-[48px] bg-white border border-[#DADADA] rounded-[24px] px-4 py-[8px] text-[14px] font-normal font-['Poppins'] leading-[20px] appearance-none focus:outline-none focus:ring-1 focus:ring-[#6366F1] ${selectedRole ? 'text-black' : 'text-[#6B7280]'
+                }`}
             >
               <option value="" disabled hidden>Select target role...</option>
               <option value="vp-marketing">VP of Marketing</option>
@@ -270,7 +268,7 @@ export function CareerTrajectoryHome() {
             </select>
             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 9L12 15L18 9" stroke={selectedRole ? "black" : "#6B7280"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 9L12 15L18 9" stroke={selectedRole ? "black" : "#6B7280"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </div>
@@ -280,12 +278,11 @@ export function CareerTrajectoryHome() {
         <div className="flex flex-col items-center w-full mt-2 gap-2">
           <button
             onClick={handleRunAnalysis}
-            disabled={analyzing || !isReady} 
-            className={`flex flex-row justify-center items-center gap-2 w-full h-[40px] rounded-[24px] text-[14px] font-normal text-white font-['Poppins'] leading-[20px] transition-colors ${
-              !isReady 
-                ? 'bg-[#C7D2FE] border border-white cursor-not-allowed' 
+            disabled={analyzing || !isReady}
+            className={`flex flex-row justify-center items-center gap-2 w-full h-[40px] rounded-[24px] text-[14px] font-normal text-white font-['Poppins'] leading-[20px] transition-colors ${!isReady
+                ? 'bg-[#C7D2FE] border border-white cursor-default'
                 : 'bg-[#6366F1] border border-[#6366F1] hover:bg-[#4F46E5]'
-            }`}
+              }`}
           >
             {analyzing ? (
               <>
@@ -305,7 +302,7 @@ export function CareerTrajectoryHome() {
       {/* Preparation Section */}
       <div className="flex flex-col items-center gap-6 w-full max-w-[512px] mt-4">
         <div className="w-[300px] h-[1px] bg-[#EEF2FF]" />
-        
+
         <div className="flex flex-col items-center gap-2 w-full">
           <div className="flex flex-row items-center gap-2">
             <span className="text-[16px] font-normal text-black font-['Poppins'] leading-[24px]">
@@ -328,7 +325,7 @@ export function CareerTrajectoryHome() {
 
         <button className="flex flex-row items-center gap-2 text-[#6366F1] hover:opacity-80 transition-opacity">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 4V8M12 4L8 8M12 4L16 8M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 4V8M12 4L8 8M12 4L16 8M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="text-[16px] font-normal font-['Poppins'] leading-[24px]">
             Update Profile

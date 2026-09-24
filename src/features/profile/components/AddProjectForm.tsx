@@ -63,7 +63,7 @@ export default function AddProjectForm({
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
   const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
   const skillWrapperRef = useRef<HTMLDivElement>(null);
-  
+
   const debouncedSkillInput = useDebounce(skillInput, 300);
 
   // Media state
@@ -193,10 +193,10 @@ export default function AddProjectForm({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSubmitAttempted(true);
-    
+
     const missingEndDate = !isCurrent && (!endMonth || !endYear);
     const hasDateLogicError = startMonth && startYear && endMonth && endYear && buildDateVal(startMonth, startYear)! >= buildDateVal(endMonth, endYear)!;
-    
+
     // Validate team size before submitting
     if (teamSize.trim() !== "") {
       const parsed = parseInt(teamSize.trim(), 10);
@@ -221,7 +221,7 @@ export default function AddProjectForm({
             fileName: res.fileName || item.pendingFile.name,
             pendingFile: undefined,
           };
-          
+
           if (item.fileUrl && item.fileUrl.startsWith("blob:")) {
             URL.revokeObjectURL(item.fileUrl);
           }
@@ -468,7 +468,7 @@ export default function AddProjectForm({
           {/* Row 5: Skills used* */}
           <div className="flex flex-col relative" ref={skillWrapperRef}>
             <Label className={labelStyles}>Skills used*</Label>
-            
+
             {/* Tag container with input */}
             <div
               className={cn(
@@ -541,7 +541,7 @@ export default function AddProjectForm({
           {/* Row 6: Media */}
           <div className="flex flex-col space-y-3" ref={mediaRef} id="media-section">
             <Label className={labelStyles}>Media(max 3 media)</Label>
-            
+
             {/* Action buttons matching CSS border: 1px solid #818CF8, text: #6366F1 */}
             <div className="flex flex-wrap items-center gap-3">
               <button
@@ -550,7 +550,7 @@ export default function AddProjectForm({
                 disabled={isMediaLimitReached}
                 className={cn(
                   "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-['DM_Sans'] transition-colors flex items-center justify-center shadow-none",
-                  isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
+                  isMediaLimitReached ? "opacity-50 cursor-default" : "hover:bg-[#818CF8]/10 cursor-pointer"
                 )}
               >
                 Add link
@@ -561,7 +561,7 @@ export default function AddProjectForm({
                 disabled={isMediaLimitReached}
                 className={cn(
                   "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-['DM_Sans'] transition-colors flex items-center justify-center shadow-none",
-                  isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
+                  isMediaLimitReached ? "opacity-50 cursor-default" : "hover:bg-[#818CF8]/10 cursor-pointer"
                 )}
               >
                 Add image
@@ -572,7 +572,7 @@ export default function AddProjectForm({
                 disabled={isMediaLimitReached}
                 className={cn(
                   "border border-[#818CF8] bg-white dark:bg-card text-[#6366F1] dark:text-primary px-5 py-2 sm:py-1.5 rounded-full text-[13px] sm:text-[14px] font-medium font-['DM_Sans'] transition-colors flex items-center justify-center shadow-none",
-                  isMediaLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-[#818CF8]/10 cursor-pointer"
+                  isMediaLimitReached ? "opacity-50 cursor-default" : "hover:bg-[#818CF8]/10 cursor-pointer"
                 )}
               >
                 Add document
@@ -732,7 +732,7 @@ export default function AddProjectForm({
             "h-[40px] px-8 rounded-full font-medium w-[142px] font-['DM_Sans'] transition-all shadow-none",
             isFormValid && !isSaving
               ? "bg-[#6366F1] text-white hover:bg-[#4F46E5] cursor-pointer"
-              : "bg-[#C7D2FE] text-white border border-white dark:border-transparent dark:bg-[#6366F1]/40 opacity-100 cursor-not-allowed hover:bg-[#C7D2FE] dark:hover:bg-[#6366F1]/40"
+              : "bg-[#C7D2FE] text-white border border-white dark:border-transparent dark:bg-[#6366F1]/40 opacity-100 cursor-default hover:bg-[#C7D2FE] dark:hover:bg-[#6366F1]/40"
           )}
         >
           {isSaving ? "Saving..." : "Save"}

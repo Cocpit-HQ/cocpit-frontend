@@ -24,7 +24,7 @@ interface ProfilePostsTabProps {
 }
 
 const isVideoPost = (post: Post): boolean => {
-  if (post.shared_post || post.repostId) return false;
+  // Do NOT exclude reposts — check the shared post's media too
 
   const hasVideoMedia =
     (post as any).media &&
@@ -51,7 +51,7 @@ const isVideoPost = (post: Post): boolean => {
 };
 
 const isImagePost = (post: Post): boolean => {
-  if (post.shared_post || post.repostId) return false;
+  // Do NOT exclude reposts — check the shared post's media too
   if (isVideoPost(post)) return false;
   if (post.post_type === "article" || post.category === "Article" || Boolean((post as any).articleBody)) return false;
   if (post.post_type === "poll" || Boolean(post.poll)) return false;
@@ -95,21 +95,21 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
   const displayedPosts = useMemo(() => {
     if (!posts || posts.length === 0) return [];
 
-    const mediaPosts = posts.filter(isMediaPost);
+    // Always show the 2 most recent posts (backend already orders by created_at DESC).
+    // If only 1 of the top 2 is a media post, prefer swapping in the earliest media
+    // post from the remaining list — but never push the most recent post below position 0.
+    const top2 = posts.slice(0, 2);
+    if (top2.length < 2) return top2;
 
-    if (mediaPosts.length >= 2) {
-      // If 2+ media posts exist (2 images, 1 image + 1 video, or 2 videos), show the 2 latest media posts
-      return mediaPosts.slice(0, 2);
+    const [first, second] = top2;
+    // If neither of the top 2 is media, try to substitute the second slot with the
+    // earliest media post from the rest of the list (position 2+), preserving the
+    // first (most recent) post in slot 0.
+    if (!isMediaPost(first) && !isMediaPost(second)) {
+      const nextMediaPost = posts.slice(2).find(isMediaPost);
+      if (nextMediaPost) return [first, nextMediaPost];
     }
-
-    if (mediaPosts.length === 1) {
-      // If 1 media post exists, show that media post and the latest remaining post of any other type
-      const otherPosts = posts.filter((p) => p.id !== mediaPosts[0].id);
-      return [mediaPosts[0], otherPosts[0]].filter(Boolean);
-    }
-
-    // If no media posts exist, show the 2 latest posts
-    return posts.slice(0, 2);
+    return top2;
   }, [posts]);
 
   if (isError) {

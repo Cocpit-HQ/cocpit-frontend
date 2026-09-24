@@ -165,7 +165,7 @@ export function ProfileSwitcher({
               className={cn(
                 "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
                 !isCompany &&
-                  "bg-profile-active-bg border-profile-active-border",
+                "bg-profile-active-bg border-profile-active-border",
               )}
             >
               <Avatar className="h-9 w-9">
@@ -202,7 +202,7 @@ export function ProfileSwitcher({
                     className={cn(
                       "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
                       activeProfile.id === (org.org_id || org.company_id) &&
-                        "bg-profile-active-bg border-profile-active-border",
+                      "bg-profile-active-bg border-profile-active-border",
                     )}
                   >
                     <Avatar className="h-9 w-9">
@@ -222,7 +222,7 @@ export function ProfileSwitcher({
                     )}
                   </DropdownMenuItem>
                 ))}
-                
+
                 {!showAllOrgs && (institutions.length + companies.length) > 3 && (
                   <DropdownMenuItem
                     onSelect={(e) => {
@@ -246,7 +246,7 @@ export function ProfileSwitcher({
               <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild>
                   <div className="px-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                    <div className="profile-switcher-item flex w-full items-center gap-3 p-2 h-[44px] rounded-[12px] outline-none cursor-not-allowed opacity-50 bg-transparent">
+                    <div className="profile-switcher-item flex w-full items-center gap-3 p-2 h-[44px] rounded-[12px] outline-none cursor-default opacity-50 bg-transparent">
                       <Plus className="w-5 h-5" />
                       <span className="text-[15px] leading-[22px] font-normal">
                         Create Organization

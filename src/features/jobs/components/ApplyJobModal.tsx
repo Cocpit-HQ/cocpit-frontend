@@ -31,7 +31,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [coverLetter, setCoverLetter] = useState<string>('');
   const [fetchedResumes, setFetchedResumes] = useState<Resume[]>([]);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset state when the modal opens/closes
@@ -41,7 +41,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
       setSelectedResumeId(null);
       setUploadedFile(null);
       setCoverLetter('');
-      
+
       // Fetch recent resumes
       import('../services/jobs.service').then(service => {
         service.getRecentResumes().then(resumes => {
@@ -65,7 +65,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       // Limit to 5MB
       if (file.size > 5 * 1024 * 1024) {
         toast.error("File size exceeds 5MB limit.");
@@ -111,8 +111,8 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   };
 
   // Get active selection details for Screen 2
-  const selectedResumeName = uploadedFile 
-    ? uploadedFile.name 
+  const selectedResumeName = uploadedFile
+    ? uploadedFile.name
     : fetchedResumes.find(r => r.id === selectedResumeId)?.name || '';
 
   const selectedResumeType = uploadedFile
@@ -123,10 +123,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[480px] [&>button]:hidden outline-none z-[101]">
         <div className="relative min-w-0 bg-white dark:bg-[#0B0F19] rounded-[28px] p-6 w-full shadow-[0px_8px_32px_rgba(0,0,0,0.08)] flex flex-col items-center outline-none border border-indigo-50/50 dark:border-[#2E3445]/50">
-          
+
           {/* Top Close Row */}
           <div className="flex justify-end w-full mb-2">
-            <button 
+            <button
               onClick={onClose}
               type="button"
               className="text-[#FF6B6B] hover:bg-[#FF6B6B]/10 p-1.5 rounded-full transition-colors cursor-pointer"
@@ -138,7 +138,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
           {step === 1 ? (
             /* SCREEN 1: SELECT OR UPLOAD RESUME */
             <div className="w-full min-w-0 flex flex-col items-center">
-              
+
               {/* Title Section */}
               <div className="text-center mb-6">
                 <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] dark:text-[#F9FAFB] text-center">
@@ -150,18 +150,18 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               </div>
 
               {/* Upload Section */}
-              <div 
+              <div
                 onClick={handleUploadAreaClick}
                 className="w-full border-2 border-dashed border-indigo-100 dark:border-[#2E3445] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-indigo-50/20 dark:hover:bg-[#2E3445]/20 hover:border-indigo-300 dark:hover:border-[#818CF8] transition-all mb-6"
               >
-                <input 
+                <input
                   type="file"
                   ref={fileInputRef}
                   accept=".pdf,.doc,.docx"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-                
+
                 {/* Upload Icon Area */}
                 <div className="w-10 h-10 flex items-center justify-center text-slate-400">
                   <Icon icon="solar:cloud-upload-linear" className="w-8 h-8 text-[#6B7280] dark:text-[#9CA3AF]" />
@@ -183,10 +183,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 <h4 className="font-['Poppins'] font-normal text-[12px] text-[#000000] dark:text-[#F9FAFB] text-left">
                   Recent resume
                 </h4>
-                
+
                 {/* Custom uploaded item if present */}
                 {uploadedFile && (
-                  <div 
+                  <div
                     className="w-full min-w-0 p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]"
                   >
                     <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
@@ -200,7 +200,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                         Uploaded just now
                       </span>
                     </div>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setUploadedFile(null);
@@ -219,14 +219,13 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 {fetchedResumes.map((resume) => {
                   const isSelected = selectedResumeId === resume.id;
                   return (
-                    <div 
+                    <div
                       key={resume.id}
                       onClick={() => handleResumeSelect(resume.id)}
-                      className={`w-full min-w-0 p-3 bg-white dark:bg-[#0B0F19] rounded-xl flex justify-start items-center gap-4 self-stretch border cursor-pointer transition-all ${
-                        isSelected 
-                          ? 'border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]' 
+                      className={`w-full min-w-0 p-3 bg-white dark:bg-[#0B0F19] rounded-xl flex justify-start items-center gap-4 self-stretch border cursor-pointer transition-all ${isSelected
+                          ? 'border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]'
                           : 'border-[#EEF2FF] dark:border-[#2E3445] hover:border-indigo-100 dark:hover:border-[#818CF8]'
-                      }`}
+                        }`}
                     >
                       <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                         <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
@@ -256,11 +255,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                   <button
                     onClick={handleContinue}
                     disabled={!selectedResumeId && !uploadedFile}
-                    className={`flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] transition-all ${
-                      (selectedResumeId || uploadedFile)
+                    className={`flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] transition-all ${(selectedResumeId || uploadedFile)
                         ? 'bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md'
-                        : 'bg-[#C7D2FE] dark:bg-[#2E3445] cursor-not-allowed'
-                    }`}
+                        : 'bg-[#C7D2FE] dark:bg-[#2E3445] cursor-default'
+                      }`}
                   >
                     Continue
                   </button>
@@ -271,7 +269,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
           ) : (
             /* SCREEN 2: SHARE WHAT MAKES YOUR APPLICATION STAND OUT */
             <div className="w-full min-w-0 flex flex-col items-center">
-              
+
               {/* Title Section */}
               <div className="text-center mb-6">
                 <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] dark:text-[#F9FAFB] text-center">

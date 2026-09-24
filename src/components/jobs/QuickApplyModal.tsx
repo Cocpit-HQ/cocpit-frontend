@@ -195,7 +195,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                   required
                   readOnly
                   type="text"
-                  className="w-full p-2 rounded-lg border border-border bg-muted text-muted-foreground focus:outline-none cursor-not-allowed"
+                  className="w-full p-2 rounded-lg border border-border bg-muted text-muted-foreground focus:outline-none cursor-default"
                   value={formData.name}
                 />
               </div>
@@ -207,7 +207,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                     required
                     readOnly
                     type="email"
-                    className="w-full p-2 rounded-lg border border-border bg-muted text-muted-foreground focus:outline-none cursor-not-allowed"
+                    className="w-full p-2 rounded-lg border border-border bg-muted text-muted-foreground focus:outline-none cursor-default"
                     value={formData.email}
                   />
                 </div>
@@ -304,7 +304,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                   type="submit"
                   disabled={isSubmitting || isLoadingProfile}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-default flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>

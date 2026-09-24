@@ -112,9 +112,9 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
       <div className="relative flex flex-col items-center bg-white rounded-3xl p-4 w-[450px] max-w-full shadow-lg">
-        
+
         {/* Close Button */}
-        <button 
+        <button
           onClick={handleClose}
           className="absolute top-4 right-4 text-[#FF6B6B] hover:opacity-80 transition-opacity"
         >
@@ -138,14 +138,14 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
             )}
 
             <div className="inline-flex justify-center items-center gap-4 w-full mt-4 mb-2">
-              <button 
-                onClick={handleClose} 
+              <button
+                onClick={handleClose}
                 className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-blue-600 flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-50 transition-colors"
               >
                 <span className="text-center text-blue-600 text-sm font-normal leading-5">Cancel</span>
               </button>
-              
-              <button 
+
+              <button
                 onClick={handleSendOTP}
                 disabled={isLoading}
                 className="w-36 h-10 px-4 py-2 bg-red-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50"
@@ -178,7 +178,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
             <div className="flex flex-col items-start gap-2 w-full mt-1">
               <label className="text-[14px] font-normal text-black">Enter code</label>
               <div className="relative w-full">
-                <input 
+                <input
                   type="text"
                   maxLength={6}
                   value={otpCode}
@@ -197,9 +197,8 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
                     }
                   }}
                   placeholder="000000"
-                  className={`w-full h-[48px] px-4 bg-white border ${
-                    errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : isSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'
-                  } rounded-[24px] text-[16px] text-black focus:outline-none transition-colors tracking-widest`}
+                  className={`w-full h-[48px] px-4 bg-white border ${errorMsg ? 'border-[#FF6B6B] focus:border-[#FF6B6B]' : isSuccess ? 'border-[#4ADE80] focus:border-[#4ADE80]' : 'border-[#DADADA] focus:border-[#6366F1]'
+                    } rounded-[24px] text-[16px] text-black focus:outline-none transition-colors tracking-widest`}
                 />
                 {isSuccess && !errorMsg && (
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4ADE80]">
@@ -219,10 +218,10 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
 
               {/* Resend Link */}
               <div className="w-full text-right mt-1">
-                <button 
+                <button
                   onClick={handleResendOTP}
                   disabled={countdown > 0 || isLoading}
-                  className={`text-[12px] ${countdown > 0 || isLoading ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6366F1] hover:underline'}`}
+                  className={`text-[12px] ${countdown > 0 || isLoading ? 'text-[#9CA3AF] cursor-default' : 'text-[#6366F1] hover:underline'}`}
                 >
                   {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
                 </button>
@@ -234,14 +233,14 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
             )}
 
             <div className="inline-flex justify-center items-center gap-4 w-full mt-4 mb-2">
-              <button 
-                onClick={handleClose} 
+              <button
+                onClick={handleClose}
                 className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-blue-600 flex justify-center items-center gap-2.5 cursor-pointer hover:bg-blue-50 transition-colors"
               >
                 <span className="text-center text-blue-600 text-sm font-normal leading-5">Cancel</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => handleVerifyAndDelete()}
                 disabled={isLoading || otpCode.length !== 6}
                 className="w-36 h-10 px-4 py-2 bg-red-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50"

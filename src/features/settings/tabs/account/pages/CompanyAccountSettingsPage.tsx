@@ -90,7 +90,7 @@ export function CompanyAccountSettingsPage() {
       {/* Credentials */}
       <div className="flex flex-col items-start p-6 gap-2 w-full">
         <h2 className="text-[18px] font-medium text-black dark:text-company-text leading-[26px]">Credentials</h2>
-        
+
         <div className="flex flex-col items-start w-full">
           {/* Email */}
           <div className="flex flex-row justify-between items-center py-3 w-full group">
@@ -145,11 +145,10 @@ export function CompanyAccountSettingsPage() {
             <button
               disabled={!isOwner}
               onClick={() => isOwner && setModal('deactivate')}
-              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
-                isOwner
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${isOwner
                   ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
-                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed opacity-75'
-              }`}
+                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-default opacity-75'
+                }`}
             >
               <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
                 {data.isDeactivated ? 'Reactivate' : 'Deactivate'}
@@ -178,11 +177,10 @@ export function CompanyAccountSettingsPage() {
             <button
               disabled={!isOwner}
               onClick={() => isOwner && setModal('transfer')}
-              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
-                isOwner
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${isOwner
                   ? 'bg-white dark:bg-company-card border-[#1A73E8] dark:border-company-primary hover:bg-blue-50 dark:hover:bg-company-light-primary cursor-pointer'
-                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed opacity-75'
-              }`}
+                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-default opacity-75'
+                }`}
             >
               <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-[#1A73E8] dark:text-company-primary' : 'text-[#9CA3AF]'}`}>
                 Transfer
@@ -211,11 +209,10 @@ export function CompanyAccountSettingsPage() {
             <button
               disabled={!isOwner}
               onClick={() => isOwner && setModal('delete')}
-              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${
-                isOwner
+              className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[140px] h-[40px] rounded-[24px] border transition-colors ${isOwner
                   ? 'bg-[#EF4444] dark:bg-company-error border-white dark:border-company-border hover:opacity-90 cursor-pointer'
-                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-not-allowed opacity-75'
-              }`}
+                  : 'bg-[#E5E7EB] dark:bg-gray-700 border-[#E5E7EB] dark:border-gray-600 cursor-default opacity-75'
+                }`}
             >
               <span className={`text-[14px] leading-[20px] text-center ${isOwner ? 'text-white' : 'text-[#9CA3AF]'}`}>
                 Delete

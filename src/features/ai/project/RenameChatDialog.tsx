@@ -96,11 +96,10 @@ export default function RenameChatDialog({
               <button
                 type="submit"
                 disabled={isRenameDisabled}
-                className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${
-                  isRenameDisabled
-                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-not-allowed"
+                className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${isRenameDisabled
+                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-default"
                     : "bg-[var(--primary)] hover:bg-[var(--primary)]/90 cursor-pointer"
-                }`}
+                  }`}
               >
                 Rename
               </button>

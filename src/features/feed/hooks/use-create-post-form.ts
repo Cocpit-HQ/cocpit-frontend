@@ -527,6 +527,11 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
                 width: img.naturalWidth || img.width || 800,
                 height: img.naturalHeight || img.height || 600
               }));
+            } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
+              updatePayload.media_metadata = media.uploadedVideos.map((vid: any) => ({
+                width: vid.naturalWidth || vid.width || undefined,
+                height: vid.naturalHeight || vid.height || undefined
+              })).filter((meta: any) => meta.width && meta.height);
             }
           }
 

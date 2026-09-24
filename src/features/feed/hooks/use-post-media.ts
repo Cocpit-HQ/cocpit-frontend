@@ -3,6 +3,7 @@ import { Area, MediaSize } from 'react-easy-crop';
 import { MediaItem } from '../types';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
 import { feedToast as toast } from '../utils/feed-toast';
+import { getImageDimensions, getVideoDimensions } from '@/features/feed/utils/imageBounds';
 
 type AspectRatioMode = '1:1' | '4:5' | '16:9';
 
@@ -37,13 +38,15 @@ export const usePostMedia = (
 
 
 
-  const createMediaItem = useCallback((file: File): MediaItem => ({
+  const createMediaItem = useCallback((file: File, dims?: { width: number; height: number }): MediaItem => ({
     id: `${Date.now()}-${Math.random()}`,
     url: URL.createObjectURL(file),
     file,
     type: file.type.startsWith('image/') ? 'image' : 'video',
     crop: { x: 0, y: 0 },
-    zoom: 1
+    zoom: 1,
+    naturalWidth: dims?.width,
+    naturalHeight: dims?.height,
   }), []);
 
   const aspectRatio = selectedAspectRatio;
@@ -69,7 +72,7 @@ export const usePostMedia = (
   const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024; // 100 MB cumulative total limit for all images in post
   const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB video size limit
 
-  const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
+  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
     const file: File | undefined = e instanceof File ? e : e.target.files?.[0];
 
     if (file) {
@@ -89,7 +92,13 @@ export const usePostMedia = (
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        const newVideo = createMediaItem(file);
+        let dims;
+        try {
+          dims = await getVideoDimensions(file);
+        } catch (err) {
+          console.error("Failed to load video dimensions", err);
+        }
+        const newVideo = createMediaItem(file, dims);
         setUploadedVideos([newVideo]);
         setUploadedImages([]);
         setActiveImageIndex(0);
@@ -116,7 +125,13 @@ export const usePostMedia = (
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        const newImage = createMediaItem(file);
+        let dims;
+        try {
+          dims = await getImageDimensions(file);
+        } catch (err) {
+          console.error("Failed to load image dimensions", err);
+        }
+        const newImage = createMediaItem(file, dims);
         setUploadedImages([newImage]);
         setUploadedVideos([]);
         setActiveImageIndex(0);
@@ -126,7 +141,7 @@ export const usePostMedia = (
     if (!(e instanceof File) && e.target) e.target.value = '';
   }, [createMediaItem, onTypeChange]);
 
-  const handleDesktopPhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+  const handleDesktopPhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const videoFiles = files.filter(f => f.type.startsWith('video/'));
@@ -193,13 +208,21 @@ export const usePostMedia = (
       }
 
       if (videoFiles.length > 0) {
-        const newVideos = videoFiles.map(file => createMediaItem(file));
+        const newVideos = await Promise.all(videoFiles.map(async file => {
+          let dims;
+          try { dims = await getVideoDimensions(file); } catch (e) { console.error(e); }
+          return createMediaItem(file, dims);
+        }));
         setUploadedVideos(newVideos);
         setUploadedImages([]);
         setActiveImageIndex(0);
         onTypeChange?.('video');
       } else if (imageFiles.length > 0) {
-        const newImages = imageFiles.map(file => createMediaItem(file));
+        const newImages = await Promise.all(imageFiles.map(async file => {
+          let dims;
+          try { dims = await getImageDimensions(file); } catch (e) { console.error(e); }
+          return createMediaItem(file, dims);
+        }));
         setUploadedImages(prev => {
           const updated = [...prev, ...newImages];
           if (prev.length === 0) setActiveImageIndex(0);

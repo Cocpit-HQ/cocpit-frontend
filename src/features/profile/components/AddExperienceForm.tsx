@@ -552,8 +552,8 @@ function RoleSection({
                 ).map((m) => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select 
-              value={role.startYear} 
+            <Select
+              value={role.startYear}
               onValueChange={(v) => {
                 let updatedStartMonth = role.startMonth
                 if (role.is_current && v === currentYear.toString()) {
@@ -632,7 +632,7 @@ function RoleSection({
             checked={role.is_current}
             onCheckedChange={(checked) => {
               const isChecked = checked as boolean
-              
+
               // If checking "current", ensure the selected start month isn't in the future of the current year
               let updatedStartMonth = role.startMonth
               if (isChecked && role.startYear === currentYear.toString()) {
@@ -1421,7 +1421,7 @@ export default function AddExperienceForm({
               disabled={!canAddRole}
               className={cn(
                 "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 py-2 rounded-full border border-border transition-all text-primary font-['DM_Sans'] text-[14px] font-medium",
-                canAddRole ? "hover:bg-secondary" : "opacity-30 cursor-not-allowed border-dashed"
+                canAddRole ? "hover:bg-secondary" : "opacity-30 cursor-default border-dashed"
               )}
               title={!canAddRole ? "You can only add multiple roles to an existing company" : "Add another role at this company"}
             >
@@ -1485,7 +1485,7 @@ export default function AddExperienceForm({
                 "sm:hidden flex items-center gap-2 w-full justify-center py-3 rounded-[16px] border border-dashed text-[14px] font-medium font-['DM_Sans'] transition-all",
                 canAddRole
                   ? "border-[#6366F1] text-[#6366F1] hover:bg-[#EEF2FF]"
-                  : "border-gray-300 text-gray-400 opacity-50 cursor-not-allowed"
+                  : "border-gray-300 text-gray-400 opacity-50 cursor-default"
               )}
             >
               <Plus className="w-4 h-4" />
@@ -1522,7 +1522,7 @@ export default function AddExperienceForm({
         <Button
           type="submit"
           disabled={!isFormValid || isSaving}
-          className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-['DM_Sans']"
+          className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-default font-['DM_Sans']"
         >
           {isSaving ? "Saving..." : "Save"}
         </Button>

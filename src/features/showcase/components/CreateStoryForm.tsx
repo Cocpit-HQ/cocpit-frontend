@@ -783,7 +783,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
         <button
           onClick={handleCreate}
           disabled={isSubmitting || (sharedJobId && !jobData) || (!selectedImage && !selectedVideo && !isSharedEntityStory && selectedFiles.length === 0)}
-          className="flex-1 px-6 py-3 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="flex-1 px-6 py-3 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>

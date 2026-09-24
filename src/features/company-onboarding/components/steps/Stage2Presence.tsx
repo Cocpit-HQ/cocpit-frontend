@@ -260,9 +260,9 @@ const Stage2Presence = React.memo(function Stage2Presence() {
           updateField('isPhoneVerified', true);
           // Auto-set HQ country from verified phone country code
           const phoneCountryToHq: Record<string, string> = {
-            '+91':  'India',
+            '+91': 'India',
             '+971': 'UAE',
-            '+81':  'Japan',
+            '+81': 'Japan',
           };
           const detectedCountry = phoneCountryToHq[phoneCountryCode];
           if (detectedCountry) {
@@ -337,27 +337,24 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                   if (emailDomainError) setEmailDomainError('');
                 }}
                 placeholder="contact@company.com"
-                className={`h-[54px] px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-all flex-none ${
-                  isEmailVerified ? 'w-[412px]' : 'w-[309px]'
-                } ${
-                  emailDomainError || (showValidationErrors && (!officialEmail.trim() || !isEmailVerified))
+                className={`h-[54px] px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-all flex-none ${isEmailVerified ? 'w-[412px]' : 'w-[309px]'
+                  } ${emailDomainError || (showValidationErrors && (!officialEmail.trim() || !isEmailVerified))
                     ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
                     : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
-                }`}
+                  }`}
               />
               {!isEmailVerified && (
                 <button
                   onClick={handleVerifyEmailClick}
                   disabled={verifyingEmail || !officialEmail.trim() || showEmailCode}
-                  className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${
-                    verifyingEmail
+                  className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${verifyingEmail
                       ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-500 dark:text-blue-400 cursor-wait'
                       : showEmailCode
-                        ? 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
+                        ? 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-default'
                         : officialEmail.trim()
                           ? 'bg-[#1A73E8] border-[#1A73E8] text-white hover:bg-[#1557b0] active:scale-[0.98]'
-                          : 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
-                  }`}
+                          : 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-default'
+                    }`}
                 >
                   {verifyingEmail ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -387,8 +384,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                 onChange={(e) => handleEmailCodeChange(e.target.value)}
                 placeholder="000000"
                 className={`w-full h-full px-6 pr-12 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#E0E0E7] dark:placeholder:text-[#6B7280] transition-colors ${!!emailCodeError
-                    ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
-                    : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
+                  ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
+                  : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
                   }`}
               />
               {isEmailVerified && (
@@ -397,7 +394,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
               {!!emailCodeError && (
                 <Icon icon="material-symbols:cancel" className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 text-[#EF4444] dark:text-[#F87171] flex-none" />
               )}
-              
+
               <div className="absolute -bottom-[22px] right-2 flex items-center justify-between w-full">
                 {!!emailCodeError ? (
                   <span className="text-[12px] text-[#EF4444] dark:text-[#F87171] font-poppins font-normal">*{emailCodeError}</span>
@@ -417,11 +414,10 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                         });
                       }
                     }}
-                    className={`text-[12px] font-poppins font-medium flex-none ${
-                      !showEmailCode
-                        ? 'text-[#E0E0E7] dark:text-[#6B7280] cursor-not-allowed'
+                    className={`text-[12px] font-poppins font-medium flex-none ${!showEmailCode
+                        ? 'text-[#E0E0E7] dark:text-[#6B7280] cursor-default'
                         : emailTimer > 0
-                          ? 'text-[#1A73E8] dark:text-[#82B8FF] cursor-not-allowed opacity-70'
+                          ? 'text-[#1A73E8] dark:text-[#82B8FF] cursor-default opacity-70'
                           : 'text-[#1A73E8] dark:text-[#82B8FF] hover:underline cursor-pointer'
                       }`}
                   >
@@ -448,10 +444,9 @@ const Stage2Presence = React.memo(function Stage2Presence() {
               </label>
             </div>
             <div className="w-[412px] h-[54px] flex flex-row items-start p-0 gap-2 flex-none">
-              <div className={`h-[54px] relative flex-none transition-all ${
-                isPhoneVerified ? 'w-[412px]' : 'w-[309px]'
-              }`} ref={phoneCountryRef}>
-                <div 
+              <div className={`h-[54px] relative flex-none transition-all ${isPhoneVerified ? 'w-[412px]' : 'w-[309px]'
+                }`} ref={phoneCountryRef}>
+                <div
                   className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 cursor-pointer select-none z-10"
                   onClick={() => { if (!isPhoneVerified) setIsPhoneCountryOpen(!isPhoneCountryOpen); }}
                 >
@@ -487,7 +482,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                     ))}
                   </div>
                 )}
-                
+
                 <input
                   type="tel"
                   value={phoneNumber}
@@ -497,7 +492,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                     const val = e.target.value.replace(/[^\d\s\+]/g, '');
                     const digitsOnly = val.replace(/\D/g, '');
                     if (digitsOnly.length > selectedCountry.digits) return;
-                    
+
                     updateField('phoneNumber', val);
                     if (isPhoneVerified) updateField('isPhoneVerified', false);
                     if (showPhoneCode) setShowPhoneCode(false);
@@ -505,8 +500,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                   }}
                   placeholder="93493-99493"
                   className={`w-full h-full pl-16 pr-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-colors ${showValidationErrors && (!phoneNumber.trim() || !isPhoneVerified)
-                      ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
-                      : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
+                    ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
+                    : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
                     }`}
                 />
               </div>
@@ -514,15 +509,14 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                 <button
                   onClick={handleVerifyPhoneClick}
                   disabled={verifyingPhone || !phoneNumber.trim() || showPhoneCode}
-                  className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${
-                    verifyingPhone
+                  className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${verifyingPhone
                       ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-500 dark:text-blue-400 cursor-wait'
                       : showPhoneCode
-                        ? 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
+                        ? 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-default'
                         : phoneNumber.trim()
                           ? 'bg-[#1A73E8] border-[#1A73E8] text-white hover:bg-[#1557b0] active:scale-[0.98]'
-                          : 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
-                  }`}
+                          : 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-default'
+                    }`}
                 >
                   {verifyingPhone ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -552,8 +546,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                 onChange={(e) => handlePhoneCodeChange(e.target.value)}
                 placeholder="000000"
                 className={`w-full h-full px-6 pr-12 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#E0E0E7] dark:placeholder:text-[#6B7280] transition-colors ${!!phoneCodeError
-                    ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
-                    : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
+                  ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
+                  : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
                   }`}
               />
               {isPhoneVerified && (
@@ -562,7 +556,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
               {!!phoneCodeError && (
                 <Icon icon="material-symbols:cancel" className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 text-[#EF4444] dark:text-[#F87171] flex-none" />
               )}
-              
+
               <div className="absolute -bottom-[22px] right-2 flex items-center justify-between w-full">
                 {!!phoneCodeError ? (
                   <span className="text-[12px] text-[#EF4444] dark:text-[#F87171] font-poppins font-normal">*{phoneCodeError}</span>
@@ -582,11 +576,10 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                         });
                       }
                     }}
-                    className={`text-[12px] font-poppins font-medium flex-none ${
-                      !showPhoneCode
-                        ? 'text-[#E0E0E7] dark:text-[#6B7280] cursor-not-allowed'
+                    className={`text-[12px] font-poppins font-medium flex-none ${!showPhoneCode
+                        ? 'text-[#E0E0E7] dark:text-[#6B7280] cursor-default'
                         : phoneTimer > 0
-                          ? 'text-[#1A73E8] dark:text-[#82B8FF] cursor-not-allowed opacity-70'
+                          ? 'text-[#1A73E8] dark:text-[#82B8FF] cursor-default opacity-70'
                           : 'text-[#1A73E8] dark:text-[#82B8FF] hover:underline cursor-pointer'
                       }`}
                   >
@@ -683,13 +676,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
             <div ref={countryRef} className="w-[412px] h-[54px] relative flex-none">
               <div
                 onClick={() => { if (!isPhoneVerified) setIsCountryOpen(!isCountryOpen); }}
-                className={`w-full h-full px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors flex items-center justify-between select-none ${
-                  isPhoneVerified
-                    ? 'border-[#E0E0E7] dark:border-[#1C2840] cursor-not-allowed opacity-70'
+                className={`w-full h-full px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors flex items-center justify-between select-none ${isPhoneVerified
+                    ? 'border-[#E0E0E7] dark:border-[#1C2840] cursor-default opacity-70'
                     : showValidationErrors && !hqCountry
                       ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171] cursor-pointer hover:border-blue-500 dark:hover:border-[#82B8FF]'
                       : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF] cursor-pointer hover:border-blue-500 dark:hover:border-[#82B8FF]'
-                }`}
+                  }`}
               >
                 <span className={hqCountry ? "text-black dark:text-[#FFFFFF]" : "text-[#6B7280] dark:text-[#A1A8B3]"}>
                   {hqCountry ? countryOptions.find(o => o.value === hqCountry)?.label : "Select Country"}
@@ -741,7 +733,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                   setCitySearch(e.target.value);
                   setShowCityDropdown(true);
                   if (e.target.value === '') {
-                     updateField('hqCity', '');
+                    updateField('hqCity', '');
                   }
                 }}
                 onFocus={() => {
@@ -752,8 +744,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                 }}
                 placeholder="Search City"
                 className={`w-full h-full px-6 pr-12 rounded-[24px] border focus:outline-none hover:border-blue-500 dark:hover:border-[#82B8FF] font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-colors ${showValidationErrors && !hqCity
-                    ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
-                    : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
+                  ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
+                  : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
                   }`}
               />
               <Icon icon="mynaui:search" className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280] dark:text-[#A1A8B3] cursor-pointer" />
@@ -832,8 +824,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
           onChange={(e) => updateField('headline', e.target.value)}
           placeholder="e.g., Accelerating global collaboration through kinetic tech"
           className={`w-[896px] h-[54px] px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-colors flex-none ${showValidationErrors && !headline.trim()
-              ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
-              : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
+            ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
+            : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
             }`}
         />
       </div>

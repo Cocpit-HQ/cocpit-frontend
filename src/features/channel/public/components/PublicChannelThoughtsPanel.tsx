@@ -36,8 +36,8 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportTargetId, setReportTargetId] = useState<string | null>(null);
 
-  const isSubscriptionError = !isSubscribed || (error as any)?.response?.status === 403 || 
-    error?.message?.includes('403') || 
+  const isSubscriptionError = !isSubscribed || (error as any)?.response?.status === 403 ||
+    error?.message?.includes('403') ||
     (error as any)?.response?.data?.message?.toLowerCase().includes('subscribe');
 
   const handleSubmit = () => {
@@ -50,7 +50,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
   const { rootThoughts, replyMap } = useMemo(() => {
     const roots: ChannelThought[] = [];
     const replies = new Map<string, ChannelThought[]>();
- 
+
     thoughts.forEach((t) => {
       if (!t.parentId) {
         roots.push(t);
@@ -61,7 +61,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
         replies.get(t.parentId)!.push(t);
       }
     });
- 
+
     return { rootThoughts: roots, replyMap: replies };
   }, [thoughts]);
 
@@ -70,7 +70,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
     return rootThoughts.filter((root) => {
       const rootMatches = matchesSearch(root.text) || matchesSearch(root.authorName);
       if (rootMatches) return true;
- 
+
       const children = replyMap.get(root.id) || [];
       return children.some((child) => matchesSearch(child.text) || matchesSearch(child.authorName));
     });
@@ -103,12 +103,12 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder={isSubscriptionError ? "Subscribe to share your thoughts" : replyingTo ? `Reply to @${replyingTo.name}...` : "Write your thoughts"}
               disabled={isSubscriptionError}
-              className={`w-full h-[56px] pl-[16px] pr-[64px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] disabled:opacity-60 disabled:cursor-not-allowed ${replyingTo ? 'rounded-b-[24px] rounded-t-none' : 'rounded-[24px]'}`}
+              className={`w-full h-[56px] pl-[16px] pr-[64px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] disabled:opacity-60 disabled:cursor-default ${replyingTo ? 'rounded-b-[24px] rounded-t-none' : 'rounded-[24px]'}`}
             />
             <button
               onClick={handleSubmit}
               disabled={!draft.trim() || isSubscriptionError}
-              className="absolute right-[8px] top-1/2 -translate-y-1/2 w-[56px] h-[40px] flex items-center justify-center text-[#000000] dark:text-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-40"
+              className="absolute right-[8px] top-1/2 -translate-y-1/2 w-[56px] h-[40px] flex items-center justify-center text-[#000000] dark:text-[#FFFFFF] disabled:cursor-default disabled:opacity-40"
             >
               <Icon icon="lucide:send" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px' }} />
             </button>
@@ -121,7 +121,7 @@ export default function PublicChannelThoughtsPanel({ articleId, isSubscribed, is
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search thoughts"
             disabled={isSubscriptionError}
-            className="w-full h-[40px] pl-[16px] pr-[48px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full h-[40px] pl-[16px] pr-[48px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280] disabled:opacity-60 disabled:cursor-default"
           />
           <div className="absolute right-[16px] top-1/2 -translate-y-1/2 flex items-center justify-center text-[#000000] dark:text-[#A1A8B3] pointer-events-none">
             <Icon icon="lucide:search" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px' }} />

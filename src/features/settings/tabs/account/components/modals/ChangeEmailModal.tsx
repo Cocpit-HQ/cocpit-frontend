@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, BadgeCheck, XCircle } from 'lucide-react';
-import { 
-  useVerifyCurrentEmailInit, 
+import {
+  useVerifyCurrentEmailInit,
   useVerifyCurrentEmailConfirm,
   useSubmitNewEmail,
   useSubmitRecoveryEmail,
-  useVerifyEmail, 
-  useVerifyRecoveryEmail 
+  useVerifyEmail,
+  useVerifyRecoveryEmail
 } from '../../../../hooks/useAccountSettings';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -44,7 +44,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
   const hasInitPrimaryRef = useRef(false);
 
   const queryClient = useQueryClient();
-  
+
   const verifyCurrentEmailInit = useVerifyCurrentEmailInit();
   const verifyCurrentEmailConfirm = useVerifyCurrentEmailConfirm();
   const submitNewEmail = useSubmitNewEmail();
@@ -250,7 +250,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
         <div className="flex flex-col items-start gap-2 w-full">
           <label className="text-[14px] font-normal text-black">Enter code</label>
           <div className="relative w-full">
-            <input 
+            <input
               type="text"
               maxLength={6}
               value={currentEmailCode}
@@ -291,7 +291,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             <button
               onClick={handleResend}
               disabled={countdown > 0}
-              className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6366F1] hover:underline'}`}
+              className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-default' : 'text-[#6366F1] hover:underline'}`}
             >
               {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
             </button>
@@ -305,7 +305,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
         <div className="flex flex-col items-start gap-4 w-full">
           <div className="flex flex-col gap-2 w-full">
             <label className="text-[14px] font-normal text-black">Email</label>
-            <input 
+            <input
               type="email"
               value={newEmail}
               onChange={(e) => {
@@ -330,7 +330,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
         <div className="flex flex-col items-start gap-2 w-full">
           <label className="text-[14px] font-normal text-black">Enter code</label>
           <div className="relative w-full">
-            <input 
+            <input
               type="text"
               maxLength={6}
               value={newEmailCode}
@@ -380,10 +380,10 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             <p className="text-[13px] text-[#4ADE80] w-full text-left">Code verified successfully.</p>
           )}
           <div className="w-full text-right mt-1">
-            <button 
+            <button
               onClick={handleResend}
               disabled={countdown > 0}
-              className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-not-allowed' : 'text-[#6366F1] hover:underline'}`}
+              className={`text-[12px] ${countdown > 0 ? 'text-[#9CA3AF] cursor-default' : 'text-[#6366F1] hover:underline'}`}
             >
               {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
             </button>
@@ -411,7 +411,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
       <div className={`relative flex flex-col items-center p-4 bg-white rounded-[24px] ${isDelete ? 'w-[360px]' : 'w-[450px]'} shadow-lg`}>
-        
+
         {!isDelete && (
           <div className="w-full flex justify-end">
             <button onClick={handleClose} className="p-1">
@@ -421,7 +421,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
         )}
 
         <div className={`flex flex-col items-center w-full max-w-[360px] gap-4 ${isDelete ? 'mt-4 mb-2' : 'mt-2 mb-4'}`}>
-          
+
           <div className="flex flex-col items-center gap-2 w-full text-center">
             <h2 className={`${isDelete ? 'text-[16px] max-w-[250px]' : 'text-[18px]'} font-medium text-black leading-snug`}>
               {getTitle()}
@@ -438,13 +438,13 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
           )}
 
           <div className="flex flex-row justify-between items-center gap-4 w-full h-[40px] mt-2">
-            <button 
+            <button
               onClick={handleClose}
               className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-[#6366F1] bg-white text-[#6366F1] text-[14px] font-normal"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleNext}
               disabled={getIsDisabled()}
               className={`flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-white text-white text-[14px] font-normal ${isDelete ? 'bg-[#FF6B6B]' : 'bg-[#6366F1]'} disabled:opacity-50`}

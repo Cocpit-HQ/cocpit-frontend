@@ -102,7 +102,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
       if (urlTab === "Saved" && !isFeatureActive("saved_jobs")) return;
       if (urlTab === "My Applications" && !isFeatureActive("enableApplicationTracking")) return;
       if (urlTab === "Offers" && !isFeatureActive("enableJobOffers")) return;
-      
+
       setActiveTab(urlTab);
     }
   }, [urlTab, activeTab, setActiveTab, isFeatureActive]);
@@ -218,7 +218,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
           const cleanStr = job.applied_date_display.replace(/^[Aa]pplied\s+/, "");
           const t = new Date(cleanStr).getTime();
           if (!isNaN(t)) return t;
-          
+
           const str = cleanStr.toLowerCase();
           if (
             str.includes("hour") ||
@@ -249,7 +249,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
         const t = new Date(job.created_at).getTime();
         if (!isNaN(t)) return t;
       }
-      
+
       if (job.posted_at) {
         const t = new Date(job.posted_at).getTime();
         if (!isNaN(t)) return t;
@@ -421,7 +421,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   if (activeTab === "My Listings" || isCompanyMode) {
     return (
       <div className={`w-full max-w-[998px] mx-auto min-h-screen bg-white ${isCompanyMode ? "dark:bg-[#0F1115]" : "dark:bg-[#0B0F19]"} pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]`}>
-        <MyListingsDashboard 
+        <MyListingsDashboard
           isCompanyMode={isCompanyMode}
           onBack={() => {
             if (isCompanyMode) {
@@ -429,7 +429,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
             } else {
               handleTabChange("Explore");
             }
-          }} 
+          }}
         />
       </div>
     );
@@ -457,66 +457,66 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
 
         {/* Mobile Posted Jobs Card */}
         <div className="w-full flex md:hidden bg-white dark:bg-[#0B0F19] rounded-[16px] border border-gray-200 dark:border-[#2E3445] p-4 flex-col gap-1 shadow-sm mt-2 mb-1">
-            <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-[15px] font-['Poppins']">Posted jobs</h4>
-            <p className="text-gray-500 dark:text-[#9CA3AF] text-[13px] font-['Poppins'] mb-2">Manage and track your active job postings</p>
-            <FeatureDisabledTooltip featureKey="enableMyListings">
-              <button 
-                onClick={() => handleTabChange("My Listings")} 
-                className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
-              >
-                Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4"/>
-              </button>
-            </FeatureDisabledTooltip>
+          <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-[15px] font-['Poppins']">Posted jobs</h4>
+          <p className="text-gray-500 dark:text-[#9CA3AF] text-[13px] font-['Poppins'] mb-2">Manage and track your active job postings</p>
+          <FeatureDisabledTooltip featureKey="enableMyListings">
+            <button
+              onClick={() => handleTabChange("My Listings")}
+              className="w-[140px] h-9 px-4 border border-[#6366F1] dark:border-[#818CF8] rounded-full text-[#6366F1] dark:text-[#818CF8] font-semibold text-sm flex items-center justify-between hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-colors"
+            >
+              Posted jobs <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+            </button>
+          </FeatureDisabledTooltip>
         </div>
 
         {/* Tabs navigation row */}
         <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white dark:bg-[#0B0F19]">
-        <div className="flex overflow-x-auto no-scrollbar md:flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto pb-1">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const tabButton = (
-              <button
-                onClick={() => handleTabChange(tab.id)}
-                className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
+          <div className="flex overflow-x-auto no-scrollbar md:flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto pb-1">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const tabButton = (
+                <button
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
                     ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
                     : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
-                  }`}
-              >
-                {tab.label}
-              </button>
-            );
-
-            if (tab.featureKey) {
-              return (
-                <FeatureDisabledTooltip key={tab.id} featureKey={tab.featureKey}>
-                  {tabButton}
-                </FeatureDisabledTooltip>
+                    }`}
+                >
+                  {tab.label}
+                </button>
               );
-            }
 
-            return (
-              <React.Fragment key={tab.id}>
-                {tabButton}
-              </React.Fragment>
-            );
-          })}
-        </div>
+              if (tab.featureKey) {
+                return (
+                  <FeatureDisabledTooltip key={tab.id} featureKey={tab.featureKey}>
+                    {tabButton}
+                  </FeatureDisabledTooltip>
+                );
+              }
 
-        {/* My Listings tab link */}
-        <FeatureDisabledTooltip featureKey="enableMyListings">
-          <button
-            onClick={() => handleTabChange("My Listings")}
-            className={`hidden md:flex h-10 px-4 md:px-5 py-1.5 rounded-3xl justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-auto ${activeTab === "My Listings"
+              return (
+                <React.Fragment key={tab.id}>
+                  {tabButton}
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          {/* My Listings tab link */}
+          <FeatureDisabledTooltip featureKey="enableMyListings">
+            <button
+              onClick={() => handleTabChange("My Listings")}
+              className={`hidden md:flex h-10 px-4 md:px-5 py-1.5 rounded-3xl justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-auto ${activeTab === "My Listings"
                 ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
                 : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
-              }`}
-          >
-            <span>Posted jobs</span>
-            <Icon icon="lucide:chevron-right" className="w-4 h-4" />
-          </button>
-        </FeatureDisabledTooltip>
+                }`}
+            >
+              <span>Posted jobs</span>
+              <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+            </button>
+          </FeatureDisabledTooltip>
+        </div>
       </div>
-    </div>
 
       {/* AI Recommended Jobs - Only show under Explore tab */}
       {activeTab === "Explore" && (isRecommendationsLoading || recommendedJobs.length > 0) && (
@@ -580,8 +580,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                 <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.filter(
-                        (job) => job.application_status?.toLowerCase() === "shortlisted"
-                      ).length
+                      (job) => job.application_status?.toLowerCase() === "shortlisted"
+                    ).length
                     : (applicationStats.shortlisted || 0)}
                 </div>
                 <div className="text-[#000000] dark:text-[#F9FAFB] text-xs sm:text-[14px] font-normal font-['Poppins'] leading-[20px] text-left">
@@ -609,11 +609,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                   {/* Desktop Date Trigger */}
                   <button
                     onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                    className={`hidden md:flex h-[40px] px-4 items-center justify-center gap-1.5 hover:bg-slate-100 dark:hover:bg-[#1C2340] rounded-full transition-all border ${
-                      selectedDateFilter !== "All time"
+                    className={`hidden md:flex h-[40px] px-4 items-center justify-center gap-1.5 hover:bg-slate-100 dark:hover:bg-[#1C2340] rounded-full transition-all border ${selectedDateFilter !== "All time"
                         ? "border-[#6366F1]/30 dark:border-[#818CF8]/30 bg-[#EEF2FF] dark:bg-[#1C2340] text-[#6366F1] dark:text-[#818CF8]"
                         : "border-transparent text-black dark:text-[#F9FAFB]"
-                    }`}
+                      }`}
                   >
                     <Icon
                       icon="iconoir:filter-list"
@@ -638,8 +637,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "All time"
-                              ? "text-indigo-500 dark:text-[#818CF8]"
-                              : "text-gray-500 dark:text-[#9CA3AF]"
+                            ? "text-indigo-500 dark:text-[#818CF8]"
+                            : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           All time
@@ -654,8 +653,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "today"
-                              ? "text-indigo-500 dark:text-[#818CF8]"
-                              : "text-gray-500 dark:text-[#9CA3AF]"
+                            ? "text-indigo-500 dark:text-[#818CF8]"
+                            : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           Today
@@ -670,8 +669,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "last 7 days"
-                              ? "text-indigo-500 dark:text-[#818CF8]"
-                              : "text-gray-500 dark:text-[#9CA3AF]"
+                            ? "text-indigo-500 dark:text-[#818CF8]"
+                            : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           Last 7 days
@@ -686,8 +685,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "last 30 days"
-                              ? "text-indigo-500 dark:text-[#818CF8]"
-                              : "text-gray-500 dark:text-[#9CA3AF]"
+                            ? "text-indigo-500 dark:text-[#818CF8]"
+                            : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           Last 30 days
@@ -709,8 +708,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                         key={chip}
                         onClick={() => setSelectedStatusFilter(chip)}
                         className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${isSelected
-                            ? "text-[#6366F1] dark:text-[#818CF8] font-semibold border-[#6366F1] dark:border-[#818CF8]"
-                            : "text-[#000000] dark:text-[#F9FAFB] font-normal border-transparent hover:text-[#6366F1]/80 dark:hover:text-[#818CF8]/80"
+                          ? "text-[#6366F1] dark:text-[#818CF8] font-semibold border-[#6366F1] dark:border-[#818CF8]"
+                          : "text-[#000000] dark:text-[#F9FAFB] font-normal border-transparent hover:text-[#6366F1]/80 dark:hover:text-[#818CF8]/80"
                           }`}
                       >
                         {chip}
@@ -751,9 +750,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                           { label: "Last 30 days", value: "last 30 days" },
                         ].map((opt) => (
                           <label key={opt.value} className="flex items-center gap-3 cursor-pointer group py-1">
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
-                              selectedDateFilter === opt.value ? "border-indigo-500 dark:border-[#818CF8]" : "border-gray-300 dark:border-gray-600"
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${selectedDateFilter === opt.value ? "border-indigo-500 dark:border-[#818CF8]" : "border-gray-300 dark:border-gray-600"
+                              }`}>
                               {selectedDateFilter === opt.value && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 dark:bg-[#818CF8]" />}
                             </div>
                             <input
@@ -774,9 +772,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       <AccordionContent className="flex flex-col gap-3 pb-4">
                         {["All", "Applied", "Shortlisted", "In review", "Declined"].map((status) => (
                           <label key={status} className="flex items-center gap-3 cursor-pointer group py-1">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
-                              selectedStatusFilter.toLowerCase() === status.toLowerCase() ? "bg-indigo-500 border-indigo-500 dark:bg-[#818CF8] dark:border-[#818CF8]" : "border-gray-300 dark:border-gray-600"
-                            }`}>
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${selectedStatusFilter.toLowerCase() === status.toLowerCase() ? "bg-indigo-500 border-indigo-500 dark:bg-[#818CF8] dark:border-[#818CF8]" : "border-gray-300 dark:border-gray-600"
+                              }`}>
                               {selectedStatusFilter.toLowerCase() === status.toLowerCase() && <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white dark:text-[#0B0F19]" />}
                             </div>
                             <input
@@ -792,14 +789,14 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                     </AccordionItem>
                   </Accordion>
                 </div>
-                
+
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-[#0B0F19] border-t border-gray-100 dark:border-[#2E3445]">
-                   <button
-                     onClick={() => setIsAppFilterDrawerOpen(false)}
-                     className="w-full py-3 rounded-xl bg-indigo-500 dark:bg-[#818CF8] text-white dark:text-[#0B0F19] font-semibold font-['Poppins'] shadow-sm active:scale-95 transition-transform"
-                   >
-                     Show Results
-                   </button>
+                  <button
+                    onClick={() => setIsAppFilterDrawerOpen(false)}
+                    className="w-full py-3 rounded-xl bg-indigo-500 dark:bg-[#818CF8] text-white dark:text-[#0B0F19] font-semibold font-['Poppins'] shadow-sm active:scale-95 transition-transform"
+                  >
+                    Show Results
+                  </button>
                 </div>
               </DrawerContent>
             </Drawer>
@@ -912,7 +909,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                           onClick={(e) => e.stopPropagation()}
                         >
                           {job.application_status?.toLowerCase() === "declined" ||
-                           job.application_status?.toLowerCase() === "rejected" ? (
+                            job.application_status?.toLowerCase() === "rejected" ? (
                             <div className="hidden md:block w-[120px]" />
                           ) : job.is_available === false ? (
                             <span className="text-[#EF4444] dark:text-[#F87171] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
@@ -960,14 +957,14 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                     );
                   })
                 )}
-                
+
                 {/* Load More Button */}
                 {hasMore && (
                   <div className="w-full flex justify-center py-4">
                     <button
                       onClick={loadMore}
                       disabled={isFetchingMore}
-                      className="h-10 px-6 rounded-[24px] border border-[#6366F1] dark:border-[#818CF8] bg-transparent text-[#6366F1] dark:text-[#818CF8] font-['Poppins'] text-[14px] font-semibold leading-[20px] flex items-center justify-center hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-10 px-6 rounded-[24px] border border-[#6366F1] dark:border-[#818CF8] bg-transparent text-[#6366F1] dark:text-[#818CF8] font-['Poppins'] text-[14px] font-semibold leading-[20px] flex items-center justify-center hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-default"
                     >
                       {isFetchingMore ? 'Loading...' : 'Load More'}
                     </button>
@@ -988,14 +985,14 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
               <h3 className="text-black dark:text-[#F9FAFB] text-xl font-bold font-['Poppins'] leading-8">
                 Official Job Offers
               </h3>
-              <button 
+              <button
                 onClick={() => setMobileFilterOpen(true)}
                 className="md:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#2E3445] transition-colors outline-none"
               >
                 <Icon icon="iconoir:filter-list" className="w-6 h-6 text-black dark:text-[#F9FAFB]" />
               </button>
             </div>
-            
+
             {/* Desktop Only Sub-tabs */}
             <div className="hidden md:flex w-full flex-row items-start gap-4 h-[36px] p-0">
               {(['All', 'Current', 'Decline', 'Expired'] as const).map((subTab) => {
@@ -1004,11 +1001,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                   <button
                     key={subTab}
                     onClick={() => handleSubTabChange(subTab)}
-                    className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] h-[36px] box-border font-['Poppins'] text-sm leading-5 transition-all ${
-                      isActive
+                    className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] h-[36px] box-border font-['Poppins'] text-sm leading-5 transition-all ${isActive
                         ? 'text-[#6366F1] font-semibold border-b border-[#6366F1] drop-shadow-[0_1px_4px_rgba(99,102,241,0.08)]'
                         : 'text-black dark:text-[#F9FAFB] font-normal rounded-3xl hover:bg-gray-50 dark:hover:bg-[#2E3445]'
-                    }`}
+                      }`}
                   >
                     {subTab}
                   </button>
@@ -1029,11 +1025,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       handleSubTabChange(subTab);
                       setMobileFilterOpen(false);
                     }}
-                    className={`w-full py-4 px-4 text-left font-['Poppins'] text-base transition-colors rounded-xl ${
-                      activeFilter === subTab
+                    className={`w-full py-4 px-4 text-left font-['Poppins'] text-base transition-colors rounded-xl ${activeFilter === subTab
                         ? 'text-indigo-500 dark:text-[#818CF8] font-medium bg-indigo-50/50 dark:bg-[#1C2340]'
                         : 'text-gray-600 dark:text-[#9CA3AF] hover:bg-gray-50 dark:hover:bg-[#1C2340]'
-                    }`}
+                      }`}
                   >
                     {subTab}
                   </button>
@@ -1058,7 +1053,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                     {activeFilter === 'All' ? 'No job offers yet' : 'No offers found'}
                   </div>
                   <div className="w-80 text-center justify-center text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">
-                    {activeFilter === 'All' 
+                    {activeFilter === 'All'
                       ? 'Job offers from recruiters and hiring teams will appear here when they match your profile.'
                       : 'There are no offers in this category.'}
                   </div>
@@ -1128,39 +1123,39 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
       {/* Explore Tab */}
       <div className={`w-full ${activeTab === "Explore" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
-              <h3 className="text-black dark:text-[#F9FAFB] text-lg font-semibold font-['Poppins'] leading-6">
-                All jobs
-              </h3>
+          <h3 className="text-black dark:text-[#F9FAFB] text-lg font-semibold font-['Poppins'] leading-6">
+            All jobs
+          </h3>
 
-              <JobFilters
-                filters={filters}
-                onFilterChange={setFilterValue}
-                onClearFilters={() => {
-                  setFilterValue("job_type", "");
-                  setFilterValue("work_mode", "");
-                  setFilterValue("experience", "");
-                  setFilterValue("salary_range", "");
-                  setFilterValue("date_posted", "");
-                  setFilterValue("industry", "");
-                }}
-              />
+          <JobFilters
+            filters={filters}
+            onFilterChange={setFilterValue}
+            onClearFilters={() => {
+              setFilterValue("job_type", "");
+              setFilterValue("work_mode", "");
+              setFilterValue("experience", "");
+              setFilterValue("salary_range", "");
+              setFilterValue("date_posted", "");
+              setFilterValue("industry", "");
+            }}
+          />
 
-              {/* Job List container */}
-              <div className="w-full">
-                <JobList
-                  jobs={jobs}
-                  isLoading={isLoading}
-                  isFetchingMore={isFetchingMore}
-                  hasMore={hasMore}
-                  loadMore={loadMore}
-                  onSave={toggleSave}
-                  onApply={handleApplyClick}
-                  onWithdraw={handleWithdrawClick}
-                  onSelect={(j) => router.push(`/jobs/${j.id}`)}
-                  onAccept={handleOfferAccept}
-                  onDecline={handleOfferDecline}
-                />
-              </div>
+          {/* Job List container */}
+          <div className="w-full">
+            <JobList
+              jobs={jobs}
+              isLoading={isLoading}
+              isFetchingMore={isFetchingMore}
+              hasMore={hasMore}
+              loadMore={loadMore}
+              onSave={toggleSave}
+              onApply={handleApplyClick}
+              onWithdraw={handleWithdrawClick}
+              onSelect={(j) => router.push(`/jobs/${j.id}`)}
+              onAccept={handleOfferAccept}
+              onDecline={handleOfferDecline}
+            />
+          </div>
         </div>
       </div>
 

@@ -26,10 +26,10 @@ export function SelectCompanyTransferModal({ isOpen, onClose, onContinue, compan
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
       <div className="relative flex flex-col items-center bg-white rounded-[24px] p-4 w-[450px] h-[426px] max-w-full shadow-lg">
-        
+
         {/* Close Button Area */}
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-[#FF6B6B] hover:opacity-80 transition-opacity"
         >
           <X className="w-5 h-5" />
@@ -37,7 +37,7 @@ export function SelectCompanyTransferModal({ isOpen, onClose, onContinue, compan
 
         {/* Content Wrapper */}
         <div className="flex flex-col items-center w-[366px] mt-2 h-full">
-          
+
           {/* Header */}
           <div className="flex flex-col items-center gap-2 mb-4">
             <h2 className="text-[18px] font-medium text-black leading-[26px] text-center m-0">Transfer company ownership</h2>
@@ -54,19 +54,18 @@ export function SelectCompanyTransferModal({ isOpen, onClose, onContinue, compan
               </div>
             ) : (
               companies.map(company => (
-                <div 
-                  key={company.id} 
+                <div
+                  key={company.id}
                   onClick={() => setSelectedCompanyId(company.id)}
-                  className={`flex items-center gap-2 px-4 py-2 w-full min-h-[64px] rounded-[12px] cursor-pointer transition-colors ${
-                    selectedCompanyId === company.id ? 'bg-[#EEF2FF]' : 'hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 w-full min-h-[64px] rounded-[12px] cursor-pointer transition-colors ${selectedCompanyId === company.id ? 'bg-[#EEF2FF]' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <div className="w-[48px] h-[48px] rounded-[12px] overflow-hidden relative flex-shrink-0 bg-gray-100 flex items-center justify-center">
                     {company.logo_url ? (
-                      <Image 
-                        src={company.logo_url} 
-                        alt={company.name} 
-                        fill 
+                      <Image
+                        src={company.logo_url}
+                        alt={company.name}
+                        fill
                         className="object-cover"
                       />
                     ) : (
@@ -86,27 +85,26 @@ export function SelectCompanyTransferModal({ isOpen, onClose, onContinue, compan
 
           {/* Action Buttons */}
           <div className="flex flex-row w-full gap-4 mt-auto">
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-[#6366F1] bg-white transition-colors hover:bg-indigo-50"
             >
               <span className="text-[14px] font-normal text-[#6366F1] leading-[20px]">Cancel</span>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => {
                 const comp = companies.find(c => c.id === selectedCompanyId);
                 if (comp) onContinue(comp);
               }}
               disabled={!selectedCompanyId}
-              className={`flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-white transition-colors ${
-                selectedCompanyId ? 'bg-[#6366F1] hover:opacity-90' : 'bg-[#6366F1]/50 cursor-not-allowed'
-              }`}
+              className={`flex-1 flex items-center justify-center h-[40px] rounded-[24px] border border-white transition-colors ${selectedCompanyId ? 'bg-[#6366F1] hover:opacity-90' : 'bg-[#6366F1]/50 cursor-default'
+                }`}
             >
               <span className="text-[14px] font-normal text-white leading-[20px]">Continue</span>
             </button>
           </div>
-          
+
         </div>
       </div>
     </div>

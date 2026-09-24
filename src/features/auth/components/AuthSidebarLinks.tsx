@@ -26,12 +26,12 @@ export default function AuthSidebarLinks({ isMobile = false }: AuthSidebarLinksP
             Contact
           </span>
         </Link>
-        <Link href="/user-agreement" className="group cursor-pointer">
+        <Link href="https://cocpit.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="group cursor-pointer">
           <span className="!text-ds-text-secondary group-hover:!text-ds-text-primary group-hover:underline transition-colors">
             User
           </span>
         </Link>
-        <Link href="/terms" className="group cursor-pointer">
+        <Link href="https://cocpit.in/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="group cursor-pointer">
           <span className="!text-ds-text-secondary group-hover:!text-ds-text-primary group-hover:underline transition-colors">
             Terms &amp; conditions
           </span>
@@ -91,7 +91,7 @@ export default function AuthSidebarLinks({ isMobile = false }: AuthSidebarLinksP
         <div className="self-stretch inline-flex justify-between items-center">
           <div className="text-center justify-start text-ds-text-muted text-[10px] font-medium font-['DM_Sans']">Agreement</div>
         </div>
-        <Link href="/user-agreement" className="h-9 inline-flex justify-start items-center gap-2 group cursor-pointer">
+        <Link href="https://cocpit.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="h-9 inline-flex justify-start items-center gap-2 group cursor-pointer">
           <div className="size-5 relative overflow-hidden flex items-center justify-center">
             <Icon name="user" className="size-5 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors" />
           </div>
@@ -99,7 +99,7 @@ export default function AuthSidebarLinks({ isMobile = false }: AuthSidebarLinksP
             User
           </div>
         </Link>
-        <Link href="/terms" className="self-stretch h-9 inline-flex justify-start items-center gap-2 group cursor-pointer">
+        <Link href="https://cocpit.in/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="self-stretch h-9 inline-flex justify-start items-center gap-2 group cursor-pointer">
           <div className="size-5 relative overflow-hidden flex items-center justify-center">
             <Icon name="terms" className="size-5 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors" />
           </div>

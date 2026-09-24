@@ -253,22 +253,20 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         <div className="flex gap-3 mt-4">
           <button
             onClick={() => setActiveTab('members')}
-            className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
-              activeTab === 'members'
+            className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${activeTab === 'members'
                 ? 'bg-company-light-primary text-company-primary border border-transparent'
                 : 'bg-transparent text-company-primary border border-company-primary hover:bg-company-light-primary/50'
-            }`}
+              }`}
           >
             Members
           </button>
           {hasActivityPermission ? (
             <button
               onClick={() => setActiveTab('activity')}
-              className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${
-                activeTab === 'activity'
+              className={`px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] transition-colors ${activeTab === 'activity'
                   ? 'bg-company-light-primary text-company-primary border border-transparent'
                   : 'bg-transparent text-company-primary border border-company-primary hover:bg-company-light-primary/50'
-              }`}
+                }`}
             >
               Activity logs
             </button>
@@ -276,10 +274,10 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="!cursor-not-allowed">
+                  <div className="!cursor-default">
                     <button
                       disabled
-                      className="px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] border border-[#9CA3AF] text-[#9CA3AF] opacity-50 !cursor-not-allowed bg-transparent"
+                      className="px-4 py-1.5 rounded-[24px] text-[13px] font-medium font-['Poppins'] border border-[#9CA3AF] text-[#9CA3AF] opacity-50 !cursor-default bg-transparent"
                     >
                       Activity logs
                     </button>

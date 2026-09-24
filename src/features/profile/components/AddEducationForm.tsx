@@ -427,7 +427,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         setSchoolHighlight(-1)
         lastSchoolQueryRef.current = query
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setSchoolLoading(false))
   }
   const handleDegreeFocus = () => {
@@ -460,7 +460,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         setDegreeHighlight(-1)
         lastDegreeQueryRef.current = query
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setDegreeLoading(false))
   }
   const handleSpecializationFocus = () => {
@@ -493,7 +493,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         setSpecializationHighlight(-1)
         lastSpecializationQueryRef.current = query
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setSpecializationLoading(false))
   }
 
@@ -1154,7 +1154,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             <Button
               type="submit"
               disabled={!isFormValid}
-              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-['DM_Sans']"
+              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-default font-['DM_Sans']"
             >
               Save
             </Button>

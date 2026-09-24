@@ -183,7 +183,7 @@ export function TagPeopleSelector({
                     <button
                         onClick={onConfirm}
                         disabled={taggedUsers.length === 0}
-                        className="w-[142px] h-10 rounded-[24px] bg-[#6366F1] border border-white text-white text-sm font-normal font-poppins leading-5 hover:bg-[#6366F1]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-[142px] h-10 rounded-[24px] bg-[#6366F1] border border-white text-white text-sm font-normal font-poppins leading-5 hover:bg-[#6366F1]/90 transition-colors disabled:opacity-50 disabled:cursor-default"
                     >
                         Add people
                     </button>

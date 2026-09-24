@@ -1,8 +1,8 @@
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -299,7 +299,7 @@ export default function AddMemberModal({
                   "w-[142px] h-[40px] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] flex-none order-1 grow text-white font-['Poppins'] font-normal text-[14px] leading-[20px] text-center transition-all",
                   selectedUserIds.length > 0
                     ? "bg-[#6366F1] cursor-pointer hover:bg-[#5254E2]"
-                    : "bg-[#C7D2FE] cursor-not-allowed",
+                    : "bg-[#C7D2FE] cursor-default",
                 )}
               >
                 <span className="w-[81px] h-[20px] flex items-center justify-center">

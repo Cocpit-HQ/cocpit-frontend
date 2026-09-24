@@ -368,7 +368,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           setRegenerateCount(prev => prev + 1);
         }
       }
-      
+
       // Sync the experience range from the persisted job — this is always an
       // echo of what we just sent (experience_min/experience_max come from the
       // form, never the AI), so this only matters when it differs from local
@@ -393,19 +393,19 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           setExperience('Senior (5+ yrs)');
         }
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Failed to regenerate with AI:", error);
       let errMsg = "AI generation is temporarily unavailable. Please make sure the backend has a valid GEMINI_API_KEY configured in .env, or type the description manually.";
       if (error.response?.data?.message) {
         errMsg = error.response.data.message;
       }
-      
+
       // If the backend 24h rate limit is hit, sync the frontend state so the button disables
       if (error.response?.status === 429) {
         setRegenerateCount(3);
       }
-      
+
       toast.error(errMsg);
     } finally {
       setIsAiGenerating(false);
@@ -500,11 +500,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             {MOBILE_STEPS.map((s, i) => (
               <div
                 key={s}
-                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  i <= progressIndex
+                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= progressIndex
                     ? (isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]')
                     : 'bg-[#EEF2FF] dark:bg-[#1C2340]'
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -522,11 +521,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   key={opt}
                   type="button"
                   onClick={() => { setExperience(opt); setMobileSubStep('job-type'); }}
-                  className={`w-full h-16 rounded-3xl font-['Poppins'] text-sm font-medium transition-all active:scale-95 ${
-                    experience === opt
+                  className={`w-full h-16 rounded-3xl font-['Poppins'] text-sm font-medium transition-all active:scale-95 ${experience === opt
                       ? (isCompanyMode ? 'bg-[#1A73E8] text-white shadow-md' : 'bg-[#6366F1] text-white shadow-md')
                       : 'bg-[#EEF2FF] text-[#6366F1] ' + (isCompanyMode ? 'dark:bg-[#121B2B] dark:text-[#4D9CFF]' : 'dark:bg-[#1C2340] dark:text-[#818CF8]')
-                  }`}
+                    }`}
                 >
                   {opt}
                 </button>
@@ -547,11 +545,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   key={opt}
                   type="button"
                   onClick={() => { setWorkType(opt); setMobileSubStep('work-mode'); }}
-                  className={`w-full h-16 rounded-3xl font-['Poppins'] text-sm font-medium transition-all active:scale-95 ${
-                    workType === opt
+                  className={`w-full h-16 rounded-3xl font-['Poppins'] text-sm font-medium transition-all active:scale-95 ${workType === opt
                       ? (isCompanyMode ? 'bg-[#1A73E8] text-white shadow-md' : 'bg-[#6366F1] text-white shadow-md')
                       : 'bg-[#EEF2FF] text-[#6366F1] ' + (isCompanyMode ? 'dark:bg-[#121B2B] dark:text-[#4D9CFF]' : 'dark:bg-[#1C2340] dark:text-[#818CF8]')
-                  }`}
+                    }`}
                 >
                   {opt}
                 </button>
@@ -572,11 +569,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   key={opt}
                   type="button"
                   onClick={() => { setWorkMode(opt); setMobileSubStep('location'); }}
-                  className={`w-full h-16 rounded-3xl font-['Poppins'] text-sm font-medium transition-all active:scale-95 ${
-                    workMode === opt
+                  className={`w-full h-16 rounded-3xl font-['Poppins'] text-sm font-medium transition-all active:scale-95 ${workMode === opt
                       ? (isCompanyMode ? 'bg-[#1A73E8] text-white shadow-md' : 'bg-[#6366F1] text-white shadow-md')
                       : 'bg-[#EEF2FF] text-[#6366F1] ' + (isCompanyMode ? 'dark:bg-[#121B2B] dark:text-[#4D9CFF]' : 'dark:bg-[#1C2340] dark:text-[#818CF8]')
-                  }`}
+                    }`}
                 >
                   {opt}
                 </button>
@@ -593,9 +589,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </h3>
             <div className="flex flex-col gap-1.5">
               <label className="text-black dark:text-[#9CA3AF] text-sm font-normal font-['Poppins']">Location</label>
-              <div className={`w-full flex items-center justify-between bg-white border rounded-2xl px-4 py-1 shadow-sm ${
-                isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
-              }`}>
+              <div className={`w-full flex items-center justify-between bg-white border rounded-2xl px-4 py-1 shadow-sm ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
+                }`}>
                 <LocationAutocomplete
                   value={location}
                   onSelect={(loc) => {
@@ -614,13 +609,12 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                       (pos) => {
                         setLocation(`${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
                       },
-                      () => {}
+                      () => { }
                     );
                   }
                 }}
-                className={`self-end text-xs font-medium font-['Poppins'] transition-colors ${
-                  isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'
-                }`}
+                className={`self-end text-xs font-medium font-['Poppins'] transition-colors ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'
+                  }`}
               >
                 Use current location
               </button>
@@ -636,9 +630,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                     await handleRegenerateAi();
                   }
                 }}
-                className={`w-full h-12 rounded-3xl font-['Poppins'] text-sm font-bold text-white shadow-md active:scale-95 transition-all ${
-                  isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
-                }`}
+                className={`w-full h-12 rounded-3xl font-['Poppins'] text-sm font-bold text-white shadow-md active:scale-95 transition-all ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
+                  }`}
               >
                 Generate
               </button>
@@ -665,12 +658,11 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </button>
             </div>
             <p className="text-sm text-gray-500 dark:text-[#9CA3AF] font-['Poppins'] -mt-4 mb-2 ml-14">This is how candidates will see your job</p>
-            
+
             {/* Summary Card */}
-            <div className={`relative bg-white border shadow-sm rounded-2xl p-4 flex flex-col gap-2 ${
-              isCompanyMode ? 'dark:bg-[#121B2B] border-slate-100 dark:border-[#2A2D35]' : 'dark:bg-[#1C2340] border-slate-100 dark:border-[#2E3445]'
-            }`}>
-              <button 
+            <div className={`relative bg-white border shadow-sm rounded-2xl p-4 flex flex-col gap-2 ${isCompanyMode ? 'dark:bg-[#121B2B] border-slate-100 dark:border-[#2A2D35]' : 'dark:bg-[#1C2340] border-slate-100 dark:border-[#2E3445]'
+              }`}>
+              <button
                 onClick={() => setMobileSubStep('edit-job')}
                 className="absolute top-4 right-4 p-2 -m-2 text-gray-500 dark:text-[#9CA3AF] hover:text-black dark:hover:text-[#F9FAFB] transition-colors"
               >
@@ -696,11 +688,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   type="button"
                   onClick={handleRegenerateAi}
                   disabled={isAiGenerating || regenerateCount >= 3}
-                  className={`text-sm font-semibold font-['Poppins'] flex items-center gap-1.5 transition-opacity ${
-                    regenerateCount >= 3
-                      ? 'text-gray-400 cursor-not-allowed'
+                  className={`text-sm font-semibold font-['Poppins'] flex items-center gap-1.5 transition-opacity ${regenerateCount >= 3
+                      ? 'text-gray-400 cursor-default'
                       : (isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1] active:scale-95')
-                  }`}
+                    }`}
                 >
                   <img src="/assets/AI 2.svg" alt="AI" className={`w-4 h-4 ${isAiGenerating ? 'animate-spin' : ''}`} style={{ filter: 'brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(700%) hue-rotate(210deg)' }} />
                   Regenerate with AI
@@ -710,15 +701,13 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </div>
 
             {/* Job Description */}
-            <div className={`w-full p-4 rounded-xl border flex flex-col gap-2 ${
-                  isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 bg-blue-50/50 dark:bg-[#16365F]/30' : 'border-slate-200 dark:border-[#2E3445] bg-white dark:bg-[#1C2340]'
-                }`}>
+            <div className={`w-full p-4 rounded-xl border flex flex-col gap-2 ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 bg-blue-50/50 dark:bg-[#16365F]/30' : 'border-slate-200 dark:border-[#2E3445] bg-white dark:bg-[#1C2340]'
+              }`}>
               <h3 className="text-black dark:text-[#F9FAFB] text-sm font-semibold font-['Poppins']">Job Description</h3>
               {isAiGenerating ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-8">
-                  <div className={`w-8 h-8 rounded-full border-4 border-t-transparent animate-spin ${
-                    isCompanyMode ? 'border-[#1A73E8]' : 'border-[#6366F1]'
-                  }`} />
+                  <div className={`w-8 h-8 rounded-full border-4 border-t-transparent animate-spin ${isCompanyMode ? 'border-[#1A73E8]' : 'border-[#6366F1]'
+                    }`} />
                 </div>
               ) : (
                 <>
@@ -731,12 +720,11 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                     style={{ minHeight: isDescriptionExpanded ? '120px' : '120px' }}
                   />
                   {description.length > 100 && (
-                    <button 
+                    <button
                       onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                       type="button"
-                      className={`self-start text-sm font-medium font-['Poppins'] mt-1 ${
-                        isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'
-                      }`}
+                      className={`self-start text-sm font-medium font-['Poppins'] mt-1 ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#6366F1] dark:text-[#818CF8]'
+                        }`}
                     >
                       {isDescriptionExpanded ? 'See less' : 'See more'}
                     </button>
@@ -752,13 +740,11 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsIndustryOpen(true)}
-                  className={`w-full flex items-center justify-between bg-white border rounded-2xl px-4 py-3 shadow-sm text-left ${
-                    isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
-                  }`}
+                  className={`w-full flex items-center justify-between bg-white border rounded-2xl px-4 py-3 shadow-sm text-left ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
+                    }`}
                 >
-                  <span className={`flex-1 text-sm font-normal font-['Poppins'] truncate pr-2 ${
-                    !industry ? 'text-gray-400' : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')
-                  }`}>
+                  <span className={`flex-1 text-sm font-normal font-['Poppins'] truncate pr-2 ${!industry ? 'text-gray-400' : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')
+                    }`}>
                     {industry || 'Select industry...'}
                   </span>
                   <Icon icon="lucide:chevron-down" className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -767,9 +753,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins']">Min salary (annual)</label>
-                <div className={`w-full flex items-center bg-white border rounded-2xl overflow-hidden shadow-sm ${
-                  isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
-                }`}>
+                <div className={`w-full flex items-center bg-white border rounded-2xl overflow-hidden shadow-sm ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
+                  }`}>
                   <span className="pl-4 text-gray-400 dark:text-[#9CA3AF] text-sm font-['Poppins']">$</span>
                   <input
                     type="number"
@@ -794,9 +779,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins']">Max salary (annual)</label>
-                <div className={`w-full flex items-center bg-white border rounded-2xl overflow-hidden shadow-sm ${
-                  isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
-                }`}>
+                <div className={`w-full flex items-center bg-white border rounded-2xl overflow-hidden shadow-sm ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340]'
+                  }`}>
                   <span className="pl-4 text-gray-400 dark:text-[#9CA3AF] text-sm font-['Poppins']">$</span>
                   <input
                     type="number"
@@ -826,9 +810,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             )}
 
             {/* Mobile action buttons (Sticky bottom for preview) */}
-            <div className={`fixed bottom-[64px] left-0 right-0 px-4 py-3 backdrop-blur-md z-[60] border-t flex flex-col gap-3 bg-white/95 border-slate-100 ${
-              isCompanyMode ? 'dark:bg-[#0F1115]/95 dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19]/95 dark:border-[#2E3445]'
-            }`}>
+            <div className={`fixed bottom-[64px] left-0 right-0 px-4 py-3 backdrop-blur-md z-[60] border-t flex flex-col gap-3 bg-white/95 border-slate-100 ${isCompanyMode ? 'dark:bg-[#0F1115]/95 dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19]/95 dark:border-[#2E3445]'
+              }`}>
               <div className="text-center w-full">
                 <button
                   type="button"
@@ -842,18 +825,16 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                 <button
                   type="button"
                   onClick={() => setMobileSubStep('location')}
-                  className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold border active:scale-95 transition-all bg-white ${
-                    isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8] dark:bg-[#0F1115]' : 'border-[#6366F1] text-[#6366F1] dark:bg-[#0B0F19]'
-                  }`}
+                  className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold border active:scale-95 transition-all bg-white ${isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8] dark:bg-[#0F1115]' : 'border-[#6366F1] text-[#6366F1] dark:bg-[#0B0F19]'
+                    }`}
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={handlePublishClick}
-                  className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold text-white shadow-md active:scale-95 transition-all ${
-                    isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
-                  }`}
+                  className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold text-white shadow-md active:scale-95 transition-all ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
+                    }`}
                 >
                   Publish
                 </button>
@@ -886,9 +867,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   type="text"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className={`w-full bg-white border rounded-2xl px-4 py-3 shadow-sm text-black text-sm font-normal font-['Poppins'] focus:outline-none ${
-                    isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340] dark:text-[#F9FAFB]'
-                  }`}
+                  className={`w-full bg-white border rounded-2xl px-4 py-3 shadow-sm text-black text-sm font-normal font-['Poppins'] focus:outline-none ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340] dark:text-[#F9FAFB]'
+                    }`}
                 />
               </div>
 
@@ -898,9 +878,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   type="text"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  className={`w-full bg-white border rounded-2xl px-4 py-3 shadow-sm text-black text-sm font-normal font-['Poppins'] focus:outline-none ${
-                    isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340] dark:text-[#F9FAFB]'
-                  }`}
+                  className={`w-full bg-white border rounded-2xl px-4 py-3 shadow-sm text-black text-sm font-normal font-['Poppins'] focus:outline-none ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30 dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'border-slate-200 dark:border-[#2E3445] dark:bg-[#1C2340] dark:text-[#F9FAFB]'
+                    }`}
                 />
               </div>
 
@@ -919,9 +898,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins']">Experience level</label>
-                <div className={`w-full flex items-center justify-between bg-white dark:bg-[#1C2340] border rounded-2xl px-4 py-3 shadow-sm ${
-                  isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30' : 'border-slate-200 dark:border-[#2E3445]'
-                }`}>
+                <div className={`w-full flex items-center justify-between bg-white dark:bg-[#1C2340] border rounded-2xl px-4 py-3 shadow-sm ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30' : 'border-slate-200 dark:border-[#2E3445]'
+                  }`}>
                   <select
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
@@ -938,9 +916,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins']">Work type</label>
-                <div className={`w-full flex items-center justify-between bg-white dark:bg-[#1C2340] border rounded-2xl px-4 py-3 shadow-sm ${
-                  isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30' : 'border-slate-200 dark:border-[#2E3445]'
-                }`}>
+                <div className={`w-full flex items-center justify-between bg-white dark:bg-[#1C2340] border rounded-2xl px-4 py-3 shadow-sm ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30' : 'border-slate-200 dark:border-[#2E3445]'
+                  }`}>
                   <select
                     value={workType}
                     onChange={(e) => setWorkType(e.target.value)}
@@ -956,9 +933,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins']">Work mode</label>
-                <div className={`w-full flex items-center justify-between bg-white dark:bg-[#1C2340] border rounded-2xl px-4 py-3 shadow-sm ${
-                  isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30' : 'border-slate-200 dark:border-[#2E3445]'
-                }`}>
+                <div className={`w-full flex items-center justify-between bg-white dark:bg-[#1C2340] border rounded-2xl px-4 py-3 shadow-sm ${isCompanyMode ? 'border-[#1A73E8]/30 dark:border-[#4D9CFF]/30' : 'border-slate-200 dark:border-[#2E3445]'
+                  }`}>
                   <select
                     value={workMode}
                     onChange={(e) => setWorkMode(e.target.value)}
@@ -976,24 +952,21 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
 
             {/* Mobile action buttons (Sticky bottom for edit form) */}
-            <div className={`fixed bottom-[64px] left-0 right-0 px-4 py-3 backdrop-blur-md z-[60] border-t flex items-center gap-3 bg-white/95 border-slate-100 ${
-              isCompanyMode ? 'dark:bg-[#0F1115]/95 dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19]/95 dark:border-[#2E3445]'
-            }`}>
+            <div className={`fixed bottom-[64px] left-0 right-0 px-4 py-3 backdrop-blur-md z-[60] border-t flex items-center gap-3 bg-white/95 border-slate-100 ${isCompanyMode ? 'dark:bg-[#0F1115]/95 dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19]/95 dark:border-[#2E3445]'
+              }`}>
               <button
                 type="button"
                 onClick={() => setMobileSubStep('preview')}
-                className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold border active:scale-95 transition-all bg-white ${
-                  isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8] dark:bg-[#0F1115]' : 'border-[#6366F1] text-[#6366F1] dark:bg-[#0B0F19]'
-                }`}
+                className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold border active:scale-95 transition-all bg-white ${isCompanyMode ? 'border-[#1A73E8] text-[#1A73E8] dark:bg-[#0F1115]' : 'border-[#6366F1] text-[#6366F1] dark:bg-[#0B0F19]'
+                  }`}
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={() => setMobileSubStep('preview')}
-                className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold text-white shadow-md active:scale-95 transition-all ${
-                  isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
-                }`}
+                className={`flex-1 h-12 rounded-3xl font-['Poppins'] text-sm font-bold text-white shadow-md active:scale-95 transition-all ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
+                  }`}
               >
                 Save
               </button>
@@ -1007,40 +980,35 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       {isIndustryOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 z-[79] bg-black/50 md:hidden animate-in fade-in duration-200"
             onClick={() => setIsIndustryOpen(false)}
           />
-          
+
           {/* Bottom Sheet */}
-          <div 
-            id="mobile-industry-sheet" 
+          <div
+            id="mobile-industry-sheet"
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className={`fixed inset-x-0 bottom-0 z-[80] rounded-t-2xl md:hidden flex flex-col h-[85vh] animate-in slide-in-from-bottom-full duration-300 shadow-2xl bg-white border-t border-slate-100 ${
-            isCompanyMode ? 'dark:bg-[#0F1115] dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19] dark:border-[#2E3445]'
-          }`}>
+            className={`fixed inset-x-0 bottom-0 z-[80] rounded-t-2xl md:hidden flex flex-col h-[85vh] animate-in slide-in-from-bottom-full duration-300 shadow-2xl bg-white border-t border-slate-100 ${isCompanyMode ? 'dark:bg-[#0F1115] dark:border-[#2A2D35]' : 'dark:bg-[#0B0F19] dark:border-[#2E3445]'
+              }`}>
             {/* Sheet Header */}
-            <div className={`flex items-center justify-between px-4 py-3 border-b border-slate-100 ${
-              isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'
-            }`}>
-              <h3 className={`text-lg font-semibold font-['Poppins'] text-slate-900 ${
-                isCompanyMode ? 'dark:text-white' : 'dark:text-[#F9FAFB]'
-              }`}>Select Industry</h3>
-              <button 
+            <div className={`flex items-center justify-between px-4 py-3 border-b border-slate-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'
+              }`}>
+              <h3 className={`text-lg font-semibold font-['Poppins'] text-slate-900 ${isCompanyMode ? 'dark:text-white' : 'dark:text-[#F9FAFB]'
+                }`}>Select Industry</h3>
+              <button
                 onClick={() => setIsIndustryOpen(false)}
-                className={`p-2 -m-2 rounded-full transition-colors text-slate-400 hover:bg-slate-50 ${
-                  isCompanyMode ? 'dark:text-[#A1A8B3] dark:hover:bg-[#121B2B]' : 'dark:text-[#9CA3AF] dark:hover:bg-[#1C2340]'
-                }`}
+                className={`p-2 -m-2 rounded-full transition-colors text-slate-400 hover:bg-slate-50 ${isCompanyMode ? 'dark:text-[#A1A8B3] dark:hover:bg-[#121B2B]' : 'dark:text-[#9CA3AF] dark:hover:bg-[#1C2340]'
+                  }`}
               >
                 <Icon icon="lucide:x" className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Search Input */}
-            <div className={`px-4 py-3 border-b border-slate-100 ${
-              isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'
-            }`}>
+            <div className={`px-4 py-3 border-b border-slate-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'
+              }`}>
               <div className="relative">
                 <Icon icon="lucide:search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -1048,23 +1016,22 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   placeholder="Search industries..."
                   value={industrySearch}
                   onChange={(e) => setIndustrySearch(e.target.value)}
-                  className={`w-full pl-9 pr-4 py-2.5 rounded-xl outline-none text-sm font-['Poppins'] transition-colors bg-slate-50 text-slate-900 placeholder-slate-400 border border-slate-200 focus:border-indigo-400 ${
-                    isCompanyMode 
-                      ? 'dark:bg-[#121B2B] dark:text-white dark:placeholder-gray-500 dark:border-[#2A2D35] dark:focus:border-[#4D9CFF]' 
+                  className={`w-full pl-9 pr-4 py-2.5 rounded-xl outline-none text-sm font-['Poppins'] transition-colors bg-slate-50 text-slate-900 placeholder-slate-400 border border-slate-200 focus:border-indigo-400 ${isCompanyMode
+                      ? 'dark:bg-[#121B2B] dark:text-white dark:placeholder-gray-500 dark:border-[#2A2D35] dark:focus:border-[#4D9CFF]'
                       : 'dark:bg-[#1C2340] dark:text-[#F9FAFB] dark:placeholder-gray-500 dark:border-[#2E3445] dark:focus:border-[#818CF8]'
-                  }`}
+                    }`}
                 />
               </div>
             </div>
-            
+
             {/* Industry List */}
             <div className="flex-1 overflow-y-auto overscroll-contain pb-safe">
               {(() => {
                 const searchLower = industrySearch.toLowerCase().trim();
-                const filtered = availableIndustries.filter(i => 
+                const filtered = availableIndustries.filter(i =>
                   i.industry_name.toLowerCase().includes(searchLower)
                 );
-                
+
                 return filtered.length > 0 ? (
                   <div className="flex flex-col py-2">
                     {filtered.map((item, idx) => {
@@ -1077,23 +1044,20 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                             setIsIndustryOpen(false);
                             setIndustrySearch('');
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center justify-between transition-colors bg-white hover:bg-slate-50 ${
-                            isSelected 
-                              ? (isCompanyMode ? 'bg-slate-50 dark:bg-[#121B2B]' : 'bg-slate-50 dark:bg-[#1C2340]') 
+                          className={`w-full px-4 py-3 text-left flex items-center justify-between transition-colors bg-white hover:bg-slate-50 ${isSelected
+                              ? (isCompanyMode ? 'bg-slate-50 dark:bg-[#121B2B]' : 'bg-slate-50 dark:bg-[#1C2340]')
                               : (isCompanyMode ? 'dark:bg-transparent dark:active:bg-[#121B2B]' : 'dark:bg-transparent dark:active:bg-[#1C2340]')
-                          }`}
+                            }`}
                         >
-                          <span className={`text-sm font-normal font-['Poppins'] ${
-                            isSelected 
-                              ? (isCompanyMode ? 'text-[#1A73E8] font-medium dark:text-[#4D9CFF]' : 'text-indigo-600 font-medium dark:text-[#818CF8]') 
+                          <span className={`text-sm font-normal font-['Poppins'] ${isSelected
+                              ? (isCompanyMode ? 'text-[#1A73E8] font-medium dark:text-[#4D9CFF]' : 'text-indigo-600 font-medium dark:text-[#818CF8]')
                               : (isCompanyMode ? 'text-slate-700 dark:text-[#FFFFFF]' : 'text-slate-700 dark:text-[#F9FAFB]')
-                          }`}>
+                            }`}>
                             {item.industry_name}
                           </span>
                           {isSelected && (
-                            <Icon icon="lucide:check" className={`w-4 h-4 ${
-                              isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-indigo-600 dark:text-[#818CF8]'
-                            }`} />
+                            <Icon icon="lucide:check" className={`w-4 h-4 ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-indigo-600 dark:text-[#818CF8]'
+                              }`} />
                           )}
                         </button>
                       );
@@ -1101,9 +1065,8 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   </div>
                 ) : (
                   <div className="p-6 text-center">
-                    <p className={`text-sm font-['Poppins'] text-slate-500 ${
-                      isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'
-                    }`}>No industry found.</p>
+                    <p className={`text-sm font-['Poppins'] text-slate-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'
+                      }`}>No industry found.</p>
                   </div>
                 );
               })()}
@@ -1112,154 +1075,192 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         </>
       )}
       <div className="hidden md:flex flex-col w-full max-w-[998px] gap-4 px-0 pb-16">
-      {/* Header Row */}
-      <div className="self-stretch flex flex-row justify-start items-center gap-4">
-        <button
-          onClick={onBack}
-          type="button"
-          className={`w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 transition-colors active:scale-95 text-gray-500 shadow-sm flex-shrink-0 hover:bg-slate-50 ${isCompanyMode ? 'dark:border-[#2A2D35] dark:hover:bg-[#121B2B]' : 'dark:border-[#2E3445] dark:hover:bg-[#1C2340]'}`}
-        >
-          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
-        </button>
-        <div className="flex flex-col justify-start items-start">
-          <div className={`text-black text-lg font-medium font-['Poppins'] leading-6 text-left ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Create job</div>
-          <div className={`text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-left ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Modify Job Details</div>
-        </div>
-      </div>
-
-      {/* Form Fields Panel */}
-      <div className={`self-stretch p-0 md:p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4 ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'}`}>
-        {/* Row 1: Role, Company, Location */}
-        <div className="self-stretch flex flex-col md:flex-row justify-center items-stretch md:items-start gap-4 md:gap-6">
-          {/* Job Role */}
-          <div className="flex-1 flex flex-col justify-start items-start gap-2">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Job Role</label>
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 transition-colors shadow-sm ${
-                isCompanyMode 
-                  ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
-                  : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-              }`}
-            />
-          </div>
-
-          {/* Recruiter Name */}
-          <div className="flex-1 flex flex-col justify-start items-start gap-2">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Recruiter</label>
-            <input
-              type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 transition-colors shadow-sm ${
-                isCompanyMode 
-                  ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
-                  : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-              }`}
-            />
-          </div>
-
-          {/* Location */}
-          <div className="flex-1 flex flex-col justify-start items-start gap-2">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Location</label>
-            <LocationAutocomplete
-              value={location}
-              onSelect={(loc) => {
-                if (typeof loc === 'string') setLocation(loc);
-                else if (loc && 'name' in loc) setLocation(loc.name);
-                else if (loc && 'formattedAddress' in loc) setLocation(loc.formattedAddress);
-                else setLocation('');
-              }}
-            />
+        {/* Header Row */}
+        <div className="self-stretch flex flex-row justify-start items-center gap-4">
+          <button
+            onClick={onBack}
+            type="button"
+            className={`w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 transition-colors active:scale-95 text-gray-500 shadow-sm flex-shrink-0 hover:bg-slate-50 ${isCompanyMode ? 'dark:border-[#2A2D35] dark:hover:bg-[#121B2B]' : 'dark:border-[#2E3445] dark:hover:bg-[#1C2340]'}`}
+          >
+            <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
+          </button>
+          <div className="flex flex-col justify-start items-start">
+            <div className={`text-black text-lg font-medium font-['Poppins'] leading-6 text-left ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Create job</div>
+            <div className={`text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-left ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Modify Job Details</div>
           </div>
         </div>
 
-        {/* Row 2: Experience Level, Work Type, Work Mode */}
-        <div className="self-stretch flex flex-col md:flex-row justify-center items-stretch md:items-start gap-4 md:gap-6">
-          {/* Experience Level */}
-          <div ref={experienceRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Experience Level</label>
-            {experience === 'Other' ? (
-              <div className="w-full flex items-center gap-2">
-                <div className={`flex-1 p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 flex items-center gap-2 shadow-sm transition-colors ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-                }`}>
-                  <span className="text-gray-400 text-sm font-['Poppins']">Min</span>
-                  <input
-                    type="number"
-                    value={minExperience}
-                    onChange={(e) => setMinExperience(e.target.value)}
-                    className={`w-full bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
-                    placeholder="0"
-                    min="0"
-                  />
+        {/* Form Fields Panel */}
+        <div className={`self-stretch p-0 md:p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4 ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'}`}>
+          {/* Row 1: Role, Company, Location */}
+          <div className="self-stretch flex flex-col md:flex-row justify-center items-stretch md:items-start gap-4 md:gap-6">
+            {/* Job Role */}
+            <div className="flex-1 flex flex-col justify-start items-start gap-2">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Job Role</label>
+              <input
+                type="text"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 transition-colors shadow-sm ${isCompanyMode
+                    ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]'
+                    : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
+                  }`}
+              />
+            </div>
+
+            {/* Recruiter Name */}
+            <div className="flex-1 flex flex-col justify-start items-start gap-2">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Recruiter</label>
+              <input
+                type="text"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 transition-colors shadow-sm ${isCompanyMode
+                    ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]'
+                    : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
+                  }`}
+              />
+            </div>
+
+            {/* Location */}
+            <div className="flex-1 flex flex-col justify-start items-start gap-2">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Location</label>
+              <LocationAutocomplete
+                value={location}
+                onSelect={(loc) => {
+                  if (typeof loc === 'string') setLocation(loc);
+                  else if (loc && 'name' in loc) setLocation(loc.name);
+                  else if (loc && 'formattedAddress' in loc) setLocation(loc.formattedAddress);
+                  else setLocation('');
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Experience Level, Work Type, Work Mode */}
+          <div className="self-stretch flex flex-col md:flex-row justify-center items-stretch md:items-start gap-4 md:gap-6">
+            {/* Experience Level */}
+            <div ref={experienceRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Experience Level</label>
+              {experience === 'Other' ? (
+                <div className="w-full flex items-center gap-2">
+                  <div className={`flex-1 p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 flex items-center gap-2 shadow-sm transition-colors ${isCompanyMode
+                      ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                      : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                    }`}>
+                    <span className="text-gray-400 text-sm font-['Poppins']">Min</span>
+                    <input
+                      type="number"
+                      value={minExperience}
+                      onChange={(e) => setMinExperience(e.target.value)}
+                      className={`w-full bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                  <div className={`flex-1 p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 flex items-center gap-2 shadow-sm transition-colors ${isCompanyMode
+                      ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                      : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                    }`}>
+                    <span className="text-gray-400 text-sm font-['Poppins']">Max</span>
+                    <input
+                      type="number"
+                      value={maxExperience}
+                      onChange={(e) => setMaxExperience(e.target.value)}
+                      className={`w-full bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setExperience('Fresher'); setIsExperienceOpen(false); }}
+                    className={`p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] hover:bg-slate-50 transition-colors text-gray-500 flex-shrink-0 ${isCompanyMode
+                        ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:hover:bg-[#121B2B]'
+                        : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:hover:bg-[#1C2340]'
+                      }`}
+                    title="Clear custom experience"
+                  >
+                    <Icon icon="lucide:x" className="w-5 h-5" />
+                  </button>
                 </div>
-                <div className={`flex-1 p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 flex items-center gap-2 shadow-sm transition-colors ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-                }`}>
-                  <span className="text-gray-400 text-sm font-['Poppins']">Max</span>
-                  <input
-                    type="number"
-                    value={maxExperience}
-                    onChange={(e) => setMaxExperience(e.target.value)}
-                    className={`w-full bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
-                    placeholder="0"
-                    min="0"
-                  />
+              ) : (
+                <div className="relative w-full">
+                  <button
+                    type="button"
+                    onClick={() => setIsExperienceOpen(!isExperienceOpen)}
+                    className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${isCompanyMode
+                        ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]'
+                        : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
+                      }`}
+                  >
+                    <span>{experience}</span>
+                    <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isExperienceOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isExperienceOpen && (
+                    <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${isCompanyMode
+                        ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                        : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                      }`}>
+                      {['Fresher', 'Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)', 'Other'].map((option) => {
+                        const isSelected = experience === option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => {
+                              setExperience(option);
+                              setIsExperienceOpen(false);
+                            }}
+                            className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
+                              }`}
+                          >
+                            <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
+                              {option}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
+              )}
+            </div>
+
+            {/* Work Type */}
+            <div ref={workTypeRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Work Type</label>
+              <div className="relative w-full">
                 <button
                   type="button"
-                  onClick={() => { setExperience('Fresher'); setIsExperienceOpen(false); }}
-                  className={`p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] hover:bg-slate-50 transition-colors text-gray-500 flex-shrink-0 ${
-                    isCompanyMode 
-                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:hover:bg-[#121B2B]' 
-                      : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:hover:bg-[#1C2340]'
-                  }`}
-                  title="Clear custom experience"
-                >
-                  <Icon icon="lucide:x" className="w-5 h-5" />
-                </button>
-              </div>
-            ) : (
-              <div className="relative w-full">
-                  <button
-                  type="button"
-                  onClick={() => setIsExperienceOpen(!isExperienceOpen)}
-                  className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${
-                    isCompanyMode 
-                      ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
+                  onClick={() => setIsWorkTypeOpen(!isWorkTypeOpen)}
+                  className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${isCompanyMode
+                      ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]'
                       : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-                  }`}
+                    }`}
                 >
-                  <span>{experience}</span>
-                  <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isExperienceOpen ? 'rotate-180' : ''}`} />
+                  <span>{workType}</span>
+                  <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isWorkTypeOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {isExperienceOpen && (
-                  <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${
-                    isCompanyMode 
-                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
+                {isWorkTypeOpen && (
+                  <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${isCompanyMode
+                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
                       : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-                  }`}>
-                    {['Fresher', 'Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)', 'Other'].map((option) => {
-                      const isSelected = experience === option;
+                    }`}>
+                    {['Full time', 'Part-time', 'Contract', 'Internship', 'Freelance'].map((option) => {
+                      const isSelected = workType === option;
                       return (
-                          <button
+                        <button
                           key={option}
                           type="button"
                           onClick={() => {
-                            setExperience(option);
-                            setIsExperienceOpen(false);
+                            setWorkType(option);
+                            setIsWorkTypeOpen(false);
                           }}
-                          className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${
-                            isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
-                          }`}
+                          className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
+                            }`}
                         >
                           <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
                             {option}
@@ -1270,122 +1271,69 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Work Type */}
-          <div ref={workTypeRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Work Type</label>
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={() => setIsWorkTypeOpen(!isWorkTypeOpen)}
-                className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
-                    : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-                }`}
-              >
-                <span>{workType}</span>
-                <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isWorkTypeOpen ? 'rotate-180' : ''}`} />
-              </button>
+            {/* Work Mode */}
+            <div ref={workModeRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Work Mode</label>
+              <div className="relative w-full">
+                <button
+                  type="button"
+                  onClick={() => setIsWorkModeOpen(!isWorkModeOpen)}
+                  className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${isCompanyMode
+                      ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]'
+                      : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
+                    }`}
+                >
+                  <span>{workMode}</span>
+                  <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isWorkModeOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-              {isWorkTypeOpen && (
-                <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-                }`}>
-                  {['Full time', 'Part-time', 'Contract', 'Internship', 'Freelance'].map((option) => {
-                    const isSelected = workType === option;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => {
-                          setWorkType(option);
-                          setIsWorkTypeOpen(false);
-                        }}
-                        className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${
-                          isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
-                        }`}
-                      >
-                        <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
-                          {option}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                {isWorkModeOpen && (
+                  <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${isCompanyMode
+                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                      : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                    }`}>
+                    {['Remote', 'Hybrid', 'Onsite'].map((option) => {
+                      const isSelected = workMode === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            setWorkMode(option);
+                            setIsWorkModeOpen(false);
+                          }}
+                          className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
+                            }`}
+                        >
+                          <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
+                            {option}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Work Mode */}
-          <div ref={workModeRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Work Mode</label>
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={() => setIsWorkModeOpen(!isWorkModeOpen)}
-                className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
-                    : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-                }`}
-              >
-                <span>{workMode}</span>
-                <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isWorkModeOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isWorkModeOpen && (
-                <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-                }`}>
-                  {['Remote', 'Hybrid', 'Onsite'].map((option) => {
-                    const isSelected = workMode === option;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => {
-                          setWorkMode(option);
-                          setIsWorkModeOpen(false);
-                        }}
-                        className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${
-                          isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
-                        }`}
-                      >
-                        <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
-                          {option}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 3: Job Description */}
-        <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
-          <div className="self-stretch flex flex-row justify-between items-center gap-2">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Job Description</label>
-            <div className="relative group">
-              <button
-                onClick={handleRegenerateAi}
-                disabled={isAiGenerating || regenerateCount >= 3}
-                type="button"
-                className={`pb-px flex justify-start items-center gap-1.5 transition-opacity ${
-                  regenerateCount >= 3 
-                    ? 'text-gray-400 cursor-not-allowed' 
-                    : 'text-indigo-500 hover:opacity-85 active:scale-95'
-                }`}
-              >
-                <style>{`
+          {/* Row 3: Job Description */}
+          <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
+            <div className="self-stretch flex flex-row justify-between items-center gap-2">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Job Description</label>
+              <div className="relative group">
+                <button
+                  onClick={handleRegenerateAi}
+                  disabled={isAiGenerating || regenerateCount >= 3}
+                  type="button"
+                  className={`pb-px flex justify-start items-center gap-1.5 transition-opacity ${regenerateCount >= 3
+                      ? 'text-gray-400 cursor-default'
+                      : 'text-indigo-500 hover:opacity-85 active:scale-95'
+                    }`}
+                >
+                  <style>{`
                   @keyframes magic-spin {
                     0% { transform: rotate(0deg); opacity: 1; }
                     15% { transform: rotate(45deg); opacity: 0.3; }
@@ -1398,423 +1346,399 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                     animation: magic-spin 2.5s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
                   }
                 `}</style>
-                <img
-                  src="/assets/AI 2.svg"
-                  alt="AI Icon"
-                  className={`w-5 h-5 ${
-                    isAiGenerating ? 'animate-magic-spin' : 
-                    regenerateCount >= 3 ? 'grayscale opacity-50' : 'animate-pulse'
-                  }`}
-                />
-                <span className={`text-base font-normal font-['Poppins'] leading-6 ${
-                  regenerateCount >= 3 ? 'text-gray-400' : (isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500')
-                }`}>
-                  {isAiGenerating ? 'Generating...' : 'Regenerate with AI'}
-                </span>
-              </button>
-              {/* Tooltip */}
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-max z-50">
-                <div className={`text-[14px] font-['Poppins'] font-medium px-[16px] py-[8px] rounded-[24px] bg-[#F4F6F8] text-black ${
-                  isCompanyMode ? 'dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'dark:bg-[#1C2340] dark:text-[#F9FAFB]'
-                }`}>
-                  {regenerateCount >= 3 
-                    ? "Limit reached. You can only regenerate 3 times per 24 hours." 
-                    : "You can regenerate with AI up to 3 times."}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className={`self-stretch relative p-1 bg-white rounded-xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-start overflow-hidden transition-colors shadow-sm ${
-            isCompanyMode 
-              ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-              : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-          }`}>
-            {isAiGenerating ? (
-              <div className={`w-full min-h-[250px] p-4 flex flex-col gap-5 select-none relative bg-white ${
-                isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'
-              }`}>
-                {/* AI Loading Indicator Badge */}
-                <div className="absolute right-4 top-4 flex items-center gap-1.5 bg-indigo-50/70 px-3 py-1.5 rounded-full border border-indigo-100">
                   <img
                     src="/assets/AI 2.svg"
                     alt="AI Icon"
-                    className="w-4 h-4 animate-magic-spin"
+                    className={`w-5 h-5 ${isAiGenerating ? 'animate-magic-spin' :
+                        regenerateCount >= 3 ? 'grayscale opacity-50' : 'animate-pulse'
+                      }`}
                   />
-                  <span className="text-[10px] font-bold text-indigo-600 font-['Poppins'] tracking-wider uppercase animate-pulse">
-                    AI Generating
+                  <span className={`text-base font-normal font-['Poppins'] leading-6 ${regenerateCount >= 3 ? 'text-gray-400' : (isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500')
+                    }`}>
+                    {isAiGenerating ? 'Generating...' : 'Regenerate with AI'}
                   </span>
-                </div>
-
-                {/* Paragraph 1 Skeleton */}
-                <div className="flex flex-col gap-2">
-                  <div className="h-4 bg-slate-200/80 rounded-md w-1/4 animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-full animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-5/6 animate-pulse" />
-                </div>
-
-                {/* Paragraph 2 Skeleton */}
-                <div className="flex flex-col gap-2 mt-1">
-                  <div className="h-4 bg-slate-200/80 rounded-md w-1/3 animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-full animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-4/5 animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse" />
-                </div>
-
-                {/* Paragraph 3 Skeleton */}
-                <div className="flex flex-col gap-2 mt-1">
-                  <div className="h-4 bg-slate-200/80 rounded-md w-1/5 animate-pulse" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-3/4 animate-pulse ml-4" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-5/6 animate-pulse ml-4" />
-                  <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse ml-4" />
+                </button>
+                {/* Tooltip */}
+                <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-max z-50">
+                  <div className={`text-[14px] font-['Poppins'] font-medium px-[16px] py-[8px] rounded-[24px] bg-[#F4F6F8] text-black ${isCompanyMode ? 'dark:bg-[#121B2B] dark:text-[#FFFFFF]' : 'dark:bg-[#1C2340] dark:text-[#F9FAFB]'
+                    }`}>
+                    {regenerateCount >= 3
+                      ? "Limit reached. You can only regenerate 3 times per 24 hours."
+                      : "You can regenerate with AI up to 3 times."}
+                  </div>
                 </div>
               </div>
-            ) : (
-              <textarea
-                ref={textareaRef}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className={`w-full min-h-[250px] p-3 border-0 focus:outline-none focus:ring-0 resize-none font-['Poppins'] text-base text-black leading-relaxed overflow-hidden bg-transparent ${
-                  isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'
-                }`}
-                placeholder="Job description details..."
-              />
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Row 3: Experience Level, Work Type, Work Mode */}
-        {/* Row 4: Industry type, Min Salary, Max Salary */}
-        <div className="self-stretch flex flex-col sm:flex-row justify-center items-stretch sm:items-start gap-4 sm:gap-6">
-          {/* Industry Type */}
-          <div ref={industryRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Industry type</label>
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={() => setIsIndustryOpen(!isIndustryOpen)}
-                className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]' 
-                    : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
-                }`}
-              >
-                <span>{industry || 'Select industry'}</span>
-                <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isIndustryOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isIndustryOpen && (
-                <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-                }`}>
-                  <div className="w-full px-2 pt-2 pb-3">
-                    <div className="relative">
-                      <Icon icon="lucide:search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="Search industries..."
-                        value={industrySearch}
-                        onChange={(e) => setIndustrySearch(e.target.value)}
-                        className={`w-full pl-9 pr-4 py-2 bg-slate-50 rounded-full outline-none text-sm font-['Poppins'] text-slate-900 border border-slate-200 transition-colors ${
-                          isCompanyMode 
-                            ? 'focus:border-blue-300 dark:bg-[#121B2B] dark:border-[#2A2D35] dark:text-[#FFFFFF]' 
-                            : 'focus:border-indigo-300 dark:bg-[#1C2340] dark:border-[#2E3445] dark:text-[#F9FAFB]'
-                        }`}
-                        autoFocus
-                      />
-                    </div>
+            <div className={`self-stretch relative p-1 bg-white rounded-xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-start overflow-hidden transition-colors shadow-sm ${isCompanyMode
+                ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+              }`}>
+              {isAiGenerating ? (
+                <div className={`w-full min-h-[250px] p-4 flex flex-col gap-5 select-none relative bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'
+                  }`}>
+                  {/* AI Loading Indicator Badge */}
+                  <div className="absolute right-4 top-4 flex items-center gap-1.5 bg-indigo-50/70 px-3 py-1.5 rounded-full border border-indigo-100">
+                    <img
+                      src="/assets/AI 2.svg"
+                      alt="AI Icon"
+                      className="w-4 h-4 animate-magic-spin"
+                    />
+                    <span className="text-[10px] font-bold text-indigo-600 font-['Poppins'] tracking-wider uppercase animate-pulse">
+                      AI Generating
+                    </span>
                   </div>
-                  <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-1 pr-1">
-                    {(() => {
-                      const searchLower = industrySearch.toLowerCase().trim();
-                      const filtered = availableIndustries.filter(i => 
-                        i.industry_name.toLowerCase().includes(searchLower)
-                      );
-                      
-                      return (
-                        <>
-                          {filtered.length > 0 ? filtered.map((item, idx) => {
-                            const isSelected = industry === item.industry_name;
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => {
-                                  setIndustry(item.industry_name);
-                                  setIsIndustryOpen(false);
-                                  setIndustrySearch('');
-                                }}
-                                className={`w-full px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl text-left transition-colors flex items-center justify-between group ${
-                                  isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
-                                }`}
-                              >
-                                <span className={`text-sm font-normal font-['Poppins'] ${
-                                  isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-medium dark:text-[#4D9CFF]' : 'text-indigo-600 font-medium dark:text-[#818CF8]') : (isCompanyMode ? 'text-slate-700 dark:text-[#FFFFFF]' : 'text-slate-700 dark:text-[#F9FAFB]')
-                                }`}>
-                                  {item.industry_name}
-                                </span>
-                                {isSelected && (
-                                  <Icon icon="lucide:check" className={`w-4 h-4 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-600'}`} />
-                                )}
-                              </button>
-                            );
-                          }) : (
-                            searchLower ? (
-                              <div className="flex flex-col gap-2 p-2">
-                                <div className="text-center pb-1 text-slate-500 text-sm font-['Poppins']">
-                                  No industry found.
-                                </div>
+
+                  {/* Paragraph 1 Skeleton */}
+                  <div className="flex flex-col gap-2">
+                    <div className="h-4 bg-slate-200/80 rounded-md w-1/4 animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-full animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-5/6 animate-pulse" />
+                  </div>
+
+                  {/* Paragraph 2 Skeleton */}
+                  <div className="flex flex-col gap-2 mt-1">
+                    <div className="h-4 bg-slate-200/80 rounded-md w-1/3 animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-full animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-4/5 animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse" />
+                  </div>
+
+                  {/* Paragraph 3 Skeleton */}
+                  <div className="flex flex-col gap-2 mt-1">
+                    <div className="h-4 bg-slate-200/80 rounded-md w-1/5 animate-pulse" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-3/4 animate-pulse ml-4" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-5/6 animate-pulse ml-4" />
+                    <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse ml-4" />
+                  </div>
+                </div>
+              ) : (
+                <textarea
+                  ref={textareaRef}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className={`w-full min-h-[250px] p-3 border-0 focus:outline-none focus:ring-0 resize-none font-['Poppins'] text-base text-black leading-relaxed overflow-hidden bg-transparent ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'
+                    }`}
+                  placeholder="Job description details..."
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Row 3: Experience Level, Work Type, Work Mode */}
+          {/* Row 4: Industry type, Min Salary, Max Salary */}
+          <div className="self-stretch flex flex-col sm:flex-row justify-center items-stretch sm:items-start gap-4 sm:gap-6">
+            {/* Industry Type */}
+            <div ref={industryRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Industry type</label>
+              <div className="relative w-full">
+                <button
+                  type="button"
+                  onClick={() => setIsIndustryOpen(!isIndustryOpen)}
+                  className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 text-black text-base font-normal font-['Poppins'] leading-6 transition-colors shadow-sm text-left flex justify-between items-center ${isCompanyMode
+                      ? 'outline-blue-50 focus:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35] dark:text-[#FFFFFF]'
+                      : 'outline-indigo-50 focus:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445] dark:text-[#F9FAFB]'
+                    }`}
+                >
+                  <span>{industry || 'Select industry'}</span>
+                  <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isIndustryOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isIndustryOpen && (
+                  <div className={`absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${isCompanyMode
+                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                      : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                    }`}>
+                    <div className="w-full px-2 pt-2 pb-3">
+                      <div className="relative">
+                        <Icon icon="lucide:search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search industries..."
+                          value={industrySearch}
+                          onChange={(e) => setIndustrySearch(e.target.value)}
+                          className={`w-full pl-9 pr-4 py-2 bg-slate-50 rounded-full outline-none text-sm font-['Poppins'] text-slate-900 border border-slate-200 transition-colors ${isCompanyMode
+                              ? 'focus:border-blue-300 dark:bg-[#121B2B] dark:border-[#2A2D35] dark:text-[#FFFFFF]'
+                              : 'focus:border-indigo-300 dark:bg-[#1C2340] dark:border-[#2E3445] dark:text-[#F9FAFB]'
+                            }`}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="w-full max-h-[250px] overflow-y-auto flex flex-col gap-1 pr-1">
+                      {(() => {
+                        const searchLower = industrySearch.toLowerCase().trim();
+                        const filtered = availableIndustries.filter(i =>
+                          i.industry_name.toLowerCase().includes(searchLower)
+                        );
+
+                        return (
+                          <>
+                            {filtered.length > 0 ? filtered.map((item, idx) => {
+                              const isSelected = industry === item.industry_name;
+                              return (
                                 <button
+                                  key={idx}
                                   type="button"
                                   onClick={() => {
-                                    setIndustry('Other');
+                                    setIndustry(item.industry_name);
                                     setIsIndustryOpen(false);
                                     setIndustrySearch('');
                                   }}
-                                  className={`w-full px-4 py-2.5 rounded-2xl text-left transition-colors flex items-center gap-2 group ${
-                                    isCompanyMode 
-                                      ? 'bg-blue-50 hover:bg-blue-100 dark:bg-[#16365F] dark:hover:bg-[#16365F]/80' 
-                                      : 'bg-indigo-50 hover:bg-indigo-100 dark:bg-[#252E54] dark:hover:bg-[#252E54]/80'
-                                  }`}
+                                  className={`w-full px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl text-left transition-colors flex items-center justify-between group ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
+                                    }`}
                                 >
-                                  <div className="flex-1 flex flex-col">
-                                    <span className={`text-sm font-medium font-['Poppins'] ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-700'}`}>
-                                      Select &quot;Other&quot;
-                                    </span>
-                                  </div>
+                                  <span className={`text-sm font-normal font-['Poppins'] ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-medium dark:text-[#4D9CFF]' : 'text-indigo-600 font-medium dark:text-[#818CF8]') : (isCompanyMode ? 'text-slate-700 dark:text-[#FFFFFF]' : 'text-slate-700 dark:text-[#F9FAFB]')
+                                    }`}>
+                                    {item.industry_name}
+                                  </span>
+                                  {isSelected && (
+                                    <Icon icon="lucide:check" className={`w-4 h-4 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-600'}`} />
+                                  )}
                                 </button>
-                              </div>
-                            ) : null
-                          )}
-                        </>
-                      );
-                    })()}
+                              );
+                            }) : (
+                              searchLower ? (
+                                <div className="flex flex-col gap-2 p-2">
+                                  <div className="text-center pb-1 text-slate-500 text-sm font-['Poppins']">
+                                    No industry found.
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setIndustry('Other');
+                                      setIsIndustryOpen(false);
+                                      setIndustrySearch('');
+                                    }}
+                                    className={`w-full px-4 py-2.5 rounded-2xl text-left transition-colors flex items-center gap-2 group ${isCompanyMode
+                                        ? 'bg-blue-50 hover:bg-blue-100 dark:bg-[#16365F] dark:hover:bg-[#16365F]/80'
+                                        : 'bg-indigo-50 hover:bg-indigo-100 dark:bg-[#252E54] dark:hover:bg-[#252E54]/80'
+                                      }`}
+                                  >
+                                    <div className="flex-1 flex flex-col">
+                                      <span className={`text-sm font-medium font-['Poppins'] ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-700'}`}>
+                                        Select &quot;Other&quot;
+                                      </span>
+                                    </div>
+                                  </button>
+                                </div>
+                              ) : null
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-          {/* Min Salary */}
-          <div className="flex-1 flex flex-col justify-start items-start gap-2">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Min Salary (Annual)</label>
-            <div ref={minCurrencyRef} className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 inline-flex justify-between items-center gap-2 shadow-sm transition-colors relative ${
-              isCompanyMode 
-                ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-            }`}>
-              <input
-                type="text"
-                placeholder="e.g. 1,200,000"
-                value={minSalary}
-                onChange={(e) => setMinSalary(e.target.value)}
-                className={`flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMinCurrencyOpen(!isMinCurrencyOpen);
-                  setIsMaxCurrencyOpen(false);
-                  setCurrencySearch('');
-                }}
-                className={`flex items-center gap-1.5 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none cursor-pointer flex-shrink-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
-              >
-                <span>{currency}</span>
-                <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-gray-500 transition-transform ${isMinCurrencyOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isMinCurrencyOpen && (
-                <div className={`absolute right-0 top-full z-50 mt-2 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-hidden w-[280px] ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+            {/* Min Salary */}
+            <div className="flex-1 flex flex-col justify-start items-start gap-2">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Min Salary (Annual)</label>
+              <div ref={minCurrencyRef} className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 inline-flex justify-between items-center gap-2 shadow-sm transition-colors relative ${isCompanyMode
+                  ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                  : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
                 }`}>
-                  <div className="w-full px-1 pb-2">
-                    <input
-                      type="text"
-                      placeholder="Search currency..."
-                      autoFocus
-                      value={currencySearch}
-                      onChange={(e) => setCurrencySearch(e.target.value)}
-                      className={`w-full p-2 bg-slate-50 rounded-xl outline-none text-xs font-['Poppins'] text-black border border-slate-200 transition-colors ${
-                        isCompanyMode 
-                          ? 'focus:border-blue-300 dark:bg-[#121B2B] dark:border-[#2A2D35] dark:text-[#FFFFFF]' 
-                          : 'focus:border-indigo-300 dark:bg-[#1C2340] dark:border-[#2E3445] dark:text-[#F9FAFB]'
-                      }`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                <input
+                  type="text"
+                  placeholder="e.g. 1,200,000"
+                  value={minSalary}
+                  onChange={(e) => setMinSalary(e.target.value)}
+                  className={`flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMinCurrencyOpen(!isMinCurrencyOpen);
+                    setIsMaxCurrencyOpen(false);
+                    setCurrencySearch('');
+                  }}
+                  className={`flex items-center gap-1.5 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none cursor-pointer flex-shrink-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
+                >
+                  <span>{currency}</span>
+                  <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-gray-500 transition-transform ${isMinCurrencyOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isMinCurrencyOpen && (
+                  <div className={`absolute right-0 top-full z-50 mt-2 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-hidden w-[280px] ${isCompanyMode
+                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                      : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                    }`}>
+                    <div className="w-full px-1 pb-2">
+                      <input
+                        type="text"
+                        placeholder="Search currency..."
+                        autoFocus
+                        value={currencySearch}
+                        onChange={(e) => setCurrencySearch(e.target.value)}
+                        className={`w-full p-2 bg-slate-50 rounded-xl outline-none text-xs font-['Poppins'] text-black border border-slate-200 transition-colors ${isCompanyMode
+                            ? 'focus:border-blue-300 dark:bg-[#121B2B] dark:border-[#2A2D35] dark:text-[#FFFFFF]'
+                            : 'focus:border-indigo-300 dark:bg-[#1C2340] dark:border-[#2E3445] dark:text-[#F9FAFB]'
+                          }`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="w-full overflow-y-auto flex flex-col gap-1 max-h-[200px]">
+                      {CURRENCIES.filter(c => {
+                        const search = currencySearch.toLowerCase()
+                          .replace(/yuro/g, 'euro')
+                          .replace(/ruppies?/g, 'rupee')
+                          .replace(/doller/g, 'dollar');
+                        return c.code.toLowerCase().includes(search) || c.label.toLowerCase().includes(search);
+                      }).map((c) => {
+                        const isSelected = currency === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              setCurrency(c.code);
+                              setIsMinCurrencyOpen(false);
+                            }}
+                            className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
+                              }`}
+                          >
+                            <div className={`text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-2 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
+                              <span>{c.code} - {c.label}</span>
+                              <span className={`font-medium px-1.5 py-0.5 rounded text-[10px] ${isCompanyMode ? 'bg-slate-100 text-gray-500 dark:bg-[#121B2B] dark:text-[#A1A8B3]' : 'bg-slate-100 text-gray-500 dark:bg-[#1C2340] dark:text-[#9CA3AF]'
+                                }`}>{c.symbol}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="w-full overflow-y-auto flex flex-col gap-1 max-h-[200px]">
-                  {CURRENCIES.filter(c => {
-                    const search = currencySearch.toLowerCase()
-                      .replace(/yuro/g, 'euro')
-                      .replace(/ruppies?/g, 'rupee')
-                      .replace(/doller/g, 'dollar');
-                    return c.code.toLowerCase().includes(search) || c.label.toLowerCase().includes(search);
-                  }).map((c) => {
-                    const isSelected = currency === c.code;
-                    return (
-                      <button
-                        key={c.code}
-                        type="button"
-                        onClick={() => {
-                          setCurrency(c.code);
-                          setIsMinCurrencyOpen(false);
-                        }}
-                        className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${
-                          isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
-                        }`}
-                      >
-                        <div className={`text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-2 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
-                          <span>{c.code} - {c.label}</span>
-                          <span className={`font-medium px-1.5 py-0.5 rounded text-[10px] ${
-                            isCompanyMode ? 'bg-slate-100 text-gray-500 dark:bg-[#121B2B] dark:text-[#A1A8B3]' : 'bg-slate-100 text-gray-500 dark:bg-[#1C2340] dark:text-[#9CA3AF]'
-                          }`}>{c.symbol}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Max Salary */}
-          <div className="flex-1 flex flex-col justify-start items-start gap-2">
-            <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Max Salary (Annual)</label>
-            <div ref={maxCurrencyRef} className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 inline-flex justify-between items-center gap-2 shadow-sm transition-colors relative ${
-              isCompanyMode 
-                ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
-            }`}>
-              <input
-                type="text"
-                placeholder="e.g. 1,200,000"
-                value={maxSalary}
-                onChange={(e) => setMaxSalary(e.target.value)}
-                className={`flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMaxCurrencyOpen(!isMaxCurrencyOpen);
-                  setIsMinCurrencyOpen(false);
-                  setCurrencySearch('');
-                }}
-                className={`flex items-center gap-1.5 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none cursor-pointer flex-shrink-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
-              >
-                <span>{currency}</span>
-                <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-gray-500 transition-transform ${isMaxCurrencyOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isMaxCurrencyOpen && (
-                <div className={`absolute right-0 top-full z-50 mt-2 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-hidden w-[280px] ${
-                  isCompanyMode 
-                    ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]' 
-                    : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+            {/* Max Salary */}
+            <div className="flex-1 flex flex-col justify-start items-start gap-2">
+              <label className={`text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Max Salary (Annual)</label>
+              <div ref={maxCurrencyRef} className={`w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] border-0 inline-flex justify-between items-center gap-2 shadow-sm transition-colors relative ${isCompanyMode
+                  ? 'outline-blue-50 focus-within:outline-blue-300 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                  : 'outline-indigo-50 focus-within:outline-indigo-300 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
                 }`}>
-                  <div className="w-full px-1 pb-2">
-                    <input
-                      type="text"
-                      placeholder="Search currency..."
-                      autoFocus
-                      value={currencySearch}
-                      onChange={(e) => setCurrencySearch(e.target.value)}
-                      className={`w-full p-2 bg-slate-50 rounded-xl outline-none text-xs font-['Poppins'] text-black border border-slate-200 transition-colors ${
-                        isCompanyMode 
-                          ? 'focus:border-blue-300 dark:bg-[#121B2B] dark:border-[#2A2D35] dark:text-[#FFFFFF]' 
-                          : 'focus:border-indigo-300 dark:bg-[#1C2340] dark:border-[#2E3445] dark:text-[#F9FAFB]'
-                      }`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                <input
+                  type="text"
+                  placeholder="e.g. 1,200,000"
+                  value={maxSalary}
+                  onChange={(e) => setMaxSalary(e.target.value)}
+                  className={`flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMaxCurrencyOpen(!isMaxCurrencyOpen);
+                    setIsMinCurrencyOpen(false);
+                    setCurrencySearch('');
+                  }}
+                  className={`flex items-center gap-1.5 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none cursor-pointer flex-shrink-0 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}
+                >
+                  <span>{currency}</span>
+                  <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-gray-500 transition-transform ${isMaxCurrencyOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isMaxCurrencyOpen && (
+                  <div className={`absolute right-0 top-full z-50 mt-2 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-hidden w-[280px] ${isCompanyMode
+                      ? 'outline-blue-50 dark:bg-[#0F1115] dark:outline-[#2A2D35]'
+                      : 'outline-indigo-50 dark:bg-[#0B0F19] dark:outline-[#2E3445]'
+                    }`}>
+                    <div className="w-full px-1 pb-2">
+                      <input
+                        type="text"
+                        placeholder="Search currency..."
+                        autoFocus
+                        value={currencySearch}
+                        onChange={(e) => setCurrencySearch(e.target.value)}
+                        className={`w-full p-2 bg-slate-50 rounded-xl outline-none text-xs font-['Poppins'] text-black border border-slate-200 transition-colors ${isCompanyMode
+                            ? 'focus:border-blue-300 dark:bg-[#121B2B] dark:border-[#2A2D35] dark:text-[#FFFFFF]'
+                            : 'focus:border-indigo-300 dark:bg-[#1C2340] dark:border-[#2E3445] dark:text-[#F9FAFB]'
+                          }`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="w-full overflow-y-auto flex flex-col gap-1 max-h-[200px]">
+                      {CURRENCIES.filter(c => {
+                        const search = currencySearch.toLowerCase()
+                          .replace(/yuro/g, 'euro')
+                          .replace(/ruppies?/g, 'rupee')
+                          .replace(/doller/g, 'dollar');
+                        return c.code.toLowerCase().includes(search) || c.label.toLowerCase().includes(search);
+                      }).map((c) => {
+                        const isSelected = currency === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              setCurrency(c.code);
+                              setIsMaxCurrencyOpen(false);
+                            }}
+                            className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
+                              }`}
+                          >
+                            <div className={`text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-2 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
+                              <span>{c.code} - {c.label}</span>
+                              <span className={`font-medium px-1.5 py-0.5 rounded text-[10px] ${isCompanyMode ? 'bg-slate-100 text-gray-500 dark:bg-[#121B2B] dark:text-[#A1A8B3]' : 'bg-slate-100 text-gray-500 dark:bg-[#1C2340] dark:text-[#9CA3AF]'
+                                }`}>{c.symbol}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="w-full overflow-y-auto flex flex-col gap-1 max-h-[200px]">
-                  {CURRENCIES.filter(c => {
-                    const search = currencySearch.toLowerCase()
-                      .replace(/yuro/g, 'euro')
-                      .replace(/ruppies?/g, 'rupee')
-                      .replace(/doller/g, 'dollar');
-                    return c.code.toLowerCase().includes(search) || c.label.toLowerCase().includes(search);
-                  }).map((c) => {
-                    const isSelected = currency === c.code;
-                    return (
-                      <button
-                        key={c.code}
-                        type="button"
-                        onClick={() => {
-                          setCurrency(c.code);
-                          setIsMaxCurrencyOpen(false);
-                        }}
-                        className={`self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full ${
-                          isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#121B2B]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#1C2340]'
-                        }`}
-                      >
-                        <div className={`text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-2 ${isSelected ? (isCompanyMode ? 'text-[#1A73E8] font-semibold dark:text-[#4D9CFF]' : 'text-indigo-500 font-semibold dark:text-[#818CF8]') : (isCompanyMode ? 'text-black dark:text-[#FFFFFF]' : 'text-black dark:text-[#F9FAFB]')}`}>
-                          <span>{c.code} - {c.label}</span>
-                          <span className={`font-medium px-1.5 py-0.5 rounded text-[10px] ${
-                            isCompanyMode ? 'bg-slate-100 text-gray-500 dark:bg-[#121B2B] dark:text-[#A1A8B3]' : 'bg-slate-100 text-gray-500 dark:bg-[#1C2340] dark:text-[#9CA3AF]'
-                          }`}>{c.symbol}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {validationError && (
-        <div className="self-stretch p-3 bg-red-50 border border-red-200 rounded-lg text-red-500 text-sm font-['Poppins'] text-center">
-          {validationError}
-        </div>
-      )}
+        {validationError && (
+          <div className="self-stretch p-3 bg-red-50 border border-red-200 rounded-lg text-red-500 text-sm font-['Poppins'] text-center">
+            {validationError}
+          </div>
+        )}
 
-      {/* Footer Controls */}
-      <div className="self-stretch flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-2 w-full gap-4">
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          {onDeleteDraft && (
+        {/* Footer Controls */}
+        <div className="self-stretch flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-2 w-full gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            {onDeleteDraft && (
+              <button
+                onClick={onDeleteDraft}
+                type="button"
+                className="text-red-400 hover:text-red-500 text-sm font-medium font-['Poppins'] transition-colors active:scale-95 text-left"
+              >
+                Delete draft
+              </button>
+            )}
             <button
-              onClick={onDeleteDraft}
+              onClick={handleSaveDraftClick}
               type="button"
-              className="text-red-400 hover:text-red-500 text-sm font-medium font-['Poppins'] transition-colors active:scale-95 text-left"
+              className="text-gray-500 hover:text-gray-700 text-sm font-medium font-['Poppins'] transition-colors active:scale-95 text-left"
             >
-              Delete draft
+              Save draft
             </button>
-          )}
-          <button
-            onClick={handleSaveDraftClick}
-            type="button"
-            className="text-gray-500 hover:text-gray-700 text-sm font-medium font-['Poppins'] transition-colors active:scale-95 text-left"
-          >
-            Save draft
-          </button>
-        </div>
-        <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-4 w-full sm:w-auto">
-          <button
-            onClick={onBack}
-            type="button"
-            className={`w-full sm:w-32 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all active:scale-95 ${
-              isCompanyMode ? 'outline-blue-400 text-[#1A73E8]' : 'outline-indigo-400 text-indigo-400'
-            }`}
-          >
-            Back
-          </button>
-          <button
-            onClick={handlePublishClick}
-            type="button"
-            className={`w-full sm:w-32 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
-              isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-            }`}
-          >
-            Publish
-          </button>
-        </div>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-4 w-full sm:w-auto">
+            <button
+              onClick={onBack}
+              type="button"
+              className={`w-full sm:w-32 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all active:scale-95 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8]' : 'outline-indigo-400 text-indigo-400'
+                }`}
+            >
+              Back
+            </button>
+            <button
+              onClick={handlePublishClick}
+              type="button"
+              className={`w-full sm:w-32 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
+                }`}
+            >
+              Publish
+            </button>
+          </div>
         </div>
       </div>
     </div>

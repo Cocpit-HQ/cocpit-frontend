@@ -175,10 +175,10 @@ export default function CreateGroupModal({
             handleClose();
         } catch (error: any) {
             console.error("Failed to create group", error);
-            toast({ 
-                title: "Error", 
-                description: error.response?.data?.message || "Failed to create group", 
-                variant: "destructive" 
+            toast({
+                title: "Error",
+                description: error.response?.data?.message || "Failed to create group",
+                variant: "destructive"
             });
         } finally {
             setIsCreating(false);
@@ -279,7 +279,7 @@ export default function CreateGroupModal({
                 "
             >
                 <div className="w-full h-full flex flex-col items-center pt-[10px] px-[16px] pb-[16px] rounded-t-[24px] rounded-b-none sm:rounded-[24px] overflow-hidden bg-white">
-                    
+
                     {/* CLOSE ICON ROW */}
                     <div className="flex flex-col items-end flex-none self-stretch">
                         <button onClick={handleClose} className="w-6 h-6 flex items-center justify-center hover:bg-gray-50 rounded-full transition-colors">
@@ -288,7 +288,7 @@ export default function CreateGroupModal({
                     </div>
 
                     <div className="w-full max-w-[368px] py-[8px] flex flex-col items-center rounded-[24px] bg-white">
-                        
+
                         {/* HEADER TITLE */}
                         <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black mt-[8px]">
                             {currentView === 'newMessage' ? 'New message' : 'Create group'}
@@ -336,7 +336,7 @@ export default function CreateGroupModal({
                                         onClick={() => setCurrentView('createGroup')}
                                         className={cn(
                                             "w-[368px] h-[40px] border border-white rounded-[24px] flex items-center justify-center font-['Poppins'] font-normal text-[14px] text-white mt-[16px] transition-all",
-                                            selectedUserIds.length > 0 ? "bg-[#6366F1] cursor-pointer" : "bg-[#C7D2FE] cursor-not-allowed"
+                                            selectedUserIds.length > 0 ? "bg-[#6366F1] cursor-pointer" : "bg-[#C7D2FE] cursor-default"
                                         )}
                                     >
                                         Create group
@@ -348,7 +348,7 @@ export default function CreateGroupModal({
                             <div className="w-full mt-[16px] flex flex-col items-center">
                                 {/* AVATAR UPLOAD */}
                                 <div className="relative flex flex-col items-center gap-[8px]">
-                                    <div 
+                                    <div
                                         onClick={() => fileInputRef.current?.click()}
                                         className="w-[80px] h-[80px] rounded-full bg-[#E5E7EB] flex items-center justify-center cursor-pointer overflow-hidden border border-gray-200"
                                     >
@@ -358,11 +358,11 @@ export default function CreateGroupModal({
                                             <User className="w-10 h-10 text-gray-400" />
                                         )}
                                     </div>
-                                    <input 
-                                        type="file" 
-                                        ref={fileInputRef} 
-                                        className="hidden" 
-                                        accept="image/*" 
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/*"
                                         onChange={handleAvatarChange}
                                     />
                                     <span className="font-['Poppins'] font-normal text-[12px] text-[#6B7280]">Add photo</span>
@@ -383,7 +383,7 @@ export default function CreateGroupModal({
                                 <div className="w-full mt-[24px] flex flex-col">
                                     <div className="flex justify-between items-center">
                                         <span className="font-['Poppins'] font-medium text-[14px] text-black">Members list</span>
-                                        <button 
+                                        <button
                                             onClick={() => setCurrentView('newMessage')}
                                             className="flex items-center gap-1 font-['Poppins'] font-normal text-[14px] text-[#6366F1]"
                                         >
@@ -411,7 +411,7 @@ export default function CreateGroupModal({
                                                         {user.full_name || user.account_name || "User"}
                                                     </span>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => toggleUserSelection(user.user_id || user.id)}
                                                     className="flex items-center gap-[4px] text-[#EF4444]"
                                                 >
@@ -436,7 +436,7 @@ export default function CreateGroupModal({
                                         disabled={!groupName.trim() || isCreating}
                                         className={cn(
                                             "w-[142px] h-[40px] border border-white rounded-[24px] flex justify-center items-center text-white font-['Poppins'] font-normal text-[14px] transition-all",
-                                            groupName.trim() && !isCreating ? "bg-[#6366F1] cursor-pointer" : "bg-[#C7D2FE] cursor-not-allowed"
+                                            groupName.trim() && !isCreating ? "bg-[#6366F1] cursor-pointer" : "bg-[#C7D2FE] cursor-default"
                                         )}
                                     >
                                         {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}

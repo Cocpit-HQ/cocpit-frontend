@@ -37,7 +37,7 @@ export default function ChannelArticlesTabs({
   onDeleteDraft,
 }: ChannelArticlesTabsProps) {
   const [tab, setTab] = useState<'published' | 'draft'>(initialTab);
-  
+
   const list = tab === 'published' ? publishedArticles : draftArticles;
   const total = tab === 'published' ? totalPublished : totalDrafts;
   const hasNext = tab === 'published' ? hasNextPublished : hasNextDraft;
@@ -60,11 +60,10 @@ export default function ChannelArticlesTabs({
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`pb-2 text-[14px] font-semibold font-['Poppins'] transition-all border-b-2 ${
-              tab === t
+            className={`pb-2 text-[14px] font-semibold font-['Poppins'] transition-all border-b-2 ${tab === t
                 ? 'border-[#1A73E8] text-[#1A73E8]'
                 : 'border-transparent text-gray-500 hover:text-black dark:text-[#A1A8B3] dark:hover:text-[#FFFFFF]'
-            }`}
+              }`}
           >
             {t === 'published' ? 'Published' : 'Drafts'}
           </button>
@@ -92,12 +91,12 @@ export default function ChannelArticlesTabs({
                 onDelete={() => onDeleteDraft(article)}
               />
             ))}
-            
+
             {hasNext && (
               <button
                 onClick={onLoadMore}
                 disabled={isLoadingMore}
-                className="w-full py-2.5 mt-2 rounded-xl border border-gray-200 dark:border-[#2A2D35] hover:bg-gray-50 dark:hover:bg-[#121B2B] text-[14px] font-medium text-gray-700 dark:text-[#A1A8B3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-['Poppins']"
+                className="w-full py-2.5 mt-2 rounded-xl border border-gray-200 dark:border-[#2A2D35] hover:bg-gray-50 dark:hover:bg-[#121B2B] text-[14px] font-medium text-gray-700 dark:text-[#A1A8B3] transition-colors disabled:opacity-50 disabled:cursor-default font-['Poppins']"
               >
                 {isLoadingMore ? 'Loading...' : 'Load more articles'}
               </button>

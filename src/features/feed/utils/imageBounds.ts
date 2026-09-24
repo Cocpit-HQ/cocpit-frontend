@@ -85,3 +85,35 @@ export function getImageDimensions(source: string | File): Promise<ImageDimensio
     }
   });
 }
+
+/**
+ * Loads video natural dimensions from a file or URL asynchronously
+ */
+export function getVideoDimensions(source: string | File): Promise<ImageDimensions> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    let objectUrl: string | null = null;
+
+    video.onloadedmetadata = () => {
+      const dimensions: ImageDimensions = {
+        width: video.videoWidth,
+        height: video.videoHeight,
+        aspectRatio: video.videoWidth / (video.videoHeight || 1),
+      };
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      resolve(dimensions);
+    };
+
+    video.onerror = (err) => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      reject(err);
+    };
+
+    if (source instanceof File) {
+      objectUrl = URL.createObjectURL(source);
+      video.src = objectUrl;
+    } else {
+      video.src = source;
+    }
+  });
+}

@@ -42,13 +42,13 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent 
+      <DialogContent
         className="w-full max-w-[444px] sm:max-w-[444px] h-[394px] !p-[16px] flex flex-col items-center justify-start rounded-[24px] sm:rounded-[24px] bg-[#FFFFFF] dark:bg-[#121B2B] !border-0 !shadow-2xl gap-0 overflow-hidden [&>button]:hidden"
       >
         {/* Frame 2608580: Top close button row */}
         <div className="w-full max-w-[412px] h-[24px] flex flex-col items-end justify-center flex-shrink-0">
-          <button 
-            onClick={handleClose} 
+          <button
+            onClick={handleClose}
             className="w-[24px] h-[24px] flex items-center justify-center text-[#EF4444] hover:opacity-80 transition-opacity"
             title="Close"
           >
@@ -58,7 +58,7 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
 
         {/* Frame 2608581: Main content container */}
         <div className="flex flex-col items-center gap-[16px] w-[360px] max-w-[360px] h-[338px] flex-shrink-0 mx-auto">
-          
+
           {/* Frame 2608578: Title and subtitle */}
           <DialogHeader className="flex flex-col items-center justify-center gap-[8px] w-full max-w-[200px] flex-shrink-0 p-0 space-y-0">
             <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-[#000000] dark:text-[#FFFFFF]">
@@ -94,9 +94,8 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
                     <div
                       key={user.id}
                       onClick={() => !user.invited && toggle(user.id)}
-                      className={`w-[360px] h-[48px] flex items-center justify-between px-2 rounded-xl transition-colors flex-shrink-0 ${
-                        user.invited ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A2435]'
-                      }`}
+                      className={`w-[360px] h-[48px] flex items-center justify-between px-2 rounded-xl transition-colors flex-shrink-0 ${user.invited ? 'opacity-50 cursor-default' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1A2435]'
+                        }`}
                     >
                       <div className="flex items-center gap-[9px] min-w-0 h-[32px]">
                         <img src={user.avatarUrl} alt={user.name} className="w-[32px] h-[32px] rounded-full object-cover flex-shrink-0" />
@@ -138,7 +137,7 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
             <button
               onClick={handleInvite}
               disabled={selected.size === 0 || inviteMutation.isPending}
-              className="w-[172px] h-[40px] flex items-center justify-center rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-[172px] h-[40px] flex items-center justify-center rounded-[24px] bg-[#1A73E8] dark:bg-[#4D9CFF] border border-[#FFFFFF] dark:border-transparent text-[#FFFFFF] dark:text-[#0F1115] text-[14px] leading-[20px] font-normal font-['Poppins'] hover:opacity-90 disabled:opacity-50 disabled:cursor-default transition-colors"
             >
               {inviteMutation.isPending ? 'Inviting...' : 'Invite'}
             </button>

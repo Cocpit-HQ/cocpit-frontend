@@ -943,8 +943,8 @@ export default function ChatWindow({
                 const newReactions =
                   idx !== -1
                     ? reactions.map((r, i) =>
-                        i === idx ? payload.reaction! : r,
-                      )
+                      i === idx ? payload.reaction! : r,
+                    )
                     : [...reactions, payload.reaction!];
                 return { ...m, reactions: newReactions };
               }
@@ -972,10 +972,10 @@ export default function ChatWindow({
             return oldChats.map((c) =>
               String(c.id) === String(payload.conversationId)
                 ? {
-                    ...c,
-                    is_muted: payload.preference.is_muted,
-                    muted_until: payload.preference.muted_until,
-                  }
+                  ...c,
+                  is_muted: payload.preference.is_muted,
+                  muted_until: payload.preference.muted_until,
+                }
                 : c,
             );
           },
@@ -1155,16 +1155,16 @@ export default function ChatWindow({
         media: tempMedia,
         sharedPost: pendingSharedPost
           ? {
-              id: pendingSharedPost.id,
-              content: pendingSharedPost.content,
-              author: pendingSharedPost.author,
-              authorAvatar: pendingSharedPost.authorAvatar || null,
-              media:
-                pendingSharedPost.images?.map((img: string) => ({
-                  url: img,
-                  type: "image",
-                })) || [],
-            }
+            id: pendingSharedPost.id,
+            content: pendingSharedPost.content,
+            author: pendingSharedPost.author,
+            authorAvatar: pendingSharedPost.authorAvatar || null,
+            media:
+              pendingSharedPost.images?.map((img: string) => ({
+                url: img,
+                type: "image",
+              })) || [],
+          }
           : null,
       };
 
@@ -1195,13 +1195,13 @@ export default function ChatWindow({
           return oldChats.map((c) =>
             String(c.id) === String(chat.id)
               ? {
-                  ...c,
-                  lastMessage:
-                    text ||
-                    (pendingSharedPost ? "Shared a post" : "Attachment"),
-                  time: formatTimeAgo(nowIso),
-                  lastMessageAt: nowIso,
-                }
+                ...c,
+                lastMessage:
+                  text ||
+                  (pendingSharedPost ? "Shared a post" : "Attachment"),
+                time: formatTimeAgo(nowIso),
+                lastMessageAt: nowIso,
+              }
               : c,
           );
         },
@@ -1956,8 +1956,8 @@ export default function ChatWindow({
                               : "User unavailable"
                             : chat.otherUserType === "COMPANY"
                               ? chat.orgHeadline ||
-                                chat.role ||
-                                "Page unavailable"
+                              chat.role ||
+                              "Page unavailable"
                               : chat.role || ""}
                         </span>
                         {!isBlockedByOther && !chat.is_requesting &&
@@ -2063,9 +2063,9 @@ export default function ChatWindow({
                             activeTab !== undefined
                               ? activeTab === "jobs"
                               : Boolean(
-                                  chat.isJobChat ||
-                                  (chat.jobIds && chat.jobIds.length > 0),
-                                )
+                                chat.isJobChat ||
+                                (chat.jobIds && chat.jobIds.length > 0),
+                              )
                           ) ? (
                             <DropdownMenuItem
                               onClick={async () => {
@@ -2168,33 +2168,33 @@ export default function ChatWindow({
                         </DropdownMenuItem>
                         {isBlockedByMe
                           ? canManageBlock && (
-                              <DropdownMenuItem
-                                onClick={handleUnblock}
-                                className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
-                              >
-                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">
-                                  Unblock profile
-                                </span>
-                                <Ban
-                                  className="w-[24px] h-[24px] text-[#000000]"
-                                  strokeWidth={1.5}
-                                />
-                              </DropdownMenuItem>
-                            )
+                            <DropdownMenuItem
+                              onClick={handleUnblock}
+                              className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                            >
+                              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">
+                                Unblock profile
+                              </span>
+                              <Ban
+                                className="w-[24px] h-[24px] text-[#000000]"
+                                strokeWidth={1.5}
+                              />
+                            </DropdownMenuItem>
+                          )
                           : canBlockTarget && (
-                              <DropdownMenuItem
-                                onClick={() => setShowBlockConfirm(true)}
-                                className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
-                              >
-                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">
-                                  Block profile
-                                </span>
-                                <Ban
-                                  className="w-[24px] h-[24px] text-[#000000]"
-                                  strokeWidth={1.5}
-                                />
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                              onClick={() => setShowBlockConfirm(true)}
+                              className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-gray-50 rounded-[24px] transition-colors border-none outline-none"
+                            >
+                              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">
+                                Block profile
+                              </span>
+                              <Ban
+                                className="w-[24px] h-[24px] text-[#000000]"
+                                strokeWidth={1.5}
+                              />
+                            </DropdownMenuItem>
+                          )}
                         <DropdownMenuItem
                           onClick={() => setShowDeleteConfirm(true)}
                           className="flex items-center justify-between px-[16px] py-[8px] h-[40px] w-full cursor-pointer hover:bg-red-50 rounded-[24px] transition-colors border-none outline-none"
@@ -2343,7 +2343,7 @@ export default function ChatWindow({
               "px-5 py-1.5 text-sm font-medium rounded-full transition-colors",
               canManageBlock
                 ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
-                : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed border border-border",
+                : "bg-muted text-muted-foreground opacity-50 cursor-default border border-border",
             )}
           >
             Unblock to chat

@@ -103,7 +103,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
       <div className="w-full relative flex-1 flex flex-col py-2 px-4 gap-6 max-w-[698px]">
         {/* Header */}
         <div className="flex flex-row items-center gap-4 mb-2">
-          <button 
+          <button
             type="button"
             onClick={onBack}
             aria-label="Go back"
@@ -119,11 +119,11 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
-          
+
           {/* Email field */}
           <div className="flex flex-col gap-2 w-full">
             <label htmlFor="support-email" className="text-[14px] font-medium text-black leading-[20px]">Your email*</label>
-            <input 
+            <input
               id="support-email"
               type="email"
               required
@@ -137,7 +137,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
           {/* Issue field */}
           <div className="flex flex-col gap-2 w-full">
             <label htmlFor="support-issue" className="text-[14px] font-medium text-black leading-[20px]">Describe your issue*</label>
-            <textarea 
+            <textarea
               id="support-issue"
               required
               value={issue}
@@ -150,10 +150,10 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
           {/* Attachment field */}
           <div className="flex flex-col gap-2 w-full">
             <label className="text-[14px] font-medium text-black leading-[20px]">Attachment</label>
-            <input 
-              type="file" 
+            <input
+              type="file"
               accept=".jpg,.jpeg,.png,.webp"
-              className="hidden" 
+              className="hidden"
               ref={fileInputRef}
               onChange={handleFileChange}
             />
@@ -166,9 +166,9 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
                     <span className="text-[11px] text-[#818CF8]">{formatFileSize(file.size)}</span>
                   </div>
                 </div>
-                <button 
+                <button
                   type="button"
-                  onClick={() => setFile(null)} 
+                  onClick={() => setFile(null)}
                   className="p-1 hover:bg-[#C7D2FE] rounded-full transition-colors focus:outline-none"
                   aria-label="Remove attachment"
                 >
@@ -176,14 +176,13 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
                 </button>
               </div>
             ) : (
-              <div 
+              <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex flex-col items-center justify-center w-full h-[100px] border ${
-                  isDragging ? (isCompany ? 'border-[#1A73E8] bg-blue-50' : 'border-[#6366F1] bg-[#EEF2FF]') : 'border-[#DADADA] bg-white hover:bg-gray-50'
-                } rounded-[12px] cursor-pointer transition-all duration-150 border-dashed`}
+                className={`flex flex-col items-center justify-center w-full h-[100px] border ${isDragging ? (isCompany ? 'border-[#1A73E8] bg-blue-50' : 'border-[#6366F1] bg-[#EEF2FF]') : 'border-[#DADADA] bg-white hover:bg-gray-50'
+                  } rounded-[12px] cursor-pointer transition-all duration-150 border-dashed`}
               >
                 <CloudUpload className={`w-8 h-8 ${isDragging ? (isCompany ? 'text-[#1A73E8]' : 'text-[#6366F1]') : 'text-[#6B7280]'} mb-2 transition-colors`} strokeWidth={1.5} />
                 <span className="text-[12px] font-medium text-gray-700 mb-0.5">
@@ -196,14 +195,13 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
 
           {/* Submit button */}
           <div className="flex flex-row justify-end items-center w-full mt-2">
-            <button 
+            <button
               type="submit"
               disabled={!issue || !email || isSubmitting}
-              className={`flex flex-row justify-center items-center py-2 px-6 min-w-[120px] h-[40px] rounded-[24px] transition-all ${
-                (issue && email && !isSubmitting) 
-                  ? 'bg-[#6366F1] hover:bg-[#4F46E5] active:scale-[0.98] text-white shadow-sm' 
-                  : 'bg-[#C7D2FE] text-white cursor-not-allowed opacity-80'
-              }`}
+              className={`flex flex-row justify-center items-center py-2 px-6 min-w-[120px] h-[40px] rounded-[24px] transition-all ${(issue && email && !isSubmitting)
+                  ? 'bg-[#6366F1] hover:bg-[#4F46E5] active:scale-[0.98] text-white shadow-sm'
+                  : 'bg-[#C7D2FE] text-white cursor-default opacity-80'
+                }`}
             >
               {isSubmitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

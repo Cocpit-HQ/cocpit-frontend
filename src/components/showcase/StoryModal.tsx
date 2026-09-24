@@ -114,7 +114,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNex
   // View Story effect & Fetch Details if Author
   useEffect(() => {
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-    
+
     showcaseService.markShowcaseSeen(story.id, companyId)
       .then(() => {
         markStoryViewed(story.id);
@@ -588,7 +588,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNex
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-300 font-medium ${isLiked
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
                   : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                  } ${story.isAuthor ? "opacity-50 cursor-not-allowed" : ""}`}
+                  } ${story.isAuthor ? "opacity-50 cursor-default" : ""}`}
               >
                 <ThumbsUp className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
                 <span>{isLiked ? "Liked" : "Like"}</span>
@@ -738,7 +738,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNex
                   <button
                     onClick={handleShare}
                     disabled={selectedUsers.length === 0}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-default transition-all shadow-lg shadow-primary/20"
                   >
                     <Send className="w-4 h-4" />
                     Send

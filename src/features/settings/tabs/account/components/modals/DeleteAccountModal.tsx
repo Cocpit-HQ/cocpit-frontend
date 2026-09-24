@@ -104,7 +104,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
 
   if (isTransferModalOpen && selectedCompanyToTransfer) {
     return (
-      <TransferOwnershipModal 
+      <TransferOwnershipModal
         isOpen={true}
         onClose={() => setIsTransferModalOpen(false)}
         onBack={() => {
@@ -127,12 +127,12 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
       {/* Outer Rounded Container with overflow-hidden to cleanly clip inner scrollbars */}
       <div className="relative flex flex-col items-center bg-white rounded-[24px] w-[450px] max-w-full shadow-lg overflow-hidden">
-        
+
         {/* Inner Scrollable Container */}
         <div className={`relative flex flex-col items-center w-full p-4 overflow-x-hidden [&:not(:hover)]:[scrollbar-width:none] [&:not(:hover)::-webkit-scrollbar]:w-0 [&:not(:hover)::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 ${hasCompanyAccount ? 'min-h-[500px] max-h-[90vh] overflow-y-auto pb-4' : 'h-auto pb-2'}`}>
-          
+
           {/* Close Button */}
-          <button 
+          <button
             onClick={onClose}
             className="absolute top-4 right-4 text-[#FF6B6B] hover:opacity-80 transition-opacity z-10"
           >
@@ -151,21 +151,21 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           {hasCompanyAccount && (
             <div className="flex flex-col items-center w-full max-w-[418px] bg-[#EEF2FF] rounded-[24px] p-4 gap-2 mb-6">
               <h3 className="text-[14px] font-semibold text-black leading-[20px] mb-1">Company accounts</h3>
-              
+
               {loadingCompanies ? (
                 <div className="flex items-center justify-center py-4 text-xs text-gray-500">
                   <Loader2 className="w-4 h-4 animate-spin mr-1" /> Loading owned companies...
                 </div>
               ) : (
-                <div 
+                <div
                   className="flex flex-col items-start w-full gap-2 mb-2 px-[20px] md:px-[40px] max-h-[160px] overflow-y-auto pr-2 [&:not(:hover)]:[scrollbar-width:none] [&:not(:hover)::-webkit-scrollbar]:w-0 [&:not(:hover)::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
                 >
                   {ownedCompanies.map(company => (
                     <label key={company.id} className="flex items-center gap-2 cursor-pointer w-full h-[20px]">
-                      <input 
-                        type="checkbox" 
-                        checked={checkedCompanyIds.includes(company.id)} 
-                        onChange={() => toggleCompanyChecked(company.id)} 
+                      <input
+                        type="checkbox"
+                        checked={checkedCompanyIds.includes(company.id)}
+                        onChange={() => toggleCompanyChecked(company.id)}
                         className="w-[18px] h-[18px] rounded-[2px] border-[#6B7280] cursor-pointer flex-shrink-0"
                       />
                       <span className="text-[14px] font-normal text-[#6B7280] leading-[20px] truncate">
@@ -175,16 +175,16 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
                   ))}
                 </div>
               )}
-              
+
               {!allChecked && ownedCompanies.length > 0 && (
                 <>
                   <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] text-center">Or</span>
-                  
+
                   <p className="text-[14px] font-normal text-[#6B7280] leading-[20px] text-center">
                     If you keep this unchecked, you'll need to transfer ownership to another account before deleting your account
                   </p>
-                  
-                  <button 
+
+                  <button
                     onClick={handleOpenTransfer}
                     className="flex items-center justify-center w-[168px] h-[40px] rounded-[24px] border border-[#6366F1] text-[#6366F1] text-[14px] font-normal leading-[20px] transition-colors hover:bg-indigo-50 mt-1"
                   >
@@ -209,24 +209,23 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
 
           {/* Action Buttons */}
           <div className={`flex flex-row justify-center items-center w-full max-w-[418px] h-[40px] gap-4 ${hasCompanyAccount ? 'mt-auto' : 'mt-4'}`}>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="flex items-center justify-center w-[140px] h-[40px] rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] text-[14px] font-normal leading-[20px] transition-colors hover:bg-indigo-50"
             >
               Cancel
             </button>
-            
-            <button 
-              onClick={handleDelete} 
-              disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}  
-              className={`flex items-center justify-center w-[140px] h-[40px] rounded-[24px] text-[14px] font-normal leading-[20px] transition-colors ${
-                isDeleteDisabled ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white'
-              }`}
+
+            <button
+              onClick={handleDelete}
+              disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}
+              className={`flex items-center justify-center w-[140px] h-[40px] rounded-[24px] text-[14px] font-normal leading-[20px] transition-colors ${isDeleteDisabled ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-default' : 'bg-[#FF6B6B] text-white hover:opacity-90 border border-white'
+                }`}
             >
               {deleteAccountMutation.isPending ? "Deleting..." : "Delete"}
             </button>
           </div>
-          
+
         </div>
       </div>
     </div>

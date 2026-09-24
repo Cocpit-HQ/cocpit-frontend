@@ -87,7 +87,7 @@ export default function CreateRoleModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-4">
-          
+
           <div className="flex flex-col gap-4 pt-2">
             {/* Role name */}
             <div className="flex flex-col gap-[11.5px]">
@@ -100,11 +100,10 @@ export default function CreateRoleModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="HR Manager"
-                  className={`w-full h-[56px] px-4 rounded-[12px] border ${
-                    hasError 
-                      ? 'border-[#EF4444] focus:border-[#EF4444]' 
+                  className={`w-full h-[56px] px-4 rounded-[12px] border ${hasError
+                      ? 'border-[#EF4444] focus:border-[#EF4444]'
                       : 'border-[#E0E0E7] dark:border-[#2A2D35] focus:border-[#1A73E8] dark:focus:border-[#4D9CFF]'
-                  } bg-[#FFFFFF] dark:bg-[#121B2B] text-[16px] text-[#434655] dark:text-white font-['Poppins'] font-medium outline-none transition-colors placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3]`}
+                    } bg-[#FFFFFF] dark:bg-[#121B2B] text-[16px] text-[#434655] dark:text-white font-['Poppins'] font-medium outline-none transition-colors placeholder:text-[#6B7280] dark:placeholder:text-[#A1A8B3]`}
                 />
                 {isNameAdmin && (
                   <p className="text-[#EF4444] text-[14px] mt-1 font-['Poppins']">
@@ -129,14 +128,13 @@ export default function CreateRoleModal({
                   <button
                     key={c}
                     onClick={() => setColor(c)}
-                    className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${
-                      color === c
+                    className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${color === c
                         ? 'border border-[#000000] dark:border-white'
                         : ''
-                    }`}
+                      }`}
                   >
-                    <div 
-                      className="w-[24px] h-[24px] rounded-full" 
+                    <div
+                      className="w-[24px] h-[24px] rounded-full"
                       style={{ backgroundColor: c }}
                     />
                   </button>
@@ -198,7 +196,7 @@ export default function CreateRoleModal({
             <button
               onClick={handleSubmit}
               disabled={!name.trim() || isSubmitting}
-              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] dark:border-transparent bg-[#1A73E8] dark:bg-[#4D9CFF] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 h-[40px] rounded-[24px] border border-[#FFFFFF] dark:border-transparent bg-[#1A73E8] dark:bg-[#4D9CFF] text-[14px] font-normal text-[#FFFFFF] font-['Poppins'] leading-[20px] flex items-center justify-center w-[140px] transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-default"
             >
               {isSubmitting ? 'Creating...' : 'Create'}
             </button>

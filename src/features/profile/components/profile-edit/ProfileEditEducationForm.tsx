@@ -89,7 +89,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
           const parsed = JSON.parse(savedDraft);
           // Only use draft if it has the same ID or both are new
           if (parsed.education_id === initialData.education_id) {
-             initialData = parsed;
+            initialData = parsed;
           }
         } catch (e) {
           // ignore
@@ -348,22 +348,22 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
         {/* Row 1: School or university & Program */}
         <div className="self-stretch flex flex-col sm:flex-row justify-start sm:items-center gap-5 sm:gap-10">
           <div className="w-full sm:w-72 flex-1">
-              <ProfileEditSearchableDropdown
-                id="edu_school"
-                label="School or university"
-                placeholder="Select"
-                value={formData.school_name}
-                loadOptions={loadSchools}
-                error={errors.school_name}
-                warning={warnings.school_name}
-                onSelect={(val) => {
-                  setFormData((prev) => ({ ...prev, school_name: val }));
-                  setErrors((prev) => ({ ...prev, school_name: "" }));
-                  setWarnings((prev) => ({ ...prev, school_name: "" }));
-                }}
-                maxLength={255}
-                maxLengthMessage="School/University cannot exceed 255 characters"
-              />
+            <ProfileEditSearchableDropdown
+              id="edu_school"
+              label="School or university"
+              placeholder="Select"
+              value={formData.school_name}
+              loadOptions={loadSchools}
+              error={errors.school_name}
+              warning={warnings.school_name}
+              onSelect={(val) => {
+                setFormData((prev) => ({ ...prev, school_name: val }));
+                setErrors((prev) => ({ ...prev, school_name: "" }));
+                setWarnings((prev) => ({ ...prev, school_name: "" }));
+              }}
+              maxLength={255}
+              maxLengthMessage="School/University cannot exceed 255 characters"
+            />
           </div>
           <div className="w-full sm:w-72 flex-1">
             <ProfileEditSearchableDropdown
@@ -497,7 +497,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
           className={cn(
             "w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all focus:outline-none",
             !canSubmit || isSaving
-              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-90"
+              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-90"
               : "bg-[var(--ds-accent)] text-white hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
           )}
         >

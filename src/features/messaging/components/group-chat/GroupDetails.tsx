@@ -324,164 +324,164 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         const isCompany = Boolean(member.org_name);
 
                         return (
-                        <div 
-                            key={member.user_id} 
-                            className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
-                        >
-                            {/* Left: Avatar */}
                             <div
-                                className={cn("w-[32px] h-[32px] shrink-0 self-stretch flex items-center justify-center", !isUnknown && "cursor-pointer")}
-                                onClick={() => {
-                                    if (isUnknown) return;
-                                    const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
-                                    router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
-                                }}
+                                key={member.user_id}
+                                className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
                             >
-                                <SharedAvatar 
-                                    url={isUnknown ? undefined : member.avatar_url} 
-                                    name={displayName} 
-                                    size="sm" 
-                                    isCompany={isCompany}
-                                    isUnknown={isUnknown}
-                                    className="w-8 h-8"
-                                />
-                            </div>
-
-                            {/* Middle: Name + Headline + Admin badge */}
-                            <div
-                                className={cn("flex flex-col flex-1 ml-[8px]", !isUnknown && "cursor-pointer")}
-                                onClick={() => {
-                                    if (isUnknown) return;
-                                    const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
-                                    router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
-                                }}
-                            >
-                                <span className={cn("font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2", !isUnknown && "hover:underline")}>
-                                    <span>{displayName}</span>
-                                </span>
-                                <div className="flex flex-row items-center">
-                                    {displayHeadline && (
-                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] flex items-center mr-[8px]">
-                                            {displayHeadline}
-                                        </span>
-                                    )}
-                                    {member.role === 'admin' && (
-                                        <>
-                                            <span className="w-[6px] h-[6px] rounded-full bg-[var(--primary)] mr-[8px]" />
-                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--primary)] flex items-center  h-[16px]">
-                                                Admin
-                                            </span>
-                                        </>
-                                    )}
+                                {/* Left: Avatar */}
+                                <div
+                                    className={cn("w-[32px] h-[32px] shrink-0 self-stretch flex items-center justify-center", !isUnknown && "cursor-pointer")}
+                                    onClick={() => {
+                                        if (isUnknown) return;
+                                        const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
+                                        router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
+                                    }}
+                                >
+                                    <SharedAvatar
+                                        url={isUnknown ? undefined : member.avatar_url}
+                                        name={displayName}
+                                        size="sm"
+                                        isCompany={isCompany}
+                                        isUnknown={isUnknown}
+                                        className="w-8 h-8"
+                                    />
                                 </div>
-                            </div>
 
-                            {/* Right: 3-dot menu (only if isAdmin) */}
-                            {isAdmin && (
-                                isUnknown ? (
-                                    <TooltipProvider delayDuration={100}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button
-                                                    type="button"
-                                                    disabled
-                                                    className="cursor-not-allowed opacity-40 p-1 outline-none bg-transparent border-none flex items-center justify-center"
-                                                    aria-label="User unavailable"
-                                                >
-                                                    <Icon
-                                                        icon="mdi-light:dots-vertical"
-                                                        width={24}
-                                                        height={24}
-                                                        style={{ color: 'var(--muted-foreground)' }}
-                                                    />
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent 
-                                                side="left" 
-                                                className="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-['Poppins'] text-[12px] shadow-md z-[100]"
-                                            >
-                                                <p>{isDeactivated ? "This user's account is deactivated" : (isDeleted ? "User account is deleted" : "User unavailable")}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ) : (
-                                    <DropdownMenu onOpenChange={setIsDropdownOpen}>
-                                        <DropdownMenuTrigger asChild>
-                                            <Icon
-                                                icon="mdi-light:dots-vertical"
-                                                width={24}
-                                                height={24}
-                                                style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
-                                            />
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
-                                                style={{ borderRadius: '24px 0px 24px 24px' }}
-                                            >
-                                                {member.user_id === currentUserId ? (
-                                                    <DropdownMenuItem
-                                                        onClick={() => setShowLeaveConfirm(true)}
-                                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                {/* Middle: Name + Headline + Admin badge */}
+                                <div
+                                    className={cn("flex flex-col flex-1 ml-[8px]", !isUnknown && "cursor-pointer")}
+                                    onClick={() => {
+                                        if (isUnknown) return;
+                                        const returnTo = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/messaging';
+                                        router.push(`/profile/${member.user_id}?returnTo=${encodeURIComponent(returnTo)}`);
+                                    }}
+                                >
+                                    <span className={cn("font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2", !isUnknown && "hover:underline")}>
+                                        <span>{displayName}</span>
+                                    </span>
+                                    <div className="flex flex-row items-center">
+                                        {displayHeadline && (
+                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] flex items-center mr-[8px]">
+                                                {displayHeadline}
+                                            </span>
+                                        )}
+                                        {member.role === 'admin' && (
+                                            <>
+                                                <span className="w-[6px] h-[6px] rounded-full bg-[var(--primary)] mr-[8px]" />
+                                                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--primary)] flex items-center  h-[16px]">
+                                                    Admin
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right: 3-dot menu (only if isAdmin) */}
+                                {isAdmin && (
+                                    isUnknown ? (
+                                        <TooltipProvider delayDuration={100}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        disabled
+                                                        className="cursor-default opacity-40 p-1 outline-none bg-transparent border-none flex items-center justify-center"
+                                                        aria-label="User unavailable"
                                                     >
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
-                                                        <LogOut className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
-                                                    </DropdownMenuItem>
-                                                ) : (
-                                                    <>
-                                                        {member.role !== 'admin' ? (
-                                                            <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
-                                                                <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
-                                                            </DropdownMenuItem>
-                                                        ) : (
-                                                            <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
-                                                                <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        <DropdownMenuItem onClick={() => setUserToShareProfile(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
-                                                            <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
-                                                            <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
-                                                        </DropdownMenuItem>
-                                                        {isBlocked(member.user_id) ? (
-                                                             <DropdownMenuItem onClick={async () => {
-                                                                 try {
-                                                                     await unblockUser(member.user_id);
-                                                                 } catch (err) {}
-                                                             }} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                                 <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
-                                                                 <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
-                                                             </DropdownMenuItem>
-                                                         ) : (
-                                                             <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                                 <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
-                                                                 <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
-                                                             </DropdownMenuItem>
-                                                         )}
+                                                        <Icon
+                                                            icon="mdi-light:dots-vertical"
+                                                            width={24}
+                                                            height={24}
+                                                            style={{ color: 'var(--muted-foreground)' }}
+                                                        />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent
+                                                    side="left"
+                                                    className="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-['Poppins'] text-[12px] shadow-md z-[100]"
+                                                >
+                                                    <p>{isDeactivated ? "This user's account is deactivated" : (isDeleted ? "User account is deleted" : "User unavailable")}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    ) : (
+                                        <DropdownMenu onOpenChange={setIsDropdownOpen}>
+                                            <DropdownMenuTrigger asChild>
+                                                <Icon
+                                                    icon="mdi-light:dots-vertical"
+                                                    width={24}
+                                                    height={24}
+                                                    style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
+                                                />
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuPortal>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
+                                                    style={{ borderRadius: '24px 0px 24px 24px' }}
+                                                >
+                                                    {member.user_id === currentUserId ? (
                                                         <DropdownMenuItem
-                                                            onClick={() => setUserToRemove(member.user_id)}
+                                                            onClick={() => setShowLeaveConfirm(true)}
                                                             className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                                         >
-                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
-                                                            <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
+                                                            <LogOut className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                                         </DropdownMenuItem>
-                                                    </>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenu>
-                                )
-                            )}
-                        </div>
+                                                    ) : (
+                                                        <>
+                                                            {member.role !== 'admin' ? (
+                                                                <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
+                                                                    <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
+                                                                    <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            <DropdownMenuItem onClick={() => setUserToShareProfile(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
+                                                                <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
+                                                                <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                                                            </DropdownMenuItem>
+                                                            {isBlocked(member.user_id) ? (
+                                                                <DropdownMenuItem onClick={async () => {
+                                                                    try {
+                                                                        await unblockUser(member.user_id);
+                                                                    } catch (err) { }
+                                                                }} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
+                                                                    <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                                </DropdownMenuItem>
+                                                            ) : (
+                                                                <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                                                                    <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            <DropdownMenuItem
+                                                                onClick={() => setUserToRemove(member.user_id)}
+                                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                                            >
+                                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
+                                                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenuPortal>
+                                        </DropdownMenu>
+                                    )
+                                )}
+                            </div>
                         );
                     })}
-                    
+
                     {/* Pending Invitations Section (Admin Only) */}
                     {isAdmin && sentInvitations && sentInvitations.length > 0 && (
                         <>
@@ -491,8 +491,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                 </span>
                             </div>
                             {sentInvitations.map((invitation) => (
-                                <div 
-                                    key={invitation.invitation_id} 
+                                <div
+                                    key={invitation.invitation_id}
                                     className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
                                 >
                                     <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch opacity-50">
@@ -545,27 +545,27 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
                 {/* 7. LEAVE GROUP & DELETE GROUP BUTTONS */}
                 {!isInactive && (
-                <div className="mt-[24px]">
-                    <div className="w-full flex items-center justify-between py-[10px]">
-                        <button
-                            onClick={() => setShowLeaveConfirm(true)}
-                            className="bg-transparent border-none outline-none cursor-pointer"
-                        >
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-left text-[var(--destructive)] h-[20px]">
-                                Leave group
-                            </span>
-                        </button>
-                        {isAdmin && (
+                    <div className="mt-[24px]">
+                        <div className="w-full flex items-center justify-between py-[10px]">
                             <button
-                                onClick={() => setShowDeleteConfirm(true)}
-                                className="bg-transparent border-none outline-none cursor-pointer p-1 hover:bg-[var(--destructive)]/10 rounded transition-colors"
-                                title="Delete group"
+                                onClick={() => setShowLeaveConfirm(true)}
+                                className="bg-transparent border-none outline-none cursor-pointer"
                             >
-                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-left text-[var(--destructive)] h-[20px]">
+                                    Leave group
+                                </span>
                             </button>
-                        )}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="bg-transparent border-none outline-none cursor-pointer p-1 hover:bg-[var(--destructive)]/10 rounded transition-colors"
+                                    title="Delete group"
+                                >
+                                    <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
                 )}
             </div>
         </div>
@@ -683,7 +683,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         className={
                             hasChanges && editData.name?.trim() && !isSaving
                                 ? "flex flex-row justify-center items-center px-[24px] py-[10px] w-[146px] h-[40px] bg-[var(--primary)] rounded-full cursor-pointer hover:opacity-90 transition-all font-['Poppins'] font-medium text-[14px] text-white shadow-sm"
-                                : "flex flex-row justify-center items-center px-[24px] py-[10px] w-[146px] h-[40px] bg-[#E9ECEF] dark:bg-zinc-800 rounded-full cursor-not-allowed font-['Poppins'] font-medium text-[14px] text-[#ADB5BD] dark:text-zinc-500"
+                                : "flex flex-row justify-center items-center px-[24px] py-[10px] w-[146px] h-[40px] bg-[#E9ECEF] dark:bg-zinc-800 rounded-full cursor-default font-['Poppins'] font-medium text-[14px] text-[#ADB5BD] dark:text-zinc-500"
                         }
                     >
                         <span className="font-['Poppins'] font-medium text-[14px] leading-[20px] text-center">
@@ -698,7 +698,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
     return (
         <div className="w-full h-full relative">
             {activeView === 'info' ? renderInfoPanel() : renderEditForm()}
-            
+
             <CocpitConfirmBox
                 isOpen={userToReport !== null}
                 title="Report this profile?"
@@ -716,10 +716,10 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             toast({ description: reportRes.message || "Profile reported successfully" });
                         } catch (err: any) {
                             const errorMsg = err?.response?.data?.message || err?.message || "Failed to report profile";
-                            toast({ 
+                            toast({
                                 title: "Error",
-                                description: errorMsg, 
-                                variant: "destructive" 
+                                description: errorMsg,
+                                variant: "destructive"
                             });
                         } finally {
                             setUserToReport(null);
@@ -774,10 +774,10 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         onClose('chat');
                     } catch (err: any) {
                         const errorMsg = err?.response?.data?.message || err?.message || "Failed to leave group";
-                        toast({ 
+                        toast({
                             title: "Error",
-                            description: errorMsg, 
-                            variant: "destructive" 
+                            description: errorMsg,
+                            variant: "destructive"
                         });
                     } finally {
                         setShowLeaveConfirm(false);
@@ -823,10 +823,10 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             await cancelInvitation(invitationToCancel);
                         } catch (err: any) {
                             const errorMsg = err?.response?.data?.message || err?.message || "Failed to cancel invitation";
-                            toast({ 
+                            toast({
                                 title: "Error",
-                                description: errorMsg, 
-                                variant: "destructive" 
+                                description: errorMsg,
+                                variant: "destructive"
                             });
                         } finally {
                             setInvitationToCancel(null);

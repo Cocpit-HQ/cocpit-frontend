@@ -72,7 +72,7 @@ export const ProfileEditDropdown: React.FC<ProfileEditDropdownProps> = ({
         <label
           className={cn(
             "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center flex-none order-0 grow-0",
-            error ? "text-red-500" : "text-[var(--ds-text-secondary)]",
+            "text-[var(--ds-text-secondary)]",
             labelClassName
           )}
         >

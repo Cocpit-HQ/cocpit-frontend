@@ -127,7 +127,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               selectedSkills.length === 0 ||
               (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
             }
-            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary text-primary-foreground font-medium text-[14px] disabled:opacity-50 transition-all disabled:cursor-not-allowed font-['DM_Sans']"
+            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary text-primary-foreground font-medium text-[14px] disabled:opacity-50 transition-all disabled:cursor-default font-['DM_Sans']"
           >
             {loading ? "..." : "Save"}
           </Button>
@@ -249,7 +249,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                 selectedSkills.length === 0 ||
                 (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
               }
-              className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-['DM_Sans']"
+              className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-default font-['DM_Sans']"
             >
               {loading ? "Saving..." : "Save"}
             </Button>

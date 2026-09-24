@@ -433,48 +433,48 @@ export default function ArticleCoverEditor({
             <div className="flex w-[600px] shrink-0 flex-col items-center gap-[24px]">
               {/* Banner: 600px x 338px */}
               <div className="relative rounded-[16px]">
-              <div
-                ref={containerRef}
-                onDoubleClick={() => fileInputRef.current?.click()}
-                onMouseDown={isAdjustActive ? (e) => {
-                  e.preventDefault();
-                  handlePointerDown(e.clientX, e.clientY);
-                } : undefined}
-                onTouchStart={isAdjustActive ? (e) => {
-                  const touch = e.touches[0];
-                  if (touch) handlePointerDown(touch.clientX, touch.clientY);
-                } : undefined}
-                onWheel={isAdjustActive ? (e) => {
-                  e.preventDefault();
-                  const delta = e.deltaY > 0 ? -5 : 5;
-                  setZoom(prev => Math.min(200, Math.max(0, prev + delta)));
-                } : undefined}
-                className={cn(
-                  "h-[338px] w-[600px] shrink-0 overflow-hidden rounded-[16px] relative bg-ds-surface-1 select-none",
-                  isAdjustActive
-                    ? isDraggingImage
-                      ? "cursor-grabbing"
-                      : "cursor-grab"
-                    : "cursor-pointer"
-                )}
-                title={isAdjustActive ? "Drag to reposition, scroll to zoom" : "Double-click to change image"}
-              >
-                <img
-                  src={displayImage || "/assets/coverphoto.jpg"}
-                  alt="Banner"
-                  draggable={false}
-                  onLoad={(e) => {
-                    const el = e.currentTarget;
-                    setNaturalImgSize({ w: el.naturalWidth, h: el.naturalHeight });
-                  }}
-                  className="absolute pointer-events-none select-none w-full h-auto"
-                  style={{
-                    left: 0,
-                    top: '50%',
-                    transform: `translateY(calc(-50% + ${positionY}px)) translateX(${positionX}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
-                    transformOrigin: '50% 50%',
-                  }}
-                />
+                <div
+                  ref={containerRef}
+                  onDoubleClick={() => fileInputRef.current?.click()}
+                  onMouseDown={isAdjustActive ? (e) => {
+                    e.preventDefault();
+                    handlePointerDown(e.clientX, e.clientY);
+                  } : undefined}
+                  onTouchStart={isAdjustActive ? (e) => {
+                    const touch = e.touches[0];
+                    if (touch) handlePointerDown(touch.clientX, touch.clientY);
+                  } : undefined}
+                  onWheel={isAdjustActive ? (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -5 : 5;
+                    setZoom(prev => Math.min(200, Math.max(0, prev + delta)));
+                  } : undefined}
+                  className={cn(
+                    "h-[338px] w-[600px] shrink-0 overflow-hidden rounded-[16px] relative bg-ds-surface-1 select-none",
+                    isAdjustActive
+                      ? isDraggingImage
+                        ? "cursor-grabbing"
+                        : "cursor-grab"
+                      : "cursor-pointer"
+                  )}
+                  title={isAdjustActive ? "Drag to reposition, scroll to zoom" : "Double-click to change image"}
+                >
+                  <img
+                    src={displayImage || "/assets/coverphoto.jpg"}
+                    alt="Banner"
+                    draggable={false}
+                    onLoad={(e) => {
+                      const el = e.currentTarget;
+                      setNaturalImgSize({ w: el.naturalWidth, h: el.naturalHeight });
+                    }}
+                    className="absolute pointer-events-none select-none w-full h-auto"
+                    style={{
+                      left: 0,
+                      top: '50%',
+                      transform: `translateY(calc(-50% + ${positionY}px)) translateX(${positionX}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
+                      transformOrigin: '50% 50%',
+                    }}
+                  />
 
                   {/* Optional visual indicator overlay on hover if not adjusting */}
                   {!isAdjustActive && (
@@ -494,13 +494,13 @@ export default function ArticleCoverEditor({
                     <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
                     <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
                     <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[var(--ds-accent)]" />
-                    
+
                     {/* 4 Edge Center Handles */}
                     <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-3.5 h-1 bg-[var(--ds-accent)]" />
                     <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-3.5 h-1 bg-[var(--ds-accent)]" />
                     <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-3.5 bg-[var(--ds-accent)]" />
                     <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-3.5 bg-[var(--ds-accent)]" />
-                    
+
                     {/* Dimension Badge */}
                     <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-[var(--ds-accent)] text-white text-[10px] font-semibold font-['DM_Sans'] rounded shadow-md pointer-events-none select-none tracking-tight whitespace-nowrap">
                       1200 × 300
@@ -514,7 +514,7 @@ export default function ArticleCoverEditor({
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting || !hasImage}
-                className="h-[24px] w-[109px] shrink-0 text-center font-dm-sans text-[16px] font-medium leading-[24px] text-ds-error cursor-pointer border-none bg-transparent p-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-[24px] w-[109px] shrink-0 text-center font-dm-sans text-[16px] font-medium leading-[24px] text-ds-error cursor-pointer border-none bg-transparent p-0 disabled:opacity-40 disabled:cursor-default"
               >
                 {isDeleting ? "Removing..." : "Remove photo"}
               </button>
@@ -580,7 +580,7 @@ export default function ArticleCoverEditor({
                 type="button"
                 onClick={handleSave}
                 disabled={isUploading || isDeleting || !hasImage}
-                className="flex h-[36px] w-[68px] items-center justify-center gap-[10px] rounded-full bg-ds-accent hover:opacity-90 active:scale-95 px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary border-none outline-none cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="flex h-[36px] w-[68px] items-center justify-center gap-[10px] rounded-full bg-ds-accent hover:opacity-90 active:scale-95 px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary border-none outline-none cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-default transition-all"
               >
                 {isUploading ? (
                   <Loader2 className="w-4 h-4 animate-spin text-white" />

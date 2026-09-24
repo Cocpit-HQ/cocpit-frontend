@@ -145,8 +145,8 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                   {job.work_mode && job.work_mode.toLowerCase() === 'remote'
                     ? 'Remote'
                     : job.work_mode && job.location
-                    ? `${job.work_mode} - ${job.location}`
-                    : job.work_mode || job.location}
+                      ? `${job.work_mode} - ${job.location}`
+                      : job.work_mode || job.location}
                 </div>
               </div>
             </>
@@ -280,14 +280,14 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
               )}
             </>
           )}
-          
+
           {/* Bookmark Button */}
           {flags?.saved_jobs === false ? (
             <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
-                <div 
+                <div
                   tabIndex={0}
-                  className="w-6 h-6 flex items-center justify-center cursor-not-allowed opacity-50 focus:outline-none"
+                  className="w-6 h-6 flex items-center justify-center cursor-default opacity-50 focus:outline-none"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Icon

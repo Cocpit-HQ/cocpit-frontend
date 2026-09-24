@@ -73,13 +73,12 @@ export function BlockedSettingsPage() {
                   onClick={() => canManageBlock && setUserToUnblockId(user.id)}
                   disabled={!canManageBlock}
                   title={!canManageBlock ? "Only organization owners or administrators can unblock accounts" : undefined}
-                  className={`flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border rounded-[24px] transition-colors ${
-                    !canManageBlock
-                      ? 'border-gray-300 bg-gray-100 text-gray-400 opacity-50 cursor-not-allowed dark:border-muted dark:bg-muted dark:text-muted-foreground'
+                  className={`flex flex-row justify-center items-center py-2 px-4 w-[140px] h-[40px] border rounded-[24px] transition-colors ${!canManageBlock
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 opacity-50 cursor-default dark:border-muted dark:bg-muted dark:text-muted-foreground'
                       : isCompany
-                      ? 'border-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint text-[#1A73E8] dark:text-company-primary cursor-pointer'
-                      : 'border-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint text-[#6366F1] dark:text-primary cursor-pointer'
-                  }`}
+                        ? 'border-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint text-[#1A73E8] dark:text-company-primary cursor-pointer'
+                        : 'border-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint text-[#6366F1] dark:text-primary cursor-pointer'
+                    }`}
                 >
                   <span className="text-[14px] font-normal leading-[20px] text-center">Unblock</span>
                 </button>
@@ -110,9 +109,9 @@ export function BlockedSettingsPage() {
                 {userToUnblock.name} will be able to message or find you.They won't be notified that you unblocked them.
               </p>
             </div>
-            
+
             <div className="flex flex-row gap-4 w-full">
-              <button 
+              <button
                 onClick={() => setUserToUnblockId(null)}
                 className={`flex-1 py-3 px-6 rounded-full border ${isCompany ? 'border-[#1A73E8] text-[#1A73E8] hover:bg-blue-50 dark:hover:bg-primary-tint' : 'border-[#6366F1] text-[#6366F1] hover:bg-indigo-50 dark:hover:bg-primary-tint'} font-medium text-[16px] transition-colors`}
               >

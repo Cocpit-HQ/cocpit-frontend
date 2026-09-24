@@ -191,14 +191,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!user?.id) return;
     try {
       const toastId = toast.loading("Generating your resume...");
-      
+
       const { downloadProfileResumePdf } = await import("@/services/api/profile");
       const { blob } = await downloadProfileResumePdf(user.id);
-      
+
       const url = window.URL.createObjectURL(blob);
       setDownloadPdfUrl(url);
       setIsDownloadProfileOpen(true);
-      
+
       // Automatically trigger the download
       const a = document.createElement("a");
       a.style.display = "none";
@@ -206,7 +206,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       a.download = `resume-${(user as any)?.first_name || (user as any)?.username || "profile"}.pdf`;
       document.body.appendChild(a);
       a.click();
-      
+
       toast.dismiss(toastId);
     } catch (error) {
       console.error("Failed to fetch resume:", error);
@@ -342,94 +342,94 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           actionButtons={
             blocked ? null : (
               <div className="inline-flex justify-start items-center gap-3">
-              {/* Follow / Unfollow button */}
-              <button
-                type="button"
-                onClick={handleFollowToggle}
-                disabled={followLoading}
-                className={cn(
-                  "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
-                  following
-                    ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
-                    : "bg-[var(--ds-accent)] hover:opacity-90"
-                )}
-              >
-                <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                  {following ? "Unfollow" : "Follow"}
-                </span>
-              </button>
+                {/* Follow / Unfollow button */}
+                <button
+                  type="button"
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                  className={cn(
+                    "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
+                    following
+                      ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
+                      : "bg-[var(--ds-accent)] hover:opacity-90"
+                  )}
+                >
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    {following ? "Unfollow" : "Follow"}
+                  </span>
+                </button>
 
-              {/* Connect / Pending / Message button */}
-              {isConnected ? (
-                <button
-                  type="button"
-                  onClick={handleMessage}
-                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    Message
-                  </span>
-                </button>
-              ) : isPending ? (
-                <button
-                  type="button"
-                  disabled
-                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 cursor-not-allowed opacity-50"
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    Pending
-                  </span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleConnect}
-                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    Connect
-                  </span>
-                </button>
-              )}
-
-              {/* More button: Mobile → Drawer, Desktop → Dropdown */}
-              {isMobile ? (
-                <button
-                  type="button"
-                  onClick={() => setIsMobileMoreOpen(true)}
-                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    More
-                  </span>
-                </button>
-              ) : (
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
+                {/* Connect / Pending / Message button */}
+                {isConnected ? (
                   <button
                     type="button"
+                    onClick={handleMessage}
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Message
+                    </span>
+                  </button>
+                ) : isPending ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 cursor-default opacity-50"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Pending
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleConnect}
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Connect
+                    </span>
+                  </button>
+                )}
+
+                {/* More button: Mobile → Drawer, Desktop → Dropdown */}
+                {isMobile ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMoreOpen(true)}
                     className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
                   >
                     <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
                       More
                     </span>
                   </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[155px]"
-                  align="end"
-                  sideOffset={8}
-                >
+                ) : (
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
+                      >
+                        <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                          More
+                        </span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[155px]"
+                      align="end"
+                      sideOffset={8}
+                    >
 
 
-                  <DropdownMenuItem
-                    onClick={() => setIsContactInfoModalOpen(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Contact info
-                  </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setIsContactInfoModalOpen(true)}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                      >
+                        Contact info
+                      </DropdownMenuItem>
 
-                  {/*
+                      {/*
                   <DropdownMenuItem
                     onClick={() => setIsSendOfferOpen(true)}
                     className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
@@ -438,49 +438,49 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   </DropdownMenuItem>
                   */}
 
-                  <DropdownMenuItem
-                    onClick={handleViewResume}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    View resume
-                  </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleViewResume}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                      >
+                        View resume
+                      </DropdownMenuItem>
 
-                  {user?.profile_score?.score === 100 && (
-                    <DropdownMenuItem
-                      onClick={handleDownloadProfile}
-                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                    >
-                      Download profile
-                    </DropdownMenuItem>
-                  )}
+                      {user?.profile_score?.score === 100 && (
+                        <DropdownMenuItem
+                          onClick={handleDownloadProfile}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                        >
+                          Download profile
+                        </DropdownMenuItem>
+                      )}
 
-                  <DropdownMenuItem
-                    onClick={() => setIsShareModalOpen(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Share profile
-                  </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                      >
+                        Share profile
+                      </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={() => setShowBlockDialog(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Block profile
-                  </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setShowBlockDialog(true)}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                      >
+                        Block profile
+                      </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={() => setIsReportModalOpen(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Report profile
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              )}
-            </div>
-          )
-        }
-      />
+                      <DropdownMenuItem
+                        onClick={() => setIsReportModalOpen(true)}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                      >
+                        Report profile
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            )
+          }
+        />
 
         {/* User Bio & Details */}
         <ProfileUserBio
@@ -512,100 +512,100 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             {/* Divider */}
             <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
-        {/* 1. Post Section */}
-        <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="w-[43px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
-              Posts
+            {/* 1. Post Section */}
+            <div className="w-full flex flex-col items-start gap-4">
+              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                <div className="w-[43px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+                  Posts
+                </div>
+              </div>
+              <div className="w-full px-4 md:px-0 md:pl-5">
+                <ProfilePostsTab
+                  posts={visiblePosts}
+                  isOwnProfile={false}
+                  userName={user?.name}
+                  onSeeAll={() => {
+                    saveScrollPosition("profile");
+                    router.push(`/profile/${userId}/posts`);
+                  }}
+                />
+              </div>
             </div>
-          </div>
-          <div className="w-full px-4 md:px-0 md:pl-5">
-            <ProfilePostsTab
-              posts={visiblePosts}
+
+            {/* Divider */}
+            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+
+            {/* 2. Skills Section */}
+            <ProfileSkillsTab
+              skills={skills}
               isOwnProfile={false}
-              userName={user?.name}
-              onSeeAll={() => {
-                saveScrollPosition("profile");
-                router.push(`/profile/${userId}/posts`);
-              }}
             />
-          </div>
-        </div>
 
-        {/* Divider */}
-        <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+            {/* 3. Experience Section */}
+            {experiences.length > 0 && (
+              <>
+                {/* Divider */}
+                <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
-        {/* 2. Skills Section */}
-        <ProfileSkillsTab
-          skills={skills}
-          isOwnProfile={false}
-        />
-
-        {/* 3. Experience Section */}
-        {experiences.length > 0 && (
-          <>
-            {/* Divider */}
-            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
-
-            <div className="w-full flex flex-col items-start gap-4">
-              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-                <div className="w-[87px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
-                  Experience
+                <div className="w-full flex flex-col items-start gap-4">
+                  <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                    <div className="w-[87px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+                      Experience
+                    </div>
+                  </div>
+                  <div className="w-full px-4 md:px-0 md:pl-5">
+                    <ProfileExperienceTab
+                      experiences={experiences}
+                      isOwnProfile={false}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="w-full px-4 md:px-0 md:pl-5">
-                <ProfileExperienceTab
-                  experiences={experiences}
-                  isOwnProfile={false}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              </>
+            )}
 
-        {/* 4. Education Section */}
-        {educations.length > 0 && (
-          <>
-            {/* Divider */}
-            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+            {/* 4. Education Section */}
+            {educations.length > 0 && (
+              <>
+                {/* Divider */}
+                <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
-            <div className="w-full flex flex-col items-start gap-4">
-              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-                <div className="w-[79px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
-                  Education
+                <div className="w-full flex flex-col items-start gap-4">
+                  <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                    <div className="w-[79px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+                      Education
+                    </div>
+                  </div>
+                  <div className="w-full px-4 md:px-0 md:pl-5">
+                    <ProfileEducationTab
+                      educations={educations}
+                      isOwnProfile={false}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="w-full px-4 md:px-0 md:pl-5">
-                <ProfileEducationTab
-                  educations={educations}
-                  isOwnProfile={false}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              </>
+            )}
 
-        {/* 5. Project Section */}
-        {projects.length > 0 && (
-          <>
-            {/* Divider */}
-            <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
+            {/* 5. Project Section */}
+            {projects.length > 0 && (
+              <>
+                {/* Divider */}
+                <div className="w-full max-w-[800px] h-0 border-t border-[var(--ds-text-muted)]/40 self-stretch my-1 flex-none" />
 
-            <div className="w-full flex flex-col items-start gap-4">
-              <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-                <div className="w-[56px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
-                  Project
+                <div className="w-full flex flex-col items-start gap-4">
+                  <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
+                    <div className="w-[56px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+                      Project
+                    </div>
+                  </div>
+                  <div className="w-full px-4 md:px-0 md:pl-5">
+                    <ProfileProjectsTab
+                      projects={projects}
+                      isOwnProfile={false}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="w-full px-4 md:px-0 md:pl-5">
-                <ProfileProjectsTab
-                  projects={projects}
-                  isOwnProfile={false}
-                />
-              </div>
-            </div>
-          </>
-        )}
+              </>
+            )}
 
           </>
         )}
@@ -662,7 +662,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           entityType="profile"
           entityId={targetUserId}
           customUrl={`/profile/${user?.account_name || targetUserId}`}
-          onShare={() => {}}
+          onShare={() => { }}
         />
       )}
 

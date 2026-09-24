@@ -256,7 +256,7 @@ export function CocpitProfileUpload({
                 editor.positionX === 0 &&
                 editor.positionY === 0)
             }
-            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-default transition-all cursor-pointer"
           >
             {isUploading ? "..." : "Save"}
           </button>
@@ -285,7 +285,7 @@ export function CocpitProfileUpload({
                   editor.positionX === 0 &&
                   editor.positionY === 0)
               }
-              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-sm cursor-pointer"
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-default transition-all flex items-center justify-center shadow-sm cursor-pointer"
             >
               {isUploading ? "Saving..." : "Save"}
             </button>
@@ -496,7 +496,7 @@ export function EditAvatarModal({
               editor.positionX === 0 &&
               editor.positionY === 0)
           }
-          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-default transition-all cursor-pointer"
         >
           {isUploading ? "..." : "Save"}
         </button>
@@ -525,7 +525,7 @@ export function EditAvatarModal({
                 editor.positionX === 0 &&
                 editor.positionY === 0)
             }
-            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-sm cursor-pointer"
+            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-default transition-all flex items-center justify-center shadow-sm cursor-pointer"
           >
             {isUploading ? "Saving..." : "Save"}
           </button>
@@ -738,7 +738,7 @@ export function EditCoverModal({
                 editor.positionX === 0 &&
                 editor.positionY === 0)
             }
-            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-primary shadow-sm"
+            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-default transition-all hover:bg-primary shadow-sm"
           >
             {isUploading ? "Saving..." : "Save"}
           </Button>
@@ -990,7 +990,7 @@ export const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({
                 editor.positionX === 0 &&
                 editor.positionY === 0)
             }
-            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-primary shadow-sm"
+            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-default transition-all hover:bg-primary shadow-sm"
           >
             {isUploading ? "Saving..." : "Save"}
           </Button>

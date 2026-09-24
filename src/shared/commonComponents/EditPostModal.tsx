@@ -15,7 +15,7 @@ import { LocationSuggestion, StructuredLocation } from '@/services/api/location'
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { ComposerImagePreview, ComposerImage, MAX_COMPOSER_IMAGES } from '@/features/feed/components/create-post/ComposerImagePreview';
-import { getImageDimensions } from '@/features/feed/utils/imageBounds';
+import { getImageDimensions, getVideoDimensions } from '@/features/feed/utils/imageBounds';
 import PostVideoCard from '@/features/feed/components/create-post/post-types/PostVideoCard';
 import SharedPreview from '@/features/feed/components/create-post/SharedPreview';
 import { usePostPoll } from '@/features/feed/hooks/use-post-poll';
@@ -90,7 +90,7 @@ export function EditPostModal({
   // Post type & media
   const [postType, setPostType] = useState<string>('text');
   const [selectedImages, setSelectedImages] = useState<ComposerImage[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState<{ file: File; previewUrl: string } | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{ file: File; previewUrl: string; naturalWidth?: number; naturalHeight?: number } | null>(null);
   const [sharedPost, setSharedPost] = useState<any | null>(null);
   const [originalPost, setOriginalPost] = useState<any | null>(null);
 
@@ -199,6 +199,8 @@ export function EditPostModal({
         setSelectedVideo({
           file: new File([''], 'existing-video.mp4', { type: 'video/mp4' }),
           previewUrl: vUrl,
+          naturalWidth: post.mediaWidth,
+          naturalHeight: post.mediaHeight,
         });
         setSelectedImages([]);
         snapVideo = vUrl;
@@ -345,10 +347,20 @@ export function EditPostModal({
         return;
       }
       const vidFile = videoFiles[0];
-      setSelectedVideo({
-        file: vidFile,
-        previewUrl: URL.createObjectURL(vidFile),
-      });
+      try {
+        const dims = await getVideoDimensions(vidFile);
+        setSelectedVideo({
+          file: vidFile,
+          previewUrl: URL.createObjectURL(vidFile),
+          naturalWidth: dims.width,
+          naturalHeight: dims.height,
+        });
+      } catch (e) {
+        setSelectedVideo({
+          file: vidFile,
+          previewUrl: URL.createObjectURL(vidFile),
+        });
+      }
       setPostType('video');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
@@ -450,10 +462,10 @@ export function EditPostModal({
     postType === 'poll'
       ? 'Cannot attach media while editing a poll'
       : selectedVideo !== null
-      ? 'Cannot add photos while video is attached'
-      : selectedImages.length >= MAX_COMPOSER_IMAGES
-      ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
-      : 'Add photos or video';
+        ? 'Cannot add photos while video is attached'
+        : selectedImages.length >= MAX_COMPOSER_IMAGES
+          ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
+          : 'Add photos or video';
 
   const handleMediaClick = () => {
     if (isSubmitting) return;
@@ -535,12 +547,12 @@ export function EditPostModal({
         postType === 'poll'
           ? 'poll'
           : originalPost?.post_type === 'article' || postType === 'article'
-          ? 'article'
-          : finalVideoUrl
-          ? 'video'
-          : finalMediaUrls.length > 0
-          ? 'image'
-          : 'text';
+            ? 'article'
+            : finalVideoUrl
+              ? 'video'
+              : finalMediaUrls.length > 0
+                ? 'image'
+                : 'text';
 
       const updatePayload: any = {
         title: originalPost?.title || '',
@@ -551,9 +563,11 @@ export function EditPostModal({
         location: locationString,
         companyId: originalPost?.author_org_id || originalPost?.companyId || undefined,
         media_urls: finalMediaUrls,
-        media_metadata: selectedImages.length > 0 
+        media_metadata: selectedImages.length > 0
           ? selectedImages.map(img => ({ width: img.naturalWidth, height: img.naturalHeight }))
-          : [],
+          : selectedVideo && selectedVideo.naturalWidth && selectedVideo.naturalHeight
+            ? [{ width: selectedVideo.naturalWidth, height: selectedVideo.naturalHeight }]
+            : [],
       };
 
       if (postType === 'poll') {
@@ -755,7 +769,7 @@ export function EditPostModal({
           type="button"
           onClick={handleRequestClose}
           disabled={isSubmitting}
-          className="fixed top-[40px] right-[40px] z-[160] flex h-[20px] w-[20px] items-center justify-center p-0 transition-opacity hover:opacity-80 cursor-pointer outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+          className="fixed top-[40px] right-[40px] z-[160] flex h-[20px] w-[20px] items-center justify-center p-0 transition-opacity hover:opacity-80 cursor-pointer outline-none disabled:opacity-40 disabled:cursor-default"
           style={{ color: 'var(--ds-text-primary)' }}
           aria-label="Close"
         >
@@ -1039,8 +1053,8 @@ export function EditPostModal({
                 ref={fileInputRef}
                 type="file"
                 accept={
-                  selectedImages.length > 0 
-                    ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif" 
+                  selectedImages.length > 0
+                    ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
                     : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
                 }
                 multiple
@@ -1056,11 +1070,10 @@ export function EditPostModal({
                   disabled={isMediaDisabled}
                   title={mediaButtonTitle}
                   aria-label={mediaButtonTitle}
-                  className={`box-border flex h-[38px] w-[94px] shrink-0 flex-row items-center gap-[8px] rounded-full border px-[12px] py-[8px] transition-opacity outline-none ${
-                    isMediaDisabled
-                      ? 'opacity-40 cursor-not-allowed pointer-events-none'
+                  className={`box-border flex h-[38px] w-[94px] shrink-0 flex-row items-center gap-[8px] rounded-full border px-[12px] py-[8px] transition-opacity outline-none ${isMediaDisabled
+                      ? 'opacity-40 cursor-default pointer-events-none'
                       : 'hover:opacity-85 cursor-pointer'
-                  }`}
+                    }`}
                   style={{
                     borderColor: 'var(--ds-border)',
                   }}
@@ -1086,7 +1099,7 @@ export function EditPostModal({
                     "flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-all outline-none",
                     canSave && !isSubmitting
                       ? "bg-[var(--ds-accent)] text-[var(--ds-text-primary)] cursor-pointer hover:opacity-90 active:scale-95"
-                      : "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-60"
+                      : "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-60"
                   )}
                 >
                   {isSubmitting ? (
@@ -1103,7 +1116,7 @@ export function EditPostModal({
                   type="button"
                   onClick={() => setIsDeleteDialogOpen(true)}
                   disabled={isSubmitting}
-                  className="box-border flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full border px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none hover:opacity-85"
+                  className="box-border flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full border px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-default outline-none hover:opacity-85"
                   style={{
                     borderColor: 'var(--ds-border)',
                     color: 'var(--ds-text-primary)',

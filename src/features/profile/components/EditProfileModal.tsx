@@ -270,7 +270,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           <button
             onClick={handleSave}
             disabled={isSaving || !hasChanges() || isUsernameAvailable === false}
-            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-default"
           >
             {isSaving ? "..." : "Save"}
           </button>
@@ -587,7 +587,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Button
                 onClick={handleSave}
                 disabled={isSaving || !hasChanges() || isUsernameAvailable === false}
-                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#6366F1] text-white font-medium shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#6366F1] text-white font-medium shadow-sm disabled:opacity-40 disabled:cursor-default"
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>

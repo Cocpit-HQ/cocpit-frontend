@@ -35,14 +35,14 @@ export const PostHeader = ({
   const hideMenuEntirely = menuAccess === 'internal';
   const queryClient = useQueryClient();
   const initial = author ? author.charAt(0).toUpperCase() : '?';
-  
+
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
-  
+
   const subtitleItems: React.ReactNode[] = [];
-  
+
   if (authorRole) {
     subtitleItems.push(
       <span key="headline" title={authorRole} className="block w-full truncate">
@@ -89,9 +89,9 @@ export const PostHeader = ({
   const actualShift = shiftCount % subtitleItems.length;
   const displayItems = shouldAnimate
     ? [
-        ...subtitleItems.slice(actualShift),
-        ...subtitleItems.slice(0, actualShift),
-      ]
+      ...subtitleItems.slice(actualShift),
+      ...subtitleItems.slice(0, actualShift),
+    ]
     : subtitleItems;
 
   const followCompanyMutation = useMutation({
@@ -149,44 +149,42 @@ export const PostHeader = ({
   const profileHref = isMe
     ? '/profile'
     : isCompanyPost && authorSlug
-    ? `/organization/${authorSlug}`
-    : `/profile/${authorUserId}`;
+      ? `/organization/${authorSlug}`
+      : `/profile/${authorUserId}`;
 
   return (
     <div className="flex flex-row justify-between items-center w-full min-h-[40px]">
       <div className="flex flex-row items-center gap-2 flex-grow min-w-0 pr-2">
         {/* Avatar */}
         <Link href={profileHref} className={`shrink-0 flex-none block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}>
-          <div className={`w-[32px] h-[32px] overflow-hidden flex items-center justify-center shrink-0 flex-none ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} ${
-            variant === 'overlay' ? 'bg-black/40 border border-white/30 shadow-md' : 'bg-ds-surface-2'
-          }`}>
+          <div className={`w-[32px] h-[32px] overflow-hidden flex items-center justify-center shrink-0 flex-none ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} ${variant === 'overlay' ? 'bg-black/40 border border-white/30 shadow-md' : 'bg-ds-surface-2'
+            }`}>
             {authorAvatar && !imgError ? (
-              <img 
-                src={authorAvatar} 
-                alt={author} 
+              <img
+                src={authorAvatar}
+                alt={author}
                 className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
-                onError={() => setImgError(true)} 
+                onError={() => setImgError(true)}
               />
             ) : (
               <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
             )}
           </div>
         </Link>
-        
+
         {/* Name and Subtitle */}
         <div className="flex flex-col items-start min-w-0 flex-1">
           <Link href={profileHref} className="block w-full outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded">
-            <span className={`block w-full font-['DM_Sans'] font-semibold text-[16px] leading-[24px] truncate ${
-              variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
-            }`}>
+            <span className={`block w-full font-['DM_Sans'] font-semibold text-[16px] leading-[24px] truncate ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
+              }`}>
               {author}
             </span>
           </Link>
-          
+
           {/* Subtitle Area (Animated) */}
           {subtitleItems.length > 0 && (
             <div className="relative w-[50vw] md:w-[50%] h-[14px] mt-[2px] overflow-hidden">
-              <div 
+              <div
                 className="w-full flex flex-col transition-transform ease-in-out"
                 style={{
                   transform: isAnimating ? 'translateY(-14px)' : 'translateY(0)',
@@ -203,11 +201,10 @@ export const PostHeader = ({
                   }
 
                   return (
-                    <div 
+                    <div
                       key={index}
-                      className={`w-full h-[14px] flex items-center font-['DM_Sans'] font-normal text-[10px] leading-[14px] shrink-0 transition-opacity ease-in-out ${opacityClass} ${
-                        variant === 'overlay' ? 'text-white/80' : 'text-ds-text-secondary'
-                      }`}
+                      className={`w-full h-[14px] flex items-center font-['DM_Sans'] font-normal text-[10px] leading-[14px] shrink-0 transition-opacity ease-in-out ${opacityClass} ${variant === 'overlay' ? 'text-white/80' : 'text-ds-text-secondary'
+                        }`}
                       style={{ transitionDuration: isAnimating ? '1000ms' : '0ms' }}
                     >
                       {item}
@@ -219,32 +216,30 @@ export const PostHeader = ({
           )}
         </div>
       </div>
-      
+
       {/* Follow and Menu Actions */}
       <div className="flex flex-row items-center gap-2 shrink-0 h-[24px]">
         {!isMe && (!isAuthorFollowing || hasInteracted) && (
-          <button 
+          <button
             onClick={handleToggleFollow}
             disabled={isFollowActionLoading}
             className={
               isAuthorFollowing
-                ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-80 ${
-                    variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
-                  }`
-                : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[14px] leading-[20px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-90`
+                ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-80 ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
+                }`
+                : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[14px] leading-[20px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-90`
             }
           >
             {isAuthorFollowing ? 'Unfollow' : 'Follow'}
           </button>
         )}
-        
+
         {!hideMenuEntirely && (
-          <button 
+          <button
             ref={optionsBtnRef}
             onClick={handleOptionsClick}
-            className={`w-[20px] h-[20px] cursor-pointer flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${
-              variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
-            }`}
+            className={`w-[20px] h-[20px] cursor-pointer flex items-center justify-center outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
+              }`}
             aria-label="Post options"
           >
             <Icon name="menu" className="w-[20px] h-[20px]" />

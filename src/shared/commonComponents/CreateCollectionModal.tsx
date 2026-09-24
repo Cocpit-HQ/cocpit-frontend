@@ -116,11 +116,10 @@ export function CreateCollectionModal({ isOpen, onClose, onSuccess }: CreateColl
                             <button
                                 type="submit"
                                 disabled={!hasName || isLoading}
-                                className={`w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] transition-colors ${
-                                    hasName
+                                className={`w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] transition-colors ${hasName
                                         ? 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-[0.98]'
-                                        : 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
-                                }`}
+                                        : 'bg-ds-surface-1 text-ds-text-muted cursor-default'
+                                    }`}
                             >
                                 {isLoading ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />

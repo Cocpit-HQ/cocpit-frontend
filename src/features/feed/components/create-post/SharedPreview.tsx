@@ -31,7 +31,7 @@ const SharedVideoPreview = ({ src }: { src: string }) => {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            el.play().catch(() => {});
+            el.play().catch(() => { });
           } else {
             el.pause();
           }
@@ -61,7 +61,7 @@ const SharedVideoPreview = ({ src }: { src: string }) => {
 const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation, onSeeMoreClick }: SharedPreviewProps) => {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   if (!sharedPost) return null;
 
   // disableNavigation is shorthand for clickable=false + showFollow=false (used in composer/edit contexts)
@@ -72,7 +72,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
   if (sharedPost.isJob) {
     const jobId = sharedJobId || sharedPost?.jobId || sharedPost?.job_id || sharedPost?.id;
     return (
-      <div 
+      <div
         onClick={(e) => {
           if (!effectiveClickable) return;
           if ((e.target as HTMLElement).closest('button, a')) return;
@@ -81,9 +81,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
             router.push(`/jobs/${jobId}`);
           }
         }}
-        className={`mt-4 border border-ds-border rounded-xl overflow-hidden bg-ds-surface-1 p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2 ${
-          effectiveClickable && jobId ? 'cursor-pointer hover:bg-ds-surface-2 transition-colors' : ''
-        }`}
+        className={`mt-4 border border-ds-border rounded-xl overflow-hidden bg-ds-surface-1 p-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2 ${effectiveClickable && jobId ? 'cursor-pointer hover:bg-ds-surface-2 transition-colors' : ''
+          }`}
       >
         <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-ds-surface-2 overflow-hidden flex items-center justify-center border border-ds-border shadow-sm">
           {sharedPost.jobLogo ? (
@@ -114,44 +113,44 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
   // Post Preview
   console.log('sharedPost:', sharedPost);
 
-  const sharedUser = sharedPost?.user 
+  const sharedUser = sharedPost?.user
     || (typeof sharedPost?.author === 'object' ? sharedPost?.author : null)
     || sharedPost?.created_by
     || sharedPost?.posted_by;
 
-  const sharedName = sharedUser?.name 
-    || sharedUser?.full_name 
+  const sharedName = sharedUser?.name
+    || sharedUser?.full_name
     || (sharedUser?.firstName && sharedUser?.lastName ? `${sharedUser.firstName} ${sharedUser.lastName}` : null)
     || (typeof sharedPost?.author === 'string' ? sharedPost?.author : null)
     || sharedPost?.userName
     || sharedPost?.authorName
     || sharedPost?.name;
 
-  const sharedAvatar = sharedUser?.image 
-    || sharedUser?.avatar 
-    || sharedUser?.avatar_url 
+  const sharedAvatar = sharedUser?.image
+    || sharedUser?.avatar
+    || sharedUser?.avatar_url
     || sharedUser?.profile_picture
     || sharedUser?.photo
     || sharedPost?.authorAvatar
     || sharedPost?.authorImg
     || sharedPost?.image;
 
-  const sharedRole = sharedUser?.title 
-    || sharedUser?.role 
+  const sharedRole = sharedUser?.title
+    || sharedUser?.role
     || sharedUser?.designation
     || sharedUser?.headline
     || sharedPost?.authorHeadline;
 
-  const sharedLocation = sharedUser?.location 
+  const sharedLocation = sharedUser?.location
     || sharedPost?.location;
 
-  const sharedSlug = sharedUser?.slug 
-    || sharedUser?.user_name 
-    || sharedUser?.username 
+  const sharedSlug = sharedUser?.slug
+    || sharedUser?.user_name
+    || sharedUser?.username
     || sharedPost?.authorSlug;
 
-  const sharedTime = sharedPost?.timeAgo 
-    || sharedPost?.created_at 
+  const sharedTime = sharedPost?.timeAgo
+    || sharedPost?.created_at
     || sharedPost?.createdAt;
 
   // Normalize media
@@ -181,7 +180,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
     }
   }
 
-  const videoSrc = sharedPost?.videoSrc 
+  const videoSrc = sharedPost?.videoSrc
     || (typeof sharedPost?.video === 'string' ? sharedPost.video : null)
     || (Array.isArray(sharedPost?.media) ? sharedPost.media.find((m: any) => m?.media_type === 'video' || m?.type === 'video')?.url : null);
 
@@ -197,23 +196,23 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
           ? (sharedPost as any).options
           : [];
 
-  const contentText = sharedPost?.content 
-    || sharedPost?.description 
-    || sharedPost?.text 
-    || sharedPost?.title 
-    || sharedPost?.poll_question 
-    || pollData?.question 
+  const contentText = sharedPost?.content
+    || sharedPost?.description
+    || sharedPost?.text
+    || sharedPost?.title
+    || sharedPost?.poll_question
+    || pollData?.question
     || pollData?.poll_question;
 
   const { user: currentUser } = useAuth();
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const queryClient = useQueryClient();
 
-  const authorUserId = sharedUser?.id?.toString() 
-    || sharedPost?.author_id?.toString() 
-    || sharedPost?.authorId?.toString() 
+  const authorUserId = sharedUser?.id?.toString()
+    || sharedPost?.author_id?.toString()
+    || sharedPost?.authorId?.toString()
     || sharedPost?.orgId?.toString();
-    
+
   const isMe = currentUser?.id?.toString() === authorUserId;
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
@@ -276,11 +275,10 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
   return (
     <div className="flex flex-col w-full">
       {/* Card */}
-      <div 
+      <div
         onClick={handleCardClick}
-        className={`self-stretch py-[8px] px-[12px] rounded-[8px] border-[0.5px] border-ds-border flex flex-col gap-[12px] ${
-          effectiveClickable && targetPostId ? 'cursor-pointer hover:border-ds-border transition-colors' : ''
-        }`}
+        className={`self-stretch py-[8px] px-[12px] rounded-[8px] border-[0.5px] border-ds-border flex flex-col gap-[12px] ${effectiveClickable && targetPostId ? 'cursor-pointer hover:border-ds-border transition-colors' : ''
+          }`}
       >
         {/* Author row */}
         <div className="flex flex-row items-center gap-[8px] w-full">
@@ -313,17 +311,17 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
               )}
             </div>
           </div>
-          
+
           {/* Follow Action */}
           {canShowFollow && !isMe && (!isAuthorFollowing || hasInteracted) && (
             <div className="flex flex-row items-center shrink-0 h-[24px] ml-auto">
-              <button 
+              <button
                 onClick={handleToggleFollow}
                 disabled={isFollowActionLoading}
                 className={
                   isAuthorFollowing
-                    ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-ds-text-primary`
-                    : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
+                    ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-ds-text-primary`
+                    : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
                 }
               >
                 {isAuthorFollowing ? 'Unfollow' : 'Follow'}
@@ -367,9 +365,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
                     className="self-stretch inline-flex justify-start items-center gap-2 w-full"
                   >
                     <div
-                      className={`flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border flex justify-start items-center gap-2.5 min-w-0 ${
-                        isSelected ? 'bg-ds-surface-2 border-ds-border' : 'bg-transparent'
-                      }`}
+                      className={`flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border flex justify-start items-center gap-2.5 min-w-0 ${isSelected ? 'bg-ds-surface-2 border-ds-border' : 'bg-transparent'
+                        }`}
                     >
                       <span className="justify-start text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] truncate">
                         {optText}
@@ -434,9 +431,9 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
         {/* Optional Media */}
         {mediaUrls.length > 0 ? (
           <div className="rounded-[4px] overflow-hidden bg-black/5 relative flex justify-center items-center w-full h-[249px] shrink-0">
-            <img 
-              src={mediaUrls[0]} 
-              className="w-full h-full object-cover rounded-[4px]" 
+            <img
+              src={mediaUrls[0]}
+              className="w-full h-full object-cover rounded-[4px]"
               alt="Shared Media"
               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
             />

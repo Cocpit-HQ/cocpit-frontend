@@ -42,7 +42,7 @@ export const ProfileBlockedState: React.FC<ProfileBlockedStateProps> = ({
         type="button"
         disabled={isLoading}
         onClick={onUnblock}
-        className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 transition-all flex flex-row justify-center items-center gap-[10px] cursor-pointer focus:outline-none flex-none shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+        className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 transition-all flex flex-row justify-center items-center gap-[10px] cursor-pointer focus:outline-none flex-none shadow-md disabled:opacity-50 disabled:cursor-default disabled:pointer-events-none"
       >
         <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none text-center">
           {isLoading ? "..." : "Unblock"}

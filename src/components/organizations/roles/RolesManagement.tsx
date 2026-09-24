@@ -257,7 +257,7 @@ function RoleDialog({ open, onOpenChange, role, onSubmit, isLoading }: RoleDialo
                                         <div className="grid gap-1.5 leading-none">
                                             <label
                                                 htmlFor={perm.id}
-                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer w-full select-none"
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-default peer-disabled:opacity-70 cursor-pointer w-full select-none"
                                             >
                                                 {perm.label}
                                             </label>

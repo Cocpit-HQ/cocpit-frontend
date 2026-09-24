@@ -303,19 +303,19 @@ export default function CocpitShareModel({
       if (profileId || entityType === "profile") {
         universalShare({ entityType: "profile", entityId: (profileId || effectiveEntityId) as string, shareMethod: "copy_link" })
           .then(() => onShare?.(["share"]))
-          .catch(() => {});
+          .catch(() => { });
       } else if (postId) {
         universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" })
           .then(() => onShare?.(["share"]))
-          .catch(() => {});
+          .catch(() => { });
       } else if (effectiveJobId) {
         universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" })
           .then(() => onShare?.(["share"]))
-          .catch(() => {});
+          .catch(() => { });
       } else if (effectiveEntityType && effectiveEntityId) {
         universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId, shareMethod: "copy_link" })
           .then(() => onShare?.(["share"]))
-          .catch(() => {});
+          .catch(() => { });
       }
     };
 
@@ -439,9 +439,9 @@ export default function CocpitShareModel({
                     ))}
                   </div>
                 ) : displayUsers.length === 0 ? (
-                    <div className="py-8 text-center text-ds-text-muted ds-text-secondary">
-                      No users found
-                    </div>
+                  <div className="py-8 text-center text-ds-text-muted ds-text-secondary">
+                    No users found
+                  </div>
                 ) : (
                   displayUsers.map((u, index) => {
                     const checked = selectedUsers.includes(u.id);
@@ -488,25 +488,25 @@ export default function CocpitShareModel({
                 type="button"
                 className="flex items-center gap-[4px] cursor-pointer hover:opacity-80 transition-opacity self-start"
                 onClick={() => {
-                   navigator.clipboard.writeText(shareUrl);
-                   toast.success("Link copied!");
-                   if (profileId || entityType === "profile") {
-                     universalShare({ entityType: "profile", entityId: (profileId || effectiveEntityId) as string, shareMethod: "copy_link" })
-                       .then(() => onShare?.(["copy_link"]))
-                       .catch(() => {});
-                   } else if (postId) {
-                     universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" })
-                       .then(() => onShare?.(["copy_link"]))
-                       .catch(() => {});
-                   } else if (effectiveJobId) {
-                     universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" })
-                       .then(() => onShare?.(["copy_link"]))
-                       .catch(() => {});
-                   } else if (effectiveEntityType && effectiveEntityId) {
-                     universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId as string, shareMethod: "copy_link" })
-                       .then(() => onShare?.(["copy_link"]))
-                       .catch(() => {});
-                   }
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success("Link copied!");
+                  if (profileId || entityType === "profile") {
+                    universalShare({ entityType: "profile", entityId: (profileId || effectiveEntityId) as string, shareMethod: "copy_link" })
+                      .then(() => onShare?.(["copy_link"]))
+                      .catch(() => { });
+                  } else if (postId) {
+                    universalShare({ entityType: "post", entityId: postId, shareMethod: "copy_link" })
+                      .then(() => onShare?.(["copy_link"]))
+                      .catch(() => { });
+                  } else if (effectiveJobId) {
+                    universalShare({ entityType: "job", entityId: effectiveJobId, shareMethod: "copy_link" })
+                      .then(() => onShare?.(["copy_link"]))
+                      .catch(() => { });
+                  } else if (effectiveEntityType && effectiveEntityId) {
+                    universalShare({ entityType: effectiveEntityType as any, entityId: effectiveEntityId as string, shareMethod: "copy_link" })
+                      .then(() => onShare?.(["copy_link"]))
+                      .catch(() => { });
+                  }
                 }}
               >
                 <Link className="w-[12px] h-[12px] text-ds-accent" />
@@ -518,7 +518,7 @@ export default function CocpitShareModel({
                   type="button"
                   onClick={handleSendClick}
                   disabled={selectedUsers.length === 0 || isSending}
-                  className="flex justify-center items-center px-[12px] py-[6px] h-[36px] w-[77px] rounded-[100px] ds-text-body-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-ds-accent text-ds-text-primary disabled:bg-ds-surface-1 disabled:text-ds-text-muted"
+                  className="flex justify-center items-center px-[12px] py-[6px] h-[36px] w-[77px] rounded-[100px] ds-text-body-1 cursor-pointer disabled:opacity-50 disabled:cursor-default transition-colors bg-ds-accent text-ds-text-primary disabled:bg-ds-surface-1 disabled:text-ds-text-muted"
                 >
                   {isSending ? "..." : "Send"}
                 </button>

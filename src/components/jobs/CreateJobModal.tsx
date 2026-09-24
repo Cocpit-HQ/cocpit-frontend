@@ -75,7 +75,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         title: initialData.title,
         location: initialData.location,
         type: initialData.type,
-        minSalary: "", 
+        minSalary: "",
         maxSalary: "",
         description: initialData.description || "",
         skills: initialData.skills?.join(", ") || "",
@@ -120,7 +120,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
     if (!formData.title.trim()) newErrors.title = "Job title is required"
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -128,7 +128,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {}
     if (!formData.description.trim()) newErrors.description = "Job description is required"
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -212,10 +212,10 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
               </span>
               <span className="text-sm text-muted-foreground font-medium">
                 — {
-                  currentStep === 1 ? "Job Title" : 
-                  currentStep === 2 ? "Description & Settings" : 
-                  currentStep === 3 ? "Salary & Location" : 
-                  "Experience & Skills"
+                  currentStep === 1 ? "Job Title" :
+                    currentStep === 2 ? "Description & Settings" :
+                      currentStep === 3 ? "Salary & Location" :
+                        "Experience & Skills"
                 }
               </span>
             </div>
@@ -226,9 +226,9 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
               {initialData ? "Modify the details of your job listing." : "Provide the details for your new job opening."}
             </DialogDescription>
           </div>
-          
+
           <div className="absolute bottom-0 left-0 h-1 bg-muted w-full">
-            <div 
+            <div
               className="h-full bg-primary transition-all duration-500 ease-out"
               style={{ width: `${(currentStep / 4) * 100}%` }}
             />
@@ -246,36 +246,36 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
               )}
 
               {currentStep === 1 && (
-                <JobDetailsStep 
-                  formData={formData} 
-                  updateFormData={updateFormData} 
-                  errors={errors} 
+                <JobDetailsStep
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  errors={errors}
                   step={1}
                 />
               )}
 
               {currentStep === 2 && (
-                <JobDescriptionStep 
-                  formData={formData} 
-                  updateFormData={updateFormData} 
+                <JobDescriptionStep
+                  formData={formData}
+                  updateFormData={updateFormData}
                   errors={errors}
                 />
               )}
 
               {currentStep === 3 && (
-                <JobDetailsStep 
-                  formData={formData} 
-                  updateFormData={updateFormData} 
-                  errors={errors} 
+                <JobDetailsStep
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  errors={errors}
                   step={3}
                 />
               )}
 
               {currentStep === 4 && (
-                <JobDetailsStep 
-                  formData={formData} 
-                  updateFormData={updateFormData} 
-                  errors={errors} 
+                <JobDetailsStep
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  errors={errors}
                   step={4}
                 />
               )}
@@ -299,7 +299,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
                   </>
                 )}
               </button>
-              
+
               <div className="flex items-center gap-3">
                 {currentStep < 4 ? (
                   <button
@@ -312,7 +312,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
                       (currentStep === 1 && !isStep1Valid()) ||
                       (currentStep === 2 && !isStep2Valid())
                     }
-                    className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale-[0.5] disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale-[0.5] disabled:cursor-default"
                   >
                     Next
                     <ArrowRight className="w-4 h-4" />

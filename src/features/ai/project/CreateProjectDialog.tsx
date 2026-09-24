@@ -60,7 +60,7 @@ export default function CreateProjectDialog({
               Create project
             </DialogTitle>
           </div>
- 
+
           <form onSubmit={handleSubmit} className="self-stretch flex flex-col justify-start items-center gap-4 w-full">
             <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
               <label
@@ -80,7 +80,7 @@ export default function CreateProjectDialog({
                 autoFocus
               />
             </div>
- 
+
             {/* Action Buttons */}
             <div className="w-72 inline-flex justify-center items-start gap-2 mt-2">
               <button
@@ -95,11 +95,10 @@ export default function CreateProjectDialog({
               <button
                 type="submit"
                 disabled={isCreateDisabled}
-                className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${
-                  isCreateDisabled
-                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-not-allowed"
+                className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${isCreateDisabled
+                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-default"
                     : "bg-[var(--primary)] hover:bg-[var(--primary)]/90 cursor-pointer"
-                }`}
+                  }`}
               >
                 Create
               </button>

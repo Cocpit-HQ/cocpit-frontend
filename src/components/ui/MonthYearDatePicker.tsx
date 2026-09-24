@@ -117,7 +117,7 @@ export const MonthYearDatePicker: React.FC<MonthYearDatePickerProps> = ({
             htmlFor={id}
             className={cn(
               "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center",
-              error ? "text-red-500" : "text-[var(--ds-text-secondary)]",
+              "text-[var(--ds-text-secondary)]",
               labelClassName
             )}
           >

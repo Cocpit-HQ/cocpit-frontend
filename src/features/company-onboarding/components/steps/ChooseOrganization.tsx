@@ -32,9 +32,9 @@ const ChooseOrganization = React.memo(function ChooseOrganization() {
       {/* 619x249px Frame with exact 99px gap between images (40px gap + ~19px 'Or' + 40px gap) */}
       <div className="w-full max-w-[619px] h-[249.36px] mt-10 flex items-center justify-center gap-10 mx-auto">
         {/* Company Card */}
-        <div 
+        <div
           onClick={() => !loadingType && handleSelect('COMPANY')}
-          className={`group ${loadingType ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex flex-col items-center justify-start gap-6 rounded-2xl p-0 w-[260px] h-[249.36px] relative`}
+          className={`group ${loadingType ? 'opacity-50 cursor-default' : 'cursor-pointer'} flex flex-col items-center justify-start gap-6 rounded-2xl p-0 w-[260px] h-[249.36px] relative`}
         >
           {loadingType === 'COMPANY' && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 z-10 rounded-2xl">
@@ -42,10 +42,10 @@ const ChooseOrganization = React.memo(function ChooseOrganization() {
             </div>
           )}
           <div className="w-[260px] h-[201.36px] relative">
-            <Image 
-              src="/images/companyonboarding/company.png" 
-              alt="Company" 
-              fill 
+            <Image
+              src="/images/companyonboarding/company.png"
+              alt="Company"
+              fill
               className="object-contain"
             />
           </div>
@@ -60,9 +60,9 @@ const ChooseOrganization = React.memo(function ChooseOrganization() {
         </div>
 
         {/* Institute Card */}
-        <div 
+        <div
           onClick={() => !loadingType && handleSelect('INSTITUTION')}
-          className={`group ${loadingType ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex flex-col items-center justify-start gap-6 rounded-2xl p-0 w-[260px] h-[249.36px] relative`}
+          className={`group ${loadingType ? 'opacity-50 cursor-default' : 'cursor-pointer'} flex flex-col items-center justify-start gap-6 rounded-2xl p-0 w-[260px] h-[249.36px] relative`}
         >
           {loadingType === 'INSTITUTION' && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 z-10 rounded-2xl">
@@ -70,10 +70,10 @@ const ChooseOrganization = React.memo(function ChooseOrganization() {
             </div>
           )}
           <div className="w-[260px] h-[201.36px] relative">
-            <Image 
-              src="/images/companyonboarding/Institute.png" 
-              alt="Institute" 
-              fill 
+            <Image
+              src="/images/companyonboarding/Institute.png"
+              alt="Institute"
+              fill
               className="object-contain"
             />
           </div>

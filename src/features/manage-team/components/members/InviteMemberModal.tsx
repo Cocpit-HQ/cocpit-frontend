@@ -126,11 +126,10 @@ export default function InviteMemberModal({
                       {c.name}
                     </span>
                   </div>
-                  <div className={`w-5 h-5 rounded-[4px] border flex items-center justify-center transition-colors ${
-                    selectedIds.includes(c.id) 
-                      ? 'bg-[#1A73E8] border-[#1A73E8]' 
+                  <div className={`w-5 h-5 rounded-[4px] border flex items-center justify-center transition-colors ${selectedIds.includes(c.id)
+                      ? 'bg-[#1A73E8] border-[#1A73E8]'
                       : 'border-[#E2E8F0] dark:border-gray-600'
-                  }`}>
+                    }`}>
                     {selectedIds.includes(c.id) && (
                       <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white stroke-[3]" />
                     )}
@@ -152,9 +151,8 @@ export default function InviteMemberModal({
           <button
             onClick={handleInvite}
             disabled={selectedIds.length === 0}
-            className={`flex-1 py-2.5 rounded-full text-white text-[14px] font-medium font-['Poppins'] transition-opacity ${
-              selectedIds.length === 0 ? 'bg-[#1A73E8]/50 cursor-not-allowed' : 'bg-[#1A73E8] hover:opacity-90'
-            }`}
+            className={`flex-1 py-2.5 rounded-full text-white text-[14px] font-medium font-['Poppins'] transition-opacity ${selectedIds.length === 0 ? 'bg-[#1A73E8]/50 cursor-default' : 'bg-[#1A73E8] hover:opacity-90'
+              }`}
           >
             Invite
           </button>

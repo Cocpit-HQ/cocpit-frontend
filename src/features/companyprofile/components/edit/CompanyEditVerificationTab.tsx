@@ -26,7 +26,7 @@ interface DocumentItem {
   file: File | null;
   name?: string;
   url?: string;
-  status?: string; 
+  status?: string;
   rejectionReason?: string;
   isExisting?: boolean;
   thumbnailUrl?: string;
@@ -65,21 +65,21 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
             setIncorpYear(String(dateParts.getFullYear()));
           }
         }
-        
+
         const verRes = await api.get(`/organizations/${orgId}/verifications`).catch(() => ({ data: { verifications: [] } }));
         const verifications = verRes.data.verifications || [];
         const latestDocVer = verifications.find((v: any) => v.verification_type === "DOCUMENT");
-        
+
         if (latestDocVer && latestDocVer.document_urls) {
           let urls: string[] = [];
           try {
-            urls = typeof latestDocVer.document_urls === 'string' 
-              ? JSON.parse(latestDocVer.document_urls) 
+            urls = typeof latestDocVer.document_urls === 'string'
+              ? JSON.parse(latestDocVer.document_urls)
               : latestDocVer.document_urls;
           } catch (e) {
             urls = [];
           }
-          
+
           if (latestDocVer.review_notes) {
             setReviewNotes(latestDocVer.review_notes);
           }
@@ -124,12 +124,12 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
     const file = e.target.files?.[0];
     if (file) {
       const thumbnailUrl = URL.createObjectURL(file);
-      setDocuments(documents.map(doc => doc.id === id ? { 
-        ...doc, 
-        file, 
+      setDocuments(documents.map(doc => doc.id === id ? {
+        ...doc,
+        file,
         name: file.name,
         thumbnailUrl,
-        status: 'Pending verification' 
+        status: 'Pending verification'
       } : doc));
     }
   };
@@ -144,42 +144,42 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
       toast.error("Please select complete date of incorporation");
       return;
     }
-    
+
     setSubmitting(true);
     try {
-        const filesToUpload = documents.map(doc => doc.file).filter(file => file !== null) as File[];
-        let urls: string[] = [];
-        
-        if (filesToUpload.length > 0) {
-            urls = await uploadMedia(filesToUpload);
-        }
-        
-        const existingUrls = documents.filter(doc => doc.isExisting && doc.url).map(doc => doc.url!);
-        const finalUrls = [...existingUrls, ...urls];
+      const filesToUpload = documents.map(doc => doc.file).filter(file => file !== null) as File[];
+      let urls: string[] = [];
 
-        if (finalUrls.length === 0) {
-            toast.error("No documents to submit.");
-            setSubmitting(false);
-            return;
-        }
+      if (filesToUpload.length > 0) {
+        urls = await uploadMedia(filesToUpload);
+      }
 
-        await api.post(`/organizations/${orgId}/verify/document`, {
-            legalName,
-            incorporationDay: incorpDay,
-            incorporationMonth: incorpMonth,
-            incorporationYear: incorpYear,
-            documentUrls: finalUrls
-        });
+      const existingUrls = documents.filter(doc => doc.isExisting && doc.url).map(doc => doc.url!);
+      const finalUrls = [...existingUrls, ...urls];
 
-        toast.success("Verification details submitted successfully!");
-        if (refreshProfile) await refreshProfile();
-        if (refreshCompanies) await refreshCompanies();
-        onCancel();
-    } catch (err) {
-        console.error("Error submitting documents:", err);
-        toast.error("Failed to submit verification details.");
-    } finally {
+      if (finalUrls.length === 0) {
+        toast.error("No documents to submit.");
         setSubmitting(false);
+        return;
+      }
+
+      await api.post(`/organizations/${orgId}/verify/document`, {
+        legalName,
+        incorporationDay: incorpDay,
+        incorporationMonth: incorpMonth,
+        incorporationYear: incorpYear,
+        documentUrls: finalUrls
+      });
+
+      toast.success("Verification details submitted successfully!");
+      if (refreshProfile) await refreshProfile();
+      if (refreshCompanies) await refreshCompanies();
+      onCancel();
+    } catch (err) {
+      console.error("Error submitting documents:", err);
+      toast.error("Failed to submit verification details.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -206,164 +206,164 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col font-poppins">
-      
+
       <div className="flex flex-col gap-6">
-          {/* Legal Name */}
-          <div className="flex flex-col gap-2 w-full mt-4">
-            <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-              Company Full Legal Name *
-            </label>
-            <input
-              type="text"
-              value={legalName}
-              onChange={(e) => setLegalName(e.target.value)}
-              placeholder="e.g. Acme Corporation Pvt Ltd"
-              className="w-full h-11 px-4 border border-gray-200 dark:border-zinc-800 rounded-full bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none dark:text-white"
-            />
-          </div>
+        {/* Legal Name */}
+        <div className="flex flex-col gap-2 w-full mt-4">
+          <label className="text-[14px] font-medium text-[#000000] dark:text-white">
+            Company Full Legal Name *
+          </label>
+          <input
+            type="text"
+            value={legalName}
+            onChange={(e) => setLegalName(e.target.value)}
+            placeholder="e.g. Acme Corporation Pvt Ltd"
+            className="w-full h-11 px-4 border border-gray-200 dark:border-zinc-800 rounded-full bg-white dark:bg-zinc-900/50 text-[14px] focus:outline-none dark:text-white"
+          />
+        </div>
 
-          {/* Incorporation Date */}
-          <div className="flex flex-col gap-2 w-full">
-            <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-              Date of Incorporation *
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              <Select value={incorpDay} onValueChange={setIncorpDay}>
-                <SelectTrigger className="rounded-full border border-gray-200 dark:border-zinc-800 h-11">
-                  <SelectValue placeholder="Day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={incorpMonth} onValueChange={setIncorpMonth}>
-                <SelectTrigger className="rounded-full border border-gray-200 dark:border-zinc-800 h-11">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={incorpYear} onValueChange={setIncorpYear}>
-                <SelectTrigger className="rounded-full border border-gray-200 dark:border-zinc-800 h-11">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {YEARS.map((y) => (
-                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Incorporation Date */}
+        <div className="flex flex-col gap-2 w-full">
+          <label className="text-[14px] font-medium text-[#000000] dark:text-white">
+            Date of Incorporation *
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            <Select value={incorpDay} onValueChange={setIncorpDay}>
+              <SelectTrigger className="rounded-full border border-gray-200 dark:border-zinc-800 h-11">
+                <SelectValue placeholder="Day" />
+              </SelectTrigger>
+              <SelectContent>
+                {DAYS.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={incorpMonth} onValueChange={setIncorpMonth}>
+              <SelectTrigger className="rounded-full border border-gray-200 dark:border-zinc-800 h-11">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={incorpYear} onValueChange={setIncorpYear}>
+              <SelectTrigger className="rounded-full border border-gray-200 dark:border-zinc-800 h-11">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {YEARS.map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* DOCUMENTS Header */}
+        <div className="flex justify-between items-center w-full pt-4">
+          <h3 className="text-[14px] font-bold text-[#1A73E8] tracking-wider uppercase">
+            VERIFICATION DOCUMENTS
+          </h3>
+          <button
+            type="button"
+            onClick={addDocument}
+            className="w-6 h-6 flex items-center justify-center text-[#1A73E8] hover:scale-110 transition-transform cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Document slots list */}
+        <div className="w-full flex flex-col gap-4">
+          {documents.length === 0 && (
+            <div className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-300 dark:border-zinc-800 rounded-[20px]">
+              No documents added. Click the + button to add a verification document.
             </div>
-          </div>
+          )}
 
-          {/* DOCUMENTS Header */}
-          <div className="flex justify-between items-center w-full pt-4">
-            <h3 className="text-[14px] font-bold text-[#1A73E8] tracking-wider uppercase">
-              VERIFICATION DOCUMENTS
-            </h3>
-            <button
-              type="button"
-              onClick={addDocument}
-              className="w-6 h-6 flex items-center justify-center text-[#1A73E8] hover:scale-110 transition-transform cursor-pointer"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-          </div>
+          {documents.map((doc) => {
+            const hasFile = doc.file !== null || doc.isExisting;
+            const displayName = doc.name || "";
 
-          {/* Document slots list */}
-          <div className="w-full flex flex-col gap-4">
-            {documents.length === 0 && (
-                <div className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-300 dark:border-zinc-800 rounded-[20px]">
-                    No documents added. Click the + button to add a verification document.
+            return (
+              <div key={doc.id} className="flex flex-col w-full">
+                <div className="flex items-center gap-2 mb-2 ml-1">
+                  <span className="text-[14px] font-bold text-gray-900 dark:text-white">
+                    Verification Document
+                  </span>
+                  {doc.status === 'Verified' && (
+                    <CheckCircle2 className="w-[18px] h-[18px] text-emerald-500 fill-emerald-50 dark:fill-zinc-900" />
+                  )}
                 </div>
-            )}
-            
-            {documents.map((doc) => {
-              const hasFile = doc.file !== null || doc.isExisting;
-              const displayName = doc.name || "";
 
-              return (
-                <div key={doc.id} className="flex flex-col w-full">
-                  <div className="flex items-center gap-2 mb-2 ml-1">
-                    <span className="text-[14px] font-bold text-gray-900 dark:text-white">
-                      Verification Document
-                    </span>
-                    {doc.status === 'Verified' && (
-                      <CheckCircle2 className="w-[18px] h-[18px] text-emerald-500 fill-emerald-50 dark:fill-zinc-900" />
-                    )}
-                  </div>
+                {hasFile ? (
+                  <div className="flex flex-col w-full">
+                    <div className="w-full h-[64px] border border-gray-200 dark:border-zinc-800 rounded-[32px] flex items-center justify-between px-2 bg-white dark:bg-zinc-900/50">
 
-                  {hasFile ? (
-                    <div className="flex flex-col w-full">
-                        <div className="w-full h-[64px] border border-gray-200 dark:border-zinc-800 rounded-[32px] flex items-center justify-between px-2 bg-white dark:bg-zinc-900/50">
-                          
-                          <div className="flex items-center gap-3 overflow-hidden pl-1">
-                            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-gray-100">
-                                {doc.thumbnailUrl ? (
-                                    <img src={doc.thumbnailUrl} alt="doc" className="w-full h-full object-cover" />
-                                ) : (
-                                    <Icon icon="lucide:file-text" className="w-5 h-5 text-gray-400" />
-                                )}
-                            </div>
-                            <span className="text-[14px] font-semibold text-gray-800 dark:text-white truncate max-w-[150px] md:max-w-[200px]">
-                                {displayName}
-                            </span>
-                          </div>
-                          
-                          <div className="text-[13px] font-medium pr-4 whitespace-nowrap flex-shrink-0">
-                            {doc.status === 'Verified' && <span className="text-emerald-500">Verified</span>}
-                            {doc.status === 'Pending verification' && <span className="text-gray-400">Pending verification</span>}
-                            {doc.status === 'Rejected' && <span className="text-red-400">Rejected({doc.rejectionReason || 'Fraud suspect'})</span>}
-                          </div>
-                          
+                      <div className="flex items-center gap-3 overflow-hidden pl-1">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 border border-gray-100">
+                          {doc.thumbnailUrl ? (
+                            <img src={doc.thumbnailUrl} alt="doc" className="w-full h-full object-cover" />
+                          ) : (
+                            <Icon icon="lucide:file-text" className="w-5 h-5 text-gray-400" />
+                          )}
                         </div>
-                        
-                        <div className="flex justify-end mt-1.5 pr-2">
-                            <button
-                                type="button"
-                                onClick={() => removeDocument(doc.id)}
-                                className="p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer"
-                                title="Remove document"
-                            >
-                                <Trash2 className="w-[18px] h-[18px] stroke-[2px]" />
-                            </button>
-                        </div>
+                        <span className="text-[14px] font-semibold text-gray-800 dark:text-white truncate max-w-[150px] md:max-w-[200px]">
+                          {displayName}
+                        </span>
+                      </div>
+
+                      <div className="text-[13px] font-medium pr-4 whitespace-nowrap flex-shrink-0">
+                        {doc.status === 'Verified' && <span className="text-emerald-500">Verified</span>}
+                        {doc.status === 'Pending verification' && <span className="text-gray-400">Pending verification</span>}
+                        {doc.status === 'Rejected' && <span className="text-red-400">Rejected({doc.rejectionReason || 'Fraud suspect'})</span>}
+                      </div>
+
                     </div>
-                  ) : (
-                    <div className="w-full relative mb-8">
-                      <label
-                        htmlFor={`file-input-${doc.id}`}
-                        className="w-full h-[64px] px-6 rounded-[32px] border border-dashed border-gray-300 dark:border-zinc-800 bg-gray-50/50 hover:border-[#1A73E8] hover:bg-blue-50/30 dark:hover:bg-zinc-900 transition-colors flex items-center justify-center cursor-pointer select-none"
-                      >
-                        <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280]" />
-                        <span className="ml-2 text-sm text-gray-500 font-medium">Click to upload document</span>
-                      </label>
-                      <input
-                        type="file"
-                        id={`file-input-${doc.id}`}
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={(e) => handleFileChange(doc.id, e)}
-                        className="hidden"
-                      />
+
+                    <div className="flex justify-end mt-1.5 pr-2">
                       <button
                         type="button"
                         onClick={() => removeDocument(doc.id)}
-                        className="absolute right-2 -bottom-8 p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer"
-                        title="Remove document slot"
+                        className="p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+                        title="Remove document"
                       >
-                         <Trash2 className="w-[18px] h-[18px] stroke-[2px]" />
+                        <Trash2 className="w-[18px] h-[18px] stroke-[2px]" />
                       </button>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  </div>
+                ) : (
+                  <div className="w-full relative mb-8">
+                    <label
+                      htmlFor={`file-input-${doc.id}`}
+                      className="w-full h-[64px] px-6 rounded-[32px] border border-dashed border-gray-300 dark:border-zinc-800 bg-gray-50/50 hover:border-[#1A73E8] hover:bg-blue-50/30 dark:hover:bg-zinc-900 transition-colors flex items-center justify-center cursor-pointer select-none"
+                    >
+                      <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280]" />
+                      <span className="ml-2 text-sm text-gray-500 font-medium">Click to upload document</span>
+                    </label>
+                    <input
+                      type="file"
+                      id={`file-input-${doc.id}`}
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => handleFileChange(doc.id, e)}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeDocument(doc.id)}
+                      className="absolute right-2 -bottom-8 p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+                      title="Remove document slot"
+                    >
+                      <Trash2 className="w-[18px] h-[18px] stroke-[2px]" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Footer Buttons */}
@@ -378,11 +378,10 @@ export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyE
         <button
           type="submit"
           disabled={!isDirty || submitting}
-          className={`h-10 px-10 rounded-full font-medium text-[14px] transition-colors flex items-center justify-center ${
-            isDirty && !submitting
+          className={`h-10 px-10 rounded-full font-medium text-[14px] transition-colors flex items-center justify-center ${isDirty && !submitting
               ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
-              : "bg-gray-100 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
-          }`}
+              : "bg-gray-100 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-default"
+            }`}
         >
           {submitting ? 'Submitting...' : 'Submit'}
         </button>

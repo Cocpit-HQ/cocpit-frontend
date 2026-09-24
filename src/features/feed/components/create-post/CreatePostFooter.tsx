@@ -80,10 +80,10 @@ const CreatePostFooter = ({
           disabled={isSubmitting}
           className={`
             flex items-center justify-center gap-2 px-8 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-all duration-300 transform active:scale-95
-            ${isBroadcast 
-              ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-amber-500/20' 
+            ${isBroadcast
+              ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:shadow-amber-500/20'
               : 'bg-primary text-primary-foreground hover:bg-primary/95 shadow-primary/20'}
-            ${isSubmitting ? 'opacity-70 cursor-not-allowed scale-95' : 'hover:scale-[1.02]'}
+            ${isSubmitting ? 'opacity-70 cursor-default scale-95' : 'hover:scale-[1.02]'}
             ${isMobile ? 'w-full' : 'sm:w-auto min-w-[140px]'}
           `}
         >
@@ -96,10 +96,10 @@ const CreatePostFooter = ({
         </button>
       </div>
 
-      
+
       {isBroadcast && !isEdit && (
         <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider text-center sm:text-right animate-pulse">
-           Broadcast post will be featured across all connected organization feeds
+          Broadcast post will be featured across all connected organization feeds
         </p>
       )}
     </div>

@@ -46,7 +46,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
   const searchParams = useSearchParams();
   const sourcePostId = searchParams.get('sourcePostId') || undefined;
   const slug = params.slug as string || "nexsus-global-systems";
-  
+
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [statsModalTab, setStatsModalTab] = useState<"followers" | "following" | "subscribers">("followers");
@@ -134,13 +134,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
   });
 
   const blockMutation = useMutation({
-    mutationFn: () => data.isBlocked 
+    mutationFn: () => data.isBlocked
       ? companyProfileService.unblockTarget(orgId!)
       : companyProfileService.blockTarget(orgId!),
     onSuccess: () => {
       toast({
         title: data.isBlocked ? "Organization unblocked" : "Organization blocked",
-        description: data.isBlocked 
+        description: data.isBlocked
           ? `You have unblocked ${data.name}`
           : `You have blocked ${data.name}`
       });
@@ -166,7 +166,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
     <div className="w-full">
       {/* 960 x 224 Header Frame (Cover + Logo/Buttons Row) */}
       <div className="relative w-full h-[224px] sm:rounded-2xl">
-        
+
         {/* 1. Cover Banner (960x160) */}
         <div className="relative w-full h-[160px] overflow-hidden sm:rounded-[24px]">
           {coverUrl ? (
@@ -183,10 +183,10 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
               style={{ background: 'linear-gradient(186.03deg, #EEF2FF 4.68%, #6366F1 332.65%)' }}
             />
           )}
-          
+
           {/* Cover Edit Icon */}
           {canManageCompany && orgId && (
-            <button 
+            <button
               onClick={() => setModalType("cover")}
               className="absolute bottom-4 right-4 w-8 h-8 bg-[#1A73E8] rounded-full flex items-center justify-center text-white shadow-md z-10"
             >
@@ -197,7 +197,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
 
         {/* 2. Logo & Buttons Row (Height 64px: from 160px to 224px) */}
         <div className="relative w-full h-[64px] pl-[30px] pr-[30px] max-md:!px-4 max-md:!h-[36px]">
-          
+
           {/* Logo overlapping the cover */}
           <div className="absolute -top-12 left-[30px] w-[96px] h-[96px] bg-white rounded-xl border-2 border-white shadow-xl z-10 flex flex-col justify-center items-center max-md:!left-4 max-md:!w-[72px] max-md:!h-[72px] max-md:!-top-9">
             <Image
@@ -208,7 +208,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             />
             {/* Logo Edit Icon */}
             {canManageCompany && orgId && (
-              <button 
+              <button
                 onClick={() => setModalType("logo")}
                 className="absolute bottom-[6px] right-[6px] w-8 h-8 bg-[#1A73E8] rounded-full flex items-center justify-center text-white shadow-md z-10"
               >
@@ -239,10 +239,10 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
       <div className="w-full pl-[40px] pr-[40px] pt-[24px] pb-2 max-md:!px-4 max-md:!pt-2">
         {/* Info & Stats Row (Frame 2608525) */}
         <div className="w-full flex flex-col md:flex-row justify-between items-start gap-[16px]">
-          
+
           {/* Left Info (Frame 2608514) */}
           <div className="flex flex-col gap-[8px] w-full md:w-[608.4px]">
-            
+
             {/* Name + tagline group (Frame 2608511) */}
             <div className="flex flex-col gap-0 w-full md:w-[608.4px]">
               {/* Title Block (Frame 2609085) */}
@@ -297,13 +297,13 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
                   </div>
                 )}
               </div>
-              
+
               {/* Tagline */}
               <p className="text-[16px] font-normal leading-[24px] text-[#000000] dark:text-zinc-200 w-full md:w-[608.4px]">
                 {data.tagline}
               </p>
             </div>
-            
+
             {/* Meta Info (Frame 2609071) */}
             <div className="flex flex-wrap items-center gap-[8px] w-full md:w-[608.4px] text-[12px] text-[#6B7280] dark:text-zinc-400">
               <span>{formatIndustryType(data.industry)}</span>
@@ -312,7 +312,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
               <span className="w-[2px] h-[2px] bg-[#6B7280] dark:bg-zinc-600 rounded-full" />
               <span>{data.employeeCount ? `${data.employeeCount}${String(data.employeeCount).toLowerCase().includes('member') ? '' : ' members'}` : ''}</span>
             </div>
-            
+
             {/* Website Link */}
             <div className="w-full md:w-[608.4px] h-[18px] flex items-center">
               <a href={data.websiteUrl} target="_blank" rel="noreferrer" className="text-[12px] font-normal leading-[18px] text-[#1A73E8] hover:underline">
@@ -323,16 +323,16 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             {/* Action Buttons (Only for public view / !isOwnProfile) */}
             {!isOwnProfile && (
               <div className="flex gap-[10px] pt-2 items-center">
-                <button 
+                <button
                   onClick={() => followMutation.mutate()}
                   disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
                   title={!actingCompanyCanFollow ? "Only company admins/owners can follow on behalf of the company" : ""}
-                  className={`h-[36px] w-[140px] ${data.isFollowing ? 'bg-transparent text-[#6B7280] border border-[#6B7280]' : 'bg-[#1A73E8] text-white'} font-normal text-[14px] leading-[20px] rounded-[24px] hover:opacity-80 transition-colors shadow-sm flex items-center justify-center ${!actingCompanyCanFollow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`h-[36px] w-[140px] ${data.isFollowing ? 'bg-transparent text-[#6B7280] border border-[#6B7280]' : 'bg-[#1A73E8] text-white'} font-normal text-[14px] leading-[20px] rounded-[24px] hover:opacity-80 transition-colors shadow-sm flex items-center justify-center ${!actingCompanyCanFollow ? 'opacity-50 cursor-default' : ''}`}
                 >
                   {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
                 </button>
                 {data.showMessage !== false && (
-                  <Link 
+                  <Link
                     href={`/messaging?companyId=${orgId}`}
                     className="h-[36px] px-4 min-w-[120px] bg-transparent text-[#1A73E8] border border-[#1A73E8] font-normal text-[14px] leading-[20px] rounded-[24px] hover:bg-blue-50 transition-colors shadow-sm flex items-center justify-center"
                   >
@@ -373,7 +373,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
           {/* Right Stats (Frame 2609070) */}
           <div className="flex gap-[40px] items-center w-[295.6px] h-[48px] mt-6 md:mt-0 max-md:!gap-2 max-md:!w-full max-md:!h-auto max-md:!justify-start">
             {/* Following */}
-            <div 
+            <div
               onClick={() => {
                 setStatsModalTab("following");
                 setIsStatsModalOpen(true);
@@ -385,7 +385,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             </div>
 
             {/* Followers */}
-            <div 
+            <div
               onClick={() => {
                 setStatsModalTab("followers");
                 setIsStatsModalOpen(true);
@@ -397,7 +397,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
             </div>
 
             {/* Subscribers */}
-            <div 
+            <div
               onClick={() => { setStatsModalTab("subscribers"); setIsStatsModalOpen(true); }}
               className="flex flex-col gap-[8px] w-[85px] cursor-pointer hover:opacity-80 transition-opacity max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]"
             >
@@ -408,7 +408,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
 
         </div>
       </div>
-      
+
       {orgId && modalType === "logo" && (
         <EditAvatarModal
           isOpen={true}

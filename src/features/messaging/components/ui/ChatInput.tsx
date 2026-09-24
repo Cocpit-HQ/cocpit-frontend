@@ -203,7 +203,7 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
           disabled={(!text.trim() && files.length === 0) || disabled}
           className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${(text.trim() || files.length > 0) && !disabled
             ? "bg-primary text-primary-foreground hover:opacity-90"
-            : "bg-muted text-muted-foreground cursor-not-allowed"
+            : "bg-muted text-muted-foreground cursor-default"
             }`}
         >
           <Send className="w-4 h-4 md:w-5 md:h-5" />

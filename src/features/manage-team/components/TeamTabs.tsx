@@ -34,22 +34,20 @@ export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
               }
             }}
             disabled={tab.disabled}
-            className={`h-10 rounded-[24px] flex justify-center items-center overflow-hidden transition-all ${
-              tab.disabled
-                ? "opacity-50 !cursor-not-allowed bg-company-bg border border-[#9CA3AF]"
-                : isActive 
-                  ? "bg-company-light-primary border border-transparent" 
+            className={`h-10 rounded-[24px] flex justify-center items-center overflow-hidden transition-all ${tab.disabled
+                ? "opacity-50 !cursor-default bg-company-bg border border-[#9CA3AF]"
+                : isActive
+                  ? "bg-company-light-primary border border-transparent"
                   : "bg-company-bg border border-company-primary hover:bg-company-light-primary/50"
-            }`}
+              }`}
           >
             <div className="h-8 px-4 py-[6px] flex justify-center items-center gap-2">
-              <span className={`text-center text-xs font-['Poppins'] leading-5 ${
-                tab.disabled 
-                  ? "text-[#9CA3AF] font-normal" 
-                  : isActive 
-                    ? "text-company-primary font-medium" 
+              <span className={`text-center text-xs font-['Poppins'] leading-5 ${tab.disabled
+                  ? "text-[#9CA3AF] font-normal"
+                  : isActive
+                    ? "text-company-primary font-medium"
                     : "text-company-primary font-normal"
-              }`}>
+                }`}>
                 {tab.label}
               </span>
             </div>
@@ -61,7 +59,7 @@ export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
             <TooltipProvider key={tab.key} delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="!cursor-not-allowed">
+                  <div className="!cursor-default">
                     {buttonContent}
                   </div>
                 </TooltipTrigger>

@@ -142,7 +142,7 @@ export function ConnectionConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 h-[36px] px-2 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[13px] leading-[20px] transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+            className="flex-1 h-[36px] px-2 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[13px] leading-[20px] transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default flex items-center justify-center"
           >
             {isLoading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-ds-text-primary" />
@@ -156,7 +156,7 @@ export function ConnectionConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 h-[36px] px-2 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[13px] leading-[20px] transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+            className="flex-1 h-[36px] px-2 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[13px] leading-[20px] transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default flex items-center justify-center"
           >
             Cancel
           </button>

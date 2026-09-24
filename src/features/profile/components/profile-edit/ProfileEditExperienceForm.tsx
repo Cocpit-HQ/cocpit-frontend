@@ -167,7 +167,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           const parsed = JSON.parse(savedDraft);
           // Only use draft if it has the same ID or both are new
           if (parsed.experience_id === initialData.experience_id) {
-             initialData = parsed;
+            initialData = parsed;
           }
         } catch (e) {
           // ignore
@@ -185,10 +185,10 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   useEffect(() => {
     setErrors((prev) => {
       const newErrors = { ...prev };
-      
+
       // Clear previous validation errors from this hook
-      if (newErrors.start_date === "Date cannot be in the future" || newErrors.start_date?.includes("overlaps") || newErrors.start_date === "The new role's start date cannot be before the current role's start date.") delete newErrors.start_date;
-      if (newErrors.end_date === "End date must be on or after start date" || newErrors.end_date === "Date cannot be in the future" || newErrors.end_date?.includes("overlaps")) delete newErrors.end_date;
+      if (newErrors.start_date === "Date cannot be in the future" || newErrors.start_date === "The new role's start date cannot be before the current role's start date.") delete newErrors.start_date;
+      if (newErrors.end_date === "End date must be on or after start date" || newErrors.end_date === "Date cannot be in the future") delete newErrors.end_date;
       if (newErrors.title === "This role already exists on your profile") delete newErrors.title;
       if (newErrors.company_name === "This role already exists on your profile") delete newErrors.company_name;
 
@@ -228,60 +228,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         }
       }
 
-      // 3.5. Same Company Date Overlap Check (Backend hard block)
-      if (company && start) {
-        const sameCompanyOverlap = allExperiences.find((e) => {
-          if (e.experience_id === formData.experience_id) return false;
-          // Ignore the role being ended in "Add new role" sequence
-          if (isAddingNewRole && endCurrentRole && e.experience_id === (initialExperience as any)?.experience_id) return false;
-          
-          if (e.company_name?.trim().toLowerCase() !== company) return false;
-
-          const eStart = e.start_date ? new Date(e.start_date) : null;
-          const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
-          const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
-
-          if (!eStart) return false;
-          return start < eEnd && currentEnd > eStart;
-        });
-
-        if (sameCompanyOverlap) {
-          const overlapMsg = `Date range overlaps with your existing "${sameCompanyOverlap.title}" role at "${sameCompanyOverlap.company_name}". Adjust your dates or edit the existing record first.`;
-          newErrors.start_date = overlapMsg;
-          if (!formData.is_current) {
-            newErrors.end_date = overlapMsg;
-          }
-        }
-      }
-
-      // 4. Overlap Check (Full-time On-site only)
-      if (
-        formData.work_type === "Full time" &&
-        formData.work_mode === "On-site" &&
-        start
-      ) {
-        const overlap = allExperiences.find((e) => {
-          if (e.experience_id === formData.experience_id) return false;
-          if (e.work_type !== "Full time" || e.work_mode !== "On-site") return false;
-
-          const eStart = e.start_date ? new Date(e.start_date) : null;
-          const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
-          const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
-
-          if (!eStart) return false;
-          
-          return start < eEnd && currentEnd > eStart;
-        });
-
-        if (overlap) {
-          const overlapMsg = `Date range overlaps with your existing '${overlap.title}' role at '${overlap.company_name}'.`;
-          newErrors.start_date = overlapMsg;
-          if (!formData.is_current) {
-            newErrors.end_date = overlapMsg;
-          }
-        }
-      }
-      // 5. Sequential Roles Check
+      // 4. Sequential Roles Check
       if (isAddingNewRole && endCurrentRole && start && initialExperience?.start_date) {
         const oldStart = new Date(initialExperience.start_date);
         oldStart.setHours(0, 0, 0, 0);
@@ -430,57 +377,6 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
       }
     }
 
-    if (companyLower && start) {
-      const sameCompanyOverlap = allExperiences.find((e) => {
-        if (e.experience_id === formData.experience_id) return false;
-        if (isAddingNewRole && endCurrentRole && e.experience_id === (initialExperience as any)?.experience_id) return false;
-        
-        if (e.company_name?.trim().toLowerCase() !== companyLower) return false;
-
-        const eStart = e.start_date ? new Date(e.start_date) : null;
-        const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
-        const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
-
-        if (!eStart) return false;
-        return start < eEnd && currentEnd > eStart;
-      });
-
-      if (sameCompanyOverlap) {
-        const overlapMsg = `Date range overlaps with your existing "${sameCompanyOverlap.title}" role at "${sameCompanyOverlap.company_name}". Adjust your dates or edit the existing record first.`;
-        newErrors.start_date = overlapMsg;
-        if (!formData.is_current) {
-          newErrors.end_date = overlapMsg;
-        }
-      }
-    }
-
-    if (
-      formData.work_type === "Full time" &&
-      formData.work_mode === "On-site" &&
-      start
-    ) {
-      const overlap = allExperiences.find((e) => {
-        if (e.experience_id === formData.experience_id) return false;
-        if (e.work_type !== "Full time" || e.work_mode !== "On-site") return false;
-
-        const eStart = e.start_date ? new Date(e.start_date) : null;
-        const eEnd = e.is_current || !e.end_date ? new Date("9999-12-31") : new Date(e.end_date);
-        const currentEnd = formData.is_current || !end ? new Date("9999-12-31") : end;
-
-        if (!eStart) return false;
-        
-        return start < eEnd && currentEnd > eStart;
-      });
-
-      if (overlap) {
-        const overlapMsg = `Date range overlaps with your existing '${overlap.title}' role at '${overlap.company_name}'.`;
-        newErrors.start_date = overlapMsg;
-        if (!formData.is_current) {
-          newErrors.end_date = overlapMsg;
-        }
-      }
-    }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -502,9 +398,9 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         skills: formData.skills,
         ...(isAddingNewRole && initialExperience
           ? {
-              end_current_role: endCurrentRole,
-              end_current_role_id: initialExperience.experience_id,
-            }
+            end_current_role: endCurrentRole,
+            end_current_role_id: initialExperience.experience_id,
+          }
           : {}),
       };
 
@@ -875,7 +771,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           className={cn(
             "w-[77px] h-[36px] px-[12px] py-[6px] rounded-full font-['DM_Sans'] font-medium text-[16px] leading-[24px] flex items-center justify-center transition-all focus:outline-none",
             !canSubmit || isSaving || isDeleting
-              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-90"
+              ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-90"
               : "bg-[var(--ds-accent)] text-white hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
           )}
         >

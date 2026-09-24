@@ -109,7 +109,7 @@ const EventDetailPage = () => {
         const originalColorScheme = document.body.style.colorScheme;
         document.body.style.colorScheme = "light";
 
-        const canvas = await html2canvas(element, { 
+        const canvas = await html2canvas(element, {
           scale: 2,
           backgroundColor: "#ffffff",
           onclone: (clonedDoc) => {
@@ -117,13 +117,13 @@ const EventDetailPage = () => {
             for (let i = 0; i < elements.length; i++) {
               const el = elements[i] as HTMLElement;
               const style = window.getComputedStyle(el);
-              
+
               if (el.classList?.contains('animate-pulse')) {
-                 el.style.display = 'none';
+                el.style.display = 'none';
               }
-              
+
               if (el.style.backgroundColor?.includes('okl') || style.backgroundColor?.includes('okl')) {
-                el.style.backgroundColor = "#1f2937"; 
+                el.style.backgroundColor = "#1f2937";
               }
               if (el.style.color?.includes('okl') || style.color?.includes('okl')) {
                 el.style.color = "#ffffff";
@@ -144,13 +144,13 @@ const EventDetailPage = () => {
           unit: "mm",
           format: "a4"
         });
-        
+
         const pdfWidth = 100;
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
+
         pdf.addImage(imgData, "PNG", (210 - pdfWidth) / 2, 20, pdfWidth, pdfHeight);
         pdf.save(`ticket-${event?.title.substring(0, 10).replace(/\s/g, '') || 'event'}.pdf`);
-        
+
         setIsDownloading(false);
         setDownloadTicketData(null);
       }, 500); // 500ms allows the react component to render in the DOM fully before screenshotting
@@ -327,7 +327,7 @@ const EventDetailPage = () => {
                     }
                   }}
                   disabled={isCancelling}
-                  className="w-full bg-card border border-red-200 text-red-500 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-card border border-red-200 text-red-500 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-default"
                 >
                   {isCancelling ? 'Processing...' : 'Cancel Registration'}
                 </button>

@@ -56,10 +56,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         try {
           const job = activeListings.find(l => l.id === initialJobId);
           const companyId = job ? (job.org_id || (job as any).company_id) : null;
-          const endpoint = companyId 
+          const endpoint = companyId
             ? `/jobs/companies/${companyId}/offers/job/${initialJobId}/recipients`
             : `/jobs/offers/job/${initialJobId}/recipients`;
-          
+
           const [res, applicantsRes] = await Promise.all([
             api.get(endpoint),
             api.get(`/jobs/${initialJobId}/applicants`).catch(() => ({ data: [] }))
@@ -95,7 +95,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     return () => {
       isMounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialJobId]);
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
         if (searchQuery.trim().length > 0) {
           endpoint = `/users/search?q=${encodeURIComponent(searchQuery.trim())}`;
         }
-        
+
         if (selectedJobId) {
           const separator = endpoint.includes('?') ? '&' : '?';
           endpoint += `${separator}excludeJobId=${selectedJobId}`;
@@ -193,14 +193,14 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
       await Promise.all(promises);
       toast.success(`Offers sent successfully to: ${selectedList.map(c => c.name).join(', ')}`);
-      
+
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
 
       if (onOfferSent) {
         onOfferSent();
       }
-      
+
       // Reset state
       setStage(1);
       setSelectedJobId('');
@@ -221,7 +221,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       {/* Mobile bottom sheet / Desktop centered modal */}
       <div className="w-full md:w-[416px] md:p-4 bg-white dark:bg-[#0F1115] md:rounded-3xl flex flex-col justify-start items-center overflow-hidden shadow-xl border border-indigo-50/50 dark:border-[#2A2D35] animate-in slide-in-from-bottom md:zoom-in-95 duration-300 rounded-t-[28px] max-h-[92dvh] md:max-h-none overflow-y-auto">
-        
+
         {/* STAGE 1: Choose Job */}
         {stage === 1 && (
           <>
@@ -250,9 +250,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               </div>
 
               {/* Search input */}
-              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${
-                isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
-              }`}>
+              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
+                }`}>
                 <input
                   type="text"
                   placeholder="Search"
@@ -280,11 +279,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                         <div
                           key={job.id}
                           onClick={() => setSelectedJobId(job.id)}
-                          className={`self-stretch px-4 py-3 md:py-2 rounded-xl inline-flex justify-start items-start gap-4 cursor-pointer border transition-all ${
-                            isSelected
+                          className={`self-stretch px-4 py-3 md:py-2 rounded-xl inline-flex justify-start items-start gap-4 cursor-pointer border transition-all ${isSelected
                               ? (isCompanyMode ? 'bg-blue-50 dark:bg-[#16365F] border-blue-100 dark:border-[#1A73E8]/30 shadow-sm' : 'bg-indigo-50 dark:bg-[#252E54] border-indigo-100 dark:border-indigo-500/30 shadow-sm')
                               : 'bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#1C2340]/30 border-transparent'
-                          }`}
+                            }`}
                         >
                           <div className="flex-1 inline-flex flex-col justify-start items-start gap-1 md:gap-2 min-w-0">
                             <div className="justify-center text-black dark:text-[#F9FAFB] text-base font-semibold md:font-medium font-['Poppins'] capitalize leading-6 truncate w-full text-left">{job.title}</div>
@@ -305,9 +303,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <button
                   onClick={handleCancelClick}
                   type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
-                    isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
-                  }`}
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
+                    }`}
                 >
                   Cancel
                 </button>
@@ -317,10 +314,10 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     setIsFetchingRecipients(true);
                     try {
                       const companyId = selectedJob.org_id || (selectedJob as any).company_id;
-                      const endpoint = companyId 
+                      const endpoint = companyId
                         ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
                         : `/jobs/offers/job/${selectedJobId}/recipients`;
-                      
+
                       const [res, applicantsRes] = await Promise.all([
                         api.get(endpoint),
                         api.get(`/jobs/${selectedJobId}/applicants`).catch(() => ({ data: [] }))
@@ -347,9 +344,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   }}
                   disabled={!selectedJobId || isFetchingRecipients}
                   type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-                  }`}
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-default ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
+                    }`}
                 >
                   {isFetchingRecipients ? <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" /> : "Continue"}
                 </button>
@@ -386,9 +382,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               </div>
 
               {/* Search input */}
-              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${
-                isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
-              }`}>
+              <div data-property-1="SEARCH" className={`w-full md:w-96 px-4 py-3 md:py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-gray-200 dark:outline-[#2A2D35] bg-white dark:bg-[#0B0F19] inline-flex justify-between items-center transition-colors ${isCompanyMode ? 'focus-within:outline-blue-400' : 'focus-within:outline-indigo-400'
+                }`}>
                 <input
                   type="text"
                   placeholder="Search"
@@ -404,7 +399,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               {/* Candidates selection */}
               <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full px-2 box-border">
                 <div className="text-left justify-start text-black text-xs font-normal font-['Poppins'] leading-4">Choose candidates</div>
-                
+
                 <div className="self-stretch flex flex-col justify-start items-start gap-2 max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
                   {(() => {
                     const availableCandidates = candidatesList.filter((cand) => {
@@ -431,9 +426,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                           onClick={() => {
                             toggleCandidateSelection(cand.id);
                           }}
-                          className={`self-stretch h-12 inline-flex justify-between items-center rounded-xl px-2 transition-colors w-full box-border cursor-pointer ${
-                             isCompanyMode ? 'hover:bg-blue-50/20' : 'hover:bg-indigo-50/20'
-                           }`}
+                          className={`self-stretch h-12 inline-flex justify-between items-center rounded-xl px-2 transition-colors w-full box-border cursor-pointer ${isCompanyMode ? 'hover:bg-blue-50/20' : 'hover:bg-indigo-50/20'
+                            }`}
                         >
                           <div className="flex justify-start items-center gap-2">
                             <div className="relative w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['Poppins'] select-none">
@@ -455,13 +449,12 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                               </div>
                             </div>
                           </div>
-                          
+
                           {/* Checkbox */}
                           {isChecked ? (
                             <div className="p-1 inline-flex flex-col justify-center items-center">
-                              <div className={`w-5 h-5 rounded flex items-center justify-center border ${
-                                 isCompanyMode ? 'bg-[#1A73E8] border-[#1A73E8]' : 'bg-indigo-500 border-indigo-500'
-                               }`}>
+                              <div className={`w-5 h-5 rounded flex items-center justify-center border ${isCompanyMode ? 'bg-[#1A73E8] border-[#1A73E8]' : 'bg-indigo-500 border-indigo-500'
+                                }`}>
                                 <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white stroke-[3]" />
                               </div>
                             </div>
@@ -489,9 +482,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     }
                   }}
                   type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
-                    isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
-                  }`}
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
+                    }`}
                 >
                   {initialJobId ? 'Cancel' : 'Back'}
                 </button>
@@ -502,9 +494,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   }}
                   disabled={selectedCandidates.length === 0}
                   type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-                  }`}
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-default ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
+                    }`}
                 >
                   Continue
                 </button>
@@ -546,8 +537,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   const c = allFetchedCandidates[id];
                   if (!c) return null;
                   return (
-                    <div 
-                      key={c.id} 
+                    <div
+                      key={c.id}
                       className="flex flex-col items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => {
                         toggleCandidateSelection(c.id);
@@ -570,9 +561,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                             />
                           ) : null}
                         </div>
-                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded border-[1.5px] border-white flex items-center justify-center shadow-sm ${
-                          isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
-                        }`}>
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded border-[1.5px] border-white flex items-center justify-center shadow-sm ${isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
+                          }`}>
                           <Icon icon="lucide:check" className="w-3.5 h-3.5 text-white stroke-[3]" />
                         </div>
                       </div>
@@ -583,9 +573,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
               </div>
 
               {/* Single Textarea */}
-              <div className={`self-stretch h-36 px-4 py-3 bg-white dark:bg-[#0B0F19] rounded-2xl outline outline-1 inline-flex justify-start items-start w-full box-border transition-colors ${
-                isCompanyMode ? 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-blue-300' : 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-indigo-300'
-              }`}>
+              <div className={`self-stretch h-36 px-4 py-3 bg-white dark:bg-[#0B0F19] rounded-2xl outline outline-1 inline-flex justify-start items-start w-full box-border transition-colors ${isCompanyMode ? 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-blue-300' : 'outline-gray-200 dark:outline-[#2A2D35] focus-within:outline-indigo-300'
+                }`}>
                 <textarea
                   value={personalNote}
                   onChange={(e) => setPersonalNote(e.target.value)}
@@ -599,9 +588,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <button
                   onClick={() => setStage(2)}
                   type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${
-                    isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
-                  }`}
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 bg-white dark:bg-transparent rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 active:scale-95 transition-all text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'outline-blue-400 text-[#1A73E8] hover:bg-blue-50/10' : 'outline-indigo-400 text-indigo-400 hover:bg-indigo-50/10'
+                    }`}
                 >
                   Back
                 </button>
@@ -609,9 +597,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   onClick={handleSendClick}
                   disabled={selectedCandidates.length === 0 || isSending}
                   type="button"
-                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
-                  }`}
+                  className={`flex-1 h-11 md:h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-default ${isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
+                    }`}
                 >
                   {isSending ? <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" /> : "Send"}
                 </button>

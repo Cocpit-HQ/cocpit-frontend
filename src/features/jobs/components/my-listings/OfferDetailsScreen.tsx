@@ -166,7 +166,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
       {/* Desktop Horizontal Stats Bar */}
       <div className={`hidden md:flex box-border flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-full h-[100px] border-b border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} flex-none self-stretch grow-0`}>
-        
+
         {/* Role details */}
         <div className="flex flex-col items-start p-0 gap-[4px] flex-1">
           <span className={`w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} truncate capitalize`}>
@@ -219,7 +219,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
         {/* View job details link */}
         <div className="flex flex-row justify-end items-center p-[8px_0px] gap-[10px] w-[110px] flex-none">
-          <button 
+          <button
             onClick={onViewListingDetails}
             className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-right ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-[#818CF8] dark:text-[#818CF8]'} hover:underline`}
           >
@@ -274,7 +274,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         </div>
 
         {/* View job details link */}
-        <button 
+        <button
           type="button"
           onClick={onViewListingDetails}
           className={`w-full pt-5 pb-1 mt-1 border-t border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} font-['Poppins'] font-normal text-[14px] ${isCompanyMode ? 'text-[#1A73E8] dark:text-[#4D9CFF]' : 'text-indigo-500 dark:text-[#818CF8]'} cursor-pointer relative z-10 active:scale-95 transition-transform`}
@@ -362,13 +362,12 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                       disabled={!canJobsChat}
                       title={!canJobsChat ? "Permission required to chat with job candidates" : ""}
                       type="button"
-                      className={`box-sizing: border-box w-[100px] md:w-[120px] h-[40px] ${
-                        !canJobsChat
-                          ? 'opacity-50 cursor-not-allowed bg-gray-300 dark:bg-gray-700 text-gray-500'
+                      className={`box-sizing: border-box w-[100px] md:w-[120px] h-[40px] ${!canJobsChat
+                          ? 'opacity-50 cursor-default bg-gray-300 dark:bg-gray-700 text-gray-500'
                           : isCompanyMode
                             ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] text-white dark:text-[#0F1115] hover:opacity-90 active:scale-95 cursor-pointer'
                             : 'bg-[#6366F1] dark:bg-[#818CF8] text-white dark:text-[#0B0F19] hover:opacity-90 active:scale-95 cursor-pointer'
-                      } border border-white dark:border-transparent rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] transition-all`}
+                        } border border-white dark:border-transparent rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] transition-all`}
                     >
                       <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center">
                         Chat
@@ -405,7 +404,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 {/* Expandable note bar */}
                 {cand.note && (
                   <div className="w-full flex flex-col items-start transition-all duration-300 mt-4 md:mt-0 gap-[8px] px-0 md:px-0 md:pb-0">
-                    
+
                     {/* Note Label */}
                     <span className={`font-['Poppins'] font-semibold text-[16px] md:text-[18px] md:font-medium leading-[24px] md:leading-[26px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'} mb-0 md:mb-0 md:mt-0`}>
                       Note

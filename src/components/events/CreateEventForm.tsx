@@ -743,7 +743,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
           type="submit"
           form="create-event-form"
           disabled={isLoading || form.formState.isSubmitting}
-          className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-default"
         >
           {isLoading ? "Saving..." : (initialData ? "Update Event" : "Create Event")}
         </Button>

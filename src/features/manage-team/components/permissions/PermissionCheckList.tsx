@@ -14,12 +14,16 @@ const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
   { id: 'CHANNEL', label: 'Channel', icon: 'quill:inbox-newsletter' },
   { id: 'CHAT', label: 'Chat', icon: 'hugeicons:comment-01' },
-  { id: 'TEAMS', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
-    { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
-  ]},
-  { id: 'JOBS', label: 'Jobs', icon: 'hugeicons:job-search', children: [
-    { id: 'JOBS_CHAT', label: 'Jobs chat' }
-  ]},
+  {
+    id: 'TEAMS', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
+      { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
+    ]
+  },
+  {
+    id: 'JOBS', label: 'Jobs', icon: 'hugeicons:job-search', children: [
+      { id: 'JOBS_CHAT', label: 'Jobs chat' }
+    ]
+  },
   { id: 'ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up' },
   { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings' }
 ] as const;
@@ -31,7 +35,7 @@ export default function PermissionCheckList({
 }: PermissionCheckListProps) {
   const toggle = (perm: TeamPermission) => {
     if (disabled) return;
-    
+
     const parentGroup = PERMISSION_GROUPS.find((g) => g.id === perm && 'children' in g);
 
     if (selected.includes(perm)) {
@@ -80,25 +84,23 @@ export default function PermissionCheckList({
                   type="button"
                   onClick={() => toggle(group.id as TeamPermission)}
                   disabled={disabled}
-                  className={`relative w-[44px] h-[24px] rounded-full transition-colors ${
-                    isChecked ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#E0E0E7] dark:bg-[#2A2D35]'
-                  }`}
+                  className={`relative w-[44px] h-[24px] rounded-full transition-colors ${isChecked ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#E0E0E7] dark:bg-[#2A2D35]'
+                    }`}
                 >
                   <div
-                    className={`absolute top-[2px] w-[20px] h-[20px] bg-[#FFFFFF] rounded-full border border-[#E0E0E7] dark:border-[#2A2D35] transition-all ${
-                      isChecked ? 'left-[22px]' : 'left-[2px]'
-                    }`}
+                    className={`absolute top-[2px] w-[20px] h-[20px] bg-[#FFFFFF] rounded-full border border-[#E0E0E7] dark:border-[#2A2D35] transition-all ${isChecked ? 'left-[22px]' : 'left-[2px]'
+                      }`}
                   />
                 </button>
               </div>
-              
+
               {hasChildren && (
                 <div className="flex flex-col w-full">
                   {group.children.map((child) => {
                     const isChildChecked = selected.includes(child.id as TeamPermission);
                     // Child permissions require their parent group toggle to be ON
                     const isChildDisabled = disabled || !isChecked;
-                    
+
                     return (
                       <div key={child.id} className={`flex items-center justify-between pl-9 h-[40px] w-full ${isChildDisabled ? 'opacity-50' : ''}`}>
                         <div className="flex items-center h-[26px] text-[16px] text-[#000000] dark:text-[#A1A8B3] leading-[26px] font-['Poppins']">
@@ -110,11 +112,10 @@ export default function PermissionCheckList({
                           disabled={isChildDisabled}
                           className="flex items-center justify-center w-[40px] h-[40px] rounded-[100px] p-[11px] hover:bg-gray-50 dark:hover:bg-[#1A2435] transition-colors disabled:hover:bg-transparent"
                         >
-                          <div className={`box-border w-[18px] h-[18px] rounded-[2px] border flex items-center justify-center transition-colors ${
-                            isChildChecked 
-                              ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] border-[#1A73E8] dark:border-[#4D9CFF]' 
+                          <div className={`box-border w-[18px] h-[18px] rounded-[2px] border flex items-center justify-center transition-colors ${isChildChecked
+                              ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] border-[#1A73E8] dark:border-[#4D9CFF]'
                               : 'border-[#6B7280] dark:border-[#A1A8B3]'
-                          } ${isChildDisabled ? 'cursor-not-allowed bg-[#E0E0E7] dark:bg-[#2A2D35] border-[#E0E0E7] dark:border-[#2A2D35]' : ''}`}>
+                            } ${isChildDisabled ? 'cursor-default bg-[#E0E0E7] dark:bg-[#2A2D35] border-[#E0E0E7] dark:border-[#2A2D35]' : ''}`}>
                             {isChildChecked && (
                               <Icon icon="lucide:check" className="w-[14px] h-[14px] text-white" />
                             )}

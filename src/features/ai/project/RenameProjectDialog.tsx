@@ -68,7 +68,7 @@ export default function RenameProjectDialog({
               Rename
             </DialogTitle>
           </div>
- 
+
           <form onSubmit={handleSubmit} className="self-stretch flex flex-col justify-start items-center gap-4 w-full">
             <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
               <div className="justify-start text-[var(--foreground)] text-sm font-normal font-['Poppins'] leading-5">
@@ -84,7 +84,7 @@ export default function RenameProjectDialog({
                 autoFocus
               />
             </div>
- 
+
             {/* Action Buttons */}
             <div className="w-72 inline-flex justify-center items-start gap-2 mt-2">
               <button
@@ -99,11 +99,10 @@ export default function RenameProjectDialog({
               <button
                 type="submit"
                 disabled={isRenameDisabled}
-                className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${
-                  isRenameDisabled
-                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-not-allowed"
+                className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${isRenameDisabled
+                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-default"
                     : "bg-[var(--primary)] hover:bg-[var(--primary)]/90 cursor-pointer"
-                }`}
+                  }`}
               >
                 Rename
               </button>

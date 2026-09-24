@@ -311,19 +311,18 @@ export function AnimatedOTPInput({
                   height: `${boxHeight}px`,
                   transformOrigin: "bottom right", // Front wheel on right, left rear corner lifts into the air!
                 }}
-                className={`relative flex items-center justify-center rounded-2xl p-[2px] transition-colors duration-400 ${
-                  isWinnerBox && isChecked
+                className={`relative flex items-center justify-center rounded-2xl p-[2px] transition-colors duration-400 ${isWinnerBox && isChecked
                     ? "bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-[0_0_35px_rgba(16,185,129,0.7)] border-2 border-emerald-300"
                     : isWinnerBox && isPostLanding
-                    ? "bg-zinc-800 border-2 border-zinc-500 shadow-md"
-                    : isError
-                    ? "bg-red-950/30 border-2 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)]"
-                    : isFocused
-                    ? "bg-zinc-900 border-2 border-indigo-500 shadow-[0_0_18px_rgba(99,102,241,0.45)]"
-                    : isFilled
-                    ? "bg-zinc-800/90 border-2 border-zinc-600/80 shadow-sm"
-                    : "bg-zinc-900/90 border-2 border-zinc-700/60 hover:border-zinc-500"
-                }`}
+                      ? "bg-zinc-800 border-2 border-zinc-500 shadow-md"
+                      : isError
+                        ? "bg-red-950/30 border-2 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)]"
+                        : isFocused
+                          ? "bg-zinc-900 border-2 border-indigo-500 shadow-[0_0_18px_rgba(99,102,241,0.45)]"
+                          : isFilled
+                            ? "bg-zinc-800/90 border-2 border-zinc-600/80 shadow-sm"
+                            : "bg-zinc-900/90 border-2 border-zinc-700/60 hover:border-zinc-500"
+                  }`}
               >
                 {/* ── CLOCKWISE PERIMETER BEAM (ACTIVE DURING VERIFYING STAGE) ── */}
                 {stage === "verifying" && (
@@ -354,15 +353,14 @@ export function AnimatedOTPInput({
 
                 {/* Inner Slot Body */}
                 <div
-                  className={`relative z-10 w-full h-full rounded-[14px] flex items-center justify-center transition-colors duration-400 ${
-                    isWinnerBox && isChecked
+                  className={`relative z-10 w-full h-full rounded-[14px] flex items-center justify-center transition-colors duration-400 ${isWinnerBox && isChecked
                       ? "bg-gradient-to-b from-emerald-500 to-emerald-600"
                       : isFilled
-                      ? "bg-zinc-900/95"
-                      : isFocused
-                      ? "bg-zinc-900"
-                      : "bg-zinc-950/90"
-                  }`}
+                        ? "bg-zinc-900/95"
+                        : isFocused
+                          ? "bg-zinc-900"
+                          : "bg-zinc-950/90"
+                    }`}
                 >
                   {/* Regular Input & Scaled Digit */}
                   {(!isMerged || !isWinnerBox || !isChecked) && (
@@ -458,11 +456,10 @@ export function AnimatedOTPInput({
               type="button"
               onClick={onResend}
               disabled={resendCountdown > 0 || resendDisabled || stage !== "idle"}
-              className={`font-medium transition-colors ${
-                resendCountdown > 0 || resendDisabled || stage !== "idle"
-                  ? "text-zinc-600 cursor-not-allowed"
+              className={`font-medium transition-colors ${resendCountdown > 0 || resendDisabled || stage !== "idle"
+                  ? "text-zinc-600 cursor-default"
                   : "text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer"
-              }`}
+                }`}
             >
               {resendCountdown > 0 ? `Resend (${resendCountdown}s)` : "Resend"}
             </button>

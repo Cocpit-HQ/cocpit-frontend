@@ -91,7 +91,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         }
       ];
     }
-    
+
     return [
       {
         title: 'Core',
@@ -142,7 +142,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     <aside className={`sidebar ${isCompany ? 'sidebar--company' : ''} ${className || ''}`} aria-label="Primary navigation">
       {/* Logo */}
       <div className="sidebar__logo">
-        <Link 
+        <Link
           href="/feed"
           onClick={(e) => {
             if (pathname === '/feed' || pathname === '/') {
@@ -176,7 +176,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
               <div className="sidebar__items">
                 {visibleItems.map((item: any) => {
                   const active = isActive(item.href)
-                  
+
                   const content = (
                     <>
                       <item.icon className="sidebar__item-icon" />
@@ -192,7 +192,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
-                              className={`sidebar__item ${isCompany ? 'sidebar__item--company' : ''} !cursor-not-allowed`}
+                              className={`sidebar__item ${isCompany ? 'sidebar__item--company' : ''} !cursor-default`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();

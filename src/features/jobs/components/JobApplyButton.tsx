@@ -24,7 +24,7 @@ export const JobApplyButton: React.FC<JobApplyButtonProps> = ({
       {flags?.saved_jobs === false ? (
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <div tabIndex={0} className="focus:outline-none flex items-center gap-2 px-5 py-3 rounded-2xl outline outline-1 outline-gray-200 bg-gray-50 opacity-60 cursor-not-allowed font-medium text-sm font-['Poppins'] text-gray-500">
+            <div tabIndex={0} className="focus:outline-none flex items-center gap-2 px-5 py-3 rounded-2xl outline outline-1 outline-gray-200 bg-gray-50 opacity-60 cursor-default font-medium text-sm font-['Poppins'] text-gray-500">
               <Icon
                 icon="solar:bookmark-linear"
                 className="w-5 h-5 text-gray-400"
@@ -58,11 +58,10 @@ export const JobApplyButton: React.FC<JobApplyButtonProps> = ({
         <button
           onClick={onApply}
           disabled={isApplied}
-          className={`flex-1 py-3 px-6 rounded-2xl flex justify-center items-center gap-2 font-semibold text-sm font-['Poppins'] transition-all active:scale-95 ${
-            isApplied
+          className={`flex-1 py-3 px-6 rounded-2xl flex justify-center items-center gap-2 font-semibold text-sm font-['Poppins'] transition-all active:scale-95 ${isApplied
               ? 'bg-emerald-500 text-white cursor-default'
               : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-md shadow-indigo-500/10'
-          }`}
+            }`}
         >
           <Icon icon={isApplied ? 'lucide:check-circle' : 'lucide:send'} className="w-5 h-5" />
           <span>{isApplied ? 'Already Applied' : 'Apply Now'}</span>

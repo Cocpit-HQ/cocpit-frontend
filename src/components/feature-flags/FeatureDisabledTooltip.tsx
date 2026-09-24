@@ -41,12 +41,12 @@ export const FeatureDisabledTooltip: React.FC<FeatureDisabledTooltipProps> = ({
       left: "right-full top-1/2 -translate-y-1/2 mr-2",
       right: "left-full top-1/2 -translate-y-1/2 ml-2",
     };
-    
+
     const popupClass = positionClasses[position];
 
     return (
-      <div 
-        className="relative inline-block cursor-not-allowed group"
+      <div
+        className="relative inline-block cursor-default group"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

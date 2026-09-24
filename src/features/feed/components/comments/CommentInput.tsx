@@ -242,7 +242,7 @@ export default function CommentInput({
                                 className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm cursor-pointer
                                     ${commentText.trim().length > 0
                                         ? 'bg-ds-accent text-white hover:opacity-90 active:scale-95'
-                                        : 'bg-ds-border text-ds-text-muted cursor-not-allowed opacity-70'
+                                        : 'bg-ds-border text-ds-text-muted cursor-default opacity-70'
                                     }`}
                             >
                                 Save
@@ -258,10 +258,10 @@ export default function CommentInput({
                         return (
                             <div className="w-6 h-6 rounded-full bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] select-none shrink-0 border border-ds-border mt-1">
                                 {hasCustomAvatar && (
-                                    <img 
-                                        src={avatarUrl} 
-                                        alt="Current user" 
-                                        className="w-full h-full object-cover rounded-full" 
+                                    <img
+                                        src={avatarUrl}
+                                        alt="Current user"
+                                        className="w-full h-full object-cover rounded-full"
                                         onError={(e) => {
                                             (e.target as HTMLImageElement).style.display = 'none';
                                             const parent = (e.target as HTMLImageElement).parentElement;
@@ -269,7 +269,7 @@ export default function CommentInput({
                                                 const fallback = parent.querySelector('[data-fallback]');
                                                 if (fallback) (fallback as HTMLElement).style.display = 'flex';
                                             }
-                                        }} 
+                                        }}
                                     />
                                 )}
                                 <span data-fallback className="p-0.5 w-full h-full flex items-center justify-center text-ds-text-primary" style={{ display: hasCustomAvatar ? 'none' : 'flex' }}>
@@ -337,7 +337,7 @@ export default function CommentInput({
                                     onClick={() => handleSubmit()}
                                     disabled={!commentText.trim()}
                                     className={`h-[30px] sm:h-[32px] px-3 rounded-full font-dm-sans font-medium text-[12px] sm:text-[13px] transition-all flex items-center justify-center shadow-sm bg-ds-accent text-white leading-none whitespace-nowrap shrink-0
-                                        ${!commentText.trim() ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'}`}
+                                        ${!commentText.trim() ? 'opacity-70 cursor-default' : 'hover:opacity-90'}`}
                                 >
                                     Comment
                                 </button>
@@ -394,7 +394,7 @@ export default function CommentInput({
                                 <Smile className="w-[18px] h-[18px]" />
                             </button>
                         </div>
-                        
+
                         <div
                             className={`flex items-center justify-center ${commentText.trim().length > 0 ? 'opacity-100' : 'hidden'}`}
                         >

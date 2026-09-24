@@ -35,7 +35,7 @@ export function DeactivateAccountModal({ isOpen, onClose, hasCompanyAccount = fa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm font-poppins">
       <div className="relative flex flex-col items-center bg-white rounded-[24px] p-4 w-[328px] max-w-full shadow-lg">
-        
+
         {/* Title & Description */}
         <div className="flex flex-col items-center gap-[16px] mb-4 w-[296px] mt-2">
           <h2 className="w-[234px] h-[26px] flex items-center justify-center text-[18px] font-medium text-black leading-[26px] text-center m-0">Deactivate your account?</h2>
@@ -61,26 +61,25 @@ export function DeactivateAccountModal({ isOpen, onClose, hasCompanyAccount = fa
 
         {/* Action Buttons */}
         <div className="flex flex-row items-start justify-center w-[296px] h-[40px] gap-[16px]">
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="box-border flex flex-row items-center justify-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] rounded-[24px] border border-[#6366F1] bg-[#FFFFFF] text-[#6366F1] transition-colors hover:bg-indigo-50"
           >
             <span className="w-[50px] h-[20px] text-[14px] font-normal leading-[20px] text-center font-['Poppins']">Cancel</span>
           </button>
-          
-          <button 
-            onClick={handleDeactivate} 
-            disabled={!password || deactivateMutation.isPending}  
-            className={`box-border flex flex-row items-center justify-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] rounded-[24px] transition-colors ${
-              !password ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-not-allowed' : 'bg-[#FF6B6B] text-[#FFFFFF] hover:opacity-90 border border-[#FFFFFF]'
-            }`}
+
+          <button
+            onClick={handleDeactivate}
+            disabled={!password || deactivateMutation.isPending}
+            className={`box-border flex flex-row items-center justify-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] rounded-[24px] transition-colors ${!password ? 'bg-[#FFF6F6] text-[#FF6B6B]/50 border border-transparent cursor-default' : 'bg-[#FF6B6B] text-[#FFFFFF] hover:opacity-90 border border-[#FFFFFF]'
+              }`}
           >
             <span className="w-[77px] h-[20px] text-[14px] font-normal leading-[20px] text-center font-['Poppins']">
               {deactivateMutation.isPending ? "Wait..." : "Deactivate"}
             </span>
           </button>
         </div>
-        
+
       </div>
     </div>
   );

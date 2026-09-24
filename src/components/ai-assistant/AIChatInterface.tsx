@@ -170,11 +170,11 @@ export function AIChatInterface() {
                         type="text"
                         placeholder="Ask AI Assistant anything... (Demo Mode)"
                         disabled
-                        className="w-full bg-background border border-border rounded-full py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                        className="w-full bg-background border border-border rounded-full py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-70 disabled:cursor-default transition-all"
                     />
                     <button
                         disabled
-                        className="absolute right-2 p-2 bg-primary/20 text-primary rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="absolute right-2 p-2 bg-primary/20 text-primary rounded-full disabled:opacity-50 disabled:cursor-default"
                     >
                         <Send className="w-4 h-4" />
                     </button>

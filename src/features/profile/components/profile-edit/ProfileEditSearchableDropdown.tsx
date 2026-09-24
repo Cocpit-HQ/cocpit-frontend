@@ -264,7 +264,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
           htmlFor={id}
           className={cn(
             "font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-center",
-            error ? "text-red-500" : warning ? "text-[var(--ds-accent)]" : "text-[var(--ds-text-secondary)]",
+            warning ? "text-[var(--ds-accent)]" : "text-[var(--ds-text-secondary)]",
             labelClassName
           )}
         >

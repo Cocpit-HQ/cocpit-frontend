@@ -7,10 +7,11 @@ import { Poll } from '@/types/entities';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { usePostSync } from './use-post-sync';
-import { useCallback } from 'react';
+import { useCallback, useId } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = false) => {
+  const instanceId = useId();
   const {
     id,
     likes = 0,
@@ -101,7 +102,11 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
   useEffect(() => {
     const handleRepostDeleted = (event: Event) => {
       const customEvent = event as CustomEvent;
-      const { originalPostId } = customEvent.detail;
+      const { originalPostId, instanceId: eventInstanceId } = customEvent.detail;
+      
+      // Ignore events emitted by this specific component instance
+      if (eventInstanceId === instanceId) return;
+
       // If THIS post is the original post, set isReposted to false
       if (id.toString() === originalPostId?.toString() && isReposted) {
         setIsReposted(false);
@@ -217,10 +222,9 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
         setIsReposted(false);
         setIsRepostedWithThoughts(false);
         setRepostId(null);
-        setShareCount(prev => Math.max(0, prev - 1));
         
         window.dispatchEvent(new CustomEvent('repostDeleted', { 
-           detail: { originalPostId: id.toString(), repostId: prevRepostId } 
+           detail: { originalPostId: id.toString(), repostId: prevRepostId, instanceId } 
         }));
       } else {
         setIsReposted(true);

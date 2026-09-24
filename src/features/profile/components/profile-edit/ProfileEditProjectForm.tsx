@@ -119,7 +119,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
           const parsed = JSON.parse(savedDraft);
           // Only use draft if it has the same ID or both are new
           if (parsed.project_id === initialData.project_id) {
-             initialData = parsed;
+            initialData = parsed;
           }
         } catch (e) {
           // ignore
@@ -166,12 +166,12 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
       setMediaModal((prev) =>
         prev
           ? {
-              ...prev,
-              fileName: file.name,
-              fileUrl: previewUrl,
-              pendingFile: file,
-              title: prev.title.trim() ? prev.title : defaultTitle,
-            }
+            ...prev,
+            fileName: file.name,
+            fileUrl: previewUrl,
+            pendingFile: file,
+            title: prev.title.trim() ? prev.title : defaultTitle,
+          }
           : null
       );
     } else {
@@ -219,12 +219,12 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
         newErrors.end_date = "End date must be on or after start date";
       }
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     if (formData.media.length > 5) {
       toast.error("You can add a maximum of 5 media items");
       return;
@@ -385,9 +385,9 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
 
   const isAllThreeAdded = Boolean(
     formData.media &&
-      formData.media.length > 0 &&
-      formData.role?.trim() &&
-      formData.team_size?.trim()
+    formData.media.length > 0 &&
+    formData.role?.trim() &&
+    formData.team_size?.trim()
   );
 
   return (
@@ -619,7 +619,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
               className={cn(
                 "w-[111px] h-[36px] px-[12px] py-[6px] rounded-[100px] border border-[var(--ds-border)] flex flex-row justify-center items-center gap-[10px] flex-none order-0 grow-0 transition-all focus:outline-none",
                 hasLink || formData.media.length >= 5
-                  ? "opacity-40 cursor-not-allowed"
+                  ? "opacity-40 cursor-default"
                   : "hover:bg-[var(--ds-surface-1)] active:scale-95 cursor-pointer"
               )}
             >
@@ -798,7 +798,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
               className={cn(
                 "min-w-[80px] px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all focus:outline-none",
                 !canSubmit || isSaving || isDeleting
-                  ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-80"
+                  ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-80"
                   : "bg-[var(--ds-accent)] text-[var(--ds-text-primary)] hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
               )}
             >
@@ -827,7 +827,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
               className={cn(
                 "min-w-[80px] px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all focus:outline-none",
                 !canSubmit || isSaving
-                  ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed opacity-80"
+                  ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-80"
                   : "bg-[var(--ds-accent)] text-[var(--ds-text-primary)] hover:opacity-90 active:scale-95 cursor-pointer shadow-md"
               )}
             >

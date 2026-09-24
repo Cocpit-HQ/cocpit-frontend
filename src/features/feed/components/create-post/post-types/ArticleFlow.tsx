@@ -389,7 +389,7 @@ const ArticleFlow = ({
     if (typeof window === 'undefined') return html;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
-    
+
     // 1. Remove image tools
     const tools = tempDiv.querySelectorAll('.img-tools');
     tools.forEach(t => t.remove());
@@ -505,7 +505,7 @@ const ArticleFlow = ({
 
     // 2. Strip inline background/font styles that Chrome adds when backspacing list items
     const styledElements = container.querySelectorAll('[style]');
-    
+
     const TEXT_ALIGN_TO_CLASS: Record<string, string> = {
       center: 'text-center',
       right: 'text-right',
@@ -550,12 +550,12 @@ const ArticleFlow = ({
         if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
 
         const currentBlock = (node as HTMLElement | null)?.closest('p, h1, h2, h3, li, blockquote');
-        
+
         if (currentBlock) {
           const tempRange = document.createRange();
           tempRange.selectNodeContents(currentBlock);
           tempRange.setEnd(range.startContainer, range.startOffset);
-          
+
           if (tempRange.toString().length === 0) {
             // Cursor is at the absolute beginning of the block
 
@@ -816,7 +816,7 @@ const ArticleFlow = ({
           if (src && src.startsWith('blob:')) {
             try {
               URL.revokeObjectURL(src);
-            } catch (err) {}
+            } catch (err) { }
           }
         }
         container.remove();
@@ -893,7 +893,7 @@ const ArticleFlow = ({
         `;
         editorRef.current?.focus();
         document.execCommand('insertHTML', false, videoHtml);
-        
+
         const insertedP = document.getElementById(pId);
         if (insertedP) {
           const sel = window.getSelection();
@@ -906,7 +906,7 @@ const ArticleFlow = ({
           }
           insertedP.removeAttribute('id');
         }
-        
+
         onContentChange(editorRef.current?.innerHTML || '');
       } else {
         try {
@@ -943,7 +943,7 @@ const ArticleFlow = ({
           `;
           editorRef.current?.focus();
           document.execCommand('insertHTML', false, imageHtml);
-          
+
           const insertedP = document.getElementById(pId);
           if (insertedP) {
             const sel = window.getSelection();
@@ -956,7 +956,7 @@ const ArticleFlow = ({
             }
             insertedP.removeAttribute('id');
           }
-          
+
           onContentChange(editorRef.current?.innerHTML || '');
         } catch (err) {
           console.error("Failed to add inline image locally", err);
@@ -1032,10 +1032,10 @@ const ArticleFlow = ({
 
   const getFilesToUpload = (): File[] => {
     const currentContent = editorRef.current?.innerHTML || content;
-    
+
     // Find all blob: URLs in currentContent
     const blobUrls = Array.from(currentContent.matchAll(/src="(blob:[^"]+)"/g)).map(m => m[1]);
-    
+
     const filesToUpload: File[] = [];
     const seen = new Set<string>();
     blobUrls.forEach(url => {
@@ -1045,7 +1045,7 @@ const ArticleFlow = ({
         filesToUpload.push(match.file);
       }
     });
-    
+
     return filesToUpload;
   };
 
@@ -1059,7 +1059,7 @@ const ArticleFlow = ({
     }
     const files = getFilesToUpload();
     await onPost(files, cleanContent);
-    
+
     if (isEdit && editorRef.current) {
       setLocalFiles([]);
       const snap = {
@@ -1115,7 +1115,7 @@ const ArticleFlow = ({
   const isNextActive = isEdit ? (hasBasicFields && hasUnsavedChanges()) : hasBasicFields;
 
   const authorName = isCompanyPost ? (currentPoster?.name || 'Company') : (currentUser?.name || 'User');
-  const subtitleText = isCompanyPost 
+  const subtitleText = isCompanyPost
     ? (currentPoster?.company_name || currentPoster?.org_slug || 'company')
     : `@${currentUser?.username || 'user'}`;
 
@@ -1130,9 +1130,9 @@ const ArticleFlow = ({
   const rawAvatarSrc = isCompanyPost
     ? (currentPoster?.logo_url || currentPoster?.avatar_url || currentPoster?.company_logo || currentPoster?.logo || currentPoster?.image)
     : (currentUser?.image || (currentUser as any)?.avatar);
-  
-  const avatarSrc = isCompanyPost 
-    ? rawAvatarSrc 
+
+  const avatarSrc = isCompanyPost
+    ? rawAvatarSrc
     : (rawAvatarSrc && !rawAvatarSrc.includes('pngegg') ? rawAvatarSrc : null);
 
   console.log("DEBUG ArticleFlow avatarSrc:", { rawAvatarSrc, avatarSrc });
@@ -1150,85 +1150,85 @@ const ArticleFlow = ({
         <div className="flex flex-col gap-5 select-none font-poppins w-full max-w-[688px]">
           <button
             type="button"
-          onClick={() => {
-            console.log("BACK CLICKED");
-            onPreviewStepChange?.(false);
-            setStep(1);
-          }}
-          className="flex w-fit items-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to article
-        </button>
+            onClick={() => {
+              console.log("BACK CLICKED");
+              onPreviewStepChange?.(false);
+              setStep(1);
+            }}
+            className="flex w-fit items-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to article
+          </button>
 
-        <div className="flex items-center gap-3">
-          <img src={avatarSrc} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-          <div className="flex min-w-0 flex-col">
-            <h5 className="font-semibold text-[15px] text-foreground leading-tight truncate">{authorName}</h5>
-            <p className="text-[12px] text-muted-foreground truncate">{subtitleText}</p>
+          <div className="flex items-center gap-3">
+            <img src={avatarSrc} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+            <div className="flex min-w-0 flex-col">
+              <h5 className="font-semibold text-[15px] text-foreground leading-tight truncate">{authorName}</h5>
+              <p className="text-[12px] text-muted-foreground truncate">{subtitleText}</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-center">
-          <a
-            href={generatedArticleUrl}
-            onClick={(e) => e.preventDefault()}
-            className="group w-full max-w-[420px] bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md"
-          >
-            <div className="w-full aspect-[16/3] overflow-hidden">
-              {coverImage ? (
-                <img src={coverImage.url} alt={title || 'Article cover'} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
-                  <Icon icon="ph:article" className="w-8 h-8" />
-                </div>
+          <div className="flex justify-center">
+            <a
+              href={generatedArticleUrl}
+              onClick={(e) => e.preventDefault()}
+              className="group w-full max-w-[420px] bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md"
+            >
+              <div className="w-full aspect-[16/3] overflow-hidden">
+                {coverImage ? (
+                  <img src={coverImage.url} alt={title || 'Article cover'} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
+                    <Icon icon="ph:article" className="w-8 h-8" />
+                  </div>
+                )}
+              </div>
+              <div className="bg-ds-surface-2 py-3.5 px-5 text-center">
+                <h3 className="line-clamp-2 text-[13px] font-semibold text-ds-text-primary font-poppins leading-tight">
+                  {title || 'Untitled Article'}
+                </h3>
+              </div>
+            </a>
+          </div>
+
+          <textarea
+            value={caption || ''}
+            onChange={(e) => onCaptionChange(e.target.value)}
+            placeholder="Say something about your article..."
+            rows={4}
+            style={{ minHeight: '96px', maxHeight: '200px' }}
+            className="w-full overflow-y-auto custom-scrollbar resize-none rounded-xl border border-border bg-background px-4 py-3 text-[14px] text-foreground outline-none placeholder:text-muted-foreground focus:border-ds-accent focus:ring-2 focus:ring-ds-accent/20"
+          />
+
+          <div className="flex items-center gap-4 border-y border-border/50 py-3">
+            <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Audience">
+              <Icon icon="ph:users-three" className="w-5 h-5" />
+            </button>
+            <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Location">
+              <Icon icon="ph:map-pin" className="w-5 h-5" />
+            </button>
+            <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Feeling">
+              <Icon icon="ph:smiley" className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button type="button" className="flex items-center gap-2 px-5 py-2 border border-ds-border text-ds-text-primary bg-background rounded-full text-[14px] font-normal hover:bg-ds-surface-2 transition-colors">
+              <Sparkles className="w-4 h-4" />
+              Enhance with AI
+            </button>
+            <button
+              disabled={isSubmitting || !isNextActive}
+              onClick={handleOnPost}
+              className={cn(
+                "ds-btn ml-auto",
+                isCompanyPost ? "bg-ds-surface-2 hover:bg-ds-surface-2/80 text-ds-text-primary" : ""
               )}
-            </div>
-            <div className="bg-ds-surface-2 py-3.5 px-5 text-center">
-              <h3 className="line-clamp-2 text-[13px] font-semibold text-ds-text-primary font-poppins leading-tight">
-                {title || 'Untitled Article'}
-              </h3>
-            </div>
-          </a>
-        </div>
-
-        <textarea
-          value={caption || ''}
-          onChange={(e) => onCaptionChange(e.target.value)}
-          placeholder="Say something about your article..."
-          rows={4}
-          style={{ minHeight: '96px', maxHeight: '200px' }}
-          className="w-full overflow-y-auto custom-scrollbar resize-none rounded-xl border border-border bg-background px-4 py-3 text-[14px] text-foreground outline-none placeholder:text-muted-foreground focus:border-ds-accent focus:ring-2 focus:ring-ds-accent/20"
-        />
-
-        <div className="flex items-center gap-4 border-y border-border/50 py-3">
-          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Audience">
-            <Icon icon="ph:users-three" className="w-5 h-5" />
-          </button>
-          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Location">
-            <Icon icon="ph:map-pin" className="w-5 h-5" />
-          </button>
-          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Feeling">
-            <Icon icon="ph:smiley" className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button type="button" className="flex items-center gap-2 px-5 py-2 border border-ds-border text-ds-text-primary bg-background rounded-full text-[14px] font-normal hover:bg-ds-surface-2 transition-colors">
-            <Sparkles className="w-4 h-4" />
-            Enhance with AI
-          </button>
-          <button
-            disabled={isSubmitting || !isNextActive}
-            onClick={handleOnPost}
-            className={cn(
-              "ds-btn ml-auto",
-              isCompanyPost ? "bg-ds-surface-2 hover:bg-ds-surface-2/80 text-ds-text-primary" : ""
-            )}
-          >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
-          </button>
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
+            </button>
           </div>
         </div>
       </div>
@@ -1278,7 +1278,7 @@ const ArticleFlow = ({
       <div className="shrink-0 z-40 bg-[#030303] w-full pt-[60px] pb-[20px] px-4 sm:px-0 flex justify-center transition-all">
         {/* Frame 2609516: Author + Toolbar + Post button - h-[36px] w-[688px] flex items-center gap-[40px] */}
         <div className="flex h-[36px] w-[688px] max-w-full items-center justify-between gap-[40px]">
-          
+
           {/* Frame 2609563: Author (w-[119px] h-[32px] gap-[8px]) */}
           <div className="flex w-[119px] h-[32px] items-center gap-[8px] shrink-0">
             <div className="w-[32px] h-[32px] rounded-full overflow-hidden shrink-0 border border-[#2C2C33] bg-[#1A1A20]">
@@ -1313,14 +1313,14 @@ const ArticleFlow = ({
                 <span className="font-dm-sans font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] whitespace-nowrap">
                   {toolbarState.heading === 'H1' ? 'H1'
                     : toolbarState.heading === 'H2' ? 'H2'
-                    : toolbarState.heading === 'NORMAL' ? 'Normal'
-                    : 'Style'}
+                      : toolbarState.heading === 'NORMAL' ? 'Normal'
+                        : 'Style'}
                 </span>
                 <ChevronDown className={cn("w-[16px] h-[16px] text-[var(--ds-text-primary)] shrink-0 transition-transform duration-150", isStyleDropdownOpen && "rotate-180")} />
               </button>
 
               {isStyleDropdownOpen && (
-                <div 
+                <div
                   className="absolute left-0 top-full mt-1.5 w-[90px] h-[100px] p-[12px] gap-[8px] bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-[8px] shadow-2xl z-50 flex flex-col items-start box-border select-none"
                 >
                   {/* Normal: height 20px, font 14px, leading 20px */}
@@ -1548,7 +1548,7 @@ const ArticleFlow = ({
                 ? "bg-[var(--ds-accent)] text-white border border-transparent opacity-80 cursor-wait shadow-sm"
                 : isNextActive
                   ? "bg-[var(--ds-accent)] text-white border border-transparent hover:opacity-90 active:scale-95 cursor-pointer shadow-sm"
-                  : "bg-[#1A1A20] text-[#726B67] cursor-not-allowed border border-[#2C2C33]"
+                  : "bg-[#1A1A20] text-[#726B67] cursor-default border border-[#2C2C33]"
             )}
           >
             {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -1564,83 +1564,83 @@ const ArticleFlow = ({
 
           {/* Frame 2609565: Cover image (688px x 338px) */}
           <div className="w-[688px] max-w-full">
-          <ArticleCoverEditor
-            coverImage={coverImage?.url ?? null}
-            onCoverChange={(url) => onCoverChange(url)}
-            onRemoveCover={onRemoveCover}
-            isEdit={isEdit}
+            <ArticleCoverEditor
+              coverImage={coverImage?.url ?? null}
+              onCoverChange={(url) => onCoverChange(url)}
+              onRemoveCover={onRemoveCover}
+              isEdit={isEdit}
+            />
+          </div>
+
+          {/* Hidden inputs & triggers */}
+          <input
+            ref={inlineImageInputRef}
+            type="file"
+            accept="image/*,video/*"
+            onChange={handleInlineImageUpload}
+            className="hidden"
+          />
+          <input
+            ref={editImageInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleEditImageUpload}
+            className="hidden"
+          />
+
+          {/* Title Input: text-[40px] font-bold leading-[48px] text-[#FFECE6] placeholder-[#726B67] */}
+          <div
+            ref={titleInputRef}
+            contentEditable
+            role="textbox"
+            onInput={(e) => {
+              const text = e.currentTarget.innerText || '';
+              if (text.trim() === '' && e.currentTarget.innerHTML !== '') {
+                // Clear stray <br> tags left by browser when deleting all text
+                // This ensures the :empty CSS pseudoclass works for the placeholder
+                if (text === '' || text === '\n') {
+                  e.currentTarget.innerHTML = '';
+                }
+              }
+              onTitleChange(e.currentTarget.innerText || '');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                editorRef.current?.focus();
+              }
+            }}
+            onPaste={(e) => {
+              e.preventDefault();
+              const text = e.clipboardData.getData('text/plain');
+              document.execCommand('insertText', false, text);
+            }}
+            {...{ placeholder: "Title" }}
+            className="article-title-editor w-[688px] max-w-full p-0 bg-transparent border-none outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-bold text-[40px] leading-[48px] block h-auto min-h-[48px] flex-shrink-0 overflow-visible cursor-text"
+          />
+
+          {/* Rich contentEditable area: text-[16px] font-normal leading-[24px] text-[#FFECE6] placeholder-[#726B67] */}
+          <div
+            ref={editorRef}
+            contentEditable
+            onInput={handleInput}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            onClick={handleEditorClick}
+            {...{ placeholder: "Write your thoughts" }}
+            className="article-editor outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-normal text-[16px] leading-[24px] min-h-[300px] pb-16 h-auto w-[688px] max-w-full flex-shrink-0 overflow-visible cursor-text [&_a]:!text-[#EC6229] [&_a]:!no-underline"
           />
         </div>
-
-        {/* Hidden inputs & triggers */}
-        <input
-          ref={inlineImageInputRef}
-          type="file"
-          accept="image/*,video/*"
-          onChange={handleInlineImageUpload}
-          className="hidden"
-        />
-        <input
-          ref={editImageInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleEditImageUpload}
-          className="hidden"
-        />
-
-        {/* Title Input: text-[40px] font-bold leading-[48px] text-[#FFECE6] placeholder-[#726B67] */}
-        <div
-          ref={titleInputRef}
-          contentEditable
-          role="textbox"
-          onInput={(e) => {
-            const text = e.currentTarget.innerText || '';
-            if (text.trim() === '' && e.currentTarget.innerHTML !== '') {
-              // Clear stray <br> tags left by browser when deleting all text
-              // This ensures the :empty CSS pseudoclass works for the placeholder
-              if (text === '' || text === '\n') {
-                e.currentTarget.innerHTML = '';
-              }
-            }
-            onTitleChange(e.currentTarget.innerText || '');
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              editorRef.current?.focus();
-            }
-          }}
-          onPaste={(e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
-          }}
-          {...{ placeholder: "Title" }}
-          className="article-title-editor w-[688px] max-w-full p-0 bg-transparent border-none outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-bold text-[40px] leading-[48px] block h-auto min-h-[48px] flex-shrink-0 overflow-visible cursor-text"
-        />
-
-        {/* Rich contentEditable area: text-[16px] font-normal leading-[24px] text-[#FFECE6] placeholder-[#726B67] */}
-        <div
-          ref={editorRef}
-          contentEditable
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          onClick={handleEditorClick}
-          {...{ placeholder: "Write your thoughts" }}
-          className="article-editor outline-none focus:ring-0 text-[#FFECE6] font-dm-sans font-normal text-[16px] leading-[24px] min-h-[300px] pb-16 h-auto w-[688px] max-w-full flex-shrink-0 overflow-visible cursor-text [&_a]:!text-[#EC6229] [&_a]:!no-underline"
-        />
-      </div>
       </div>
 
       {/* Add / Edit Link Modal */}
       {isLinkModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
           onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }}
         >
           {/* Modal Container */}
-          <div 
+          <div
             className="relative flex h-[276px] w-[300px] flex-col items-center gap-[12px] rounded-[16px] border border-[#2C2C33] bg-[#030303] p-[12px] shadow-2xl font-dm-sans"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1711,7 +1711,7 @@ const ArticleFlow = ({
                   "flex h-[36px] w-[77px] items-center justify-center rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-all border-none outline-none",
                   isLinkFormValid
                     ? "bg-[#FF6422] text-[#FFECE6] hover:opacity-90 active:scale-95 cursor-pointer shadow-sm"
-                    : "bg-[#1A1A20] text-[#726B67] cursor-not-allowed"
+                    : "bg-[#1A1A20] text-[#726B67] cursor-default"
                 )}
               >
                 {editingLinkNode ? 'Save' : 'Add'}

@@ -81,16 +81,14 @@ export function RequestCard({
               alt={user.name}
               width={32}
               height={32}
-              className={`w-8 h-8 object-cover shrink-0 bg-ds-surface-1 border border-ds-border ${
-                isCompany ? 'rounded-[8px]' : 'rounded-full'
-              }`}
+              className={`w-8 h-8 object-cover shrink-0 bg-ds-surface-1 border border-ds-border ${isCompany ? 'rounded-[8px]' : 'rounded-full'
+                }`}
               onError={() => setImgError(true)}
             />
           ) : (
             <div
-              className={`flex items-center justify-center w-8 h-8 shrink-0 bg-ds-surface-1 text-ds-text-primary p-1.5 border border-ds-border ${
-                isCompany ? 'rounded-[8px]' : 'rounded-full'
-              }`}
+              className={`flex items-center justify-center w-8 h-8 shrink-0 bg-ds-surface-1 text-ds-text-primary p-1.5 border border-ds-border ${isCompany ? 'rounded-[8px]' : 'rounded-full'
+                }`}
               aria-hidden="true"
             >
               <UserIcon className="w-full h-full text-ds-text-primary" />
@@ -152,7 +150,7 @@ export function RequestCard({
                 disabled={isActing}
                 onClick={() => onAccept?.(request.id)}
                 aria-label={`Accept request from ${user.name}`}
-                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
               >
                 {isActing ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
@@ -166,7 +164,7 @@ export function RequestCard({
                 disabled={isActing}
                 onClick={() => onDecline?.(request.id)}
                 aria-label={`Decline request from ${user.name}`}
-                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
               >
                 {isActing ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
@@ -180,19 +178,19 @@ export function RequestCard({
 
         {mode === 'sent' && (
           <FeatureDisabledTooltip featureKey="enableConnectionManagement">
-          <button
-            type="button"
-            disabled={isActing}
-            onClick={() => onUndo?.(request.id)}
-            aria-label={`Withdraw request to ${user.name}`}
-            className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isActing ? (
-              <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
-            ) : (
-              'Withdraw'
-            )}
-          </button>
+            <button
+              type="button"
+              disabled={isActing}
+              onClick={() => onUndo?.(request.id)}
+              aria-label={`Withdraw request to ${user.name}`}
+              className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+            >
+              {isActing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+              ) : (
+                'Withdraw'
+              )}
+            </button>
           </FeatureDisabledTooltip>
         )}
       </div>

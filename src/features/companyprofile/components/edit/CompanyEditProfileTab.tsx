@@ -76,7 +76,7 @@ const SIZE_OPTIONS = [
 const normalizeCompanySize = (val?: string): string => {
   if (!val) return "1 - 10 Members";
   const s = val.toLowerCase().replace(/–/g, '-').replace(/\s+/g, '');
-  
+
   if (s.includes('1-10') || s.includes('1to10')) return "1 - 10 Members";
   if (s.includes('11-50') || s.includes('11to50')) return "11 - 50 Members";
   if (s.includes('51-200') || s.includes('51to200')) return "51 - 200 Members";
@@ -216,7 +216,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       const newOfferings = Array.from({ length: 4 }).map((_, idx) => {
         const existing = existingOfferings[idx];
         const text = existing?.content || "";
-        
+
         let icon = existing?.icon;
         if (!icon || !AVAILABLE_ICONS.includes(icon)) {
           icon = OFFERING_ICONS[idx % OFFERING_ICONS.length];
@@ -450,7 +450,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
               name="country"
               value="India"
               readOnly
-              className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-not-allowed"
+              className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-default"
             />
           </div>
         </div>
@@ -610,7 +610,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           disabled={!isDirty || updateMutation.isPending}
           className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center ${isDirty && !updateMutation.isPending
             ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
-            : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
+            : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-default"
             }`}
         >
           {updateMutation.isPending ? "Saving..." : "Save"}

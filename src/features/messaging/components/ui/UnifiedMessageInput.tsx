@@ -333,11 +333,11 @@ export default function UnifiedMessageInput({
                             onClick={handleSend}
                             disabled={isDisabled || (!text.trim() && files.length === 0 && !pendingSharedPost && !pendingSharedProfile)}
                             className={`flex items-center justify-center transition-all shadow-sm ${isQuickChat ? 'w-[20px] h-[20px] rounded-none shadow-none text-black hover:opacity-70' : 'w-9 h-9 rounded-full'} 
-                                ${isQuickChat 
+                                ${isQuickChat
                                     ? (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile ? 'text-[var(--primary)]' : 'text-black')
                                     : (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile
                                         ? 'bg-[var(--primary-tint)] text-[var(--primary)] hover:bg-[var(--primary-tint)]/80'
-                                        : 'bg-transparent text-muted-foreground/40 cursor-not-allowed')
+                                        : 'bg-transparent text-muted-foreground/40 cursor-default')
                                 }`}
                             aria-label="Send message"
                         >
