@@ -4,6 +4,7 @@ import { feedApi } from '../api/feed.api';
 import { FeedPostProps } from '../types';
 import { useFeed } from '@/hooks/use-feed';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useUIStore } from '@/store/ui.store';
 
 export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any, data: any) => void) => {
   const { id, visibility: initialVisibility = 'public', onDelete, onToggleVisibility, isCompanyPost, authorId } = props;
@@ -12,7 +13,13 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
   // const { deletePost } = useFeed();
   const { activeProfile, isCompany } = useActiveProfile();
 
-  const [showOptions, setShowOptions] = useState(false);
+  const menuKey = id ? `post-${id}` : 'post-options';
+  const showOptions = useUIStore((state) => state.activeOpenMenuId === menuKey);
+  const setShowOptions = (open: boolean | ((prev: boolean) => boolean)) => {
+    const currentOpen = useUIStore.getState().activeOpenMenuId === menuKey;
+    const nextOpen = typeof open === 'function' ? open(currentOpen) : open;
+    useUIStore.getState().setActiveOpenMenuId(nextOpen ? menuKey : null);
+  };
   const [optionsPos, setOptionsPos] = useState<{ top: number; right: number } | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 

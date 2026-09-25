@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ThumbsUp, Trash2, Heart, Flag, Ban, Link as LinkIcon, Pin } from 'lucide-react';
 import { UserIcon } from '@/components/icons';
 import { toggleCommentLike, toggleCommentPin } from '@/services/api/posts';
@@ -18,6 +18,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { Icon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { CommentActionSnackbar } from './CommentActionSnackbar';
+import { useUIStore } from '@/store/ui.store';
 
 interface CommentProps {
   comment: CommentType;
@@ -82,6 +83,39 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likes, setLikes] = useState(like_count);
   const [isPinned, setIsPinned] = useState(is_pinned || false);
+  const menuKey = id ? `comment-${id}` : 'comment-options';
+  const isMenuOpen = useUIStore((state) => state.activeOpenMenuId === menuKey);
+  const setIsMenuOpen = (open: boolean | ((prev: boolean) => boolean)) => {
+    const currentOpen = useUIStore.getState().activeOpenMenuId === menuKey;
+    const nextOpen = typeof open === 'function' ? open(currentOpen) : open;
+    useUIStore.getState().setActiveOpenMenuId(nextOpen ? menuKey : null);
+  };
+  const optionsBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleScrollOrResize = () => {
+      if (!optionsBtnRef.current) return;
+      const rect = optionsBtnRef.current.getBoundingClientRect();
+      const menuHeight = 90; // dropdown height (~80-90px)
+      // Close only when the entire comment button and menu have scrolled completely out of the viewport
+      if (rect.bottom + menuHeight <= 0 || rect.top >= window.innerHeight) {
+        if (document.activeElement === optionsBtnRef.current) {
+          optionsBtnRef.current.blur();
+        }
+        setIsMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isMenuOpen]);
 
   const currentActorId = activeProfile?.id || currentUserId || (session?.user as any)?.user_id || (session?.user as any)?.sub || session?.user?.id;
   const currentActorName = activeProfile?.name || session?.user?.name;
@@ -235,9 +269,10 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
             {/* ORIGINAL: <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span> */}
             <span className="ds-text-meta text-ds-text-secondary whitespace-nowrap">{timeAgo}</span>
             {!isPending && (
-              <DropdownMenu modal={false}>
+              <DropdownMenu modal={false} open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button
+                    ref={optionsBtnRef}
                     aria-label="More options"
                     onClick={(e) => e.stopPropagation()}
                     className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent transition-colors"
@@ -248,9 +283,14 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                 <DropdownMenuContent
                   align="end"
                   sideOffset={4}
-                  collisionPadding={8}
+                  avoidCollisions={false}
+                  hideWhenDetached={true}
+                  onCloseAutoFocus={(e) => {
+                    e.preventDefault();
+                  }}
+                  style={{ zIndex: 35 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans"
+                  className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans !z-[35] data-[state=closed]:!animate-none data-[state=closed]:!duration-0"
                 >
                   <style>{`
                     [data-theme] [role="menuitem"].comment-menu-item:hover,

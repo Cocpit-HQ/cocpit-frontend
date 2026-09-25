@@ -19,6 +19,7 @@ export interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLT
     placeholder?: string;
     className?: string;
     initialMentions?: UserMention[];
+    zIndex?: number;
 }
 
 export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaProps>(({ 
@@ -29,6 +30,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
     searchUsersFn, 
     className, 
     initialMentions,
+    zIndex,
     ...props 
 }, ref) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -538,6 +540,37 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
 
     const containerRef = useRef<HTMLDivElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
+    const suggestionPositionRef = useRef(suggestionPosition);
+
+    useEffect(() => {
+        suggestionPositionRef.current = suggestionPosition;
+    }, [suggestionPosition]);
+
+    const [computedZIndex, setComputedZIndex] = useState<number>(zIndex ?? 35);
+
+    useEffect(() => {
+        if (zIndex !== undefined) {
+            setComputedZIndex(zIndex);
+            return;
+        }
+        if (!showSuggestions || !containerRef.current) {
+            setComputedZIndex(35);
+            return;
+        }
+        let el: HTMLElement | null = containerRef.current;
+        let maxZ = 35;
+        while (el && el !== document.body) {
+            const z = window.getComputedStyle(el).zIndex;
+            if (z && z !== 'auto') {
+                const num = parseInt(z, 10);
+                if (!isNaN(num) && num >= 40) {
+                    maxZ = Math.max(maxZ, num + 10);
+                }
+            }
+            el = el.parentElement;
+        }
+        setComputedZIndex(maxZ);
+    }, [zIndex, showSuggestions]);
 
     useEffect(() => {
         if (!showSuggestions) return;
@@ -552,12 +585,41 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
             }
         };
 
+        const updatePositionAndVisibility = () => {
+            if (!textareaRef.current || !popupRef.current) return;
+
+            const textareaRect = textareaRef.current.getBoundingClientRect();
+            const popupEl = popupRef.current;
+            const popupHeight = popupEl.offsetHeight || 282;
+            const popupWidth = popupEl.offsetWidth || 300;
+
+            const currentTop = textareaRect.top + (suggestionPositionRef.current?.top ?? 0);
+            const currentLeft = textareaRect.left + (suggestionPositionRef.current?.left ?? 0);
+
+            // Close the modal only when it has scrolled completely outside of the viewport
+            const isOutOfViewport =
+                currentTop + popupHeight <= 0 ||
+                currentTop >= window.innerHeight ||
+                currentLeft + popupWidth <= 0 ||
+                currentLeft >= window.innerWidth;
+
+            if (isOutOfViewport) {
+                setShowSuggestions(false);
+                return;
+            }
+
+            // Keep the modal anchored to the input/caret as the page/container scrolls
+            popupEl.style.top = `${currentTop}px`;
+            popupEl.style.left = `${currentLeft}px`;
+        };
+
         const handleScrollOrResize = (e: Event) => {
             const target = e.target as Node;
+            // Don't reposition or close if scrolling inside the suggestions list itself
             if (popupRef.current && popupRef.current.contains(target)) {
                 return;
             }
-            setShowSuggestions(false);
+            updatePositionAndVisibility();
         };
 
         document.addEventListener('mousedown', handleClickOutside);
@@ -580,8 +642,9 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     ref={popupRef}
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
-                    className="fixed z-[99999] pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
+                    className="fixed pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
                     style={{
+                        zIndex: computedZIndex,
                         top: typeof suggestionPosition.top === 'number'
                             ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
                             : '40px',
@@ -617,8 +680,9 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                             }
                         }
                     }}
-                    className="fixed z-[99999] pointer-events-auto animate-in fade-in-0 zoom-in-95 shadow-2xl bg-ds-surface-2 border border-ds-border rounded-xl flex flex-col items-start p-4 gap-2 w-[280px] max-h-[232px] overflow-x-hidden overflow-y-auto custom-scrollbar mb-2 box-border"
+                    className="fixed pointer-events-auto animate-in fade-in-0 zoom-in-95 shadow-2xl bg-ds-surface-2 border border-ds-border rounded-xl flex flex-col items-start p-4 gap-2 w-[280px] max-h-[232px] overflow-x-hidden overflow-y-auto custom-scrollbar mb-2 box-border"
                     style={{
+                        zIndex: computedZIndex,
                         top: typeof suggestionPosition.top === 'number'
                             ? `${(textareaRef.current?.getBoundingClientRect().top || 0) + suggestionPosition.top}px` 
                             : '40px',

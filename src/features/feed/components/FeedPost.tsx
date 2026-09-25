@@ -887,6 +887,7 @@ export const FeedPost = (props: FeedPostProps) => {
           isOpen={showOptions}
           onClose={() => setShowOptions(false)}
           position={optionsPos}
+          triggerRef={optionsBtnRef}
           isMe={isTargetAuthorMe}
           isPollPost={!!pollData}
           visibility={targetVisibility}

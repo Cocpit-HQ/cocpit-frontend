@@ -7,6 +7,7 @@ interface PostOptionsMenuProps {
   isOpen: boolean;
   onClose: () => void;
   position: { top: number; right: number } | null;
+  triggerRef?: React.RefObject<HTMLElement | null>;
   isMe: boolean;
   onEdit?: () => void;
   onMakePrivate?: () => void;
@@ -19,12 +20,14 @@ interface PostOptionsMenuProps {
   isReported?: boolean;
   isPollPost?: boolean;
   visibility?: string;
+  zIndex?: number;
 }
 
 export const PostOptionsMenu = ({
   isOpen,
   onClose,
   position,
+  triggerRef,
   isMe,
   onEdit,
   onMakePrivate,
@@ -37,51 +40,93 @@ export const PostOptionsMenu = ({
   isReported,
   isPollPost,
   visibility,
+  zIndex,
 }: PostOptionsMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (
+        menuRef.current && !menuRef.current.contains(target) &&
+        (!triggerRef?.current || !triggerRef.current.contains(target))
+      ) {
         onClose();
       }
     };
 
-    const handleScroll = () => {
-      onClose();
+    const updatePositionAndCheckVisibility = () => {
+      if (!menuRef.current) return;
+
+      let top = position?.top ?? 0;
+      let right = position?.right ?? 0;
+
+      if (triggerRef?.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        top = rect.bottom + 6;
+        right = window.innerWidth - rect.right;
+      }
+
+      const menuHeight = menuRef.current.offsetHeight || 150;
+
+      // Close only when scrolled completely outside the viewport
+      if (top + menuHeight <= 0 || top >= window.innerHeight) {
+        onClose();
+        return;
+      }
+
+      if (!isMobile) {
+        menuRef.current.style.top = `${top}px`;
+        menuRef.current.style.right = `${right}px`;
+      }
+    };
+
+    const handleScrollOrResize = (e: Event) => {
+      const target = e.target as Node;
+      if (menuRef.current && menuRef.current.contains(target)) {
+        return;
+      }
+      updatePositionAndCheckVisibility();
     };
 
     // Delay attaching to prevent immediate close if the click to open also triggers this
-    setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-      window.addEventListener('scroll', handleScroll, { passive: true });
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      window.addEventListener('scroll', handleScrollOrResize, true);
+      window.addEventListener('resize', handleScrollOrResize);
     }, 0);
 
     return () => {
-      document.removeEventListener('click', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, position, triggerRef, isMobile]);
 
   if (!isOpen || !position || typeof document === 'undefined') {
     return null;
   }
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const effectiveZIndex = zIndex ?? (isMobile ? 60 : 35);
 
   const menuStyle: React.CSSProperties = isMobile ? {
     position: 'fixed',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 9999,
+    zIndex: effectiveZIndex,
   } : {
     position: 'fixed',
     top: `${position.top}px`,
     right: `${position.right}px`,
-    zIndex: 9999,
+    zIndex: effectiveZIndex,
   };
 
   const handleAction = (action?: () => void) => {

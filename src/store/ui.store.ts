@@ -39,6 +39,9 @@ interface UIState {
   sharedPostData: any | null;
   setSharedPostData: (data: any | null) => void;
 
+  activeOpenMenuId: string | null;
+  setActiveOpenMenuId: (id: string | null) => void;
+
   reportedPostIds: string[];
   notInterestedPostIds: string[];
   interestedPostIds: string[];
@@ -50,6 +53,7 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   isSidebarOpen: true,
   activeModal: null,
+  activeOpenMenuId: null,
   initialPostType: 'text',
   pendingPosts: [],
   isArticleMode: typeof window !== 'undefined' ? sessionStorage.getItem('cocpit_is_article_mode') === 'true' : false,
@@ -91,6 +95,7 @@ export const useUIStore = create<UIState>((set) => ({
   setArticleDraft: (draft) => set({ articleDraft: draft }),
   setEditMode: (isEdit, postId = null, postData = null) => set({ isEditMode: isEdit, editingPostId: postId, editingPostData: postData }),
   setSharedPostData: (data) => set({ sharedPostData: data }),
+  setActiveOpenMenuId: (id) => set({ activeOpenMenuId: id }),
 
   addReportedPostId: (id) => set((state) => ({ reportedPostIds: [...state.reportedPostIds, id] })),
   addNotInterestedPostId: (id) => set((state) => ({ notInterestedPostIds: [...state.notInterestedPostIds, id] })),
