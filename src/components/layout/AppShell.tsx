@@ -36,8 +36,9 @@ export function AppShell({
     pathname?.startsWith('/profile/') &&
     !['/profile/edit', '/profile/download', '/profile/posts'].includes(pathname)
   );
+  const isNotificationsPage = pathname?.startsWith('/notifications');
   const { activeModal, isArticleMode } = useUIStore();
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile;
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isNotificationsPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || activeModal === 'create-post';
 
   return (

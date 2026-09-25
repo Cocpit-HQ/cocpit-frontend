@@ -29,14 +29,14 @@ export const ConnectionRequestList: React.FC<ConnectionRequestListProps> = ({ re
 
     if (requests.length === 0) {
         return (
-            <div className="py-12 text-center text-muted-foreground border rounded-lg border-dashed">
+            <div className="py-12 text-center ds-text-secondary font-['DM_Sans'] text-ds-text-muted border border-ds-border rounded-lg border-dashed">
                 <p>No pending connection requests</p>
             </div>
         )
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 font-['DM_Sans']">
             {requests.map(req => (
                 <ConnectionRequestCard
                     key={req.id}

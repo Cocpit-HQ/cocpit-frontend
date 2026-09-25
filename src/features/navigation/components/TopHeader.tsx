@@ -34,10 +34,12 @@ export function TopHeader({ className }: TopHeaderProps) {
       {/* Right Actions Section */}
       <div className="fixed top-[40px] right-[40px] flex items-center gap-[12px] h-[40px] pointer-events-auto z-50">
         {/* Notification Bell */}
-        <NotificationPopover 
-          className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent hover:bg-ds-surface-1 data-[state=open]:bg-ds-surface-1 rounded-[24px] transition-colors"
-          icon={<Icon name="notification" className="w-[24px] h-[24px] flex-none order-0 grow-0 text-ds-text-primary group-hover:text-ds-accent group-data-[state=open]:text-ds-accent transition-colors" />}
-        />
+        <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
+          <NotificationPopover 
+            className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent rounded-[24px] transition-colors"
+            icon={<Icon name="notification" className="w-[24px] h-[24px] flex-none order-0 grow-0 text-ds-text-primary group-hover:text-ds-accent transition-colors" />}
+          />
+        </FeatureGuard>
 
         {/* User Avatar & Dropdown */}
         <ProfileDropdown />

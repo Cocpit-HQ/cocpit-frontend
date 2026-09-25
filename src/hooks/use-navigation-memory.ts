@@ -47,6 +47,13 @@ export function useNavigationTracker() {
       sessionStorage.removeItem('nav_memory_jobs_base');
       useJobStore.getState().setActiveCandidateTab('Explore');
     }
+
+    // Track last visited location outside notifications so < Back on notifications can reliably return to it
+    if (pathname && !pathname.startsWith('/notifications')) {
+      const queryString = searchParams?.toString();
+      const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
+      sessionStorage.setItem('cocpit_last_location', currentPath);
+    }
   }, [pathname, searchParams]);
 }
 

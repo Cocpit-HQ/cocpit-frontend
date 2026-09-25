@@ -61,7 +61,7 @@ export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ re
     }
 
     return (
-        <div className="p-4 border rounded-lg bg-card hover:border-primary/50 transition-all flex items-center justify-between gap-4">
+        <div className="p-4 border border-ds-border rounded-lg bg-ds-surface-1 hover:border-ds-accent/50 transition-all flex items-center justify-between gap-4 font-['DM_Sans']">
             <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={navigateToProfile}>
                 <Avatar
                     url={request.sender.avatar || undefined}
@@ -70,8 +70,8 @@ export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ re
                     isCompany={request.isCompanyRequest}
                 />
                 <div>
-                    <h3 className="font-semibold text-foreground hover:underline">{request.sender.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{request.sender.headline || "No headline"}</p>
+                    <h3 className="ds-text-secondary-2 font-['DM_Sans'] text-ds-text-primary hover:underline">{request.sender.name}</h3>
+                    <p className="ds-text-secondary font-['DM_Sans'] text-ds-text-secondary line-clamp-1">{request.sender.headline || "No headline"}</p>
                     {/* Potential Mutual connections count here if available */}
                 </div>
             </div>

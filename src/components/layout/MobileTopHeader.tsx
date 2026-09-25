@@ -52,14 +52,16 @@ export function MobileTopHeader() {
 
       {/* Actions */}
       <div className="flex items-center gap-[16px] shrink-0 pr-4 ml-auto">
-        <Link href="/messaging" className="cursor-pointer shrink-0 group">
-          <Icon name="chat" className="w-[20px] h-[20px] text-[#A1A1AA] group-hover:text-[#EC6229] transition-colors" />
+        <Link href="/messaging" className="cursor-pointer shrink-0 group" aria-label="Messages">
+          <Icon name="chat" className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
         </Link>
         <div className="shrink-0">
-          <NotificationPopover
-            className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
-            icon={<Icon name="notification" className="w-[22px] h-[22px] text-[#A1A1AA] group-hover:text-[#EC6229] group-data-[state=open]:text-[#EC6229] transition-colors" />}
-          />
+          <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
+            <NotificationPopover
+              className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
+              icon={<Icon name="notification" className="w-[22px] h-[22px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />}
+            />
+          </FeatureGuard>
         </div>
       </div>
     </header>
