@@ -10,7 +10,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { feedToast as toast } from "@/features/feed/utils/feed-toast";
+import { showToast as toast } from "@/shared/commonComponents/GlobalToast";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
 import { universalShare } from "@/services/api/shareService";
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
@@ -271,7 +271,13 @@ export default function CocpitShareModel({
         })
       );
 
-      toast.success(selectedUsers.length > 1 ? "Messages sent" : "Message sent");
+      let successMessage = selectedUsers.length > 1 ? "Messages sent" : "Message sent";
+      if (profileId || entityType === "profile") {
+        successMessage = "Profile shared successfully";
+      } else if (postId || entityType === "post" || entityType === "article") {
+        successMessage = "Post shared successfully";
+      }
+      toast.success(successMessage);
 
       // Only invalidate conversations (sidebar) — the socket event updates the message list in real time
       queryClient.invalidateQueries({ queryKey: ["conversations"] });

@@ -8,7 +8,7 @@ import StepEmail from "../components/StepEmail";
 import StepOtp from "../components/StepOtp";
 import StepNewPassword from "../components/StepNewPassword";
 import LogoutOtherDevicesModal from "../components/LogoutOtherDevicesModal";
-import BottomToast from "@/shared/commonComponents/BottomToast";
+import { showToast } from "@/shared/commonComponents/GlobalToast";
 import { LeaveConfirmationModal } from "@/components/shared";
 
 interface ResetPasswordFlowProps {
@@ -71,6 +71,25 @@ export const ResetPasswordFlow: React.FC<ResetPasswordFlowProps> = ({ initialTok
       : toastParam === "password_updated"
       ? "Password updated"
       : toastParam;
+
+  useEffect(() => {
+    if (toastMessage) {
+      showToast.success(toastMessage, {
+        onAutoClose: () => {
+          setShowSessionExpiredToast(false);
+          if (toastParam) {
+            router.replace("/reset-password", { scroll: false });
+          }
+        },
+        onDismiss: () => {
+          setShowSessionExpiredToast(false);
+          if (toastParam) {
+            router.replace("/reset-password", { scroll: false });
+          }
+        }
+      });
+    }
+  }, [toastMessage, toastParam, router, setShowSessionExpiredToast]);
 
   if (!isMounted) return null;
 
@@ -138,18 +157,7 @@ export const ResetPasswordFlow: React.FC<ResetPasswordFlowProps> = ({ initialTok
         isLoading={isLoading}
       />
 
-      {/* Dynamic confirmation toast */}
-      {toastMessage && (
-        <BottomToast
-          message={toastMessage}
-          onClose={() => {
-            setShowSessionExpiredToast(false);
-            if (toastParam) {
-              router.replace("/reset-password", { scroll: false });
-            }
-          }}
-        />
-      )}
+
 
       <LeaveConfirmationModal
         isOpen={isLeaveModalOpen}

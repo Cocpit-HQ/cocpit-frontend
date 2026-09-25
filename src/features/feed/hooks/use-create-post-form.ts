@@ -3,7 +3,7 @@ import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { usePostUpload } from '@/context/PostUploadContext';
 import { useFeed } from '@/hooks/use-feed';
-import { feedToast as toast } from '../utils/feed-toast';
+import { showToast as toast } from '@/shared/commonComponents/GlobalToast';
 import { PostType, CategoryType, CreatePostModalProps, MediaItem } from '../types';
 import { usePostMedia } from './use-post-media';
 import { usePostPoll } from './use-post-poll';

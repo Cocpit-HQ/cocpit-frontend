@@ -8,8 +8,6 @@ export { default as StepOtp } from "./components/StepOtp";
 export { default as StepNewPassword } from "./components/StepNewPassword";
 export { default as StepSuccess } from "./components/StepSuccess";
 export { default as LogoutOtherDevicesModal } from "./components/LogoutOtherDevicesModal";
-export { default as BottomToast } from "@/shared/commonComponents/BottomToast";
-export { default as PasswordUpdatedToast } from "./components/PasswordUpdatedToast";
 export * from "./hooks/useResetPassword";
 export * from "./services/reset-password.service";
 export * from "./types/reset-password.types";

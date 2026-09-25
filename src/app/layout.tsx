@@ -5,8 +5,7 @@ import "./globals.css";
 import "./newGlobal.css"; // New design system — typography, motion, spacing tokens
 
 import Providers from "@/components/layout/providers";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { GlobalToast } from "@/shared/commonComponents/GlobalToast";
 import MobileUnsupported from "@/components/shared/MobileUnsupported";
 
 const geistSans = Geist({
@@ -125,8 +124,7 @@ export default function RootLayout({
           <div className="block lg:hidden">
             <MobileUnsupported />
           </div>
-          <Toaster />
-          <Sonner />
+          <GlobalToast />
         </Providers>
       </body>
     </html>

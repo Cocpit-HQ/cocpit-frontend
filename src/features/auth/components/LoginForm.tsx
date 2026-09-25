@@ -16,8 +16,7 @@ import {
   SendIcon,
   LoadingIcon,
 } from "@/components/icons";
-import BottomToast from "@/shared/commonComponents/BottomToast";
-
+import { showToast } from "@/shared/commonComponents/GlobalToast";
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -118,12 +117,27 @@ const LoginForm = () => {
     }
   }, [reason]);
 
+  // Trigger global toast for url-param based messages
+  useEffect(() => {
+    if (toastMessage) {
+      showToast.success(toastMessage, {
+        onAutoClose: () => {
+          router.replace("/", { scroll: false });
+        },
+        onDismiss: () => {
+          router.replace("/", { scroll: false });
+        }
+      });
+    }
+  }, [toastMessage, router]);
+
   const validateEmailFormat = (val: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
   };
 
   // Shared redirect logic — used by both credential and Google login
   const handlePostLoginRedirect = async () => {
+    showToast.success("Logged in successfully");
     if (typeof window !== "undefined") {
       sessionStorage.setItem("cocpit_active_onboarding_session", "true");
     }
@@ -579,16 +593,6 @@ const LoginForm = () => {
           <span className="!text-ds-text-primary font-medium">Sign up</span>
         </Link>
       </div>
-
-      {/* Confirmation pop-up toast */}
-      {toastMessage && (
-        <BottomToast
-          message={toastMessage}
-          onClose={() => {
-            router.replace("/", { scroll: false });
-          }}
-        />
-      )}
 
       {/* Account Not Found Modal */}
       {showNoAccountModal && (

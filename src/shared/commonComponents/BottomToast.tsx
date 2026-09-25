@@ -1,3 +1,4 @@
+/*
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -55,3 +56,4 @@ export const BottomToast: React.FC<BottomToastProps> = ({
 };
 
 export default BottomToast;
+*/

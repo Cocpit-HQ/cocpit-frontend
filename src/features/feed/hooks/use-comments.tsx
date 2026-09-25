@@ -6,7 +6,7 @@ import { Comment as CommentType } from '@/types/entities';
 import { mapBackendCommentToFrontend } from '@/lib/mappers/feed.mapper';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { feedToast as toast } from '../utils/feed-toast';
+import { showToast as toast } from '@/shared/commonComponents/GlobalToast';
 import { CommentActionSnackbar } from '../components/comments/CommentActionSnackbar';
 import { usePostSync } from './use-post-sync';
 import { useSearchParams } from 'next/navigation';

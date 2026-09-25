@@ -7,7 +7,7 @@ import SignUpLayout from "../components/SignUpLayout";
 import StepEmail from "../components/StepEmail";
 import StepOtp from "../components/StepOtp";
 import StepPassword from "../components/StepPassword";
-import BottomToast from "@/shared/commonComponents/BottomToast";
+import { showToast } from "@/shared/commonComponents/GlobalToast";
 import { LeaveConfirmationModal } from "@/components/shared";
 
 export const SignUpFlow: React.FC = () => {
@@ -63,6 +63,25 @@ export const SignUpFlow: React.FC = () => {
     toastParam === "session_expired" || showSessionExpiredToast
       ? "Session expired"
       : toastParam;
+
+  useEffect(() => {
+    if (toastMessage) {
+      showToast.success(toastMessage, {
+        onAutoClose: () => {
+          setShowSessionExpiredToast(false);
+          if (toastParam) {
+            router.replace("/signup", { scroll: false });
+          }
+        },
+        onDismiss: () => {
+          setShowSessionExpiredToast(false);
+          if (toastParam) {
+            router.replace("/signup", { scroll: false });
+          }
+        }
+      });
+    }
+  }, [toastMessage, toastParam, router, setShowSessionExpiredToast]);
 
   if (!isMounted) return null;
 
@@ -125,18 +144,7 @@ export const SignUpFlow: React.FC = () => {
         )}
       </SignUpLayout>
 
-      {/* Dynamic bottom toast notification */}
-      {toastMessage && (
-        <BottomToast
-          message={toastMessage}
-          onClose={() => {
-            setShowSessionExpiredToast(false);
-            if (toastParam) {
-              router.replace("/signup", { scroll: false });
-            }
-          }}
-        />
-      )}
+
 
       <LeaveConfirmationModal
         isOpen={isLeaveModalOpen}
