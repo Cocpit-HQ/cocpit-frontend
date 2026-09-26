@@ -15,6 +15,7 @@ import {
   formatNotificationTime,
   getNotificationVisualKind,
   parseNotificationText,
+  getNotificationRoute,
 } from '../utils/notification-helpers';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { cn } from '@/lib/utils';
@@ -33,9 +34,20 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   isInsideGroup = false,
 }) => {
   const router = useRouter();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
 
   const visualKind = getNotificationVisualKind(notification);
+  
+  const itemUrl = getNotificationRoute(notification, activeProfile, isCompany);
+
+  const handleItemClick = () => {
+    if (itemUrl) {
+      if (!notification.is_read && onRead) {
+        onRead(notification.notification_id);
+      }
+      router.push(itemUrl);
+    }
+  };
   const parsed = parseNotificationText(notification, activeProfile?.name);
 
   // ── Determine actor profile URL for click redirection ─────────────
@@ -179,7 +191,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
           onClick={actorUrl ? handleActorClick : undefined}
           className={cn(
             'font-semibold text-ds-text-primary',
-            actorUrl && 'cursor-pointer hover:underline'
+            actorUrl && 'cursor-pointer'
           )}
         >
           {parsed.actorName}{' '}
@@ -194,13 +206,15 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
   return (
     <div
+      onClick={itemUrl ? handleItemClick : undefined}
       className={cn(
         "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2",
         isInsideGroup
           ? 'bg-transparent rounded-none'
           : isUnread
           ? 'bg-ds-surface-1 rounded-[8px]'
-          : 'bg-transparent rounded-[8px]'
+          : 'bg-transparent rounded-[8px]',
+        itemUrl && 'cursor-pointer'
       )}
     >
       {/* ── Ellipse 15: Unread dot (4×4px, gap: 8px to inner frame) ── */}

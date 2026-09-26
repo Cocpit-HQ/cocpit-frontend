@@ -26,6 +26,7 @@ export interface ActionConfirmModalProps {
   isLoading?: boolean;
   buttonWidthClass?: string;
   titleClassName?: string;
+  modalClassName?: string;
 }
 
 const PRESETS: Record<
@@ -94,13 +95,14 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   isLoading = false,
   buttonWidthClass: customButtonWidthClass,
   titleClassName: customTitleClassName,
+  modalClassName,
 }) => {
   const preset = type !== "custom" ? PRESETS[type] : null;
 
   const resolvedTitle = title || (preset ? preset.getTitle(targetName) : "Are you sure?");
   const resolvedDescription = description || (preset ? preset.description : "");
   const resolvedConfirmText = confirmText || (preset ? preset.confirmText : "Confirm");
-  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[84px]";
+  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[85px]";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -108,7 +110,10 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="box-border w-[237px] p-[12px] gap-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center shadow-2xl outline-none select-none z-[101]"
+        className={cn(
+          "box-border w-[237px] h-[150px] p-[12px] gap-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          modalClassName
+        )}
       >
         {/* Frame 2609475: Text Container */}
         <div className="w-[211px] self-stretch flex flex-col items-center gap-[8px]">
@@ -121,14 +126,14 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
             {resolvedTitle}
           </DialogTitle>
           {resolvedDescription && (
-            <DialogDescription className="font-['Poppins'] text-[12px] font-normal leading-[16px] text-[var(--ds-text-secondary)] text-center w-full m-0 p-0">
+            <DialogDescription className="font-['DM_Sans'] text-[14px] font-normal leading-[20px] text-[var(--ds-text-secondary)] text-center w-full m-0 p-0">
               {resolvedDescription}
             </DialogDescription>
           )}
         </div>
 
         {/* Frame 2609476: Action Buttons */}
-        <div className="w-[176px] h-[36px] flex flex-row justify-center items-center gap-[8px]">
+        <div className="w-[178px] h-[36px] flex flex-row justify-center items-center gap-[8px]">
           <button
             type="button"
             disabled={isLoading}

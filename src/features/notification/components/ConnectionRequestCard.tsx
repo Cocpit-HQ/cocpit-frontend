@@ -70,7 +70,7 @@ export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ re
                     isCompany={request.isCompanyRequest}
                 />
                 <div>
-                    <h3 className="ds-text-secondary-2 font-['DM_Sans'] text-ds-text-primary hover:underline">{request.sender.name}</h3>
+                    <h3 className="ds-text-secondary-2 font-['DM_Sans'] text-ds-text-primary">{request.sender.name}</h3>
                     <p className="ds-text-secondary font-['DM_Sans'] text-ds-text-secondary line-clamp-1">{request.sender.headline || "No headline"}</p>
                     {/* Potential Mutual connections count here if available */}
                 </div>

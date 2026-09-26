@@ -59,7 +59,7 @@ export function MobileTopHeader() {
           <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
             <NotificationPopover
               className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
-              icon={<Icon name="notification" className="w-[22px] h-[22px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />}
+              icon={<Icon name="notification" className="w-[22px] h-[22px] text-ds-text-secondary transition-colors" />}
             />
           </FeatureGuard>
         </div>

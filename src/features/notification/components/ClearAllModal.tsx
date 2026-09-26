@@ -24,7 +24,7 @@ export const ClearAllModal: React.FC<ClearAllModalProps> = ({
       description="This will remove all your notifications"
       confirmText="Clear all"
       cancelText="Cancel"
-      buttonWidthClass="w-[90px]"
+      buttonWidthClass="w-[85px]"
     />
   );
 };

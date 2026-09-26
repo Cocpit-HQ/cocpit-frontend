@@ -37,7 +37,7 @@ export function TopHeader({ className }: TopHeaderProps) {
         <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
           <NotificationPopover 
             className="group relative w-[40px] h-[40px] p-[8px] flex flex-row items-center justify-center bg-transparent rounded-[24px] transition-colors"
-            icon={<Icon name="notification" className="w-[24px] h-[24px] flex-none order-0 grow-0 text-ds-text-primary group-hover:text-ds-accent transition-colors" />}
+            icon={<Icon name="notification" className="w-[24px] h-[24px] flex-none order-0 grow-0 text-ds-text-primary transition-colors" />}
           />
         </FeatureGuard>
 

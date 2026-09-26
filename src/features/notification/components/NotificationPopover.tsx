@@ -19,7 +19,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   icon = (
     <Icon
       name="notification"
-      className="w-[24px] h-[24px] text-ds-text-primary group-hover:text-ds-accent transition-colors"
+      className="w-[24px] h-[24px] text-ds-text-primary transition-colors"
     />
   ),
 }) => {
