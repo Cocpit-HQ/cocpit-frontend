@@ -111,7 +111,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onPointerDownOutside={(e) => e.preventDefault()}
         onOpenAutoFocus={(e) => e.preventDefault()}
         className={cn(
-          "box-border w-[237px] h-[150px] p-[12px] gap-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          "box-border w-[237px] min-h-[150px] p-[12px] gap-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
           modalClassName
         )}
       >
@@ -133,7 +133,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         </div>
 
         {/* Frame 2609476: Action Buttons */}
-        <div className="w-[178px] h-[36px] flex flex-row justify-center items-center gap-[8px]">
+        <div className="w-full h-[36px] flex flex-row justify-center items-center gap-[8px]">
           <button
             type="button"
             disabled={isLoading}

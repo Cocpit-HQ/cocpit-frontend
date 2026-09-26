@@ -7,6 +7,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { formatMentionsForBackend } from '@/lib/mentions';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { EmojiPickerPortal, EmojiPickerPosition } from '@/shared/commonComponents/EmojiPickerPortal';
+import { toast } from '@/shared/commonComponents/GlobalToast';
 
 interface CommentInputProps {
     onAddComment: (text: string) => void;
@@ -80,6 +81,11 @@ export default function CommentInput({
             if (!finalContent.includes(mentionStr)) {
                 finalContent = `${mentionStr} ${finalContent}`;
             }
+        }
+
+        if (finalContent.length > 1000) {
+            toast.error("Comment should be less than 1000 characters");
+            return;
         }
 
         onAddComment(finalContent.trim());
@@ -221,6 +227,7 @@ export default function CommentInput({
                                 placeholder="Edit your comment..."
                                 className="w-full bg-transparent border-none focus:ring-0 p-0 m-0 resize-none text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none leading-[20px] scrollbar-hide min-h-[48px] max-h-[160px]"
                                 rows={2}
+                                maxLength={1000}
                             />
                         </div>
 
@@ -317,6 +324,7 @@ export default function CommentInput({
                                 placeholder="Write your reply..."
                                 className="w-full bg-transparent border-none focus:ring-0 p-0 m-0 resize-none text-[13px] sm:text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none leading-[20px] scrollbar-hide min-h-[24px] max-h-[128px]"
                                 rows={1}
+                                maxLength={1000}
                             />
                         </div>
 
@@ -332,6 +340,9 @@ export default function CommentInput({
                             </button>
 
                             <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[11px] font-medium mr-1 text-ds-text-muted">
+                                    {commentText.length}/1000
+                                </span>
                                 <button
                                     type="button"
                                     onClick={() => handleSubmit()}
@@ -379,6 +390,7 @@ export default function CommentInput({
                             placeholder="Write your thoughts"
                             className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted scrollbar-hide focus:outline-none leading-normal ${commentText.trim().length > 0 ? '' : 'flex items-center m-0'}`}
                             rows={1}
+                            maxLength={1000}
                         />
                     </div>
 
@@ -398,6 +410,9 @@ export default function CommentInput({
                         <div
                             className={`flex items-center justify-center ${commentText.trim().length > 0 ? 'opacity-100' : 'hidden'}`}
                         >
+                            <span className="text-[11px] font-medium mr-2 text-ds-text-muted">
+                                {commentText.length}/1000
+                            </span>
                             <button
                                 onClick={() => handleSubmit()}
                                 disabled={!commentText.trim()}
