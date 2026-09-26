@@ -628,6 +628,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 onToggleExpand={() => setIsExpanded(!isExpanded)}
                 onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 hasMedia={hasMedia || isVideoFeedCard}
+                mentionedUsers={interactionTargetProps.mentioned_users}
               />
             )}
 
@@ -721,6 +722,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 onToggleExpand={() => setIsExpanded(!isExpanded)}
                 onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 hasMedia={hasMedia}
+                mentionedUsers={interactionTargetProps.mentioned_users}
               />
             )}
 

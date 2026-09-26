@@ -158,6 +158,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                       content={sharedContent}
                       authorName={sharedName}
                       disableLinks={true}
+                      mentionedUsers={state.sharedPost?.mentioned_users}
                     />
                   </div>
                 )}

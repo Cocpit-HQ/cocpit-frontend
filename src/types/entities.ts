@@ -103,6 +103,7 @@ export interface Comment {
   isPending?: boolean; // For optimistic UI
   reply_count?: number; // Added for UI display
   is_edited?: boolean; // Whether the comment has been edited
+  mentioned_users?: { user_id: string; full_name: string; account_name: string }[];
   actionState?: {
     type: 'hidden' | 'deleted' | 'reported';
     toastId?: string | number;
@@ -147,6 +148,7 @@ export interface Post {
   title?: string | null;
   timeAgo: string;
   content: string;
+  mentioned_users?: { user_id: string; full_name: string; account_name: string }[];
   imageSrc?: string;
   images?: string[];
   imageDimensions?: Array<{ width: number; height: number } | null>;

@@ -341,6 +341,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
             hasMedia={mediaUrls.length > 0 || !!videoSrc}
             maxLines={mediaUrls.length > 0 || !!videoSrc ? 2 : 15}
             disableLinks={disableNavigation}
+            mentionedUsers={sharedPost.mentioned_users}
           />
         )}
 

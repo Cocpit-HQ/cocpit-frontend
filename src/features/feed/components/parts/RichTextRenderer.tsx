@@ -2,11 +2,13 @@
 
 import React, { Fragment, memo, useMemo } from 'react';
 import Link from 'next/link';
+import { DynamicMention } from '@/shared/commonComponents/DynamicMention';
 
 export interface RichTextRendererProps {
   content: string;
   authorName?: string;
   authorSlug?: string;
+  mentionedUsers?: { user_id: string; full_name: string; account_name: string }[];
   disableLinks?: boolean;
 }
 
@@ -35,7 +37,7 @@ const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
 };
 
-export const RichTextRenderer = memo(({ content, authorName, authorSlug, disableLinks = false }: RichTextRendererProps) => {
+export const RichTextRenderer = memo(({ content, authorName, authorSlug, mentionedUsers, disableLinks = false }: RichTextRendererProps) => {
   if (!content) return null;
 
   // Dynamically build regex based on whether authorName is provided
@@ -97,28 +99,14 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug, disable
           const displayName = structuredMatch[1];
           const handle = structuredMatch[2];
 
-          if (disableLinks) {
-            return (
-              <span
-                key={i}
-                className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
-                style={{ color: 'var(--ds-accent)' }}
-              >
-                {displayName}
-              </span>
-            );
-          }
-
           return (
-            <Link
+            <DynamicMention
               key={i}
-              href={`/profile/${handle.toLowerCase()}`}
-              className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold no-underline hover:no-underline cursor-pointer transition-opacity hover:opacity-80"
-              style={{ color: 'var(--ds-accent)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {displayName}
-            </Link>
+              displayName={displayName}
+              handle={handle}
+              mentionedUsers={mentionedUsers}
+              disableLinks={disableLinks}
+            />
           );
         }
 

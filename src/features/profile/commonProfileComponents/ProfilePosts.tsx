@@ -624,6 +624,7 @@ const ProfilePostCard = ({
                 authorName={localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}
                 authorSlug={localPost.shared_post.authorSlug}
                 disableLinks={false}
+                mentionedUsers={localPost.shared_post.mentioned_users}
               />
             </div>
             {localPost.shared_post.poll ? (

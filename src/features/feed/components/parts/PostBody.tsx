@@ -12,6 +12,7 @@ export interface PostBodyProps {
   hasMedia?: boolean;
   maxLines?: number;
   disableLinks?: boolean;
+  mentionedUsers?: { user_id: string; full_name: string; account_name: string }[];
 }
 
 // Isomorphic layout effect to avoid Next.js SSR warnings
@@ -29,6 +30,7 @@ export const PostBody = ({
   hasMedia = false,
   maxLines,
   disableLinks = false,
+  mentionedUsers,
 }: PostBodyProps) => {
   if (!content) return null;
 
@@ -200,6 +202,7 @@ export const PostBody = ({
           content={displayContent}
           authorName={author}
           authorSlug={authorSlug}
+          mentionedUsers={mentionedUsers}
           disableLinks={disableLinks}
         />
 

@@ -98,6 +98,7 @@ export interface BackendPost {
   is_commented: boolean;
   is_saved: boolean;
   is_reported?: boolean;
+  mentioned_users?: { user_id: string; full_name: string; account_name: string }[];
   liked_users?: { username: string; avatar_url: string | null }[];
   shared_post?: {
     is_accessible: boolean;

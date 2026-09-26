@@ -261,5 +261,6 @@ export const mapBackendMessageToMessage = (
     seen_count: backendMessage.seen_count,
     is_unavailable: (backendMessage as any).is_unavailable === true,
     is_edited: backendMessage.is_edited === true || (backendMessage as any).isEdited === true,
+    mentioned_users: (backendMessage as any).mentioned_users,
   };
 };

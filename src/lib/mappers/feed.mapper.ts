@@ -386,6 +386,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     author_org_id: backendPost.author_org_id,
     createdByUserId: backendPost.created_by_user_id,
     communityId: backendPost.community_id,
+    mentioned_users: backendPost.mentioned_users,
   };
 };
 
@@ -435,5 +436,6 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
       (backendComment.updated_at &&
         new Date(backendComment.updated_at).getTime() - new Date(backendComment.created_at).getTime() > 2000)
     ),
+    mentioned_users: (backendComment as any).mentioned_users,
   };
 };

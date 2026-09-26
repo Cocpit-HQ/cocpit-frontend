@@ -160,6 +160,7 @@ export interface Message {
   edited_at?: string;
 
   time: string;
+  mentioned_users?: { user_id: string; full_name: string; account_name: string }[];
   type?: 'text' | 'system';
   messageType?: string;
   action_type?: string;

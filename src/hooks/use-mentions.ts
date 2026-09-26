@@ -35,17 +35,19 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
             setIsLoading(true);
             try {
                 if (mode === 'mention') {
-                    if (searchUsersFn) {
-                        const results = await searchUsersFn(debouncedQuery);
-                        if (isMounted) {
-                            setUsers(results || []);
-                            setActiveIndex(0);
-                        }
-                    } else if (debouncedQuery) {
-                        const results = await searchUsers(debouncedQuery);
-                        if (isMounted) {
-                            setUsers(results || []);
-                            setActiveIndex(0);
+                    if (debouncedQuery) {
+                        if (searchUsersFn) {
+                            const results = await searchUsersFn(debouncedQuery);
+                            if (isMounted) {
+                                setUsers(results || []);
+                                setActiveIndex(0);
+                            }
+                        } else {
+                            const results = await searchUsers(debouncedQuery);
+                            if (isMounted) {
+                                setUsers(results || []);
+                                setActiveIndex(0);
+                            }
                         }
                     } else {
                         const suggested = await getSuggestedUsers();

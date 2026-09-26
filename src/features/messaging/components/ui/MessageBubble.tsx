@@ -38,6 +38,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useSession } from "next-auth/react";
 
 import UnavailableContentCard from "./UnavailableContentCard";
+import { DynamicMention } from '@/shared/commonComponents/DynamicMention';
 
 const CustomReplyIcon = ({ className }: { className?: string }) => (
   <svg
@@ -1554,19 +1555,22 @@ const MessageText = ({
       // 2. Handle Structured Mentions (@[Display Name](handle))
       const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
       if (structuredMatch) {
-        const username = structuredMatch[2];
+        const displayName = structuredMatch[1];
+        const handle = structuredMatch[2];
         return (
-          <Mention key={i} username={username} isMe={isMe}>
-            <span
+          <Mention key={i} username={handle} isMe={isMe}>
+            <DynamicMention 
+              displayName={displayName}
+              handle={handle}
+              mentionedUsers={message.mentioned_users}
               className={cn(
                 "hover:underline cursor-pointer font-bold font-['Poppins'] font-medium text-[12px]",
                 isMe
                   ? "text-[var(--primary-foreground)]"
                   : "text-[var(--primary)]",
               )}
-            >
-              @{username}
-            </span>
+              style={{}} // Override default style to use Tailwind classes
+            />
           </Mention>
         );
       }

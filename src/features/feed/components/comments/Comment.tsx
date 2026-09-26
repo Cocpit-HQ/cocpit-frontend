@@ -4,6 +4,7 @@ import { UserIcon } from '@/components/icons';
 import { toggleCommentLike, toggleCommentPin } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import Link from 'next/link';
+import { DynamicMention } from '@/shared/commonComponents/DynamicMention';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +37,12 @@ interface CommentProps {
   onUndo?: (commentId: string | number) => void;
 }
 
-const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
+const formatCommentText = (
+  text: string | null | undefined, 
+  postId?: string | number, 
+  currentCommentId?: string | number,
+  mentionedUsers?: { user_id: string; full_name: string; account_name: string }[]
+) => {
   if (!text) return null;
   // Only match structured mentions @[Name](account) for registered platform users
   const parts = text.split(/(@\[[^\]]+\]\([^)]+\))/g);
@@ -52,22 +58,15 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
     }
 
     if (accountName) {
-      const params = new URLSearchParams();
-      if (postId) params.set('openPost', postId.toString());
-      if (currentCommentId) params.set('commentId', currentCommentId.toString());
-
-      const searchStr = params.toString();
-      const href = `/profile/${accountName}${searchStr ? `?${searchStr}` : ''}`;
-
       return (
-        <Link
-          key={index}
-          href={href}
-          className="mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold no-underline hover:no-underline cursor-pointer transition-opacity hover:opacity-80"
+        <DynamicMention 
+          key={index} 
+          displayName={displayName} 
+          handle={accountName}
+          mentionedUsers={mentionedUsers}
+          className="hover:underline cursor-pointer transition-opacity hover:opacity-80 text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
           style={{ color: 'var(--ds-accent)' }}
-        >
-          {displayName}
-        </Link>
+        />
       );
     }
     return part;
@@ -366,7 +365,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         {/* Comment Body */}
         {/* ORIGINAL: <div className="text-[14px] text-black/90 leading-normal mb-2 break-words"> */}
         <div className="ds-text-small text-ds-text-primary leading-normal mb-2 break-words">
-          {formatCommentText(text, postId, id)}
+          {formatCommentText(text, postId, id, comment.mentioned_users)}
         </div>
 
         {/* Action Bar (Styled like Figma) */}
