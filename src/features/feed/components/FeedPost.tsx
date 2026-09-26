@@ -865,6 +865,16 @@ export const FeedPost = (props: FeedPostProps) => {
             onShare={(selectedIds) => {
               if (selectedIds.length > 0) {
                 incrementExternalShareCount(selectedIds.length);
+                const updatedCount = externalShareCount + selectedIds.length;
+                
+                // Force sync with other components like ProfileAllPostsScreen
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(
+                    new CustomEvent("postUpdated", {
+                      detail: { id: targetId.toString(), externalShares: updatedCount, external_share_count: updatedCount },
+                    })
+                  );
+                }
               }
             }}
           />

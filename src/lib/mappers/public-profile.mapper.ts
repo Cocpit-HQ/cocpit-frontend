@@ -152,6 +152,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     likedUsers: publicPost.liked_users || [],
     comments: publicPost.comment_count.toString(),
     shares: ((publicPost as any).rePostCount || 0).toString(),
+    externalShares: (publicPost as any).sharePostCount || 0,
     commentData: [],
     visibility: publicPost.visibility as 'public' | 'private', // Assuming backend visibility matches
     poll: poll,
@@ -205,6 +206,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
           sampleLikerUsername: (sp as any).sample_liker_username || (((sp as any).liked_users && (sp as any).liked_users.length > 0) ? (sp as any).liked_users[0].username : null),
           comments: (sp.comment_count || 0).toString(),
           shares: ((sp as any).rePostCount || 0).toString(),
+          externalShares: (sp as any).sharePostCount || 0,
           images: sp.media?.filter(m => m.media_type === 'image' || (m as any).type === 'image').map(m => m.url),
           imageDimensions: sp.media
             ?.filter(m => m.media_type === 'image' || (m as any).type === 'image')

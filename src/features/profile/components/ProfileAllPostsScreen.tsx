@@ -87,7 +87,20 @@ export function ProfileAllPostsScreen({
     return String(userId).toLowerCase() === String(currentUserId).toLowerCase();
   }, [userId, session?.user, profileData?.user?.id]);
 
-  const [activeTab, setActiveTab] = useState<PostFilterTab>(initialTab);
+  const [activeTab, setActiveTab] = useState<PostFilterTab>(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("cocpit_profile_posts_tab") as PostFilterTab | null;
+      if (stored && TABS.some((t) => t.key === stored)) return stored;
+    }
+    return initialTab;
+  });
+  
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cocpit_profile_posts_tab", activeTab);
+    }
+  }, [activeTab]);
+  
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
 
