@@ -184,7 +184,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
   };
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary py-6 sm:py-8 md:py-10 font-dm-sans md:-ml-[220px] md:w-[calc(100%+220px)] px-4 sm:px-6 md:px-8">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary py-6 sm:py-8 md:py-10 font-dm-sans px-4 sm:px-6 md:px-8">
       <div className="w-full max-w-[800px] mx-auto">
         {/* Back header — only in expanded view */}
         {isExpanded && <ConnectionHeader />}
@@ -203,18 +203,24 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
         {!isExpanded && <ConnectionTabs activeCount={totalCount} />}
 
         {/* Subheader Row: Count on Left, Batch Actions on Right */}
-        <div className="w-full h-6 flex items-center justify-between gap-2 mb-2 select-none">
+        <div className="w-full min-h-6 flex flex-wrap items-center justify-between gap-2 mb-2 select-none">
           <div className="flex items-center gap-2">
             <h2 className="font-dm-sans font-medium text-[16px] leading-6 text-ds-text-primary">
-              {activeTab === 'received'
-                ? 'Pending Invitations'
-                : activeTab === 'sent'
-                ? 'Sent invitations'
-                : 'Page invitations'}
+              <span className="hidden sm:inline">
+                {activeTab === 'received' ? 'Pending Invitations' : activeTab === 'sent' ? 'Sent invitations' : 'Page invitations'}
+              </span>
+              <span className="inline sm:hidden">
+                {activeTab === 'received' ? 'Invitations' : activeTab === 'sent' ? 'Sent invitations' : 'Page invitations'}
+              </span>
             </h2>
             <span className="w-1 h-1 rounded-full bg-ds-text-muted shrink-0 inline-block" aria-hidden="true" />
             <span className="font-dm-sans text-[14px] leading-5 font-normal text-ds-text-secondary">
-              {isLoading ? 'Loading...' : `${inboxCount} waiting`}
+              {isLoading ? 'Loading...' : (
+                <>
+                  <span className="hidden sm:inline">{inboxCount} waiting</span>
+                  <span className="inline sm:hidden">{inboxCount}</span>
+                </>
+              )}
             </span>
           </div>
 

@@ -43,9 +43,8 @@ export function AppShell({
 
   return (
     <div className="relative flex flex-col min-h-screen bg-ds-bg text-foreground overflow-x-hidden">
-      {/* Desktop sidebar */}
       {!isDistractionFree && (
-        <div className="hidden md:block fixed left-0 top-0 h-screen z-40">
+        <div className="hidden sm:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />
         </div>
       )}
@@ -53,17 +52,17 @@ export function AppShell({
       {/* Top Header */}
       {!isDistractionFree && (
         <>
-          <div className="hidden md:block">
+          <div className="hidden sm:block">
             <TopHeader />
           </div>
-          <div className="md:hidden">
+          <div className="sm:hidden">
             <MobileTopHeader />
           </div>
         </>
       )}
 
       {/* Main content */}
-      <main className={isDistractionFree ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full md:pl-[220px] pt-[60px] md:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} md:pb-0 relative z-0`}>
+      <main className={isDistractionFree ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full sm:pl-[220px] pt-[60px] sm:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative z-0`}>
         {children}
       </main>
 

@@ -57,7 +57,7 @@ export function MobileBottomNav() {
   const activeColor = "text-[#EC6229]" // Using the approved orange token for active states
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 border-border backdrop-blur-md">
+    <nav className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t bg-background/95 border-border backdrop-blur-md">
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3">
         {/* Home */}
         {isFeatureActive('enableFeedAccess') && (

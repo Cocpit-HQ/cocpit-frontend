@@ -144,9 +144,11 @@ export function GlobalSearch() {
   return (
     <div 
       ref={dropdownRef}
-      className="fixed top-[40px] left-1/2 -translate-x-1/2 w-[442px] pointer-events-auto z-50"
+      className="fixed top-[40px] left-0 sm:left-[220px] right-0 pointer-events-auto z-50 px-4 sm:px-6 md:px-8"
     >
-      <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-[442px] h-[40px] border-b border-ds-text-primary bg-transparent">
+      <div className="w-full max-w-[800px] mx-auto flex flex-col items-start relative">
+        {/* Search Input Bar */}
+        <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full max-w-[442px] h-[40px] border-b border-ds-text-primary bg-transparent">
         <input
           type="text"
           placeholder="Search"
@@ -166,7 +168,7 @@ export function GlobalSearch() {
 
       {/* Live Search Dropdown */}
       {showLive && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[442px] p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
+        <div className="absolute top-[48px] left-0 w-full max-w-[442px] p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
           {isSearching ? (
             <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
           ) : searchResults.length > 0 ? (
@@ -213,7 +215,7 @@ export function GlobalSearch() {
 
       {/* Recent / Search History Dropdown */}
       {showRecent && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[442px] p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
+        <div className="absolute top-[48px] left-0 w-full max-w-[442px] p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
           <div className="flex justify-between items-center w-full mb-1">
             <h3 className="text-[14px] leading-5 font-normal text-ds-text-primary">Recent</h3>
           </div>
@@ -294,6 +296,7 @@ export function GlobalSearch() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

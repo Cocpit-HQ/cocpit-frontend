@@ -275,12 +275,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
               className="!w-[145px] !min-w-[145px] !max-w-[145px] !p-3 !rounded-[16px] !bg-ds-bg !border !border-ds-border !overflow-visible flex flex-col items-start !gap-4 !shadow-none z-[200] font-['DM_Sans']"
               onClick={(e) => e.stopPropagation()}
             >
-              <DropdownMenuItem
-                onSelect={() => handleMarkAsRead()}
-                className="!p-0 !m-0 !h-5 flex-none whitespace-nowrap justify-start text-ds-text-secondary hover:!text-ds-text-primary focus:!text-ds-text-primary data-[highlighted]:!text-ds-text-primary hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent ds-text-secondary font-['DM_Sans'] cursor-pointer outline-none transition-colors border-none"
-              >
-                Mark as read
-              </DropdownMenuItem>
+              {!notification.is_read && (
+                <DropdownMenuItem
+                  onSelect={() => handleMarkAsRead()}
+                  className="!p-0 !m-0 !h-5 flex-none whitespace-nowrap justify-start text-ds-text-secondary hover:!text-ds-text-primary focus:!text-ds-text-primary data-[highlighted]:!text-ds-text-primary hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent ds-text-secondary font-['DM_Sans'] cursor-pointer outline-none transition-colors border-none"
+                >
+                  Mark as read
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onSelect={() => handleDelete()}
                 className="!p-0 !m-0 !h-5 flex-none whitespace-nowrap justify-start text-ds-text-secondary hover:!text-ds-text-primary focus:!text-ds-text-primary data-[highlighted]:!text-ds-text-primary hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent ds-text-secondary font-['DM_Sans'] cursor-pointer outline-none transition-colors border-none"

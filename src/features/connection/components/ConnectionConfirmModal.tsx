@@ -115,7 +115,7 @@ export function ConnectionConfirmModal({
         border: 1px solid #2C2C33, border-radius: 16px, background: #030303
       */}
       <div
-        className="box-border w-[236px] h-[154px] p-[12px] gap-[16px] rounded-[16px] border border-ds-border bg-ds-bg shadow-2xl flex flex-col items-center justify-between font-dm-sans"
+        className="box-border w-[236px] min-h-[154px] p-[12px] gap-[16px] rounded-[16px] border border-ds-border bg-ds-bg shadow-2xl flex flex-col items-center justify-between font-dm-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Text stack */}

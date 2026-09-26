@@ -1,3 +1,21 @@
+import { toast as sonnerToast } from "sonner";
+
+export function toast(props: any) {
+  if (props.variant === 'destructive') {
+    sonnerToast.error(props.title || "Error", { description: props.description });
+  } else if (props.title) {
+    sonnerToast(props.title, { description: props.description });
+  } else if (props.description) {
+    sonnerToast(props.description as string);
+  }
+}
+
+export function useToast() {
+  return { toast };
+}
+
+/* 
+--- ORIGINAL CODE COMMENTED OUT BELOW ---
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
@@ -182,3 +200,5 @@ function useToast() {
 }
 
 export { useToast, toast };
+
+*/

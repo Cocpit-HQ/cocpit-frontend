@@ -118,12 +118,12 @@ export default function RootLayout({
         className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide bg-background text-foreground`}
       >
         <Providers>
-          <div className="hidden lg:contents">
+          {/* <div className="hidden lg:contents"> */}
             {children}
-          </div>
+          {/* </div>
           <div className="block lg:hidden">
             <MobileUnsupported />
-          </div>
+          </div> */}
           <GlobalToast />
         </Providers>
       </body>

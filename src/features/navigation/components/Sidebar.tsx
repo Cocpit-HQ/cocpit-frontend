@@ -75,14 +75,14 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <aside 
-      className={`h-screen flex flex-col justify-center bg-ds-bg pl-[40px] overflow-y-auto scrollbar-hide ${className || ''}`}
+      className={`h-screen w-[220px] flex flex-col justify-center bg-ds-bg pl-[16px] sm:pl-[24px] lg:pl-[40px] overflow-y-auto scrollbar-hide ${className || ''}`}
     >
-      <div className="w-[180px] flex flex-col my-auto py-6">
+      <div className="w-full pr-[16px] lg:pr-[0px] flex flex-col my-auto py-6">
         {/* Main Navigation Sections */}
         {sections.map((section) => (
           <div key={section.title} className={`flex flex-col shrink-0 ${section.gapTop}`}>
             {/* Section Header */}
-            <div className="flex flex-row justify-between items-center w-[180px] h-[16px] px-[12px] mb-[12px]">
+            <div className="flex flex-row justify-between items-center w-full h-[16px] px-[12px] mb-[12px]">
               <span className="font-['DM_Sans'] font-medium text-[10px] leading-[13px] text-ds-text-muted text-center">
                 {section.title}
               </span>
@@ -98,7 +98,7 @@ export function Sidebar({ className }: SidebarProps) {
                     key={item.label}
                     href={item.href}
                     className={`
-                      flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-[180px] h-[33px] rounded-full transition-[var(--motion-quick)] group
+                      flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[33px] rounded-full transition-[var(--motion-quick)] group
                       ${active ? 'bg-ds-surface-1' : ''}
                     `}
                   >
@@ -125,7 +125,7 @@ export function Sidebar({ className }: SidebarProps) {
         {user && (
           <div className="flex flex-col mt-[20px] shrink-0">
             {/* Section Header */}
-            <div className="flex flex-row justify-between items-center w-[180px] h-[16px] px-[12px] mb-[12px]">
+            <div className="flex flex-row justify-between items-center w-full h-[16px] px-[12px] mb-[12px]">
               <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-secondary">
                 Personal
               </span>
@@ -139,7 +139,7 @@ export function Sidebar({ className }: SidebarProps) {
                   e.preventDefault();
                   switchProfile('USER', user.id);
                 }}
-                className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-[180px] h-[33px] rounded-full transition-[var(--motion-quick)] group"
+                className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[33px] rounded-full transition-[var(--motion-quick)] group"
               >
                 <div className={`w-[20px] h-[20px] rounded-full shrink-0 flex items-center justify-center overflow-hidden ${(user.image || activeProfile?.avatar_url) ? 'bg-[#6366F1]' : 'bg-ds-surface-1 border border-ds-border'}`}>
                   {user.image || activeProfile?.avatar_url ? (
@@ -159,7 +159,7 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Organization Section (Special 20px Top Gap) */}
         <div className="flex flex-col mt-[20px] shrink-0">
           {/* Section Header */}
-          <div className="flex flex-row justify-between items-center w-[180px] h-[16px] px-[12px] mb-[12px] shrink-0">
+          <div className="flex flex-row justify-between items-center w-full h-[16px] px-[12px] mb-[12px] shrink-0">
             <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-secondary">
               Organization
             </span>
@@ -187,7 +187,7 @@ export function Sidebar({ className }: SidebarProps) {
                     const id = company.org_id || company.company_id;
                     if (id) switchProfile('COMPANY', id);
                   }}
-                  className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-[180px] h-[33px] rounded-full transition-[var(--motion-quick)] group"
+                  className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[33px] rounded-full transition-[var(--motion-quick)] group"
                 >
                   <div className={`w-[20px] h-[20px] rounded shrink-0 ${fallbackColor} flex items-center justify-center overflow-hidden`}>
                     {company.logo_url ? (

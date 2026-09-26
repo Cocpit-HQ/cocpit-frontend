@@ -64,11 +64,11 @@ export function RequestCard({
 
   return (
     <article
-      className="w-full min-h-[68px] flex flex-col sm:flex-row sm:items-center justify-between py-2 px-0 sm:px-2 border-b border-ds-border last:border-b-0 hover:bg-ds-surface-1/30 transition-colors gap-2 rounded-2xl font-dm-sans"
+      className="w-full min-h-[68px] flex flex-row items-center justify-between py-2 px-0 sm:px-2 border-b border-ds-border last:border-b-0 hover:bg-ds-surface-1/30 transition-colors gap-2 rounded-2xl font-dm-sans"
       aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}
     >
       {/* Left: Avatar + Details */}
-      <div className="w-full flex-1 min-w-0 min-h-[52px] flex items-center gap-2">
+      <div className="flex-1 min-w-0 min-h-[52px] flex items-center gap-2">
         <Link
           href={targetHref}
           className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent"
@@ -141,7 +141,7 @@ export function RequestCard({
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end mt-1 sm:mt-0">
+      <div className="flex items-center gap-2 shrink-0 justify-end mt-0">
         {(mode === 'received' || mode === 'invitations') && (
           <FeatureDisabledTooltip featureKey="enableConnectionManagement">
             <>
@@ -150,7 +150,7 @@ export function RequestCard({
                 disabled={isActing}
                 onClick={() => onAccept?.(request.id)}
                 aria-label={`Accept request from ${user.name}`}
-                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+                className="w-auto px-4 sm:px-3 sm:w-[89px] inline-flex items-center justify-center h-9 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[14px] sm:text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
               >
                 {isActing ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
@@ -159,17 +159,36 @@ export function RequestCard({
                 )}
               </button>
 
+              {/* Web Decline Button (Text Pill) */}
               <button
                 type="button"
                 disabled={isActing}
                 onClick={() => onDecline?.(request.id)}
                 aria-label={`Decline request from ${user.name}`}
-                className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+                className="hidden sm:inline-flex w-[89px] items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
               >
                 {isActing ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
                 ) : (
                   'Decline'
+                )}
+              </button>
+
+              {/* Mobile Decline Button (Circular X) */}
+              <button
+                type="button"
+                disabled={isActing}
+                onClick={() => onDecline?.(request.id)}
+                aria-label={`Decline request from ${user.name}`}
+                className="inline-flex sm:hidden w-9 h-9 items-center justify-center rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+              >
+                {isActing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 )}
               </button>
             </>
@@ -182,8 +201,7 @@ export function RequestCard({
               type="button"
               disabled={isActing}
               onClick={() => onUndo?.(request.id)}
-              aria-label={`Withdraw request to ${user.name}`}
-              className="flex-1 sm:w-[89px] sm:flex-none inline-flex items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+              className="w-auto px-4 sm:px-3 sm:w-[89px] inline-flex items-center justify-center h-9 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[14px] sm:text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
             >
               {isActing ? (
                 <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />

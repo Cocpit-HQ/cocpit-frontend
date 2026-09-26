@@ -30,7 +30,7 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
         <h2 className="font-dm-sans text-[16px] font-medium leading-[24px] text-ds-text-primary mb-5">
           People you may know
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="flex flex-wrap gap-3 sm:gap-4 lg:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <SuggestionCardSkeleton key={i} />
           ))}
@@ -55,7 +55,7 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
         People you may know
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+      <div className="flex flex-wrap gap-3 sm:gap-4 lg:gap-6">
         {filteredSuggestions.map((user) => (
           <SuggestionCard key={user.id} user={user} />
         ))}

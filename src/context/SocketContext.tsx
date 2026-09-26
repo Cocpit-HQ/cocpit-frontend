@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { io, Socket } from 'socket.io-client';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
+
 import { toast as sonnerToast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
@@ -54,7 +54,13 @@ const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, update } = useSession();
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
-  const { toast } = useToast();
+  const toast = (props: any) => {
+    if (props.variant === 'destructive') {
+      sonnerToast.error(props.title, { description: props.description, duration: props.duration });
+    } else {
+      sonnerToast(props.title, { description: props.description, duration: props.duration });
+    }
+  };
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();

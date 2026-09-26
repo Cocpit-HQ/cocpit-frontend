@@ -32,7 +32,7 @@ export function ConnectionTabs({ activeCount }: ConnectionTabsProps) {
   };
 
   return (
-    <div className="w-full h-9 flex items-center gap-3 border-b border-ds-border/60 pb-0 mb-5 select-none font-dm-sans">
+    <div className="w-full h-9 flex items-center gap-3 border-b border-ds-border/60 pb-0 mb-5 select-none font-dm-sans overflow-x-auto whitespace-nowrap scrollbar-hide">
       <div
         role="tablist"
         aria-label="Connection request tabs"

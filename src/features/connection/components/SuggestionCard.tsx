@@ -122,7 +122,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
 
   // Suggestion card with bg-ds-bg background and 182x216px dimensions per Figma spec
   return (
-    <div className="relative flex flex-col items-center text-center p-3 w-[182px] h-[216px] rounded-[16px] border border-ds-border bg-ds-bg hover:border-ds-border/80 transition-all font-dm-sans group select-none">
+    <div className="relative flex flex-col items-center text-center p-3 w-[calc(50%-6px)] sm:w-[182px] h-[216px] rounded-[16px] border border-ds-border bg-ds-bg hover:border-ds-border/80 transition-all font-dm-sans group select-none">
       {/* Top-Right Dismiss Button per Figma spec (32x32px, absolute top-3 right-3) */}
       <button
         type="button"
