@@ -11,7 +11,7 @@ export function toast(props: any) {
 }
 
 export function useToast() {
-  return { toast };
+  return { toast, toasts: [] as any[], dismiss: () => {} };
 }
 
 /* 
