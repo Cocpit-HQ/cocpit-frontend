@@ -10,7 +10,11 @@ import { SearchedUser } from '@/types/user';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useToast } from '@/hooks/use-toast';
 
-export function GlobalSearch() {
+interface GlobalSearchProps {
+  hasSidebar?: boolean;
+}
+
+export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
   const router = useRouter();
   const pathname = usePathname();
   
@@ -141,14 +145,23 @@ export function GlobalSearch() {
   const showRecent = isFocused && !searchQuery.trim() && history.length > 0;
   const showLive = isFocused && searchQuery.trim().length > 0;
 
+  let paddingRightClass = '';
+  if (pathname === '/feed') {
+    paddingRightClass = 'md:pr-[220px]';
+  } else if (pathname === '/profile') {
+    paddingRightClass = 'md:pr-[253px]';
+  }
+
   return (
-    <div 
-      ref={dropdownRef}
-      className="fixed top-[40px] left-0 sm:left-[220px] right-0 pointer-events-auto z-50 px-4 sm:px-6 md:px-8"
-    >
-      <div className="w-full max-w-[800px] mx-auto flex flex-col items-start relative">
-        {/* Search Input Bar */}
-        <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full max-w-[442px] h-[40px] border-b border-ds-text-primary bg-transparent">
+    <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
+      <div 
+        ref={dropdownRef}
+        className="w-full pointer-events-auto pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8"
+      >
+      <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
+        <div className="relative w-full max-w-[442px]">
+          {/* Search Input Bar */}
+          <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
         <input
           type="text"
           placeholder="Search"
@@ -168,7 +181,7 @@ export function GlobalSearch() {
 
       {/* Live Search Dropdown */}
       {showLive && (
-        <div className="absolute top-[48px] left-0 w-full max-w-[442px] p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
+        <div className="absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
           {isSearching ? (
             <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
           ) : searchResults.length > 0 ? (
@@ -215,7 +228,7 @@ export function GlobalSearch() {
 
       {/* Recent / Search History Dropdown */}
       {showRecent && (
-        <div className="absolute top-[48px] left-0 w-full max-w-[442px] p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
+        <div className="absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
           <div className="flex justify-between items-center w-full mb-1">
             <h3 className="text-[14px] leading-5 font-normal text-ds-text-primary">Recent</h3>
           </div>
@@ -296,6 +309,8 @@ export function GlobalSearch() {
           </button>
         </div>
       )}
+        </div>
+        </div>
       </div>
     </div>
   );

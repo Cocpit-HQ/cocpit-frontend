@@ -276,7 +276,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
       {/* Center Search (Figma top: 40px) */}
       <div className="hidden sm:block">
-        <GlobalSearch />
+        <GlobalSearch hasSidebar={false} />
       </div>
 
       {/* Cross / Close to Feed button (top: 40px, right: 40px) */}

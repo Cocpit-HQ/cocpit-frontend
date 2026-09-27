@@ -28,7 +28,7 @@ const GlobalToast = ({ ...props }: ToasterProps) => {
 
         /* 1. Card simply fades in smoothly without moving */
         html body .animate-toast-card[data-mounted="true"] {
-          animation: cardFadeIn 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+          animation: cardFadeIn 300ms cubic-bezier(0.22, 1, 0.36, 1);
         }
         html body .animate-toast-card[data-removed="true"] {
           animation: cardFadeOut 200ms ease-in forwards !important;

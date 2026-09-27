@@ -242,18 +242,23 @@ export default function CommentInput({
                                 <Smile className="w-5 h-5" />
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleSubmit()}
-                                disabled={!commentText.trim()}
-                                className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm cursor-pointer
-                                    ${commentText.trim().length > 0
-                                        ? 'bg-ds-accent text-white hover:opacity-90 active:scale-95'
-                                        : 'bg-ds-border text-ds-text-muted cursor-default opacity-70'
-                                    }`}
-                            >
-                                Save
-                            </button>
+                            <div className="flex items-center justify-center">
+                                <span className="text-[11px] font-medium mr-2 text-ds-text-muted">
+                                    {commentText.length}/1000
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSubmit()}
+                                    disabled={!commentText.trim()}
+                                    className={`px-4 py-1.5 rounded-[100px] font-dm-sans font-medium text-[14px] transition-all flex items-center justify-center shadow-sm cursor-pointer
+                                        ${commentText.trim().length > 0
+                                            ? 'bg-ds-accent text-white hover:opacity-90 active:scale-95'
+                                            : 'bg-ds-border text-ds-text-muted cursor-default opacity-70'
+                                        }`}
+                                >
+                                    Save
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -125,7 +125,9 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
               onChange={(e) => {
                 const val = e.target.value;
                 if (maxLength && val.length > maxLength) {
-                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`);
+                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`, {
+                    id: `max-length-error-${id}`
+                  });
                   onChange(val.slice(0, maxLength));
                 } else {
                   onChange(val);
@@ -159,7 +161,9 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
                 }
 
                 if (maxLength && targetVal.length > maxLength) {
-                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`);
+                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`, {
+                    id: `max-length-error-${id}`
+                  });
                   targetVal = targetVal.slice(0, maxLength);
                   if (targetCursor !== null) {
                     targetCursor = Math.min(targetCursor, maxLength);
