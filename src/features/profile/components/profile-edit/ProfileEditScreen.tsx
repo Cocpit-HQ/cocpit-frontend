@@ -194,6 +194,7 @@ export function ProfileEditScreen({
 
   const [initialFormData, setInitialFormData] = useState<ProfileFormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Industries
   const [availableIndustries, setAvailableIndustries] = useState<{ industry_name: string }[]>([]);
@@ -322,9 +323,11 @@ export function ProfileEditScreen({
         .replace(/[^a-zA-Z0-9_.]/g, "")
         .toLowerCase();
       setFormData((prev) => ({ ...prev, account_name: sanitized }));
+      setErrors((prev) => ({ ...prev, account_name: "" }));
       return;
     }
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   // Discard Confirmation Modal State
@@ -340,7 +343,9 @@ export function ProfileEditScreen({
   };
 
   const handleCloseWithCheck = () => {
-    if (activeTab === "profile" && hasChanges) {
+    const nestedHasChanges = registeredBackFnRef.current ? (registeredBackFnRef.current as any).hasChanges : false;
+
+    if ((activeTab === "profile" && hasChanges) || (activeTab !== "profile" && nestedHasChanges)) {
       setIsLeaveModalOpen(true);
     } else {
       handleClose();
@@ -407,26 +412,32 @@ export function ProfileEditScreen({
   const handleSave = async () => {
     if (!hasChanges || isSaving || isUsernameAvailable === false) return;
 
+    const newErrors: Record<string, string> = {};
+
     if (!formData.name || formData.name.trim().length < 3) {
-      toast.error("Full name must be at least 3 characters");
-      return;
+      newErrors.name = "Full name must be at least 3 characters";
     }
 
-    if (formData.account_name) {
-      const usernameRegex = /^[a-z0-9_.]{3,25}$/;
-      if (!usernameRegex.test(formData.account_name)) {
-        toast.error("Username must be 3-25 characters and contain only lowercase letters, numbers, underscores, or dots");
-        return;
-      }
+    const usernameRegex = /^[a-z0-9_.]{3,25}$/;
+    if (!formData.account_name || !usernameRegex.test(formData.account_name)) {
+      newErrors.account_name = "Username must be 3-25 characters and contain only lowercase letters, numbers, underscores, or dots";
     }
 
-    if (formData.headline && formData.headline.length > 120) {
-      toast.error("Headline cannot exceed 120 characters");
-      return;
+    if (!formData.headline || formData.headline.trim() === '') {
+      newErrors.headline = "Headline is required";
+    } else if (formData.headline.length > 120) {
+      newErrors.headline = "Headline cannot exceed 120 characters";
     }
+
     if (formData.about && formData.about.length > 500) {
-      toast.error("About cannot exceed 500 characters");
+      newErrors.about = "About cannot exceed 500 characters";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
+    } else {
+      setErrors({});
     }
 
     setIsSaving(true);
@@ -680,6 +691,7 @@ export function ProfileEditScreen({
               isUsernameAvailable={isUsernameAvailable}
               isCheckingUsername={isCheckingUsername}
               availableIndustries={availableIndustries}
+              errors={errors}
             />
           </div>
         ) : activeTab === "skills" ? (

@@ -36,6 +36,7 @@ interface ProfileEditFormProps {
   isUsernameAvailable?: boolean | null;
   isCheckingUsername?: boolean;
   availableIndustries?: { industry_name: string }[];
+  errors?: Record<string, string>;
 }
 
 const LOOKING_FOR_OPTIONS = [
@@ -81,6 +82,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   isUsernameAvailable = true,
   isCheckingUsername = false,
   availableIndustries = [],
+  errors = {},
 }) => {
   const industryOptions = availableIndustries.map((ind) => ({
     id: ind.industry_name,
@@ -118,6 +120,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           placeholder="Enter full name"
           className="w-[300px] max-w-full flex-none grow-0"
           labelClassName="w-[54px] text-center"
+          error={errors.name}
         />
 
         {/* Username (300px width) */}
@@ -139,7 +142,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           placeholder="Username"
           className="w-[300px] max-w-full flex-none grow-0"
           labelClassName="w-[58px] text-center"
-          error={isUsernameAvailable === false ? "Username is taken" : undefined}
+          error={isUsernameAvailable === false ? "Username is taken" : errors.account_name}
           statusBadge={
             isCheckingUsername ? (
               <span className="text-[10px] text-[var(--ds-text-muted)] font-['DM_Sans']">
@@ -165,6 +168,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         showCounter={true}
         className="w-full max-w-[800px]"
         labelClassName="w-[49px] text-center"
+        error={errors.headline}
       />
 
       {/* 4. Link (800px width) */}
@@ -260,6 +264,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         showCounter={true}
         className="w-full max-w-[800px]"
         labelClassName="w-[35px] text-center"
+        error={errors.about}
       />
 
       {/* 9. Save & Cancel Action Buttons */}
@@ -270,10 +275,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         disabled={
           !hasChanges ||
           isUsernameAvailable === false ||
-          isCheckingUsername ||
-          !formData.name?.trim() ||
-          formData.name.trim().length < 3 ||
-          (Boolean(formData.account_name) && !/^[a-z0-9_.]{3,25}$/.test(formData.account_name))
+          isCheckingUsername
         }
       />
     </div>

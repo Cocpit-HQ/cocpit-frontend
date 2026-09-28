@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { AddIcon } from "@/components/icons";
 import { LeaveConfirmationModal } from "@/components/shared";
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { ProfileEditField } from "./ProfileEditField";
 import { ProfileEditDropdown } from "./ProfileEditDropdown";
 import { ProfileEditSearchableDropdown } from "./ProfileEditSearchableDropdown";
@@ -117,6 +118,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   const [endCurrentRole, setEndCurrentRole] = useState(true);
   const [initialEndCurrentRole, setInitialEndCurrentRole] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -457,12 +459,14 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
     try {
       await expMutations.remove.mutateAsync(expId);
       toast.success("Experience deleted successfully");
+      setShowDeleteModal(false);
       clearDraft();
       onDeleted();
       onBackToList();
     } catch (err: any) {
       console.error("Failed to delete experience:", err);
       toast.error(err?.response?.data?.message || "Failed to delete experience");
+      setShowDeleteModal(false);
     } finally {
       setIsDeleting(false);
     }
@@ -517,8 +521,10 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   }, [hasChanges, clearDraft, onBackToList]);
 
   useEffect(() => {
-    onRegisterBack?.(handleCancelClick);
-  }, [onRegisterBack, handleCancelClick]);
+    const fn = () => handleCancelClick();
+    (fn as any).hasChanges = hasChanges;
+    onRegisterBack?.(fn);
+  }, [onRegisterBack, handleCancelClick, hasChanges]);
 
   return (
     <div className="w-full max-w-[640px] flex flex-col items-center gap-[40px] p-0 animate-in fade-in duration-200">
@@ -781,7 +787,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         <button
           type="button"
           disabled={isDeleting || isSaving}
-          onClick={isEditing ? handleDelete : handleCancelClick}
+          onClick={isEditing ? () => setShowDeleteModal(true) : handleCancelClick}
           className="w-[77px] h-[36px] px-[12px] py-[6px] rounded-full border border-[var(--ds-border)] bg-transparent hover:bg-[var(--ds-surface-1)] text-[var(--ds-text-primary)] font-['DM_Sans'] font-medium text-[16px] leading-[24px] flex items-center justify-center transition-all cursor-pointer focus:outline-none disabled:opacity-50"
         >
           {isDeleting ? "..." : isEditing ? "Delete" : "Cancel"}
@@ -801,6 +807,15 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           setShowLeaveModal(false);
           onBackToList();
         }}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Experience"
+        description="Are you sure you want to delete this experience? This action cannot be undone."
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

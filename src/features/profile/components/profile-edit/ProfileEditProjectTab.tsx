@@ -102,7 +102,11 @@ export const ProfileEditProjectTab: React.FC<ProfileEditProjectTabProps> = ({
       setActiveProjId(id);
     }
     onSuccess?.();
-    // Retain user on the form page
+    if (!hasVisitedList) {
+      onCancel?.();
+    } else {
+      setViewMode("list");
+    }
   };
 
   const handleDeleted = () => {

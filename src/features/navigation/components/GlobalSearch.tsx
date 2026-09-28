@@ -156,10 +156,10 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
     <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
       <div 
         ref={dropdownRef}
-        className="w-full pointer-events-auto pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8"
+        className="w-full pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8"
       >
       <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
-        <div className="relative w-full max-w-[442px]">
+        <div className="relative w-full max-w-[442px] pointer-events-auto">
           {/* Search Input Bar */}
           <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
         <input

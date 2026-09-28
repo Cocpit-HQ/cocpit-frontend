@@ -247,11 +247,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/feed");
-    }
+    router.back();
   };
 
   const handleClose = () => {

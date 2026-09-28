@@ -157,7 +157,11 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
     }
     setIsAddingNewRole(false);
     onSuccess?.();
-    // Retain user on the form page as required
+    if (!hasVisitedList) {
+      onCancel?.();
+    } else {
+      setViewMode("list");
+    }
   };
 
   const handleDeleted = () => {

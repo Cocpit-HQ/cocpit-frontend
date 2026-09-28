@@ -190,18 +190,24 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
         </div>
       </div>
 
-      {/* Right-aligned Counter below */}
-      {showCounter && maxLength && (
-        <div className="w-full flex justify-end">
-          <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-muted)]">
-            {(value || "").length}/{maxLength}
-          </span>
+      {/* Footer Row: Error (left) and Counter (right) */}
+      {(error || (showCounter && maxLength)) && (
+        <div className="w-full flex justify-between items-start">
+          <div className="flex-1">
+            {error && (
+              <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">
+                {error}
+              </span>
+            )}
+          </div>
+          {showCounter && maxLength && (
+            <div className="flex-none ml-2">
+              <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-muted)]">
+                {(value || "").length}/{maxLength}
+              </span>
+            </div>
+          )}
         </div>
-      )}
-      {error && (
-        <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">
-          {error}
-        </span>
       )}
     </div>
   );

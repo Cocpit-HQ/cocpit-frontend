@@ -79,7 +79,7 @@ export const ProfileEditProjectList: React.FC<ProfileEditProjectListProps> = ({
             /* Frame 2608627: Item Box (w: 640px, min-h: 64px, p: 8px 12px, gap: 12px, rounded: 8px) */
             <div
               key={proj.project_id}
-              className="w-full max-w-full min-h-[64px] px-0 py-2 rounded-lg flex flex-row justify-between items-start gap-3 hover:bg-[var(--ds-surface-1)] transition-colors group flex-none order-1 self-stretch flex-grow-0"
+              className="min-h-[64px] px-3 py-2 -mx-3 rounded-lg flex flex-row justify-between items-start gap-3 hover:bg-[var(--ds-surface-1)] transition-colors group flex-none order-1 self-stretch flex-grow-0"
             >
               {/* Frame 2609618: Details Box (flex column, gap: 8px) */}
               <div className="flex flex-col items-start p-0 gap-2 flex-1 min-w-0">

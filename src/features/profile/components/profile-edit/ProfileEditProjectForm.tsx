@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Plus, ExternalLink } from "lucide-react";
 import { ProfileEditIcon, ProjectDocIcon } from "@/components/icons";
 import { LeaveConfirmationModal } from "@/components/shared";
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { toast } from "sonner";
 import { ProfileEditField } from "./ProfileEditField";
 import { ProfileEditDatePicker } from "./ProfileEditDatePicker";
@@ -69,6 +70,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
   const [formData, setFormData] = useState<ProjectFormData>(EMPTY_FORM);
   const [initialSnapshot, setInitialSnapshot] = useState<ProjectFormData | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -330,11 +332,13 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
     try {
       await projMutations.remove.mutateAsync(formData.project_id);
       toast.success("Project deleted successfully");
+      setShowDeleteModal(false);
       clearDraft();
       onDeleted();
     } catch (err: any) {
       console.error("Failed to delete project:", err);
       toast.error(err?.response?.data?.message || "Failed to delete project");
+      setShowDeleteModal(false);
     } finally {
       setIsDeleting(false);
     }
@@ -378,8 +382,10 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
   }, [hasChanges, clearDraft, onBackToList]);
 
   useEffect(() => {
-    onRegisterBack?.(handleCancelClick);
-  }, [onRegisterBack, handleCancelClick]);
+    const fn = () => handleCancelClick();
+    (fn as any).hasChanges = hasChanges;
+    onRegisterBack?.(fn);
+  }, [onRegisterBack, handleCancelClick, hasChanges]);
 
   const mediaSectionRef = useRef<HTMLDivElement>(null);
 
@@ -810,7 +816,7 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
             <button
               type="button"
               disabled={isDeleting || isSaving}
-              onClick={handleDelete}
+              onClick={() => setShowDeleteModal(true)}
               className="min-w-[80px] px-4 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-2.5 transition-all cursor-pointer focus:outline-none disabled:opacity-50"
             >
               <div className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
@@ -975,6 +981,15 @@ export const ProfileEditProjectForm: React.FC<ProfileEditProjectFormProps> = ({
           handleRemoveMedia(id);
           setMediaModal(null);
         }}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Project"
+        description="Are you sure you want to delete this project? This action cannot be undone."
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

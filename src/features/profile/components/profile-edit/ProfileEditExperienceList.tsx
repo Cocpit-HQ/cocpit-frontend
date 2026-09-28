@@ -68,7 +68,7 @@ export const ProfileEditExperienceList: React.FC<ProfileEditExperienceListProps>
             <div
               key={exp.experience_id}
               className={cn(
-                "w-full max-w-full min-h-[104px] flex flex-row justify-between items-start py-2 px-0 gap-3 rounded-[8px] transition-colors group bg-transparent hover:bg-[var(--ds-surface-1)]"
+                "min-h-[104px] flex flex-row justify-between items-start py-2 px-3 -mx-3 gap-3 rounded-[8px] transition-colors group bg-transparent hover:bg-[var(--ds-surface-1)]"
               )}
             >
               {/* Frame 2609612: Exp Details Box (gap: 4px) */}

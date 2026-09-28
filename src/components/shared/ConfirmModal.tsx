@@ -1,3 +1,9 @@
+/**
+ * @deprecated LEGACY COMPONENT
+ * DO NOT USE this modal for new features. It is considered legacy.
+ * Use `ActionConfirmModal` (from @/shared/commonComponents/ActionConfirmModal) 
+ * or `DeleteConfirmationModal` (from @/components/shared/DeleteConfirmationModal) instead.
+ */
 import React from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';

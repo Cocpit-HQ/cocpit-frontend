@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { LeaveConfirmationModal } from "@/components/shared";
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { ProfileEditField } from "./ProfileEditField";
 import { ProfileEditSearchableDropdown } from "./ProfileEditSearchableDropdown";
 import { ProfileEditLocationInput } from "./ProfileEditLocationInput";
@@ -58,6 +59,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   const [formData, setFormData] = useState<EducationFormData>(EMPTY_FORM);
   const [initialSnapshot, setInitialSnapshot] = useState<EducationFormData | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -293,11 +295,13 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     try {
       await eduMutations.remove.mutateAsync(formData.education_id);
       toast.success("Education deleted successfully");
+      setShowDeleteModal(false);
       clearDraft();
       onDeleted();
     } catch (err: any) {
       console.error("Failed to delete education:", err);
       toast.error(err?.response?.data?.message || "Failed to delete education");
+      setShowDeleteModal(false);
     } finally {
       setIsDeleting(false);
     }
@@ -338,8 +342,10 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   }, [hasChanges, clearDraft, onBackToList]);
 
   useEffect(() => {
-    onRegisterBack?.(handleCancelClick);
-  }, [onRegisterBack, handleCancelClick]);
+    const fn = () => handleCancelClick();
+    (fn as any).hasChanges = hasChanges;
+    onRegisterBack?.(fn);
+  }, [onRegisterBack, handleCancelClick, hasChanges]);
 
   return (
     <div className="w-full max-w-full flex flex-col justify-start items-center gap-5 animate-in fade-in duration-200">
@@ -509,7 +515,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
         <button
           type="button"
           disabled={isDeleting || isSaving}
-          onClick={isEditing ? handleDelete : handleCancelClick}
+          onClick={isEditing ? () => setShowDeleteModal(true) : handleCancelClick}
           className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-95 flex justify-center items-center gap-2.5 transition-all cursor-pointer focus:outline-none disabled:opacity-50"
         >
           <div className="justify-start text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
@@ -531,6 +537,15 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
           setShowLeaveModal(false);
           onBackToList();
         }}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Education"
+        description="Are you sure you want to delete this education? This action cannot be undone."
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

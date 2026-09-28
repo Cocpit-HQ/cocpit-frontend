@@ -102,7 +102,11 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
       setActiveEduId(id);
     }
     onSuccess?.();
-    // Retain user on the form page
+    if (!hasVisitedList) {
+      onCancel?.();
+    } else {
+      setViewMode("list");
+    }
   };
 
   const handleDeleted = () => {

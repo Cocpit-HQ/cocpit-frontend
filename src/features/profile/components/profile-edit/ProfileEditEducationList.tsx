@@ -61,7 +61,7 @@ export const ProfileEditEducationList: React.FC<ProfileEditEducationListProps> =
             <div
               key={edu.education_id}
               className={cn(
-                "w-full max-w-full min-h-[64px] px-0 py-2 rounded-lg flex flex-row justify-between items-start gap-3 hover:bg-[var(--ds-surface-1)] transition-colors group flex-none order-1 self-stretch flex-grow-0"
+                "min-h-[64px] px-3 py-2 -mx-3 rounded-lg flex flex-row justify-between items-start gap-3 hover:bg-[var(--ds-surface-1)] transition-colors group flex-none order-1 self-stretch flex-grow-0"
               )}
             >
               <div className="flex flex-col justify-start items-start gap-1 flex-1 min-w-0">
