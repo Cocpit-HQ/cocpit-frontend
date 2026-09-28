@@ -40,7 +40,8 @@ export const useConnectionRequests = (tab: ConnectionTab, subTab?: InvitationSub
         return { data: mapped, totalCount: mapped.length, page: 1, limit: 50 };
       }
 
-      // ── Invitations — Channels sub-tab ────────────────────────────────────
+      // ── Invitations — Channels sub-tab (Disabled per request) ─────────────
+      /*
       const res = await getChannelInvitations();
       const mapped: ConnectionRequest[] = (res.data ?? []).map((item) => ({
         id:               item.inviteId,
@@ -59,6 +60,8 @@ export const useConnectionRequests = (tab: ConnectionTab, subTab?: InvitationSub
         },
       }));
       return { data: mapped, totalCount: mapped.length, page: 1, limit: 50 };
+      */
+      return EMPTY_RESPONSE;
     },
     // Only fetch invitations when actually on an invitations sub-tab.
     // For other tabs (received/sent), always enabled.

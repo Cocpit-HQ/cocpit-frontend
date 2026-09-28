@@ -24,7 +24,7 @@ import {
 import { ProfileCoverSection } from "../components/ProfileCoverSection";
 import { ProfileUserBio } from "../components/ProfileUserBio";
 import { ProfileAboutSection } from "../components/ProfileAboutSection";
-import { FullPageError, SomethingWentWrong } from "../components/ProfileEmptyStates";
+import { FullPageError /* [CLEANUP:UNUSED] SomethingWentWrong */ } from "../components/ProfileEmptyStates";
 import { AddIcon } from "@/components/icons";
 
 // Tab Content Components
@@ -37,7 +37,7 @@ import { ProfileSkillsTab } from "../components/tabs/ProfileSkillsTab";
 // Modals
 import { ProfileEditScreen, type ProfileEditTabKey } from "../components/profile-edit";
 import { DownloadProfileScreen } from "../components/download-profile";
-import { EditProfileModal } from "../components/EditProfileModal";
+// [CLEANUP:UNUSED] import { EditProfileModal } from "../components/EditProfileModal";
 import { EditAvatarModal } from "../components/EditAvatarModal";
 import EditCoverPhoto from "../components/EditCoverPhoto";
 import { ContactInfoModal } from "../components/ContactInfoModal";

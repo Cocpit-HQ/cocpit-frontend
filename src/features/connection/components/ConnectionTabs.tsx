@@ -45,9 +45,7 @@ export function ConnectionTabs({ activeCount }: ConnectionTabsProps) {
               ? counts?.received ?? 0
               : key === 'sent'
               ? counts?.sent ?? 0
-              : invitationSubTab === 'teams'
-              ? counts?.teamsInvitations ?? 0
-              : counts?.channelsInvitations ?? 0;
+              : counts?.teamsInvitations ?? 0;
 
           const count = isActive && typeof activeCount === 'number' ? activeCount : fallbackCount;
           // Fix: Display the pending indicator when count > 0, even for the active tab

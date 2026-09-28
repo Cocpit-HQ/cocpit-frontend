@@ -112,7 +112,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
       ? counts?.received ?? 0
       : activeTab === 'sent'
       ? counts?.sent ?? 0
-      : counts?.invitations ?? 0;
+      : counts?.teamsInvitations ?? 0;
 
   const baseCount =
     typeof data?.totalCount === 'number' && data.totalCount > 0
