@@ -11,6 +11,7 @@ import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
 import { getPostById } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFeed } from '@/hooks/use-feed';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 import { feedApi } from '../api/feed.api';
@@ -48,6 +49,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const router = useRouter();
   const isArticlePost = category === 'Article' || post_type === 'article';
 
+  const queryClient = useQueryClient();
   const { updatePostInFeed } = useFeed(false);
 
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
@@ -880,10 +882,24 @@ export const FeedPost = (props: FeedPostProps) => {
             entityId={targetId.toString()}
             onShare={(selectedIds) => {
               if (selectedIds.length > 0) {
-                incrementExternalShareCount(selectedIds.length);
                 const updatedCount = externalShareCount + selectedIds.length;
-                
-                // Force sync with other components like ProfileAllPostsScreen
+
+                if (shouldManageRoom) {
+                  // Post Details page: WebSocket delivers the exact share count,
+                  // so skip local increment. But invalidate the feed query so
+                  // the Feed fetches fresh data when the user navigates back.
+                  queryClient.invalidateQueries({ queryKey: ['feed'] });
+                } else {
+                  // Feed page: WebSocket is off, so increment locally for
+                  // instant feedback and update the feed cache directly.
+                  incrementExternalShareCount(selectedIds.length);
+                  const shareUpdate = isRepostWithoutThoughts && shared_post
+                    ? { shared_post: { ...shared_post, externalShares: updatedCount } }
+                    : { externalShares: updatedCount };
+                  updatePostInFeed(id.toString(), shareUpdate);
+                }
+
+                // Always notify other components (ProfileAllPostsScreen, etc.)
                 if (typeof window !== "undefined") {
                   window.dispatchEvent(
                     new CustomEvent("postUpdated", {

@@ -81,7 +81,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
     }
   }, [value, isTextarea]);
 
-  const isOverLimit = maxLength ? (value || "").length >= maxLength : false;
+  const isOverLimit = maxLength ? (value || "").length > maxLength : false;
   const displayError = isOverLimit ? (maxLengthMessage || `Maximum ${maxLength} characters allowed`) : error;
   const hasError = !!displayError;
 
