@@ -224,7 +224,8 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
               option_text: o.option_text,
               vote_count: o.vote_count || 0
             })) || []
-          } : undefined
+          } : undefined,
+          mentioned_users: (sp as any).mentioned_users
         } as Post & { isAvailable?: boolean };
       }
 
@@ -237,5 +238,6 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     post_type: publicPost.post_type,
     type: publicPost.post_type,
     media: publicPost.media,
+    mentioned_users: (publicPost as any).mentioned_users,
   };
 };

@@ -222,7 +222,8 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
               option_text: o.option_text,
               vote_count: o.vote_count || 0
             })) || []
-          } : undefined
+          } : undefined,
+          mentioned_users: (sp as any).mentioned_users
         } as Post & { isAvailable?: boolean };
       }
 
@@ -238,5 +239,6 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     achievementImageTitle: backendPost.achievement_image_title || (backendPost.achievement_image_id ? 'Achievement' : undefined),
     achievementImageKey: backendPost.achievement_image_key || undefined,
     media: backendPost.media,
+    mentioned_users: backendPost.mentioned_users,
   };
 };

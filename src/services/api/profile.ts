@@ -58,6 +58,7 @@ export interface ProfilePost {
   share_count: number;
   external_share_count?: number;
   poll: ProfilePostPoll | null;
+  mentioned_users?: any[];
   sample_liker_username?: string | null;
   author_headline?: string;
   post_type?: string;

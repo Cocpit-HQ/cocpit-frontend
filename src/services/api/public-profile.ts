@@ -45,6 +45,7 @@ export interface PublicPost {
   comment_count: number;
   share_count?: number;
   poll: PublicPostPoll | null;
+  mentioned_users?: any[];
   location?: string | null;
   tags?: any[];
   sample_liker_username?: string | null;

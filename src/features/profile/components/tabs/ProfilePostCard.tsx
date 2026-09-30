@@ -38,6 +38,7 @@ import {
 import type { Post } from "@/types/entities";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
+import { RichTextRenderer } from "@/features/feed/components/parts/RichTextRenderer";
 
 const mergeProfilePostState = (current: Post, incoming: Post): Post => ({
   ...current,
@@ -340,7 +341,11 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
       {/* Post Text Description (if any) */}
       {localPost.content && !isArticlePost && !isPollPost && (
         <div className="w-full text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4 line-clamp-2">
-          {localPost.content}
+          <RichTextRenderer 
+            content={localPost.content} 
+            mentionedUsers={localPost.mentioned_users} 
+            disableLinks={true}
+          />
         </div>
       )}
 
