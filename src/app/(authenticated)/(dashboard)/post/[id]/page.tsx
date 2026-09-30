@@ -215,14 +215,6 @@ export default function SinglePostPage({ params }: PageProps) {
             onEdit={(postToEdit) => {
               useUIStore.getState().setEditMode(true, id, postToEdit || post);
             }}
-            onDelete={() => {
-              if (typeof window !== "undefined" && window.history.length > 1) {
-                router.back();
-              } else {
-                const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
-                router.push(savedPath || "/feed");
-              }
-            }}
             // Purpose of Bug Fix: Enable Repost with Thoughts on post detail page to populate quoted post into UI store and navigate to feed composer
             onRepostWithThoughts={(postToQuote) => {
               useUIStore.getState().setSharedPostData(postToQuote);

@@ -202,6 +202,9 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       queryClient.invalidateQueries({ queryKey: ["organization-followers"] });
       queryClient.invalidateQueries({ queryKey: ["organization-following"] });
       queryClient.invalidateQueries({ queryKey: ["followersCount", id] });
+      queryClient.invalidateQueries({ queryKey: ["connections"] });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus"] });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
 
       if (currentUserId) {
         queryClient.invalidateQueries({

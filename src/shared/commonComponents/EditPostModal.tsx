@@ -647,7 +647,6 @@ export function EditPostModal({
       const companyId = originalPost?.author_org_id || originalPost?.companyId;
       await deletePost(editPostId, companyId);
 
-      window.dispatchEvent(new CustomEvent('postDeleted', { detail: { id: editPostId } }));
       if (onDelete) {
         onDelete(editPostId);
       }
@@ -1157,6 +1156,8 @@ export function EditPostModal({
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+        modalClassName="!z-[302]"
+        overlayClassName="!z-[301]"
       />
 
       {/* Discard Confirmation Modal */}

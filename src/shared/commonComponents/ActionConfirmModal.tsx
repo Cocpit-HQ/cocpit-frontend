@@ -27,6 +27,7 @@ export interface ActionConfirmModalProps {
   buttonWidthClass?: string;
   titleClassName?: string;
   modalClassName?: string;
+  overlayClassName?: string;
 }
 
 const PRESETS: Record<
@@ -96,6 +97,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   buttonWidthClass: customButtonWidthClass,
   titleClassName: customTitleClassName,
   modalClassName,
+  overlayClassName,
 }) => {
   const preset = type !== "custom" ? PRESETS[type] : null;
 
@@ -110,6 +112,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
         onOpenAutoFocus={(e) => e.preventDefault()}
+        overlayClassName={overlayClassName}
         className={cn(
           "box-border w-[237px] min-h-[150px] p-[12px] gap-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
           modalClassName

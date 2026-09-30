@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   useAvatarMutations,
@@ -56,6 +56,7 @@ import { useScrollRestoration, saveScrollPosition } from "@/hooks/use-scroll-res
 
 export default function ProfilePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading, isError: isProfileError, refetch: refetchProfile } = useMyProfile();
 
   // Modals state
@@ -495,16 +496,32 @@ export default function ProfilePage() {
     }
   };
 
-  // Handlers for post delete / update
-  const handleDeletePost = async (id: string) => {
-    try {
-      await apiDeletePost(id);
-      toast.success("Post deleted successfully");
-      refetchPosts();
-    } catch {
-      toast.error("Failed to delete post");
-    }
-  };
+  const handleDeletePost = useCallback(async (id: string) => {
+    // The actual API call and toast are handled by FeedPost -> usePostOptions -> useFeed.
+    // We just need to refresh our local posts list to remove the deleted post from the UI immediately.
+    queryClient.setQueryData(["userPosts", user?.id], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        posts: oldData.posts.filter((p: any) => p.id !== id && p.id?.toString() !== id)
+      };
+    });
+    refetchPosts();
+  }, [queryClient, user?.id, refetchPosts]);
+
+  useEffect(() => {
+    const onPostDeleted = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.id) {
+        handleDeletePost(customEvent.detail.id);
+      }
+    };
+    window.addEventListener("postDeleted", onPostDeleted);
+    return () => {
+      window.removeEventListener("postDeleted", onPostDeleted);
+    };
+  }, [handleDeletePost]);
+
 
   const openFollowList = (tab: "followers" | "following" | "connections") => {
     setActiveFollowTab(tab);

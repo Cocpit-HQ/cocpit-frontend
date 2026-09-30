@@ -114,9 +114,9 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                         <button
                             onClick={onClose}
                             aria-label="Close save modal"
-                            className="flex items-center justify-center w-[20px] h-[20px] rounded-full hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)]"
+                            className="flex items-center justify-center w-[24px] h-[24px] rounded-full hover:bg-ds-surface-1 transition-colors duration-[var(--motion-quick)]"
                         >
-                            <X className="w-[16px] h-[16px] text-ds-text-primary" strokeWidth={2} />
+                            <X className="w-[20px] h-[20px] text-ds-text-primary" strokeWidth={2} />
                         </button>
                     </div>
 

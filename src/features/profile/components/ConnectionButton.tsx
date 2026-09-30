@@ -156,8 +156,9 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
             if (isCompany && activeProfile) {
                 await companyService.cancelConnectionRequest(activeProfile.id, userId);
             } else {
-                if (!requestId) return;
-                await cancelConnectionRequest(requestId);
+                const idToCancel = requestId || userId;
+                if (!idToCancel) return;
+                await cancelConnectionRequest(idToCancel);
             }
             setRequestId(null);
             toast.success('Request cancelled');

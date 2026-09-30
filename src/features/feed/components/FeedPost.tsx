@@ -918,9 +918,6 @@ export const FeedPost = (props: FeedPostProps) => {
             onClose={() => setIsDeleteDialogOpen(false)}
             onConfirm={async () => {
               await confirmDelete();
-              if (props.isFullContent) {
-                router.push('/feed');
-              }
             }}
           />
         )}

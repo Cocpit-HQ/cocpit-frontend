@@ -8,6 +8,8 @@ interface DeleteConfirmationModalProps {
   title?: string;
   description?: string;
   isDeleting?: boolean;
+  modalClassName?: string;
+  overlayClassName?: string;
 }
 
 export function DeleteConfirmationModal({
@@ -17,6 +19,8 @@ export function DeleteConfirmationModal({
   title,
   description,
   isDeleting = false,
+  modalClassName,
+  overlayClassName,
 }: DeleteConfirmationModalProps) {
   return (
     <ActionConfirmModal
@@ -27,6 +31,8 @@ export function DeleteConfirmationModal({
       title={title}
       description={description}
       isLoading={isDeleting}
+      modalClassName={modalClassName}
+      overlayClassName={overlayClassName}
     />
   );
 }

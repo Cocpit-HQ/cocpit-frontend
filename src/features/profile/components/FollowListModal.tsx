@@ -206,10 +206,12 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       await queryClient.cancelQueries({ queryKey: ["profileStats", userId] });
       await queryClient.cancelQueries({ queryKey: ["following", userId] });
       await queryClient.cancelQueries({ queryKey: ["followers", userId] });
+      await queryClient.cancelQueries({ queryKey: ["connections", userId] });
 
       const previousStats = queryClient.getQueryData(["profileStats", userId]);
       const previousFollowing = queryClient.getQueryData(["following", userId, search]);
       const previousFollowers = queryClient.getQueryData(["followers", userId, search]);
+      const previousConnections = queryClient.getQueryData(["connections", userId, search]);
 
       if (activeTab === "following") {
         if (isOwnProfile) {
@@ -236,9 +238,16 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         );
       }
 
+      // Optimistically remove from connections since unfollowing breaks the connection
+      if (isOwnProfile) {
+        queryClient.setQueryData(["connections", userId, search], (old: any[]) =>
+          old?.filter((u) => (u.user_id || u.following_id || u.id) !== targetId)
+        );
+      }
+
       syncFollowStatus(targetId, false);
 
-      return { previousStats, previousFollowing, previousFollowers };
+      return { previousStats, previousFollowing, previousFollowers, previousConnections };
     },
     onSuccess: (_, variables) => {
       toast.success(variables.name ? `Unfollowed ${variables.name}` : "Unfollowed user");
@@ -249,6 +258,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
         queryClient.setQueryData(["following", userId, search], context.previousFollowing);
         queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
+        queryClient.setQueryData(["connections", userId, search], context.previousConnections);
       }
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
@@ -256,6 +266,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ["following", userId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
       queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["connections", userId] });
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["profile", userId] });
@@ -321,15 +332,22 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ["profileStats", userId] });
       await queryClient.cancelQueries({ queryKey: ["connections", userId] });
+      await queryClient.cancelQueries({ queryKey: ["followers", userId] });
+      await queryClient.cancelQueries({ queryKey: ["following", userId] });
 
       const previousStats = queryClient.getQueryData(["profileStats", userId]);
       const previousConnections = queryClient.getQueryData(["connections", userId, search]);
+      const previousFollowers = queryClient.getQueryData(["followers", userId, search]);
+      const previousFollowing = queryClient.getQueryData(["following", userId, search]);
 
-      queryClient.setQueryData(["connections", userId, search], (old: any[]) =>
-        old?.filter((u) => (u.user_id || u.follower_id || u.following_id || u.id) !== data.id)
-      );
+      const filterFn = (old: any[]) =>
+        old?.filter((u) => (u.user_id || u.follower_id || u.following_id || u.id) !== data.id);
 
-      return { previousStats, previousConnections };
+      queryClient.setQueryData(["connections", userId, search], filterFn);
+      queryClient.setQueryData(["followers", userId, search], filterFn);
+      queryClient.setQueryData(["following", userId, search], filterFn);
+
+      return { previousStats, previousConnections, previousFollowers, previousFollowing };
     },
     onSuccess: () => {
       toast.success("Connection removed");
@@ -338,14 +356,19 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       if (context) {
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
         queryClient.setQueryData(["connections", userId, search], context.previousConnections);
+        queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
+        queryClient.setQueryData(["following", userId, search], context.previousFollowing);
       }
     },
-    onSettled: () => {
+    onSettled: (data, err, variables) => {
       queryClient.invalidateQueries({ queryKey: ["connections", userId] });
       queryClient.invalidateQueries({ queryKey: ["following", userId] });
+      queryClient.invalidateQueries({ queryKey: ["followers", userId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
-      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
-      queryClient.invalidateQueries({ queryKey: ["relationshipStatus", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["relationshipStatus"] });
+      syncFollowStatus(variables.id, false);
     },
   });
 

@@ -252,8 +252,8 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
         </div>
       )}
 
-      {/* Desktop Action Buttons: Frame 2609610 (right aligned, absolute right-0 bottom-0, w-[280px] h-[36px] gap-3) */}
-      <div className="hidden md:flex absolute right-0 bottom-0 w-[280px] h-[36px] flex-row items-center gap-3 p-0 z-20">
+      {/* Desktop Action Buttons: Frame 2609610 (right aligned, absolute right-0 bottom-0, h-[36px] gap-3) */}
+      <div className={cn("absolute right-0 bottom-0 h-[36px] flex-row items-center justify-end gap-3 p-0 z-20", actionButtons !== undefined ? "flex" : "hidden md:flex")}>
         {actionButtons !== undefined ? (
           actionButtons
         ) : (

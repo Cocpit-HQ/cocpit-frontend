@@ -99,16 +99,22 @@ export function CreateCollectionModal({ isOpen, onClose, onSuccess }: CreateColl
                     </h3>
 
                     <form onSubmit={handleSubmit} className="self-stretch flex flex-col items-center gap-3">
-                        {/* Input Row */}
-                        <div className="self-stretch py-2 border-b border-ds-border flex items-center">
-                            <input
-                                type="text"
-                                autoFocus
-                                value={collectionName}
-                                onChange={(e) => setCollectionName(e.target.value)}
-                                placeholder="Collection name"
-                                className="w-full bg-transparent border-none outline-none font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-primary placeholder:text-ds-text-muted p-0"
-                            />
+                        {/* Input & Counter Container */}
+                        <div className="self-stretch flex flex-col gap-1">
+                            <div className="self-stretch py-2 border-b border-ds-border flex items-center">
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    maxLength={25}
+                                    value={collectionName}
+                                    onChange={(e) => setCollectionName(e.target.value)}
+                                    placeholder="Collection name"
+                                    className="w-full bg-transparent border-none outline-none font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-primary placeholder:text-ds-text-muted p-0"
+                                />
+                            </div>
+                            <span className="self-end font-['DM_Sans'] text-[12px] text-ds-text-muted">
+                                {collectionName.length}/25
+                            </span>
                         </div>
 
                         {/* Buttons Row */}

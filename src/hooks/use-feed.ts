@@ -86,6 +86,11 @@ export const useFeed = (enableInitialFetch = true) => {
     try {
       await apiDeletePost(id, companyId);
       toast.success("Post deleted successfully");
+      
+      // Dispatch global event so other lists (like profile) can update instantly
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent("postDeleted", { detail: { id: id.toString() } }));
+      }
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast.error("Failed to delete post");

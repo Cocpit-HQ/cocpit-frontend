@@ -74,13 +74,9 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleDeletePost = async (postId: string) => {
+    // The actual API call and toast are handled by FeedPost -> usePostOptions -> useFeed.
+    // We just need to refresh our local query cache to remove the deleted post from the UI immediately.
     try {
-      // Only pass companyId when the viewer is a company owner/member.
-      // External users undoing their own personal reposts must NOT send the org id,
-      // as they are not members and the backend will reject it with 403.
-      await apiDeletePost(postId, isOwnProfile ? data.id : undefined);
-      toast({ title: "Post deleted successfully" });
-      
       queryClient.setQueryData(["orgPosts", data.id], (oldData: any) => {
         if (!oldData) return oldData;
         return {
@@ -101,8 +97,7 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
       queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
       queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
     } catch (error) {
-      console.error("Failed to delete post:", error);
-      toast({ title: "Failed to delete post", variant: "destructive" });
+      console.error("Failed to update cache after deleting post:", error);
     }
   };
 

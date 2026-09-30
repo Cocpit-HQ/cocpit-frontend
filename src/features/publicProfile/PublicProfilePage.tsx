@@ -14,9 +14,12 @@ import { useProfile, useProfilePosts } from "./hooks/usePublicProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   sendConnectionRequest,
+  cancelConnectionRequest,
+  handleConnectionRequest,
   removeConnection,
   getRelationshipStatus,
 } from "@/services/api/social";
+import { useConnectionActions } from "@/features/connection/hooks/useConnectionActions";
 
 // Layout & Header Components
 import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
@@ -66,7 +69,7 @@ interface PublicProfileProps {
 
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
-  const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading } = useSocial();
+  const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
 
   const queryClient = useQueryClient();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
@@ -124,18 +127,45 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     enabled: !!targetUserId,
   });
 
-  const [isPendingSent, setIsPendingSent] = useState(false);
-
+  // ─── Derived connection state ────────────────────────────────────────────────
+  // Priority: query cache > profile response fallback
   const connectionStatus = useMemo(() => {
-    if (isPendingSent) return "pending_sent";
-    if (relationshipData?.status) return relationshipData.status;
-    if ((user as any)?.connection_status) return (user as any).connection_status;
+    if (relationshipData?.status) return relationshipData.status as string;
+    // Fallback: map the profile-level connection_request_sender to directional status
+    const profileStatus = (user as any)?.connection_request_status;
+    const profileSender = (user as any)?.connection_request_sender;
+    if (profileStatus === "connected") return "connected";
+    if (profileStatus === "pending") {
+      return profileSender === "me" ? "pending_sent" : "pending_received";
+    }
     if ((user as any)?.is_connected) return "connected";
     return "none";
-  }, [relationshipData, user, isPendingSent]);
+  }, [relationshipData, user]);
 
+  // The request_id needed for cancel / accept / decline
+  const pendingRequestId = relationshipData?.request_id ||
+    (user as any)?.connection_request_id ||
+    null;
+
+  // Directional states
   const isConnected = connectionStatus === "connected";
-  const isPending = connectionStatus === "pending_sent" || connectionStatus === "pending";
+  const isPendingSent = connectionStatus === "pending_sent";
+  const isPendingReceived = connectionStatus === "pending_received";
+
+  // 2-threshold: threshold for Creator Mode (kept at 2 for testing, normally 500)
+  const targetConnectionCount = blocked ? 0 : ((user as any)?.connections_count ?? 0);
+  const isCreatorMode = targetConnectionCount >= 2;
+  const showConnect = connectionStatus === "none" && !isCreatorMode;
+  const showFollow = isCreatorMode && (connectionStatus === "none" || isPendingSent);
+
+  // ─── Action handlers ─────────────────────────────────────────────────────────
+
+  const invalidateRelationshipCaches = () => {
+    queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
+    queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
+    queryClient.invalidateQueries({ queryKey: ["profile", targetUserId] });
+    queryClient.invalidateQueries({ queryKey: ["connectionCount", targetUserId] });
+  };
 
   const handleFollowToggle = async () => {
     if (!targetUserId) return;
@@ -150,17 +180,61 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   const handleConnect = async () => {
     if (!targetUserId) return;
-    setIsPendingSent(true);
+    // Optimistic update
+    queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
     try {
       await sendConnectionRequest(targetUserId);
-      queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_sent" });
-      queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
-      queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
+      invalidateRelationshipCaches();
       toast.success("Connection request sent!");
     } catch (err: any) {
-      setIsPendingSent(false);
+      // Rollback
+      queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none", request_id: null });
       const msg = err?.response?.data?.message || "Failed to send connection request";
       toast.error(msg);
+    }
+  };
+
+  const { undo } = useConnectionActions();
+
+  const handleWithdraw = async () => {
+    const idToCancel = pendingRequestId || targetUserId;
+    if (!idToCancel) return;
+
+    // We can just use the undo mutation to handle optimistic updates identically to the connections panel
+    undo.mutate(idToCancel, {
+      onSuccess: () => {
+        // Additional invalidations specific to profile page
+        invalidateRelationshipCaches();
+      }
+    });
+  };
+
+  const handleAccept = async () => {
+    if (!pendingRequestId) return;
+    // Optimistic update
+    queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "connected" });
+    try {
+      await handleConnectionRequest(pendingRequestId, "connected");
+      invalidateRelationshipCaches();
+      toast.success("Connected!");
+    } catch (err: any) {
+      // Rollback
+      queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_received", request_id: pendingRequestId });
+      toast.error("Failed to accept request.");
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!pendingRequestId) return;
+    // Optimistic update
+    queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none", request_id: null });
+    try {
+      await handleConnectionRequest(pendingRequestId, "rejected");
+      invalidateRelationshipCaches();
+    } catch (err: any) {
+      // Rollback
+      queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "pending_received", request_id: pendingRequestId });
+      toast.error("Failed to decline request.");
     }
   };
 
@@ -171,7 +245,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       queryClient.setQueryData(["relationshipStatus", targetUserId], { status: "none" });
       queryClient.invalidateQueries({ queryKey: ["relationshipStatus", targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["profileStats", targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] }); // invalidate current user's stats too
       queryClient.invalidateQueries({ queryKey: ["connections", targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ["followers"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] }); // Updates followersCount on the page
+      syncFollowStatus(targetUserId, false); // immediately reflect unfollow in UI
       setShowRemoveConnectionDialog(false);
       toast.success("Connection removed");
     } catch (err: any) {
@@ -340,45 +419,46 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           actionButtons={
             blocked ? null : (
               <div className="inline-flex justify-start items-center gap-3">
-                {/* Follow / Unfollow button */}
-                <button
-                  type="button"
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                  className={cn(
-                    "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
-                    following
-                      ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
-                      : "bg-[var(--ds-accent)] hover:opacity-90"
-                  )}
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    {following ? "Unfollow" : "Follow"}
-                  </span>
-                </button>
 
-                {/* Connect / Pending / Message button */}
-                {isConnected ? (
+                {/* ── SCENARIO 2: pending_received — ACCEPT + DECLINE ── */}
+                {isPendingReceived && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleAccept}
+                      className="px-3 py-1.5 rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                    >
+                      <span className="text-white text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                        Accept
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDecline}
+                      className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                    >
+                      <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                        Decline
+                      </span>
+                    </button>
+                  </>
+                )}
+
+                {/* ── SCENARIO 1: pending_sent — WITHDRAW ── */}
+                {isPendingSent && !isCreatorMode && (
                   <button
                     type="button"
-                    onClick={handleMessage}
+                    onClick={handleWithdraw}
                     className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
                   >
                     <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Message
+                      Withdraw
                     </span>
                   </button>
-                ) : isPending ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 cursor-default opacity-50"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Pending
-                    </span>
-                  </button>
-                ) : (
+                )}
+
+                {/* ── SCENARIO 3a: no relationship, target < 2 connections → CONNECT ── */}
+                {showConnect && (
                   <button
                     type="button"
                     onClick={handleConnect}
@@ -386,6 +466,38 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   >
                     <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
                       Connect
+                    </span>
+                  </button>
+                )}
+
+                {/* ── SCENARIO 3b: no relationship, target >= 2 connections → FOLLOW ── */}
+                {showFollow && (
+                  <button
+                    type="button"
+                    onClick={handleFollowToggle}
+                    disabled={followLoading}
+                    className={cn(
+                      "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
+                      following
+                        ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
+                        : "bg-[var(--ds-accent)] hover:opacity-90"
+                    )}
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      {following ? "Unfollow" : "Follow"}
+                    </span>
+                  </button>
+                )}
+
+                {/* ── MESSAGE (Always Shown except for incoming requests) ── */}
+                {!isPendingReceived && (
+                  <button
+                    type="button"
+                    onClick={handleMessage}
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Message
                     </span>
                   </button>
                 )}
@@ -418,7 +530,54 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                       align="end"
                       sideOffset={8}
                     >
+                      {/* Show Follow in More menu whenever Follow is not the primary header button and not connected */}
+                      {!showFollow && !isConnected && (
+                        <DropdownMenuItem
+                          onClick={handleFollowToggle}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                        >
+                          {following ? "Unfollow" : "Follow"}
+                        </DropdownMenuItem>
+                      )}
 
+                      {/* ── SCENARIO 2: pending_received — show Message in menu ── */}
+                      {isPendingReceived && (
+                        <DropdownMenuItem
+                          onClick={handleMessage}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                        >
+                          Message
+                        </DropdownMenuItem>
+                      )}
+
+                      {/* Connection actions in More menu when Follow is the primary header button */}
+                      {isCreatorMode && connectionStatus === "none" && (
+                        <DropdownMenuItem
+                          onClick={handleConnect}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                        >
+                          Connect
+                        </DropdownMenuItem>
+                      )}
+
+                      {isCreatorMode && isPendingSent && (
+                        <DropdownMenuItem
+                          onClick={handleWithdraw}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                        >
+                          Withdraw request
+                        </DropdownMenuItem>
+                      )}
+
+                      {/* ── Connected state — Remove connection ── */}
+                      {isConnected && (
+                        <DropdownMenuItem
+                          onClick={() => setShowRemoveConnectionDialog(true)}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                        >
+                          Remove connection
+                        </DropdownMenuItem>
+                      )}
 
                       <DropdownMenuItem
                         onClick={() => setIsContactInfoModalOpen(true)}
@@ -426,15 +585,6 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                       >
                         Contact info
                       </DropdownMenuItem>
-
-                      {/*
-                  <DropdownMenuItem
-                    onClick={() => setIsSendOfferOpen(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Send offer
-                  </DropdownMenuItem>
-                  */}
 
                       <DropdownMenuItem
                         onClick={handleViewResume}
@@ -734,7 +884,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         isOpen={isMobileMoreOpen}
         onClose={() => setIsMobileMoreOpen(false)}
         connectionStatus={connectionStatus}
+        showFollowPrimary={showFollow}
+        isFollowing={following}
+        onFollow={handleFollowToggle}
         onConnect={handleConnect}
+        onWithdraw={handleWithdraw}
+        onAccept={handleAccept}
+        onDecline={handleDecline}
+        onMessage={handleMessage}
         onRemoveConnection={() => {
           setIsMobileMoreOpen(false);
           setShowRemoveConnectionDialog(true);
