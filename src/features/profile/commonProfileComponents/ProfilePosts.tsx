@@ -432,10 +432,22 @@ const ProfilePostCard = ({
     <div onClick={handleCardClick} onClickCapture={handleCardNavigationClick} className="cursor-pointer flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       
       {isRepostWithoutThoughts && (
-        <div className="flex items-center gap-1 text-[#6B7280] text-[10px] font-['DM_Sans'] px-4 mb-2 select-none">
+        <button 
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            const reposterLink = localPost.isCompanyPost
+              ? `/organization/${localPost.authorSlug || localPost.authorId}`
+              : `/profile/${localPost.authorSlug || localPost.authorId}`;
+            if (localPost.authorSlug || localPost.authorId) {
+              router.push(reposterLink);
+            }
+          }}
+          className="flex items-center gap-1 text-[#6B7280] text-[10px] font-['DM_Sans'] px-4 mb-2 select-none cursor-pointer prevent-card-click outline-none"
+        >
           <Icon icon="lucide:repeat" className="w-3 h-3 text-[#6B7280]" style={{ strokeWidth: '1.5px' }} />
           <span>{localPost.author} reposted</span>
-        </div>
+        </button>
       )}
 
       {/* Header section */}

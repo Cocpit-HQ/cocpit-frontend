@@ -116,17 +116,17 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
 
   const handleToggle = () => {
     if (disabled) return;
-    if (searchable) {
-      setIsOpen(true);
-      inputRef.current?.focus();
-    } else {
-      setIsOpen((prev) => {
-        if (!prev) {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        if (searchable) {
+          setTimeout(() => inputRef.current?.focus(), 0);
+        } else {
           setTimeout(() => containerRef.current?.focus(), 0);
         }
-        return !prev;
-      });
-    }
+      }
+      return next;
+    });
   };
 
   const handleItemClick = (option: DropdownOption) => {
@@ -238,13 +238,13 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             }
           }
         }}
-        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent transition-colors focus:outline-none ${
+        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent transition-colors focus:outline-none cursor-pointer ${
           errorMessage
             ? "border-ds-error"
             : isOpen
             ? "border-ds-accent"
             : "border-ds-border hover:border-ds-text-muted"
-        } ${searchable ? "cursor-text" : "cursor-pointer"}`}
+        }`}
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={`${id}-listbox`}
@@ -256,11 +256,10 @@ export const OnboardingDropdown: React.FC<OnboardingDropdownProps> = ({
             type="text"
             value={searchQuery}
             onChange={handleInputChange}
-            onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
             autoComplete="off"
-            className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted truncate"
+            className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted truncate cursor-pointer"
           />
         ) : (
           <span

@@ -244,8 +244,13 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
 
   const handleWrapperClick = () => {
     if (disabled) return;
-    setOpen(true);
-    inputRef.current?.focus();
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+      return next;
+    });
   };
 
   const showNoResults =
@@ -271,7 +276,7 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
       {/* Figma Trigger: w-64 py-2 border-b border-ds-border inline-flex justify-between items-center */}
       <div
         onClick={handleWrapperClick}
-        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent cursor-text transition-colors ${
+        className={`w-64 py-2 border-b inline-flex justify-between items-center bg-transparent cursor-pointer transition-colors ${
           open ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
         }`}
         role="combobox"
@@ -284,7 +289,6 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
           type="text"
           value={query}
           onChange={handleInputChange}
-          onFocus={() => setOpen(true)}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -313,7 +317,7 @@ export const OnboardingLocationInput: React.FC<OnboardingLocationInputProps> = (
           placeholder="Location"
           disabled={disabled}
           autoComplete="off"
-          className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted truncate"
+          className="w-[210px] bg-transparent border-none outline-none font-sans text-sm font-normal leading-normal text-ds-text-primary placeholder:text-ds-text-muted truncate cursor-pointer"
         />
 
         {/* Right Icon Actions */}

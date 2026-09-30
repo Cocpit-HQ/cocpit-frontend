@@ -589,12 +589,24 @@ export const FeedPost = (props: FeedPostProps) => {
         }
       >
         {isRepostWithoutThoughts && shared_post && (
-          <div className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none">
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const reposterLink = props.isCompanyPost
+                ? `/organization/${props.authorSlug || props.authorId}`
+                : `/profile/${props.authorSlug || props.authorId}`;
+              if (props.authorSlug || props.authorId) {
+                router.push(reposterLink);
+              }
+            }}
+            className="flex flex-row items-center gap-[8px] h-[12px] text-ds-text-secondary select-none cursor-pointer prevent-card-click outline-none"
+          >
             <RepostIcon size={12} className="w-[12px] h-[12px] shrink-0 flex-none text-ds-text-secondary" />
             <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-ds-text-secondary truncate shrink-0 flex-none">
               {props.author} reposted
             </span>
-          </div>
+          </button>
         )}
 
         {props.isFullContent ? (

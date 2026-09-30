@@ -132,13 +132,14 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       }
 
       const isProfile = pathname === '/profile' || pathname.startsWith('/profile');
+      const isMainProfilePage = isProfile && !pathname.endsWith('/posts');
       const lastPostId = sessionStorage.getItem("cocpit_last_interacted_post_id");
       const profileScrollSource = sessionStorage.getItem("cocpit_profile_scroll_source");
 
       let saved = sessionStorage.getItem(`scroll-${pathname}`);
 
       // For profile: only restore scroll if returning from an explicit post interaction (e.g. Back button)
-      if (isProfile) {
+      if (isMainProfilePage) {
         const isReturningFromPost = Boolean(lastPostId || profileScrollSource === "profile");
         if (!isReturningFromPost) {
           saved = null;
