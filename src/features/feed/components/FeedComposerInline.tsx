@@ -604,6 +604,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
 
         addPost(mappedPost);
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+        if (resolvedRepostData?.id) toast.success("Post reposted successfully!");
 
         setUploadPhase('success');
         setTimeout(() => setUploadPhase('idle'), 3000);
@@ -635,6 +636,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
       const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
       addPost(mappedPost);
       window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+      if (sharedPostId) toast.success("Post reposted successfully!");
 
       setUploadPhase('success');
       setTimeout(() => setUploadPhase('idle'), 3000);

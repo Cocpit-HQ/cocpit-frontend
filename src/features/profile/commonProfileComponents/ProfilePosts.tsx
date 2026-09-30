@@ -295,7 +295,7 @@ const ProfilePostCard = ({
           return updated;
         });
         window.dispatchEvent(new CustomEvent('repostDeleted', { detail: { originalPostId: mainPost.id, repostId: repostId } }));
-        toast.success("Repost removed");
+        toast.success("Repost removed successfully");
       }
     } catch (err: any) {
       setIsReposted(previousIsReposted);

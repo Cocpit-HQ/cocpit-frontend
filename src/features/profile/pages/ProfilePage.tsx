@@ -507,6 +507,7 @@ export default function ProfilePage() {
       a.click();
       
       toast.dismiss(toastId);
+      toast.success("Resume downloaded successfully!");
     } catch (error) {
       console.error("Failed to fetch resume:", error);
       toast.error("Failed to load resume preview.");

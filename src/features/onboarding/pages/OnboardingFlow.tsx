@@ -26,6 +26,7 @@ import { getProfile } from "@/services/api/profile";
 import { toast } from "sonner";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSession, signOut } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const ONBOARDING_FLOW: Record<string | number, { next: any; prev: any }> = {
   0: { next: 1, prev: null },
@@ -124,6 +125,17 @@ export default function OnboardingFlow() {
   };
 
   const [hasMounted, setHasMounted] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const toastParam = searchParams.get("toast");
+    if (toastParam === "account_created") {
+      toast.success("Account created successfully", { id: "account_created" });
+      router.replace("/onboarding?step=begin", { scroll: false });
+    }
+  }, [searchParams, router]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const activeSession = sessionStorage.getItem("cocpit_active_onboarding_session");

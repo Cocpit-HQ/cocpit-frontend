@@ -46,6 +46,7 @@ export const NotificationTabs: React.FC<NotificationTabsProps> = ({
         </button>
 
         {/* Tab: Jobs */}
+        {/*
         <button
           type="button"
           onClick={() => onTabChange('jobs')}
@@ -62,6 +63,7 @@ export const NotificationTabs: React.FC<NotificationTabsProps> = ({
             <span className="absolute bottom-0 inset-x-0 h-[1.5px] bg-ds-accent" />
           )}
         </button>
+        */}
       </div>
 
       {/* Right: actions — only render what is relevant */}

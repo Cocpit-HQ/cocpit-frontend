@@ -30,6 +30,8 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   forceSquareMedia?: boolean;
   onCommentClickOverride?: () => void;
   authorRole?: string;
+  /** z-index override for the post-options dropdown (useful inside high-z overlays). */
+  menuZIndex?: number;
 }
 
 export type FeedInteraction = {

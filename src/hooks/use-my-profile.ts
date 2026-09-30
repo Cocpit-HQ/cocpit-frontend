@@ -378,7 +378,6 @@ export function useProfileMutation() {
             if (variables?.name) {
                 void updateSession({ name: variables.name });
             }
-            toast.success("Profile updated successfully");
         },
     });
 

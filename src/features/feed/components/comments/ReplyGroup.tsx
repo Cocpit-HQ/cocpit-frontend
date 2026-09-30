@@ -20,6 +20,7 @@ interface ReplyGroupProps {
     onCancelReply?: () => void;
     onAddComment?: (text: string, replyToId?: string | number) => void;
     currentUserAvatar?: string;
+    hideCancelButton?: boolean;
 }
 
 // ORIGINAL: export default function ReplyGroup({ replies, onReply, onDelete, onEdit, currentUserId, isDark, isPostOwner, postId, onReport, onHide }: ReplyGroupProps) {
@@ -38,7 +39,8 @@ export default function ReplyGroup({
     replyingTo,
     onCancelReply,
     onAddComment,
-    currentUserAvatar
+    currentUserAvatar,
+    hideCancelButton
 }: ReplyGroupProps) {
     const [isOpen, setIsOpen] = useState(false);
     const searchParams = useSearchParams();
@@ -90,6 +92,7 @@ export default function ReplyGroup({
                                         onCancelReply={onCancelReply}
                                         currentUserAvatar={currentUserAvatar}
                                         autoFocus={true}
+                                        hideCancelButton={hideCancelButton}
                                     />
                                 </div>
                             )}

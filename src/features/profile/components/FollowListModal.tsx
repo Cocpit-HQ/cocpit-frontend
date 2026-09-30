@@ -145,8 +145,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
   // Mutations
   const followMutation = useMutation({
-    mutationFn: followUser,
-    onMutate: async (newUserId) => {
+    mutationFn: (data: { id: string; name?: string }) => followUser(data.id),
+    onMutate: async ({ id: newUserId }) => {
       await queryClient.cancelQueries({ queryKey: ["profileStats", userId] });
       await queryClient.cancelQueries({ queryKey: ["followers", userId] });
       await queryClient.cancelQueries({ queryKey: ["following", userId] });
@@ -179,7 +179,10 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
       return { previousStats, previousFollowing, previousFollowers };
     },
-    onError: (err, newUserId, context: any) => {
+    onSuccess: (_, variables) => {
+      toast.success(variables.name ? `Started following ${variables.name}` : "Started following user");
+    },
+    onError: (err, { id: newUserId }, context: any) => {
       syncFollowStatus(newUserId, false);
       if (context) {
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
@@ -198,8 +201,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: unfollowUser,
-    onMutate: async (targetId) => {
+    mutationFn: (data: { id: string; name?: string }) => unfollowUser(data.id),
+    onMutate: async ({ id: targetId }) => {
       await queryClient.cancelQueries({ queryKey: ["profileStats", userId] });
       await queryClient.cancelQueries({ queryKey: ["following", userId] });
       await queryClient.cancelQueries({ queryKey: ["followers", userId] });
@@ -237,7 +240,10 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
       return { previousStats, previousFollowing, previousFollowers };
     },
-    onError: (err, targetId, context: any) => {
+    onSuccess: (_, variables) => {
+      toast.success(variables.name ? `Unfollowed ${variables.name}` : "Unfollowed user");
+    },
+    onError: (err, { id: targetId }, context: any) => {
       syncFollowStatus(targetId, true);
       if (context) {
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
@@ -258,8 +264,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   });
 
   const unfollowCompanyMutation = useMutation({
-    mutationFn: (companyId: string) => companyService.unfollowCompany(companyId),
-    onMutate: async (companyId) => {
+    mutationFn: (data: { id: string; name?: string }) => companyService.unfollowCompany(data.id),
+    onMutate: async ({ id: companyId }) => {
       await queryClient.cancelQueries({ queryKey: ["profileStats", userId] });
       await queryClient.cancelQueries({ queryKey: ["following", userId] });
 
@@ -286,7 +292,10 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
       return { previousStats, previousFollowing };
     },
-    onError: (err, companyId, context: any) => {
+    onSuccess: (_, variables) => {
+      toast.success(variables.name ? `Unfollowed ${variables.name}` : "Unfollowed user");
+    },
+    onError: (err, { id: companyId }, context: any) => {
       if (context) {
         queryClient.setQueryData(["profileStats", userId], context.previousStats);
         queryClient.setQueryData(["following", userId, search], context.previousFollowing);
@@ -321,6 +330,9 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       );
 
       return { previousStats, previousConnections };
+    },
+    onSuccess: () => {
+      toast.success("Connection removed");
     },
     onError: (err, data, context: any) => {
       if (context) {
@@ -380,8 +392,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     connectMutation.mutate(id);
   };
 
-  const handleFollow = (id: string) => {
-    followMutation.mutate(id);
+  const handleFollow = (id: string, name?: string) => {
+    followMutation.mutate({ id, name });
   };
 
   const handleUnfollow = (id: string, name: string, type?: string) => {
@@ -417,14 +429,14 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
   const executeConfirmedAction = async () => {
     if (!confirmAction) return;
-    const { type, userId: targetId, userType } = confirmAction;
+    const { type, userId: targetId, userType, userName } = confirmAction;
 
     try {
       if (type === "unfollow") {
         if (userType === "company") {
-          await unfollowCompanyMutation.mutateAsync(targetId);
+          await unfollowCompanyMutation.mutateAsync({ id: targetId, name: userName });
         } else {
-          await unfollowMutation.mutateAsync(targetId);
+          await unfollowMutation.mutateAsync({ id: targetId, name: userName });
         }
       } else if (type === "remove_connection") {
         await removeConnectionMutation.mutateAsync({ id: targetId, type: userType });
@@ -489,7 +501,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         return (
           <button
             type="button"
-            onClick={() => handleFollow(id)}
+            onClick={() => handleFollow(id, name)}
             className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
           >
             Follow
@@ -533,7 +545,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         return (
           <button
             type="button"
-            onClick={() => handleFollow(id)}
+            onClick={() => handleFollow(id, name)}
             className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
           >
             Follow

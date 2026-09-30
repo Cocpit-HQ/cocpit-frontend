@@ -367,6 +367,7 @@ export const FeedPost = (props: FeedPostProps) => {
           const backendPost = await getPostById(createdPostId);
           const mappedPost = mapBackendPostToFrontend(backendPost);
           window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+          toast.success("Post reposted successfully!");
           if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
@@ -381,6 +382,7 @@ export const FeedPost = (props: FeedPostProps) => {
         if (isRepostWithoutThoughts && isMyPost) {
           removePostFromFeed(id.toString());
         }
+        toast.success("Repost removed successfully");
       }
     } catch (err) {
       console.error(err);
@@ -915,6 +917,7 @@ export const FeedPost = (props: FeedPostProps) => {
           isMe={isTargetAuthorMe}
           isPollPost={!!pollData}
           visibility={targetVisibility}
+          zIndex={props.menuZIndex}
           onEdit={() => {
             setShowOptions(false);
             if (isArticlePost) {

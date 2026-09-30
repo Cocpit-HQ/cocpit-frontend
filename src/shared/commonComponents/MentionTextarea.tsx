@@ -356,6 +356,16 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
 
         const textBefore = value.substring(0, start);
         const textAfter = value.substring(end);
+        
+        if (props.maxLength) {
+            const availableSpace = props.maxLength - (textBefore.length + textAfter.length);
+            if (availableSpace <= 0) {
+                insertedText = '';
+            } else if (insertedText.length > availableSpace) {
+                insertedText = insertedText.substring(0, availableSpace);
+            }
+        }
+        
         const newValue = textBefore + insertedText + textAfter;
 
         if (newMentions.length > 0) {
@@ -765,7 +775,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
                     className={cn(
-                        "w-full resize-none overflow-hidden bg-transparent outline-none relative z-10 selection:bg-[var(--primary)] selection:text-white dark:selection:text-white mention-textarea-input",
+                        "w-full resize-none overflow-y-auto scrollbar-hide bg-transparent outline-none relative z-10 selection:bg-[var(--primary)] selection:text-white dark:selection:text-white mention-textarea-input",
                         value.length > 0 ? "!text-transparent" : "text-ds-text-primary",
                         className
                     )}

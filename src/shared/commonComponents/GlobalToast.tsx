@@ -46,7 +46,7 @@ const GlobalToast = ({ ...props }: ToasterProps) => {
 
         /* 2. Text swipes and expands from left to right */
         .animate-text-swipe {
-          display: inline-block;
+          display: block;
           animation: textSwipeIn 800ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both !important;
         }
 
@@ -80,6 +80,7 @@ const GlobalToast = ({ ...props }: ToasterProps) => {
           classNames: {
             toast:
               "animate-toast-card bg-ds-bg border border-ds-border rounded-[8px] w-fit max-w-[calc(100vw-32px)] sm:max-w-[335px] min-h-[38px] h-fit py-[8px] px-[12px] gap-0 shadow-lg flex items-center justify-start pointer-events-auto",
+            content: "flex flex-col gap-0.5",
             title: "animate-text-swipe text-ds-text-primary text-sm font-medium",
             description: "animate-text-swipe text-ds-text-secondary text-xs font-normal",
             actionButton: "bg-ds-accent text-white ds-btn",

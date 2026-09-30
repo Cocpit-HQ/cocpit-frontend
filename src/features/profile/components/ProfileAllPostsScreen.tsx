@@ -254,7 +254,15 @@ export function ProfileAllPostsScreen({
       onClose();
       return;
     }
-    router.replace(userId && !isOwner ? `/profile/${userId}` : "/profile");
+    const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+    
+    // If savedPath exists, we know for sure the user navigated here from within the app,
+    // so it is completely safe to use the native back button.
+    if (savedPath) {
+      router.back();
+    } else {
+      router.replace(userId && !isOwner ? `/profile/${userId}` : "/profile");
+    }
   };
 
   // Client-side filtering per active sub-tab
@@ -374,6 +382,7 @@ export function ProfileAllPostsScreen({
                     onDelete={isOwner ? handleDeletePost : undefined}
                     onToggleVisibility={isOwner ? handleToggleVisibility : undefined}
                     priority={false}
+                    menuZIndex={60}
                     onRepostWithThoughts={(postToQuote) => {
                       useUIStore.getState().setSharedPostData(postToQuote);
                       if (typeof window !== 'undefined' && window.innerWidth < 768) {

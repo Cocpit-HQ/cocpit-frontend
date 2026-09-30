@@ -63,7 +63,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, canManageComp
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast({ title: "Link copied to clipboard" });
+    toast({ title: "Profile link copied to clipboard!" });
   };
 
   // Utility to format numbers (e.g. 12500 -> 12.5k)

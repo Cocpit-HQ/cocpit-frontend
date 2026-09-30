@@ -55,10 +55,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, update } = useSession();
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
   const toast = (props: any) => {
+    const message = props.title || props.description;
+    const description = props.title && props.description ? props.description : undefined;
+
     if (props.variant === 'destructive') {
-      sonnerToast.error(props.title, { description: props.description, duration: props.duration });
+      sonnerToast.error(message, { description, duration: props.duration });
     } else {
-      sonnerToast(props.title, { description: props.description, duration: props.duration });
+      sonnerToast(message, { description, duration: props.duration });
     }
   };
   const router = useRouter();
@@ -379,8 +382,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const postId = payload.referenceId || (payload as any).reference_id || payload.metadata?.post_id;
 
         toast({
-          title: senderName,
-          description: (
+          title: (
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
@@ -420,8 +422,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("[SOCKET] Toast title:", companyName, "Text:", notifText);
 
         toast({
-          title: companyName,
-          description: (
+          title: (
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => router.push(navigateTo)}
@@ -446,7 +447,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           toast({
-            title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : (payload.title || payload.senderName || "Notification"),
+            title: payload.type === 'message' || payload.type === 'new_message' ? 'New Message' : payload.title,
             description: payload.text,
             duration: 5000,
           });

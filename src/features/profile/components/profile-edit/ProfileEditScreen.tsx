@@ -394,6 +394,7 @@ export function ProfileEditScreen({
   const handleSelectResume = (file: File) => {
     setStagedResumeFile(file);
     setIsResumeDeleted(false);
+    toast.success("Resume uploaded successfully");
   };
 
   const handleRemoveResume = () => {
@@ -458,6 +459,7 @@ export function ProfileEditScreen({
         await uploadCoverPhoto(coverFd);
       } else if (isCoverDeleted) {
         await deleteCoverPhoto();
+        toast.success("Cover photo removed.");
       }
 
       // 3. Upload or Delete Resume if staged
@@ -470,6 +472,21 @@ export function ProfileEditScreen({
       }
 
       // 4. Update Profile fields
+      const formFieldsChanged = Object.keys(formData).filter(
+        (k) => formData[k as keyof ProfileFormData] !== initialFormData?.[k as keyof ProfileFormData]
+      );
+      
+      const isOnlyAboutChanged = 
+        formFieldsChanged.length === 1 && 
+        formFieldsChanged[0] === "about" && 
+        !stagedAvatarFile && !isAvatarDeleted && 
+        !stagedCoverFile && !isCoverDeleted && 
+        !stagedResumeFile && !isResumeDeleted;
+
+      const toastMessage = isOnlyAboutChanged 
+        ? "About info saved successfully!" 
+        : "Your basic profile has been saved.";
+
       await updateProfileMutation.mutateAsync({
         name: formData.name,
         account_name: formData.account_name,
@@ -482,6 +499,10 @@ export function ProfileEditScreen({
         work_preference: formData.work_preference,
         industry: formData.industry,
         about: formData.about,
+      }, {
+        onSuccess: () => {
+          toast.success(toastMessage);
+        }
       });
 
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });

@@ -11,6 +11,7 @@ import {
   Interest,
 } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
+import { showToast } from "@/shared/commonComponents/GlobalToast";
 import { useDebounce } from "@/hooks/use-debounce";
 import PillButton from "./PillButton";
 
@@ -225,6 +226,7 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
 
       // Update NextAuth session so middleware knows we are onboarded
       await update({ onboarding_complete: true });
+      showToast.success("Onboarding completed!");
 
       if (onNext) {
         onNext(selectedInterests);

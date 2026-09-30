@@ -110,6 +110,7 @@ export default function CommentSectionView({
             onAddComment={onAddComment}
             currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
             showAllInitially={isSidebar}
+            hideCancelButton={isSidebar}
           />
         )}
       </div>

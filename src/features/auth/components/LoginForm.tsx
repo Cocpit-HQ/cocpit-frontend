@@ -17,6 +17,14 @@ import {
   LoadingIcon,
 } from "@/components/icons";
 import { showToast } from "@/shared/commonComponents/GlobalToast";
+
+const TOAST_MESSAGES: Record<string, string> = {
+  logged_out: "Logged out successfully",
+  account_created: "Account created successfully",
+  password_updated: "Password changed successfully",
+  session_expired: "Session expired",
+};
+
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -28,12 +36,6 @@ const LoginForm = () => {
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason");
   const toastParam = searchParams.get("toast") || searchParams.get("status");
-  const toastMessage =
-    toastParam === "password_updated"
-      ? "Password updated"
-      : toastParam === "session_expired"
-      ? "Session expired"
-      : toastParam;
   const [sessionEnded, setSessionEnded] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -119,17 +121,14 @@ const LoginForm = () => {
 
   // Trigger global toast for url-param based messages
   useEffect(() => {
-    if (toastMessage) {
-      showToast.success(toastMessage, {
-        onAutoClose: () => {
-          router.replace("/", { scroll: false });
-        },
-        onDismiss: () => {
-          router.replace("/", { scroll: false });
-        }
-      });
+    if (toastParam && TOAST_MESSAGES[toastParam]) {
+      showToast.success(TOAST_MESSAGES[toastParam], { id: toastParam });
+      router.replace("/");
+    } else if (toastParam) {
+      showToast.success(toastParam, { id: toastParam });
+      router.replace("/");
     }
-  }, [toastMessage, router]);
+  }, [toastParam, router]);
 
   const validateEmailFormat = (val: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
@@ -206,11 +205,10 @@ const LoginForm = () => {
 
       if (result?.error) {
         if (!tryParseDeletionError(result.error, email)) {
-          setAuthError(
-            result.error !== "CredentialsSignin"
+          const errMsg = result.error !== "CredentialsSignin"
               ? result.error
-              : "Incorrect email or password. Try again"
-          );
+              : "Incorrect email or password. Try again";
+          setAuthError(errMsg);
         }
         setIsLoading(false);
       } else {
@@ -218,7 +216,8 @@ const LoginForm = () => {
         await handlePostLoginRedirect();
       }
     } catch (err: any) {
-      setAuthError(err?.message || "Incorrect email or password. Try again");
+      const errMsg = err?.message || "Incorrect email or password. Try again";
+      setAuthError(errMsg);
       setIsLoading(false);
     }
   };

@@ -142,7 +142,8 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (following) {
       setShowUnfollowDialog(true);
     } else {
-      await followUser(targetUserId);
+      const userName = user?.name;
+      await followUser(targetUserId, undefined, userName);
       refetchProfile();
     }
   };
@@ -190,7 +191,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const handleDownloadProfile = async () => {
     if (!user?.id) return;
     try {
-      const toastId = toast.loading("Generating your resume...");
+      const toastId = toast.loading("Downloading resume...");
 
       const { downloadProfileResumePdf } = await import("@/services/api/profile");
       const { blob } = await downloadProfileResumePdf(user.id);
@@ -208,6 +209,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       a.click();
 
       toast.dismiss(toastId);
+      toast.success("Resume downloaded successfully!");
     } catch (error) {
       console.error("Failed to fetch resume:", error);
       toast.error("Failed to load resume preview.");
@@ -717,7 +719,8 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         onClose={() => setShowUnfollowDialog(false)}
         onConfirm={async () => {
           if (targetUserId) {
-            await unfollowUser(targetUserId);
+            const userName = user?.name || undefined;
+            await unfollowUser(targetUserId, userName);
             refetchProfile();
           }
           setShowUnfollowDialog(false);

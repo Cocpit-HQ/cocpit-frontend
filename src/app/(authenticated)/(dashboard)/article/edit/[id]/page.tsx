@@ -34,9 +34,14 @@ export default function EditArticlePage() {
       try {
         sessionStorage.removeItem('cocpit_article_source_path');
       } catch (e) {}
-      router.replace(sourcePath);
+      // We use router.back() if possible to prevent duplicating the sourcePath in history
+      if (savedPath) {
+        router.back();
+      } else {
+        router.replace(sourcePath);
+      }
     } else if (savedPath && savedPath !== window.location.pathname && !savedPath.includes('/article/edit')) {
-      router.replace(savedPath);
+      router.back();
     } else {
       router.replace('/feed');
     }

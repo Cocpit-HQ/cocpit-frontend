@@ -88,7 +88,7 @@ export function ManagePasswordPage() {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
-        toast.success("Password changed successfully.");
+        toast.success("Password changed successfully");
         router.push(`${basePath}/account`);
       },
       onError: (error: any) => {

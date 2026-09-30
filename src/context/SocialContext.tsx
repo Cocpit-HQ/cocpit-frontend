@@ -10,8 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface SocialContextType {
   followingIds: string[];
-  followUser: (id: string, sourcePostId?: string) => Promise<void> | void;
-  unfollowUser: (id: string) => Promise<void> | void;
+  followUser: (id: string, sourcePostId?: string, userName?: string) => Promise<void> | void;
+  unfollowUser: (id: string, userName?: string) => Promise<void> | void;
   isFollowing: (id: string) => boolean;
   startChat: (userId: string, companyId?: string) => void;
   isFollowLoading: (id: string) => boolean;
@@ -106,7 +106,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["my-profile"] });
   };
 
-  const followUser = async (id: string, sourcePostId?: string) => {
+  const followUser = async (id: string, sourcePostId?: string, userName?: string) => {
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -133,7 +133,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         next.delete(id);
         return next;
       });
-
+      toast.success(userName ? `Started following ${userName}` : "Started following user");
       notifyFollowEvent(id, true);
       const currentUserId = session?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["profileStats", id] });
@@ -168,7 +168,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     }
   };
 
-  const unfollowUser = async (id: string) => {
+  const unfollowUser = async (id: string, userName?: string) => {
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -192,7 +192,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         next.delete(id);
         return next;
       });
-
+      toast.success(userName ? `Unfollowed ${userName}` : "Unfollowed user");
       notifyFollowEvent(id, false);
       const currentUserId = session?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["profileStats", id] });
@@ -300,9 +300,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       setBlockedIds((prev) => [...prev, id]);
       setFollowingIds((prev) => prev.filter((uid) => uid !== id));
       notifyBlockEvent(id, true);
-      toast.success("User blocked", {
-        description: "You will no longer see their content.",
-      });
+      toast.success("User blocked. You will no longer see their content.");
       return { success: true };
     } catch (error: any) {
       console.error("Block failed", error);

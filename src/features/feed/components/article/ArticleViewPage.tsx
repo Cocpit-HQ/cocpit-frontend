@@ -180,9 +180,9 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
     try {
       const result = await handleRepostToggle(isCompany, activeProfile?.id);
       if (result && result.post_id) {
-        toast.success('Article reposted');
+        toast.success('Article reposted successfully!');
       } else if (result && result.reposted === false) {
-        toast.success('Repost removed');
+        toast.success('Repost removed successfully');
       }
     } catch (err) {
       console.error('Repost error:', err);
@@ -192,10 +192,13 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   // Navigation handlers
   const handleClose = () => {
     const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
-    if (savedPath && savedPath !== window.location.pathname && !savedPath.includes('/article/')) {
-      router.push(savedPath);
+    
+    // If savedPath exists, we know for sure the user navigated here from within the app,
+    // so it is completely safe to use the native back button.
+    if (savedPath) {
+      router.back();
     } else {
-      router.push('/feed');
+      router.replace('/feed');
     }
   };
 

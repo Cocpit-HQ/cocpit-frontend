@@ -19,13 +19,7 @@ export const StepBegin: React.FC<StepBeginProps> = ({ onNext }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showErrorToast = (message: string) => {
-    toast.custom((t) => (
-      <div className="flex flex-col justify-center py-[8px] px-[12px] gap-[16px] w-[335px] h-auto min-h-[44px] bg-[#222228] border border-[#2C2C33] rounded-[8px] box-border shadow-lg">
-        <span className="w-full font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-[#E5484D]">
-          {message}
-        </span>
-      </div>
-    ));
+    toast.error(message);
   };
 
   const {

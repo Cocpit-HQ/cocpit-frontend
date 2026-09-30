@@ -114,7 +114,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
         if (!user?.id) return;
         try {
             setIsDownloadingResume(true);
-            const loadingToast = toast.loading("Generating your resume...");
+            const loadingToast = toast.loading(isOwnProfile ? "Generating your resume..." : "Downloading resume...");
 
             const { downloadProfileResumePdf } = await import("@/services/api/profile");
 

@@ -61,7 +61,7 @@ export function ViewMediaModal({
           <img
             src={activeUrl}
             alt={alt || "Profile photo"}
-            className="w-full h-full object-cover select-none pointer-events-none"
+            className="w-full h-full object-cover rounded-full select-none pointer-events-none"
           />
         </div>
       ) : (

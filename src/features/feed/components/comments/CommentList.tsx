@@ -22,6 +22,7 @@ interface CommentListProps {
   onAddComment?: (text: string, replyToId?: string | number) => void;
   currentUserAvatar?: string;
   showAllInitially?: boolean;
+  hideCancelButton?: boolean;
 }
 
 // ORIGINAL: export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport, onHide }: CommentListProps) {
@@ -40,7 +41,8 @@ export default function CommentList({
   onCancelReply,
   onAddComment,
   currentUserAvatar,
-  showAllInitially = false
+  showAllInitially = false,
+  hideCancelButton = false
 }: CommentListProps) {
   const [showAllComments, setShowAllComments] = useState(showAllInitially);
 
@@ -144,6 +146,7 @@ export default function CommentList({
                 onCancelReply={onCancelReply}
                 currentUserAvatar={currentUserAvatar}
                 autoFocus={true}
+                hideCancelButton={hideCancelButton}
               />
             </div>
           )}
@@ -165,6 +168,7 @@ export default function CommentList({
               onCancelReply={onCancelReply}
               onAddComment={onAddComment}
               currentUserAvatar={currentUserAvatar}
+              hideCancelButton={hideCancelButton}
             />
           )}
         </React.Fragment>

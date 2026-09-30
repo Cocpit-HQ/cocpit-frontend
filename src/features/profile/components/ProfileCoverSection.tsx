@@ -188,7 +188,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 <img
                   src={displayAvatar}
                   alt={userName || "Profile avatar"}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-full"
                   onError={() => setAvatarError(true)}
                 />
               ) : (
@@ -218,7 +218,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
               <img
                 src={displayAvatar}
                 alt={userName || "Profile avatar"}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-full"
                 onError={() => setAvatarError(true)}
               />
             ) : (

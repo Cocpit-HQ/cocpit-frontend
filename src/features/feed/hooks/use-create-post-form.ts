@@ -578,6 +578,9 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         }
       }).catch(console.error);
 
+      if (sharedPostId || initialSharedPost) {
+        toast.success("Post reposted successfully!");
+      }
       if (onPostCreated) onPostCreated();
       
       // Scroll to the top of the feed to see the newly created post

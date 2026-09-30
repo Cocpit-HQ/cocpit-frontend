@@ -65,31 +65,19 @@ export const ResetPasswordFlow: React.FC<ResetPasswordFlowProps> = ({ initialTok
     }
   }, [toastParam, setShowSessionExpiredToast]);
 
-  const toastMessage =
-    toastParam === "session_expired" || showSessionExpiredToast
-      ? "Session expired"
-      : toastParam === "password_updated"
-      ? "Password updated"
-      : toastParam;
-
   useEffect(() => {
-    if (toastMessage) {
-      showToast.success(toastMessage, {
-        onAutoClose: () => {
-          setShowSessionExpiredToast(false);
-          if (toastParam) {
-            router.replace("/reset-password", { scroll: false });
-          }
-        },
-        onDismiss: () => {
-          setShowSessionExpiredToast(false);
-          if (toastParam) {
-            router.replace("/reset-password", { scroll: false });
-          }
-        }
-      });
+    if (toastParam === "session_expired" || showSessionExpiredToast) {
+      showToast.success("Session expired", { id: "session_expired" });
+      setShowSessionExpiredToast(false);
+      router.replace("/reset-password", { scroll: false });
+    } else if (toastParam === "password_updated") {
+      showToast.success("Password changed successfully", { id: toastParam });
+      router.replace("/reset-password", { scroll: false });
+    } else if (toastParam) {
+      showToast.success(toastParam, { id: toastParam });
+      router.replace("/reset-password", { scroll: false });
     }
-  }, [toastMessage, toastParam, router, setShowSessionExpiredToast]);
+  }, [toastParam, showSessionExpiredToast, router, setShowSessionExpiredToast]);
 
   if (!isMounted) return null;
 

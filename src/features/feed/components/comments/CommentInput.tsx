@@ -26,6 +26,7 @@ interface CommentInputProps {
     className?: string;
     autoFocus?: boolean;
     variant?: 'default' | 'reply';
+    hideCancelButton?: boolean;
 }
 
 export default function CommentInput({
@@ -38,6 +39,7 @@ export default function CommentInput({
     className = "",
     autoFocus = false,
     variant = 'default',
+    hideCancelButton = false,
 }: CommentInputProps) {
     const { activeProfile } = useActiveProfile();
     const [commentText, setCommentText] = useState('');
@@ -83,7 +85,7 @@ export default function CommentInput({
             }
         }
 
-        if (finalContent.length > 1000) {
+        if (commentText.length > 1000) {
             toast.error("Comment should be less than 1000 characters");
             return;
         }
@@ -144,10 +146,17 @@ export default function CommentInput({
     const handleEmojiSelect = (emoji: string) => {
         const textarea = textareaRef.current;
         if (!textarea) {
-            setCommentText(prev => prev + emoji);
+            if (commentText.length + emoji.length <= 1000) {
+                setCommentText(prev => prev + emoji);
+            }
         } else {
             const start = textarea.selectionStart ?? commentText.length;
             const end = textarea.selectionEnd ?? commentText.length;
+
+            if (commentText.length - (end - start) + emoji.length > 1000) {
+                return;
+            }
+
             const newText = commentText.substring(0, start) + emoji + commentText.substring(end);
             setCommentText(newText);
 
@@ -357,7 +366,7 @@ export default function CommentInput({
                                 >
                                     Comment
                                 </button>
-                                {onCancelReply && (
+                                {onCancelReply && !hideCancelButton && (
                                     <button
                                         type="button"
                                         onMouseDown={(e) => {

@@ -6,6 +6,7 @@ import { signIn, getSession } from "next-auth/react";
 import { signupService } from "../services/signup.service";
 import { cancelOTP } from "@/services/api/auth";
 import { SignUpStep, PasswordCriteria, PendingDeletionInfo } from "../types/signup.types";
+import { toast } from 'sonner';
 
 const SESSION_LIFETIME_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -247,21 +248,23 @@ export function useSignUp() {
   };
 
   // Shared post-login redirect logic
-  const handlePostLoginRedirect = async () => {
+  const handlePostLoginRedirect = async (toastParam?: string) => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("cocpit_active_onboarding_session", "true");
     }
     const session = await getSession();
+    const queryStr = toastParam ? `?toast=${toastParam}` : "";
+
     if (!session || !session.user) {
-      window.location.href = "/onboarding?step=begin";
+      window.location.href = `/onboarding${queryStr ? queryStr + "&step=begin" : "?step=begin"}`;
       return;
     }
 
     // @ts-ignore
     if (!session.user.onboarding_complete) {
-      router.push("/onboarding");
+      router.push(`/onboarding${queryStr}`);
     } else {
-      router.push("/feed");
+      router.push(`/feed${queryStr}`);
     }
   };
 
@@ -476,7 +479,7 @@ export function useSignUp() {
         return;
       }
 
-      await handlePostLoginRedirect();
+      await handlePostLoginRedirect("account_created");
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || "Registration failed. Please try again.";
       if (msg.toLowerCase().includes("expired")) {

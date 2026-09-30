@@ -51,7 +51,7 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
     // This will clear the session and redirect the user
     await signOut({
       redirect: true,
-      callbackUrl: reason ? `/?reason=${reason}` : "/"
+      callbackUrl: reason ? `/?reason=${reason}` : "/?toast=logged_out"
     });
 
     isLoggingOut = false;
