@@ -278,7 +278,20 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
       onSaved(savedId);
     } catch (err: any) {
       console.error("Failed to save education:", err);
-      toast.error(err?.response?.data?.message || "Failed to save education");
+      const backendErrors = err?.response?.data?.errors;
+      if (Array.isArray(backendErrors)) {
+        const fieldErrors: Record<string, string> = {};
+        backendErrors.forEach((e) => {
+          let field = e.path;
+          if (field === 'start_date') field = 'start_date';
+          if (field === 'end_date') field = 'end_date';
+          if (field === 'school_name') field = 'school_name';
+          fieldErrors[field] = e.message;
+        });
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      } else {
+        toast.error(err?.response?.data?.message || "Failed to save education");
+      }
     } finally {
       setIsSaving(false);
     }

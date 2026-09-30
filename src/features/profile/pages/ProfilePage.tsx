@@ -353,7 +353,38 @@ export default function ProfilePage() {
       setEditingExperiences(undefined);
     } catch (err: any) {
       console.error("Failed to save experience:", err);
+      
+      const backendErrors = err?.response?.data?.errors;
+      if (Array.isArray(backendErrors)) {
+        const roleFieldErrors: Record<number, Record<string, string>> = {};
+        const globalMessages: string[] = [];
+
+        backendErrors.forEach((errorObj) => {
+          if (errorObj.entityId) {
+            const index = roles.findIndex((r) => r.experience_id === errorObj.entityId);
+            if (index !== -1) {
+              if (!roleFieldErrors[index]) roleFieldErrors[index] = {};
+              let field = errorObj.path.split('.').pop() || "";
+              if (field === 'start_date') field = 'startDate';
+              if (field === 'end_date') field = 'endDate';
+              if (field === 'is_current') field = 'isCurrent';
+              roleFieldErrors[index][field] = errorObj.message;
+            } else {
+               globalMessages.push(errorObj.message);
+            }
+          } else {
+            globalMessages.push(errorObj.message);
+          }
+        });
+
+        const customErr = new Error("Validation Failed") as any;
+        customErr.roleFieldErrors = Object.keys(roleFieldErrors).length > 0 ? roleFieldErrors : null;
+        customErr.globalMessages = globalMessages;
+        throw customErr;
+      }
+      
       toast.error(err?.response?.data?.message || "Failed to save experience");
+      throw err;
     } finally {
       setIsSavingExperience(false);
     }
@@ -393,7 +424,22 @@ export default function ProfilePage() {
       setIsAddEducationModalOpen(false);
       setEditingEducation(null);
     } catch (err: any) {
+      const backendErrors = err?.response?.data?.errors;
+      if (Array.isArray(backendErrors)) {
+        const fieldErrors: Record<string, string> = {};
+        backendErrors.forEach((e) => {
+          let field = e.path;
+          if (field === 'start_date') field = 'startDate';
+          if (field === 'end_date') field = 'endDate';
+          if (field === 'school_name') field = 'school_name';
+          fieldErrors[field] = e.message;
+        });
+        const customErr = new Error("Validation Failed") as any;
+        customErr.fieldErrors = Object.keys(fieldErrors).length > 0 ? fieldErrors : null;
+        throw customErr;
+      }
       toast.error(err?.response?.data?.message || "Failed to save education");
+      throw err;
     }
   };
 
@@ -419,7 +465,22 @@ export default function ProfilePage() {
       setIsAddProjectModalOpen(false);
       setEditingProject(null);
     } catch (err: any) {
+      const backendErrors = err?.response?.data?.errors;
+      if (Array.isArray(backendErrors)) {
+        const fieldErrors: Record<string, string> = {};
+        backendErrors.forEach((e) => {
+          let field = e.path;
+          if (field === 'start_date') field = 'startDate';
+          if (field === 'end_date') field = 'endDate';
+          if (field === 'team_size') field = 'teamSize';
+          fieldErrors[field] = e.message;
+        });
+        const customErr = new Error("Validation Failed") as any;
+        customErr.fieldErrors = Object.keys(fieldErrors).length > 0 ? fieldErrors : null;
+        throw customErr;
+      }
       toast.error(err?.response?.data?.message || "Failed to save project");
+      throw err;
     }
   };
 

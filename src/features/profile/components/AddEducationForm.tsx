@@ -676,7 +676,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     return Object.keys(errors).length === 0
   }
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     if (!validate()) return
 
@@ -703,18 +703,24 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       ? dayjs(`${formData.endYear}-${endMonthIdx + 1}-01`).format("YYYY-MM-DD")
       : null
 
-    onSave?.({
-      ...initialData,
-      school_name: formData.school_name,
-      school_org_id: resolvedSchoolOrgId,
-      school_logo: schoolLogo,
-      degree: formData.degree,
-      field_of_study: formData.field_of_study,
-      location: formData.location,
-      start_date: startDate,
-      end_date: endDate,
-      description: formData.description
-    })
+    try {
+      await onSave?.({
+        ...initialData,
+        school_name: formData.school_name,
+        school_org_id: resolvedSchoolOrgId,
+        school_logo: schoolLogo,
+        degree: formData.degree,
+        field_of_study: formData.field_of_study,
+        location: formData.location,
+        start_date: startDate,
+        end_date: endDate,
+        description: formData.description
+      })
+    } catch (err: any) {
+      if (err.fieldErrors) {
+        setFieldErrors(prev => ({ ...prev, ...err.fieldErrors }))
+      }
+    }
   }
 
   const inputStyles = "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-['DM_Sans'] text-[16px] leading-[24px] text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"

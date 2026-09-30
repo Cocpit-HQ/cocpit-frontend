@@ -81,13 +81,17 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
     }
   }, [value, isTextarea]);
 
+  const isOverLimit = maxLength ? (value || "").length >= maxLength : false;
+  const displayError = isOverLimit ? (maxLengthMessage || `Maximum ${maxLength} characters allowed`) : error;
+  const hasError = !!displayError;
+
   return (
     <div className={cn("flex flex-col gap-[8px] w-full", className)}>
       <div
         className={cn(
           "w-full py-[8px] px-0 border-b transition-colors flex flex-col justify-center items-start gap-[10px] relative box-border self-stretch",
           isTextarea && isExpanded ? "min-h-[62px] h-auto" : "h-[62px]",
-          error
+          hasError
             ? "border-red-500 hover:border-red-600 focus-within:border-red-500"
             : "border-[var(--ds-border)] hover:border-[var(--ds-text-muted)] focus-within:border-[var(--ds-accent)]",
           inputBoxClassName
@@ -122,16 +126,10 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
               id={id}
               rows={rows}
               value={value}
+              maxLength={maxLength}
               onChange={(e) => {
                 const val = e.target.value;
-                if (maxLength && val.length > maxLength) {
-                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`, {
-                    id: `max-length-error-${id}`
-                  });
-                  onChange(val.slice(0, maxLength));
-                } else {
-                  onChange(val);
-                }
+                onChange(val);
               }}
               placeholder={placeholder}
               className="block w-full bg-transparent text-[var(--ds-text-primary)] font-['DM_Sans'] font-normal text-[14px] leading-[20px] placeholder:text-[var(--ds-text-muted)] focus:outline-none resize-none p-0 m-0 h-[20px] overflow-hidden"
@@ -144,6 +142,7 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
               inputMode={inputMode}
               pattern={pattern}
               value={value}
+              maxLength={maxLength}
               onChange={(e) => {
                 const rawVal = e.target.value;
                 const rawCursor = e.target.selectionStart;
@@ -158,15 +157,13 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
                     targetCursor = formattedBefore.length;
                   }
                   targetVal = formatValue(rawVal);
-                }
-
-                if (maxLength && targetVal.length > maxLength) {
-                  toast.error(maxLengthMessage || `Maximum ${maxLength} characters allowed`, {
-                    id: `max-length-error-${id}`
-                  });
-                  targetVal = targetVal.slice(0, maxLength);
-                  if (targetCursor !== null) {
-                    targetCursor = Math.min(targetCursor, maxLength);
+                  
+                  // Enforce format slicing if needed (since formatValue might return > maxLength)
+                  if (maxLength && targetVal.length > maxLength) {
+                    targetVal = targetVal.slice(0, maxLength);
+                    if (targetCursor !== null) {
+                      targetCursor = Math.min(targetCursor, maxLength);
+                    }
                   }
                 }
 
@@ -191,18 +188,21 @@ export const ProfileEditField: React.FC<ProfileEditFieldProps> = ({
       </div>
 
       {/* Footer Row: Error (left) and Counter (right) */}
-      {(error || (showCounter && maxLength)) && (
+      {(hasError || (showCounter && maxLength)) && (
         <div className="w-full flex justify-between items-start">
           <div className="flex-1">
-            {error && (
+            {hasError && (
               <span className="font-['DM_Sans'] text-[12px] text-red-500 leading-tight">
-                {error}
+                {displayError}
               </span>
             )}
           </div>
           {showCounter && maxLength && (
             <div className="flex-none ml-2">
-              <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-muted)]">
+              <span className={cn(
+                "font-['DM_Sans'] font-normal text-[12px] leading-[16px]",
+                isOverLimit ? "text-red-500 font-medium" : "text-[var(--ds-text-muted)]"
+              )}>
                 {(value || "").length}/{maxLength}
               </span>
             </div>

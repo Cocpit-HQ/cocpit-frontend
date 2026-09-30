@@ -368,7 +368,7 @@ export const FeedPost = (props: FeedPostProps) => {
           const mappedPost = mapBackendPostToFrontend(backendPost);
           window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
           toast.success("Post reposted successfully!");
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && window.location.pathname === '/feed') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         } catch (fetchErr) {

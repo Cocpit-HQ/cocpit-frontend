@@ -62,6 +62,7 @@ export default function AddProjectForm({
   const [skillInput, setSkillInput] = useState("");
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
   const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
+  const [backendErrors, setBackendErrors] = useState<Record<string, string>>({});
   const skillWrapperRef = useRef<HTMLDivElement>(null);
 
   const debouncedSkillInput = useDebounce(skillInput, 300);
@@ -173,6 +174,7 @@ export default function AddProjectForm({
   const [touchedEndDate, setTouchedEndDate] = useState(false);
 
   const endDateError = useMemo(() => {
+    if (backendErrors.endDate) return backendErrors.endDate;
     if (isCurrent) return null;
     if (!endMonth || !endYear) {
       if (submitAttempted || touchedEndDate) {
@@ -188,7 +190,7 @@ export default function AddProjectForm({
       }
     }
     return null;
-  }, [isCurrent, startMonth, startYear, endMonth, endYear, submitAttempted, touchedEndDate]);
+  }, [isCurrent, startMonth, startYear, endMonth, endYear, submitAttempted, touchedEndDate, backendErrors.endDate]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -245,9 +247,16 @@ export default function AddProjectForm({
         role_description: roleDescription.trim() || undefined,
       };
 
-      onSave?.(savedProject);
+      await onSave?.(savedProject);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to upload media files");
+      if (err.fieldErrors) {
+        setBackendErrors(err.fieldErrors);
+        if (err.fieldErrors.teamSize) {
+          setTeamSizeError(err.fieldErrors.teamSize);
+        }
+      } else {
+        toast.error(err?.response?.data?.message || "Failed to upload media files");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -350,20 +359,36 @@ export default function AddProjectForm({
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setBackendErrors(prev => ({ ...prev, title: "" }));
+                }}
                 placeholder="e.g. Website Redesign for Acme Corp"
-                className={inputStyles}
+                className={cn(inputStyles, backendErrors.title && "border-red-400 focus:border-red-400")}
               />
+              {backendErrors.title && (
+                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
+                  <AlertTriangle className="w-3 h-3" />{backendErrors.title}
+                </p>
+              )}
             </div>
             <div className="flex flex-col">
               <Label className={labelStyles}>Organization*</Label>
               <input
                 type="text"
                 value={organization}
-                onChange={(e) => setOrganization(e.target.value)}
+                onChange={(e) => {
+                  setOrganization(e.target.value);
+                  setBackendErrors(prev => ({ ...prev, organization: "" }));
+                }}
                 placeholder='e.g. Acme Corp" or "Self / Academic proje...'
-                className={inputStyles}
+                className={cn(inputStyles, backendErrors.organization && "border-red-400 focus:border-red-400")}
               />
+              {backendErrors.organization && (
+                <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-['DM_Sans']">
+                  <AlertTriangle className="w-3 h-3" />{backendErrors.organization}
+                </p>
+              )}
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ProfileEditIcon, OrgBuildingIcon } from "@/components/icons";
+import { ProfileEditIcon, OrgBuildingIcon, SkillsBulbIcon } from "@/components/icons";
 import type { Experience } from "@/types/entities";
 import { ProfileExperienceEmptyState, ProfileExperienceErrorState } from "../ProfileEmptyStates";
 
@@ -43,9 +43,14 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedCompanyRoles, setExpandedCompanyRoles] = useState<Record<string, boolean>>({});
+  const [expandedSkills, setExpandedSkills] = useState<Record<string, boolean>>({});
 
   const toggleCompanyRoles = (companyKey: string) => {
     setExpandedCompanyRoles((prev) => ({ ...prev, [companyKey]: !prev[companyKey] }));
+  };
+
+  const toggleSkills = (id: string) => {
+    setExpandedSkills((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   // Group all experiences belonging to the same company
@@ -175,6 +180,44 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
                         {exp.description && (
                           <ExpandableText text={exp.description} />
                         )}
+
+                        {/* Skills Used */}
+                        {exp.skills && exp.skills.length > 0 && (() => {
+                          const skills = exp.skills;
+                          const expId = exp.experience_id || `${gIdx}-${idx}`;
+                          const isSkillsExpanded = expandedSkills[expId];
+                          const visibleSkills = isSkillsExpanded ? skills : skills.slice(0, 2);
+                          const remainingCount = skills.length - 2;
+
+                          return (
+                            <div className="flex flex-row items-center gap-2 flex-wrap">
+                              <SkillsBulbIcon className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" />
+                              {visibleSkills.map((sk: any, sIdx: number) => {
+                                const skName = typeof sk === "string" ? sk : sk.name || sk.skill_name;
+                                return (
+                                  <span
+                                    key={sIdx}
+                                    className="text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4"
+                                  >
+                                    {skName}
+                                  </span>
+                                );
+                              })}
+                              {remainingCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSkills(expId)}
+                                  className="flex flex-row items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                >
+                                  <div className="w-7 h-0 border-t border-[var(--ds-accent)] flex-none" />
+                                  <span className="text-[var(--ds-accent)] text-xs font-medium font-['DM_Sans'] leading-4">
+                                    {isSkillsExpanded ? "Show less" : `+${remainingCount} more`}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Vertical Connector with 4x4px Ellipse Badges between roles in the same company */}

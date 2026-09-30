@@ -50,12 +50,14 @@ export const ProjectLinkModal: React.FC<ProjectLinkModalProps> = ({
   const [title, setTitle] = useState(initialTitle);
   const [url, setUrl] = useState(initialUrl);
   const [isUrlTouched, setIsUrlTouched] = useState(false);
+  const [titleError, setTitleError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setTitle(initialTitle || "");
       setUrl(initialUrl || "");
       setIsUrlTouched(false);
+      setTitleError("");
     }
   }, [isOpen, initialTitle, initialUrl]);
 
@@ -66,15 +68,18 @@ export const ProjectLinkModal: React.FC<ProjectLinkModalProps> = ({
   const handleAction = () => {
     const trimmedTitle = title.trim();
     const trimmedUrl = url.trim();
+    let hasError = false;
 
     if (!trimmedTitle) {
-      toast.error("Please provide a title");
-      return;
+      setTitleError("Please provide a title");
+      hasError = true;
     }
     if (!isValidUrl(trimmedUrl)) {
-      toast.error("Please enter a valid link (e.g. www.example.com or https://...)");
-      return;
+      setIsUrlTouched(true);
+      hasError = true;
     }
+
+    if (hasError) return;
 
     onConfirm(trimmedTitle, normalizeUrl(trimmedUrl));
   };
@@ -111,19 +116,32 @@ export const ProjectLinkModal: React.FC<ProjectLinkModalProps> = ({
         </div>
 
         {/* Input 1: Title */}
-        <div className="w-full sm:w-[276px] h-[62px] box-border flex flex-col justify-center items-start py-[8px] px-0 gap-[10px] border-b border-[var(--ds-border)] flex-none order-2 self-stretch">
-          <label
-            htmlFor="modal_link_title"
-            className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]"
-          >
-            Title
-          </label>
+        <div className={cn(
+          "w-full sm:w-[276px] h-auto min-h-[62px] box-border flex flex-col justify-center items-start py-[8px] px-0 gap-[10px] border-b flex-none order-2 self-stretch transition-colors",
+          titleError ? "border-[var(--ds-error)]" : "border-[var(--ds-border)] focus-within:border-[var(--ds-text-secondary)]"
+        )}>
+          <div className="w-full flex items-center justify-between">
+            <label
+              htmlFor="modal_link_title"
+              className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]"
+            >
+              Title
+            </label>
+            {titleError && (
+              <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-error)]">
+                {titleError}
+              </span>
+            )}
+          </div>
           <input
             id="modal_link_title"
             type="text"
             autoFocus
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (titleError) setTitleError("");
+            }}
             placeholder="Write a title"
             className="w-full bg-transparent font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] focus:outline-none"
           />
@@ -248,6 +266,8 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
   const [fileUrl, setFileUrl] = useState(modalData?.fileUrl || "");
   const [fileName, setFileName] = useState(modalData?.fileName || "");
   const [pendingFile, setPendingFile] = useState<File | undefined>(modalData?.pendingFile);
+  const [titleError, setTitleError] = useState("");
+  const [fileError, setFileError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -257,6 +277,8 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
       setFileUrl(modalData.fileUrl || "");
       setFileName(modalData.fileName || "");
       setPendingFile(modalData.pendingFile);
+      setTitleError("");
+      setFileError("");
     }
   }, [modalData]);
 
@@ -274,6 +296,7 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
     setFileUrl(previewUrl);
     setFileName(file.name);
     setPendingFile(file);
+    if (fileError) setFileError("");
     if (!title.trim()) {
       setTitle(defaultTitle);
     }
@@ -288,14 +311,18 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
 
   const handleAction = () => {
     const trimmedTitle = title.trim();
+    let hasError = false;
+
     if (!trimmedTitle) {
-      toast.error("Please provide a title");
-      return;
+      setTitleError("Please provide a title");
+      hasError = true;
     }
     if (!fileUrl && !pendingFile) {
-      toast.error("Please select a file");
-      return;
+      setFileError("Please select a file");
+      hasError = true;
     }
+
+    if (hasError) return;
 
     onConfirm({
       id: modalData.id,
@@ -349,19 +376,32 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
         </div>
 
         {/* Input 1: Title */}
-        <div className="w-full sm:w-[276px] h-[62px] box-border flex flex-col justify-center items-start py-[8px] px-0 gap-[10px] border-b border-[var(--ds-border)] flex-none order-2 self-stretch">
-          <label
-            htmlFor="media_modal_title"
-            className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]"
-          >
-            Title
-          </label>
+        <div className={cn(
+          "w-full sm:w-[276px] h-auto min-h-[62px] box-border flex flex-col justify-center items-start py-[8px] px-0 gap-[10px] border-b flex-none order-2 self-stretch transition-colors",
+          titleError ? "border-[var(--ds-error)]" : "border-[var(--ds-border)] focus-within:border-[var(--ds-text-secondary)]"
+        )}>
+          <div className="w-full flex items-center justify-between">
+            <label
+              htmlFor="media_modal_title"
+              className="font-['DM_Sans'] font-medium text-[12px] leading-[16px] text-[var(--ds-text-secondary)]"
+            >
+              Title
+            </label>
+            {titleError && (
+              <span className="font-['DM_Sans'] font-normal text-[10px] leading-[12px] text-[var(--ds-error)]">
+                {titleError}
+              </span>
+            )}
+          </div>
           <input
             id="media_modal_title"
             type="text"
             autoFocus
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (titleError) setTitleError("");
+            }}
             placeholder="Write a title"
             className="w-full bg-transparent font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] focus:outline-none"
           />
@@ -405,14 +445,24 @@ export const ProjectMediaModal: React.FC<ProjectMediaModalProps> = ({
           </div>
         ) : (
           /* Empty Upload Box (Avatar: w: 276px, h: 120px, bg: var(--ds-border), rounded: 16px) */
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full sm:w-[276px] h-[120px] bg-[var(--ds-border)] rounded-[16px] flex flex-col justify-center items-center gap-[8px] cursor-pointer hover:opacity-90 transition-opacity flex-none order-3 self-stretch"
-          >
-            <UploadIcon size={40} className="w-10 h-10 text-[var(--ds-text-primary)] flex-none" />
-            <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] text-center">
-              {modalData.type === "image" ? "Add media" : "PDF, WORD, TXT"}
-            </span>
+          <div className="flex flex-col gap-2 w-full sm:w-[276px] flex-none order-3 self-stretch">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "w-full h-[120px] bg-[var(--ds-border)] rounded-[16px] flex flex-col justify-center items-center gap-[8px] cursor-pointer hover:opacity-90 transition-all",
+                fileError ? "border border-[var(--ds-error)]" : ""
+              )}
+            >
+              <UploadIcon size={40} className="w-10 h-10 text-[var(--ds-text-primary)] flex-none" />
+              <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-[var(--ds-text-primary)] text-center">
+                {modalData.type === "image" ? "Add media" : "PDF, WORD, TXT"}
+              </span>
+            </div>
+            {fileError && (
+              <span className="font-['DM_Sans'] font-normal text-[12px] text-[var(--ds-error)] text-center">
+                {fileError}
+              </span>
+            )}
           </div>
         )}
 

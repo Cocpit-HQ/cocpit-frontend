@@ -441,7 +441,20 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
       onSaved(savedId);
     } catch (err: any) {
       console.error("Failed to save experience:", err);
-      toast.error(err?.response?.data?.message || "Failed to save experience");
+      const backendErrors = err?.response?.data?.errors;
+      if (Array.isArray(backendErrors)) {
+        const fieldErrors: Record<string, string> = {};
+        backendErrors.forEach((e) => {
+          let field = e.path;
+          if (field === 'start_date') field = 'start_date';
+          if (field === 'end_date') field = 'end_date';
+          if (field === 'is_current') field = 'is_current';
+          fieldErrors[field] = e.message;
+        });
+        setErrors((prev) => ({ ...prev, ...fieldErrors }));
+      } else {
+        toast.error(err?.response?.data?.message || "Failed to save experience");
+      }
     } finally {
       setIsSaving(false);
     }
