@@ -202,9 +202,7 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
       {/* Live Search Dropdown */}
       {showLive && (
         <div className="absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
-          {isSearching ? (
-            <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
-          ) : searchResults.length > 0 ? (
+          {searchResults.length > 0 ? (
             <div className="w-full flex flex-col gap-3 max-h-[276px] overflow-y-auto overscroll-contain scrollbar-hide">
               {searchResults.map((user) => (
                 <Link
@@ -245,6 +243,8 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
               </div>
               */}
             </div>
+          ) : isSearching ? (
+            <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
           ) : (
             <div className="text-[14px] leading-5 text-ds-text-muted">No results found.</div>
           )}
