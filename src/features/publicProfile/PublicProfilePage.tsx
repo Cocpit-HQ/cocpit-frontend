@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSocial } from "@/context/SocialContext";
-import { useProfile, useProfilePosts } from "./hooks/usePublicProfile";
+import { useProfile, useProfilePostsPreview } from "./hooks/usePublicProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   sendConnectionRequest,
@@ -90,7 +90,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   // Fetch Public Profile Data
   const { data: user, isLoading: isUserLoading, error: userError, refetch: refetchProfile } = useProfile(userId);
-  const { data: publicPosts } = useProfilePosts(userId);
+  const { data: publicPosts } = useProfilePostsPreview(userId);
 
   const visiblePosts = useMemo(() => {
     if (!publicPosts) return [];
