@@ -182,6 +182,14 @@ export const useFeed = (enableInitialFetch = true) => {
       const newPost = customEvent.detail;
       if (newPost) {
         addPost(newPost);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('scroll-/feed', '0');
+          sessionStorage.removeItem('cocpit_last_interacted_post_id');
+          sessionStorage.removeItem('cocpit_last_interacted_post_viewport_top');
+          if (window.location.pathname === '/feed' || window.location.pathname === '/') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
       }
     };
 

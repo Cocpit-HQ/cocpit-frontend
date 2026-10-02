@@ -9,6 +9,7 @@ import { FeedPost } from "@/features/feed/components/FeedPost";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 import type { Post } from "@/types/entities";
 import { ProfilePostsEmptyState, ProfilePostsErrorState } from "../ProfileEmptyStates";
+import { useShallow } from "zustand/react/shallow";
 
 interface ProfilePostsTabProps {
   posts: Post[];
@@ -90,15 +91,24 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
   const router = useRouter();
   const { data: session } = useSession();
   const { isCompany, activeProfile, userCompanies } = useActiveProfile();
+  const hiddenPostIds = useUIStore(useShallow((s) => s.hiddenPostIds));
+  const reportedPostIds = useUIStore(useShallow((s) => s.reportedPostIds));
 
   // Rules of Hooks: All hooks must be called unconditionally before any early returns
   const displayedPosts = useMemo(() => {
     if (!posts || posts.length === 0) return [];
 
+    // Filter out posts that have been reported/hidden in this session so the
+    // remaining posts immediately shift up without needing a page refresh.
+    const visiblePosts = posts.filter(
+      (p) =>
+        !hiddenPostIds.includes(p.id?.toString())
+    );
+
     // Always show the 2 most recent posts (backend already orders by created_at DESC).
     // If only 1 of the top 2 is a media post, prefer swapping in the earliest media
     // post from the remaining list — but never push the most recent post below position 0.
-    const top2 = posts.slice(0, 2);
+    const top2 = visiblePosts.slice(0, 2);
     if (top2.length < 2) return top2;
 
     const [first, second] = top2;
@@ -106,11 +116,11 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
     // earliest media post from the rest of the list (position 2+), preserving the
     // first (most recent) post in slot 0.
     if (!isMediaPost(first) && !isMediaPost(second)) {
-      const nextMediaPost = posts.slice(2).find(isMediaPost);
+      const nextMediaPost = visiblePosts.slice(2).find(isMediaPost);
       if (nextMediaPost) return [first, nextMediaPost];
     }
     return top2;
-  }, [posts]);
+  }, [posts, hiddenPostIds, reportedPostIds]);
 
   if (isError) {
     return <ProfilePostsErrorState onRetry={onRetry} />;

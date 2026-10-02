@@ -49,6 +49,9 @@ export const PostOptionsMenu = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    // Dispatch event to close any other open menus
+    document.dispatchEvent(new CustomEvent('closeAllPostMenus'));
+
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
       if (
@@ -93,12 +96,17 @@ export const PostOptionsMenu = ({
       updatePositionAndCheckVisibility();
     };
 
+    const handleCloseMenus = () => {
+      onClose();
+    };
+
     // Delay attaching to prevent immediate close if the click to open also triggers this
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
       window.addEventListener('scroll', handleScrollOrResize, true);
       window.addEventListener('resize', handleScrollOrResize);
+      document.addEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
     }, 0);
 
     return () => {
@@ -107,6 +115,7 @@ export const PostOptionsMenu = ({
       document.removeEventListener('touchstart', handleClickOutside);
       window.removeEventListener('scroll', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
+      document.removeEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
     };
   }, [isOpen, onClose, position, triggerRef, isMobile]);
 

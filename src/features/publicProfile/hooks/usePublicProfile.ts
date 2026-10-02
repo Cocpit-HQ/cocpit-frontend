@@ -54,6 +54,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
                 logo_url: exp.logo_url || groupLogo || null,
                 company_logo: exp.company_logo || groupLogo || null,
                 org_id: exp.org_id || null,
+                skills: exp.skills || [],
             };
         });
     });
