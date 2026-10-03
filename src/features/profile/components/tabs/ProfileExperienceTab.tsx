@@ -214,12 +214,16 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
                               {visibleSkills.map((sk: any, sIdx: number) => {
                                 const skName = typeof sk === "string" ? sk : sk.name || sk.skill_name;
                                 return (
-                                  <span
-                                    key={sIdx}
-                                    className="text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4"
-                                  >
-                                    {skName}
-                                  </span>
+                                  <React.Fragment key={sIdx}>
+                                    <span className="text-[var(--ds-text-primary)] text-xs font-normal font-['DM_Sans'] leading-4">
+                                      {skName}
+                                    </span>
+                                    {sIdx < visibleSkills.length - 1 && (
+                                      <span className="text-[var(--ds-text-muted)] text-xs font-normal font-['DM_Sans'] leading-4">
+                                        |
+                                      </span>
+                                    )}
+                                  </React.Fragment>
                                 );
                               })}
                               {remainingCount > 0 && (

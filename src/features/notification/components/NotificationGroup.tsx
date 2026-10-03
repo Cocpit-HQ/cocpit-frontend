@@ -16,7 +16,7 @@ export const NotificationGroup: React.FC<NotificationGroupProps> = ({
   if (!notifications || notifications.length === 0) return null;
 
   return (
-    <div className="rounded-[8px] bg-ds-surface-1 flex flex-col gap-3 transition-all font-['DM_Sans'] overflow-hidden">
+    <div className="rounded-[8px] bg-transparent flex flex-col gap-3 transition-all font-['DM_Sans'] overflow-hidden">
       {notifications.map((notif) => (
         <NotificationItem
           key={notif.notification_id}

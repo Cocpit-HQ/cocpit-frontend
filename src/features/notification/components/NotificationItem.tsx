@@ -211,8 +211,6 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2",
         isInsideGroup
           ? 'bg-transparent rounded-none'
-          : isUnread
-          ? 'bg-ds-surface-1 rounded-[8px]'
           : 'bg-transparent rounded-[8px]',
         itemUrl && 'cursor-pointer'
       )}

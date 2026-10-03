@@ -152,6 +152,7 @@ export const useFeed = (enableInitialFetch = true) => {
   }, [feedQueryKey, queryClient]);
 
   const removePostFromFeed = useCallback((id: string) => {
+    // 1. Remove from feed queries (infinite query format)
     queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
       return {
@@ -161,6 +162,18 @@ export const useFeed = (enableInitialFetch = true) => {
           posts: page.posts.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id)
         }))
       };
+    });
+
+    // 2. Remove from profile-posts query (standard array format)
+    queryClient.setQueriesData<Post[]>({ queryKey: ["profile-posts"] }, (oldData) => {
+      if (!oldData || !Array.isArray(oldData)) return oldData;
+      return oldData.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id);
+    });
+
+    // 3. Remove from profile-posts-preview query (standard array format)
+    queryClient.setQueriesData<Post[]>({ queryKey: ["profile-posts-preview"] }, (oldData) => {
+      if (!oldData || !Array.isArray(oldData)) return oldData;
+      return oldData.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id);
     });
   }, [feedQueryKey, queryClient]);
 
@@ -182,6 +195,14 @@ export const useFeed = (enableInitialFetch = true) => {
       const newPost = customEvent.detail;
       if (newPost) {
         addPost(newPost);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('scroll-/feed', '0');
+          sessionStorage.removeItem('cocpit_last_interacted_post_id');
+          sessionStorage.removeItem('cocpit_last_interacted_post_viewport_top');
+          if (window.location.pathname === '/feed' || window.location.pathname === '/') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
       }
     };
 

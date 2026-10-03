@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { usePostUpload } from '@/context/PostUploadContext';
@@ -21,6 +22,7 @@ const COMPANY_CATEGORIES: CategoryType[] = ['Professional', 'Update', 'Hiring', 
 const INSTITUTION_CATEGORIES: CategoryType[] = ['Professional', 'Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
 
 export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: boolean }) => {
+  const router = useRouter();
   const {
     isOpen,
     onClose,
@@ -585,7 +587,14 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       
       // Scroll to the top of the feed to see the newly created post
       if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        sessionStorage.setItem('scroll-/feed', '0');
+        sessionStorage.removeItem('cocpit_last_interacted_post_id');
+        sessionStorage.removeItem('cocpit_last_interacted_post_viewport_top');
+        if (window.location.pathname === '/feed' || window.location.pathname === '/') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          router.push('/feed');
+        }
       }
 
       resetForm();

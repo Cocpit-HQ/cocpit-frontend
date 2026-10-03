@@ -1030,7 +1030,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 </button>
 
                 {/* Article */}
-                <button
+                {/* <button
                   type="button"
                   onClick={handleArticleClick}
                   disabled={hasMedia}
@@ -1047,7 +1047,7 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                 >
                   <Icon name="articles" className="w-[20px] h-[20px]" />
                   <span className="text-[14px] leading-[20px] font-normal font-dmsans">Article</span>
-                </button>
+                </button> */}
               </div>
             ) : (
               <div className="flex flex-row items-center gap-[12px]">

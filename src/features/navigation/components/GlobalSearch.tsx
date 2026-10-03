@@ -23,6 +23,26 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        setIsKeyboardNavigating(true);
+      }
+    };
+    const handleMouseMove = () => {
+      setIsKeyboardNavigating(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('mousemove', handleMouseMove, true);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('mousemove', handleMouseMove, true);
+    };
+  }, []);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -182,16 +202,19 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
       {/* Live Search Dropdown */}
       {showLive && (
         <div className="absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
-          {isSearching ? (
-            <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
-          ) : searchResults.length > 0 ? (
+          {searchResults.length > 0 ? (
             <div className="w-full flex flex-col gap-3 max-h-[276px] overflow-y-auto overscroll-contain scrollbar-hide">
               {searchResults.map((user) => (
                 <Link
                   key={user.id}
                   href={getUrlForUser(user)}
                   onClick={() => handleResultClick(user)}
-                  className="w-full h-9 flex flex-row items-center justify-between gap-2 cursor-pointer group transition-colors"
+                  onMouseEnter={(e) => {
+                    if (document.activeElement?.tagName !== 'INPUT') {
+                      e.currentTarget.focus();
+                    }
+                  }}
+                  className={`w-full h-9 flex flex-row items-center justify-between gap-2 cursor-pointer group transition-colors focus-visible:outline-none focus-visible:bg-ds-surface-1 rounded px-2 -mx-2 ${!isKeyboardNavigating ? 'hover:bg-ds-surface-1' : ''}`}
                 >
                   <div className="flex items-center gap-2 h-9 min-w-0 flex-1">
                     {renderAvatar(user)}
@@ -220,6 +243,8 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
               </div>
               */}
             </div>
+          ) : isSearching ? (
+            <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
           ) : (
             <div className="text-[14px] leading-5 text-ds-text-muted">No results found.</div>
           )}
@@ -236,16 +261,31 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
             {history.map((item) => {
               if (item.type === 'QUERY') {
                 return (
-                  <div key={item.id} className="w-full h-9 flex flex-row items-center justify-between gap-2 group transition-colors">
-                    <div 
-                      className="flex items-center gap-2 h-9 cursor-pointer flex-grow min-w-0"
-                      onClick={() => {
+                  <div 
+                    key={item.id} 
+                    className={`w-full h-9 flex flex-row items-center justify-between gap-2 group transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-ds-surface-1 rounded px-2 -mx-2 ${!isKeyboardNavigating ? 'hover:bg-ds-surface-1' : ''}`}
+                    tabIndex={0}
+                    onMouseEnter={(e) => {
+                      if (document.activeElement?.tagName !== 'INPUT') {
+                        e.currentTarget.focus();
+                      }
+                    }}
+                    onClick={() => {
+                      setSearchQuery(item.value);
+                      saveSearch(item.value);
+                      setIsFocused(false);
+                      router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
                         setSearchQuery(item.value);
                         saveSearch(item.value);
                         setIsFocused(false);
                         router.push(`/search?q=${encodeURIComponent(item.value)}`);
-                      }}
-                    >
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2 h-9 flex-grow min-w-0">
                       <div className="w-8 h-8 rounded-full bg-ds-surface-1 flex items-center justify-center overflow-hidden shrink-0">
                         <Icon name="search" className="w-[14px] h-[14px] text-ds-text-primary" />
                       </div>
@@ -258,7 +298,8 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
                         e.stopPropagation();
                         removeSearch(item.id);
                       }}
-                      className="text-ds-text-secondary hover:text-ds-text-primary p-1 rounded-full transition-colors flex items-center justify-center shrink-0"
+                      tabIndex={-1}
+                      className="text-ds-text-secondary hover:text-ds-text-primary p-1 rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none"
                       aria-label="Remove recent search"
                     >
                       <Icon name="close" className="w-[16px] h-[16px] text-current" />
@@ -269,11 +310,23 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
               
               const user = item.value as SearchedUser;
               return (
-                <div key={item.id} className="w-full h-9 flex flex-row items-center justify-between gap-2 group transition-colors">
-                  <div
-                    className="flex items-center gap-2 h-9 cursor-pointer flex-grow min-w-0"
-                    onClick={(e) => handleRecentUserClick(e, user)}
-                  >
+                <div 
+                  key={item.id} 
+                  className={`w-full h-9 flex flex-row items-center justify-between gap-2 group transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-ds-surface-1 rounded px-2 -mx-2 ${!isKeyboardNavigating ? 'hover:bg-ds-surface-1' : ''}`}
+                  tabIndex={0}
+                  onMouseEnter={(e) => {
+                    if (document.activeElement?.tagName !== 'INPUT') {
+                      e.currentTarget.focus();
+                    }
+                  }}
+                  onClick={(e) => handleRecentUserClick(e, user)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleRecentUserClick(e as any, user);
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-2 h-9 flex-grow min-w-0">
                     {renderAvatar(user)}
                     <div className="h-9 flex flex-col justify-center items-start min-w-0 overflow-hidden flex-1">
                       <p className="text-[14px] leading-5 font-normal font-['DM_Sans'] text-ds-text-primary whitespace-nowrap overflow-hidden text-ellipsis w-full">
@@ -292,7 +345,8 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
                       e.stopPropagation();
                       removeSearch(item.id);
                     }}
-                    className="text-ds-text-secondary hover:text-ds-text-primary p-1 rounded-full transition-colors flex items-center justify-center shrink-0"
+                    tabIndex={-1}
+                    className="text-ds-text-secondary hover:text-ds-text-primary p-1 rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none"
                     aria-label="Remove recent search"
                   >
                      <Icon name="close" className="w-[16px] h-[16px] text-current" />
@@ -303,7 +357,12 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
           </div>
           <button 
             onClick={() => clearAll()}
-            className="w-full text-center text-[12px] leading-5 font-medium text-ds-accent mt-1"
+            onMouseEnter={(e) => {
+              if (document.activeElement?.tagName !== 'INPUT') {
+                e.currentTarget.focus();
+              }
+            }}
+            className={`w-full text-center text-[12px] leading-5 font-medium text-ds-accent mt-1 focus-visible:outline-none focus-visible:bg-ds-surface-1 rounded p-1 ${!isKeyboardNavigating ? 'hover:bg-ds-surface-1' : ''}`}
           >
             Clear all
           </button>

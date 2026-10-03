@@ -103,6 +103,21 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
     }
   }, []);
 
+  // When navigating to a route explicitly reset to top ('0'), scroll instantly on route change
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(`scroll-${pathname}`);
+      if (saved === '0') {
+        const el = containerId ? document.getElementById(containerId) : null;
+        if (el) {
+          el.scrollTo({ top: 0, behavior: 'instant' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+      }
+    }
+  }, [pathname, containerId]);
+
   useIsomorphicLayoutEffect(() => {
     if (isReady && !restoredRef.current) {
       const { useUIStore } = require('@/store/ui.store');
