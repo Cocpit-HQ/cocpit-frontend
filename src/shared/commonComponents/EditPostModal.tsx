@@ -1062,30 +1062,34 @@ export function EditPostModal({
               />
 
               {/* Media Button (Figma: 94x38, border #2C2C33, rounded-full, px 12 py 8, text 14px #FFECE6) */}
-              <div className="flex h-[38px] w-[94px] shrink-0 items-center gap-[12px]">
-                <button
-                  type="button"
-                  onClick={handleMediaClick}
-                  disabled={isMediaDisabled}
-                  title={mediaButtonTitle}
-                  aria-label={mediaButtonTitle}
-                  className={`box-border flex h-[38px] w-[94px] shrink-0 flex-row items-center gap-[8px] rounded-full border px-[12px] py-[8px] transition-opacity outline-none ${isMediaDisabled
-                      ? 'opacity-40 cursor-default pointer-events-none'
-                      : 'hover:opacity-85 cursor-pointer'
-                    }`}
-                  style={{
-                    borderColor: 'var(--ds-border)',
-                  }}
-                >
-                  <Plus className="w-[16px] h-[16px]" color="var(--ds-text-primary)" />
-                  <span
-                    className="text-[14px] font-medium leading-[20px] font-dmsans shrink-0"
-                    style={{ color: 'var(--ds-text-primary)' }}
+              {!sharedPost ? (
+                <div className="flex h-[38px] w-[94px] shrink-0 items-center gap-[12px]">
+                  <button
+                    type="button"
+                    onClick={handleMediaClick}
+                    disabled={isMediaDisabled}
+                    title={mediaButtonTitle}
+                    aria-label={mediaButtonTitle}
+                    className={`box-border flex h-[38px] w-[94px] shrink-0 flex-row items-center gap-[8px] rounded-full border px-[12px] py-[8px] transition-opacity outline-none ${isMediaDisabled
+                        ? 'opacity-40 cursor-default pointer-events-none'
+                        : 'hover:opacity-85 cursor-pointer'
+                      }`}
+                    style={{
+                      borderColor: 'var(--ds-border)',
+                    }}
                   >
-                    Media
-                  </span>
-                </button>
-              </div>
+                    <Plus className="w-[16px] h-[16px]" color="var(--ds-text-primary)" />
+                    <span
+                      className="text-[14px] font-medium leading-[20px] font-dmsans shrink-0"
+                      style={{ color: 'var(--ds-text-primary)' }}
+                    >
+                      Media
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                <div />
+              )}
 
               {/* Save + Delete (Figma: container 162x36, gap 8) */}
               <div className="flex h-[36px] w-[162px] shrink-0 flex-row items-center gap-[8px]">
