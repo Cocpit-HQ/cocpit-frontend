@@ -18,6 +18,7 @@ interface ProfileEditSearchableDropdownProps {
   options?: (string | SearchableDropdownOption)[];
   loadOptions?: (query: string) => Promise<(string | SearchableDropdownOption)[]>;
   onSelect: (value: string) => void;
+  onSelectOption?: (opt: SearchableDropdownOption | string) => void;
   placeholder?: string;
   searchable?: boolean;
   allowCustom?: boolean;
@@ -38,6 +39,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
   options = [],
   loadOptions,
   onSelect,
+  onSelectOption,
   placeholder = "Select",
   searchable = true,
   allowCustom = true,
@@ -177,6 +179,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
     }
     setQuery(val);
     onSelect(val);
+    if (onSelectOption) onSelectOption(val);
     setIsOpen(true);
   };
 
@@ -184,6 +187,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
     lastSelectedRef.current = opt.label;
     setQuery(opt.label);
     onSelect(opt.label);
+    if (onSelectOption) onSelectOption(opt);
     setIsOpen(false);
   };
 
@@ -231,6 +235,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
         } else if (query.trim() && allowCustom) {
           lastSelectedRef.current = query.trim();
           onSelect(query.trim());
+          if (onSelectOption) onSelectOption(query.trim());
           setIsOpen(false);
         } else if (displayedOptions.length > 0) {
           handleSelectOption(displayedOptions[0]);

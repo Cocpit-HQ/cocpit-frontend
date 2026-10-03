@@ -263,13 +263,8 @@ export default function OnboardingFlow() {
             setEducation(latestEd.school_name || "", latestEd.degree || "");
           }
           if (profile.experiences && profile.experiences.length > 0) {
-            const latestExpGroup = profile.experiences[0];
-            if (latestExpGroup.experiences && latestExpGroup.experiences.length > 0) {
-              const latestExp = latestExpGroup.experiences[0];
-              setWorkExperience(latestExp.company_name || "", latestExp.title || "");
-            } else if (latestExpGroup.company_name) {
-              setWorkExperience(latestExpGroup.company_name, "");
-            }
+            const latestExp = profile.experiences[0];
+            setWorkExperience(latestExp.company_name || "", latestExp.title || "");
           }
 
           // ── Step 4: Interests ──────────────────────────────────────────

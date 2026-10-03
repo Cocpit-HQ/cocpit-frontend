@@ -126,35 +126,7 @@ export default function ProfilePage() {
   // User & sub-entities
   const user = profileData?.user;
   
-  // Flatten experiences from groups while preserving company details
-  const flatExperiences = useMemo<Experience[]>(() => {
-    if (!profileData?.experiences) return [];
-    return profileData.experiences.flatMap((group: any) => {
-      const groupName = group.company_name || group.company || "";
-      const groupLogo = group.logo_url || group.company_logo || null;
-      const groupSkills =
-        group.skills ||
-        group.experience_skills ||
-        group.skills_used ||
-        group.skill_names ||
-        [];
-      const innerExps = Array.isArray(group.experiences) && group.experiences.length > 0
-        ? group.experiences
-        : [group];
-      return innerExps.map((exp: any) => ({
-        ...exp,
-        skills:
-          exp.skills ||
-          exp.experience_skills ||
-          exp.skills_used ||
-          exp.skill_names ||
-          groupSkills ||
-          [],
-        company_name: exp.company_name || groupName,
-        company_logo: exp.company_logo || groupLogo,
-      }));
-    });
-  }, [profileData?.experiences]);
+  const flatExperiences = useMemo<Experience[]>(() => profileData?.experiences || [], [profileData?.experiences]);
 
   const educations = useMemo<Education[]>(() => profileData?.educations || [], [profileData?.educations]);
   const projects = useMemo<Project[]>(() => profileData?.projects || [], [profileData?.projects]);
@@ -317,6 +289,7 @@ export default function ProfilePage() {
               end_date: role.is_current ? undefined : role.end_date,
               is_current: role.is_current,
               description: role.description,
+              org_id: role.org_id,
             },
           });
         } else {
@@ -330,6 +303,7 @@ export default function ProfilePage() {
             end_date: role.is_current ? undefined : role.end_date,
             is_current: role.is_current,
             description: role.description,
+            org_id: role.org_id,
           });
         }
       });

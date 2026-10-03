@@ -32,21 +32,16 @@ import {
     AddEducationPayload,
     AddSkillsPayload
 } from "@/types/user";
-import { Education, ExperienceGroup, Project } from "@/types/entities";
+import { Education, Experience, Project } from "@/types/entities";
 
 // ─── Cache helper (used only for optimistic remove) ───────────────────────────
 
 /** Removes a single experience from its group; removes the group if it becomes empty */
-function removeExperienceFromGroups(
-    groups: ExperienceGroup[],
+function removeExperienceFromFlat(
+    experiences: Experience[],
     id: string
-): ExperienceGroup[] {
-    return groups
-        .map(g => ({
-            ...g,
-            experiences: g.experiences.filter(e => e.experience_id !== id),
-        }))
-        .filter(g => g.experiences.length > 0);
+): Experience[] {
+    return experiences.filter(e => e.experience_id !== id);
 }
 
 // ─── Query ────────────────────────────────────────────────────────────────────
@@ -113,7 +108,7 @@ export function useExperienceMutations() {
                 if (!old) return old;
                 return {
                     ...old,
-                    experiences: removeExperienceFromGroups(old.experiences, id),
+                    experiences: removeExperienceFromFlat(old.experiences, id),
                 };
             });
             return { previous };
@@ -143,16 +138,13 @@ export function useExperienceMutations() {
                 // 1. Update version
                 const next = { ...old, user: { ...old.user, version: data.newVersion } };
 
-                // 2. Map tempIds to real IDs in grouped experiences
+                // 2. Map tempIds to real IDs in flat experiences
                 if (data.idMap) {
-                    next.experiences = next.experiences.map(group => ({
-                        ...group,
-                        experiences: group.experiences.map(exp => {
-                            const realId = data.idMap[exp.experience_id];
-                            if (realId) return { ...exp, experience_id: realId };
-                            return exp;
-                        })
-                    }));
+                    next.experiences = next.experiences.map(exp => {
+                        const realId = data.idMap[exp.experience_id];
+                        if (realId) return { ...exp, experience_id: realId };
+                        return exp;
+                    });
                 }
 
                 return next;

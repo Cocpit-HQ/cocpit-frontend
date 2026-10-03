@@ -60,7 +60,7 @@ export interface CompanyRole {
 
 export interface UserProfile {
   user: UserData;
-  experiences: ExperienceGroup[];   // backend returns grouped by company
+  experiences: Experience[];
   educations: Education[];
   skills: SkillResponse[];
   projects?: Project[];

@@ -15,11 +15,17 @@ interface ProfileExperienceTabProps {
 const formatDate = (dateStr?: string | null): string => {
   if (!dateStr) return "";
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "";
-    const month = d.toLocaleDateString("en-US", { month: "short" }).replace(/\./g, "");
-    const year = d.getFullYear();
-    return `${month} ${year}`;
+    // Parse year/month from the string directly to avoid UTC-to-local timezone
+    // shift: new Date("YYYY-MM-DD") is treated as UTC midnight by the spec,
+    // which causes month shifting for users in UTC-negative timezones.
+    const parts = dateStr.split("T")[0].split("-").map(Number);
+    const year = parts[0];
+    const month = parts[1];
+    if (!year || !month) return "";
+    // Construct using local-time constructor — no UTC conversion
+    const d = new Date(year, month - 1, 1);
+    const monthStr = d.toLocaleDateString("en-US", { month: "short" }).replace(/\./g, "");
+    return `${monthStr} ${year}`;
   } catch {
     return "";
   }
@@ -28,6 +34,7 @@ const formatDate = (dateStr?: string | null): string => {
 interface CompanyGroup {
   companyName: string;
   companyLogo?: string | null;
+  logo_url?: string | null;
   items: Experience[];
 }
 
@@ -53,28 +60,40 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
     setExpandedSkills((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Group all experiences belonging to the same company
+  // Group consecutive experiences belonging to the same company
   const companyGroups = React.useMemo(() => {
-    const groupMap = new Map<string, CompanyGroup>();
+    const groups: CompanyGroup[] = [];
+    let currentGroup: CompanyGroup | null = null;
+
     experiences.forEach((exp) => {
       const rawName = exp.company_name?.trim() || "Unknown Company";
-      const key = rawName.toLowerCase();
+      const normalizedName = rawName.toLowerCase();
+      const orgId = (exp as any).org_id;
       const logo = exp.company_logo || (exp as any).company_logo_url || (exp as any).logo_url || (exp as any).logo;
-      if (!groupMap.has(key)) {
-        groupMap.set(key, {
+
+      // Adjacency check based purely on the normalized company name, 
+      // matching the visual representation the user sees.
+      const isSameGroup = currentGroup && (currentGroup as any).normalizedName === normalizedName;
+
+      if (isSameGroup) {
+        currentGroup!.items.push(exp);
+        if (!currentGroup!.companyLogo && logo) {
+          currentGroup!.companyLogo = logo;
+          currentGroup!.logo_url = logo;
+        }
+      } else {
+        currentGroup = {
           companyName: rawName,
           companyLogo: logo,
+          logo_url: logo,
           items: [exp],
-        });
-      } else {
-        const g = groupMap.get(key)!;
-        g.items.push(exp);
-        if (!g.companyLogo && logo) {
-          g.companyLogo = logo;
-        }
+        } as CompanyGroup;
+        (currentGroup as any).orgId = orgId;
+        (currentGroup as any).normalizedName = normalizedName;
+        groups.push(currentGroup);
       }
     });
-    return Array.from(groupMap.values());
+    return groups;
   }, [experiences]);
 
   if (isError) {
@@ -163,8 +182,8 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
                             )}
                           </div>
 
-                          {/* Edit Icon for Recent Role Only */}
-                          {idx === 0 && isOwnProfile && onEditExperience && (
+                          {/* Edit Icon for All Roles */}
+                          {isOwnProfile && onEditExperience && (
                             <button
                               type="button"
                               onClick={() => onEditExperience(exp, hasMultipleRoles)}

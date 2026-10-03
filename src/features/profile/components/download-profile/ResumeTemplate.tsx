@@ -18,11 +18,17 @@ export interface ResumeTemplateProps {
 const formatDate = (dateStr?: string | null): string => {
   if (!dateStr) return "";
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "";
-    const month = d.toLocaleDateString("en-US", { month: "short" }).replace(/\./g, "");
-    const year = d.getFullYear();
-    return `${month} ${year}`;
+    // Parse year/month from the string directly to avoid UTC-to-local timezone
+    // shift: new Date("YYYY-MM-DD") is treated as UTC midnight by the spec,
+    // which causes month shifting for users in UTC-negative timezones.
+    const parts = dateStr.split("T")[0].split("-").map(Number);
+    const year = parts[0];
+    const month = parts[1];
+    if (!year || !month) return "";
+    // Construct using local-time constructor — no UTC conversion
+    const d = new Date(year, month - 1, 1);
+    const monthStr = d.toLocaleDateString("en-US", { month: "short" }).replace(/\./g, "");
+    return `${monthStr} ${year}`;
   } catch {
     return "";
   }

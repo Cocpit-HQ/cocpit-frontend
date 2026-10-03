@@ -115,6 +115,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
   const skillMutations = useSkillMutations();
   const [formData, setFormData] = useState<ExperienceFormData>(EMPTY_FORM);
   const [initialSnapshot, setInitialSnapshot] = useState<ExperienceFormData | null>(null);
+  const [orgId, setOrgId] = useState<string | null>((initialExperience as any)?.org_id || null);
   const [endCurrentRole, setEndCurrentRole] = useState(true);
   const [initialEndCurrentRole, setInitialEndCurrentRole] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -179,6 +180,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
 
     setFormData(initialData);
     setInitialSnapshot(initialData);
+    setOrgId((initialExperience as any)?.org_id || null);
     setEndCurrentRole(initialEnd);
     setInitialEndCurrentRole(initialEnd);
   }, [initialExperience, isAddingNewRole]);
@@ -301,15 +303,15 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
       const res = await getCompanyList(search, "");
       const raw = res.companies || [];
       const seen = new Set<string>();
-      const deduplicated: { id: string; label: string }[] = [];
+      const deduplicated: { id: string; label: string; org_id?: string | null }[] = [];
       for (const c of raw) {
         const name = c.name?.trim();
         if (name && !seen.has(name.toLowerCase())) {
           seen.add(name.toLowerCase());
-          deduplicated.push({ id: name, label: name });
+          deduplicated.push({ id: c.org_id || name, label: name, org_id: c.org_id });
         }
       }
-      return deduplicated;
+      return deduplicated as any;
     } catch {
       return [];
     }
@@ -389,7 +391,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
       const payload: any = {
         title: formData.title.trim(),
         company_name: company,
-        org_id: (initialExperience as any)?.org_id || null,
+        org_id: orgId,
         location: formData.location.trim() || null,
         work_type: formData.work_type || null,
         work_mode: formData.work_mode || null,
@@ -633,6 +635,13 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   onSelect={(val) => {
                     setFormData((prev) => ({ ...prev, company_name: val }));
                     setErrors((prev) => ({ ...prev, company_name: "" }));
+                  }}
+                  onSelectOption={(opt) => {
+                    if (typeof opt === 'string') {
+                      setOrgId(null);
+                    } else {
+                      setOrgId((opt as any).org_id || null);
+                    }
                   }}
                   labelClassName="w-[72px] h-[16px] text-center"
                 />
