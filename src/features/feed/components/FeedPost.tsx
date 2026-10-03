@@ -701,7 +701,7 @@ export const FeedPost = (props: FeedPostProps) => {
             />
 
             {/* Full Post Description Text */}
-            {targetContent && (
+            {targetContent && !pollData && (
               <PostBody
                 content={targetContent}
                 author={targetAuthor}
