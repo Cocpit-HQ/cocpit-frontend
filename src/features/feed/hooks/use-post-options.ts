@@ -6,14 +6,14 @@ import { useFeed } from '@/hooks/use-feed';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useUIStore } from '@/store/ui.store';
 
-export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any, data: any) => void) => {
+export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any, data: any) => void, menuKeyOverride?: string) => {
   const { id, visibility: initialVisibility = 'public', onDelete, onToggleVisibility, isCompanyPost, authorId } = props;
   // Pass false to avoid mounting redundant active infinite query observers on every post
   const { deletePost } = useFeed(false);
   // const { deletePost } = useFeed();
   const { activeProfile, isCompany } = useActiveProfile();
 
-  const menuKey = id ? `post-${id}` : 'post-options';
+  const menuKey = menuKeyOverride || (id ? `post-${id}` : 'post-options');
   const showOptions = useUIStore((state) => state.activeOpenMenuId === menuKey);
   const setShowOptions = (open: boolean | ((prev: boolean) => boolean)) => {
     const currentOpen = useUIStore.getState().activeOpenMenuId === menuKey;

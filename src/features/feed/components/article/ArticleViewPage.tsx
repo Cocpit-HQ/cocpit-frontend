@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -72,8 +72,9 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   // Menu and Reporting states
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  
+
   const { reportedPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId } = useUIStore();
   const isBackendReported = !!(post as any)?.is_reported || !!(post as any)?.isReported;
   const isReportedInStore = reportedPostIds.includes(id);
@@ -192,7 +193,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   // Navigation handlers
   const handleClose = () => {
     const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
-    
+
     // If savedPath exists, we know for sure the user navigated here from within the app,
     // so it is completely safe to use the native back button.
     if (savedPath) {
@@ -296,6 +297,10 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+      return;
+    }
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setMenuPosition({
       top: rect.bottom + 8,
@@ -329,7 +334,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
 
   const handleInterested = () => {
     addInterestedPostId(id);
-    
+
     // Fire API in background
     submitPostFeedback({
       item_id: id,
@@ -473,6 +478,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
 
             <div className="flex items-center shrink-0">
               <button
+                ref={menuBtnRef}
                 type="button"
                 onClick={handleMenuClick}
                 className="flex h-[24px] w-[24px] items-center justify-center rounded hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors"
@@ -582,6 +588,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         position={menuPosition}
+        triggerRef={menuBtnRef}
         isMe={canManage}
         onEdit={handleEdit}
         onDelete={() => setIsDeleteModalOpen(true)}

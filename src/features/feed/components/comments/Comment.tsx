@@ -87,9 +87,28 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const setIsMenuOpen = (open: boolean | ((prev: boolean) => boolean)) => {
     const currentOpen = useUIStore.getState().activeOpenMenuId === menuKey;
     const nextOpen = typeof open === 'function' ? open(currentOpen) : open;
+    
+    // Purpose of Bug Fix: When opening the comment options menu, dispatch global event to close any open Post option menus
+    // This prevents overlaps when Post menus use local state (e.g., in ArticleViewPage) and Comment menus use global state.
+    if (nextOpen) {
+      document.dispatchEvent(new CustomEvent('closeAllPostMenus'));
+    }
     useUIStore.getState().setActiveOpenMenuId(nextOpen ? menuKey : null);
   };
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Purpose of Bug Fix: Listen to the global event so the Comment menu automatically closes if a Post menu is opened
+  useEffect(() => {
+    const handleCloseMenus = () => {
+      if (useUIStore.getState().activeOpenMenuId === menuKey) {
+        useUIStore.getState().setActiveOpenMenuId(null);
+      }
+    };
+    document.addEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
+    return () => {
+      document.removeEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
+    };
+  }, [menuKey]);
 
   useEffect(() => {
     if (!isMenuOpen) return;

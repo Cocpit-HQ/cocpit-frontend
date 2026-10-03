@@ -48,6 +48,8 @@ interface UIState {
   addReportedPostId: (id: string) => void;
   addNotInterestedPostId: (id: string) => void;
   addInterestedPostId: (id: string) => void;
+  hiddenPostIds: string[];
+  addHiddenPostId: (id: string) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -66,6 +68,7 @@ export const useUIStore = create<UIState>((set) => ({
   reportedPostIds: [],
   notInterestedPostIds: [],
   interestedPostIds: [],
+  hiddenPostIds: [],
   
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   setActiveModal: (modal, type = 'text') => {
@@ -100,4 +103,5 @@ export const useUIStore = create<UIState>((set) => ({
   addReportedPostId: (id) => set((state) => ({ reportedPostIds: [...state.reportedPostIds, id] })),
   addNotInterestedPostId: (id) => set((state) => ({ notInterestedPostIds: [...state.notInterestedPostIds, id] })),
   addInterestedPostId: (id) => set((state) => ({ interestedPostIds: [...state.interestedPostIds, id] })),
+  addHiddenPostId: (id) => set((state) => ({ hiddenPostIds: [...state.hiddenPostIds, id] })),
 }));

@@ -630,6 +630,15 @@ export default function ProfilePage() {
     }
   };
 
+  const handleCreatePost = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("scroll-/feed", "0");
+      sessionStorage.removeItem("cocpit_last_interacted_post_id");
+      sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+    }
+    router.push("/feed");
+  };
+
   return (
     <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center -mt-5 pb-16 px-0 md:px-4 md:pr-[253px] select-text">
       {/* 800px Centered Main Profile Container */}
@@ -698,7 +707,7 @@ export default function ProfilePage() {
             </div>
             <button
               type="button"
-              onClick={() => router.push("/feed")}
+              onClick={handleCreatePost}
               className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
               title="Create Post"
             >
@@ -713,7 +722,7 @@ export default function ProfilePage() {
               onRetry={() => refetchPosts()}
               onDeletePost={handleDeletePost}
               onUpdatePost={() => refetchPosts()}
-              onCreatePost={() => router.push("/feed")}
+              onCreatePost={handleCreatePost}
               onSeeAll={() => {
                 saveScrollPosition("profile");
                 router.push("/profile/posts");
