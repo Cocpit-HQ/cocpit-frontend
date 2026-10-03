@@ -182,13 +182,13 @@ export const ProfileExperienceTab: React.FC<ProfileExperienceTabProps> = ({
                             )}
                           </div>
 
-                          {/* Edit Icon for All Roles */}
-                          {isOwnProfile && onEditExperience && (
+                          {/* Edit Icon for Group (Top Level Only) */}
+                          {isOwnProfile && onEditExperience && idx === 0 && (
                             <button
                               type="button"
                               onClick={() => onEditExperience(exp, hasMultipleRoles)}
                               className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0"
-                              title="Edit experience"
+                              title="Edit experience group"
                             >
                               <ProfileEditIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
                             </button>
