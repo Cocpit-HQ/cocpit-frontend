@@ -45,7 +45,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
             logo_url: exp.logo_url || null,
             company_logo: exp.company_logo || exp.logo_url || null,
             org_id: exp.org_id || null,
-                skills: exp.skills || [],
+            skills: exp.skills || [],
         };
     });
 
