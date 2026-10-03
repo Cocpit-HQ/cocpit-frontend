@@ -31,7 +31,7 @@ function formatStaticLine(loc: StaticLocation): string {
   return `${loc.city}, ${loc.country}`;
 }
 
-const DEFAULT_ALLOWED_COUNTRIES = ["in", "ae", "sg", "us", "uk", "jp"];
+const DEFAULT_ALLOWED_COUNTRIES = ["in", "ae"];
 
 export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> = ({
   value,
@@ -95,7 +95,7 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
           trimmed,
           sessionToken.current,
           allowedCountryCodes,
-          true
+          false
         );
         if (!cancelled) {
           setApiSuggestions(results || []);
@@ -185,7 +185,7 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
         const details = await getPlaceDetails(
           suggestion.placeId,
           sessionToken.current,
-          true
+          false
         );
         resetSession();
         const formatted =
