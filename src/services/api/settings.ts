@@ -65,7 +65,7 @@ export const updateNotificationPreferences = async (
 export interface PrivacySettings {
   showEmail: boolean;
   showPhone: boolean;
-  tagPermission: 'everyone' | 'connections' | 'followers' | 'noone' | 'followers_only' | 'no_one';
+  tagPermission: 'everyone' | 'connections' | 'connections_only' | 'followers' | 'noone' | 'followers_only' | 'no_one';
   // Organization specific fields:
   followingVisibility?: 'everyone' | 'followers_only' | 'no_one';
   followersVisibility?: 'everyone' | 'followers_only' | 'no_one';
@@ -91,15 +91,14 @@ export const updatePrivacySettings = async (
   settings: Partial<PrivacySettings>,
   companyId?: string
 ): Promise<{ success: boolean }> => {
-  const payload = {
-    ...settings,
-    show_email: settings.showEmail,
-    show_phone: settings.showPhone,
-    tag_permission: settings.tagPermission,
-    following_visibility: settings.followingVisibility,
-    followers_visibility: settings.followersVisibility,
-    message_permission: settings.messagePermission,
-  };
+  const payload: Record<string, any> = {};
+  if (settings.showEmail !== undefined) payload.show_email = settings.showEmail;
+  if (settings.showPhone !== undefined) payload.show_phone = settings.showPhone;
+  if (settings.tagPermission !== undefined) payload.tag_permission = settings.tagPermission;
+  if (settings.followingVisibility !== undefined) payload.following_visibility = settings.followingVisibility;
+  if (settings.followersVisibility !== undefined) payload.followers_visibility = settings.followersVisibility;
+  if (settings.messagePermission !== undefined) payload.message_permission = settings.messagePermission;
+
   const response = await api.put("/settings/privacy", payload, {
     headers: getActorHeaders(companyId)
   });
@@ -179,10 +178,7 @@ export const verifyIdentity = async (
   companyId?: string
 ): Promise<{ success: boolean; message: string }> => {
   const response = await api.post("/settings/account/verify-identity", formData, {
-    headers: {
-      ...getActorHeaders(companyId),
-      "Content-Type": "multipart/form-data",
-    },
+    headers: getActorHeaders(companyId),
   });
   return response.data;
 };

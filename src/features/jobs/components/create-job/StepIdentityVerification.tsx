@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { VerifyIdentityModal } from '@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal';
+import { VerifyIdentityModal } from '@/features/settings';
 
 interface StepIdentityVerificationProps {
   onBack: () => void;

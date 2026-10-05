@@ -13,7 +13,7 @@ interface CompanyAccountData {
 }
 
 export function useCompanyAccountSettings() {
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
 
   const companyId = activeProfile?.id;
   const entityType = (activeProfile?.entityType as "COMPANY" | "INSTITUTION") || "COMPANY";
@@ -22,7 +22,7 @@ export function useCompanyAccountSettings() {
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['companyAccountSettings', companyId],
     queryFn: () => companyService.getAccountSettings(companyId!),
-    enabled: !!companyId,
+    enabled: isCompany && !!companyId,
     retry: 1
   });
 

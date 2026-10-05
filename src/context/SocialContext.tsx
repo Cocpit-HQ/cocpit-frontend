@@ -295,6 +295,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.invalidateQueries({ queryKey: ["profilePreview"] });
     queryClient.invalidateQueries({ queryKey: ["sharedPost"] });
     queryClient.invalidateQueries({ queryKey: ["jobContext"] });
+    queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
   };
 
   const blockUser = async (id: string) => {

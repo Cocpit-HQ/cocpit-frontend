@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createReport, CreateReportRequest } from "@/services/api/report";
 import {
   getUserReports,
   getUserReportById,
@@ -64,4 +65,16 @@ export function useActionDetail(id: string | null) {
     action: query.data,
     isLoading: query.isLoading,
   };
+}
+
+/** Mutation hook — auto-invalidates reports cache on success */
+export function useCreateReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateReportRequest) => createReport(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: USER_REPORTS_QUERY_KEY });
+    },
+  });
 }

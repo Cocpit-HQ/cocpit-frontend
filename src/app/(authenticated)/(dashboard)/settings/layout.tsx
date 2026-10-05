@@ -1,5 +1,4 @@
-import React from 'react';
-import { SettingsLayout } from '@/features/settings/components';
+import { SettingsLayout } from '@/features/settings/components/SettingsLayout';
 import { RouteGuard } from '@/features/access-denied';
 import { FeatureGuard } from '@/components/feature-flags';
 

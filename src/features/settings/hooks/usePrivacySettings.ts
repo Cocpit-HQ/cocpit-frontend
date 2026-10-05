@@ -27,7 +27,7 @@ export function usePrivacySettings() {
 
       return { previousSettings };
     },
-    onError: (err, newSettings, context) => {
+    onError: (err: any, newSettings, context) => {
       if (context?.previousSettings) {
         queryClient.setQueryData(PRIVACY_SETTINGS_QUERY_KEY, context.previousSettings);
       }

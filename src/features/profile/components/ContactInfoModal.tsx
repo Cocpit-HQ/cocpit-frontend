@@ -8,7 +8,7 @@ import { UserData } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileContactInfoDrawer } from "./drawers/MobileContactInfoDrawer";
-import { VerifyIdentityModal } from "@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal";
+import { VerifyIdentityModal } from "@/features/settings";
 
 export interface ContactInfoModalProps {
   isOpen: boolean;

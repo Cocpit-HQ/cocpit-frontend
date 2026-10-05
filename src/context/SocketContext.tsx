@@ -596,6 +596,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['organization-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
       queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
@@ -673,6 +674,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['recommended-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['saved-jobs'] });
       queryClient.invalidateQueries({ queryKey: ['organization-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
       queryClient.refetchQueries({ queryKey: ['sharedPost'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['profilePreview'], type: 'all' });
       queryClient.refetchQueries({ queryKey: ['entityPreview'], type: 'all' });
@@ -822,7 +824,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleActivityUpdated = (payload: any) => {
       console.log("[Socket] activity_updated event received:", payload);
-      queryClient.invalidateQueries({ queryKey: ['activityLog'] });
+      queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
     };
 
     const handleAccountStateChanged = (payload: any) => {

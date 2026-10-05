@@ -45,7 +45,9 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
       return <OrganizationsSettingsPage />;
     // Handle sub-routes manually if they are hit as [tab]
     case 'account-password':
-      return <ManagePasswordPage />;
+      return <ManagePasswordPage mode="change" />;
+    case 'account-add-password':
+      return <ManagePasswordPage mode="add" />;
     case 'account-email':
       return <ManageEmailPage />;
     case 'account-phone':

@@ -1,6 +1,7 @@
 // TODO: Migrate to React Query (useQuery) when comment caching/deduplication is needed.
 // Current architecture: manual fetch lifecycle with optimistic updates.
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { getComments, addComment, deleteComment, updateComment, hideComment, unhideComment } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import { mapBackendCommentToFrontend } from '@/lib/mappers/feed.mapper';
@@ -25,6 +26,7 @@ export interface UseCommentsReturn {
 }
 
 export const useComments = (postId: string, enabled: boolean = true): UseCommentsReturn => {
+  const queryClient = useQueryClient();
   const [comments, setComments] = useState<CommentType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
@@ -159,6 +161,10 @@ export const useComments = (postId: string, enabled: boolean = true): UseComment
       }
 
       toast.success('Comment added');
+      queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('cocpit:activity-updated'));
+      }
       return true;
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -256,6 +262,10 @@ export const useComments = (postId: string, enabled: boolean = true): UseComment
       try {
         const companyId = isCompanyRef.current ? activeProfileIdRef.current : undefined;
         await deleteComment(commentIdStr, companyId);
+        queryClient.invalidateQueries({ queryKey: ['activityLogs'] });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cocpit:activity-updated'));
+        }
         onSuccess?.();
       } catch (error) {
         console.error('Failed to delete comment:', error);

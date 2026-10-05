@@ -9,7 +9,6 @@ import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post, SavedFolder } from "@/types/entities";
 import { SavedPostCard } from "../components/SavedPostCard";
 import { toast } from "sonner";
-import { DeleteAccountModal } from "@/features/settings/tabs/account/components/modals/DeleteAccountModal"; // Can build a simpler one, or use window.confirm
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { CreateFolderModal } from "@/features/settings/components/CreateFolderModal";
 import { useQueryClient } from "@tanstack/react-query";

@@ -28,6 +28,9 @@ export function useActivityLogs(tab: ActivityTab, companyId?: string) {
   const query = useQuery({
     queryKey: activityLogsQueryKey(tab, companyId),
     queryFn: () => getActivityLogs(LOG_TYPE[tab], companyId),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const removeMutation = useMutation({

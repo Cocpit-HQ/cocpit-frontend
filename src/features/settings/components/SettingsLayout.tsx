@@ -1,10 +1,8 @@
 "use client";
 
 import React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { SettingsSidebar } from './SettingsSidebar';
-import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { ChevronLeft } from 'lucide-react';
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -12,27 +10,47 @@ interface SettingsLayoutProps {
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { isCompany } = useActiveProfile();
   
   // Check if we are at the root of settings to handle mobile menu visibility
   const isRoot = pathname === '/settings' || pathname?.match(/^\/organization\/[^\/]+\/settings\/?$/);
 
   return (
-    <div className={`w-full flex justify-start items-start md:pt-[36px] md:pl-[36px] pb-10 min-h-screen bg-white ${isCompany ? 'dark:bg-company-bg' : 'dark:bg-background'}`}>
-      <div className={`flex flex-col md:flex-row items-stretch w-full md:max-w-[948px] border-0 md:border md:border-[#EEF2FF] md:rounded-[24px] bg-white ${isCompany ? 'md:dark:border-company-border dark:bg-company-bg md:dark:bg-company-card' : 'md:dark:border-border dark:bg-background md:dark:bg-card'}`}>
-        <div className={`w-full md:w-auto ${isRoot ? 'block' : 'hidden md:block'}`}>
-          <SettingsSidebar />
+    <>
+      <style>{`
+        .settings-page-wrapper {
+          padding-top: 16px;
+          box-sizing: border-box;
+        }
+        @media (min-width: 768px) {
+          .settings-page-wrapper {
+            padding-top: clamp(24px, calc(100dvh - 680px), 126px);
+          }
+        }
+        @media (min-width: 768px) and (min-height: 850px) {
+          .settings-page-wrapper {
+            padding-top: 126px;
+          }
+        }
+      `}</style>
+      <div className="settings-page-wrapper w-full h-full max-h-screen bg-ds-bg text-ds-text-primary font-sans flex justify-start items-start overflow-hidden box-border">
+        {/* Frame 2608689: Outer box max 980px, fills available height */}
+        <div className="w-full max-w-[980px] h-full p-2 sm:p-4 md:p-[0px_16px] flex flex-col items-start gap-0 rounded-[24px] overflow-hidden">
+          {/* Frame 2608633: Inner box max 948px, fills height */}
+          <div className="w-full max-w-[948px] h-full p-0 flex flex-col md:flex-row items-start gap-0 overflow-hidden">
+            {/* Fixed Sidebar - Completely stationary in place, never scrolls with the content */}
+            <aside className={`w-full md:w-[236px] shrink-0 md:h-full md:overflow-y-auto scrollbar-hide ${isRoot ? 'block' : 'hidden md:block'}`}>
+              <SettingsSidebar />
+            </aside>
+            
+            {/* Main Content Pane - Only this tab component scrolls, extending all the way to the bottom */}
+            <main className={`flex-1 min-w-0 w-full max-w-[712px] h-full overflow-y-auto scrollbar-hide ${isRoot ? 'hidden md:flex' : 'flex'} flex-col pb-24`}>
+              {children}
+            </main>
+          </div>
         </div>
-        
-        {/* Solid vertical divider */}
-        <div className={`hidden md:block w-[1px] bg-[#EEF2FF] shrink-0 ${isCompany ? 'dark:bg-company-border' : 'dark:bg-border'}`}></div>
-        
-        {/* Main Content Pane - hidden on mobile when viewing the root menu */}
-        <main className={`flex-1 min-w-0 w-full flex-col ${isRoot ? 'hidden md:flex' : 'flex'}`}>
-          {children}
-        </main>
       </div>
-    </div>
-  );
+  </>
+);
 }
+
+

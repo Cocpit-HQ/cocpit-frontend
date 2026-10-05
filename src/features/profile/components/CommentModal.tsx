@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Send, User, MessageSquare } from "lucide-react";
 import {
     Dialog,
@@ -27,6 +28,7 @@ interface CommentModalProps {
 }
 
 export function CommentModal({ isOpen, onClose, postId, onCommentAdded }: CommentModalProps) {
+    const queryClient = useQueryClient();
     const { activeProfile } = useActiveProfile();
     const [comments, setComments] = useState<BackendComment[]>([]);
     const [newComment, setNewComment] = useState("");
@@ -73,6 +75,10 @@ export function CommentModal({ isOpen, onClose, postId, onCommentAdded }: Commen
             setNewComment("");
             onCommentAdded?.();
             toast.success("Comment added");
+            queryClient.invalidateQueries({ queryKey: ["activityLogs"] });
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("cocpit:activity-updated"));
+            }
         } catch (err) {
             toast.error("Failed to add comment");
         } finally {

@@ -28,6 +28,8 @@ export interface ActionConfirmModalProps {
   titleClassName?: string;
   modalClassName?: string;
   overlayClassName?: string;
+  confirmColor?: 'accent' | 'red';
+  cancelTextColor?: 'primary' | 'secondary';
 }
 
 const PRESETS: Record<
@@ -98,6 +100,8 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   titleClassName: customTitleClassName,
   modalClassName,
   overlayClassName,
+  confirmColor = 'accent',
+  cancelTextColor = 'primary',
 }) => {
   const preset = type !== "custom" ? PRESETS[type] : null;
 
@@ -114,34 +118,38 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onOpenAutoFocus={(e) => e.preventDefault()}
         overlayClassName={overlayClassName}
         className={cn(
-          "box-border w-[237px] min-h-[150px] p-[12px] gap-[16px] bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-[16px] flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          "box-border w-[237px] min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
           modalClassName
         )}
       >
         {/* Frame 2609475: Text Container */}
-        <div className="w-[211px] self-stretch flex flex-col items-center gap-[8px]">
+        <div className="w-full self-stretch flex flex-col items-center gap-2">
           <DialogTitle
             className={cn(
-              "text-[var(--ds-text-primary)] text-center w-full m-0 p-0",
-              customTitleClassName || preset?.titleClassName || "font-['DM_Sans'] text-[16px] font-medium leading-[24px]"
+              "text-ds-text-primary text-center w-full m-0 p-0",
+              customTitleClassName || preset?.titleClassName || "ds-text-body-1"
             )}
           >
             {resolvedTitle}
           </DialogTitle>
           {resolvedDescription && (
-            <DialogDescription className="font-['DM_Sans'] text-[14px] font-normal leading-[20px] text-[var(--ds-text-secondary)] text-center w-full m-0 p-0">
+            <DialogDescription className="ds-text-secondary text-ds-text-secondary text-center w-full m-0 p-0">
               {resolvedDescription}
             </DialogDescription>
           )}
         </div>
 
         {/* Frame 2609476: Action Buttons */}
-        <div className="w-full h-[36px] flex flex-row justify-center items-center gap-[8px]">
+        <div className="w-full h-[36px] flex flex-row justify-center items-center gap-2">
           <button
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className={`${buttonWidthClass} h-[36px] px-[12px] py-[6px] bg-[var(--ds-accent)] rounded-[100px] border-0 outline-none flex justify-center items-center text-[var(--ds-text-primary)] text-[16px] font-medium font-['DM_Sans'] leading-[24px] hover:opacity-90 active:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 select-none whitespace-nowrap focus:outline-none focus-visible:outline-none`}
+            className={cn(
+              buttonWidthClass,
+              "h-[36px] px-3 py-1.5 rounded-[100px] border-0 outline-none flex justify-center items-center ds-text-body-1 text-ds-text-primary hover:opacity-90 active:opacity-80 transition-opacity cursor-pointer disabled:opacity-50 select-none whitespace-nowrap ds-focus-ring",
+              confirmColor === 'red' ? 'bg-ds-error' : 'bg-ds-accent'
+            )}
           >
             {isLoading ? "..." : resolvedConfirmText}
           </button>
@@ -149,7 +157,13 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
             type="button"
             disabled={isLoading}
             onClick={onClose}
-            className={`${buttonWidthClass} h-[36px] px-[12px] py-[6px] bg-transparent border border-[var(--ds-border)] rounded-[100px] outline-none flex justify-center items-center text-[var(--ds-text-primary)] text-[16px] font-medium font-['DM_Sans'] leading-[24px] hover:bg-[var(--ds-surface-1)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer disabled:opacity-50 select-none whitespace-nowrap focus:outline-none focus-visible:outline-none`}
+            className={cn(
+              buttonWidthClass,
+              "h-[36px] px-3 py-1.5 bg-transparent border border-ds-border rounded-[100px] outline-none flex justify-center items-center ds-text-body-1 hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer disabled:opacity-50 select-none whitespace-nowrap ds-focus-ring",
+              cancelTextColor === 'secondary'
+                ? "text-ds-text-secondary hover:text-ds-text-primary"
+                : "text-ds-text-primary"
+            )}
           >
             {cancelText}
           </button>

@@ -45,10 +45,6 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     ? `/organization/${activeProfile.slug}/settings`
     : "/settings";
 
-  const oldSettingsHref = isCompany && activeProfile?.slug
-    ? `/organization/${activeProfile.slug}/old-settings`
-    : "/old-settings";
-
 
   const analyticsHref = isCompany && activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics";
   const profileHref = activeProfile?.type === 'COMPANY' && activeProfile.slug
@@ -86,7 +82,6 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           items: [
             { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: isFeatureActive('enableProfileTab') },
             { icon: Settings, label: 'Settings', href: settingsHref, show: isFeatureActive('enableSettingsModule'), disabled: !checkPermission('SETTINGS') },
-            { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: isFeatureActive('enableSettingsModule'), disabled: !checkPermission('SETTINGS') },
           ]
         }
       ];
@@ -121,11 +116,10 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         items: [
           { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: isFeatureActive('enableProfileTab') },
           { icon: Settings, label: 'Settings', href: settingsHref, show: isFeatureActive('enableSettingsModule') },
-          { icon: Settings, label: 'Old Settings (Legacy)', href: oldSettingsHref, show: isFeatureActive('enableSettingsModule') },
         ]
       }
     ];
-  }, [isCompany, checkPermission, analyticsHref, profileHref, settingsHref, oldSettingsHref, canEdit, isFeatureActive]);
+  }, [isCompany, checkPermission, analyticsHref, profileHref, settingsHref, canEdit, isFeatureActive]);
 
   const isActive = (href: string) => {
     const currentPath = optimisticPath || pathname

@@ -42,7 +42,9 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
     case 'support':
       return <SupportSettingsPage />;
     case 'account-password':
-      return <ManagePasswordPage />;
+      return <ManagePasswordPage mode="change" />;
+    case 'account-add-password':
+      return <ManagePasswordPage mode="add" />;
     case 'account-email':
       return <ManageEmailPage />;
     case 'account-phone':

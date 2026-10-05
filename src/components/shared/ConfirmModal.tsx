@@ -31,30 +31,30 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[300px] sm:max-w-[300px] p-[16px] rounded-[24px] sm:rounded-[24px] border-0 gap-[8px]">
-        <div className="flex flex-col items-center justify-center text-center font-[family-name:var(--font-poppins)]">
+      <DialogContent className="w-[340px] sm:max-w-[340px] p-6 rounded-2xl bg-ds-surface-2 border border-ds-border shadow-2xl">
+        <div className="flex flex-col items-center justify-center text-center">
           
-          <div className="flex flex-col items-center justify-center py-[8px] gap-[10px] w-full">
-            <DialogTitle className="text-[14px] font-normal text-black m-0 leading-[20px] text-center w-full">
+          <div className="flex flex-col items-center justify-center gap-2 w-full">
+            <DialogTitle className="ds-text-body-2 text-base font-semibold text-ds-text-primary text-center w-full">
               {title}
             </DialogTitle>
-            <DialogDescription className="text-[12px] font-normal text-[#6B7280] m-0 leading-[16px] text-center w-full">
+            <DialogDescription className="ds-text-small text-ds-text-secondary text-center w-full leading-relaxed">
               {description}
             </DialogDescription>
           </div>
 
-          <div className="flex flex-row gap-[16px] w-full justify-center mt-2">
+          <div className="flex flex-row gap-3 w-full justify-center mt-5">
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 h-[40px] px-[16px] py-[8px] rounded-[24px] border border-[#818CF8] bg-white text-[#818CF8] font-normal text-[14px] leading-[20px] hover:bg-[#EEF2FF] transition-colors disabled:opacity-50"
+              className="ds-btn flex-1 h-[36px] px-4 rounded-full border border-ds-border bg-ds-surface-1 text-ds-text-primary ds-text-small font-medium hover:bg-ds-surface-2 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {cancelText}
             </button>
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className="flex-1 h-[40px] px-[16px] py-[8px] rounded-[24px] bg-[#FF6B6B] border border-white text-white font-normal text-[14px] leading-[20px] hover:bg-[#ff5252] transition-colors disabled:opacity-70 flex items-center justify-center"
+              className="ds-btn flex-1 h-[36px] px-4 rounded-full bg-ds-error text-white ds-text-small font-medium hover:opacity-90 transition-opacity disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : confirmText}
             </button>

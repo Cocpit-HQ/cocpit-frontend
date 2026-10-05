@@ -1,13 +1,15 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 
-interface AccountData {
+export interface AccountData {
   id?: string;
   primaryEmail?: string;
   recoveryEmail?: string;
   phone?: string | null;
   hasCompanyAccount?: boolean;
   isDeactivated?: boolean;
+  hasPassword?: boolean;
+  authProvider?: 'email' | 'google' | 'apple' | string;
 }
 
 export function useAccountSettings() {
@@ -93,10 +95,14 @@ export function useDeleteRecoveryEmail() {
 }
 
 export function useUpdatePassword() {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+    mutationFn: async (data: { currentPassword?: string; newPassword: string }) => {
       const response = await api.put('/user/password', data);
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userAccount'] });
     },
   });
 }

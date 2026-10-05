@@ -21,6 +21,7 @@ interface ActiveProfile {
     avatar_url?: string;
     viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null;
     verification_status?: string;
+    is_identity_verified?: boolean;
 }
 
 interface ActiveProfileContextType {
@@ -41,12 +42,23 @@ const normalizeCompany = (company: Company & { role?: string }) => ({
     company_id: company.company_id || company.org_id!,
 });
 
-const createUserProfile = (user: User): ActiveProfile => ({
-    type: "USER",
-    id: user.id,
-    name: user.name || "User",
-    avatar_url: user.image || undefined,
-});
+const createUserProfile = (user: any): ActiveProfile => {
+    const isVerified = Boolean(
+        user.is_identity_verified ||
+        user.is_verified ||
+        user.isVerified ||
+        user.verification_status === "VERIFIED" ||
+        user.verification_status === "approved"
+    );
+    return {
+        type: "USER",
+        id: user.id,
+        name: user.name || "User",
+        avatar_url: user.image || undefined,
+        verification_status: user.verification_status || (isVerified ? "VERIFIED" : undefined),
+        is_identity_verified: isVerified,
+    };
+};
 
 const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null, verification_status?: string }): ActiveProfile => ({
     type: "COMPANY",
@@ -104,6 +116,21 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 if (targetCompany && canSwitchToCompany(targetCompany)) {
                     nextProfile = buildCompanyProfile(targetCompany);
                 }
+            } else if (actorContext.actor.type === "USER") {
+                const actorData = actorContext.actor as any;
+                const isActorVerified = Boolean(
+                    actorData.is_identity_verified ||
+                    actorData.is_verified ||
+                    actorData.isVerified ||
+                    actorData.verification_status === "VERIFIED" ||
+                    actorData.verification_status === "approved" ||
+                    userProfile.is_identity_verified
+                );
+                nextProfile = {
+                    ...userProfile,
+                    verification_status: actorData.verification_status || (isActorVerified ? "VERIFIED" : userProfile.verification_status),
+                    is_identity_verified: isActorVerified,
+                };
             }
             setActiveProfile(nextProfile);
         } catch (error) {
@@ -168,6 +195,21 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                     if (targetCompany && canSwitchToCompany(targetCompany)) {
                         nextProfile = buildCompanyProfile(targetCompany);
                     }
+                } else if (actorContext.actor.type === "USER") {
+                    const actorData = actorContext.actor as any;
+                    const isActorVerified = Boolean(
+                        actorData.is_identity_verified ||
+                        actorData.is_verified ||
+                        actorData.isVerified ||
+                        actorData.verification_status === "VERIFIED" ||
+                        actorData.verification_status === "approved" ||
+                        userProfile.is_identity_verified
+                    );
+                    nextProfile = {
+                        ...userProfile,
+                        verification_status: actorData.verification_status || (isActorVerified ? "VERIFIED" : userProfile.verification_status),
+                        is_identity_verified: isActorVerified,
+                    };
                 }
 
                 setActiveProfile(nextProfile);

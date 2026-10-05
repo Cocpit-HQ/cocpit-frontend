@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FolderPlus, User, Plus, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { X, Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createSavedFolderWithFile, updateSavedFolderWithFile } from '@/features/settings/api/savedPost'
 import { SavedFolder } from '@/types/entities'
@@ -54,6 +54,8 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initi
             formData.append('name', folderName.trim());
             if (companyId) formData.append('companyId', companyId);
 
+            // Comment out image upload for now as requested (sent as empty)
+            /*
             if (coverImage && coverImage.startsWith('data:')) {
                 const blob = dataUrlToBlob(coverImage);
                 const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
@@ -61,6 +63,7 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initi
             } else if (coverImage && coverImage.startsWith('http')) {
                 formData.append('coverImage', coverImage);
             }
+            */
 
             let response;
             if (isEditing && folderId) {
@@ -74,11 +77,13 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initi
                 onClose()
             }
         } catch (error: any) {
-            console.error("Failed to save folder:", error)
+            const serverMsg = error.response?.data?.message || error.response?.data?.error;
             if (error.response?.status === 409) {
-                toast.error("Folder with this name already exists")
+                console.warn("[SavedCollections] Conflict 409:", serverMsg || "Folder with this name already exists");
+                toast.error(serverMsg || "A collection with this name already exists. Please choose a different name.");
             } else {
-                toast.error(isEditing ? "Failed to update folder" : "Failed to create folder")
+                console.error("[SavedCollections] Failed to save folder:", error);
+                toast.error(serverMsg || (isEditing ? "Failed to update folder" : "Failed to create folder"));
             }
         } finally {
             setIsLoading(false)
@@ -89,102 +94,68 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initi
 
     const modalContent = (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 isolate">
+            <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 isolate">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="absolute inset-0 bg-background/60 backdrop-blur-sm sm:bg-black/40"
+                    className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                 />
 
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    initial={{ scale: 0.95, opacity: 0, y: 15 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 400 }}
-                    className="relative w-full max-w-[420px] md:min-h-[374px] bg-card border border-border rounded-[24px] shadow-2xl z-10 flex flex-col p-6 font-poppins"
+                    exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                    className="relative w-[300px] max-w-[calc(100vw-32px)] p-4 bg-ds-bg border border-ds-border rounded-2xl shadow-2xl z-10 flex flex-col justify-start items-center gap-4 overflow-hidden select-none animate-in fade-in"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header with Close Button */}
-                    <div className="flex flex-col items-end w-full h-6 mb-[10px]">
-                        <button
-                            onClick={onClose}
-                            className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-muted transition-all active:scale-95"
-                        >
-                            <X className="w-5 h-5 text-[#FF6B6B]" strokeWidth={2} />
-                        </button>
+                    {/* Title */}
+                    <div className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 text-center">
+                        {isEditing ? "Edit collection" : "New collection"}
                     </div>
 
-                    <div className="flex flex-col items-center w-full flex-1 gap-4">
-                        {/* Title & Subtitle */}
-                        <div className="flex flex-col items-center gap-2">
-                            <h3 className="font-medium text-[18px] leading-[26px] text-foreground text-center">
-                                {isEditing ? "Edit collection" : "Collection"}
-                            </h3>
-                            <p className="font-normal text-[12px] leading-[16px] text-muted-foreground text-center">
-                                Share this with others
-                            </p>
+                    {/* Form: Input and Buttons */}
+                    <form onSubmit={handleSubmit} className="self-stretch flex flex-col items-center gap-4">
+                        {/* Underline text input */}
+                        <div className="self-stretch py-2 border-b border-ds-border inline-flex justify-start items-center gap-2.5">
+                            <input
+                                type="text"
+                                autoFocus
+                                value={folderName}
+                                onChange={(e) => setFolderName(e.target.value)}
+                                placeholder="Collection name"
+                                className="w-full bg-transparent outline-none border-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5"
+                            />
                         </div>
 
-                        {/* Add cover image section */}
-                        <CocpitProfileUpload
-                            value={coverImage}
-                            onChange={setCoverImage}
-                            trigger={
-                                <div className="flex flex-col items-center gap-2 mt-2 cursor-pointer group">
-                                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center border border-border overflow-hidden relative transition-all group-hover:bg-muted/80">
-                                        {coverImage ? (
-                                            <img src={coverImage} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Icon icon="solar:folder-linear" className="w-10 h-10 text-muted-foreground" />
-                                        )}
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all">
-                                            <Plus className="w-6 h-6 text-white opacity-0 group-hover:opacity-100" />
-                                        </div>
-                                    </div>
-                                    <span className="font-normal text-[12px] leading-[16px] text-foreground">
-                                        {isEditing ? "Cover image" : "Add cover image"}
-                                    </span>
-                                </div>
-                            }
-                        />
-
-                        <form onSubmit={handleSubmit} className="w-full flex flex-col flex-1 gap-6 mt-2">
-                            <div className="flex flex-col gap-2">
-                                <label className="font-normal text-[14px] leading-[20px] text-foreground">
-                                    Collection name
-                                </label>
-                                <input
-                                    type="text"
-                                    autoFocus
-                                    value={folderName}
-                                    onChange={(e) => setFolderName(e.target.value)}
-                                    placeholder="Enter value"
-                                    className="w-full h-12 bg-transparent border border-[#818CF8]/50 rounded-[12px] px-4 text-[16px] leading-[24px] font-normal text-foreground dark:text-foreground focus:outline-none focus:border-[#818CF8] focus:ring-1 focus:ring-[#818CF8] transition-all placeholder:text-muted-foreground/50 font-poppins"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-3 mt-auto">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 h-10 flex items-center justify-center border border-[#818CF8] rounded-[24px] font-normal text-[14px] text-[#818CF8] bg-white dark:bg-transparent hover:bg-[#818CF8]/5 transition-all active:scale-95"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={!folderName.trim() || isLoading}
-                                    className="flex-1 h-10 flex items-center justify-center bg-[#818CF8] rounded-[24px] font-normal text-[14px] text-white hover:bg-[#818CF8]/90 disabled:bg-[#818CF8]/40 disabled:text-white/60 transition-all active:scale-95 shadow-sm"
-                                >
-                                    {isLoading ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (isEditing ? "Save" : "Add")}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                        {/* Actions: Create & Cancel */}
+                        <div className="inline-flex justify-center items-start gap-2">
+                            <button
+                                type="submit"
+                                disabled={!folderName.trim() || isLoading}
+                                className={`w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all text-base font-medium font-['DM_Sans'] leading-6 ${
+                                    folderName.trim()
+                                        ? 'bg-ds-accent text-white hover:opacity-90 active:scale-95 cursor-pointer'
+                                        : 'bg-[#1c1d22] text-ds-text-muted cursor-not-allowed'
+                                }`}
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                    isEditing ? "Save" : "Create"
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
                 </motion.div>
             </div>
         </AnimatePresence>

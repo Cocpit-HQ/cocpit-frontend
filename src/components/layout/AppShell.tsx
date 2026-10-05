@@ -37,20 +37,25 @@ export function AppShell({
     !['/profile/edit', '/profile/download', '/profile/posts'].includes(pathname)
   );
   const isNotificationsPage = pathname?.startsWith('/notifications');
+  const isSettingsRoute = Boolean(
+    pathname === '/settings' ||
+    pathname?.startsWith('/settings/') ||
+    pathname?.includes('/settings')
+  );
   const { activeModal, isArticleMode } = useUIStore();
   const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isNotificationsPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || activeModal === 'create-post';
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-ds-bg text-foreground overflow-x-hidden">
+    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground overflow-x-hidden`}>
       {!isDistractionFree && (
         <div className="hidden sm:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />
         </div>
       )}
       
-      {/* Top Header */}
-      {!isDistractionFree && (
+      {/* Top Header - hidden on distraction-free pages and settings routes */}
+      {!isDistractionFree && !isSettingsRoute && (
         <>
           <div className="hidden sm:block">
             <TopHeader />
@@ -62,7 +67,13 @@ export function AppShell({
       )}
 
       {/* Main content */}
-      <main className={isDistractionFree ? "min-w-0 flex-1 w-full relative z-0" : `min-w-0 flex-1 w-full sm:pl-[220px] pt-[60px] sm:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative z-0`}>
+      <main className={
+        isDistractionFree
+          ? "min-w-0 flex-1 w-full relative z-0"
+          : isSettingsRoute
+            ? `min-w-0 flex-1 w-full h-full overflow-hidden sm:pl-[280px] lg:pl-[320px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative z-0`
+            : `min-w-0 flex-1 w-full sm:pl-[220px] pt-[60px] sm:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative z-0`
+      }>
         {children}
       </main>
 

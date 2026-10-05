@@ -5,7 +5,7 @@ import { Drawer } from "vaul";
 import { BadgeCheck, Check } from "lucide-react";
 import { UserData } from "@/types/user";
 import { useRouter } from "next/navigation";
-import { VerifyIdentityModal } from "@/features/settings/tabs/privacy/components/modals/VerifyIdentityModal";
+import { VerifyIdentityModal } from "@/features/settings";
 
 interface MobileContactInfoDrawerProps {
   isOpen: boolean;
