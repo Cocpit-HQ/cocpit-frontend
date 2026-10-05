@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { getProfileDropdowns } from "@/services/api/profile";
 import { ProfileEditResumeSection } from "@/features/profile/components/profile-edit/ProfileEditResumeSection";
 import { ProfileEditField } from "@/features/profile/components/profile-edit/ProfileEditField";
 import { ProfileEditDropdown } from "@/features/profile/components/profile-edit/ProfileEditDropdown";
@@ -39,7 +40,7 @@ interface ProfileEditFormProps {
   errors?: Record<string, string>;
 }
 
-const LOOKING_FOR_OPTIONS = [
+const FALLBACK_LOOKING_FOR_OPTIONS = [
   "Full-time",
   "Part-time",
   "Internship",
@@ -47,7 +48,7 @@ const LOOKING_FOR_OPTIONS = [
   "Connections",
 ];
 
-const AVAILABILITY_OPTIONS = [
+const FALLBACK_AVAILABILITY_OPTIONS = [
   "Immediately",
   "Weekdays",
   "Weekends",
@@ -56,9 +57,9 @@ const AVAILABILITY_OPTIONS = [
   "On-demand",
 ];
 
-const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "On-site"];
+const FALLBACK_WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "On-site"];
 
-const STATUS_OPTIONS = [
+const FALLBACK_STATUS_OPTIONS = [
   { id: "employed", label: "Employed" },
   { id: "self_employed", label: "Self employed" },
   { id: "student", label: "Student" },
@@ -89,8 +90,33 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     label: ind.industry_name,
   }));
 
+  const [dropdownOptions, setDropdownOptions] = useState<{
+    status: { id: number; label: string }[];
+    looking_for: { id: number; label: string }[];
+    work_setup: { id: number; label: string }[];
+    availability: { id: number; label: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const response = await getProfileDropdowns();
+        if (response.success) {
+          setDropdownOptions(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile dropdowns", err);
+      }
+    };
+    fetchDropdowns();
+  }, []);
+
+  const currentStatusOptions = dropdownOptions?.status
+    ? dropdownOptions.status.map(s => ({ id: String(s.id), label: s.label }))
+    : FALLBACK_STATUS_OPTIONS;
+
   const selectedStatusLabel =
-    STATUS_OPTIONS.find((s) => s.id === formData.status)?.label ||
+    currentStatusOptions.find((s) => String(s.id) === String(formData.status))?.label ||
     formData.status ||
     "Select";
 
@@ -197,7 +223,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           label="Status"
           value={formData.status}
           displayValue={selectedStatusLabel}
-          options={STATUS_OPTIONS}
+          options={currentStatusOptions}
           onSelect={(val) => onChange("status", val)}
           className="w-[380px] max-w-full flex-none grow-1"
           labelClassName="w-[37px] h-4 text-center"
@@ -209,7 +235,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         <ProfileEditDropdown
           label="Looking for"
           value={formData.open_to}
-          options={LOOKING_FOR_OPTIONS}
+          options={dropdownOptions?.looking_for?.map(o => o.label) ?? FALLBACK_LOOKING_FOR_OPTIONS}
           onSelect={(val) => onChange("open_to", val)}
           placeholder="Select"
           className="w-[380px] max-w-full flex-none grow-1"
@@ -219,7 +245,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         <ProfileEditDropdown
           label="Availability"
           value={formData.availability}
-          options={AVAILABILITY_OPTIONS}
+          options={dropdownOptions?.availability?.map(o => o.label) ?? FALLBACK_AVAILABILITY_OPTIONS}
           onSelect={(val) => onChange("availability", val)}
           placeholder="Select"
           className="w-[380px] max-w-full flex-none grow-1"
@@ -232,7 +258,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         <ProfileEditDropdown
           label="Work setup"
           value={formData.work_preference}
-          options={WORK_SETUP_OPTIONS}
+          options={dropdownOptions?.work_setup?.map(o => o.label) ?? FALLBACK_WORK_SETUP_OPTIONS}
           onSelect={(val) => onChange("work_preference", val)}
           placeholder="Select"
           className="w-[380px] max-w-full flex-none grow-1"

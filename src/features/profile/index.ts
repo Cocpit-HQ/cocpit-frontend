@@ -9,3 +9,6 @@ export { default as AddProjectForm } from './components/AddProjectForm';
 export * from './components/profile-edit';
 export { ProfileAllPostsScreen } from './components/ProfileAllPostsScreen';
 export * from './components/ProfileScoreCard';
+
+// Resolve naming collision for DropdownOption between services and profile-edit
+export type { DropdownOption } from './services/profile.service';

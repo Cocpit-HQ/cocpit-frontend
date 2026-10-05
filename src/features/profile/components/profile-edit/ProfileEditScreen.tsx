@@ -207,23 +207,26 @@ export function ProfileEditScreen({
   useEffect(() => {
     if (user) {
       const ACCOUNT_TYPE_TO_ROLE_ID: Record<string, string> = {
-        student: "student",
-        Student: "student",
-        fresher: "fresher",
-        Fresher: "fresher",
-        intern: "intern",
-        Intern: "intern",
-        self_employed: "self_employed",
-        "Self Employed": "self_employed",
-        "Self employed": "self_employed",
-        employed: "employed",
-        Employee: "employed",
-        Employed: "employed",
-        unemployed: "unemployed",
-        Unemployed: "unemployed",
+        // Map DB labels to numeric IDs (matching dropdown API)
+        student: "1",
+        Student: "1",
+        fresher: "2",
+        Fresher: "2",
+        intern: "3",
+        Intern: "3",
+        self_employed: "4",
+        "Self Employed": "4",
+        "Self employed": "4",
+        "Self-employed": "4",
+        employed: "5",
+        Employee: "5",
+        Employed: "5",
+        unemployed: "6",
+        Unemployed: "6",
+        "Currently not working": "6",
       };
       const rawAccountType = (user as any).account_type || "";
-      const initialStatus = ACCOUNT_TYPE_TO_ROLE_ID[rawAccountType] || "employed";
+      const initialStatus = ACCOUNT_TYPE_TO_ROLE_ID[rawAccountType] || "5";
 
       const rawAccountName = user.account_name || "";
       const cleanAccountName = rawAccountName.startsWith("@")

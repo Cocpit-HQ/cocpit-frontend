@@ -345,12 +345,20 @@ export function useProfileMutation() {
                 industry: payload.industry,
             });
             const ROLE_ID_TO_ACCOUNT_TYPE: Record<string, string> = {
+                // Old string IDs (backward compatible)
                 student: "Student",
                 fresher: "Fresher",
                 intern: "Intern",
                 self_employed: "Self-employed",
                 employed: "Employed",
                 unemployed: "Currently not working",
+                // New numeric IDs (from dropdown API)
+                "1": "Student",
+                "2": "Fresher",
+                "3": "Intern",
+                "4": "Self-employed",
+                "5": "Employed",
+                "6": "Currently not working",
             };
             const mappedAccountType = payload.status
                 ? ROLE_ID_TO_ACCOUNT_TYPE[payload.status] || payload.status

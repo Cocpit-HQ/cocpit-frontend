@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { updateMemberRoleSettings } from "@/services/api/organization"
 import { checkAccountNameAvailability } from "@/services/api/onboarding"
 import { getIndustries } from "@/features/jobs/services/jobs.service"
+import { getProfileDropdowns } from "@/services/api/profile"
 import {
   Dialog,
   DialogContent,
@@ -38,23 +39,23 @@ interface EditProfileModalProps {
   onSave: (data: any) => void
 }
 
-const LOOKING_FOR_OPTIONS = ["Full-time", "Part-time", "Internship", "Freelance", "Connections"]
-const AVAILABILITY_OPTIONS = ["Immediately", "Weekdays", "Weekends", "15 to 30 days", "Flexible", "On-demand"]
-const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "On-site"]
-
-const normalizeAvailability = (value?: string | null) => {
-  if (value === "Immediate") return "Immediately";
-  if (value === "30 Days") return "15 to 30 days";
-  return value || "";
-}
-
-const ROLES = [
+// Fallback constants (used until API data loads)
+const FALLBACK_LOOKING_FOR = ["Full-time", "Part-time", "Internship", "Freelance", "Connections"]
+const FALLBACK_AVAILABILITY = ["Immediately", "Weekdays", "Weekends", "15 to 30 days", "Flexible", "On-demand"]
+const FALLBACK_WORK_SETUP = ["Remote", "Hybrid", "On-site"]
+const FALLBACK_ROLES = [
   { id: "student", label: "Student" },
   { id: "fresher", label: "Fresher" },
   { id: "intern", label: "Intern" },
   { id: "self_employed", label: "Self employed" },
   { id: "employed", label: "Employed" },
 ];
+
+const normalizeAvailability = (value?: string | null) => {
+  if (value === "Immediate") return "Immediately";
+  if (value === "30 Days") return "15 to 30 days";
+  return value || "";
+}
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
   const getWordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
@@ -96,6 +97,14 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const [industrySearch, setIndustrySearch] = useState('');
   const industryRef = React.useRef<HTMLDivElement>(null);
 
+  // Dropdown options from API
+  const [dropdownOptions, setDropdownOptions] = useState<{
+    status: { id: number; label: string }[];
+    looking_for: { id: number; label: string }[];
+    work_setup: { id: number; label: string }[];
+    availability: { id: number; label: string }[];
+  } | null>(null);
+
   const formDataRef = React.useRef(formData);
   useEffect(() => {
     formDataRef.current = formData;
@@ -115,6 +124,21 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       }
     };
     fetchIndustries();
+  }, []);
+
+  // Fetch dropdown options from API
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const response = await getProfileDropdowns();
+        if (response.success) {
+          setDropdownOptions(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile dropdowns", err);
+      }
+    };
+    fetchDropdowns();
   }, []);
 
   useEffect(() => {
@@ -429,7 +453,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    {ROLES.map(role => (
+                    {(dropdownOptions?.status?.map(opt => ({ id: String(opt.id), label: opt.label })) ?? FALLBACK_ROLES).map(role => (
                       <SelectItem key={role.id} value={role.id}>{role.label}</SelectItem>
                     ))}
                   </SelectContent>
@@ -490,7 +514,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <div className="flex flex-col" ref={lookingForRef}>
                 <Label className={labelStyles}>Looking for</Label>
                 <div className="flex flex-wrap gap-2">
-                  {LOOKING_FOR_OPTIONS.map(opt => (
+                  {(dropdownOptions?.looking_for?.map(o => o.label) ?? FALLBACK_LOOKING_FOR).map(opt => (
                     <button
                       key={opt}
                       onClick={() => toggleOption("open_to", opt)}
@@ -508,7 +532,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <div className="flex flex-col" ref={availabilityRef}>
                 <Label className={labelStyles}>Availability</Label>
                 <div className="flex flex-wrap gap-2">
-                  {AVAILABILITY_OPTIONS.map(opt => (
+                  {(dropdownOptions?.availability?.map(o => o.label) ?? FALLBACK_AVAILABILITY).map(opt => (
                     <button
                       key={opt}
                       onClick={() => toggleOption("availability", opt)}
@@ -526,7 +550,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <div className="flex flex-col" ref={workSetupRef}>
                 <Label className={labelStyles}>Work setup</Label>
                 <div className="flex flex-wrap gap-2">
-                  {WORK_SETUP_OPTIONS.map(opt => (
+                  {(dropdownOptions?.work_setup?.map(o => o.label) ?? FALLBACK_WORK_SETUP).map(opt => (
                     <button
                       key={opt}
                       onClick={() => toggleOption("work_preference", opt)}

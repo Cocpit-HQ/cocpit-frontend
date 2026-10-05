@@ -291,6 +291,28 @@ export const deleteCoverPhoto = async (): Promise<DeleteCoverResponse> => {
   return response.data;
 };
 
+// --- Profile Dropdown Options ---
+
+export interface DropdownOption {
+  id: number;
+  label: string;
+}
+
+export interface ProfileDropdownsResponse {
+  success: boolean;
+  data: {
+    status: DropdownOption[];
+    looking_for: DropdownOption[];
+    work_setup: DropdownOption[];
+    availability: DropdownOption[];
+  };
+}
+
+export const getProfileDropdowns = async (): Promise<ProfileDropdownsResponse> => {
+  const response = await api.get<ProfileDropdownsResponse>("/profile/dropdowns");
+  return response.data;
+};
+
 export const getIdentity = async (): Promise<any> => {
   const response = await api.get("/profile/identity");
   return response.data;

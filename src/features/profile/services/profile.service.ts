@@ -21,6 +21,7 @@ export {
   deleteCoverPhoto,
   getIdentity,
   updateIdentity,
+  getProfileDropdowns,
   uploadResume,
   getResume,
   deleteResume,
@@ -36,6 +37,8 @@ export type {
   BatchExperienceOperation,
   BatchExperiencePayload,
   BatchExperienceResponse,
+  DropdownOption,
+  ProfileDropdownsResponse,
 } from "@/services/api/profile";
 
 // Public profile API functions
