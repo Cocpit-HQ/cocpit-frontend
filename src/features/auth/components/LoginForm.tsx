@@ -499,7 +499,7 @@ const LoginForm = () => {
               href="/forgot-password"
               className="group inline-flex items-center text-xs font-normal font-['DM_Sans'] leading-4 !no-underline cursor-pointer"
             >
-              <span className="!text-ds-text-secondary group-hover:!text-ds-text-primary transition-colors !no-underline">
+              <span className="!text-ds-text-primary transition-colors !no-underline">
                 Forgot password?
               </span>
             </Link>

@@ -15,7 +15,7 @@ interface UnifiedMessageInputProps {
     disabledMessage?: string
     placeholder?: string
     isLoading?: boolean
-    searchUsersFn?: (query: string) => Promise<UserMention[]>
+    searchUsersFn?: (query: string, forTagging?: boolean) => Promise<UserMention[]>
     replyingTo?: {
         messageId: string;
         senderName: string;

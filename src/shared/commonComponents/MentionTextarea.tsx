@@ -15,7 +15,7 @@ export interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLT
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     onMentionSelect?: (user: UserMention) => void;
     onMentionsChange?: (mentions: UserMention[]) => void;
-    searchUsersFn?: (query: string) => Promise<UserMention[]>;
+    searchUsersFn?: (query: string, forTagging?: boolean) => Promise<UserMention[]>;
     placeholder?: string;
     className?: string;
     initialMentions?: UserMention[];

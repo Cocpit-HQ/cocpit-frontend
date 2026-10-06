@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Smartphone, Laptop, Tablet, LogOut, ChevronLeft } from 'lucide-react';
 import { SettingToggle } from '../components/SettingToggle';
 import { VerifyIdentityModal } from '../components/VerifyIdentityModal';
+import { LogoutModal } from '../components/modals/LogoutModal';
 import { usePrivacySettings } from '../hooks/usePrivacySettings';
 import { useActiveSessions } from '../hooks/useActiveSessions';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -18,6 +19,7 @@ const TAG_OPTIONS = [
   { id: 'no_one', label: 'No One' },
 ] as const;
 
+/*
 const DEFAULT_FALLBACK_SESSIONS: ActiveSession[] = [
   {
     id: 'current-macbook',
@@ -44,6 +46,7 @@ const DEFAULT_FALLBACK_SESSIONS: ActiveSession[] = [
     isCurrent: false,
   },
 ];
+*/
 
 function formatSessionDate(dateStr?: string) {
   if (!dateStr) return '';
@@ -71,6 +74,7 @@ export function PrivacySettingsPage() {
   const basePath = match ? match[1] : '/settings';
 
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isLogoutAllModalOpen, setIsLogoutAllModalOpen] = useState(false);
   const { activeProfile } = useActiveProfile();
   const { data: myProfile } = useMyProfile();
 
@@ -121,7 +125,11 @@ export function PrivacySettingsPage() {
     [updateSettings]
   );
 
-  const displaySessions = (sessions && sessions.length > 0) ? sessions : DEFAULT_FALLBACK_SESSIONS;
+  const displaySessions = (sessions ? [...sessions] : []).sort((a, b) => {
+    if (a.isCurrent && !b.isCurrent) return -1;
+    if (!a.isCurrent && b.isCurrent) return 1;
+    return 0;
+  });
 
   return (
     <div className="w-full max-w-[712px] p-[8px_0px] flex flex-col items-start gap-2 rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
@@ -312,22 +320,36 @@ export function PrivacySettingsPage() {
         </div>
 
         {/* Section 5: Log out from all other device button */}
-        <div className="self-stretch py-3 rounded-3xl flex flex-col justify-center items-center mt-2">
-          <button
-            type="button"
-            onClick={() => logoutOtherSessions()}
-            disabled={isLoggingOutOthers}
-            className="px-4 py-1.5 rounded-[100px] border border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <span className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
-              {isLoggingOutOthers ? 'Logging out...' : 'Log out from all other device'}
-            </span>
-          </button>
-        </div>
+        {/* Only render the log out from other devices button if there are active sessions other than the current one */}
+        {displaySessions.some(session => !session.isCurrent) && (
+          <div className="self-stretch py-3 rounded-3xl flex flex-col justify-center items-center mt-2">
+            <button
+              type="button"
+              onClick={() => setIsLogoutAllModalOpen(true)}
+              disabled={isLoggingOutOthers}
+              className="px-4 py-1.5 rounded-[100px] border border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+                {isLoggingOutOthers ? 'Logging out...' : 'Log out from all other devices'}
+              </span>
+            </button>
+          </div>
+        )}
 
       </div>
 
       <VerifyIdentityModal isOpen={isVerifyModalOpen} onClose={() => setIsVerifyModalOpen(false)} />
+      
+      <LogoutModal 
+        isOpen={isLogoutAllModalOpen} 
+        onClose={() => setIsLogoutAllModalOpen(false)} 
+        mode="all" 
+        onConfirm={() => {
+          logoutOtherSessions();
+          setIsLogoutAllModalOpen(false);
+        }} 
+        isLoading={isLoggingOutOthers}
+      />
     </div>
   );
 }

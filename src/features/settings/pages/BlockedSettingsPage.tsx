@@ -15,8 +15,9 @@ interface BlockedUserRowProps {
 const BlockedUserRow = memo(({ user, onUnblock }: BlockedUserRowProps) => {
   const [imageError, setImageError] = useState(false);
 
+  // Removed hover classes from the row since it is not interactive
   return (
-    <div className="self-stretch p-3 sm:p-4 inline-flex justify-between items-center hover:bg-ds-surface-1/40 rounded-xl transition-colors gap-2">
+    <div className="self-stretch p-3 sm:p-4 inline-flex justify-between items-center rounded-xl gap-2">
       <div className="flex justify-start items-center gap-2 min-w-0 flex-1 mr-2">
         {user.avatar && !imageError ? (
           <img

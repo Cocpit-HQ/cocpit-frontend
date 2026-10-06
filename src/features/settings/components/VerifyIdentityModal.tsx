@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Upload, X, CarFront, BookOpenText, Contact, CreditCard, Info, CheckCircle2 } from 'lucide-react';
+import { Loader2, Upload, X, Info, CheckCircle2 } from 'lucide-react';
+import { DrivingLicenceIcon, PassportIcon, NationalIdIcon, PanCardIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { useIdentityVerification } from '@/features/settings/hooks/useIdentityVerification';
@@ -14,10 +15,10 @@ interface VerifyIdentityModalProps {
 }
 
 const documentOptions = [
-  { id: 'DRIVING_LICENSE', label: 'Driving License', icon: CarFront },
-  { id: 'PASSPORT', label: 'Passport', icon: BookOpenText },
-  { id: 'NATIONAL_ID', label: 'National ID', icon: Contact },
-  { id: 'PAN_CARD', label: 'PAN Card', icon: CreditCard },
+  { id: 'DRIVING_LICENSE', label: 'Driving License', icon: DrivingLicenceIcon },
+  { id: 'PASSPORT', label: 'Passport', icon: PassportIcon },
+  { id: 'NATIONAL_ID', label: 'National ID', icon: NationalIdIcon },
+  { id: 'PAN_CARD', label: 'PAN Card', icon: PanCardIcon },
 ];
 
 export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProps) {
@@ -59,7 +60,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
   };
 
   const FileUploader = ({ side, file, setFile }: { side: 'front' | 'back', file: File | null, setFile: (f: File | null) => void }) => (
-    <div className="w-full sm:w-80 flex flex-col justify-start items-start gap-2">
+    <div className="w-full sm:w-[334px] flex flex-col justify-start items-start gap-2">
       <div className="text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
         {side === 'front' ? 'Front image' : 'Back image'}
       </div>
@@ -87,9 +88,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
           htmlFor={`file-upload-${side}`}
           className="self-stretch h-44 bg-black rounded-2xl border border-ds-border hover:border-ds-text-muted flex flex-col justify-center items-center gap-2 overflow-hidden cursor-pointer transition-colors"
         >
-          <div className="w-10 h-10 flex items-center justify-center text-ds-text-primary">
-            <Upload className="w-7 h-7 text-ds-text-primary" strokeWidth={1.5} />
-          </div>
+          <Upload className="w-10 h-10 text-ds-text-primary" strokeWidth={1.5} />
           <div className="text-center text-ds-text-primary text-xs font-normal font-['DM_Sans'] leading-4">
             JPG, PNG, WEBP · Max 5MB
           </div>
@@ -123,7 +122,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <BareDialogContent
-        className="fixed inset-0 top-0 left-0 translate-x-0 translate-y-0 w-full h-full max-w-none border-0 p-0 bg-black shadow-none outline-none flex flex-col items-center justify-center z-[101]"
+        className="fixed inset-0 top-0 left-0 translate-x-0 translate-y-0 w-full h-full max-w-none border-0 p-0 bg-black shadow-none outline-none flex flex-col items-center justify-center z-[300]"
         overlayClassName="bg-black"
       >
         <DialogTitle className="sr-only">
@@ -135,7 +134,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
           type="button"
           onClick={handleClose}
           aria-label="Close dialog"
-          className="fixed top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-50 p-2 text-ds-text-secondary hover:text-ds-text-primary rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+          className="fixed top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-[301] p-2 text-ds-text-secondary hover:text-ds-text-primary rounded-full hover:bg-white/10 transition-colors cursor-pointer"
         >
           <X className="w-6 h-6" strokeWidth={1.5} />
         </button>
@@ -249,7 +248,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
 
             {/* Info Note Banner */}
             <div className="px-4 py-2 bg-ds-surface-1 rounded-3xl inline-flex justify-center items-center gap-2 max-w-[560px]">
-              <Info className="w-4 h-4 text-ds-text-primary shrink-0" strokeWidth={1.5} />
+              <Info className="w-6 h-6 text-ds-text-primary shrink-0" strokeWidth={1.5} />
               <div className="justify-center text-ds-text-primary text-xs font-normal font-['DM_Sans'] leading-4 text-center sm:text-left">
                 Ensure all details are clearly visible and not blurred. Good lighting and a plain
                 <br className="hidden sm:inline" /> background help speed up the verification process.
@@ -262,15 +261,10 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                 <button
                   type="submit"
                   disabled={isPending || !frontImage || !backImage}
-                  className="h-[36px] px-5 py-1.5 bg-ds-accent hover:opacity-90 rounded-[100px] flex justify-center items-center gap-2.5 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-[78px] h-[36px] bg-ds-accent hover:opacity-90 rounded-[100px] flex justify-center items-center transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white mr-1.5" />
-                      <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
-                        Submitting...
-                      </span>
-                    </>
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
                   ) : (
                     <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                       Submit
@@ -280,7 +274,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="w-[94px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-white/[0.06] flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-[78px] h-[36px] rounded-[100px] border border-ds-border hover:bg-white/[0.06] flex justify-center items-center transition-colors cursor-pointer"
                 >
                   <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                     Cancel

@@ -320,7 +320,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={requestResetLinkMutation.isPending}
-                className="h-[36px] px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-secondary hover:text-ds-text-primary ds-text-secondary-1 transition-colors disabled:opacity-50 cursor-pointer ds-focus-ring"
+                className="w-[150px] h-[36px] px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary ds-text-secondary-1 transition-colors disabled:opacity-50 cursor-pointer ds-focus-ring"
               >
                 {requestResetLinkMutation.isPending ? "Sending link..." : "Forgot password"}
               </button>
@@ -331,21 +331,21 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
             <button
               type="submit"
               disabled={updatePasswordMutation.isPending}
-              className={`${isAddMode ? 'w-[132px]' : 'w-[169px]'} h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-opacity ds-focus-ring`}
+              className={`${isAddMode ? 'w-[132px]' : 'w-[80px]'} h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-opacity ds-focus-ring`}
             >
               <span className="text-white ds-text-body-1 whitespace-nowrap">
                 {updatePasswordMutation.isPending
                   ? (isAddMode ? "Adding..." : "Updating...")
-                  : (isAddMode ? "Add password" : "Change password")}
+                  : (isAddMode ? "Add password" : "Update")}
               </span>
             </button>
           ) : (
             <div
               data-property-1="Disabled"
-              className={`${isAddMode ? 'w-[132px]' : 'w-[169px]'} h-[36px] px-4 py-1.5 bg-ds-surface-1 rounded-full flex justify-center items-center gap-2 cursor-not-allowed select-none border border-ds-border/40`}
+              className={`${isAddMode ? 'w-[132px]' : 'w-[80px]'} h-[36px] px-4 py-1.5 bg-ds-surface-1 rounded-full flex justify-center items-center gap-2 cursor-not-allowed select-none border border-ds-border/40`}
             >
               <span className="text-ds-text-muted ds-text-body-1 whitespace-nowrap">
-                {isAddMode ? "Add password" : "Change password"}
+                {isAddMode ? "Add password" : "Update"}
               </span>
             </div>
           )}

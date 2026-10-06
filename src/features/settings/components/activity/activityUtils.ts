@@ -3,6 +3,8 @@ import { CommentActivityItem } from './activity.types';
 export function cleanActivityText(text?: string): string {
   if (!text || typeof text !== 'string') return '';
   return text
+    // Replace markdown mentions @[Name](UUID) with @Name
+    .replace(/@\[([^\]]+)\]\([^)]+\)/g, '@$1')
     // Remove HTML comments like <!-- article_divider -->
     .replace(/<!--[\s\S]*?-->/g, '')
     // Remove HTML tags like <p>, </p>, <br>, etc.

@@ -6,7 +6,7 @@ import { searchHashtags, getTrendingHashtags, HashtagSuggestion } from '@/servic
 export type MentionMode = 'mention' | 'hashtag' | null;
 
 interface UseMentionsProps {
-    searchUsersFn?: (query: string) => Promise<UserMention[]>;
+    searchUsersFn?: (query: string, forTagging?: boolean) => Promise<UserMention[]>;
 }
 
 export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
@@ -37,20 +37,20 @@ export const useMentions = ({ searchUsersFn }: UseMentionsProps = {}) => {
                 if (mode === 'mention') {
                     if (debouncedQuery) {
                         if (searchUsersFn) {
-                            const results = await searchUsersFn(debouncedQuery);
+                            const results = await searchUsersFn(debouncedQuery, true);
                             if (isMounted) {
                                 setUsers(results || []);
                                 setActiveIndex(0);
                             }
                         } else {
-                            const results = await searchUsers(debouncedQuery);
+                            const results = await searchUsers(debouncedQuery, true);
                             if (isMounted) {
                                 setUsers(results || []);
                                 setActiveIndex(0);
                             }
                         }
                     } else {
-                        const suggested = await getSuggestedUsers();
+                        const suggested = await getSuggestedUsers(true);
                         if (isMounted) {
                             setUsers(suggested || []);
                             setActiveIndex(0);

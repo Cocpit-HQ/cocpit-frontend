@@ -15,6 +15,7 @@ interface StructuredFaq {
 }
 
 const DEFAULT_FAQS: StructuredFaq[] = [
+  /*
   {
     question: "How do I change my primary email?",
     intro: "Updating your primary email is essential for account security and notifications. Follow these steps:",
@@ -50,6 +51,7 @@ const DEFAULT_FAQS: StructuredFaq[] = [
       ),
     ],
   },
+  */
   {
     question: "What happens when I deactivate my account?",
     plainAnswer:
@@ -63,7 +65,7 @@ const DEFAULT_FAQS: StructuredFaq[] = [
 ];
 
 export function HelpCentre({ onBack }: HelpCentreProps) {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
     setOpenIndex(prev => (prev === index ? null : index));

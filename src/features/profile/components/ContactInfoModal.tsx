@@ -199,8 +199,7 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
               </div>
             </div>
 
-            {/* Verifications Section - commented out for now */}
-            {/*
+            {/* Verifications Section */}
             <div className="self-stretch py-2 flex flex-col justify-center items-start gap-2.5">
               <div className="text-center justify-start text-[var(--ds-text-primary)] text-sm font-semibold font-['DM_Sans'] leading-5">
                 Verifications
@@ -234,7 +233,6 @@ export const ContactInfoModal: React.FC<ContactInfoModalProps> = ({
                 )}
               </div>
             </div>
-            */}
           </div>
         </div>
       </BareDialogContent>

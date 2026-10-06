@@ -158,8 +158,7 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
               </div>
             </div>
 
-            {/* Verifications Section - commented out for now */}
-            {/*
+            {/* Verifications Section */}
             <div className="flex flex-col gap-1">
               <span className="text-[var(--ds-text-secondary)] text-sm font-medium">Verifications</span>
               {isVerified ? (
@@ -179,7 +178,6 @@ export const MobileContactInfoDrawer: React.FC<MobileContactInfoDrawerProps> = (
                 <span className="text-[var(--ds-text-muted)] text-sm font-normal">User is not verified</span>
               )}
             </div>
-            */}
           </div>
         </Drawer.Content>
       </Drawer.Portal>

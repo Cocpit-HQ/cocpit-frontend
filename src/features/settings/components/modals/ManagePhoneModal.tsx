@@ -282,20 +282,23 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     </span>
                   )}
                 </div>
-                <div className="self-stretch flex justify-start items-center">
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={countdown > 0}
-                    className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
-                      countdown > 0
-                        ? 'text-ds-text-muted cursor-default'
-                        : 'text-ds-accent hover:underline cursor-pointer'
-                    }`}
-                  >
-                    {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
-                  </button>
-                </div>
+                {/* Hide resend code option after successful phone verification */}
+                {!confirmPhoneMutation.isSuccess && (
+                  <div className="self-stretch flex justify-start items-center">
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={countdown > 0}
+                      className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
+                        countdown > 0
+                          ? 'text-ds-text-muted cursor-default'
+                          : 'text-ds-accent hover:underline cursor-pointer'
+                      }`}
+                    >
+                      {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

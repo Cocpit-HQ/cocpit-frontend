@@ -25,13 +25,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
     }
   }, [accountData]);
 
-  const maskEmail = (emailStr: string) => {
-    if (!emailStr) return 'Loading email...';
-    const [local, domain] = emailStr.split('@');
-    if (!domain) return emailStr;
-    if (local.length <= 4) return `${local.slice(0, 1)}***@${domain}`;
-    return `${local.slice(0, 4)}********@${domain}`;
-  };
+
 
   const validateAndSetFile = (selectedFile: File) => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -111,14 +105,14 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
         <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-1">
           <div className="ds-text-small-1 text-ds-text-secondary">Primary email</div>
           <div className="ds-text-secondary text-ds-text-primary">
-            {maskEmail(email || accountData?.primaryEmail || '')}
+            {email || accountData?.primaryEmail || 'Loading email...'}
           </div>
         </div>
       </div>
 
       {/* Describe your issue row */}
       <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-1">
-        <div className="ds-text-small-1 text-ds-text-secondary">Discribe your issue*</div>
+        <div className="ds-text-small-1 text-ds-text-secondary">Describe your issue*</div>
         <input
           type="text"
           value={issue}

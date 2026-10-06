@@ -113,17 +113,31 @@ export function NotificationSettingsPage() {
   const handleToggle = useCallback(
     (key: NotificationKey, nextVal: boolean) => {
       const current = settingsRef.current;
-      const updated = {
-        ...(current || {
-          all: true,
-          posts: true,
-          jobs: true,
-          messages: true,
-          emails: true,
-          push: true,
-        }),
-        [key]: nextVal,
+      const baseSettings = current || {
+        all: true,
+        posts: true,
+        jobs: true,
+        messages: true,
+        emails: true,
+        push: true,
       };
+
+      let updated = { ...baseSettings, [key]: nextVal };
+
+      if (key === 'all') {
+        updated.posts = nextVal;
+        updated.jobs = nextVal;
+        updated.messages = nextVal;
+        updated.emails = nextVal;
+      } else {
+        updated.all = !!(
+          updated.posts &&
+          updated.jobs &&
+          updated.messages &&
+          updated.emails
+        );
+      }
+
       settingsRef.current = updated;
       updateSettings(updated);
     },
