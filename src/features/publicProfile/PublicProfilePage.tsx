@@ -152,9 +152,9 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const isPendingSent = connectionStatus === "pending_sent";
   const isPendingReceived = connectionStatus === "pending_received";
 
-  // 2-threshold: threshold for Creator Mode (kept at 2 for testing, normally 500)
+  // 500-threshold: threshold for Creator Mode
   const targetConnectionCount = blocked ? 0 : ((user as any)?.connections_count ?? 0);
-  const isCreatorMode = targetConnectionCount >= 2;
+  const isCreatorMode = targetConnectionCount >= 500;
   const showConnect = connectionStatus === "none" && !isCreatorMode;
   const showFollow = isCreatorMode && (connectionStatus === "none" || isPendingSent);
 
@@ -470,7 +470,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   </button>
                 )}
 
-                {/* ── SCENARIO 3b: no relationship, target >= 2 connections → FOLLOW ── */}
+                {/* ── SCENARIO 3b: no relationship, target >= 500 connections → FOLLOW ── */}
                 {showFollow && (
                   <button
                     type="button"

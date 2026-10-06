@@ -176,18 +176,19 @@ export const FeedPost = (props: FeedPostProps) => {
   // Purpose of Bug Fix: Read from global UI store to correctly display snackbar on the Feed when redirected from post details page
   const { reportedPostIds, notInterestedPostIds, interestedPostIds, hiddenPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId, addHiddenPostId } = useUIStore();
 
-  // targetOriginalId: holds the original post's ID when this is a repost-without-thoughts.
-  const targetOriginalId = shared_post?.id?.toString();
+  const embeddedOriginalId = (shared_post?.id || (shared_post as any)?.post_id || (shared_post as any)?._id || (shared_post as any)?.postId)?.toString();
+  // targetOriginalId: holds the original post's ID only when this is a repost-without-thoughts.
+  const targetOriginalId = isRepostWithoutThoughts ? embeddedOriginalId : undefined;
 
 
 
   // isReportedInStore: true if this post's own ID is reported, OR if this is a repost
   // and the original post was reported (cascade: original reported → all derived reposts hide).
   const isReportedInStore = reportedPostIds.includes(id.toString())
-    || (isRepostWithoutThoughts && !!targetOriginalId && reportedPostIds.includes(targetOriginalId));
+    || (!!embeddedOriginalId && reportedPostIds.includes(embeddedOriginalId));
 
-  const isNotInterestedInStore = notInterestedPostIds.includes(id.toString()) || (!!targetOriginalId && notInterestedPostIds.includes(targetOriginalId));
-  const isInterestedInStore = interestedPostIds.includes(id.toString()) || (!!targetOriginalId && interestedPostIds.includes(targetOriginalId));
+  const isNotInterestedInStore = notInterestedPostIds.includes(id.toString()) || (!!embeddedOriginalId && notInterestedPostIds.includes(embeddedOriginalId));
+  const isInterestedInStore = interestedPostIds.includes(id.toString()) || (!!embeddedOriginalId && interestedPostIds.includes(embeddedOriginalId));
 
   const isBackendReported = isRepostWithoutThoughts
     ? (!!props.is_reported || !!(props as any).isReported || !!(shared_post as any)?.is_reported)
@@ -241,45 +242,68 @@ export const FeedPost = (props: FeedPostProps) => {
     setIsReportSubmittedLocal(true);
     setHasBeenReported(true);
     // Always store the wrapper post's own ID as reported.
-    // If this is a repost without thoughts, also store and hide the original post.
+    // If this is a repost, also store and hide the original post.
     addReportedPostId(id.toString());
-    if (isRepostWithoutThoughts && targetOriginalId) {
+    if (targetOriginalId) {
       addReportedPostId(targetOriginalId);
     }
 
-    if (props.isFullContent) {
-      router.back();
-    }
-    // Auto-remove the wrapper post (and original if repost without thoughts) from the feed.
+    // Auto-remove the wrapper post (and original if repost) from the feed.
     reportTimeoutRef.current = setTimeout(() => {
       removePostFromFeed(id.toString());
       addHiddenPostId(id.toString());
 
-      if (isRepostWithoutThoughts && targetOriginalId) {
+      if (targetOriginalId) {
         removePostFromFeed(targetOriginalId);
         addHiddenPostId(targetOriginalId);
+      }
+      
+      if (props.isFullContent) {
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+        } else {
+          const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+          router.push(savedPath || "/feed");
+        }
       }
     }, 5000);
   };
 
   // State to temporarily show the reported post when user clicks 'Show post'
   const [isTemporarilyShowingReportedPost, setIsTemporarilyShowingReportedPost] = useState(false);
+  
+  // Refs to prevent double router.back() calls causing history corruption
+  const hasAutoNavigatedReportRef = useRef(false);
+  const hasAutoNavigatedNotInterestedRef = useRef(false);
 
   // Trigger auto-remove if reported from another component (e.g. original post reported → repost auto-removes)
   // or if the backend explicitly tells us it is reported.
   useEffect(() => {
     if ((isReportedInStore || isBackendReported) && !isReportSubmittedLocal && !isTemporarilyShowingReportedPost && !reportTimeoutRef.current) {
+      if (props.isFullContent) {
+        if (!hasAutoNavigatedReportRef.current) {
+          hasAutoNavigatedReportRef.current = true;
+          if (typeof window !== "undefined" && window.history.length > 1) {
+            setTimeout(() => router.back(), 50);
+          } else {
+            const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+            router.push(savedPath || "/feed");
+          }
+        }
+        return;
+      }
+
       reportTimeoutRef.current = setTimeout(() => {
         removePostFromFeed(id.toString());
         addHiddenPostId(id.toString());
 
-        if (isRepostWithoutThoughts && targetOriginalId) {
+        if (targetOriginalId) {
           removePostFromFeed(targetOriginalId);
           addHiddenPostId(targetOriginalId);
         }
       }, 5000);
     }
-  }, [isReportedInStore, isBackendReported, isReportSubmittedLocal, isTemporarilyShowingReportedPost, id, targetOriginalId, isRepostWithoutThoughts, removePostFromFeed, addHiddenPostId]);
+  }, [isReportedInStore, isBackendReported, isReportSubmittedLocal, isTemporarilyShowingReportedPost, id, targetOriginalId, removePostFromFeed, addHiddenPostId, props.isFullContent, router]);
 
   // Triggered when the user clicks 'Show post' on the success snackbar
   const handleUndoReportUI = (e: React.MouseEvent) => {
@@ -301,9 +325,18 @@ export const FeedPost = (props: FeedPostProps) => {
       removePostFromFeed(id.toString());
       addHiddenPostId(id.toString());
 
-      if (isRepostWithoutThoughts && targetOriginalId) {
+      if (targetOriginalId) {
         removePostFromFeed(targetOriginalId);
         addHiddenPostId(targetOriginalId);
+      }
+      
+      if (props.isFullContent) {
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+        } else {
+          const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+          router.push(savedPath || "/feed");
+        }
       }
     }, 5000);
   };
@@ -334,13 +367,26 @@ export const FeedPost = (props: FeedPostProps) => {
   // Purpose of Bug Fix: Auto-remove post after 5 seconds if marked as Not Interested from single view
   useEffect(() => {
     if (isNotInterestedInStore && !isNotInterestedLocal && !notInterestedTimeoutRef.current) {
+      if (props.isFullContent) {
+        if (!hasAutoNavigatedNotInterestedRef.current) {
+          hasAutoNavigatedNotInterestedRef.current = true;
+          if (typeof window !== "undefined" && window.history.length > 1) {
+            setTimeout(() => router.back(), 50);
+          } else {
+            const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+            router.push(savedPath || "/feed");
+          }
+        }
+        return;
+      }
+
       notInterestedTimeoutRef.current = setTimeout(() => {
         removePostFromFeed(id.toString());
         addHiddenPostId(id.toString());
-        if (isRepostWithoutThoughts && targetOriginalId) addHiddenPostId(targetOriginalId);
+        if (targetOriginalId) addHiddenPostId(targetOriginalId);
       }, 5000);
     }
-  }, [isNotInterestedInStore, isNotInterestedLocal, id, targetOriginalId, isRepostWithoutThoughts, removePostFromFeed, addHiddenPostId]);
+  }, [isNotInterestedInStore, isNotInterestedLocal, id, targetOriginalId, removePostFromFeed, addHiddenPostId, props.isFullContent, router]);
 
   // Triggered when the user clicks 'Undo' on the snackbar
   const handleUndoNotInterested = async (e: React.MouseEvent) => {
@@ -544,7 +590,7 @@ export const FeedPost = (props: FeedPostProps) => {
     }
   };
 
-  const isHiddenGlobally = hiddenPostIds.includes(id.toString()) || (!!targetOriginalId && hiddenPostIds.includes(targetOriginalId));
+  const isHiddenGlobally = hiddenPostIds.includes(id.toString()) || (!!embeddedOriginalId && hiddenPostIds.includes(embeddedOriginalId));
   if (isHiddenGlobally) return null;
 
   // Temporary 'Report submitted' inline snackbar after reporting a post
@@ -554,12 +600,16 @@ export const FeedPost = (props: FeedPostProps) => {
     return null;
   }
 
-  const isFeedRoute = pathname === '/feed' || pathname === '/';
-  const shouldShowReportSnackbar = isReportSubmittedLocal || (isReportedInStore && isFeedRoute && !props.isProfileView);
-  const shouldShowNotInterestedSnackbar = isNotInterestedLocal || (isNotInterestedInStore && isFeedRoute && !props.isProfileView);
+  const shouldShowReportSnackbar = isReportSubmittedLocal || (isReportedInStore && !isBackendReported);
+  const shouldShowNotInterestedSnackbar = isNotInterestedLocal || isNotInterestedInStore;
 
-  // If reported globally but we shouldn't show the snackbar (e.g. on profile page), render nothing so it doesn't leak
+  // If reported globally but we shouldn't show the snackbar, render nothing so it doesn't leak
   if (isReportedInStore && !shouldShowReportSnackbar && !isTemporarilyShowingReportedPost) {
+    return null;
+  }
+
+  // If marked not interested globally but we shouldn't show the snackbar, render nothing
+  if (isNotInterestedInStore && !shouldShowNotInterestedSnackbar && !isTemporarilyShowingReportedPost) {
     return null;
   }
 
@@ -1018,14 +1068,23 @@ export const FeedPost = (props: FeedPostProps) => {
             setIsInterestedLocal(true);
             if (props.isFullContent) {
               addInterestedPostId(id.toString());
-              router.back();
+              if (targetOriginalId) addInterestedPostId(targetOriginalId);
             }
             if (interestedTimeoutRef.current) {
               clearTimeout(interestedTimeoutRef.current);
             }
             interestedTimeoutRef.current = setTimeout(() => {
               setIsInterestedLocal(false);
-              useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString()) }));
+              useUIStore.setState((state) => ({ interestedPostIds: state.interestedPostIds.filter(postId => postId !== id.toString() && postId !== targetOriginalId) }));
+              
+              if (props.isFullContent) {
+                if (typeof window !== "undefined" && window.history.length > 1) {
+                  router.back();
+                } else {
+                  const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+                  router.push(savedPath || "/feed");
+                }
+              }
             }, 5000);
 
             // Fire API in background
@@ -1045,14 +1104,23 @@ export const FeedPost = (props: FeedPostProps) => {
 
             if (props.isFullContent) {
               addNotInterestedPostId(id.toString());
-              router.back();
+              if (targetOriginalId) addNotInterestedPostId(targetOriginalId);
             }
 
             // 2. Auto-remove the post from the feed entirely after 5 seconds
             notInterestedTimeoutRef.current = setTimeout(() => {
               removePostFromFeed(id.toString());
               addHiddenPostId(id.toString());
-              if (isRepostWithoutThoughts && targetOriginalId) addHiddenPostId(targetOriginalId);
+              if (targetOriginalId) addHiddenPostId(targetOriginalId);
+              
+              if (props.isFullContent) {
+                if (typeof window !== "undefined" && window.history.length > 1) {
+                  router.back();
+                } else {
+                  const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+                  router.push(savedPath || "/feed");
+                }
+              }
             }, 5000);
 
             // 3. Instantly submit feedback on the backend to guarantee persistence if the user refreshes

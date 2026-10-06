@@ -9,6 +9,7 @@ import { useConnectionActions } from '../hooks/useConnectionActions';
 import { useConnectionStore } from '@/store/connection.store';
 import type { SuggestedUser } from '../types';
 import { FeatureDisabledTooltip } from '@/components/feature-flags';
+import { formatImgSrc } from '@/lib/utils';
 
 interface SuggestionCardProps {
   user: SuggestedUser;
@@ -40,7 +41,7 @@ function MutualAvatar({ src, index }: { src: string; index: number }) {
 
   return (
     <img
-      src={src}
+      src={formatImgSrc(src)}
       alt=""
       className="w-4 h-4 rounded-full border border-ds-surface-2 object-cover"
       style={{ zIndex: 10 - index }}
@@ -60,14 +61,12 @@ function MetaRow({ user }: { user: SuggestedUser }) {
         <span className="truncate">
           {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
         </span>
-        {mutuals.avatars && mutuals.avatars.length > 0 && (
-          <div className="flex items-center -space-x-1 shrink-0" aria-hidden="true">
-            {/* Mutual avatar with 1px #222228 stroke per Figma spec */}
-            {mutuals.avatars.slice(0, 3).map((src, i) => (
-              <MutualAvatar key={i} src={src} index={i} />
-            ))}
-          </div>
-        )}
+        <div className="flex items-center -space-x-1 shrink-0" aria-hidden="true">
+          {/* Mutual avatar with 1px #222228 stroke per Figma spec */}
+          {Array.from({ length: Math.min(mutuals.count, 3) }).map((_, i) => (
+            <MutualAvatar key={i} src={mutuals.avatars?.[i] || ''} index={i} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -142,7 +141,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
       >
         {showAvatar ? (
           <Image
-            src={user.avatarUrl}
+            src={formatImgSrc(user.avatarUrl)}
             alt={user.name}
             width={60}
             height={60}

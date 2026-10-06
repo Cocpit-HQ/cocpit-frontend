@@ -26,12 +26,12 @@ import {
 // ── Empty state text per tab ──────────────────────────────────────────────────
 const EMPTY_STATE = {
   received: {
-    title: 'No Incoming Requests',
-    subtitle: 'When someone sends you a connection request, it will appear here.',
+    title: 'No pending invitations',
+    subtitle: "You don't have any connection requests right now",
   },
   sent: {
-    title: 'No Sent Requests',
-    subtitle: 'Connect with people you know to grow your network.',
+    title: 'No sent invitations',
+    subtitle: 'Connection requests you send will appear here',
   },
 } as const;
 
@@ -139,8 +139,8 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
   let emptySubtitle = '';
   if (activeTab === 'invitations') {
     if (invitationSubTab === 'teams') {
-      emptyTitle = 'No team invitations';
-      emptySubtitle = "You haven't received any team invitations";
+      emptyTitle = 'No page invitations';
+      emptySubtitle = 'Invitations to join a business page will appear here';
     } else {
       emptyTitle = 'No channel invitations';
       emptySubtitle = "You haven't received any channel invitations";

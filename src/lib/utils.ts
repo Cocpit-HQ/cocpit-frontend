@@ -59,3 +59,13 @@ export function maskEmail(email: string): string {
   const lastTwo = localPart.slice(-2);
   return `${firstTwo}****${lastTwo}@${domain}`;
 }
+
+export function formatImgSrc(src: string | undefined | null): string {
+  if (!src) return '';
+  let formatted = src.replace(/\\/g, '/');
+  if (!formatted.startsWith('http') && !formatted.startsWith('/')) {
+    formatted = `/${formatted}`;
+  }
+  return formatted;
+}
+

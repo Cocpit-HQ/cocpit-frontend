@@ -8,7 +8,7 @@ interface MobilePublicProfileMenuDrawerProps {
   onClose: () => void;
   /** The resolved directional connection status */
   connectionStatus: "none" | "pending_sent" | "pending_received" | "connected" | string;
-  /** Whether the primary header action is currently Follow (>=2 connections) */
+  /** Whether the primary header action is currently Follow (>=500 connections) */
   showFollowPrimary?: boolean;
   /** Whether the current user is already following the target */
   isFollowing?: boolean;
