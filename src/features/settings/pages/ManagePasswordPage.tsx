@@ -144,7 +144,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
           type="button"
           onClick={() => router.back()}
           aria-label="Back to account settings"
-          className="w-8 h-8 -ml-1.5 flex items-center justify-center p-0 text-ds-text-primary hover:text-ds-accent hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring rounded-full cursor-pointer ds-touch-target"
+          className="w-[20px] h-[20px] min-w-[20px] min-h-[20px] -ml-1.5 flex items-center justify-center p-0 text-ds-text-primary hover:text-ds-accent transition-colors shrink-0 ds-focus-ring cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={2} />
         </button>
@@ -165,7 +165,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
         {!isAddMode && (
           <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
             <label className="text-left text-ds-text-secondary ds-text-small-1">
-              Current password
+              Enter your current password
             </label>
             <div className="self-stretch inline-flex justify-between items-center gap-2">
               <input
@@ -235,12 +235,17 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
               )}
             </button>
           </div>
+          {!isAddMode && currentPassword && newPassword && newPassword === currentPassword && (
+            <span className="ds-text-small text-ds-error">
+              New password must be different from current password.
+            </span>
+          )}
         </div>
 
-        {/* Conform new password */}
-        <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+        {/* Confirm new password */}
+        <div className="self-stretch pb-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
           <label className="text-left text-ds-text-secondary ds-text-small-1">
-            Conform new password
+            Confirm new password
           </label>
           <div className="self-stretch inline-flex justify-between items-center gap-2">
             <input
@@ -250,7 +255,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                 setConfirmPassword(e.target.value);
                 if (errorMsg === "Passwords do not match.") setErrorMsg('');
               }}
-              placeholder="Conform password"
+              placeholder="Confirm password"
               maxLength={15}
               autoComplete="new-password"
               className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
@@ -270,6 +275,11 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
               )}
             </button>
           </div>
+          {confirmPassword && newPassword && confirmPassword !== newPassword && (
+            <span className="ds-text-small text-ds-error">
+              Passwords do not match.
+            </span>
+          )}
         </div>
 
         {/* Password Requirements helper card */}
@@ -280,30 +290,25 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
         ) : null}
 
         {/* Error / Feedback area */}
-        <div className="ds-supporting-area w-full">
-          {confirmPassword && newPassword && confirmPassword !== newPassword && (
-            <span className="ds-text-small text-ds-error">
-              Passwords do not match.
-            </span>
-          )}
-          {!isAddMode && currentPassword && newPassword && newPassword === currentPassword && (
-            <span className="ds-text-small text-ds-error">
-              New password must be different from current password.
-            </span>
-          )}
-          {errorMsg &&
+        {((errorMsg &&
             errorMsg !== "Current password is incorrect" &&
             errorMsg !== "Passwords do not match." &&
-            errorMsg !== "New password must be different from current password." && (
-              <span className="ds-text-small text-ds-error">{errorMsg}</span>
-          )}
-          {resetSuccessMsg && (
-            <span className="ds-text-small text-ds-success">{resetSuccessMsg}</span>
-          )}
-        </div>
+            errorMsg !== "New password must be different from current password.") || resetSuccessMsg) ? (
+          <div className="ds-supporting-area w-full">
+            {errorMsg &&
+              errorMsg !== "Current password is incorrect" &&
+              errorMsg !== "Passwords do not match." &&
+              errorMsg !== "New password must be different from current password." && (
+                <span className="ds-text-small text-ds-error">{errorMsg}</span>
+            )}
+            {resetSuccessMsg && (
+              <span className="ds-text-small text-ds-success">{resetSuccessMsg}</span>
+            )}
+          </div>
+        ) : null}
 
         {/* Action Button Row */}
-        <div className="self-stretch flex flex-wrap sm:flex-nowrap justify-end items-center gap-3 pt-2">
+        <div className="self-stretch flex flex-wrap sm:flex-nowrap justify-end items-center gap-3">
           {!isAddMode && (
             cooldownSeconds > 0 ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-ds-surface-1 border border-ds-warning/40 text-ds-warning ds-text-small font-medium">
@@ -326,7 +331,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
             <button
               type="submit"
               disabled={updatePasswordMutation.isPending}
-              className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-opacity ds-focus-ring"
+              className={`${isAddMode ? 'w-[132px]' : 'w-[169px]'} h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-opacity ds-focus-ring`}
             >
               <span className="text-white ds-text-body-1 whitespace-nowrap">
                 {updatePasswordMutation.isPending
@@ -337,7 +342,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
           ) : (
             <div
               data-property-1="Disabled"
-              className="h-[36px] px-4 py-1.5 bg-ds-surface-1 rounded-full flex justify-center items-center gap-2 cursor-not-allowed select-none border border-ds-border/40"
+              className={`${isAddMode ? 'w-[132px]' : 'w-[169px]'} h-[36px] px-4 py-1.5 bg-ds-surface-1 rounded-full flex justify-center items-center gap-2 cursor-not-allowed select-none border border-ds-border/40`}
             >
               <span className="text-ds-text-muted ds-text-body-1 whitespace-nowrap">
                 {isAddMode ? "Add password" : "Change password"}
@@ -346,14 +351,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
           )}
         </div>
 
-        {/* Footer Note - Only in Change mode */}
-        {!isAddMode && (
-          <div className="pt-8 pb-4 w-full flex justify-center">
-            <p className="ds-text-meta text-ds-text-muted text-center max-w-[500px] m-0">
-              Note: Changing your password will log you out of all other sessions on all devices for your protection.
-            </p>
-          </div>
-        )}
+
       </form>
     </div>
   );

@@ -7,6 +7,7 @@ import { companyService } from "@/services/organization.service";
 interface CompanyAccountData {
   email: string;
   phone: string | null;
+  countryCode?: string | null;
   isDeactivated: boolean;
   companyName: string;
   entityType: "COMPANY" | "INSTITUTION";
@@ -29,6 +30,7 @@ export function useCompanyAccountSettings() {
   const data: CompanyAccountData = {
     email: rawData?.email || '',
     phone: rawData?.phone || null,
+    countryCode: rawData?.countryCode || null,
     isDeactivated: rawData?.isDeactivated || false,
     companyName: activeProfile?.name || "Company",
     entityType,

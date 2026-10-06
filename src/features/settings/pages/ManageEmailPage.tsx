@@ -42,7 +42,7 @@ export function ManageEmailPage() {
   };
 
   return (
-    <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-4 select-none">
+    <div className="w-full h-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-4 select-none">
       {/* Header */}
       <div className="self-stretch inline-flex justify-start items-center gap-2.5 shrink-0">
         <button
@@ -134,8 +134,8 @@ export function ManageEmailPage() {
       )}
 
       {/* Footer Note */}
-      <div className="self-stretch flex-1 p-4 rounded-xl flex flex-col justify-end items-center mt-auto">
-        <p className="self-stretch text-center text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4 m-0">
+      <div className="self-stretch flex-1 flex flex-col justify-end items-center pb-[90px]">
+        <p className="text-center text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4 m-0 max-w-[648px] w-full">
           Note: Verification ensures that you own the new email address. After updating, all notifications and login requests will be sent to the new address. Your old email will no longer be associated with this Cocpit account.
         </p>
       </div>

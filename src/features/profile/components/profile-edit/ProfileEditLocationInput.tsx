@@ -7,7 +7,7 @@ import {
   searchPlaces,
   getPlaceDetails,
 } from "@/services/api/location";
-import { POPULAR_LOCATIONS, StaticLocation, searchStaticLocations } from "@/data/staticLocations";
+import { POPULAR_LOCATIONS, STATIC_LOCATIONS, StaticLocation, searchStaticLocations } from "@/data/staticLocations";
 import { useDebounce } from "@/hooks/use-debounce";
 import { v4 as uuidv4 } from "uuid";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ interface ProfileEditLocationInputProps {
   className?: string;
   allowedCountryCodes?: string[];
   disabled?: boolean;
+  isGlobal?: boolean;
 }
 
 type DisplaySuggestion =
@@ -39,6 +40,7 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
   className,
   allowedCountryCodes = DEFAULT_ALLOWED_COUNTRIES,
   disabled = false,
+  isGlobal = false,
 }) => {
   const [query, setQuery] = useState(value ?? "");
   const [open, setOpen] = useState(false);
@@ -95,7 +97,7 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
           trimmed,
           sessionToken.current,
           allowedCountryCodes,
-          false
+          isGlobal
         );
         if (!cancelled) {
           setApiSuggestions(results || []);
@@ -136,8 +138,9 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
   // Build unified suggestions list
   const displaySuggestions: DisplaySuggestion[] = React.useMemo(() => {
     const trimmed = query.trim();
+    const staticBase = isGlobal ? STATIC_LOCATIONS : POPULAR_LOCATIONS;
     if (trimmed.length < 2) {
-      return POPULAR_LOCATIONS.map((d) => ({
+      return staticBase.map((d) => ({
         kind: "static",
         data: d,
         lineText: formatStaticLine(d),
@@ -185,7 +188,7 @@ export const ProfileEditLocationInput: React.FC<ProfileEditLocationInputProps> =
         const details = await getPlaceDetails(
           suggestion.placeId,
           sessionToken.current,
-          false
+          isGlobal
         );
         resetSession();
         const formatted =

@@ -137,7 +137,7 @@ export function ManagePasswordPage() {
           
           {/* Current Password */}
           <div className="flex flex-col gap-2 w-full">
-            <label className="text-[14px] font-medium text-black">Current password</label>
+            <label className="text-[14px] font-medium text-black">Enter your current password</label>
             <div className="relative w-full">
               <input 
                 type={showCurrent ? "text" : "password"} 
@@ -254,12 +254,7 @@ export function ManagePasswordPage() {
 
         </div>
 
-        {/* Footer Note */}
-        <div className="mt-auto pt-16 pb-4 w-full flex justify-center">
-          <p className="text-[12px] font-normal text-[#9CA3AF] text-center">
-            Note: Changing your password will log you out of all other sessions on all devices for your protection.
-          </p>
-        </div>
+
 
       </div>
     </div>

@@ -6,6 +6,7 @@ export interface AccountData {
   primaryEmail?: string;
   recoveryEmail?: string;
   phone?: string | null;
+  countryCode?: string | null;
   hasCompanyAccount?: boolean;
   isDeactivated?: boolean;
   hasPassword?: boolean;
@@ -129,7 +130,7 @@ export function useResetLinkStatus() {
 
 export function useSetPhone() {
   return useMutation({
-    mutationFn: async (data: { phone: string }) => {
+    mutationFn: async (data: { countryCode: string; phone: string }) => {
       const response = await api.post('/settings/account/phone', data);
       return response.data;
     },

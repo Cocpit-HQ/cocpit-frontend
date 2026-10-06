@@ -65,7 +65,7 @@ export function ManagePhonePage() {
               <button
                 type="button"
                 onClick={() => setModalMode('add')}
-                className="h-[36px] px-4 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-secondary hover:text-ds-text-primary rounded-full inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
+                className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring"
               >
                 <span className="text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
                   Add phone number
@@ -80,7 +80,7 @@ export function ManagePhonePage() {
                 Phone number
               </div>
               <div className="text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 break-all">
-                {phoneNumber}
+                {`${accountData?.countryCode || ''} ${phoneNumber}`.trim()}
               </div>
             </div>
             <div className="self-stretch inline-flex justify-end items-center gap-3 pt-1">

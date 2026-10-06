@@ -19,6 +19,7 @@ interface LocationAutocompleteProps {
   value: string | null;
   mode?: "legacy" | "places";
   allowedCountryCodes?: string[];
+  isGlobal?: boolean;
 }
 
 type DisplaySuggestion =
@@ -37,11 +38,12 @@ function staticToStructured(loc: StaticLocation): StructuredLocation {
   };
 }
 
-export default function LocationAutocomplete({ onSelect, value, allowedCountryCodes }: LocationAutocompleteProps) {
+export default function LocationAutocomplete({ onSelect, value, allowedCountryCodes, isGlobal }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value ?? "");
   // "idle" = showing popular static cities; "searching" = user typed, use API
   const [mode, setMode] = useState<"idle" | "searching">("idle");
   const [staticSuggestions] = useState<StaticLocation[]>(() => {
+    if (isGlobal) return POPULAR_LOCATIONS; // When global, just show the popular ones without filtering
     if (!allowedCountryCodes) return POPULAR_LOCATIONS;
     const codeMap: Record<string, string> = { "India": "in", "United Arab Emirates": "ae", "Singapore": "sg", "Japan": "jp" };
     return POPULAR_LOCATIONS.filter(l => allowedCountryCodes.includes(codeMap[l.country]));
@@ -84,7 +86,7 @@ export default function LocationAutocomplete({ onSelect, value, allowedCountryCo
     const fetch = async () => {
       setLoading(true);
       try {
-        const results = await searchPlaces(debouncedQuery, sessionToken.current, allowedCountryCodes);
+        const results = await searchPlaces(debouncedQuery, sessionToken.current, allowedCountryCodes, isGlobal);
         if (!cancelled) setApiSuggestions(results);
       } catch {
         if (!cancelled) {
@@ -149,7 +151,7 @@ export default function LocationAutocomplete({ onSelect, value, allowedCountryCo
     setLoading(true);
     setOpen(false);
     try {
-      const details = await getPlaceDetails(suggestion.placeId, sessionToken.current);
+      const details = await getPlaceDetails(suggestion.placeId, sessionToken.current, isGlobal);
       resetSession();
       if (details) {
         onSelect(details);

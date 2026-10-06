@@ -2,8 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2 } from 'lucide-react';
-import { useSetPhone, useConfirmPhone } from '@/features/settings/hooks/useAccountSettings';
+import { CheckCircle2, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { useAccountSettings, useSetPhone, useConfirmPhone } from '@/features/settings/hooks/useAccountSettings';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -16,6 +22,15 @@ interface ManagePhoneModalProps {
 
 export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: ManagePhoneModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
+  const { data: accountData } = useAccountSettings();
+  const [countryCode, setCountryCode] = useState('+91');
+
+  useEffect(() => {
+    if (accountData?.countryCode) {
+      setCountryCode(accountData.countryCode);
+    }
+  }, [accountData?.countryCode]);
+
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -78,7 +93,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
       }
 
       setPhoneMutation.mutate(
-        { phone },
+        { countryCode, phone },
         {
           onSuccess: () => {
             setStep(2);
@@ -124,7 +139,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
     setCountdown(30);
     setErrorMsg('');
     setPhoneMutation.mutate(
-      { phone },
+      { countryCode, phone },
       {
         onError: (err: any) => {
           setErrorMsg(err?.response?.data?.message || 'Failed to resend verification code');
@@ -148,25 +163,52 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
         role="dialog"
         aria-modal="true"
         aria-labelledby="manage-phone-modal-title"
-        className="w-80 p-3 bg-ds-bg border border-ds-border rounded-2xl flex flex-col justify-start items-center gap-4 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 select-none"
+        className="w-[316px] min-h-[220px] p-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col justify-between items-center shadow-2xl animate-in fade-in zoom-in-95 duration-200 select-none"
       >
-        <div className="self-stretch flex flex-col justify-start items-center gap-2">
+        <div className="self-stretch flex flex-col justify-start items-center gap-1">
           <h2 id="manage-phone-modal-title" className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 m-0 text-center">
             {step === 1 ? 'Enter your phone number' : 'Verify your phone number'}
           </h2>
           <p className="self-stretch text-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 m-0">
             {step === 1
-              ? "Enter a valid phone number. You'll need to verify it before the change is applied"
-              : `A 6-digit verification code has been sent to ${phone}`}
+              ? "Enter a valid number. We'll send a verification code to confirm it"
+              : `A 6-digit verification code has been sent to ${countryCode} ${phone}`}
           </p>
 
           {step === 1 ? (
-            <div className="self-stretch py-2 flex flex-col justify-start items-start gap-2">
+            <div className="self-stretch py-1 flex flex-col justify-start items-start gap-1.5">
               <label htmlFor="phone-input" className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
                 Phone number
               </label>
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch pb-1 border-b border-ds-border flex justify-between items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="flex items-center gap-1 bg-transparent border-none outline-none text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 p-0 cursor-pointer">
+                        <ChevronDown className="w-4 h-4 text-ds-text-primary" />
+                        {countryCode}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent 
+                      className="z-[10000] w-auto min-w-[204px] min-h-[80px] !bg-[#030303] !border !border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-center gap-3 shadow-2xl !outline-none !ring-0" 
+                      style={{ backgroundColor: '#030303', borderColor: '#2C2C33' }}
+                      align="start" 
+                      sideOffset={8}
+                    >
+                      <DropdownMenuItem 
+                        className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
+                        onClick={() => setCountryCode('+91')}
+                      >
+                        India (+91)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
+                        onClick={() => setCountryCode('+971')}
+                      >
+                        United Arab Emirates (+971)
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <input
                     id="phone-input"
                     type="tel"
@@ -179,7 +221,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !getIsDisabled()) handleNext();
                     }}
-                    placeholder="+91 1234567890"
+                    placeholder="1234567890"
                     className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0"
                   />
                 </div>
@@ -194,7 +236,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
               </div>
             </div>
           ) : (
-            <div className="self-stretch py-2 flex flex-col justify-start items-start gap-2">
+            <div className="self-stretch py-1 flex flex-col justify-start items-start gap-1.5">
               <label htmlFor="code-input" className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
                 Enter code
               </label>
@@ -259,7 +301,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
           )}
         </div>
 
-        <div className="w-full inline-flex justify-center items-center gap-2 pt-1">
+        <div className="w-full inline-flex justify-center items-center gap-2 pt-0">
           <button
             type="button"
             onClick={handleNext}

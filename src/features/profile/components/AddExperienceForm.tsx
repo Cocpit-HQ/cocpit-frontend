@@ -1352,6 +1352,7 @@ export default function AddExperienceForm({
       <Label className={labelStyles}>Location</Label>
       <LocationAutocomplete
         value={location}
+        isGlobal={true}
         onSelect={(val) => {
           if (!val) {
             setLocation("");

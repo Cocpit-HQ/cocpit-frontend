@@ -981,6 +981,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
               <Label className={labelStyles}>Location</Label>
               <LocationAutocomplete
                 value={formData.location}
+                isGlobal={true}
                 onSelect={(val) => {
                   let locStr = "";
                   if (!val) {

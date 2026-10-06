@@ -598,6 +598,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
             <div className="w-[300px] flex-none">
               <ProfileEditLocationInput
                 value={formData.location}
+                isGlobal={true}
                 onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
                 className="w-[300px]"
               />
@@ -652,6 +653,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
             <div className="w-full max-w-[640px]">
               <ProfileEditLocationInput
                 value={formData.location}
+                isGlobal={true}
                 onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
                 className="w-full max-w-[640px]"
               />

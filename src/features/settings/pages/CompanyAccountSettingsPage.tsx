@@ -65,8 +65,8 @@ export function CompanyAccountSettingsPage() {
               </p>
             </div>
             {/* Right button */}
-            <Link href={`${basePath}/account-password`} className="shrink-0">
-              <button className="min-w-[140px] sm:min-w-[169px] h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors whitespace-nowrap">
+            <Link href={`${basePath}/account-password`} className="shrink-0 w-full sm:w-auto">
+              <button className="w-full sm:w-auto h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors whitespace-nowrap">
                 <span className="text-ds-text-primary group-hover:text-white text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center transition-colors whitespace-nowrap">
                   Reset password
                 </span>
@@ -84,8 +84,8 @@ export function CompanyAccountSettingsPage() {
                 {isLoading ? 'Loading...' : primaryEmail ? `Current: ${primaryEmail}` : 'Manage organization email'}
               </p>
             </div>
-            <Link href={`${basePath}/account-email`} className="shrink-0">
-              <button className="min-w-[140px] sm:min-w-[169px] h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors whitespace-nowrap">
+            <Link href={`${basePath}/account-email`} className="shrink-0 w-full sm:w-auto">
+              <button className="w-full sm:w-auto h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors whitespace-nowrap">
                 <span className="text-ds-text-primary group-hover:text-white text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center transition-colors whitespace-nowrap">
                   Change email
                 </span>
@@ -100,11 +100,11 @@ export function CompanyAccountSettingsPage() {
                 Organization phone
               </span>
               <p className="text-ds-text-secondary text-[14px] font-normal font-['DM_Sans'] leading-[20px] m-0 truncate">
-                {isLoading ? 'Loading...' : hasPhone ? phoneNumber : 'No phone number'}
+                {isLoading ? 'Loading...' : hasPhone ? `${accountData?.countryCode || ''} ${phoneNumber}`.trim() : 'No phone number'}
               </p>
             </div>
-            <Link href={`${basePath}/account-phone`} className="shrink-0">
-              <button className="min-w-[140px] sm:min-w-[169px] h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors whitespace-nowrap">
+            <Link href={`${basePath}/account-phone`} className="shrink-0 w-full sm:w-auto">
+              <button className="w-full sm:w-auto h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors whitespace-nowrap">
                 <span className="text-ds-text-primary group-hover:text-white text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center transition-colors whitespace-nowrap">
                   {hasPhone ? 'Change phone number' : 'Add phone number'}
                 </span>
@@ -135,7 +135,7 @@ export function CompanyAccountSettingsPage() {
             {/* Right button */}
             <button
               onClick={handleOpenLogout}
-              className="min-w-[107px] h-[36px] px-3 py-1.5 gap-[8px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors shrink-0 whitespace-nowrap"
+              className="w-full sm:w-auto h-[36px] px-3 py-1.5 gap-[8px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors shrink-0 whitespace-nowrap"
             >
               <LogOut className="w-[16px] h-[16px] text-ds-text-primary shrink-0" />
               <span className="text-ds-text-primary group-hover:text-white text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center transition-colors whitespace-nowrap">
@@ -162,7 +162,7 @@ export function CompanyAccountSettingsPage() {
             {/* Right button */}
             <button
               onClick={handleOpenDeactivate}
-              className="min-w-[107px] h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors shrink-0 whitespace-nowrap"
+              className="w-full sm:w-auto h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] border border-ds-border hover:border-ds-border/80 flex flex-row justify-center items-center group transition-colors shrink-0 whitespace-nowrap"
             >
               <span className="text-ds-text-primary group-hover:text-white text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center transition-colors whitespace-nowrap">
                 {isDeactivated ? 'Reactivate' : 'Deactivate'}
@@ -186,7 +186,7 @@ export function CompanyAccountSettingsPage() {
             {/* Right button */}
             <button
               onClick={handleOpenDelete}
-              className="min-w-[107px] h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] bg-ds-error hover:bg-ds-error/90 flex flex-row justify-center items-center group transition-colors shrink-0 whitespace-nowrap"
+              className="w-full sm:w-auto h-[36px] px-3 py-1.5 gap-[10px] rounded-[100px] bg-ds-error hover:bg-ds-error/90 flex flex-row justify-center items-center group transition-colors shrink-0 whitespace-nowrap"
             >
               <span className="text-white text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center whitespace-nowrap">
                 Delete

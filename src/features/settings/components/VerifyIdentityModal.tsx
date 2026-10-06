@@ -204,7 +204,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-[100px] flex justify-center items-center gap-2.5 transition-opacity cursor-pointer"
+                  className="w-[94px] h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-[100px] flex justify-center items-center gap-2.5 transition-opacity cursor-pointer"
                 >
                   <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                     Continue
@@ -213,7 +213,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="h-[36px] w-24 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-[94px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                     Cancel
@@ -280,7 +280,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="h-[36px] w-20 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-white/[0.06] flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-[94px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-white/[0.06] flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                     Cancel
