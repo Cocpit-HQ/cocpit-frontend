@@ -14,6 +14,9 @@ export function useUserReports() {
   const query = useQuery({
     queryKey: USER_REPORTS_QUERY_KEY,
     queryFn: () => getUserReports(),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   return {

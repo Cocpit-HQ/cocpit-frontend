@@ -18,6 +18,10 @@ export interface ReportListItem {
     title: string;
     status: string;
     statusLabel: string;
+    postType?: string | null;
+    mediaType?: string | null;
+    imageUrl?: string | null;
+    videoUrl?: string | null;
 }
 
 export interface ReportDetail extends ReportListItem {

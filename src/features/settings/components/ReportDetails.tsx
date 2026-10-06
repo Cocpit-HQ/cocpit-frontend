@@ -43,7 +43,7 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
             Content type
           </div>
           <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
-            {report.type || report.targetType || 'Profile'}
+            {report.postType ? (report.postType.charAt(0).toUpperCase() + report.postType.slice(1).toLowerCase()) : (report.type || report.targetType || 'Profile')}
           </div>
         </div>
         <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">

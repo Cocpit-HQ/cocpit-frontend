@@ -33,35 +33,51 @@ export function YourReportsEmptyState() {
   );
 }
 
-function getReportIcon(type: string = '', title: string = '', reason: string = '') {
-  const tUpper = type.toUpperCase();
-  const combined = `${type} ${title} ${reason}`.toLowerCase();
+function renderReportThumbnail(item: ReportListItem) {
+  const postType = (item.postType || item.mediaType || '').toLowerCase();
+  const targetType = (item.targetType || item.type || '').toUpperCase();
+  const combined = `${item.targetType || ''} ${item.type || ''} ${item.title || ''} ${item.reason || ''} ${item.postType || ''}`.toLowerCase();
 
-  // 1. Profile / User
+  // 1. Profile / User / Company
   if (
-    tUpper === 'USER' ||
-    tUpper === 'PROFILE' ||
-    tUpper === 'COMPANY' ||
+    targetType === 'USER' ||
+    targetType === 'PROFILE' ||
+    targetType === 'COMPANY' ||
     combined.includes('profile') ||
     combined.includes('fake account') ||
     combined.includes('impersonat')
   ) {
-    return <ReportProfileIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />;
+    return (
+      <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
+        <ReportProfileIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />
+      </div>
+    );
   }
 
   // 2. Poll
-  if (tUpper === 'POLL' || combined.includes('poll')) {
-    return <CommentPollIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />;
+  if (postType === 'poll' || combined.includes('poll')) {
+    return (
+      <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
+        <CommentPollIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />
+      </div>
+    );
   }
 
   // 3. Article
-  if (tUpper === 'ARTICLE' || combined.includes('article')) {
-    return <CommentArticleIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />;
+  if (postType === 'article' || combined.includes('article')) {
+    return (
+      <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
+        <CommentArticleIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />
+      </div>
+    );
   }
 
-  // 4. Default: All other posts (text, image, video, comment, thought)
-  // Per instruction: instead of thumbnail use that text/media icon for image and video post also, else poll article and text are same
-  return <CommentMediaIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />;
+  // 4. Video, image, and all other reported content -> show image icon (no thumbnail)
+  return (
+    <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
+      <CommentMediaIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />
+    </div>
+  );
 }
 
 function formatDate(dateStr?: string) {
@@ -89,12 +105,8 @@ export function YourReportsTab({ reports, onSelectReport }: YourReportsTabProps)
           onClick={() => onSelectReport(item.id)}
           className="w-full pb-4 border-b border-ds-border last:border-b-0 last:pb-0 flex justify-start items-center gap-4 cursor-pointer group"
         >
-          {/* Left 76x76 icon box — Figma: #1A1A20, 12px radius, no border */}
-          <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex flex-col justify-center items-center overflow-hidden shrink-0">
-            <div className="size-8 relative overflow-hidden flex items-center justify-center">
-              {getReportIcon(item.targetType || item.type, item.title, item.reason)}
-            </div>
-          </div>
+          {/* Left 76x76 icon / media box */}
+          {renderReportThumbnail(item)}
 
           {/* Right Details */}
           <div className="flex-1 min-w-0 flex flex-col justify-center items-start gap-1.5">
