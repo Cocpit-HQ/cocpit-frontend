@@ -109,7 +109,7 @@ export function TagsActivityTab({ data, removedItemIds, onRemove }: TagsActivity
           {/* Post Content */}
           {item.type === 'media' && item.imageUrl ? (
             <div className="w-full inline-flex justify-start items-center gap-4">
-              <div className="w-20 h-20 rounded-[8px] overflow-hidden shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center">
+              <div className="w-[76px] h-[76px] rounded-[8px] overflow-hidden shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center">
                 <img
                   className="w-full h-full object-cover"
                   src={item.imageUrl}

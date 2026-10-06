@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { Folder, ChevronLeft, Pencil, Trash2, Bookmark, Loader2 } from 'lucide-react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Folder, ChevronLeft, Loader2 } from 'lucide-react';
+import { Icon } from '@/components/icons';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 import { useSavedFolders, SAVED_FOLDERS_QUERY_KEY } from '../hooks/useSavedFolders';
 import { CreateFolderModal } from '../components/CreateFolderModal';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
@@ -11,7 +13,7 @@ import { mapProfilePostToPost } from '@/lib/mappers/profile.mapper';
 import { useQueryClient } from '@tanstack/react-query';
 import { SavedFolder, Post } from '@/types/entities';
 import { toast } from 'sonner';
-
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 export function SavedSettingsPage() {
   const router = useRouter();
   const pathname = usePathname() || '/settings/saved';
@@ -19,10 +21,28 @@ export function SavedSettingsPage() {
   const basePath = match ? match[1] : '/settings';
 
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const folderIdParam = searchParams.get('folderId');
 
   const { folders, isLoading: isLoadingFolders } = useSavedFolders();
 
   const [selectedFolder, setSelectedFolder] = useState<SavedFolder | { folder_id: string; name: string; post_count?: number; cover_image?: string } | null>(null);
+
+  // Sync selectedFolder with URL param
+  useEffect(() => {
+    if (folderIdParam) {
+      if (folderIdParam === 'all') {
+        setSelectedFolder({ folder_id: 'all', name: 'General' });
+      } else {
+        const found = folders?.find((f: SavedFolder) => f.folder_id === folderIdParam);
+        if (found) {
+          setSelectedFolder(found);
+        }
+      }
+    } else {
+      setSelectedFolder(null);
+    }
+  }, [folderIdParam, folders]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
@@ -78,6 +98,12 @@ export function SavedSettingsPage() {
     }
   };
 
+  const handlePostClick = (postId: string) => {
+    saveScrollPosition('saved', postId);
+    router.push(`/post/${postId}`);
+  };
+
+
   // Delete folder handler
   const handleDeleteFolder = async () => {
     if (!selectedFolder || selectedFolder.folder_id === 'all') return;
@@ -88,7 +114,7 @@ export function SavedSettingsPage() {
       queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY });
       toast.success("Collection deleted successfully");
       setIsDeleteModalOpen(false);
-      setSelectedFolder(null);
+      router.push(pathname);
     } catch (error) {
       console.error("Failed to delete folder", error);
       toast.error("Failed to delete collection");
@@ -108,7 +134,7 @@ export function SavedSettingsPage() {
       <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 text-ds-text-primary">
         {/* Top Back Bar */}
         <div
-          onClick={() => setSelectedFolder(null)}
+          onClick={() => router.push(pathname)}
           className="self-stretch flex justify-start items-center gap-2.5 cursor-pointer group py-1"
         >
           <ChevronLeft className="size-5 text-ds-text-primary group-hover:-translate-x-0.5 transition-transform" />
@@ -119,19 +145,6 @@ export function SavedSettingsPage() {
           {/* Collection Header */}
           <div className="self-stretch p-2 border-b border-ds-border flex justify-between items-center w-full">
             <div className="flex justify-start items-center gap-4 min-w-0">
-              <div className="size-10 flex justify-center items-center shrink-0">
-                {/* Image code removed/commented out since collections do not have images */}
-                {/* {selectedFolder.cover_image ? (
-                  <img
-                    src={selectedFolder.cover_image}
-                    alt={selectedFolder.name}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
-                )} */}
-                <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
-              </div>
               <div className="flex flex-col justify-start items-start gap-1 min-w-0">
                 <span className="text-ds-text-primary text-base font-semibold leading-6 truncate">
                   {selectedFolder.name}
@@ -144,22 +157,22 @@ export function SavedSettingsPage() {
 
             {/* Folder Actions (Edit & Delete for custom folders) */}
             {isCustomFolder && (
-              <div className="flex justify-start items-center gap-3">
+              <div className="flex justify-start items-center gap-4">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(true)}
-                  className="size-8 rounded-full flex items-center justify-center hover:bg-ds-surface-2 text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
+                  className="text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
                   title="Edit collection"
                 >
-                  <Pencil className="size-4" />
+                  <Icon name="profile-edit" className="size-5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsDeleteModalOpen(true)}
-                  className="size-8 rounded-full flex items-center justify-center hover:bg-ds-surface-2 text-ds-error hover:opacity-80 transition-opacity cursor-pointer"
+                  className="text-ds-error hover:opacity-80 transition-opacity cursor-pointer"
                   title="Delete collection"
                 >
-                  <Trash2 className="size-4" />
+                  <Icon name="trash" className="size-5" />
                 </button>
               </div>
             )}
@@ -177,10 +190,12 @@ export function SavedSettingsPage() {
               </div>
             ) : (
               posts.map((post) => {
-                const postImage = post.imageSrc || post.images?.[0];
+                const postImage = post.videoSrc || post.imageSrc || post.images?.[0];
+                const isVideo = !!post.videoSrc || (postImage && typeof postImage === 'string' && postImage.toLowerCase().match(/\.(mp4|mov|webm)$/i));
                 const rawText = post.content || (post as any).articleBody || (post as any).title || (post as any).caption || '';
                 const cleanText = rawText
                   ? rawText
+                      .replace(/@\[(.*?)\]\([^)]+\)/g, '@$1')
                       .replace(/<[^>]*>?/gm, ' ')
                       .replace(/&nbsp;/g, ' ')
                       .replace(/&amp;/g, '&')
@@ -206,21 +221,23 @@ export function SavedSettingsPage() {
                         onClick={() => post.authorId && router.push(`/profile/${post.authorId}`)}
                         className="flex justify-start items-center gap-1.5 cursor-pointer group min-w-0"
                       >
-                        <img
-                          src={
-                            post.authorAvatar ||
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || 'User')}`
-                          }
-                          alt={post.author}
-                          className="size-8 rounded-full object-cover shrink-0"
-                        />
+                        <Avatar className="size-8 rounded-full shrink-0">
+                          <AvatarImage
+                            src={(post.authorAvatar && post.authorAvatar !== "null") ? post.authorAvatar : ""}
+                            alt={post.author}
+                            className="object-cover"
+                          />
+                          <AvatarFallback />
+                        </Avatar>
                         <div className="flex flex-col justify-center items-start min-w-0">
-                          <span className="text-ds-text-primary text-base font-semibold leading-6 group-hover:underline truncate">
+                          <span className="text-ds-text-primary text-base font-semibold leading-6 truncate">
                             {post.author}
                           </span>
-                          <span className="text-ds-text-muted text-[10px] font-normal leading-3 truncate">
-                            {post.authorHeadline || 'Designer'}
-                          </span>
+                          {post.authorHeadline && (
+                            <span className="text-ds-text-muted text-[10px] font-normal leading-3 truncate">
+                              {post.authorHeadline}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -231,22 +248,39 @@ export function SavedSettingsPage() {
                         className="p-1 hover:opacity-80 transition-opacity cursor-pointer text-ds-accent shrink-0"
                         title="Remove from saved"
                       >
-                        <Bookmark className="size-4 fill-ds-accent text-ds-accent" />
+                        <Icon name="save-filled" className="size-5 text-current" />
                       </button>
                     </div>
 
                     {/* Post Content & Media */}
                     {hasImage ? (
                       <div
-                        onClick={() => router.push(`/post/${post.id}`)}
+                        onClick={() => handlePostClick(post.id)}
                         className="self-stretch flex justify-start items-center gap-4 cursor-pointer group w-full"
                       >
-                        <div className="size-20 bg-ds-surface-2 rounded-xl border border-ds-border overflow-hidden shrink-0">
-                          <img
-                            src={postImage}
-                            alt="Post attachment"
-                            className="size-full object-cover group-hover:scale-105 transition-transform"
-                          />
+                        <div className="relative w-[76px] h-[76px] bg-ds-surface-2 rounded-xl border border-ds-border overflow-hidden shrink-0">
+                          {isVideo ? (
+                            <>
+                              <video
+                                src={postImage}
+                                className="size-full object-cover group-hover:scale-105 transition-transform"
+                                preload="metadata"
+                                muted
+                                playsInline
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-colors">
+                                <div className="size-8 rounded-full bg-black/50 flex items-center justify-center border border-white/20">
+                                  <Icon name="play" className="size-4 text-white ml-0.5" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <img
+                              src={postImage}
+                              alt="Post attachment"
+                              className="size-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          )}
                         </div>
                         {hasText && (
                           <div className="flex-1 flex flex-col justify-start items-start min-w-0">
@@ -258,7 +292,7 @@ export function SavedSettingsPage() {
                       </div>
                     ) : hasText ? (
                       <div
-                        onClick={() => router.push(`/post/${post.id}`)}
+                        onClick={() => handlePostClick(post.id)}
                         className="self-stretch cursor-pointer group w-full"
                       >
                         <p className="text-ds-text-primary text-sm font-normal leading-5 line-clamp-3 group-hover:text-white transition-colors">
@@ -332,12 +366,7 @@ export function SavedSettingsPage() {
       <div className="self-stretch py-2 flex justify-between items-center w-full gap-4">
         {/* General Folder */}
         <div
-          onClick={() =>
-            setSelectedFolder({
-              folder_id: 'all',
-              name: 'General',
-            })
-          }
+          onClick={() => router.push(`${pathname}?folderId=all`)}
           className="flex justify-start items-center gap-4 cursor-pointer group"
         >
           <div className="size-10 flex justify-center items-center shrink-0">
@@ -378,7 +407,7 @@ export function SavedSettingsPage() {
             {folders.map((folder: SavedFolder) => (
               <div
                 key={folder.folder_id}
-                onClick={() => setSelectedFolder(folder)}
+                onClick={() => router.push(`${pathname}?folderId=${folder.folder_id}`)}
                 className="py-2 flex justify-start items-center gap-4 cursor-pointer group hover:bg-ds-surface-1/40 rounded-xl px-2 transition-colors"
               >
                 <div className="size-10 flex justify-center items-center shrink-0">

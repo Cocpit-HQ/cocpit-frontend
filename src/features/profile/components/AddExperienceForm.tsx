@@ -991,8 +991,8 @@ export default function AddExperienceForm({
             valid = false
           } else {
             const endDate = buildDate(role.endMonth, role.endYear)
-            if (endDate <= startDate) {
-              roleErrors.endDate = "End date must be after start date"
+            if (endDate < startDate) {
+              roleErrors.endDate = "End date must be on or after start date"
               valid = false
             }
           }

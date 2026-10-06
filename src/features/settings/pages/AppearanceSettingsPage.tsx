@@ -108,7 +108,13 @@ export function AppearanceSettingsPage() {
                 {/* Left content: Icon + Title & Description */}
                 <div className="flex justify-start items-center gap-4">
                   <div className="size-5 relative overflow-hidden flex items-center justify-center shrink-0">
-                    <IconComponent className="size-5 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors" />
+                    <IconComponent 
+                      className={`size-5 transition-colors ${
+                        isSelected 
+                          ? 'text-ds-text-primary' 
+                          : 'text-ds-text-secondary group-hover:text-ds-text-primary'
+                      }`} 
+                    />
                   </div>
                   <div className="inline-flex flex-col justify-center items-start">
                     <div className="justify-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 transition-colors">
