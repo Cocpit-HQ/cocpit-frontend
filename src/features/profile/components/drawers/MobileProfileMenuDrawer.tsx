@@ -55,18 +55,16 @@ export const MobileProfileMenuDrawer: React.FC<MobileProfileMenuDrawerProps> = (
               Share profile
             </button>
 
-            {isProfileComplete && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onDownloadProfile();
-                }}
-                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-              >
-                Download profile
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onDownloadProfile();
+              }}
+              className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+            >
+              Download profile
+            </button>
           </div>
         </Drawer.Content>
       </Drawer.Portal>

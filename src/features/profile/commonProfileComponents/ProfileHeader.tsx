@@ -574,33 +574,19 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                             <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy profile</span>
                                             <Icon icon="solar:copy-outline" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
                                         </DropdownMenuItem>
-                                        <TooltipProvider>
-                                            <Tooltip delayDuration={200}>
-                                                <TooltipTrigger asChild>
-                                                    <div className="w-full">
-                                                        <DropdownMenuItem
-                                                            onClick={(e) => {
-                                                                if (profileScore < 100 || isDownloadingResume) {
-                                                                    e.preventDefault();
-                                                                    return;
-                                                                }
-                                                                handleDownloadResume();
-                                                            }}
-                                                            className={`flex items-center justify-between px-3 py-1.5 cursor-pointer rounded-xl outline-none group transition-colors ${(profileScore < 100 || isDownloadingResume) ? 'opacity-50 cursor-default' : 'focus:bg-[#EEF2FF] focus:text-[#6366F1]'}`}
-                                                            title="" // Removed native title in favor of Tooltip component
-                                                        >
-                                                            <span className={`text-sm font-medium text-foreground ${!(profileScore < 100 || isDownloadingResume) && 'group-focus:text-[#6366F1]'}`}>{isDownloadingResume ? 'Downloading...' : 'Download profile'}</span>
-                                                            <Icon icon="mynaui:download" className={`w-6 h-6 text-black transition-colors ${!(profileScore < 100 || isDownloadingResume) && 'group-focus:text-[#6366F1]'}`} style={{ strokeWidth: '1.5px' }} />
-                                                        </DropdownMenuItem>
-                                                    </div>
-                                                </TooltipTrigger>
-                                                {profileScore < 100 && (
-                                                    <TooltipContent side="left" align="center" className="bg-[#1C202B] text-white text-[13px] font-medium border-none rounded-md px-3 py-2 shadow-md">
-                                                        Profile must be 100% complete to download
-                                                    </TooltipContent>
-                                                )}
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                if (isDownloadingResume) {
+                                                    e.preventDefault();
+                                                    return;
+                                                }
+                                                handleDownloadResume();
+                                            }}
+                                            className={`flex items-center justify-between px-3 py-1.5 cursor-pointer rounded-xl outline-none group transition-colors ${isDownloadingResume ? 'opacity-50 cursor-default' : 'focus:bg-[#EEF2FF] focus:text-[#6366F1]'}`}
+                                        >
+                                            <span className={`text-sm font-medium text-foreground ${!isDownloadingResume && 'group-focus:text-[#6366F1]'}`}>{isDownloadingResume ? 'Downloading...' : 'Download profile'}</span>
+                                            <Icon icon="mynaui:download" className={`w-6 h-6 text-black transition-colors ${!isDownloadingResume && 'group-focus:text-[#6366F1]'}`} style={{ strokeWidth: '1.5px' }} />
+                                        </DropdownMenuItem>
 
                                     </>
                                 ) : (

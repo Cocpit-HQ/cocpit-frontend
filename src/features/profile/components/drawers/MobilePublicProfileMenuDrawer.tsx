@@ -164,15 +164,13 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
               View resume
             </button>
 
-            {Number(profileScore) >= 100 && (
-              <button
-                type="button"
-                onClick={closeAnd(onDownloadProfile)}
-                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-              >
-                Download profile
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={closeAnd(onDownloadProfile)}
+              className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+            >
+              Download profile
+            </button>
 
             <button
               type="button"

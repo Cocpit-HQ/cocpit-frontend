@@ -294,24 +294,22 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none w-[135px]"
+                className="p-[12px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[16px] flex flex-col justify-start items-start gap-[16px] overflow-hidden shadow-2xl z-50 outline-none w-[135px] h-[82px] box-border"
                 align="end"
                 sideOffset={8}
               >
                 <DropdownMenuItem
                   onClick={handleDefaultShare}
-                  className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  className="!p-0 !m-0 justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] w-[82px] flex-none order-0 grow-0"
                 >
                   Share profile
                 </DropdownMenuItem>
-                {Number(completionPercentage) >= 100 && (
-                  <DropdownMenuItem
-                    onClick={handleDefaultDownload}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                  >
-                    Download profile
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  onClick={handleDefaultDownload}
+                  className="!p-0 !m-0 justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] w-[109px] flex-none order-1 grow-0"
+                >
+                  Download profile
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
