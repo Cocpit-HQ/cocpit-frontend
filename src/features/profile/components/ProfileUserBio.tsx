@@ -162,12 +162,12 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
 
         {/* Website */}
         {website && (
-          <div className="max-w-full min-w-0 w-full">
+          <div className="max-w-full min-w-0 flex justify-start">
             <a
               href={websiteHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="profile-website-link block truncate max-w-full justify-start text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:underline cursor-pointer transition-colors"
+              className="profile-website-link inline-block truncate max-w-full text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:underline cursor-pointer transition-colors"
             >
               {displayWebsite || website}
             </a>

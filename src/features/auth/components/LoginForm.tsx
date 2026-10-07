@@ -384,6 +384,16 @@ const LoginForm = () => {
         </div>
       )}
 
+      {/* Account Deleted Alert */}
+      {reason === "account_deleted" && (
+        <div className="w-full sm:w-[260px] p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary mb-4">
+          <AlertCircleIcon className="w-4 h-4 text-ds-warning shrink-0 mt-0.5" />
+          <p className="text-ds-text-primary">
+            Your account will be scheduled for deletion. You can recover it within 40 days using the link sent to your email
+          </p>
+        </div>
+      )}
+
       {/* Deactivated Alert */}
       {reason === "deactivated" && (
         <div className="w-full sm:w-64 p-3 bg-ds-surface-1 border border-ds-border rounded-xl flex items-start gap-2 text-xs text-ds-text-secondary">

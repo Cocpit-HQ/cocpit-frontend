@@ -145,7 +145,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
             step === 1
               ? "w-full max-w-[340px] px-4 py-2 border-0 bg-transparent shadow-none"
               : step === 2
-              ? "w-full max-w-[680px] px-4 py-2 border-0 bg-transparent shadow-none"
+              ? "w-full max-w-[712px] px-4 py-2 border-0 bg-transparent shadow-none"
               : "p-6 bg-ds-surface-2 border border-ds-border rounded-2xl shadow-2xl w-[380px] max-w-[95vw]"
           )}
         >
@@ -175,8 +175,22 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                     >
                       <div className="flex justify-start items-center gap-6">
                         {/* Circular Icon Disc */}
-                        <div className="w-12 h-12 rounded-full border border-ds-border bg-gradient-to-b from-[#222228] to-[#121217] flex justify-center items-center shrink-0 shadow-sm">
-                          <option.icon className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
+                        <div className="relative w-12 h-12 shrink-0 flex justify-center items-center rounded-full">
+                          {/* Gradient border wrapper — always-on diagonal conic ring */}
+                          <div
+                            className="absolute inset-0 rounded-full p-[1px]"
+                            style={{
+                              background: "conic-gradient(from 345deg at 50% 50%, rgba(255,255,255,0.04) 0deg, rgba(255,255,255,0.7) 60deg, rgba(255,255,255,0.04) 120deg, rgba(255,255,255,0.01) 180deg, rgba(255,255,255,0.6) 240deg, rgba(255,255,255,0.04) 300deg, rgba(255,255,255,0.04) 360deg)"
+                            }}
+                          >
+                            {/* Inner black container */}
+                            <div className="w-full h-full rounded-full bg-black flex justify-center items-center">
+                              <option.icon 
+                                className="w-5 h-5 text-white" 
+                                strokeWidth={1.5} 
+                              />
+                            </div>
+                          </div>
                         </div>
                         <span className="justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
                           {option.label}

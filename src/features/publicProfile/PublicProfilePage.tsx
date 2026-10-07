@@ -597,7 +597,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                         View resume
                       </DropdownMenuItem>
 
-                      {user?.profile_score?.score === 100 && (
+                      {Number(user?.profile_score?.score) >= 100 && (
                         <DropdownMenuItem
                           onClick={handleDownloadProfile}
                           className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"

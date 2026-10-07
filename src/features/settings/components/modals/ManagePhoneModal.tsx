@@ -73,11 +73,12 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
   // SSR guard: No extra re-render cycle via useState(mounted)
   if (!isOpen || typeof document === 'undefined') return null;
 
-  const isPhoneValid = phone.replace(/\D/g, '').length >= 10;
+  const requiredLength = countryCode === '+971' ? 9 : 10;
+  const isPhoneValid = phone.length === requiredLength;
   const isCodeValid = code.length === 6;
 
   const getIsDisabled = () => {
-    if (step === 1) return !isPhoneValid || setPhoneMutation.isPending;
+    if (step === 1) return !phone || setPhoneMutation.isPending;
     if (step === 2) return !isCodeValid || confirmPhoneMutation.isPending;
     return false;
   };
@@ -86,9 +87,8 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
     setErrorMsg('');
 
     if (step === 1) {
-      const digitCount = phone.replace(/\D/g, '').length;
-      if (digitCount < 10) {
-        setErrorMsg('Please enter a valid phone number.');
+      if (phone.length !== requiredLength) {
+        setErrorMsg(`Please enter a valid ${requiredLength}-digit phone number.`);
         return;
       }
 
@@ -197,13 +197,19 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     >
                       <DropdownMenuItem 
                         className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
-                        onClick={() => setCountryCode('+91')}
+                        onClick={() => {
+                          setCountryCode('+91');
+                          setErrorMsg('');
+                        }}
                       >
                         India (+91)
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
-                        onClick={() => setCountryCode('+971')}
+                        onClick={() => {
+                          setCountryCode('+971');
+                          setErrorMsg('');
+                        }}
                       >
                         United Arab Emirates (+971)
                       </DropdownMenuItem>
@@ -214,14 +220,16 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     type="tel"
                     autoFocus
                     value={phone}
+                    maxLength={requiredLength}
                     onChange={(e) => {
-                      setPhone(e.target.value);
+                      const numericValue = e.target.value.replace(/\D/g, '');
+                      setPhone(numericValue);
                       if (errorMsg) setErrorMsg('');
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !getIsDisabled()) handleNext();
                     }}
-                    placeholder="1234567890"
+                    placeholder={countryCode === '+971' ? '123456789' : '1234567890'}
                     className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0"
                   />
                 </div>

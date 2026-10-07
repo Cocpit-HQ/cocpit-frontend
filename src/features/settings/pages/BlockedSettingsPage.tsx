@@ -3,7 +3,7 @@
 import React, { useState, useCallback, memo } from 'react';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { BlockIcon } from '@/components/icons';
+import { BlockIcon, UserIcon } from '@/components/icons';
 import { useBlockedUsers, BlockedUser } from '../hooks/useBlockedUsers';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 
@@ -27,8 +27,8 @@ const BlockedUserRow = memo(({ user, onUnblock }: BlockedUserRowProps) => {
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-ds-surface-1 border border-ds-border flex items-center justify-center ds-text-small text-ds-text-primary font-medium shrink-0">
-            {user.name?.charAt(0) || 'U'}
+          <div className="w-8 h-8 rounded-full bg-ds-surface-1 border border-ds-border flex items-center justify-center shrink-0">
+            <UserIcon className="w-5 h-5 text-ds-text-secondary" />
           </div>
         )}
         <div className="inline-flex flex-col justify-center items-start min-w-0">

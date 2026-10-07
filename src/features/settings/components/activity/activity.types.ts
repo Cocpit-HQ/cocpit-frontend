@@ -7,6 +7,7 @@ export interface LikeActivityItem {
   content: string;
   type: 'media' | 'text' | 'poll';
   imageUrl?: string;
+  videoUrl?: string;
   pollQuestion?: string;
   pollMeta?: string;
 }
@@ -21,9 +22,10 @@ export interface CommentActivityItem {
   commenter: string;
   commenterAvatarUrl: string;
   commentText: string;
+  commentTextRaw?: string;
   likesCount: number;
   repliesCount: number;
-  mediaType: 'image' | 'video' | 'poll' | 'article' | 'text';
+  mediaType: 'image' | 'video' | 'poll' | 'article' | 'repost' | 'text';
   imageUrl?: string;
   videoUrl?: string;
 }
@@ -37,6 +39,7 @@ export interface TagActivityItem {
   content: string;
   type: 'media' | 'text' | 'poll';
   imageUrl?: string;
+  videoUrl?: string;
   pollQuestion?: string;
   pollMeta?: string;
 }

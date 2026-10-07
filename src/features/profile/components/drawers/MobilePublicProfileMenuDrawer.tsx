@@ -164,7 +164,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
               View resume
             </button>
 
-            {profileScore === 100 && (
+            {Number(profileScore) >= 100 && (
               <button
                 type="button"
                 onClick={closeAnd(onDownloadProfile)}

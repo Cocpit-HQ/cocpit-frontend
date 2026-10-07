@@ -169,8 +169,8 @@ export function extractPostMedia(item: any) {
     allTypeStrings.some((t) => t.includes('poll'))
   );
 
-  const pollQuestion = item.poll?.question || post.poll?.question || item.pollQuestion || (hasPoll ? (item.content || item.text) : undefined);
-  const pollMeta = hasPoll ? `${item.poll?.total_votes ?? post.poll?.total_votes ?? 0} votes • Poll closed` : undefined;
+  const pollQuestion = item.poll?.question || post.poll?.question || item.pollQuestion || item.postTitle || item.post_title || (hasPoll ? (item.content || item.text) : undefined);
+  const pollMeta = hasPoll ? `${item.poll?.total_votes ?? post.poll?.total_votes ?? item.votes ?? item.post?.votes ?? 0} votes • ${item.isPollActive || item.post?.isPollActive ? 'Poll active' : 'Poll closed'}` : undefined;
 
   const isArticle = Boolean(
     allTypeStrings.some((t) => t.includes('article')) ||
@@ -195,8 +195,61 @@ export function extractPostMedia(item: any) {
     String(item.comment || item.commentText || '').toLowerCase().includes('article')
   );
 
-  let mediaType: 'image' | 'video' | 'poll' | 'article' | 'text' = 'text';
-  if (hasPoll) {
+  const isRepost = Boolean(
+    allTypeStrings.some((t) => t.includes('repost') || t.includes('share') || t.includes('quote')) ||
+    post.is_repost ||
+    item.is_repost ||
+    metadata.is_repost ||
+    post.isRepost ||
+    item.isRepost ||
+    post.repost_id ||
+    item.repost_id ||
+    item.activity_type === 'repost' ||
+    post.shared_post ||
+    post.shared_post_id ||
+    post.sharedPost ||
+    item.shared_post_id ||
+    item.sharedPostId ||
+    item.is_shared ||
+    item.isShared ||
+    post.is_shared ||
+    post.isShared ||
+    post.quoted_post ||
+    item.quoted_post_id ||
+    metadata.shared_post_id ||
+    metadata.repost_id ||
+    post.original_post_id ||
+    item.original_post_id ||
+    post.originalPostId ||
+    item.originalPostId ||
+    post.parent_post_id ||
+    item.parent_post_id ||
+    post.parentPostId ||
+    item.parentPostId ||
+    post.is_quote ||
+    item.is_quote ||
+    post.isQuote ||
+    item.isQuote ||
+    item.type === 'quote' ||
+    post.type === 'quote' ||
+    post.is_reposted ||
+    item.is_reposted ||
+    metadata.is_reposted ||
+    post.is_reposted_with_thoughts ||
+    item.is_reposted_with_thoughts ||
+    metadata.is_reposted_with_thoughts ||
+    post.rePostCount > 0 ||
+    item.rePostCount > 0 ||
+    String(item.action).toUpperCase() === 'REPOST' ||
+    String(item.action).toUpperCase() === 'SHARE_POST' ||
+    String(post.action).toUpperCase() === 'REPOST' ||
+    String(post.action).toUpperCase() === 'SHARE_POST'
+  );
+
+  let mediaType: 'image' | 'video' | 'poll' | 'article' | 'repost' | 'text' = 'text';
+  if (isRepost) {
+    mediaType = 'repost';
+  } else if (hasPoll) {
     mediaType = 'poll';
   } else if (isArticle) {
     mediaType = 'article';
@@ -342,6 +395,7 @@ export function resolveCommentPostData(item: any, index: number = 0): CommentAct
     commenter,
     commenterAvatarUrl,
     commentText: cleanActivityText(commentText),
+    commentTextRaw: commentText,
     likesCount: item.likes ?? item.likesCount ?? item.like_count ?? 0,
     repliesCount: item.replies ?? item.repliesCount ?? item.reply_count ?? 0,
     mediaType: media.mediaType,

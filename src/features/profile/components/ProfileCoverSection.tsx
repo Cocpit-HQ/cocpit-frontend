@@ -294,7 +294,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none w-[135px] h-[82px]"
+                className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none w-[135px]"
                 align="end"
                 sideOffset={8}
               >
@@ -304,12 +304,14 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
                 >
                   Share profile
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleDefaultDownload}
-                  className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                >
-                  Download profile
-                </DropdownMenuItem>
+                {Number(completionPercentage) >= 100 && (
+                  <DropdownMenuItem
+                    onClick={handleDefaultDownload}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                  >
+                    Download profile
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </>
@@ -324,6 +326,7 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
           onContactInfo={() => onContactInfo?.()}
           onShareProfile={handleDefaultShare}
           onDownloadProfile={handleDefaultDownload}
+          isProfileComplete={Number(completionPercentage) >= 100}
         />
       )}
 

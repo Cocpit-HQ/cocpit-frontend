@@ -2,14 +2,14 @@
 
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { LikeFilledIcon, LikeIcon } from '@/components/icons';
+import { LikeFilledIcon, LikeIcon, UserIcon } from '@/components/icons';
 import { LikeActivityItem } from './activity.types';
 import { extractPostMedia, cleanActivityText } from './activityUtils';
 
 interface LikesActivityTabProps {
   data?: any[];
   removedItemIds: Set<string | number>;
-  onRemove: (e: React.MouseEvent, id: string | number) => void;
+  onRemove: (e: React.MouseEvent, id: string | number, postId?: string) => void;
 }
 
 export function LikesEmptyState() {
@@ -46,8 +46,9 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
           role: item.role || item.author?.headline || 'Designer',
           avatarUrl: item.avatarUrl || item.author?.avatarUrl || item.author?.avatar || '',
           content: cleanActivityText(item.content || item.text || item.post?.content || item.post?.text || ''),
-          type: (media.hasPoll ? 'poll' : media.thumbnailUrl ? 'media' : 'text') as 'media' | 'text' | 'poll',
+          type: (media.hasPoll ? 'poll' : (media.thumbnailUrl || media.videoUrl) ? 'media' : 'text') as 'media' | 'text' | 'poll',
           imageUrl: media.thumbnailUrl,
+          videoUrl: media.videoUrl,
           pollQuestion: cleanActivityText(media.pollQuestion || item.content),
           pollMeta: media.pollMeta,
         };
@@ -81,15 +82,15 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
                   alt={item.user}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-ds-surface-2 border border-ds-border text-ds-text-primary ds-text-small font-semibold flex items-center justify-center shrink-0">
-                  {(item.user || '?').charAt(0).toUpperCase()}
+                <div className="w-8 h-8 rounded-full bg-ds-surface-1 border border-ds-border text-ds-text-primary flex items-center justify-center shrink-0">
+                  <UserIcon className="w-full h-full p-1.5" />
                 </div>
               )}
               <div className="inline-flex flex-col justify-center items-start">
                 <span className="text-ds-text-primary ds-text-body-2 leading-6 group-hover:text-ds-text-primary">
                   {item.user}
                 </span>
-                <span className="text-ds-text-secondary ds-text-meta leading-3">
+                <span className="text-ds-text-secondary ds-text-meta leading-3 line-clamp-1">
                   {item.role}
                 </span>
               </div>
@@ -98,7 +99,7 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
             {/* Unlike / Heart Icon Button with accessible hit area */}
             <button
               type="button"
-              onClick={(e) => onRemove(e, item.id)}
+              onClick={(e) => onRemove(e, item.id, item.postId ? String(item.postId) : undefined)}
               className="min-w-[36px] min-h-[36px] flex items-center justify-center text-ds-accent transition-transform hover:scale-110 active:scale-95 cursor-pointer bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-md"
               aria-label="Unlike post"
             >
@@ -107,15 +108,27 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
           </div>
 
           {/* Post Content based on type */}
-          {item.type === 'media' && item.imageUrl ? (
+          {item.type === 'media' && (item.imageUrl || item.videoUrl) ? (
             <div className="w-full inline-flex justify-start items-center gap-4">
-              <div className="w-[76px] h-[76px] rounded-[8px] overflow-hidden shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center">
-                <img
-                  className="w-full h-full object-cover"
-                  src={item.imageUrl}
-                  alt="Thumbnail"
-                />
-              </div>
+              {item.videoUrl || (item.imageUrl && item.imageUrl.match(/\.(mp4|webm|mov)(\?|#|$)/i)) ? (
+                <div className="w-[76px] h-[76px] rounded-[8px] overflow-hidden shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center">
+                  <video
+                    className="w-full h-full object-cover pointer-events-none"
+                    src={`${item.videoUrl || item.imageUrl}#t=0.001`}
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
+                </div>
+              ) : (
+                <div className="w-[76px] h-[76px] rounded-[8px] overflow-hidden shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center">
+                  <img
+                    className="w-full h-full object-cover"
+                    src={item.imageUrl}
+                    alt="Thumbnail"
+                  />
+                </div>
+              )}
               <div className="flex-1 self-stretch inline-flex flex-col justify-start items-start gap-2 min-w-0">
                 <p className="w-full text-ds-text-primary ds-text-secondary leading-5 line-clamp-4 break-words">
                   {item.content}

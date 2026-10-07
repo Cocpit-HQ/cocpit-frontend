@@ -34,15 +34,15 @@ export function useActivityLogs(tab: ActivityTab, companyId?: string) {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: number | string) => {
+    mutationFn: async (params: { id: number | string; postId?: string }) => {
       // "Likes" removal goes through the feed's like-toggle endpoint, not
       // the generic activity-removal endpoint the other two tabs use.
       if (tab === "Likes") {
-        await feedApi.toggleLike(id as string, companyId);
+        await feedApi.toggleLike(params.id as string, companyId);
       } else {
-        await removeActivity(REMOVE_TYPE[tab], id, companyId);
+        await removeActivity(REMOVE_TYPE[tab], params.id, companyId, params.postId);
       }
-      return id;
+      return params.id;
     },
     onSuccess: (id) => {
       queryClient.setQueryData<any[]>(activityLogsQueryKey(tab, companyId), (prev) =>

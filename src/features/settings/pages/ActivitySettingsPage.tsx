@@ -45,10 +45,10 @@ export function ActivitySettingsPage() {
   }, [queryClient]);
 
   const handleRemove = useCallback(
-    (e: React.MouseEvent, id: number | string) => {
+    (e: React.MouseEvent, id: number | string, postId?: string) => {
       e.stopPropagation();
       setRemovedItemIds((prev) => new Set(prev).add(id));
-      removeActivity(id);
+      removeActivity({ id, postId });
     },
     [removeActivity]
   );
