@@ -6,6 +6,7 @@ import "./newGlobal.css"; // New design system — typography, motion, spacing t
 
 import Providers from "@/components/layout/providers";
 import { GlobalToast } from "@/shared/commonComponents/GlobalToast";
+import { GlobalBrandMark } from "@/shared/commonComponents/GlobalBrandMark";
 import MobileUnsupported from "@/components/shared/MobileUnsupported";
 
 const geistSans = Geist({
@@ -137,6 +138,7 @@ export default function RootLayout({
           </div>
           */}
           <GlobalToast />
+          <GlobalBrandMark />
         </Providers>
       </body>
     </html>

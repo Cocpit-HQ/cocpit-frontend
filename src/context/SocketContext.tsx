@@ -8,7 +8,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { toast as sonnerToast } from 'sonner';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
-import Avatar from '@/components/shared/Avatar';
+// import Avatar from '@/components/shared/Avatar'; // Commented out as per manager message: toasts show simple text only without profile avatar (SCRUM-113 / SCRUM-873)
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotificationSettings, NOTIFICATION_SETTINGS_QUERY_KEY } from '@/features/settings/hooks/useNotificationSettings';
 import type { NotificationPreferences } from '@/services/api/settings';
@@ -357,6 +357,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               }}
             >
+              {/* Commented out as per manager message: show only text simple, no profile avatar in toast (SCRUM-113 / SCRUM-873)
               {payload.senderAvatar && (
                 <Avatar
                   name={payload.senderName || "Someone"}
@@ -364,6 +365,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                   size="sm"
                 />
               )}
+              */}
               <span className="text-sm">
                 {payload.text || `You have a message from ${payload.senderName || "someone"}`}
               </span>
@@ -376,8 +378,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const senderAvatar = payload.senderAvatar || (payload as any).actor_avatar;
         let notifText = payload.text || `${senderName} interacted with your post`;
         
-        if (senderName && senderName !== 'Someone') {
-            notifText = notifText.replace(new RegExp('^"?' + senderName.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '"?\\s*', 'i'), '').trim();
+        // Ensure notifText includes the sender's name if stripped or missing
+        if (senderName && senderName !== 'Someone' && !notifText.toLowerCase().includes(senderName.toLowerCase())) {
+          notifText = `${senderName} ${notifText}`;
         }
         const postId = payload.referenceId || (payload as any).reference_id || payload.metadata?.post_id;
 
@@ -395,6 +398,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               }}
             >
+              {/* Commented out as per manager message: show only text simple, no profile avatar in toast (SCRUM-113 / SCRUM-873)
               {senderAvatar && (
                 <Avatar
                   name={senderName}
@@ -402,6 +406,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                   size="sm"
                 />
               )}
+              */}
               <span className="text-sm">{notifText}</span>
             </div>
           ),
@@ -427,6 +432,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => router.push(navigateTo)}
             >
+              {/* Commented out as per manager message: show only text simple, no profile avatar in toast (SCRUM-113 / SCRUM-873)
               {companyAvatar && (
                 <Avatar
                   name={companyName}
@@ -434,6 +440,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                   size="sm"
                 />
               )}
+              */}
               <span className="text-sm">{notifText}</span>
             </div>
           ),

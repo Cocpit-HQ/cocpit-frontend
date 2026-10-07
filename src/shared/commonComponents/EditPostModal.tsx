@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Loader2, Image as ImageIcon, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
-import { CocpitLogoIcon } from '@/components/icons';
 import { Post, PostVisibility } from '@/types/entities';
 import { postApi } from '@/features/feed/api/post.api';
 import { getPostById, deletePost as apiDeletePost } from '@/services/api/posts';
@@ -787,11 +786,6 @@ export function EditPostModal({
             />
           </svg>
         </button>
-
-        {/* Bottom-Right Cocpit Logo Watermark */}
-        <div className="fixed bottom-6 right-6 z-[160] pointer-events-none opacity-80">
-          <CocpitLogoIcon className="w-7 h-7" fill="#FFFFFF" />
-        </div>
 
         {/* Scrollable Main Edit Post Body (Fix: Keep Save bar fixed at bottom while post content scrolls and hide visible scrollbar track) */}
         <div className="flex-1 w-full overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col items-center pt-[60px] pb-[24px]">

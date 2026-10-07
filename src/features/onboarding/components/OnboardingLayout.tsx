@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { CloseCrossIcon, CocpitLogoIcon, LeftArrowIcon } from "@/components/icons";
+import { CloseCrossIcon, LeftArrowIcon } from "@/components/icons";
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -83,19 +82,6 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       {/* Center Content Area */}
       <div className="w-full flex items-center justify-center z-10 flex-1 sm:flex-none sm:my-auto pt-[104px] sm:pt-0 pb-6 sm:pb-0 overflow-y-auto sm:overflow-visible">
         {children}
-      </div>
-
-      {/* Company Logo Mark */}
-      <div className={`absolute ${showBack ? "hidden sm:block" : "block"} left-6 top-8 sm:left-auto sm:top-auto sm:right-[40px] sm:bottom-[40px] z-20 pointer-events-auto`}>
-        <Link
-          href="https://cocpit.in"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Cocpit"
-          className="block relative text-ds-text-primary hover:opacity-80 transition-opacity"
-        >
-          <CocpitLogoIcon className="w-[27px] h-[30px]" fill="currentColor" />
-        </Link>
       </div>
 
       {/* Confirmation Popup */}

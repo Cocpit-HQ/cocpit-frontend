@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { CloseCrossIcon, CocpitLogoIcon } from "@/components/icons";
+import { CloseCrossIcon } from "@/components/icons";
 import { AuthSidebarLinks } from "@/features/auth";
 
 interface SignUpLayoutProps {
@@ -55,19 +54,6 @@ export const SignUpLayout: React.FC<SignUpLayoutProps> = ({
           <AuthSidebarLinks isMobile />
         </div>
       )}
-
-      {/* Company Logo Mark (Mobile: Top-Left, Tablet/Desktop: Bottom-Right) */}
-      <div className="absolute top-10 left-6 sm:fixed sm:top-auto sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-10 pointer-events-auto">
-        <Link
-          href="https://cocpit.in"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Cocpit"
-          className="block relative text-ds-text-primary hover:opacity-80 transition-opacity"
-        >
-          <CocpitLogoIcon className="w-[27px] h-[30px]" />
-        </Link>
-      </div>
     </main>
   );
 };

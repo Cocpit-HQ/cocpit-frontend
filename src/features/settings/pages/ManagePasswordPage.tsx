@@ -163,39 +163,41 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
       >
         {/* Current Password - Only in Change mode */}
         {!isAddMode && (
-          <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
-            <label className="text-left text-ds-text-secondary ds-text-small-1">
-              Enter your current password
-            </label>
-            <div className="self-stretch inline-flex justify-between items-center gap-2">
-              <input
-                type={showCurrent ? "text" : "password"}
-                value={currentPassword}
-                onChange={(e) => {
-                  setCurrentPassword(e.target.value);
-                  if (errorMsg === "Current password is incorrect") setErrorMsg('');
-                }}
-                placeholder="Current password"
-                autoComplete="current-password"
-                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
-                  !showCurrent && currentPassword ? "tracking-[2px]" : ""
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrent(!showCurrent)}
-                aria-label={showCurrent ? "Hide current password" : "Show current password"}
-                className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
-              >
-                {showCurrent ? (
-                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-                ) : (
-                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-                )}
-              </button>
+          <div className="self-stretch flex flex-col justify-start items-start">
+            <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+              <label className="text-left text-ds-text-secondary ds-text-small-1">
+                Enter your current password
+              </label>
+              <div className="self-stretch inline-flex justify-between items-center gap-2">
+                <input
+                  type={showCurrent ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    if (errorMsg === "Current password is incorrect") setErrorMsg('');
+                  }}
+                  placeholder="Current password"
+                  autoComplete="current-password"
+                  className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
+                    !showCurrent && currentPassword ? "tracking-[2px]" : ""
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrent(!showCurrent)}
+                  aria-label={showCurrent ? "Hide current password" : "Show current password"}
+                  className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
+                >
+                  {showCurrent ? (
+                    <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                  ) : (
+                    <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                  )}
+                </button>
+              </div>
             </div>
             {errorMsg === "Current password is incorrect" && (
-              <span className="ds-text-small text-ds-error">
+              <span className="ds-text-small text-ds-error pt-1">
                 Current password is incorrect.
               </span>
             )}
@@ -203,80 +205,84 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
         )}
 
         {/* New Password */}
-        <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
-          <label className="text-left text-ds-text-secondary ds-text-small-1">
-            New password
-          </label>
-          <div className="self-stretch inline-flex justify-between items-center gap-2">
-            <input
-              type={showNew ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                if (errorMsg === "New password must be different from current password.") setErrorMsg('');
-              }}
-              placeholder="New password"
-              maxLength={15}
-              autoComplete="new-password"
-              className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
-                !showNew && newPassword ? "tracking-[2px]" : ""
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew(!showNew)}
-              aria-label={showNew ? "Hide new password" : "Show new password"}
-              className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
-            >
-              {showNew ? (
-                <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-              ) : (
-                <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-              )}
-            </button>
+        <div className="self-stretch flex flex-col justify-start items-start">
+          <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+            <label className="text-left text-ds-text-secondary ds-text-small-1">
+              New password
+            </label>
+            <div className="self-stretch inline-flex justify-between items-center gap-2">
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (errorMsg === "New password must be different from current password.") setErrorMsg('');
+                }}
+                placeholder="New password"
+                maxLength={15}
+                autoComplete="new-password"
+                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
+                  !showNew && newPassword ? "tracking-[2px]" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                aria-label={showNew ? "Hide new password" : "Show new password"}
+                className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
+              >
+                {showNew ? (
+                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                ) : (
+                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                )}
+              </button>
+            </div>
           </div>
           {!isAddMode && currentPassword && newPassword && newPassword === currentPassword && (
-            <span className="ds-text-small text-ds-error">
+            <span className="ds-text-small text-ds-error pt-1">
               New password must be different from current password.
             </span>
           )}
         </div>
 
         {/* Confirm new password */}
-        <div className="self-stretch pb-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
-          <label className="text-left text-ds-text-secondary ds-text-small-1">
-            Confirm new password
-          </label>
-          <div className="self-stretch inline-flex justify-between items-center gap-2">
-            <input
-              type={showConfirm ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (errorMsg === "Passwords do not match.") setErrorMsg('');
-              }}
-              placeholder="Confirm password"
-              maxLength={15}
-              autoComplete="new-password"
-              className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
-                !showConfirm && confirmPassword ? "tracking-[2px]" : ""
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm(!showConfirm)}
-              aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
-              className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
-            >
-              {showConfirm ? (
-                <EyeIcon className="w-4 h-4 shrink-0" size={16} />
-              ) : (
-                <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
-              )}
-            </button>
+        <div className="self-stretch flex flex-col justify-start items-start">
+          <div className="self-stretch pb-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+            <label className="text-left text-ds-text-secondary ds-text-small-1">
+              Confirm new password
+            </label>
+            <div className="self-stretch inline-flex justify-between items-center gap-2">
+              <input
+                type={showConfirm ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errorMsg === "Passwords do not match.") setErrorMsg('');
+                }}
+                placeholder="Confirm password"
+                maxLength={15}
+                autoComplete="new-password"
+                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
+                  !showConfirm && confirmPassword ? "tracking-[2px]" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                className="w-4 h-4 inline-flex justify-center items-center text-ds-text-muted hover:text-ds-text-primary transition-colors cursor-pointer shrink-0"
+              >
+                {showConfirm ? (
+                  <EyeIcon className="w-4 h-4 shrink-0" size={16} />
+                ) : (
+                  <EyeOffIcon className="w-4 h-4 shrink-0" size={16} />
+                )}
+              </button>
+            </div>
           </div>
           {confirmPassword && newPassword && confirmPassword !== newPassword && (
-            <span className="ds-text-small text-ds-error">
+            <span className="ds-text-small text-ds-error pt-1">
               Passwords do not match.
             </span>
           )}

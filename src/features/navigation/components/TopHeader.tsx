@@ -19,12 +19,6 @@ export function TopHeader({ className }: TopHeaderProps) {
       {/* Full-width top background bar to seamlessly occlude scrolling feed across the entire screen */}
       <div className="fixed top-0 left-0 sm:left-[220px] right-0 h-[100px] bg-ds-bg z-40 pointer-events-none" />
 
-      {/* Cocpit Logo (Bottom Right) */}
-      <div className="fixed bottom-4 md:bottom-8 lg:bottom-[40px] right-4 md:right-8 lg:right-[40px] flex items-center h-[40px] pointer-events-auto z-50">
-        <Link href="/feed">
-          <Icon name="cocpit-logo" className="text-ds-text-primary hover:opacity-80 transition-opacity" width={110} height={32} />
-        </Link>
-      </div>
 
       {/* Center Search Column (View Port Perspective Center) */}
       <FeatureGuard featureKey="enableGlobalSearch" mode="silent">
