@@ -28,7 +28,7 @@ export function DeactivateAccountModal({ isOpen, onClose }: DeactivateAccountMod
         router.push('/?reason=deactivated');
       },
       onError: (err: any) => {
-        setErrorMsg(err?.response?.data?.message || 'Failed to deactivate account');
+        setErrorMsg('incorrect password');
       }
     });
   };
@@ -49,29 +49,38 @@ export function DeactivateAccountModal({ isOpen, onClose }: DeactivateAccountMod
         </div>
 
         {/* Input Wrapper */}
-        <div className="flex flex-col justify-center items-start w-[278px] py-[8px] px-0 gap-[10px] border-b border-ds-border z-[1] shrink-0">
-          <label className="ds-text-small-1 text-ds-text-secondary text-left shrink-0 m-0 p-0 leading-[16px]">
-            Enter code
-          </label>
-          <div className="flex flex-row justify-between items-center w-full h-[20px] gap-[10px] p-0 shrink-0">
-            <input
-              type={showPassword ? "text" : "password"}
-              className="flex-1 w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary text-left m-0 shrink-0 leading-[20px] placeholder:text-transparent"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none p-0 m-0 flex items-center justify-center bg-transparent border-none cursor-pointer w-[16px] h-[16px] shrink-0"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <Eye className="w-full h-full" />
-              ) : (
-                <EyeOff className="w-full h-full" />
-              )}
-            </button>
+        <div className="flex flex-col w-[278px] gap-[4px] z-[1] shrink-0">
+          <div className={`flex flex-col justify-center items-start w-full py-[8px] px-0 border-b ${errorMsg ? 'border-ds-error' : 'border-ds-border'}`}>
+            <div className="flex flex-row justify-between items-center w-full h-[20px] gap-[10px] p-0 shrink-0">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="flex-1 w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary text-left m-0 shrink-0 leading-[20px] placeholder:text-ds-text-muted"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errorMsg) setErrorMsg('');
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none p-0 m-0 flex items-center justify-center bg-transparent border-none cursor-pointer w-[16px] h-[16px] shrink-0"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <Eye className="w-full h-full" />
+                ) : (
+                  <EyeOff className="w-full h-full" />
+                )}
+              </button>
+            </div>
+          </div>
+          {/* Supporting Area */}
+          <div className="ds-supporting-area min-h-[16px] w-full flex items-start">
+            {errorMsg && (
+              <span className="ds-text-small text-ds-error m-0 p-0 leading-[16px]">{errorMsg}</span>
+            )}
           </div>
         </div>
 
@@ -81,11 +90,10 @@ export function DeactivateAccountModal({ isOpen, onClose }: DeactivateAccountMod
             type="button"
             onClick={handleDeactivate}
             disabled={!password || deactivateMutation.isPending}
-            className={`flex flex-row justify-center items-center px-[12px] py-[6px] w-[106px] h-[36px] rounded-[100px] gap-[10px] shrink-0 transition-all ${
-              !password
-                ? 'bg-ds-accent/40 text-ds-text-primary/50 cursor-not-allowed'
+            className={`flex flex-row justify-center items-center px-[12px] py-[6px] w-[106px] h-[36px] rounded-[100px] gap-[10px] shrink-0 transition-all ${!password
+                ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                 : 'bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary'
-            }`}
+              }`}
           >
             {deactivateMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />

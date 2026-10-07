@@ -62,7 +62,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
         await hardLogout('account_deleted');
       },
       onError: (err: any) => {
-        setErrorMsg(err?.response?.data?.message || 'Failed to delete account');
+        setErrorMsg('incorrect password');
       }
     });
   };
@@ -181,23 +181,19 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           </div>
         )}
 
-        {errorMsg && (
-          <div className="w-full p-2 mb-2 rounded-lg bg-ds-error/10 border border-ds-error/20 text-ds-error ds-text-small text-center">
-            {errorMsg}
-          </div>
-        )}
-
-        <div className="flex flex-col items-start w-full gap-2">
-          <label className="ds-text-small-1 text-ds-text-secondary block">
-            Enter Password
-          </label>
-          <div className="flex flex-row justify-between items-center w-full gap-2.5 pb-[6px] border-b border-ds-border">
-            <input
-              type={showPassword ? "text" : "password"}
-              className="w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+        <div className="flex flex-col w-full gap-[4px] shrink-0">
+          <div className={`flex flex-col justify-center items-start w-full pb-[6px] px-0 border-b ${errorMsg ? 'border-ds-error' : 'border-ds-border'}`}>
+            <div className="flex flex-row justify-between items-center w-full gap-2.5 p-0 shrink-0">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errorMsg) setErrorMsg('');
+                }}
+              />
             {password && (
               <div className="flex items-center gap-2">
                 <button
@@ -214,6 +210,13 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
                 </button>
               </div>
             )}
+            </div>
+          </div>
+          {/* Supporting Area */}
+          <div className="ds-supporting-area min-h-[16px] w-full flex items-start">
+            {errorMsg && (
+              <span className="ds-text-small text-ds-error m-0 p-0 leading-[16px]">{errorMsg}</span>
+            )}
           </div>
         </div>
 
@@ -224,7 +227,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
             disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}
             className={`flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full transition-all ${
               isDeleteDisabled || !password
-                ? 'bg-ds-accent/40 text-ds-text-primary/50 cursor-not-allowed'
+                ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                 : 'bg-ds-accent hover:opacity-90 active:scale-95 shadow-sm text-ds-text-primary'
             }`}
           >
