@@ -1,15 +1,14 @@
 "use client"
 
 import React from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Home, Briefcase, Users, Plus, Sparkles, Calendar } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
-import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
+import { MobileProfileSwitcher } from "@/components/layout/MobileProfileSwitcher"
 import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
 import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
-import { Icon } from '@iconify/react'
+import { Icon } from "@/components/icons"
 import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { useUIStore } from "@/store/ui.store"
 
@@ -23,6 +22,7 @@ const NAV_ROUTES: Record<string, string> = {
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const { handleNavClick } = useNavigationMemoryLink()
   const { activeProfile, isCompany } = useActiveProfile()
   const { user } = useAuth()
@@ -36,28 +36,30 @@ export function MobileBottomNav() {
   const isActive = (route: string) => {
     if (!pathname) return false
 
+    // Normalize pathname to remove trailing slash for consistent matching
+    const normalizedPath = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+
     // Feed special case
-    if (route === "/feed" && pathname === "/") return true;
+    if (route === "/feed" && normalizedPath === "/") return true;
 
     // Exact match for organization profile to avoid highlighting on settings/events
     if (route.startsWith('/organization/') && !route.endsWith('/settings') && !route.endsWith('/events')) {
-      return pathname === route;
+      return normalizedPath === route;
     }
 
-    // Profile special case: only highlight for own profile and its sub-pages
-    // This prevents highlighting when viewing public profiles at /profile/[id]
+    // Profile special case: highlight when viewing any profile page
     if (route === "/profile") {
-      return pathname === "/profile" || pathname === "/profile/posts" || pathname.startsWith("/profile/edit");
+      return normalizedPath.toLowerCase().startsWith("/profile");
     }
 
     // Default behavior
-    return pathname.startsWith(route)
+    return normalizedPath.startsWith(route)
   }
 
-  const activeColor = "text-[#EC6229]" // Using the approved orange token for active states
+  const activeColor = "text-ds-accent" // Using the approved orange token for active states
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t bg-background/95 border-border backdrop-blur-md">
+    <nav className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t bg-ds-bg/95 border-ds-border backdrop-blur-md">
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3">
         {/* Home */}
         {isFeatureActive('enableFeedAccess') && (
@@ -66,18 +68,26 @@ export function MobileBottomNav() {
             onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/feed')}
             className="flex flex-col items-center justify-center flex-1"
           >
-            <Home className={`w-6 h-6 ${isActive("/feed") ? activeColor : "text-muted-foreground"}`} />
+            <Icon name="feed" className={`w-[22px] h-[22px] ${isActive("/feed") ? activeColor : "text-[#A1A1AA]"}`} />
           </Link>
         )}
 
-        {/* Jobs */}
-        {showJobs && (
+        {/* Network / Teams */}
+        {isCompany ? (
           <Link
-            href="/jobs"
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/jobs')}
+            href="/team"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
             className="flex flex-col items-center justify-center flex-1"
           >
-            <Briefcase className={`w-6 h-6 ${isActive("/jobs") ? activeColor : "text-muted-foreground"}`} />
+            <Icon name="connection" className={`w-[22px] h-[22px] ${isActive("/team") ? activeColor : "text-[#A1A1AA]"}`} />
+          </Link>
+        ) : (
+          <Link
+            href="/connections"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/connections')}
+            className="flex flex-col items-center justify-center flex-1"
+          >
+            <Icon name="connection" className={`w-[22px] h-[22px] ${isActive("/connections") ? activeColor : "text-[#A1A1AA]"}`} />
           </Link>
         )}
 
@@ -92,66 +102,60 @@ export function MobileBottomNav() {
               }
               setActiveModal('create-post');
             }}
-            className={`w-10 h-10 rounded-full flex items-center justify-center border border-border ${canCreatePost ? 'text-foreground' : 'text-muted-foreground opacity-50 cursor-default'}`}
+            className={`w-[44px] h-[32px] rounded-[10px] flex items-center justify-center border border-[#3F3F46] bg-transparent ${canCreatePost ? 'text-[#EC6229]' : 'text-muted-foreground opacity-50 cursor-default'}`}
             aria-label="Create Post"
           >
-            <Plus className="w-5 h-5" strokeWidth={2.5} />
+            <Icon name="plus" className="w-[20px] h-[20px]" />
           </button>
         </div>
 
-        {/* Network / Teams */}
-        {isCompany ? (
+        {/* Jobs */}
+        {showJobs && (
           <Link
-            href="/team"
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
+            href="/jobs"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/jobs')}
             className="flex flex-col items-center justify-center flex-1"
           >
-            <Users className={`w-6 h-6 ${isActive("/team") ? activeColor : "text-muted-foreground"}`} />
-          </Link>
-        ) : (
-          <Link
-            href="/connections"
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/connections')}
-            className="flex flex-col items-center justify-center flex-1"
-          >
-            <Users className={`w-6 h-6 ${isActive("/connections") ? activeColor : "text-muted-foreground"}`} />
+            <Icon name="jobs" className={`w-[22px] h-[22px] ${isActive("/jobs") ? activeColor : "text-[#A1A1AA]"}`} />
           </Link>
         )}
 
         {/* Profile */}
-        {isFeatureActive('enableProfileTab') && (
-          <div className="flex flex-col items-center justify-center flex-1">
-            {isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? (
-              <ProfileSwitcher
+        {isFeatureActive('enableProfileTab') && (() => {
+          const isProfActive = isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`));
+          const profileHref = activeProfile?.type === "COMPANY" ? `/organization/${activeProfile.slug}` : "/profile";
+          
+          return (
+            <div className="flex flex-col items-center justify-center flex-1">
+              <MobileProfileSwitcher
                 align="end"
                 customTrigger={
-                  <button className="flex flex-col items-center justify-center w-full">
-                    <div className={`relative w-7 h-7 rounded-full overflow-hidden border-2 border-[#EC6229]`}>
-                      <img
-                        src={activeProfile?.avatar_url || user?.image || undefined}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </button>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="flex flex-col items-center justify-center w-full focus-visible:outline-none cursor-pointer"
+                    onPointerDown={(e) => {
+                      if (!isProfActive) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    onClick={(e) => {
+                      if (!isProfActive) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleNavClick(e as any, profileHref);
+                        router.push(profileHref);
+                      }
+                    }}
+                  >
+                    <Icon name="profile" className={`w-[22px] h-[22px] ${isProfActive ? activeColor : "text-[#A1A1AA]"}`} />
+                  </div>
                 }
               />
-            ) : (
-              <Link
-                href={activeProfile?.type === "COMPANY" && activeProfile.slug ? `/organization/${activeProfile.slug}` : "/profile"}
-                className="flex flex-col items-center justify-center w-full"
-              >
-                <div className="w-7 h-7 rounded-full overflow-hidden border border-transparent">
-                  <img
-                    src={activeProfile?.avatar_url || user?.image || undefined}
-                    alt="Profile"
-                    className="w-full h-full object-cover opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all"
-                  />
-                </div>
-              </Link>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
       </div>
     </nav>
   )

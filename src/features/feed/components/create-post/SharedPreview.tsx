@@ -61,6 +61,7 @@ const SharedVideoPreview = ({ src }: { src: string }) => {
 const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clickable = true, showFollow, disableNavigation, onSeeMoreClick }: SharedPreviewProps) => {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   if (!sharedPost) return null;
 
@@ -132,8 +133,10 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
     || sharedUser?.profile_picture
     || sharedUser?.photo
     || sharedPost?.authorAvatar
+    || sharedPost?.author_avatar
     || sharedPost?.authorImg
-    || sharedPost?.image;
+    || sharedPost?.image
+    || sharedPost?.avatar_url;
 
   const sharedRole = sharedUser?.title
     || sharedUser?.role
@@ -259,6 +262,14 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
 
   const targetPostId = sharedPostId || sharedPost?.id || sharedPost?.post_id || sharedPost?._id || sharedPost?.postId;
 
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const targetSlug = sharedSlug || authorUserId;
+    if (targetSlug) {
+      router.push(isCompanyPost ? `/organization/${targetSlug}` : `/profile/${targetSlug}`);
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     if (!effectiveClickable) return;
     if ((e.target as HTMLElement).closest('button, a')) {
@@ -284,20 +295,26 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
       >
         {/* Author row */}
         <div className="flex flex-row items-center gap-[8px] w-full">
-          <div className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-[14px] overflow-hidden flex-shrink-0 font-dmsans select-none`}>
-            {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' ? (
+          <div 
+            onClick={handleProfileClick}
+            className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-[14px] overflow-hidden flex-shrink-0 font-dmsans select-none cursor-pointer`}
+          >
+            {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' && sharedAvatar !== 'null' && !avatarError ? (
               <img
                 className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 src={sharedAvatar}
                 alt={sharedName || 'avatar'}
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onError={() => setAvatarError(true)}
               />
             ) : (
               <UserIcon className="w-[60%] h-[60%] text-current" />
             )}
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-ds-text-primary text-[16px] font-semibold font-dmsans leading-[24px] truncate">
+            <span 
+              onClick={handleProfileClick}
+              className="text-ds-text-primary text-[16px] font-semibold font-dmsans leading-[24px] truncate cursor-pointer hover:underline"
+            >
               {sharedName || 'Unknown User'}
             </span>
             {sharedRole && (

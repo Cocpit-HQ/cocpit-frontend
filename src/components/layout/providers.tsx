@@ -13,7 +13,6 @@ import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 
 const THEME_BG_COLORS: Record<string, string> = {
   dark:  '#030303',
-  // navy:  '#030303',
   // light: '#FFF9F6',
 };
 
@@ -26,7 +25,7 @@ function ThemeColorSync() {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    const color = THEME_BG_COLORS[resolvedTheme ?? 'dark'] ?? '#0B0F19';
+    const color = THEME_BG_COLORS[resolvedTheme ?? 'dark'] ?? '#030303';
     // Safari reads <html> background for the rubber-band / overscroll area.
     document.documentElement.style.backgroundColor = color;
     // Keep the browser chrome (tab bar on mobile Safari) in sync.

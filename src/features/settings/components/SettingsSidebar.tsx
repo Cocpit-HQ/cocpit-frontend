@@ -103,6 +103,10 @@ export function SettingsSidebar() {
     };
   });
 
+  const handleExitSettings = () => {
+    router.push(isCompany && activeProfile?.slug ? `/organization/${activeProfile.slug}` : '/profile');
+  };
+
   return (
     <>
       {/* --- DESKTOP SIDEBAR (Frame 2608631) --- */}
@@ -141,19 +145,19 @@ export function SettingsSidebar() {
       {/* --- MOBILE MENU --- */}
       <div className="flex md:hidden flex-col w-full min-h-[100dvh] bg-ds-bg text-ds-text-primary font-sans pb-24">
         {/* Mobile Header */}
-        <div className="flex flex-row items-center gap-4 p-4 sticky top-0 bg-ds-bg/95 backdrop-blur border-b border-ds-border z-10">
+        <div className="flex flex-row items-center gap-2.5 px-4 py-2 sticky top-0 bg-ds-bg/95 backdrop-blur border-b border-ds-border z-10">
           <button 
-            onClick={() => router.back()}
+            onClick={handleExitSettings}
             aria-label="Back"
-            className="flex justify-center items-center w-[40px] h-[40px] border border-ds-border rounded-full hover:bg-ds-surface-1 transition-colors shrink-0"
+            className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
           >
-            <ChevronLeft className="w-5 h-5 text-ds-text-secondary" strokeWidth={1.5} />
+            <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
           </button>
-          <div className="flex flex-col min-w-0">
-            <h1 className="ds-text-heading-2 text-ds-text-primary truncate">
+          <div className="flex flex-col min-w-0 justify-center">
+            <h1 className="text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[22px] truncate m-0">
               Settings
             </h1>
-            <p className="ds-text-small text-ds-text-secondary truncate">
+            <p className="text-ds-text-secondary text-[12px] font-normal font-['DM_Sans'] leading-[16px] truncate m-0">
               Manage your preferences
             </p>
           </div>

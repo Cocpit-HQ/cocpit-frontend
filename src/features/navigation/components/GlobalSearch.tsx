@@ -9,12 +9,14 @@ import { searchUsers, getUserById } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useToast } from '@/hooks/use-toast';
+import { MobileSearchScreen } from './MobileSearchScreen';
 
 interface GlobalSearchProps {
   hasSidebar?: boolean;
+  variant?: 'desktop' | 'mobile';
 }
 
-export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
+export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalSearchProps) {
   const router = useRouter();
   const pathname = usePathname();
   
@@ -23,6 +25,7 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
   
   useEffect(() => {
@@ -94,7 +97,7 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       setIsFocused(false);
-      // router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
   
@@ -165,44 +168,49 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
   const showRecent = isFocused && !searchQuery.trim() && history.length > 0;
   const showLive = isFocused && searchQuery.trim().length > 0;
 
-  let paddingRightClass = '';
-  if (pathname === '/feed') {
-    paddingRightClass = 'md:pr-[220px]';
-  } else if (pathname === '/profile') {
-    paddingRightClass = 'md:pr-[253px]';
-  }
+  // Always apply right padding equal to the left sidebar width to keep it perfectly viewport-centered on all pages
+  const paddingRightClass = hasSidebar ? 'sm:pr-[220px]' : '';
 
-  return (
-    <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
-      <div 
-        ref={dropdownRef}
-        className="w-full pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8"
-      >
-      <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
-        <div className="relative w-full max-w-[442px] pointer-events-auto">
-          {/* Search Input Bar */}
-          <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
-        <input
-          type="text"
-          placeholder="Search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onKeyDown={handleSearch}
-          className="flex-grow bg-transparent outline-none font-['DM_Sans'] text-[16px] leading-[24px] text-ds-text-primary placeholder:text-ds-text-muted w-full h-full"
-        />
-        <Icon name="search" className="w-[20px] h-[20px] text-ds-text-primary shrink-0 cursor-pointer hover:text-ds-accent transition-colors" onClick={() => {
+  const inputEl = (
+    <>
+      <input
+        type="text"
+        placeholder="Search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onFocus={() => setIsFocused(true)}
+        onKeyDown={handleSearch}
+        className={
+          variant === 'mobile'
+            ? "bg-transparent outline-none font-['DM_Sans'] text-[15px] text-[#A1A1AA] placeholder:text-[#A1A1AA] w-full pl-2"
+            : "flex-grow bg-transparent outline-none font-['DM_Sans'] text-[16px] leading-[24px] text-ds-text-primary placeholder:text-ds-text-muted w-full h-full"
+        }
+      />
+      <Icon
+        name="search"
+        className={
+          variant === 'mobile'
+            ? "w-[20px] h-[20px] text-[#A1A1AA] shrink-0 cursor-pointer mr-1"
+            : "w-[20px] h-[20px] text-ds-text-primary shrink-0 cursor-pointer hover:text-ds-accent transition-colors"
+        }
+        onClick={() => {
           if (searchQuery.trim()) {
             setIsFocused(false);
-            // router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+            router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
           }
-        }} />
-      </div>
+        }}
+      />
+    </>
+  );
 
+  const dropdownEl = (
+    <>
       {/* Live Search Dropdown */}
       {showLive && (
-        <div className="absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
-          {searchResults.length > 0 ? (
+        <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-[#3F3F46] shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
+          {isSearching ? (
+            <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
+          ) : searchResults.length > 0 ? (
             <div className="w-full flex flex-col gap-3 max-h-[276px] overflow-y-auto overscroll-contain scrollbar-hide">
               {searchResults.map((user) => (
                 <Link
@@ -231,17 +239,6 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
                   </div>
                 </Link>
               ))}
-              {/*
-              <div 
-                onClick={() => {
-                  setIsFocused(false);
-                  // router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                }}
-                className="w-full py-2 border-t border-ds-border text-[12px] font-medium text-ds-accent cursor-pointer text-center"
-              >
-                See all results for "{searchQuery}"
-              </div>
-              */}
             </div>
           ) : isSearching ? (
             <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
@@ -253,7 +250,7 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
 
       {/* Recent / Search History Dropdown */}
       {showRecent && (
-        <div className="absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50">
+        <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-[#3F3F46] shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
           <div className="flex justify-between items-center w-full mb-1">
             <h3 className="text-[14px] leading-5 font-normal text-ds-text-primary">Recent</h3>
           </div>
@@ -368,7 +365,45 @@ export function GlobalSearch({ hasSidebar = true }: GlobalSearchProps) {
           </button>
         </div>
       )}
+    </>
+  );
+
+  if (variant === 'mobile') {
+    return (
+      <>
+        <div 
+          className="flex-1 relative ml-2 cursor-text"
+          onClick={() => setIsMobileSearchOpen(true)}
+        >
+          <div className="flex flex-row items-center justify-between border-b border-[#3F3F46] pb-1 cursor-text">
+            <div className="flex-1 bg-transparent font-['DM_Sans'] text-[15px] text-[#A1A1AA] pl-2 h-[24px] flex items-center">
+              Search
+            </div>
+            <Icon
+              name="search"
+              className="w-[20px] h-[20px] text-[#A1A1AA] shrink-0 mr-1"
+            />
+          </div>
         </div>
+        <MobileSearchScreen isOpen={isMobileSearchOpen} onClose={() => setIsMobileSearchOpen(false)} />
+      </>
+    );
+  }
+
+  return (
+    <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
+      <div 
+        ref={dropdownRef}
+        className="w-full pointer-events-auto pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8"
+      >
+        <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
+          <div className="relative w-full max-w-[442px]">
+            {/* Search Input Bar */}
+            <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
+              {inputEl}
+            </div>
+            {dropdownEl}
+          </div>
         </div>
       </div>
     </div>

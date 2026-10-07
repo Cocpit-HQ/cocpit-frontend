@@ -15,7 +15,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useUIStore } from '@/store/ui.store';
 import { getPostMenuAccess } from '@/features/feed/utils/postMenuAccess';
 import { StoryDetail, StoryGroup } from '@/types/showcase';
-import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+
 import { usePostUpload } from '@/context/PostUploadContext';
 import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadProgressStrip';
 
@@ -84,11 +84,11 @@ export const FeedSection = ({
 
     return (
         <section className="lg:col-span-8 max-w-[560px] w-full flex flex-col items-center">
-            <PullToRefresh onRefresh={resetSession}>
+
                 {/* ===== OLD COMPOSER (commented out) =====
                 <FeedComposer onOpenComposer={() => setIsCreateModalOpen(true)} />
                 ===== END OLD COMPOSER ===== */}
-                <FeedComposerInline 
+                <FeedComposerInline
                     onOpenArticle={() => {
                         const { setArticleMode } = useUIStore.getState();
                         setArticleMode(true);
@@ -125,8 +125,10 @@ export const FeedSection = ({
                     ))}
                 </div>
 
+                {/* Sort Dropdown Removed */}
+
                 {/* Posts */}
-                <div className="w-full mt-[12px] flex flex-col">
+                <div className="w-full mt-0 md:mt-[12px] flex flex-col">
                     {/* Skeletons appear when initial load is happening */}
                     {feedLoading && posts.length === 0 && (
                         <div className="flex flex-col gap-6 w-full max-w-[442px] mx-auto">
@@ -197,7 +199,7 @@ export const FeedSection = ({
                         </div>
                     )}
                 </div>
-            </PullToRefresh>
+
         </section>
     );
 };

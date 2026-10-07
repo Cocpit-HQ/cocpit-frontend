@@ -62,6 +62,13 @@ const GlobalToast = ({ ...props }: ToasterProps) => {
             clip-path: inset(0 0 0 0);
           }
         }
+        
+        /* 3. Push toaster above bottom navigation on mobile */
+        @media (max-width: 640px) {
+          html body [data-sonner-toaster][data-y-position="bottom"] {
+            bottom: calc(env(safe-area-inset-bottom, 16px) + 72px) !important;
+          }
+        }
       `}} />
       <Sonner
         theme={theme as ToasterProps["theme"]}

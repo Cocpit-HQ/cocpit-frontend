@@ -35,6 +35,14 @@ export const FeatureMaintenanceView: React.FC<FeatureMaintenanceViewProps> = ({
 
   return (
     <div className="fixed inset-0 z-[999] bg-[#030303] flex flex-col items-center justify-center p-6 text-center select-none font-['DM_Sans'] overflow-hidden">
+      <style>{`
+        @media (max-width: 767px) {
+          header.fixed.md\\:hidden {
+            display: none !important;
+          }
+        }
+      `}</style>
+      
       {/* Top Right Close Button */}
       <button
         onClick={handleClose}

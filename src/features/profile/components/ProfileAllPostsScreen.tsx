@@ -326,12 +326,20 @@ export function ProfileAllPostsScreen({
       {/* Frame 2609780 Header Bar: Fixed Tabs at top 60px */}
       <header className="sticky top-0 z-40 w-full pt-[60px] pb-[20px] bg-[var(--ds-bg)] flex flex-col items-center shrink-0">
         {/* Frame 2609617: Auto layout row, gap 12px, width 462px, height 36px */}
-        <div className="w-[462px] max-w-full px-4 sm:px-0 h-[36px] flex flex-row items-center justify-center gap-[12px] overflow-x-auto scrollbar-hide">
+        <div className="w-[462px] max-w-full px-4 sm:px-0 h-[36px] flex flex-row items-center justify-start sm:justify-center gap-[12px] overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
+                ref={(el) => {
+                  if (el && isActive) {
+                    // Scroll active tab into view when it becomes active
+                    setTimeout(() => {
+                      el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                    }, 50);
+                  }
+                }}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className="relative h-[36px] py-[6px] px-[12px] flex flex-col items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EC6229] shrink-0"

@@ -258,7 +258,7 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
         </div>
 
         {/* Frame 2608581: Content Box (376px x 260px, gap 12px, items-center) */}
-        <div className="w-full sm:w-[376px] flex-1 sm:h-[260px] flex flex-col items-center gap-[12px] shrink-0">
+        <div className="w-full sm:w-[376px] flex-1 min-h-0 sm:h-[260px] flex flex-col items-center gap-[12px]">
           {/* Title: Add skills (DM Sans 16px Medium, #FFECE6, text-center) */}
           <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] select-none shrink-0">
             Add skills
@@ -294,7 +294,7 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
           <div
             ref={listRef}
             onScroll={handleScroll}
-            className="w-full sm:w-[376px] flex-1 sm:h-[176px] flex flex-col items-start gap-[16px] overflow-y-auto scrollbar-hide py-1 box-border"
+            className="w-full sm:w-[376px] flex-1 min-h-0 sm:h-[176px] flex flex-col items-start gap-[16px] overflow-y-auto scrollbar-hide py-1 box-border"
           >
             {displayList.length > 0 ? (
               displayList.map((skill, index) => (

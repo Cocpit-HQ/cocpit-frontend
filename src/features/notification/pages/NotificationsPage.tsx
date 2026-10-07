@@ -73,23 +73,23 @@ export const NotificationsPage: React.FC = () => {
 
   return (
     <div className="fixed inset-0 h-screen w-full bg-ds-bg text-ds-text-primary font-['DM_Sans'] overflow-hidden flex flex-col">
-      {/* Back — absolute, 40px from top and left */}
+      {/* Back — absolute, 16px from top/left on mobile, 40px on desktop */}
       <button
         type="button"
         onClick={handleBack}
-        className="absolute left-10 top-10 h-[36px] px-2 flex flex-row items-center gap-1.5 text-ds-text-primary ds-text-secondary-1 font-['DM_Sans'] hover:text-ds-text-primary/80 transition-colors cursor-pointer group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-20"
+        className="absolute left-4 sm:left-10 top-4 sm:top-10 h-[36px] px-2 flex flex-row items-center gap-1.5 text-ds-text-primary ds-text-secondary-1 font-['DM_Sans'] hover:text-ds-text-primary/80 transition-colors cursor-pointer group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-20"
         aria-label="Go back"
       >
         <ChevronLeft className="w-5 h-5 text-ds-text-primary transition-transform group-hover:-translate-x-0.5" strokeWidth={1.75} />
         <span>Back</span>
       </button>
 
-      {/* Close — absolute, 40px from top and right (hidden on error state per design) */}
+      {/* Close — absolute, 16px from top/right on mobile, 40px on desktop (hidden on error state per design) */}
       {!hasError && (
         <button
           type="button"
           onClick={handleClose}
-          className="absolute right-10 top-10 w-9 h-9 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-text-primary/80 hover:bg-ds-surface-1 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-20"
+          className="absolute right-4 sm:right-10 top-4 sm:top-10 w-9 h-9 rounded-full flex items-center justify-center text-ds-text-primary hover:text-ds-text-primary/80 hover:bg-ds-surface-1 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-20"
           aria-label="Close"
         >
           <X className="w-5 h-5 text-ds-text-primary" strokeWidth={1.75} />
@@ -97,7 +97,7 @@ export const NotificationsPage: React.FC = () => {
       )}
 
       {/* Main content — 800px centered, title at 60px from page top */}
-      <main className="max-w-[800px] mx-auto w-full flex-1 min-h-0 px-4 sm:px-0 pt-[60px] flex flex-col overflow-hidden">
+      <main className="max-w-[800px] mx-auto w-full flex-1 min-h-0 px-4 sm:px-0 pt-[60px] sm:pt-[60px] flex flex-col overflow-hidden mt-6 sm:mt-0">
 
         {/* ── Title block ─────────────────────────────────────────── */}
         {/* Height: 24 (title) + 8 (gap) + 20 (subtitle) = 52px, matches design "Frame 2609716" */}

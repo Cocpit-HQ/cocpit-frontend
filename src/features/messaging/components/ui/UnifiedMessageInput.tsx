@@ -64,7 +64,7 @@ export default function UnifiedMessageInput({
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const { theme, resolvedTheme } = useTheme()
-    const isDarkTheme = resolvedTheme === "dark" || theme === "dark" || theme === "navy"
+    const isDarkTheme = resolvedTheme === "dark" || theme === "dark" 
 
     const handleInputEmojiSelect = (emojiData: EmojiClickData) => {
         const emojiChar = emojiData.emoji;
@@ -363,4 +363,5 @@ export default function UnifiedMessageInput({
         </div>
     );
 }
+
 

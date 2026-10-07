@@ -15,7 +15,7 @@ export default async function Home() {
 
   return (
     <main
-      className="min-h-screen w-full bg-ds-bg text-ds-text-primary relative flex items-center justify-center overflow-x-hidden font-['DM_Sans',sans-serif]"
+      className="min-h-[100dvh] md:min-h-screen w-full bg-ds-bg text-ds-text-primary relative flex items-center justify-center overflow-x-hidden font-['DM_Sans',sans-serif]"
     >
       {/* Left Sidebar Navigation (Desktop: 40px from left edge, vertically centered) */}
       <div className="hidden lg:block absolute left-[40px] top-1/2 -translate-y-1/2 z-10">

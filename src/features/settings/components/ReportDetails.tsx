@@ -26,7 +26,7 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
         <button
           type="button"
           onClick={onBack}
-          className="w-8 h-8 rounded-full border border-ds-border bg-transparent flex items-center justify-center cursor-pointer text-ds-text-primary hover:bg-ds-surface-1 transition-colors ds-focus-ring shrink-0"
+          className="-ml-1.5 w-8 h-8 rounded-full border border-ds-border bg-transparent flex items-center justify-center cursor-pointer text-ds-text-primary hover:bg-ds-surface-1 transition-colors ds-focus-ring shrink-0"
           aria-label="Back to reports list"
         >
           <ChevronLeft className="size-5 text-ds-text-primary shrink-0" />

@@ -677,6 +677,12 @@ export const FeedPost = (props: FeedPostProps) => {
   const handleCardClick = (e: React.MouseEvent) => {
     if (props.isFullContent) return;
     const target = e.target as HTMLElement;
+    
+    // Check if the click originated from outside this DOM element (e.g. from a Modal rendered in a Portal)
+    if (!e.currentTarget.contains(target)) {
+      return;
+    }
+
     if (
       target.closest('button') ||
       target.closest('a') ||
@@ -972,22 +978,18 @@ export const FeedPost = (props: FeedPostProps) => {
           decrementCommentCount={handleDecrementCommentCount}
         />
 
-        {isSaveModalOpen && (
-          <SavePostModal
-            postId={targetId.toString()}
-            isOpen={isSaveModalOpen}
-            onClose={() => setIsSaveModalOpen(false)}
-            onSaved={() => setIsSaved(true)}
-          />
-        )}
+        <SavePostModal
+          postId={targetId.toString()}
+          isOpen={isSaveModalOpen}
+          onClose={() => setIsSaveModalOpen(false)}
+          onSaved={() => setIsSaved(true)}
+        />
 
-        {isLikesModalOpen && (
-          <LikesModal
-            postId={(selectedLikesPostId || id).toString()}
-            isOpen={isLikesModalOpen}
-            onClose={() => { setIsLikesModalOpen(false); setSelectedLikesPostId(null); }}
-          />
-        )}
+        <LikesModal
+          postId={(selectedLikesPostId || id).toString()}
+          isOpen={isLikesModalOpen}
+          onClose={() => { setIsLikesModalOpen(false); setSelectedLikesPostId(null); }}
+        />
 
         {isShareModalOpen && (
           <CocpitShareModel
@@ -998,24 +1000,10 @@ export const FeedPost = (props: FeedPostProps) => {
             entityId={targetId.toString()}
             onShare={(selectedIds) => {
               if (selectedIds.length > 0) {
+                incrementExternalShareCount(selectedIds.length);
                 const updatedCount = externalShareCount + selectedIds.length;
-
-                if (shouldManageRoom) {
-                  // Post Details page: WebSocket delivers the exact share count,
-                  // so skip local increment. But invalidate the feed query so
-                  // the Feed fetches fresh data when the user navigates back.
-                  queryClient.invalidateQueries({ queryKey: ['feed'] });
-                } else {
-                  // Feed page: WebSocket is off, so increment locally for
-                  // instant feedback and update the feed cache directly.
-                  incrementExternalShareCount(selectedIds.length);
-                  const shareUpdate = isRepostWithoutThoughts && shared_post
-                    ? { shared_post: { ...shared_post, externalShares: updatedCount } }
-                    : { externalShares: updatedCount };
-                  updatePostInFeed(id.toString(), shareUpdate);
-                }
-
-                // Always notify other components (ProfileAllPostsScreen, etc.)
+                
+                // Force sync with other components like ProfileAllPostsScreen
                 if (typeof window !== "undefined") {
                   window.dispatchEvent(
                     new CustomEvent("postUpdated", {
@@ -1034,6 +1022,9 @@ export const FeedPost = (props: FeedPostProps) => {
             onClose={() => setIsDeleteDialogOpen(false)}
             onConfirm={async () => {
               await confirmDelete();
+              if (props.isFullContent) {
+                router.push('/feed');
+              }
             }}
           />
         )}
@@ -1154,7 +1145,7 @@ export const FeedPost = (props: FeedPostProps) => {
             onClose={() => setIsReportModalOpen(false)}
             onSuccess={handleReportSuccess}
             targetType="POST"
-            targetId={id.toString()}
+            targetId={(isRepostWithoutThoughts && targetId ? targetId : id).toString()}
           />
         )}
       </div>

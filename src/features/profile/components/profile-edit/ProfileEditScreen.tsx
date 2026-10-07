@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { LeftArrowIcon } from "@/components/icons";
+import { LeftArrowIcon, CloseIcon } from "@/components/icons";
 import { LeaveConfirmationModal } from "@/components/shared";
 import {
   useMyProfile,
@@ -628,39 +628,62 @@ export function ProfileEditScreen({
   if (!isOpen) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[50] min-h-screen w-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">
-      {/* Top-Left Back Button (Frame 2609475: top/left 40px desktop, gap 8px, 20px icon, 16px medium text) */}
+    <div className="fixed inset-0 z-[50] min-h-screen w-full bg-ds-bg text-ds-text-primary font-dm-sans flex flex-col items-center overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">
+      
+      {/* Mobile Sticky Header */}
+      <div className="md:hidden sticky top-0 w-full bg-ds-bg z-[60] px-4 py-4 border-b border-ds-border flex items-center justify-between">
+         <div className="flex-1 flex justify-start">
+           {showBackButton && (
+             <button onClick={handleBackClick} className="p-2 -ml-2 text-ds-text-primary hover:bg-ds-surface-1 rounded-full transition-colors">
+                <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary" />
+             </button>
+           )}
+         </div>
+         <div className="flex-1 flex justify-center text-[16px] font-medium text-ds-text-primary whitespace-nowrap">
+           {tabSubtitle || "Edit profile"}
+         </div>
+         <div className="flex-1 flex justify-end">
+           <button onClick={handleCloseWithCheck} className="p-2 -mr-2 text-ds-text-primary hover:bg-ds-surface-1 rounded-full transition-colors">
+              <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary rotate-45 opacity-0 absolute pointer-events-none" /> {/* Spacer trick to balance center */}
+              <CloseIcon size={20} className="w-5 h-5 text-ds-text-primary" />
+           </button>
+         </div>
+      </div>
+
+      {/* Top-Left Back Button (Desktop) */}
       {showBackButton && (
         <button
           type="button"
           onClick={handleBackClick}
           aria-label="Back"
-          className="fixed top-4 left-4 md:top-[40px] md:left-[40px] z-[60] w-[65px] h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity focus:outline-none"
+          className="hidden md:flex fixed top-4 left-4 md:top-[40px] md:left-[40px] z-[60] w-[65px] h-[24px] flex-row items-center p-0 gap-[8px] cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity focus:outline-none"
         >
           <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
-            <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
+            <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
           </div>
-          <span className="w-[37px] h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-[var(--ds-text-primary)] shrink-0">
+          <span className="w-[37px] h-[24px] font-dm-sans font-medium text-[16px] leading-[24px] text-center text-ds-text-primary shrink-0">
             Back
           </span>
         </button>
       )}
 
-      {/* Frame 2609633: Centered Main Container (640px in form mode / 800px in tab mode, top 60px padding desktop / 16px mobile, 20px gap) */}
+      {/* Centered Main Container */}
       <div
         className={cn(
-          "max-w-full px-4 sm:px-0 pt-4 md:pt-[60px] pb-[60px] flex flex-col items-center gap-[20px] relative transition-opacity",
-          tabSubtitle ? "w-full md:w-[640px]" : "w-full md:w-[800px]"
+          "w-full px-4 sm:px-6 md:px-8 pt-4 md:pt-[60px] pb-[60px] flex flex-col items-center gap-[20px] relative transition-opacity mx-auto",
+          tabSubtitle ? "max-w-[640px]" : "max-w-[800px]"
         )}
       >
-        {/* Frame 2609631: Top Header & Close Button */}
-        <ProfileEditHeader
-          userName={formData.name || user?.name}
-          avatarUrl={stagedAvatarPreview}
-          subTitle={tabSubtitle}
-          headerAction={headerAction}
-          onClose={handleCloseWithCheck}
-        />
+        {/* Top Header & Close Button */}
+        <div className="flex w-full">
+          <ProfileEditHeader
+            userName={formData.name || user?.name}
+            avatarUrl={stagedAvatarPreview}
+            subTitle={tabSubtitle}
+            headerAction={headerAction}
+            onClose={handleCloseWithCheck}
+          />
+        </div>
 
         {/* Frame 2609617: Navigation Tabs - ONLY shown in list mode / profile view */}
         {!tabSubtitle && (
@@ -689,8 +712,8 @@ export function ProfileEditScreen({
 
         {/* Active Tab Content */}
         {activeTab === "profile" ? (
-          <div className="w-full md:w-[800px] md:max-w-full flex flex-col items-center">
-            {/* Frame 2609766: Cover & Profile Avatar Section */}
+          <div className="w-full flex flex-col items-center">
+            {/* Cover & Profile Avatar Section */}
             <ProfileEditMediaSection
               coverImage={stagedCoverPreview}
               avatarImage={stagedAvatarPreview}

@@ -21,6 +21,7 @@ interface CommentSectionViewProps {
   handleReportComment: (commentId: string | number) => void;
   onUndoComment?: (commentId: string | number) => void;
   isSidebar?: boolean;
+  isDrawer?: boolean;
 }
 
 export default function CommentSectionView({
@@ -35,7 +36,8 @@ export default function CommentSectionView({
   onHideComment,
   handleReportComment,
   onUndoComment,
-  isSidebar
+  isSidebar,
+  isDrawer
 }: CommentSectionViewProps) {
   const { activeProfile } = useActiveProfile();
   // Local UI State only
@@ -64,11 +66,12 @@ export default function CommentSectionView({
 
   return (
     <div 
-      className={`flex flex-col min-h-0 bg-ds-bg relative font-dmsans comment-section ${isSidebar ? 'flex-1 w-full' : 'md:max-h-[450px]'}`}
+      className={`flex flex-col min-h-0 relative font-dmsans comment-section ${isDrawer ? 'bg-transparent' : 'bg-ds-bg'} ${isSidebar ? 'flex-1 w-full' : 'md:max-h-[450px]'}`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="py-2 bg-ds-bg z-10 sticky top-0">
+      <div className={`py-2 z-10 sticky top-0 ${isDrawer ? 'bg-transparent' : 'bg-ds-bg'}`}>
         <CommentInput
+          isDrawer={isDrawer}
           onAddComment={(text) => {
             if (editingComment) {
               onEditComment?.(editingComment.id, text);

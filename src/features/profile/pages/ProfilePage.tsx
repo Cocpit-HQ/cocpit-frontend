@@ -48,6 +48,7 @@ import AddProjectForm from "../components/AddProjectForm";
 import { SkillModal } from "../components/SkillModal";
 import { ViewAvatarModal } from "../commonProfileComponents/ViewAvatarModal";
 import { CreatePostModal } from "@/features/feed/components/create-post";
+import { useUIStore } from "@/store/ui.store";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import type { Education, Experience, Post, Project } from "@/types/entities";
 import type { SkillResponse } from "@/types/user";
@@ -524,7 +525,7 @@ export default function ProfilePage() {
 
   if (isProfileError) {
     return (
-      <div className="w-full md:-ml-[220px] md:w-[calc(100%+220px)] h-[calc(100vh-120px)] bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center justify-center px-4 overflow-hidden select-text">
+      <div className="w-full min-h-screen flex items-center justify-center bg-ds-bg text-ds-text-primary font-dm-sans px-4 select-text">
         <FullPageError
           title="Unable to load profile"
           description="Something went wrong. Please check your connection and try again"
@@ -614,9 +615,9 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center -mt-5 pb-16 px-0 md:px-4 md:pr-[253px] select-text">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans px-4 sm:px-6 md:px-8 pt-5 pb-6 sm:pb-8 md:pb-10 md:pr-[253px] select-text">
       {/* 800px Centered Main Profile Container */}
-      <div className="w-full max-w-[800px] flex flex-col items-start gap-5">
+      <div className="w-full max-w-[800px] mx-auto flex flex-col gap-5">
         {/* Cover + Profile Image + Action Buttons */}
         <ProfileCoverSection
           coverImage={user?.cover_image}
@@ -675,20 +676,26 @@ export default function ProfilePage() {
 
         {/* 1. Post Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="w-[43px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+          <div className="w-full flex justify-between items-center">
+            <div className="w-[43px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Posts
             </div>
             <button
               type="button"
-              onClick={handleCreatePost}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  useUIStore.getState().setActiveModal('create-post');
+                } else {
+                  router.push("/feed");
+                }
+              }}
               className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
               title="Create Post"
             >
-              <AddIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
+              <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full px-4 md:px-0 md:pl-5">
+          <div className="w-full">
             <ProfilePostsTab
               posts={posts}
               isOwnProfile={true}
@@ -696,7 +703,13 @@ export default function ProfilePage() {
               onRetry={() => refetchPosts()}
               onDeletePost={handleDeletePost}
               onUpdatePost={() => refetchPosts()}
-              onCreatePost={handleCreatePost}
+              onCreatePost={() => {
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  useUIStore.getState().setActiveModal('create-post');
+                } else {
+                  router.push("/feed");
+                }
+              }}
               onSeeAll={() => {
                 saveScrollPosition("profile");
                 router.push("/profile/posts");
@@ -730,8 +743,8 @@ export default function ProfilePage() {
 
         {/* 3. Experience Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="w-[87px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+          <div className="w-full flex justify-between items-center">
+            <div className="w-[87px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Experience
             </div>
             <button
@@ -742,13 +755,13 @@ export default function ProfilePage() {
                 setEditSelectedId("new");
                 setIsEditProfileModalOpen(true);
               }}
-              className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
+              className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
               title="Add Experience"
             >
-              <AddIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
+              <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full px-4 md:px-0 md:pl-5">
+          <div className="w-full">
             <ProfileExperienceTab
               experiences={flatExperiences}
               isOwnProfile={true}
@@ -775,8 +788,8 @@ export default function ProfilePage() {
 
         {/* 4. Education Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="w-[79px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+          <div className="w-full flex justify-between items-center">
+            <div className="w-[79px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Education
             </div>
             <button
@@ -787,13 +800,13 @@ export default function ProfilePage() {
                 setEditSelectedId("new");
                 setIsEditProfileModalOpen(true);
               }}
-              className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
+              className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
               title="Add Education"
             >
-              <AddIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
+              <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full px-4 md:px-0 md:pl-5">
+          <div className="w-full">
             <ProfileEducationTab
               educations={educations}
               isOwnProfile={true}
@@ -820,8 +833,8 @@ export default function ProfilePage() {
 
         {/* 5. Project Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
-            <div className="w-[56px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+          <div className="w-full flex justify-between items-center">
+            <div className="w-[56px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Project
             </div>
             <button
@@ -832,13 +845,13 @@ export default function ProfilePage() {
                 setEditSelectedId("new");
                 setIsEditProfileModalOpen(true);
               }}
-              className="w-5 h-5 flex items-center justify-center text-[var(--ds-text-primary)] hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
+              className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer flex-none order-1"
               title="Add Project"
             >
-              <AddIcon className="w-5 h-5 text-[var(--ds-text-primary)]" />
+              <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full px-4 md:px-0 md:pl-5">
+          <div className="w-full">
             <ProfileProjectsTab
               projects={projects}
               isOwnProfile={true}

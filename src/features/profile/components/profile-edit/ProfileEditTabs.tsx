@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 export type ProfileEditTabKey = "profile" | "skills" | "experience" | "education" | "project";
@@ -37,14 +37,28 @@ export const ProfileEditTabs: React.FC<ProfileEditTabsProps> = ({
   onTabChange,
   tabs = PROFILE_EDIT_TABS,
 }) => {
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const setTabRef = useCallback((key: string) => (el: HTMLButtonElement | null) => {
+    tabRefs.current[key] = el;
+  }, []);
+
+  useEffect(() => {
+    const activeEl = tabRefs.current[activeTab];
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeTab]);
+
   return (
-    <div className="w-full md:w-[800px] md:max-w-full h-[36px] flex flex-row items-center gap-[12px] overflow-x-auto scrollbar-hide border-b border-transparent">
+    <div className="w-full h-[36px] flex flex-row items-center gap-[12px] overflow-x-auto scrollbar-hide border-b border-transparent">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         const config = TAB_CONFIG[tab.key] || { widthClass: "w-auto", orderClass: "order-0" };
         return (
           <button
             key={tab.key}
+            ref={setTabRef(tab.key)}
             type="button"
             onClick={() => onTabChange(tab.key)}
             className={cn(

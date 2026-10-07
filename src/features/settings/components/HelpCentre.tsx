@@ -78,7 +78,7 @@ export function HelpCentre({ onBack }: HelpCentreProps) {
         <button
           type="button"
           onClick={onBack}
-          className="w-8 h-8 flex items-center justify-center cursor-pointer bg-transparent border border-ds-border hover:bg-ds-surface-1 p-0 ds-focus-ring rounded-full shrink-0"
+          className="-ml-1.5 w-8 h-8 flex items-center justify-center cursor-pointer bg-transparent border border-ds-border hover:bg-ds-surface-1 p-0 ds-focus-ring rounded-full shrink-0"
           aria-label="Back to Support"
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />

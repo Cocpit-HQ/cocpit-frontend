@@ -35,16 +35,16 @@ export function ManagePhonePage() {
   };
 
   return (
-    <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 select-none">
+    <div className="w-full max-w-[712px] px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 select-none">
       {/* Header */}
-      <div className="self-stretch inline-flex justify-start items-center gap-2.5 shrink-0">
+      <div className="self-stretch flex items-center gap-2.5 mb-1 shrink-0">
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="Back to account settings"
-          className="flex items-center justify-center p-0 text-ds-text-primary hover:text-ds-accent transition-colors shrink-0 ds-focus-ring rounded-sm"
+          className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring md:w-[20px] md:h-[20px] md:-ml-1.5 md:rounded-none md:border-0 md:p-0 md:hover:bg-transparent md:text-ds-text-primary md:hover:text-ds-accent"
         >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={2} />
+          <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5] md:stroke-[2]" />
         </button>
         <h1 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6 m-0">
           Manage phone number

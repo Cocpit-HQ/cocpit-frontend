@@ -169,7 +169,7 @@ export default function SinglePostPage({ params }: PageProps) {
       </button>
 
       {/* ── Main Post View Container (Figma top: 60px) ── */}
-      <div className="w-full max-w-[442px] px-4 sm:px-0 mx-auto pt-4 sm:pt-[60px]">
+      <div className="w-full max-w-[442px] px-4 sm:px-0 mx-auto pt-[60px] sm:pt-[60px]">
         {loading ? (
           <div className="w-full bg-ds-bg rounded-[8px] p-6 flex flex-col gap-4 animate-pulse">
             {/* Author header skeleton */}

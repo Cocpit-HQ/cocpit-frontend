@@ -35,7 +35,7 @@ export default function AIEmptyState({
 }: AIEmptyStateProps) {
   const isMobile = useIsMobile();
   const { theme, resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark" || theme === "dark" || theme === "navy";
+  const isDark = resolvedTheme === "dark" || theme === "dark" ;
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([]);
@@ -1069,3 +1069,4 @@ export default function AIEmptyState({
     </div>
   );
 }
+

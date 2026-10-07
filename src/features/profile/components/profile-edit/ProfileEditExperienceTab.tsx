@@ -110,7 +110,7 @@ export const ProfileEditExperienceTab: React.FC<ProfileEditExperienceTabProps> =
             setIsAddingNewRole(true);
           }}
           className={cn(
-            "h-[36px] min-w-[149px] px-[12px] py-[6px] rounded-[100px] border border-[var(--ds-border)] transition-all text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex flex-row items-center justify-center gap-[10px] shrink-0 whitespace-nowrap focus:outline-none",
+            "hidden sm:flex h-[36px] min-w-[149px] px-[12px] py-[6px] rounded-[100px] border border-[var(--ds-border)] transition-all text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex-row items-center justify-center gap-[10px] shrink-0 whitespace-nowrap focus:outline-none",
             disableAddRole
               ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-50"
               : "hover:bg-[var(--ds-surface-1)] active:scale-95 text-[var(--ds-text-primary)] cursor-pointer"

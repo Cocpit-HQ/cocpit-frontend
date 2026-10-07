@@ -1820,7 +1820,7 @@ function MessageBubble(props: MessageBubbleProps) {
   const router = useRouter();
   const { theme, resolvedTheme } = useTheme();
   const isDarkTheme =
-    resolvedTheme === "dark" || theme === "dark" || theme === "navy";
+    resolvedTheme === "dark" || theme === "dark" ;
 
   const {
     message,
@@ -2768,3 +2768,4 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.statusLabel === nextProps.statusLabel
   );
 });
+

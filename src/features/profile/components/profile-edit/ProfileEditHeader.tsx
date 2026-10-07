@@ -34,13 +34,8 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
         <CloseIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
       </button>
 
-      {/* Frame 2609631: User Info Row (640px in form mode, 800px in tab mode, 32px/36px height, justify-between) */}
-      <div
-        className={cn(
-          "w-full md:max-w-full min-h-[32px] flex flex-row items-center justify-between gap-[8px] transition-opacity",
-          subTitle ? "md:w-[640px]" : "md:w-[800px]"
-        )}
-      >
+      {/* User Info Row */}
+      <div className="w-full min-h-[32px] flex flex-row items-center justify-between gap-[8px] transition-opacity">
         {/* Left Side: Avatar + Name + Subtitle */}
         <div className="flex flex-row items-center gap-[8px] overflow-hidden">
           {/* Frame 2609611: Avatar 32x32 rounded-full */}
@@ -73,22 +68,13 @@ export const ProfileEditHeader: React.FC<ProfileEditHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Header Action (e.g. + Add new role) OR Mobile Close Button */}
+        {/* Right Side: Header Action (e.g. + Add new role) */}
         <div className="flex items-center gap-3 shrink-0">
           {headerAction && (
             <div className="flex items-center shrink-0">
               {headerAction}
             </div>
           )}
-          {/* Mobile inline close button */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close edit profile"
-            className="flex md:hidden w-[20px] h-[20px] items-center justify-center text-[var(--ds-text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer focus:outline-none"
-          >
-            <CloseIcon size={20} className="w-[20px] h-[20px] text-[var(--ds-text-primary)]" />
-          </button>
         </div>
       </div>
     </>

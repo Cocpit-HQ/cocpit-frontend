@@ -99,12 +99,14 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
   // Sync initial shared post when modal opens
   useEffect(() => {
-    if (isOpen && initialSharedPost) {
-      setSharedPost(initialSharedPost);
-    } else if (isOpen && !initialSharedPost && !sharedPostId) {
-      // Don't clear it if we are just opening and already have a shared post
+    if (isOpen) {
+      if (initialSharedPost) {
+        setSharedPost(initialSharedPost);
+      } else if (!sharedPostId) {
+        setSharedPost(null);
+      }
     }
-  }, [isOpen, initialSharedPost]);
+  }, [isOpen, initialSharedPost, sharedPostId]);
 
   // Sync with global article draft or sessionStorage
   useEffect(() => {
@@ -292,7 +294,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           toast.error("Failed to load post. It may have been deleted.");
         })
         .finally(() => setIsLoadingPost(false));
-    } else if (isOpen && sharedPostId) {
+    } else if (isOpen && sharedPostId && !initialSharedPost) {
       postApi.getById(sharedPostId).then(post => {
         setSharedPost(post);
         setPostCategory(post.category as any || 'Professional');
@@ -302,7 +304,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         toast.error("Failed to load shared post. It may have been deleted.");
       });
     }
-  }, [isOpen, editPostId, sharedPostId]);
+  }, [isOpen, editPostId, sharedPostId, initialSharedPost]);
 
   const handlePost = async (
     inlineFilesOrTagUserIds?: File[] | string[],
@@ -420,7 +422,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
         companyId: isCompanyPost ? postAsCompanyId || undefined : undefined,
         ...(isCompanyPost && isBroadcast ? { is_broadcast: true } : {}),
-        shared_post_id: sharedPostId,
+        shared_post_id: sharedPost ? (sharedPost.id || sharedPost._id || (sharedPost as any).post_id) : (sharedPostId || initialSharedPost?.id || initialSharedPost?._id || (initialSharedPost as any)?.post_id),
         shared_job_id: sharedJobId,
         location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
         achievement_image_id: achievementImageId
@@ -623,9 +625,11 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     setAchievementImageId(undefined);
     setInlineFiles([]);
     setInlineMentions([]);
+    setSharedPost(null);
     if (clearDraft) {
       useUIStore.getState().setArticleDraft(null);
     }
+    useUIStore.getState().setSharedPostData(null);
   };
 
   const requestContextSwitch = (newCompanyId: string | null) => {

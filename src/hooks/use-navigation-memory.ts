@@ -54,6 +54,13 @@ export function useNavigationTracker() {
       const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
       sessionStorage.setItem('cocpit_last_location', currentPath);
     }
+
+    // Track last visited location outside settings so < Back on settings menu can reliably exit to it
+    if (pathname && !pathname.includes('/settings')) {
+      const queryString = searchParams?.toString();
+      const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
+      sessionStorage.setItem('cocpit_last_location_outside_settings', currentPath);
+    }
   }, [pathname, searchParams]);
 }
 

@@ -22,10 +22,10 @@ export const ProfileEditMediaSection: React.FC<ProfileEditMediaSectionProps> = (
   const displayAvatar = avatarImage && avatarImage !== failedUrl ? avatarImage : null;
 
   return (
-    /* Frame 2609766: Banner and Profile Parent Box (800px width desktop, full width mobile) */
-    <div className="w-full md:w-[800px] md:max-w-full h-auto md:h-[256px] flex flex-col items-center select-none relative">
-      {/* Frame 2609600: Banner Box (800px width, 200px height, 16px radius) */}
-      <div className="w-full md:w-[800px] h-[200px] rounded-[16px] overflow-hidden relative bg-[var(--ds-surface-1)] flex-none order-0 grow-0">
+    /* Banner and Profile Parent Box */
+    <div className="w-full h-auto md:h-[256px] flex flex-col items-center select-none relative">
+      {/* Banner Box */}
+      <div className="w-full h-[200px] rounded-[16px] overflow-hidden relative bg-[var(--ds-surface-1)] flex-none order-0 grow-0">
         {coverImage ? (
           <img
             src={coverImage}

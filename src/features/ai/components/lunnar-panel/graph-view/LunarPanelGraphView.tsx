@@ -70,7 +70,7 @@ const horizontalBarData = [
 export default function LunarPanelGraphView({ isDownload = false }: { isDownload?: boolean }) {
   const [isMounted, setIsMounted] = useState(false);
   const { theme, resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark" || theme === "dark" || theme === "navy";
+  const isDark = resolvedTheme === "dark" || theme === "dark" ;
 
   useEffect(() => {
     setIsMounted(true);
@@ -338,3 +338,4 @@ export default function LunarPanelGraphView({ isDownload = false }: { isDownload
     </div>
   );
 }
+

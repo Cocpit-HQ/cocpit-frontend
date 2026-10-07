@@ -116,15 +116,10 @@ export default function PublicChannelArticlePage() {
             __html: `
             .article-content a,
             [data-theme="dark"] .article-content a,
-            [data-theme="navy"] .article-content a {
-              color: #EC6229 !important;
-              transition: opacity 0.2s;
-            }
+            
             .article-content a:hover,
             [data-theme="dark"] .article-content a:hover,
-            [data-theme="navy"] .article-content a:hover {
-              opacity: 0.8 !important;
-            }
+            
           `}} />
 
           <div

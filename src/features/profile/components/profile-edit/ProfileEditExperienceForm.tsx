@@ -548,8 +548,8 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         {/* Row 1: Role / New role & Organization / Location */}
         {isAddingNewRole ? (
           /* Add New Role Layout: New role + Location in Row 1 */
-          <div className="w-full flex flex-row items-start gap-[40px]">
-            <div className="w-[300px] flex-none flex flex-col gap-2.5">
+          <div className="w-full flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-[40px]">
+            <div className="w-full sm:w-[300px] flex-none flex flex-col gap-2.5">
               <ProfileEditSearchableDropdown
                 id="exp_new_role"
                 label="New role"
@@ -595,7 +595,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               )}
             </div>
 
-            <div className="w-[300px] flex-none">
+            <div className="w-full sm:w-[300px] flex-none">
               <ProfileEditLocationInput
                 value={formData.location}
                 isGlobal={true}
@@ -607,8 +607,8 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         ) : (
           /* Standard Edit/Add Layout: Role + Organization in Row 1 */
           <>
-            <div className="w-full flex flex-row items-center gap-[40px]">
-              <div className="w-[300px] flex-none">
+            <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
+              <div className="w-full sm:w-[300px] flex-none">
                 <ProfileEditSearchableDropdown
                   id="exp_role"
                   label="Role"
@@ -625,7 +625,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   labelClassName="w-[24px] h-[16px] text-center"
                 />
               </div>
-              <div className="w-[300px] flex-none">
+              <div className="w-full sm:w-[300px] flex-none">
                 <ProfileEditSearchableDropdown
                   id="exp_org"
                   label="Organization"
@@ -662,8 +662,8 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         )}
 
         {/* Row 3: Work type & Work mode (640px width, 40px gap, 300px each) */}
-        <div className="w-full flex flex-row items-center gap-[40px]">
-          <div className="w-[300px] flex-none">
+        <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
+          <div className="w-full sm:w-[300px] flex-none">
             <ProfileEditDropdown
               label="Work type"
               value={formData.work_type}
@@ -677,7 +677,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               labelClassName="w-[59px] h-[16px] text-center"
             />
           </div>
-          <div className="w-[300px] flex-none">
+          <div className="w-full sm:w-[300px] flex-none">
             <ProfileEditDropdown
               label="Work mode"
               value={formData.work_mode}
@@ -695,8 +695,8 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
 
         {/* Row 4: Date Section (640px width, 20px vertical gap) */}
         <div className="w-full max-w-[640px] flex flex-col items-start gap-[20px] p-0">
-          <div className="w-full flex flex-row items-center gap-[40px]">
-            <div className="w-[300px] flex-none">
+          <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
+            <div className="w-full sm:w-[300px] flex-none">
               <ProfileEditDatePicker
                 id="exp_start_date"
                 label="Start date"
@@ -711,7 +711,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               />
             </div>
             {!formData.is_current ? (
-              <div className="w-[300px] flex-none">
+              <div className="w-full sm:w-[300px] flex-none">
                 <ProfileEditDatePicker
                   id="exp_end_date"
                   label="End date"
@@ -726,7 +726,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 />
               </div>
             ) : (
-              <div className="w-[300px] flex-none" />
+              <div className="w-full sm:w-[300px] flex-none hidden sm:block" />
             )}
           </div>
 
@@ -791,6 +791,28 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           labelClassName="w-[35px] h-[16px] text-center"
         />
       </div>
+
+      {/* Mobile Add New Role Button */}
+      {isEditing && (
+        <div className="sm:hidden w-full flex items-center justify-center pt-[12px]">
+          <button
+            type="button"
+            disabled={hasChanges || isSaving || isDeleting || !hasCompany || !isRequiredFilled}
+            onClick={() => onToggleAddNewRole?.(true)}
+            className={cn(
+              "h-[36px] min-w-[149px] px-[12px] py-[6px] rounded-[100px] border border-[var(--ds-border)] transition-all text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex flex-row items-center justify-center gap-[10px] shrink-0 whitespace-nowrap focus:outline-none",
+              (hasChanges || isSaving || isDeleting || !hasCompany || !isRequiredFilled)
+                ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-50"
+                : "hover:bg-[var(--ds-surface-1)] active:scale-95 text-[var(--ds-text-primary)] cursor-pointer"
+            )}
+          >
+            <AddIcon className={cn("w-4 h-4 shrink-0", (hasChanges || isSaving || isDeleting || !hasCompany || !isRequiredFilled) ? "text-[var(--ds-text-muted)]" : "text-[var(--ds-text-primary)]")} />
+            <span className={cn("font-['DM_Sans'] font-medium text-[16px] leading-[24px] whitespace-nowrap", (hasChanges || isSaving || isDeleting || !hasCompany || !isRequiredFilled) ? "text-[var(--ds-text-muted)]" : "text-[var(--ds-text-primary)]")}>
+              Add new role
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Buttons: Add/Save and Cancel (Centered) */}
       <div className="w-full flex flex-row items-center justify-center gap-[8px] h-[36px] pt-[20px] pb-[60px]">

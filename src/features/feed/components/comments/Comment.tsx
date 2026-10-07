@@ -306,9 +306,9 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                   onCloseAutoFocus={(e) => {
                     e.preventDefault();
                   }}
-                  style={{ zIndex: 35 }}
+                  style={{ zIndex: 150 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans !z-[35] data-[state=closed]:!animate-none data-[state=closed]:!duration-0"
+                  className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans !z-[150] data-[state=closed]:!animate-none data-[state=closed]:!duration-0"
                 >
                   <style>{`
                     [data-theme] [role="menuitem"].comment-menu-item:hover,

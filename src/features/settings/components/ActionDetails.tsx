@@ -19,7 +19,7 @@ export function ActionDetails({ action, onBack }: ActionDetailsProps) {
         <button
           type="button"
           onClick={onBack}
-          className="w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 p-0 flex items-center justify-center cursor-pointer text-ds-text-primary transition-colors ds-focus-ring shrink-0"
+          className="-ml-1.5 w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 p-0 flex items-center justify-center cursor-pointer text-ds-text-primary transition-colors ds-focus-ring shrink-0"
           aria-label="Back to account actions list"
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary shrink-0" strokeWidth={1.5} />

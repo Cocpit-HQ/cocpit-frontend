@@ -632,6 +632,72 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
         {/* User Bio & Details */}
         <ProfileUserBio
+          actionButtons={
+            blocked ? null : (
+              <div className="flex md:hidden w-full justify-start items-center gap-3 pt-2">
+                {/* Follow / Unfollow button */}
+                <button
+                  type="button"
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                  className={cn(
+                    "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
+                    following
+                      ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
+                      : "bg-[var(--ds-accent)] hover:opacity-90"
+                  )}
+                >
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    {following ? "Unfollow" : "Follow"}
+                  </span>
+                </button>
+
+                {/* Connect / Pending / Message button */}
+                {isConnected ? (
+                  <button
+                    type="button"
+                    onClick={handleMessage}
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Message
+                    </span>
+                  </button>
+                ) : (isPendingSent || isPendingReceived) ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 cursor-default opacity-50"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Pending
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleConnect}
+                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+                  >
+                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      Connect
+                    </span>
+                  </button>
+                )}
+
+                {/* More button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMoreOpen(true)}
+                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
+                >
+                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                    More
+                  </span>
+                </button>
+              </div>
+            )
+          }
           fullName={user?.name}
           userName={user?.account_name || user?.name?.toLowerCase().replace(/\s+/g, ".")}
           role={user?.headline}

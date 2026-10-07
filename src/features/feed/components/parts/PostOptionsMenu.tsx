@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { MobileSafeBackdrop } from '@/components/shared/MobileSafeBackdrop';
 
 interface PostOptionsMenuProps {
   isOpen: boolean;
@@ -102,8 +103,6 @@ export const PostOptionsMenu = ({
 
     // Delay attaching to prevent immediate close if the click to open also triggers this
     const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
       window.addEventListener('scroll', handleScrollOrResize, true);
       window.addEventListener('resize', handleScrollOrResize);
       document.addEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
@@ -111,8 +110,6 @@ export const PostOptionsMenu = ({
 
     return () => {
       clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
       window.removeEventListener('scroll', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
       document.removeEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
@@ -123,7 +120,7 @@ export const PostOptionsMenu = ({
     return null;
   }
 
-  const effectiveZIndex = zIndex ?? (isMobile ? 60 : 35);
+  const effectiveZIndex = zIndex ?? 100;
 
   const menuStyle: React.CSSProperties = isMobile ? {
     position: 'fixed',
@@ -146,12 +143,19 @@ export const PostOptionsMenu = ({
   };
 
   const menuContent = (
-    <div
-      ref={menuRef}
-      style={menuStyle}
-      className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : `${isMe ? 'w-[99px]' : 'w-[135px]'} h-auto rounded-[8px] p-[12px] gap-[16px]`}`}
-      onClick={(e) => e.stopPropagation()}
-    >
+    <>
+      {/* Invisible backdrop to capture outside clicks and prevent them from triggering elements underneath */}
+      <MobileSafeBackdrop 
+        onClose={onClose} 
+        className="fixed inset-0"
+        style={{ zIndex: effectiveZIndex - 1 }}
+      />
+      <div
+        ref={menuRef}
+        style={menuStyle}
+        className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : `${isMe ? 'w-[99px]' : 'w-[135px]'} h-auto rounded-[8px] p-[12px] gap-[16px]`}`}
+        onClick={(e) => e.stopPropagation()}
+      >
       {isMobile && (
         <div className="w-full flex justify-center mb-2">
           <div className="w-[40px] h-[4px] bg-ds-border rounded-full" />
@@ -223,6 +227,7 @@ export const PostOptionsMenu = ({
         </>
       )}
     </div>
+    </>
   );
 
   return createPortal(menuContent, document.body);

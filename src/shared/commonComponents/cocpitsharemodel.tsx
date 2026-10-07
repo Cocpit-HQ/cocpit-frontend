@@ -14,6 +14,7 @@ import { showToast as toast } from "@/shared/commonComponents/GlobalToast";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
 import { universalShare } from "@/services/api/shareService";
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
+import { MobileSafeBackdrop } from "@/components/shared/MobileSafeBackdrop";
 
 export interface ShareUser {
   id: string;
@@ -378,7 +379,10 @@ export default function CocpitShareModel({
         }}
       >
         <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <MobileSafeBackdrop 
+            onClose={handleClose}
+            className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" 
+          />
           <DialogPrimitive.Content
             onOpenAutoFocus={(e) => {
               e.preventDefault();
@@ -393,8 +397,6 @@ export default function CocpitShareModel({
                 e.preventDefault();
               }
             }}
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
             className="fixed left-1/2 top-1/2 z-[9999] w-[calc(100vw-32px)] max-w-[400px] sm:w-[400px] h-[468px] -translate-x-1/2 -translate-y-1/2 rounded-[16px] bg-ds-bg border border-ds-border p-[12px] shadow-2xl outline-none flex flex-col gap-[12px] box-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           >
             {/* Header Area */}

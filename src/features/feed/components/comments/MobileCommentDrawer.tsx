@@ -33,8 +33,8 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
     <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[99]" />
-        <Drawer.Content className="bg-ds-surface-1 flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none font-dmsans border-t border-ds-border">
-          <div className="p-4 bg-ds-surface-1 border-b border-ds-border flex items-center justify-between rounded-t-[20px]">
+        <Drawer.Content className="bg-ds-bg flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none font-dmsans border-t border-ds-border">
+          <div className="p-4 bg-ds-bg border-b border-ds-border flex items-center justify-between rounded-t-[20px]">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-ds-border mb-4 absolute top-3 left-1/2 -translate-x-1/2" />
             <Drawer.Title className="flex items-center gap-2 mt-2">
               <MessageCircle className="w-5 h-5 text-ds-text-primary" />
@@ -62,6 +62,7 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
               onUndoComment={handleUndo}
               currentUserId={currentUserId}
               isPostOwner={isPostOwner}
+              isDrawer={true}
             />
           </div>
         </Drawer.Content>

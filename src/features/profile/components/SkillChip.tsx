@@ -28,6 +28,7 @@ export const SkillChip: React.FC<SkillChipProps> = ({
   title,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isMobileHovered, setIsMobileHovered] = useState(false);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,6 +42,18 @@ export const SkillChip: React.FC<SkillChipProps> = ({
 
   const handleClick = (e: React.MouseEvent) => {
     if (isDeleting) return;
+    
+    // On mobile, first tap simulates hover (reveals trash can)
+    if (typeof window !== 'undefined' && window.innerWidth < 768 && deletable && !disabled) {
+      if (!isMobileHovered) {
+        setIsMobileHovered(true);
+        setTimeout(() => {
+          setIsMobileHovered(false);
+        }, 3000); // Auto-hide after 3 seconds
+        return;
+      }
+    }
+
     if (deletable && onDelete && !onClick) {
       handleDelete(e);
       return;
@@ -55,6 +68,7 @@ export const SkillChip: React.FC<SkillChipProps> = ({
       className={cn(
         "group h-7 px-2 py-1.5 bg-[var(--ds-surface-1)] rounded-[100px] inline-flex justify-center items-center gap-2 select-none transition-all duration-300 ease-out border border-transparent box-border",
         deletable && !disabled && "cursor-pointer hover:border-[#E5484D] hover:bg-[var(--ds-surface-1)]",
+        isMobileHovered && "border-[#E5484D] bg-[var(--ds-surface-1)]",
         isDeleting && "border-[#E5484D] opacity-0 scale-75 -translate-y-1 pointer-events-none",
         !deletable && onClick && "cursor-pointer hover:bg-[var(--ds-surface-2)]",
         disabled && "opacity-60 cursor-default",
@@ -66,7 +80,7 @@ export const SkillChip: React.FC<SkillChipProps> = ({
         <div
           className={cn(
             "w-4 h-4 flex items-center justify-center shrink-0 transition-opacity",
-            isDeleting ? "hidden" : deletable && !disabled ? "group-hover:hidden" : ""
+            isDeleting ? "hidden" : deletable && !disabled ? (isMobileHovered ? "hidden" : "group-hover:hidden") : ""
           )}
         >
           <SkillsBulbIcon className="w-4 h-4 text-[var(--ds-text-primary)] shrink-0" />
@@ -79,6 +93,7 @@ export const SkillChip: React.FC<SkillChipProps> = ({
           "h-4 font-['DM_Sans'] text-xs font-normal leading-4 whitespace-nowrap flex-none order-0 flex-grow-0 transition-colors",
           "text-[var(--ds-text-primary)]",
           (isDeleting || (deletable && !disabled)) && "group-hover:text-[#726B67]",
+          isMobileHovered && "text-[#726B67]",
           isDeleting && "text-[#726B67]"
         )}
       >
@@ -94,7 +109,7 @@ export const SkillChip: React.FC<SkillChipProps> = ({
           aria-label={`Delete ${name}`}
           className={cn(
             "w-4 h-4 flex items-center justify-center shrink-0 flex-none order-1 text-[#E5484D] transition-all cursor-pointer focus:outline-none p-0",
-            isDeleting ? "flex" : "hidden group-hover:flex"
+            isDeleting ? "flex" : isMobileHovered ? "flex" : "hidden group-hover:flex"
           )}
         >
           <SkillDeleteIcon className="w-4 h-4 text-[#E5484D] shrink-0" />

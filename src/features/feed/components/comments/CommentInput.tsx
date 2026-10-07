@@ -26,6 +26,7 @@ interface CommentInputProps {
     className?: string;
     autoFocus?: boolean;
     variant?: 'default' | 'reply';
+    isDrawer?: boolean;
     hideCancelButton?: boolean;
 }
 
@@ -39,6 +40,7 @@ export default function CommentInput({
     className = "",
     autoFocus = false,
     variant = 'default',
+    isDrawer = false,
     hideCancelButton = false,
 }: CommentInputProps) {
     const { activeProfile } = useActiveProfile();
@@ -402,7 +404,7 @@ export default function CommentInput({
                             searchUsersFn={searchUsers}
                             onKeyDown={handleKeyDown}
                             placeholder="Write your thoughts"
-                            className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted scrollbar-hide focus:outline-none leading-normal ${commentText.trim().length > 0 ? '' : 'flex items-center m-0'}`}
+                            className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted md:scrollbar-hide focus:outline-none leading-normal ${isDrawer ? 'max-h-[35vh] md:max-h-none overflow-y-auto' : ''} ${commentText.trim().length > 0 ? '' : 'flex items-center m-0'}`}
                             rows={1}
                             maxLength={1000}
                         />

@@ -3,7 +3,7 @@
  */
 
 export type Page = string;
-export type Theme = "dark" | "light" | "navy" | "system";
+export type Theme = "dark" | "light" | "system";
 
 export type Status = "idle" | "loading" | "success" | "error";
 

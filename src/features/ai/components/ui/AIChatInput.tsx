@@ -27,7 +27,7 @@ export default function AIChatInput({
 }: AIChatInputProps) {
   const isMobile = useIsMobile();
   const { theme, resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark" || theme === "dark" || theme === "navy";
+  const isDark = resolvedTheme === "dark" || theme === "dark" ;
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([]);

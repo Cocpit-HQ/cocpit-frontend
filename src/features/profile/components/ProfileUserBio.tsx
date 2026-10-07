@@ -18,6 +18,7 @@ interface ProfileUserBioProps {
   onOpenFollowers?: () => void;
   onOpenFollowing?: () => void;
   onOpenConnections?: () => void;
+  actionButtons?: React.ReactNode;
 }
 
 export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
@@ -35,6 +36,7 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
   onOpenFollowers,
   onOpenFollowing,
   onOpenConnections,
+  actionButtons,
 }) => {
   const formattedUsername = userName
     ? userName.startsWith("@")
@@ -51,10 +53,10 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
     : undefined;
 
   return (
-    /* Frame 2609603: Main Parent Box (w: 800px, pl: 20px / px-4 mobile, gap: 16px) */
-    <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-start gap-4">
-      {/* StatsRow: Auto layout (w: 780px, h: 44px, p: 12px, gap: 24px, justify-between, items-center, left: 20px) */}
-      <div className="w-full max-w-[780px] h-[44px] p-3 flex flex-row items-center justify-between gap-6 self-stretch flex-none order-0 grow-0">
+    /* Main Parent Box */
+    <div className="w-full flex flex-col items-start gap-4">
+      {/* StatsRow */}
+      <div className="w-full h-[44px] p-3 flex flex-row items-center justify-between gap-6 self-stretch flex-none order-0 grow-0">
         {/* Following */}
         <button
           type="button"
@@ -98,8 +100,15 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
         </button>
       </div>
 
-      {/* Frame 2609607: User Details Block (w: 780px, gap: 4px) */}
-      <div className="w-full max-w-[780px] inline-flex flex-col justify-start items-start gap-1">
+      {/* Action Buttons (Mobile typically) */}
+      {actionButtons && (
+        <div className="w-full">
+          {actionButtons}
+        </div>
+      )}
+
+      {/* User Details Block */}
+      <div className="w-full inline-flex flex-col justify-start items-start gap-1">
         {/* Name and Handle */}
         <div className="inline-flex justify-start items-center gap-2 flex-wrap">
           <h1 className="justify-start text-[var(--ds-text-primary)] text-xl md:text-2xl font-bold font-['DM_Sans'] leading-7 md:leading-8">

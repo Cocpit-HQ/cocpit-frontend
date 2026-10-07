@@ -1,5 +1,5 @@
 // Invalidate layout cache to reload global styles - timestamp 1725259560
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins, Roboto, DM_Sans } from "next/font/google";
 import "./globals.css";
 import "./newGlobal.css"; // New design system — typography, motion, spacing tokens
@@ -43,6 +43,14 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/weblogo.png.PNG",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -117,12 +125,17 @@ export default function RootLayout({
         className={`${dmSans.variable} ${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${roboto.variable} antialiased overflow-x-hidden scrollbar-hide bg-background text-foreground`}
       >
         <Providers>
+          <div className="w-full max-w-full overflow-x-hidden flex flex-col min-h-[100dvh]">
+            {children}
+          </div>
+          {/*
           <div className="hidden lg:contents">
             {children}
           </div>
           <div className="block lg:hidden">
             <MobileUnsupported />
           </div>
+          */}
           <GlobalToast />
         </Providers>
       </body>
@@ -130,3 +143,5 @@ export default function RootLayout({
   );
 }
 
+// Force rebuild
+// Force rebuild 2

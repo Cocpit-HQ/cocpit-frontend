@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -94,9 +94,22 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
   const hiddenPostIds = useUIStore(useShallow((s) => s.hiddenPostIds));
   const reportedPostIds = useUIStore(useShallow((s) => s.reportedPostIds));
 
+  // Detect mobile viewport to limit visible posts (mobile: 1, desktop: 2)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Rules of Hooks: All hooks must be called unconditionally before any early returns
   const displayedPosts = useMemo(() => {
     if (!posts || posts.length === 0) return [];
+
+    const limit = isMobile ? 1 : 2;
 
     // Filter out posts that have been reported/hidden in this session so the
     // remaining posts immediately shift up without needing a page refresh.
@@ -105,13 +118,13 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
         !hiddenPostIds.includes(p.id?.toString())
     );
 
-    // Always show the 2 most recent posts (backend already orders by created_at DESC).
+    // Always show the most recent posts (backend already orders by created_at DESC).
     // If only 1 of the top 2 is a media post, prefer swapping in the earliest media
     // post from the remaining list — but never push the most recent post below position 0.
-    const top2 = visiblePosts.slice(0, 2);
-    if (top2.length < 2) return top2;
+    const topN = visiblePosts.slice(0, limit);
+    if (topN.length < 2 || isMobile) return topN;
 
-    const [first, second] = top2;
+    const [first, second] = topN;
     // If neither of the top 2 is media, try to substitute the second slot with the
     // earliest media post from the rest of the list (position 2+), preserving the
     // first (most recent) post in slot 0.
@@ -119,8 +132,8 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
       const nextMediaPost = visiblePosts.slice(2).find(isMediaPost);
       if (nextMediaPost) return [first, nextMediaPost];
     }
-    return top2;
-  }, [posts, hiddenPostIds, reportedPostIds]);
+    return topN;
+  }, [posts, isMobile, hiddenPostIds, reportedPostIds]);
 
   if (isError) {
     return <ProfilePostsErrorState onRetry={onRetry} />;

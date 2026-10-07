@@ -12,6 +12,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@iconify/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolders'
+import { MobileSafeBackdrop } from '@/components/shared/MobileSafeBackdrop'
 
 interface SavePostModalProps {
     isOpen: boolean
@@ -88,12 +89,9 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
         <AnimatePresence>
             <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center sm:px-4 isolate">
                 {/* Backdrop */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={onClose}
+                <MobileSafeBackdrop 
+                    onClose={onClose} 
+                    isAnimated={true} 
                     className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 />
 

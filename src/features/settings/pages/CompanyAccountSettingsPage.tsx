@@ -36,14 +36,14 @@ export function CompanyAccountSettingsPage() {
   return (
     <div className="w-full max-w-[712px] md:min-h-[490px] p-[8px_0px] flex flex-col items-start gap-[12px] rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
       {/* Frame 2609232: Credentials Section */}
-      <div className="w-full max-w-[712px] px-3 sm:px-4 py-2 flex flex-col items-start self-stretch">
+      <div className="w-full max-w-[712px] px-4 py-2 flex flex-col items-start self-stretch">
         {/* Title: Credentials & Mobile Back */}
-        <div className="flex flex-row items-center gap-3">
+        <div className="flex flex-row items-center gap-2.5 mb-1">
           <button
             type="button"
-            onClick={() => router.push(basePath)}
+            onClick={() => router.replace(basePath)}
             aria-label="Back to settings menu"
-            className="flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
+            className="-ml-1.5 flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
           >
             <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
           </button>

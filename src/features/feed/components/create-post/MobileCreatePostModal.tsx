@@ -1,10 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { X, Image as ImageIcon, BarChart3, Loader2, Loader, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 import { useCreatePostForm } from '../../hooks/use-create-post-form';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import RichTextRenderer from '../parts/RichTextRenderer';
+import { CarouselDots } from '../parts/CarouselDots';
+import { Icon } from '@/components/icons';
+import { useUIStore } from '@/store/ui.store';
 
 interface MobileCreatePostModalProps {
   isOpen: boolean;
@@ -14,17 +18,89 @@ interface MobileCreatePostModalProps {
 }
 
 export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, editPostId }: MobileCreatePostModalProps) => {
+  const resolvedSharedPostId = initialSharedPost?.id || initialSharedPost?._id || (initialSharedPost as any)?.post_id;
+
   const { state, media, poll, actions } = useCreatePostForm({
     isOpen,
     onClose,
     isMobile: true,
     initialSharedPost,
+    sharedPostId: resolvedSharedPostId,
     editPostId: editPostId || undefined
   });
 
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [isSettingLocation, setIsSettingLocation] = useState(false);
+  const [durationOpen, setDurationOpen] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeImageIndex >= media.uploadedImages.length) {
+      setActiveImageIndex(Math.max(0, media.uploadedImages.length - 1));
+    }
+  }, [media.uploadedImages.length, activeImageIndex]);
+
+  const handleCarouselScroll = useCallback(() => {
+    const container = carouselRef.current;
+    if (!container || media.uploadedImages.length <= 1) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    if (scrollLeft <= 4) {
+      setActiveImageIndex(0);
+      return;
+    }
+    if (scrollLeft >= scrollWidth - clientWidth - 4) {
+      setActiveImageIndex(media.uploadedImages.length - 1);
+      return;
+    }
+
+    const children = Array.from(container.children) as HTMLElement[];
+    if (children.length === 0) return;
+
+    const containerCenter = scrollLeft + clientWidth / 2;
+    let closestIndex = 0;
+    let minDistance = Infinity;
+
+    children.forEach((child, index) => {
+      const childCenter = child.offsetLeft + child.offsetWidth / 2;
+      const distance = Math.abs(containerCenter - childCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    setActiveImageIndex(closestIndex);
+  }, [media.uploadedImages.length]);
+
+  const handleDotClick = useCallback((index: number) => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const children = Array.from(container.children) as HTMLElement[];
+    const child = children[index];
+    if (child) {
+      const targetScrollLeft = child.offsetLeft - (container.clientWidth - child.offsetWidth) / 2;
+      container.scrollTo({
+        left: Math.max(0, targetScrollLeft),
+        behavior: 'smooth',
+      });
+    }
+  }, []);
+
+  const handleMediaClick = useCallback(() => {
+    if (state.postType === 'poll') return;
+    if (media.uploadedVideos.length >= 1) {
+      toast.error("Only one video file is allowed");
+      return;
+    }
+    if (media.uploadedImages.length >= 12) {
+      toast.error("Maximum 12 images allowed");
+      return;
+    }
+    galleryInputRef.current?.click();
+  }, [state.postType, media.uploadedVideos.length, media.uploadedImages.length]);
 
   if (!isOpen) return null;
 
@@ -70,8 +146,14 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
   const sharedContent = state.sharedPost?.content || state.sharedPost?.description || state.sharedPost?.text;
   const sharedImage = state.sharedPost?.images?.[0] || state.sharedPost?.imageSrc;
 
+  const handleClose = () => {
+    state.setSharedPost(null);
+    useUIStore.getState().setSharedPostData(null);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <BareDialogContent
         hideOverlay
         className="fixed inset-0 z-[101] bg-ds-bg max-w-none rounded-none flex flex-col pt-0 pb-0 !top-0 !left-0 !translate-x-0 !translate-y-0 ds-animate-sheet-up data-[state=closed]:slide-out-to-bottom-[100%] data-[state=open]:slide-in-from-bottom-[100%] duration-300"
@@ -90,7 +172,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)]">
           <DialogTitle className="ds-text-body-2 text-ds-text-primary font-semibold">{editPostId ? 'Edit post' : 'Create post'}</DialogTitle>
-          <button onClick={onClose} className="p-2 -mr-2 text-ds-text-secondary hover:text-ds-text-primary transition-colors">
+          <button onClick={handleClose} className="p-2 -mr-2 text-ds-text-secondary hover:text-ds-text-primary transition-colors">
             <X className="w-5 h-5 ds-icon-20" />
           </button>
         </div>
@@ -99,14 +181,19 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4 flex flex-col gap-4 no-scrollbar">
           <div className="flex gap-3">
             {/* Avatar */}
-            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-ds-surface-1 select-none">
-              <img
-                src={posterImage || "/assets/pngegg.png"}
-                alt="Profile"
-                draggable={false}
-                onDragStart={(e) => e.preventDefault()}
-                className="w-full h-full object-cover select-none pointer-events-none"
-              />
+            <div className="w-8 h-8 rounded-full flex-shrink-0 bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-ds-border overflow-hidden select-none">
+              {posterImage && posterImage !== '/assets/pngegg.png' ? (
+                <img
+                  src={posterImage}
+                  alt="Profile"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <Icon name="user" className="w-[18px] h-[18px] text-ds-text-secondary" />
+              )}
             </div>
 
             {/* Textarea or Poll Title */}
@@ -128,7 +215,20 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           {/* Repost Preview */}
           {state.sharedPost && (
             <div className="ml-11 relative flex flex-col mt-2 animate-in fade-in duration-200">
-              <div className="w-full border border-ds-border rounded-xl p-3 bg-transparent">
+              <div className="w-full border border-ds-border rounded-xl p-3 bg-transparent relative">
+                {/* Remove Shared Post Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    state.setSharedPost(null);
+                    useUIStore.getState().setSharedPostData(null);
+                  }}
+                  className="absolute top-2 right-2 p-1 text-ds-text-muted hover:text-ds-text-primary rounded-full hover:bg-ds-surface-1 transition-colors z-10"
+                  title="Remove repost"
+                >
+                  <X className="w-4 h-4" />
+                </button>
                 {/* Original Author */}
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-ds-surface-1 flex-shrink-0 flex items-center justify-center font-medium text-[10px]">
@@ -224,18 +324,32 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                 </div>
               )}
               <div className="py-[10px] border-b border-ds-border relative mt-1">
-                <select
-                  value={poll.pollDuration}
-                  onChange={(e) => poll.setPollDuration(e.target.value)}
-                  className={`w-full bg-transparent text-[14px] focus:outline-none appearance-none pr-6 relative z-10 text-left ${!poll.pollDuration ? 'text-ds-text-muted' : 'text-ds-text-primary'}`}
+                <button
+                  type="button"
+                  onClick={() => setDurationOpen((open) => !open)}
+                  className={`w-full flex items-center justify-between bg-transparent text-[14px] focus:outline-none appearance-none relative z-10 text-left ${!poll.pollDuration ? 'text-ds-text-muted' : 'text-ds-text-primary'}`}
                 >
-                  <option value="" disabled hidden>Poll duration</option>
-                  <option value="1 day" className="bg-ds-surface-1 text-ds-text-primary text-left">&nbsp;&nbsp;1 day</option>
-                  <option value="3 days" className="bg-ds-surface-1 text-ds-text-primary text-left">&nbsp;&nbsp;3 days</option>
-                  <option value="1 week" className="bg-ds-surface-1 text-ds-text-primary text-left">&nbsp;&nbsp;1 week</option>
-                  <option value="2 weeks" className="bg-ds-surface-1 text-ds-text-primary text-left">&nbsp;&nbsp;2 weeks</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-ds-text-muted absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <span>{poll.pollDuration || 'Poll duration'}</span>
+                  <ChevronDown className={`w-4 h-4 text-ds-text-muted pointer-events-none transition-transform duration-200 ${durationOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {durationOpen && (
+                  <div className="absolute left-0 right-0 top-full bg-ds-bg rounded-b-2xl z-[999] py-2 flex flex-col shadow-2xl border-b border-l border-r border-ds-border/30">
+                    {['1 day', '3 days', '1 week', '2 weeks'].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => { poll.setPollDuration(d); setDurationOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-[14px] font-dmsans transition-colors cursor-pointer bg-transparent hover:bg-white/5 ${
+                          poll.pollDuration === d
+                            ? 'text-ds-accent font-medium'
+                            : 'text-ds-text-secondary'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -243,7 +357,11 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           {/* Multiple Image Preview */}
           {media.uploadedImages.length > 0 && state.postType !== 'poll' && !state.sharedPost && (
             <div className="ml-11 flex flex-col gap-2">
-              <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 no-scrollbar pb-2">
+              <div
+                ref={carouselRef}
+                onScroll={handleCarouselScroll}
+                className="flex overflow-x-auto snap-x snap-mandatory gap-3 no-scrollbar pb-2"
+              >
                 {media.uploadedImages.map((img) => (
                   <div
                     key={img.id}
@@ -280,10 +398,12 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
 
               {/* Pagination Dots & Limit Text */}
               {media.uploadedImages.length > 1 && (
-                <div className="flex justify-center gap-1.5 mt-1">
-                  {media.uploadedImages.map((img) => (
-                    <div key={img.id} className="w-1.5 h-1.5 rounded-full bg-ds-text-muted/50" />
-                  ))}
+                <div className="flex justify-center mt-1">
+                  <CarouselDots
+                    total={media.uploadedImages.length}
+                    activeIndex={activeImageIndex}
+                    onDotClick={handleDotClick}
+                  />
                 </div>
               )}
               {media.uploadedImages.length >= 12 && (
@@ -350,9 +470,19 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
               {!state.sharedPost && (
                 <>
                   <button
-                    onClick={() => galleryInputRef.current?.click()}
-                    className={`transition-colors ${state.postType === 'poll' ? 'text-ds-text-secondary/50 cursor-default' : 'text-ds-text-secondary hover:text-ds-text-primary'}`}
-                    title="Add Photo"
+                    onClick={handleMediaClick}
+                    className={`transition-colors ${
+                      state.postType === 'poll' || media.uploadedVideos.length >= 1 || media.uploadedImages.length >= 12
+                        ? 'text-ds-text-secondary/50 cursor-default'
+                        : 'text-ds-text-secondary hover:text-ds-text-primary cursor-pointer'
+                    }`}
+                    title={
+                      media.uploadedVideos.length >= 1
+                        ? "Only one video allowed"
+                        : media.uploadedImages.length >= 12
+                        ? "Maximum 12 images allowed"
+                        : "Add Photo or Video"
+                    }
                     disabled={state.postType === 'poll'}
                   >
                     <ImageIcon className="w-5 h-5 ds-icon-20" />
@@ -370,7 +500,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
 
             <div className="flex items-center gap-[12px] ml-auto">
               <button
-                onClick={() => onClose()}
+                onClick={handleClose}
                 disabled={state.isSubmitting}
                 className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
               >
@@ -401,7 +531,11 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         <input
           ref={galleryInputRef}
           type="file"
-          accept="image/*,video/*"
+          accept={
+            media.uploadedImages.length > 0
+              ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
+              : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
+          }
           multiple
           onChange={(e) => media.handleDesktopPhotoUpload(e, false)}
           className="hidden"

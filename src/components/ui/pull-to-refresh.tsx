@@ -98,7 +98,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-center -mt-16 z-10 pointer-events-none">
+      <div className="absolute top-2 left-0 right-0 flex items-center justify-center z-10 pointer-events-none">
         <motion.div
            animate={spinnerControls}
            initial={{ scale: 0, opacity: 0 }}

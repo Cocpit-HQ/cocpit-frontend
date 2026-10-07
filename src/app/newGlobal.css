@@ -41,6 +41,8 @@
   /* Hide scrollbars globally on root viewport while preserving scroll functionality */
   html,
   body {
+    max-width: 100%;
+    position: relative;
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox and modern Chrome/Edge */
   }
@@ -302,7 +304,7 @@
 @layer base {
   :root {
     /* Navy Theme (Default) - Based on hardcoded values */
-    --background: #171c28;
+    --background: #030303;
     --foreground: #ffffff;
 
     --card: #242b3d;
@@ -344,7 +346,7 @@
 
     /* Shadows & Gradients */
     --gradient-primary: linear-gradient(120deg, #6366F1 0%, #8B5CF6 100%);
-    --gradient-subtle: linear-gradient(180deg, #1f2937 0%, #171c28 100%);
+    --gradient-subtle: linear-gradient(180deg, #1f2937 0%, #030303 100%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -420,7 +422,7 @@
 
   [data-theme="navy"] {
     /* Same as root */
-    --background: #171c28;
+    --background: #030303;
     --foreground: #ffffff;
     --card: #242b3d;
     --card-foreground: #ffffff;
@@ -574,12 +576,12 @@
 
   [data-theme="dark"] {
     /* ═══════════════════════════════════════════════════
-       Dark Theme — Base: #0B0F19
-       Full color system derived from #0B0F19
+       Dark Theme — Base: #030303
+       Full color system derived from #030303
        ═══════════════════════════════════════════════════ */
 
     /* ── Custom Dark Palette Variables ──────────────── */
-    --bg-base: #0B0F19;
+    --bg-base: #030303;
     --surface-1: #111827;
     --surface-2: #161D2E;
     --surface-3: #1A2236;
@@ -603,10 +605,10 @@
     --add-btn-bg: #1A2236;
 
     /* ── Core Design Tokens ─────────────────────────── */
-    --background: #0B0F19;
+    --background: #030303;
     --foreground: #F9FAFB;
 
-    --card: #0B0F19;
+    --card: #030303;
     --card-foreground: #F9FAFB;
 
     --popover: #161D2E;
@@ -632,7 +634,7 @@
     --ring: #818CF8;
 
     /* ── Sidebar ────────────────────────────────────── */
-    --sidebar-background: #0B0F19;
+    --sidebar-background: #030303;
     --sidebar-foreground: #F9FAFB;
     --sidebar-primary: #818CF8;
     --sidebar-primary-foreground: #ffffff;
@@ -643,7 +645,7 @@
 
     /* ── Gradients & Shadows ────────────────────────── */
     --gradient-primary: linear-gradient(120deg, #818CF8 0%, #A5B4FC 100%);
-    --gradient-subtle: linear-gradient(180deg, #111827 0%, #0B0F19 100%);
+    --gradient-subtle: linear-gradient(180deg, #111827 0%, #030303 100%);
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
@@ -1461,7 +1463,7 @@
 }
 
 @media (max-width: 768px) {
-  [data-theme="dark"] { --background: #0B0F19; }
+  [data-theme="dark"] { --background: #030303; }
 }
 
 @media (max-width: 768px) {
@@ -1599,7 +1601,7 @@ textarea.mention-textarea-input:not(:placeholder-shown) {
 
 /* ── Stats buttons (Metric Boxes & Living Resume Metrics) ── */
 [data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border {
-  background: #0B0F19 !important;
+  background: #030303 !important;
   box-shadow: 0px 2px 4px 0px #818CF899 !important;
   border-radius: 24px !important;
   border: 1.5px solid rgba(129, 140, 248, 0.15) !important;
@@ -1654,9 +1656,9 @@ textarea.mention-textarea-input:not(:placeholder-shown) {
   border-style: solid !important;
 }
 
-/* Select dropdown (Radix Select): force dark theme background to match base (#0B0F19) */
+/* Select dropdown (Radix Select): force dark theme background to match base (#030303) */
 [data-theme="dark"] .cocpit-select-content {
-  background-color: #0B0F19 !important;
+  background-color: #030303 !important;
 }
 
 /* ── Dropdown hover states ──────────────────────────────── */

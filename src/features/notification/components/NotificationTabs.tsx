@@ -68,14 +68,14 @@ export const NotificationTabs: React.FC<NotificationTabsProps> = ({
 
       {/* Right: actions — only render what is relevant */}
       {(hasUnread || hasNotifications) && (
-        <div className="flex flex-row items-center gap-3">
+        <div className="flex flex-row items-center gap-1.5 sm:gap-3">
 
           {/* Mark all as read — only when there are unread items */}
           {hasUnread && (
             <button
               type="button"
               onClick={onMarkAllAsRead}
-              className="ds-text-secondary font-['DM_Sans'] text-ds-accent hover:opacity-80 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded"
+              className="ds-text-secondary font-['DM_Sans'] text-[12px] sm:text-[14px] whitespace-nowrap text-ds-accent hover:opacity-80 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded"
             >
               Mark all as read
             </button>
@@ -84,7 +84,7 @@ export const NotificationTabs: React.FC<NotificationTabsProps> = ({
           {/* Separator — only when both buttons are visible */}
           {hasUnread && hasNotifications && (
             <span
-              className="block w-px h-5 bg-ds-border flex-shrink-0"
+              className="block w-px h-4 sm:h-5 bg-ds-border flex-shrink-0"
               aria-hidden="true"
             />
           )}
@@ -94,7 +94,7 @@ export const NotificationTabs: React.FC<NotificationTabsProps> = ({
             <button
               type="button"
               onClick={onClearAllClick}
-              className="ds-text-secondary font-['DM_Sans'] text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded"
+              className="ds-text-secondary font-['DM_Sans'] text-[12px] sm:text-[14px] whitespace-nowrap text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded"
             >
               Clear all
             </button>

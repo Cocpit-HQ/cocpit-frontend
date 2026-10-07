@@ -48,7 +48,7 @@ export default function LunarPanel({
     try {
       const bgColor = resolvedTheme === "dark" || theme === "dark"
         ? "#0B0F19"
-        : (resolvedTheme === "navy" || theme === "navy" ? "#171c28" : "#FFFFFF");
+        : "#FFFFFF";
       const canvas = await html2canvas(element, {
         backgroundColor: bgColor,
         useCORS: true,
@@ -138,3 +138,4 @@ export default function LunarPanel({
     </div>
   );
 }
+
