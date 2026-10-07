@@ -328,7 +328,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleBack = () => {
-    router.back();
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/feed");
+    }
   };
 
   const handleClose = () => {
@@ -345,7 +349,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         type="button"
         onClick={handleBack}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 flex items-center gap-2 h-9 px-2 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-50 group"
+        className="fixed top-6 left-4 sm:top-10 sm:left-10 flex items-center gap-2 h-9 px-2 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-[60] group"
       >
         <ChevronLeft className="w-5 h-5 text-[var(--ds-text-primary)] group-hover:text-[var(--ds-text-secondary)] transition-colors shrink-0" />
         <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px]">Back</span>
@@ -361,7 +365,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         type="button"
         onClick={handleClose}
         aria-label="Close to feed"
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 flex items-center justify-center w-9 h-9 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-50"
+        className="fixed top-6 right-4 sm:top-10 sm:right-10 flex items-center justify-center w-9 h-9 rounded-md text-[var(--ds-text-primary)] hover:text-[var(--ds-text-secondary)] transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] z-[60]"
       >
         <X className="w-5 h-5" />
       </button>

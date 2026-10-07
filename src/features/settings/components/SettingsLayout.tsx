@@ -37,8 +37,8 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
         <div className="w-full max-w-[980px] h-full p-2 sm:p-4 md:p-[0px_16px] flex flex-col items-start gap-0 rounded-[24px] overflow-hidden">
           {/* Frame 2608633: Inner box max 948px, fills height */}
           <div className="w-full max-w-[948px] h-full p-0 flex flex-col md:flex-row items-start gap-0 overflow-hidden">
-            {/* Fixed Sidebar - Completely stationary in place, never scrolls with the content */}
-            <aside className={`w-full md:w-[236px] shrink-0 md:h-full md:overflow-y-auto scrollbar-hide ${isRoot ? 'block' : 'hidden md:block'}`}>
+            {/* Fixed Sidebar - Stationarily scrolls internally on desktop; scrollable on mobile */}
+            <aside className={`w-full md:w-[236px] shrink-0 h-full overflow-y-auto scrollbar-hide overscroll-contain ${isRoot ? 'block' : 'hidden md:block'}`}>
               <SettingsSidebar />
             </aside>
             

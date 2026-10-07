@@ -143,7 +143,7 @@ export function SettingsSidebar() {
       </div>
 
       {/* --- MOBILE MENU --- */}
-      <div className="flex md:hidden flex-col w-full min-h-[100dvh] bg-ds-bg text-ds-text-primary font-sans pb-24">
+      <div className="flex md:hidden flex-col w-full min-h-full bg-ds-bg text-ds-text-primary font-sans pb-4">
         {/* Mobile Header */}
         <div className="flex flex-row items-center gap-2.5 px-4 py-2 sticky top-0 bg-ds-bg/95 backdrop-blur border-b border-ds-border z-10">
           <button 

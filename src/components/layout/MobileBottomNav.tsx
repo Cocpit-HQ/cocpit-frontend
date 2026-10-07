@@ -30,7 +30,7 @@ export function MobileBottomNav() {
   const { isFeatureActive } = useFeatureFlags()
   const { setActiveModal } = useUIStore()
 
-  const showJobs = isFeatureActive('enableJobsBoard') && (!isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS'))
+  const showJobs = !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS')
   const canCreatePost = !isCompany || checkPermission('create_post') || checkPermission('CREATE_POST')
 
   const isActive = (route: string) => {
