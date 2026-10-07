@@ -9,7 +9,7 @@ import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post, SavedFolder } from "@/types/entities";
 import { SavedPostCard } from "../components/SavedPostCard";
 import { toast } from "sonner";
-import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { CreateFolderModal } from "@/features/settings/components/CreateFolderModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -187,15 +187,20 @@ export default function CustomSavedPostsPage() {
           {/* Main Content Area */}
           <div className="space-y-[24px]">
             {/* Posts List */}
-            <div className="flex flex-col gap-[24px] p-[8px] rounded-[24px] w-full max-w-[666px]">
+            <div className="flex flex-col gap-[12px] p-[8px] rounded-[24px] w-full max-w-[648px]">
               {posts.length > 0 ? (
                 posts.map(post => (
-                  <SavedPostCard
+                  <div
                     key={post.id}
-                    post={post}
-                    folderId={folderId}
-                    onUnsave={handlePostUnsaved}
-                  />
+                    className="self-stretch pb-[12px] border-b border-[#2C2C33] last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-[12px] w-full"
+                  >
+                    <SavedPostCard
+                      key={post.id}
+                      post={post}
+                      folderId={folderId}
+                      onUnsave={handlePostUnsaved}
+                    />
+                  </div>
                 ))
               ) : (
                 !loading && (
@@ -235,14 +240,18 @@ export default function CustomSavedPostsPage() {
         }}
       />
 
-      <ConfirmModal
+      <ActionConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         title="Delete collection"
         description="Are you sure you want to delete this collection"
         confirmText="Delete"
+        cancelText="Cancel"
+        confirmColor="accent"
         onConfirm={handleDeleteFolder}
         isLoading={isDeleting}
+        buttonWidthClass="w-[77px]"
+        modalClassName="w-[237px] h-[150px]"
       />
     </div>
   );

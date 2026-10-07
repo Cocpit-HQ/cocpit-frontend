@@ -185,8 +185,8 @@ export default function AddProjectForm({
     if (startMonth && startYear) {
       const sTime = buildDateVal(startMonth, startYear);
       const eTime = buildDateVal(endMonth, endYear);
-      if (sTime !== null && eTime !== null && eTime <= sTime) {
-        return "End date must be greater than start date";
+      if (sTime !== null && eTime !== null && eTime < sTime) {
+        return "End date must be on or after start date";
       }
     }
     return null;
@@ -197,7 +197,7 @@ export default function AddProjectForm({
     setSubmitAttempted(true);
 
     const missingEndDate = !isCurrent && (!endMonth || !endYear);
-    const hasDateLogicError = startMonth && startYear && endMonth && endYear && buildDateVal(startMonth, startYear)! >= buildDateVal(endMonth, endYear)!;
+    const hasDateLogicError = startMonth && startYear && endMonth && endYear && buildDateVal(startMonth, startYear)! > buildDateVal(endMonth, endYear)!;
 
     // Validate team size before submitting
     if (teamSize.trim() !== "") {
@@ -407,7 +407,7 @@ export default function AddProjectForm({
           <div className="space-y-2">
             <Label className={labelStyles}>Start date*</Label>
             <div className="grid grid-cols-2 gap-4">
-              <Select value={startMonth} onValueChange={setStartMonth}>
+              <Select value={startMonth} onValueChange={(val) => { setStartMonth(val); setBackendErrors(prev => ({ ...prev, endDate: "", startDate: "" })); }}>
                 <SelectTrigger className={cn(inputStyles, !startMonth && "text-muted-foreground")}>
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
@@ -420,7 +420,7 @@ export default function AddProjectForm({
                 </SelectContent>
               </Select>
 
-              <Select value={startYear} onValueChange={setStartYear}>
+              <Select value={startYear} onValueChange={(val) => { setStartYear(val); setBackendErrors(prev => ({ ...prev, endDate: "", startDate: "" })); }}>
                 <SelectTrigger className={cn(inputStyles, !startYear && "text-muted-foreground")}>
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
@@ -440,7 +440,7 @@ export default function AddProjectForm({
             <div className="space-y-2 animate-in fade-in-90 duration-200">
               <Label className={labelStyles}>End date*</Label>
               <div className="grid grid-cols-2 gap-4">
-                <Select value={endMonth} onValueChange={(val) => { setEndMonth(val); setTouchedEndDate(true); }}>
+                <Select value={endMonth} onValueChange={(val) => { setEndMonth(val); setTouchedEndDate(true); setBackendErrors(prev => ({ ...prev, endDate: "", startDate: "" })); }}>
                   <SelectTrigger className={cn(inputStyles, !endMonth && "text-muted-foreground", endDateError && "border-red-400")}>
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
@@ -453,7 +453,7 @@ export default function AddProjectForm({
                   </SelectContent>
                 </Select>
 
-                <Select value={endYear} onValueChange={(val) => { setEndYear(val); setTouchedEndDate(true); }}>
+                <Select value={endYear} onValueChange={(val) => { setEndYear(val); setTouchedEndDate(true); setBackendErrors(prev => ({ ...prev, endDate: "", startDate: "" })); }}>
                   <SelectTrigger className={cn(inputStyles, !endYear && "text-muted-foreground", endDateError && "border-red-400")}>
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>

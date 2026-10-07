@@ -44,6 +44,12 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/weblogo.png.PNG",
   },
+  formatDetection: {
+    email: false,
+    telephone: false,
+    date: false,
+    address: false,
+  },
 };
 
 export const viewport: Viewport = {

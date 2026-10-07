@@ -166,6 +166,8 @@ export interface Post {
   is_saved?: boolean;
   is_reported?: boolean;
   isReported?: boolean;
+  votes?: number;
+  isPollActive?: boolean;
   likedUsers?: { username: string; avatar_url: string | null }[];
   comments: string;
   shares: string;

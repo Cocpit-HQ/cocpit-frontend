@@ -206,7 +206,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                         </button>
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="w-[162px] h-[36px] flex flex-row justify-center items-center p-[6px_12px] gap-[10px] border border-ds-border rounded-[100px] hover:bg-ds-surface-1 active:scale-[0.98] transition-all duration-[var(--motion-quick)]"
+                            className="w-[169px] h-[36px] flex flex-row justify-center items-center p-[6px_12px] gap-[10px] border border-ds-border rounded-[100px] hover:bg-ds-surface-1 active:scale-[0.98] transition-all duration-[var(--motion-quick)]"
                         >
                             <Plus className="w-[16px] h-[16px] text-ds-text-primary shrink-0" strokeWidth={2} />
                             <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary whitespace-nowrap">

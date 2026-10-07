@@ -49,33 +49,31 @@ export function DeactivateAccountModal({ isOpen, onClose }: DeactivateAccountMod
         </div>
 
         {/* Input Wrapper */}
-        <div className="flex flex-col justify-center items-start w-[278px] h-[62px] py-[8px] px-0 gap-[10px] border-b border-ds-border z-[1] shrink-0">
-          <label className="ds-text-small-1 text-ds-text-secondary text-center w-[62px] h-[16px] shrink-0 m-0 p-0 leading-[16px]">
+        <div className="flex flex-col justify-center items-start w-[278px] py-[8px] px-0 gap-[10px] border-b border-ds-border z-[1] shrink-0">
+          <label className="ds-text-small-1 text-ds-text-secondary text-left shrink-0 m-0 p-0 leading-[16px]">
             Enter code
           </label>
-          <div className="flex flex-row justify-between items-center w-[278px] h-[20px] gap-[10px] p-0 shrink-0">
+          <div className="flex flex-row justify-between items-center w-full h-[20px] gap-[10px] p-0 shrink-0">
             <input
               type={showPassword ? "text" : "password"}
-              className="w-[47px] h-[20px] bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary text-center m-0 shrink-0 leading-[20px] placeholder:text-transparent"
+              className="flex-1 w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary text-left m-0 shrink-0 leading-[20px] placeholder:text-transparent"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none p-0 m-0 flex items-center justify-center bg-transparent border-none cursor-pointer w-[16px] h-[16px] shrink-0"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <Eye className="w-full h-full" />
+              ) : (
+                <EyeOff className="w-full h-full" />
+              )}
+            </button>
           </div>
         </div>
-
-        {/* Absolute Eye Icon */}
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute w-[16px] h-[16px] left-[275px] top-[305px] z-[2] text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none p-0 m-0 flex items-center justify-center bg-transparent border-none cursor-pointer"
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? (
-            <Eye className="w-full h-full" />
-          ) : (
-            <EyeOff className="w-full h-full" />
-          )}
-        </button>
 
         {/* Action Buttons */}
         <div className="flex flex-row justify-center items-start gap-[8px] w-[220px] h-[36px] p-0 z-[3] shrink-0">

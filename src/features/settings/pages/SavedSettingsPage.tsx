@@ -14,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { SavedFolder, Post } from '@/types/entities';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { SavedPostCard } from '@/app/(authenticated)/(dashboard)/saved/components/SavedPostCard';
 export function SavedSettingsPage() {
   const router = useRouter();
   const pathname = usePathname() || '/settings/saved';
@@ -77,6 +78,19 @@ export function SavedSettingsPage() {
   }, [selectedFolder, fetchPostsForFolder]);
 
   // Unsave post handler
+  const handlePostUnsaved = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    setSelectedFolder((prev) =>
+      prev
+        ? {
+            ...prev,
+            post_count: Math.max(0, (prev.post_count ?? posts.length) - 1),
+          }
+        : null
+    );
+    queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY });
+  };
+
   const handleUnsavePost = async (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
     try {
@@ -178,8 +192,8 @@ export function SavedSettingsPage() {
             )}
           </div>
 
-          {/* Saved Posts List */}
-          <div className="self-stretch p-2 rounded-3xl flex flex-col justify-start items-start gap-4 w-full">
+          {/* Saved Posts List (Frame 2609256) */}
+          <div className="self-stretch p-2 rounded-[24px] flex flex-col justify-start items-start gap-[12px] w-full max-w-[648px]">
             {isLoadingPosts ? (
               <div className="self-stretch flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-ds-accent" />
@@ -189,120 +203,18 @@ export function SavedSettingsPage() {
                 No saved posts in this collection.
               </div>
             ) : (
-              posts.map((post) => {
-                const postImage = post.videoSrc || post.imageSrc || post.images?.[0];
-                const isVideo = !!post.videoSrc || (postImage && typeof postImage === 'string' && postImage.toLowerCase().match(/\.(mp4|mov|webm)$/i));
-                const rawText = post.content || (post as any).articleBody || (post as any).title || (post as any).caption || '';
-                const cleanText = rawText
-                  ? rawText
-                      .replace(/@\[(.*?)\]\([^)]+\)/g, '@$1')
-                      .replace(/<[^>]*>?/gm, ' ')
-                      .replace(/&nbsp;/g, ' ')
-                      .replace(/&amp;/g, '&')
-                      .replace(/&lt;/g, '<')
-                      .replace(/&gt;/g, '>')
-                      .replace(/&quot;/g, '"')
-                      .replace(/&#39;/g, "'")
-                      .replace(/\s+/g, ' ')
-                      .trim()
-                  : '';
-
-                const hasImage = !!postImage;
-                const hasText = !!cleanText;
-
-                return (
-                  <div
-                    key={post.id}
-                    className="self-stretch pb-4 border-b border-ds-border last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-3 w-full"
-                  >
-                    {/* Author Row */}
-                    <div className="self-stretch flex justify-between items-center w-full">
-                      <div
-                        onClick={() => post.authorId && router.push(`/profile/${post.authorId}`)}
-                        className="flex justify-start items-center gap-1.5 cursor-pointer group min-w-0"
-                      >
-                        <Avatar className="size-8 rounded-full shrink-0">
-                          <AvatarImage
-                            src={(post.authorAvatar && post.authorAvatar !== "null") ? post.authorAvatar : ""}
-                            alt={post.author}
-                            className="object-cover"
-                          />
-                          <AvatarFallback />
-                        </Avatar>
-                        <div className="flex flex-col justify-center items-start min-w-0">
-                          <span className="text-ds-text-primary text-base font-semibold leading-6 truncate">
-                            {post.author}
-                          </span>
-                          {post.authorHeadline && (
-                            <span className="text-ds-text-muted text-[10px] font-normal leading-3 truncate">
-                              {post.authorHeadline}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Bookmark Icon (Orange active state) */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleUnsavePost(e, post.id)}
-                        className="p-1 hover:opacity-80 transition-opacity cursor-pointer text-ds-accent shrink-0"
-                        title="Remove from saved"
-                      >
-                        <Icon name="save-filled" className="size-5 text-current" />
-                      </button>
-                    </div>
-
-                    {/* Post Content & Media */}
-                    {hasImage ? (
-                      <div
-                        onClick={() => handlePostClick(post.id)}
-                        className="self-stretch flex justify-start items-center gap-4 cursor-pointer group w-full"
-                      >
-                        <div className="relative w-[76px] h-[76px] bg-ds-surface-2 rounded-xl border border-ds-border overflow-hidden shrink-0">
-                          {isVideo ? (
-                            <>
-                              <video
-                                src={postImage}
-                                className="size-full object-cover group-hover:scale-105 transition-transform"
-                                preload="metadata"
-                                muted
-                                playsInline
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-colors">
-                                <div className="size-8 rounded-full bg-black/50 flex items-center justify-center border border-white/20">
-                                  <Icon name="play" className="size-4 text-white ml-0.5" />
-                                </div>
-                              </div>
-                            </>
-                          ) : (
-                            <img
-                              src={postImage}
-                              alt="Post attachment"
-                              className="size-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          )}
-                        </div>
-                        {hasText && (
-                          <div className="flex-1 flex flex-col justify-start items-start min-w-0">
-                            <p className="text-ds-text-primary text-sm font-normal leading-5 line-clamp-2 group-hover:text-white transition-colors">
-                              {cleanText}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : hasText ? (
-                      <div
-                        onClick={() => handlePostClick(post.id)}
-                        className="self-stretch cursor-pointer group w-full"
-                      >
-                        <p className="text-ds-text-primary text-sm font-normal leading-5 line-clamp-3 group-hover:text-white transition-colors">
-                          {cleanText}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })
+              posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="self-stretch pb-[12px] border-b border-[#2C2C33] last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-[12px] w-full"
+                >
+                  <SavedPostCard
+                    post={post}
+                    folderId={selectedFolder.folder_id}
+                    onUnsave={handlePostUnsaved}
+                  />
+                </div>
+              ))
             )}
           </div>
         </div>
@@ -336,8 +248,8 @@ export function SavedSettingsPage() {
             cancelText="Cancel"
             confirmColor="accent"
             isLoading={isDeleting}
-            buttonWidthClass="w-[88px]"
-            modalClassName="w-[280px]"
+            buttonWidthClass="w-[77px]"
+            modalClassName="w-[237px] h-[150px]"
           />
         )}
       </div>
@@ -381,7 +293,7 @@ export function SavedSettingsPage() {
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="w-auto sm:w-44 px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 shrink-0"
+          className="w-[169px] h-[36px] px-3 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 shrink-0"
         >
           <span>New collections</span>
         </button>

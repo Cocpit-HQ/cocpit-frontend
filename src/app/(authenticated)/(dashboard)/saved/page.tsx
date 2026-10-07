@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { FeedPost } from "@/features/feed/components/FeedPost";
+import { SavedPostCard } from "./components/SavedPostCard";
 import { getSavedPosts } from "@/features/settings/api/savedPost";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";
@@ -108,18 +108,18 @@ export default function SavedPostsGeneralPage() {
           {/* Main Content Area */}
           <div className="space-y-[24px]">
             {/* Posts List */}
-            <div className="flex flex-col gap-[16px] w-full max-w-[560px]">
+            <div className="flex flex-col gap-[12px] p-[8px] rounded-[24px] w-full max-w-[648px]">
               {posts.length > 0 ? (
                 posts.map(post => (
-                  <FeedPost
+                  <div
                     key={post.id}
-                    {...post}
-                    initialComments={post.commentData}
-                    isOwnPost={!isCompany}
-                    onDelete={handleDeletePost}
-                    onToggleVisibility={handleToggleVisibility}
-                    isFullContent={true}
-                  />
+                    className="self-stretch pb-[12px] border-b border-[#2C2C33] last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-[12px] w-full"
+                  >
+                    <SavedPostCard
+                      post={post}
+                      onUnsave={handleDeletePost}
+                    />
+                  </div>
                 ))
               ) : (
                 !loading && (

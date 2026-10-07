@@ -169,8 +169,13 @@ export function extractPostMedia(item: any) {
     allTypeStrings.some((t) => t.includes('poll'))
   );
 
-  const pollQuestion = item.poll?.question || post.poll?.question || item.pollQuestion || item.postTitle || item.post_title || (hasPoll ? (item.content || item.text) : undefined);
-  const pollMeta = hasPoll ? `${item.poll?.total_votes ?? post.poll?.total_votes ?? item.votes ?? item.post?.votes ?? 0} votes • ${item.isPollActive || item.post?.isPollActive ? 'Poll active' : 'Poll closed'}` : undefined;
+  // Merge: keep HEAD's cleaner pollMeta logic + incoming's additional post_title field in pollQuestion
+  const pollQuestion = item.postTitle || item.poll?.question || post.poll?.question || item.pollQuestion || item.post_title || (hasPoll ? (item.content || item.text) : undefined);
+  const pollObj = item.poll || post.poll;
+  const totalVotes = item.votes ?? pollObj?.total_votes ?? 0;
+  const isActive = item.isPollActive !== undefined ? item.isPollActive : pollObj?.is_active;
+  const pollStatus = isActive === false ? ' • Poll closed' : '';
+  const pollMeta = hasPoll ? `${totalVotes} votes${pollStatus}` : undefined;
 
   const isArticle = Boolean(
     allTypeStrings.some((t) => t.includes('article')) ||

@@ -118,28 +118,31 @@ export const ProfilePostsTab: React.FC<ProfilePostsTabProps> = ({
         !hiddenPostIds.includes(p.id?.toString())
     );
 
-    // Always show the most recent posts (backend already orders by created_at DESC).
-    // If only 1 of the top 2 is a media post, prefer swapping in the earliest media
-    // post from the remaining list — but never push the most recent post below position 0.
-    const topN = visiblePosts.slice(0, limit);
-    if (topN.length < 2 || isMobile) return topN;
-
-    const [first, second] = topN;
-    // If neither of the top 2 is media, try to substitute the second slot with the
-    // earliest media post from the rest of the list (position 2+), preserving the
-    // first (most recent) post in slot 0.
-    if (!isMediaPost(first) && !isMediaPost(second)) {
-      const nextMediaPost = visiblePosts.slice(2).find(isMediaPost);
-      if (nextMediaPost) return [first, nextMediaPost];
+    const mediaPosts = visiblePosts.filter(isMediaPost);
+    
+    // If we have at least 2 media posts, show the top 2
+    if (mediaPosts.length >= 2) {
+      return mediaPosts.slice(0, 2);
     }
-    return topN;
-  }, [posts, isMobile, hiddenPostIds, reportedPostIds]);
+    
+    // If we have 1 media post, fill the second slot with the next available non-media post
+    if (mediaPosts.length === 1) {
+      const otherPosts = visiblePosts.filter((p) => !isMediaPost(p));
+      if (otherPosts.length > 0) {
+        return [mediaPosts[0], otherPosts[0]];
+      }
+      return [mediaPosts[0]];
+    }
+
+    // Fallback: If no media posts are available, show the top 2 available posts of any type
+    return visiblePosts.slice(0, 2);
+  }, [posts, hiddenPostIds, reportedPostIds]);
 
   if (isError) {
     return <ProfilePostsErrorState onRetry={onRetry} />;
   }
 
-  if (!posts || posts.length === 0) {
+  if (!posts || posts.length === 0 || displayedPosts.length === 0) {
     return <ProfilePostsEmptyState isOwnProfile={isOwnProfile} userName={userName} />;
   }
 

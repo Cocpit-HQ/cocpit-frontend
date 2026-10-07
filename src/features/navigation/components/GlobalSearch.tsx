@@ -208,9 +208,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       {/* Live Search Dropdown */}
       {showLive && (
         <div className={variant === 'mobile' ? "fixed top-[60px] left-0 right-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg border-t border-[#3F3F46] shadow-xl z-[9999] max-h-[80vh] overflow-y-auto" : "absolute top-[48px] left-0 w-full p-[12px] gap-[16px] flex flex-col bg-ds-bg rounded-[8px] shadow-xl z-50"}>
-          {isSearching ? (
-            <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
-          ) : searchResults.length > 0 ? (
+          {searchResults.length > 0 && (
             <div className="w-full flex flex-col gap-3 max-h-[276px] overflow-y-auto overscroll-contain scrollbar-hide">
               {searchResults.map((user) => (
                 <Link
@@ -240,9 +238,11 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
                 </Link>
               ))}
             </div>
-          ) : isSearching ? (
+          )}
+          {isSearching && (
             <div className="text-[14px] leading-5 text-ds-text-muted">Searching...</div>
-          ) : (
+          )}
+          {!isSearching && searchResults.length === 0 && (
             <div className="text-[14px] leading-5 text-ds-text-muted">No results found.</div>
           )}
         </div>

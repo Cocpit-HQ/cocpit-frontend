@@ -234,6 +234,8 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     sampleLikerUsername: backendPost.sample_liker_username || undefined,
     authorHeadline: backendPost.author_headline || undefined,
     post_type: backendPost.post_type,
+    votes: (backendPost as any).votes,
+    isPollActive: (backendPost as any).isPollActive,
     achievementImageId: backendPost.achievement_image_id || undefined,
     achievementImageUrl: backendPost.achievement_image_url || undefined,
     achievementImageTitle: backendPost.achievement_image_title || (backendPost.achievement_image_id ? 'Achievement' : undefined),

@@ -68,7 +68,7 @@ export function AccountSettingsPage() {
             >
               <button
                 type="button"
-                className="w-full sm:w-auto h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
+                className="w-full sm:w-[200px] h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
               >
                 <span className="text-ds-text-primary ds-text-body-1 whitespace-nowrap">
                   {isLoading ? '...' : hasPassword ? 'Change password' : 'Add password'}
@@ -77,7 +77,8 @@ export function AccountSettingsPage() {
             </Link>
           </div>
 
-          {/* Row 2: Manage email */}
+          {/* Row 2: Manage email (Commented out) */}
+          {/*
           <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
               <span className="text-ds-text-primary ds-text-body-1">
@@ -98,12 +99,13 @@ export function AccountSettingsPage() {
               </button>
             </Link>
           </div>
+          */}
 
           {/* Row 3: Manage phone number */}
           <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
               <span className="text-ds-text-primary ds-text-body-1">
-                Manage phone number
+                {hasPhone ? 'Manage phone number' : 'Add phone number'}
               </span>
               <p className="text-ds-text-secondary ds-text-secondary m-0 truncate max-w-full">
                 {isLoading ? 'Loading...' : hasPhone ? `${accountData?.countryCode || ''} ${phoneNumber}`.trim() : 'No phone number'}
@@ -112,7 +114,7 @@ export function AccountSettingsPage() {
             <Link href={`${basePath}/account-phone`} className="shrink-0 w-full sm:w-auto">
               <button
                 type="button"
-                className="w-full sm:w-auto h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
+                className="w-full sm:w-[200px] h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
               >
                 <span className="text-ds-text-primary ds-text-body-1 whitespace-nowrap">
                   {hasPhone ? 'Change phone number' : 'Add phone number'}
@@ -142,7 +144,7 @@ export function AccountSettingsPage() {
             <button
               type="button"
               onClick={handleOpenLogout}
-              className="w-full sm:w-auto h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2 transition-colors cursor-pointer shrink-0 ds-focus-ring"
+              className="w-full sm:w-[107px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2 transition-colors cursor-pointer shrink-0 ds-focus-ring"
             >
               <LogOut className="w-4 h-4 text-ds-text-primary shrink-0" />
               <span className="text-ds-text-primary ds-text-body-1 whitespace-nowrap">
@@ -165,7 +167,7 @@ export function AccountSettingsPage() {
           <button
             type="button"
             onClick={handleOpenDeactivate}
-            className="w-full sm:w-auto h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer shrink-0 ds-focus-ring"
+            className="w-full sm:w-[107px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer shrink-0 ds-focus-ring"
           >
             <span className="text-ds-text-primary ds-text-body-1 whitespace-nowrap">
               Deactivate
@@ -186,7 +188,7 @@ export function AccountSettingsPage() {
           <button
             type="button"
             onClick={handleOpenDelete}
-            className="w-full sm:w-auto h-[36px] px-3 py-1.5 bg-ds-error hover:bg-ds-error/90 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors cursor-pointer shrink-0 ds-focus-ring"
+            className="w-full sm:w-[107px] h-[36px] px-3 py-1.5 bg-ds-error hover:bg-ds-error/90 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors cursor-pointer shrink-0 ds-focus-ring"
           >
             <span className="text-white ds-text-body-1 whitespace-nowrap">
               Delete

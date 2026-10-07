@@ -127,19 +127,19 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative flex flex-col items-center bg-ds-bg border border-ds-border rounded-2xl w-[403px] p-3 gap-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative flex flex-col items-center bg-ds-bg border border-ds-border rounded-2xl w-[304px] p-6 gap-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
 
         {/* Title & Description */}
-        <div className="flex flex-col items-center gap-2 w-[377px] text-center">
-          <h2 className="ds-text-body-1 text-ds-text-primary">Delete your Cocpit account</h2>
-          <p className="ds-text-secondary text-ds-text-secondary">
+        <div className="flex flex-col items-center gap-2 w-full text-center">
+          <h2 className="ds-text-body-1 text-ds-text-primary">Delete your Cocpit account?</h2>
+          <p className="ds-text-small text-ds-text-secondary">
             Your account will be scheduled for deletion. You can recover it within 40 days using the link sent to your email. After 40 days, your account and all associated data will be permanently deleted
           </p>
         </div>
 
         {/* Company Accounts Block */}
         {hasCompanyAccount && (
-          <div className="flex flex-col items-center w-[377px] bg-ds-bg rounded-[24px] p-4 gap-3">
+          <div className="flex flex-col items-center w-full bg-ds-bg rounded-2xl gap-3">
             <h3 className="ds-text-body-1 text-ds-text-primary self-center">Company accounts</h3>
 
             {loadingCompanies ? (
@@ -187,15 +187,14 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           </div>
         )}
 
-        <div className="flex flex-col items-start w-[377px] py-2 gap-2.5">
+        <div className="flex flex-col items-start w-full gap-2">
           <label className="ds-text-small-1 text-ds-text-secondary block">
             Enter Password
           </label>
-          <div className="flex flex-row justify-between items-center w-full gap-2.5 pb-2 border-b border-ds-border">
+          <div className="flex flex-row justify-between items-center w-full gap-2.5 pb-[6px] border-b border-ds-border">
             <input
               type={showPassword ? "text" : "password"}
               className="w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 ds-text-secondary text-ds-text-primary"
-              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -219,16 +218,15 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-row justify-center items-center gap-2 w-full mt-1">
+        <div className="flex flex-row justify-center items-center gap-3 w-full">
           <button
             onClick={handleDelete}
             disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}
-            className={`flex flex-row justify-center items-center px-3 py-1.5 h-9 rounded-full transition-all ${
+            className={`flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full transition-all ${
               isDeleteDisabled || !password
                 ? 'bg-ds-accent/40 text-ds-text-primary/50 cursor-not-allowed'
                 : 'bg-ds-accent hover:opacity-90 active:scale-95 shadow-sm text-ds-text-primary'
             }`}
-            style={{ width: '77px' }}
           >
             {deleteAccountMutation.isPending ? (
                <Loader2 className="w-4 h-4 animate-spin" />
@@ -239,8 +237,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           
           <button
             onClick={onClose}
-            className="flex flex-row justify-center items-center px-3 py-1.5 h-9 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors text-ds-text-primary"
-            style={{ width: '77px' }}
+            className="flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors text-ds-text-primary"
           >
             <span className="ds-text-body-1">Cancel</span>
           </button>

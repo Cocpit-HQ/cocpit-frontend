@@ -20,7 +20,7 @@ const userSidebarItems = [
   { id: 'saved', label: 'Saved posts', icon: (props: any) => <Icon icon="solar:bookmark-linear" width={20} height={20} {...props} /> },
   { id: 'activity', label: 'Your activity', icon: (props: any) => <Icon icon="hugeicons:activity-03" width={20} height={20} {...props} /> },
   { id: 'reports', label: 'Account status', icon: (props: any) => <Icon icon="si:info-line" width={20} height={20} {...props} /> },
-  { id: 'organizations', label: 'Organizations', icon: (props: any) => <Building2 className="w-5 h-5 shrink-0" {...props} /> },
+  // { id: 'organizations', label: 'Organizations', icon: (props: any) => <Building2 className="w-5 h-5 shrink-0" {...props} /> },
   { id: 'blocked', label: 'Blocked accounts', icon: (props: any) => <Icon icon="ic:baseline-block" width={20} height={20} {...props} /> },
   { id: 'support', label: 'Help & Support', icon: (props: any) => <Icon icon="streamline:customer-support-1" width={20} height={20} {...props} /> },
   { id: 'legal', label: 'Legal & Privacy', icon: (props: any) => <Icon icon="hugeicons:legal-01" width={20} height={20} {...props} /> },
@@ -51,7 +51,7 @@ const mobileMenuGroups: { title: string, items: MenuItem[] }[] = [
     title: 'Account',
     items: [
       { id: 'account', label: 'Account', icon: (props: any) => <Icon icon="iconoir:profile-circle" width={20} height={20} {...props} /> },
-      { id: 'organizations', label: 'Organizations', icon: (props: any) => <Building2 className="w-5 h-5 shrink-0" {...props} /> },
+      // { id: 'organizations', label: 'Organizations', icon: (props: any) => <Building2 className="w-5 h-5 shrink-0" {...props} /> },
       { id: 'privacy', label: 'Privacy', icon: (props: any) => <Icon icon="material-symbols-light:admin-panel-settings-outline-rounded" width={20} height={20} {...props} /> },
       { id: 'notifications', label: 'Notifications', icon: (props: any) => <Bell className="w-5 h-5 shrink-0" {...props} /> },
     ]
