@@ -123,7 +123,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       const { useUIStore } = require('@/store/ui.store');
       const isEditing = !!useUIStore.getState().editingPostId;
       const isReposting = !!useUIStore.getState().sharedPostData;
-      
+
       if (isEditing || isReposting) {
         return;
       }
@@ -184,7 +184,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
         const attemptScroll = () => {
           const el = getScrollElement();
-          
+
           const targetEl = lastPostId ? (document.getElementById(`post-${lastPostId}`) || document.querySelector(`[data-post-id="${lastPostId}"]`)) : null;
 
           let targetScroll = initialTargetScroll;
@@ -214,9 +214,9 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
           // 4. Retry conditions
           if (retries >= maxRetries) {
-             consumeProfileTokens();
-             setTimeout(() => setHasRestored(true), 150);
-             return;
+            consumeProfileTokens();
+            setTimeout(() => setHasRestored(true), 150);
+            return;
           }
 
           // Keep attempting for subsequent frames as virtualizer/DOM mutates sizes
@@ -236,7 +236,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         consumeProfileTokens();
         setTimeout(() => setHasRestored(true), 150);
       }
-      
+
       restoredRef.current = true;
     }
   }, [isReady, pathname, containerId]);
@@ -246,7 +246,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
     if (!hasRestored) return;
 
     let timeoutId: NodeJS.Timeout;
-    
+
     const getScrollElement = () => containerId ? document.getElementById(containerId) : null;
     const scrollTarget = getScrollElement() || window;
 
@@ -256,10 +256,10 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
       const el = getScrollElement();
       const currentScroll = el ? el.scrollTop : window.scrollY;
-      
+
       // Discard coordinates if they abruptly crash to zero when navigating away
       if (currentScroll === 0 && sessionStorage.getItem(`scroll-${pathname}`) !== '0') {
-          return;
+        return;
       }
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
@@ -268,7 +268,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         if (!pathname.startsWith('/profile')) {
           sessionStorage.setItem(`scroll-${pathname}`, currentScroll.toString());
         }
-      }, 150); 
+      }, 150);
     };
 
     scrollTarget.addEventListener('scroll', handleScroll, { passive: true });

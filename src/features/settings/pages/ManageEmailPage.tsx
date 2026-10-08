@@ -16,7 +16,7 @@ export function ManageEmailPage() {
   const [isChangeEmailModalOpen, setIsChangeEmailModalOpen] = useState(false);
   const [isAddRecoveryModalOpen, setIsAddRecoveryModalOpen] = useState(false);
   const [isDeleteRecoveryModalOpen, setIsDeleteRecoveryModalOpen] = useState(false);
-  
+
   const queryClient = useQueryClient();
   const { data: accountData } = useAccountSettings();
   const { data: companyAccountData } = useCompanyAccountSettings();
@@ -42,24 +42,24 @@ export function ManageEmailPage() {
   };
 
   return (
-    <div className="w-full h-full max-w-[712px] px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-4 select-none">
+    <div className="w-full h-full max-w-[712px] p-0 md:px-4 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-0 md:gap-4 select-none">
       {/* Header */}
-      <div className="self-stretch flex items-center gap-2.5 mb-1 shrink-0">
+      <div className="self-stretch flex items-center gap-2 shrink-0 px-4 h-6 mb-4 md:px-0 md:h-auto md:mb-1">
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="Back to account settings"
-          className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring md:w-[20px] md:h-[20px] md:-ml-1.5 md:rounded-none md:border-0 md:p-0 md:hover:bg-transparent md:text-ds-text-primary md:hover:text-ds-accent"
+          className="flex items-center justify-center w-5 h-5 p-0 text-ds-text-primary hover:text-ds-text-secondary transition-colors shrink-0 cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5] md:stroke-[2]" />
+          <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
         </button>
-        <h1 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6 m-0">
-          Manage email
+        <h1 className="text-ds-text-primary text-[16px] md:text-base font-medium md:font-semibold font-['DM_Sans'] leading-[24px] h-6 flex items-center m-0">
+          Manage mail
         </h1>
       </div>
 
       {/* Primary Email Section */}
-      <div className="self-stretch flex flex-col justify-start items-start gap-2 shrink-0">
+      <div className="self-stretch px-4 md:px-0 flex flex-col justify-start items-start gap-2 shrink-0">
         <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
           <div className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
             Primary email
@@ -141,17 +141,17 @@ export function ManageEmailPage() {
       </div>
 
       {isChangeEmailModalOpen && (
-        <ChangeEmailModal 
-          isOpen={isChangeEmailModalOpen} 
-          onClose={() => setIsChangeEmailModalOpen(false)} 
+        <ChangeEmailModal
+          isOpen={isChangeEmailModalOpen}
+          onClose={() => setIsChangeEmailModalOpen(false)}
           currentEmail={userEmail}
         />
       )}
-      
+
       {isAddRecoveryModalOpen && (
-        <ChangeEmailModal 
-          isOpen={isAddRecoveryModalOpen} 
-          onClose={() => setIsAddRecoveryModalOpen(false)} 
+        <ChangeEmailModal
+          isOpen={isAddRecoveryModalOpen}
+          onClose={() => setIsAddRecoveryModalOpen(false)}
           currentEmail={userEmail}
           mode="recovery"
         />

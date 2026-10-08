@@ -13,7 +13,9 @@ import {
   ManagePasswordPage,
   ManageEmailPage,
   ManagePhonePage,
-  OrganizationsSettingsPage
+  OrganizationsSettingsPage,
+  MobileDeactivateView,
+  MobileDeleteView
 } from '@/features/settings';
 
 export default async function SettingsTabPage({ params }: { params: Promise<{ tab: string }> }) {
@@ -52,6 +54,10 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
       return <ManageEmailPage />;
     case 'account-phone':
       return <ManagePhonePage />;
+    case 'account-deactivate':
+      return <MobileDeactivateView />;
+    case 'account-delete':
+      return <MobileDeleteView hasCompanyAccount={true} />;
     default:
       redirect('/settings/account');
   }

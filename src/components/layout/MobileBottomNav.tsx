@@ -4,7 +4,6 @@ import React from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useAuth } from "@/hooks/use-auth"
 import { MobileProfileSwitcher } from "@/components/layout/MobileProfileSwitcher"
 import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
 import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
@@ -12,20 +11,11 @@ import { Icon } from "@/components/icons"
 import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { useUIStore } from "@/store/ui.store"
 
-const NAV_ROUTES: Record<string, string> = {
-  home: "/feed",
-  jobs: "/jobs",
-  ai: "/ai-assistant",
-  events: "/events",
-  profile: "/profile",
-}
-
 export function MobileBottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { handleNavClick } = useNavigationMemoryLink()
   const { activeProfile, isCompany } = useActiveProfile()
-  const { user } = useAuth()
   const { canPostJobs, checkPermission } = useCompanyPermissions(activeProfile)
   const { isFeatureActive } = useFeatureFlags()
   const { setActiveModal } = useUIStore()
@@ -58,8 +48,89 @@ export function MobileBottomNav() {
 
   const activeColor = "text-ds-accent" // Using the approved orange token for active states
 
+  const [isKeyboardOpen, setIsKeyboardOpen] = React.useState(false);
+  const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = React.useState(false);
+  const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const clearLongPress = React.useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleProfileTouchStart = React.useCallback(() => {
+    clearLongPress();
+    longPressTimerRef.current = setTimeout(() => {
+      setIsProfileSwitcherOpen(true);
+    }, 500);
+  }, [clearLongPress]);
+
+  React.useEffect(() => {
+    return () => {
+      clearLongPress();
+    };
+  }, [clearLongPress]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkKeyboard = () => {
+      if (window.innerWidth >= 768) {
+        setIsKeyboardOpen(false);
+        return;
+      }
+
+      if (window.visualViewport) {
+        const heightDiff = window.innerHeight - window.visualViewport.height;
+        if (heightDiff > 120) {
+          setIsKeyboardOpen(true);
+          return;
+        }
+      }
+
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement).isContentEditable
+      );
+      setIsKeyboardOpen(Boolean(isInput));
+    };
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (window.innerWidth < 768 && target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        setIsKeyboardOpen(true);
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(checkKeyboard, 100);
+    };
+
+    window.addEventListener('focusin', handleFocusIn, { passive: true });
+    window.addEventListener('focusout', handleFocusOut, { passive: true });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', checkKeyboard, { passive: true });
+    }
+
+    return () => {
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', checkKeyboard);
+      }
+    };
+  }, []);
+
+  if (isKeyboardOpen) {
+    return null;
+  }
+
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t bg-ds-bg/95 border-ds-border backdrop-blur-md">
+    <nav className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t bg-ds-bg/95 border-ds-border backdrop-blur-md transform-gpu pb-[env(safe-area-inset-bottom,0px)]">
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3">
         {/* Home */}
         {isFeatureActive('enableFeedAccess') && (
@@ -124,39 +195,40 @@ export function MobileBottomNav() {
         {isFeatureActive('enableProfileTab') && (() => {
           const isProfActive = isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`));
           const profileHref = activeProfile?.type === "COMPANY" ? `/organization/${activeProfile.slug}` : "/profile";
-          
+
+          const handleProfileClick = (e: React.MouseEvent) => {
+            clearLongPress();
+            if (isProfActive) {
+              e.preventDefault();
+              setIsProfileSwitcherOpen(true);
+            } else {
+              handleNavClick(e as any, profileHref);
+              router.push(profileHref);
+            }
+          };
+
           return (
             <div className="flex flex-col items-center justify-center flex-1">
-              <MobileProfileSwitcher
-                align="end"
-                customTrigger={
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="flex flex-col items-center justify-center w-full focus-visible:outline-none cursor-pointer"
-                    onPointerDown={(e) => {
-                      if (!isProfActive) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    onClick={(e) => {
-                      if (!isProfActive) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleNavClick(e as any, profileHref);
-                        router.push(profileHref);
-                      }
-                    }}
-                  >
-                    <Icon name="profile" className={`w-[22px] h-[22px] ${isProfActive ? activeColor : "text-[#A1A1AA]"}`} />
-                  </div>
-                }
-              />
+              <button
+                type="button"
+                onClick={handleProfileClick}
+                onTouchStart={handleProfileTouchStart}
+                onTouchEnd={clearLongPress}
+                onTouchCancel={clearLongPress}
+                className="flex flex-col items-center justify-center w-full focus-visible:outline-none cursor-pointer"
+                aria-label="Profile"
+              >
+                <Icon name="profile" className={`w-[22px] h-[22px] ${isProfActive ? activeColor : "text-[#A1A1AA]"}`} />
+              </button>
             </div>
           );
         })()}
       </div>
+
+      <MobileProfileSwitcher
+        isOpen={isProfileSwitcherOpen}
+        onOpenChange={setIsProfileSwitcherOpen}
+      />
     </nav>
   )
 }

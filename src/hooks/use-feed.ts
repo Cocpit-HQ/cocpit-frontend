@@ -86,7 +86,7 @@ export const useFeed = (enableInitialFetch = true) => {
     try {
       await apiDeletePost(id, companyId);
       toast.success("Post deleted successfully");
-      
+
       // Dispatch global event so other lists (like profile) can update instantly
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent("postDeleted", { detail: { id: id.toString() } }));
@@ -209,7 +209,7 @@ export const useFeed = (enableInitialFetch = true) => {
     const handleRepostDeleted = (e: Event) => {
       const customEvent = e as CustomEvent;
       const { repostId, originalPostId } = customEvent.detail;
-      
+
       queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
         if (!oldData) return oldData;
         return {
@@ -217,14 +217,14 @@ export const useFeed = (enableInitialFetch = true) => {
           pages: oldData.pages.map((page: any) => ({
             ...page,
             posts: page.posts.filter((p: Post) => {
-               if (repostId && p.id.toString() === repostId.toString()) return false;
-               if (p.shared_post?.id?.toString() === originalPostId?.toString() && p.authorId === activeProfile?.id) return false;
-               return true;
+              if (repostId && p.id.toString() === repostId.toString()) return false;
+              if (p.shared_post?.id?.toString() === originalPostId?.toString() && p.authorId === activeProfile?.id) return false;
+              return true;
             }).map((p: Post) => {
-               if (p.id.toString() === originalPostId?.toString()) {
-                  return { ...p, isReposted: false, repostId: null, shares: Math.max(0, (Number(p.shares) || 1) - 1).toString() };
-               }
-               return p;
+              if (p.id.toString() === originalPostId?.toString()) {
+                return { ...p, isReposted: false, repostId: null, shares: Math.max(0, (Number(p.shares) || 1) - 1).toString() };
+              }
+              return p;
             })
           }))
         };

@@ -75,9 +75,9 @@ export function ActivitySettingsPage() {
             type="button"
             onClick={() => router.replace(basePath)}
             aria-label="Back to settings menu"
-            className="-ml-1.5 flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring mr-1"
+            className="flex md:hidden items-center justify-center w-5 h-5 p-0 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer shrink-0 mr-2"
           >
-            <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
+            <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
           </button>
           {TABS.map((tab) => {
             const isSelected = activeTab === tab.key;

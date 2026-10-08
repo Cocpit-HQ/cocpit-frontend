@@ -36,9 +36,9 @@ export default function DashboardLayout({
                 {/* <StoriesProvider enabled={isFeedRoute}> */}
                 <StoriesProvider enabled={false}>
                     <AppShell>{children}</AppShell>
-                    
-                    <MobileCreatePostModal 
-                        isOpen={activeModal === 'create-post'} 
+
+                    <MobileCreatePostModal
+                        isOpen={activeModal === 'create-post'}
                         onClose={() => {
                             setActiveModal(null);
                             useUIStore.getState().setSharedPostData(null);
@@ -92,7 +92,7 @@ export default function DashboardLayout({
                         editPostId={editingPostId || ''}
                         postData={editingPostData}
                     />
-                    
+
                     {/* 
                     <CreatePostModal
                         isOpen={activeModal === 'create-post'}

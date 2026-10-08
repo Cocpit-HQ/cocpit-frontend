@@ -5,11 +5,11 @@ import { ChevronLeft, Clock } from 'lucide-react';
 import { EyeIcon, EyeOffIcon } from '@/components/icons';
 import { toast } from 'sonner';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  useAccountSettings, 
-  useUpdatePassword, 
-  useRequestPasswordResetLink, 
-  useResetLinkStatus 
+import {
+  useAccountSettings,
+  useUpdatePassword,
+  useRequestPasswordResetLink,
+  useResetLinkStatus
 } from '../hooks/useAccountSettings';
 import { getFirstMissingPasswordRequirement, isPasswordFullyValid } from '@/lib/validators';
 import { PasswordRequirementsCard } from '@/components/shared/PasswordRequirementsCard';
@@ -25,23 +25,23 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
   const router = useRouter();
 
   const { data: accountData, isLoading: isAccountLoading } = useAccountSettings();
-  
+
   const isAddRoute = pathname.includes('account-add-password');
   // Dynamic single key check: accountData?.hasPassword
   // If user has no password (hasPassword === false) or explicit mode='add' or isAddRoute, show Add password
   const isAddMode = modeProp === 'add' || (accountData && accountData.hasPassword === false) || (!accountData && isAddRoute);
-  
+
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [resetSuccessMsg, setResetSuccessMsg] = useState('');
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
-  
+
   const updatePasswordMutation = useUpdatePassword();
   const requestResetLinkMutation = useRequestPasswordResetLink();
   const { data: resetStatus, refetch: refetchResetStatus } = useResetLinkStatus();
@@ -139,16 +139,16 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
   return (
     <div className="w-full max-w-[712px] py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 select-none">
       {/* Header */}
-      <div className="self-stretch flex items-center gap-2.5 shrink-0 px-4 py-2 mb-1 md:px-0 md:py-0 md:mb-0">
+      <div className="self-stretch flex items-center gap-2 shrink-0 px-4 h-6 mb-4 md:px-0 md:h-auto md:mb-0">
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="Back to account settings"
-          className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring md:w-[20px] md:h-[20px] md:min-w-[20px] md:min-h-[20px] md:-ml-1.5 md:rounded-none md:border-0 md:p-0 md:hover:bg-transparent md:text-ds-text-primary md:hover:text-ds-accent md:cursor-pointer"
+          className="flex items-center justify-center w-5 h-5 p-0 text-ds-text-primary hover:text-ds-text-secondary transition-colors shrink-0 cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5] md:stroke-[2]" />
+          <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
         </button>
-        <h1 className="justify-center text-ds-text-primary ds-text-body-1 md:ds-text-body-2 m-0">
+        <h1 className="justify-center text-ds-text-primary text-[16px] md:ds-text-body-2 font-medium md:font-normal leading-[24px] h-6 flex items-center m-0">
           Manage password
         </h1>
       </div>
@@ -178,9 +178,8 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                   }}
                   placeholder="Current password"
                   autoComplete="current-password"
-                  className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
-                    !showCurrent && currentPassword ? "tracking-[2px]" : ""
-                  }`}
+                  className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${!showCurrent && currentPassword ? "tracking-[2px]" : ""
+                    }`}
                 />
                 <button
                   type="button"
@@ -221,9 +220,8 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                 placeholder="New password"
                 maxLength={15}
                 autoComplete="new-password"
-                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
-                  !showNew && newPassword ? "tracking-[2px]" : ""
-                }`}
+                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${!showNew && newPassword ? "tracking-[2px]" : ""
+                  }`}
               />
               <button
                 type="button"
@@ -263,9 +261,8 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                 placeholder="Confirm password"
                 maxLength={15}
                 autoComplete="new-password"
-                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${
-                  !showConfirm && confirmPassword ? "tracking-[2px]" : ""
-                }`}
+                className={`w-full bg-transparent text-ds-text-primary ds-text-secondary focus:outline-none placeholder:text-ds-text-muted ${!showConfirm && confirmPassword ? "tracking-[2px]" : ""
+                  }`}
               />
               <button
                 type="button"
@@ -297,16 +294,16 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
 
         {/* Error / Feedback area */}
         {((errorMsg &&
-            errorMsg !== "Current password is incorrect" &&
-            errorMsg !== "Passwords do not match." &&
-            errorMsg !== "New password must be different from current password.") || resetSuccessMsg) ? (
+          errorMsg !== "Current password is incorrect" &&
+          errorMsg !== "Passwords do not match." &&
+          errorMsg !== "New password must be different from current password.") || resetSuccessMsg) ? (
           <div className="ds-supporting-area w-full">
             {errorMsg &&
               errorMsg !== "Current password is incorrect" &&
               errorMsg !== "Passwords do not match." &&
               errorMsg !== "New password must be different from current password." && (
                 <span className="ds-text-small text-ds-error">{errorMsg}</span>
-            )}
+              )}
             {resetSuccessMsg && (
               <span className="ds-text-small text-ds-success">{resetSuccessMsg}</span>
             )}

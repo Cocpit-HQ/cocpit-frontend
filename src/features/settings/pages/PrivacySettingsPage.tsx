@@ -67,6 +67,8 @@ function formatSessionDate(dateStr?: string) {
   return dateStr;
 }
 
+import { MobileSettingsHeader } from '../components/MobileSettingsView';
+
 export function PrivacySettingsPage() {
   const router = useRouter();
   const pathname = usePathname() || '/settings/privacy';
@@ -132,21 +134,16 @@ export function PrivacySettingsPage() {
   });
 
   return (
-    <div className="w-full max-w-[712px] p-[8px_0px] flex flex-col items-start gap-2 rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
-      {/* Header / Mobile Back - Fixed */}
-      <div className="self-stretch inline-flex justify-start items-center gap-3 shrink-0 px-3 sm:px-4 pb-1">
-        <button
-          type="button"
-          onClick={() => router.replace(basePath)}
-          aria-label="Back to settings menu"
-          className="-ml-1.5 flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
-        >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
-        </button>
+    <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-2 rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
+      {/* Mobile Header: < Privacy */}
+      <MobileSettingsHeader title="Privacy" />
+
+      {/* Desktop Section Header: Profile visibility (visible on desktop md+) */}
+      <div className="hidden md:block self-stretch px-3 sm:px-4 pb-1">
         <div className="ds-text-body-2 text-ds-text-primary">Profile visibility</div>
       </div>
 
-      <div className="w-full px-3 sm:px-4 py-1 flex flex-col gap-4">
+      <div className="w-full px-4 md:px-4 py-0 md:py-1 flex flex-col gap-4">
         {/* Section 1: Visibility Toggles */}
         <div className="self-stretch flex flex-col justify-start items-start pb-4 border-b border-ds-border">
           {/* Show email on profile */}

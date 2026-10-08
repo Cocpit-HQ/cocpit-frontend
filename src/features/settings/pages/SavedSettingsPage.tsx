@@ -15,6 +15,7 @@ import { SavedFolder, Post } from '@/types/entities';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SavedPostCard } from '@/app/(authenticated)/(dashboard)/saved/components/SavedPostCard';
+import { MobileSettingsHeader } from '../components/MobileSettingsView';
 export function SavedSettingsPage() {
   const router = useRouter();
   const pathname = usePathname() || '/settings/saved';
@@ -145,17 +146,20 @@ export function SavedSettingsPage() {
     const displayCount = selectedFolder.post_count !== undefined ? selectedFolder.post_count : posts.length;
 
     return (
-      <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 text-ds-text-primary">
-        {/* Top Back Bar */}
+      <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-3 rounded-tr-3xl rounded-br-3xl text-ds-text-primary">
+        {/* Mobile Back Header */}
+        <MobileSettingsHeader title="Save" onBack={() => router.push(pathname)} />
+
+        {/* Desktop Back Bar */}
         <div
           onClick={() => router.push(pathname)}
-          className="self-stretch flex justify-start items-center gap-2.5 cursor-pointer group py-1"
+          className="hidden md:flex self-stretch px-4 justify-start items-center gap-2.5 cursor-pointer group py-1"
         >
           <ChevronLeft className="size-5 text-ds-text-primary group-hover:-translate-x-0.5 transition-transform" />
           <span className="text-ds-text-primary text-base font-semibold leading-6">Saved</span>
         </div>
 
-        <div className="self-stretch px-0 sm:px-4 flex flex-col justify-start items-start gap-3 w-full">
+        <div className="self-stretch px-4 flex flex-col justify-start items-start gap-3 w-full">
           {/* Collection Header */}
           <div className="self-stretch p-2 border-b border-ds-border flex justify-between items-center w-full">
             <div className="flex justify-start items-center gap-4 min-w-0">
@@ -260,77 +264,141 @@ export function SavedSettingsPage() {
   // View 1: Collections List View (Default)
   // -------------------------------------------------------------
   return (
-    <div className="w-full max-w-[712px] px-3 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 text-ds-text-primary font-sans">
+    <div className="w-full max-w-[712px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-3 rounded-tr-3xl rounded-br-3xl text-ds-text-primary font-sans">
       {/* Mobile Back Header (visible on mobile only) */}
-      <div className="self-stretch inline-flex md:hidden justify-start items-center gap-3 mb-1">
-        <button
-          type="button"
-          onClick={() => router.replace(basePath)}
-          aria-label="Back to settings menu"
-          className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
-        >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
-        </button>
-        <div className="ds-text-body-2 text-ds-text-primary">Saved posts</div>
+      <MobileSettingsHeader title="Save" />
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 1. DESKTOP VIEW: 100% Intact & Untouched for >= md (768px+)   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="hidden md:flex w-full px-4 py-2 flex-col justify-start items-start gap-3">
+        {/* Row 1: General + New collections button */}
+        <div className="self-stretch py-2 flex justify-between items-center w-full gap-4">
+          {/* General Folder */}
+          <div
+            onClick={() => router.push(`${pathname}?folderId=all`)}
+            className="flex justify-start items-center gap-4 cursor-pointer group"
+          >
+            <div className="size-10 flex justify-center items-center shrink-0">
+              <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
+            </div>
+            <div className="justify-center text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 group-hover:text-white transition-colors">
+              General
+            </div>
+          </div>
+
+          {/* New collections Button */}
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-[169px] h-[36px] px-3 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 shrink-0"
+          >
+            <span>New collections</span>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="self-stretch h-0 border-b border-ds-border" />
+
+        {/* Collections Section */}
+        <div className="self-stretch flex flex-col justify-start items-start gap-4 w-full">
+          <div className="self-stretch flex justify-start items-center gap-2.5">
+            <span className="text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
+              Collections
+            </span>
+          </div>
+
+          {isLoadingFolders ? (
+            <div className="self-stretch flex justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-ds-accent" />
+            </div>
+          ) : (
+            <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+              {folders.map((folder: SavedFolder) => (
+                <div
+                  key={folder.folder_id}
+                  onClick={() => router.push(`${pathname}?folderId=${folder.folder_id}`)}
+                  className="py-2 flex justify-start items-center gap-4 cursor-pointer group hover:bg-ds-surface-1/40 rounded-xl px-2 transition-colors"
+                >
+                  <div className="size-10 flex justify-center items-center shrink-0">
+                    <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
+                  </div>
+                  <div className="flex flex-col justify-center items-start gap-1 min-w-0">
+                    <span className="text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 group-hover:text-white transition-colors truncate">
+                      {folder.name}
+                    </span>
+                    <span className="text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
+                      Posts - {folder.post_count || 0}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Row 1: General + New collections button */}
-      <div className="self-stretch py-2 flex justify-between items-center w-full gap-4">
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 2. MOBILE VIEW: Strictly rendered on < md (< 768px)          */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="flex md:hidden flex-col w-full px-4 select-none">
         {/* General Folder */}
         <div
           onClick={() => router.push(`${pathname}?folderId=all`)}
-          className="flex justify-start items-center gap-4 cursor-pointer group"
+          role="button"
+          tabIndex={0}
+          className="flex items-center gap-3.5 cursor-pointer py-1.5 active:opacity-75 transition-opacity"
         >
-          <div className="size-10 flex justify-center items-center shrink-0">
-            <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
-          </div>
-          <div className="justify-center text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 group-hover:text-white transition-colors">
+          <Folder className="w-5 h-5 text-ds-text-primary stroke-[1.5] shrink-0" />
+          <span className="text-ds-text-primary text-[15px] font-normal font-['DM_Sans'] leading-[22px]">
             General
-          </div>
+          </span>
         </div>
 
-        {/* New collections Button */}
+        {/* New collections Button (Full-width pill) */}
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="w-[169px] h-[36px] px-3 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 shrink-0"
+          className="w-full h-[38px] mt-3 rounded-full border border-ds-border hover:bg-ds-surface-1 active:bg-ds-surface-1 flex items-center justify-center transition-colors cursor-pointer"
         >
-          <span>New collections</span>
+          <span className="text-ds-text-primary text-[14px] font-medium font-['DM_Sans']">
+            New collections
+          </span>
         </button>
-      </div>
 
-      {/* Divider */}
-      <div className="self-stretch h-0 border-b border-ds-border" />
-
-      {/* Collections Section */}
-      <div className="self-stretch flex flex-col justify-start items-start gap-4 w-full">
-        <div className="self-stretch flex justify-start items-center gap-2.5">
-          <span className="text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
+        {/* Collections Title */}
+        <div className="mt-5 mb-3 w-full">
+          <span className="text-ds-text-secondary text-[12px] font-normal font-['DM_Sans']">
             Collections
           </span>
         </div>
 
+        {/* Collections 2-Column Grid */}
         {isLoadingFolders ? (
-          <div className="self-stretch flex justify-center py-12">
+          <div className="w-full flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-ds-accent" />
           </div>
+        ) : folders.length === 0 ? (
+          <div className="w-full py-6 text-center text-ds-text-secondary text-[13px] font-['DM_Sans']">
+            No collections created yet
+          </div>
         ) : (
-          <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4 w-full">
             {folders.map((folder: SavedFolder) => (
               <div
                 key={folder.folder_id}
                 onClick={() => router.push(`${pathname}?folderId=${folder.folder_id}`)}
-                className="py-2 flex justify-start items-center gap-4 cursor-pointer group hover:bg-ds-surface-1/40 rounded-xl px-2 transition-colors"
+                role="button"
+                tabIndex={0}
+                className="flex items-start gap-2.5 cursor-pointer py-1 active:opacity-75 transition-opacity"
               >
-                <div className="size-10 flex justify-center items-center shrink-0">
-                  <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
-                </div>
-                <div className="flex flex-col justify-center items-start gap-1 min-w-0">
-                  <span className="text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 group-hover:text-white transition-colors truncate">
+                <Folder className="w-5 h-5 text-ds-text-primary stroke-[1.5] shrink-0 mt-0.5" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-ds-text-primary text-[14px] font-normal font-['DM_Sans'] leading-[20px] truncate">
                     {folder.name}
                   </span>
-                  <span className="text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
-                    Posts - {folder.post_count || 0}
+                  <span className="text-ds-text-secondary text-[12px] font-normal font-['DM_Sans'] leading-[16px] truncate">
+                    Posts - {folder.post_count ?? 0}
                   </span>
                 </div>
               </div>

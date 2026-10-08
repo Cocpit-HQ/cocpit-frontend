@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Icon } from "@/components/icons";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { NotificationPopover } from "@/features/notification/components/NotificationPopover";
 import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
@@ -12,23 +12,28 @@ import { Settings } from "lucide-react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export function MobileTopHeader() {
-  const router = useRouter();
   const pathname = usePathname();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
 
-  const isProfileActive = 
+  const isProfileActive = Boolean(
     pathname === "/profile" || 
     pathname === "/profile/posts" || 
-    pathname.startsWith("/profile/edit") || 
-    (activeProfile?.type === "COMPANY" && pathname.startsWith(`/organization/${activeProfile.slug}`) && !pathname.endsWith('/settings') && !pathname.endsWith('/events'));
+    pathname?.startsWith("/profile/edit") || 
+    (Boolean(isCompany || activeProfile?.type === "COMPANY") && 
+      Boolean(activeProfile?.slug) && 
+      pathname?.startsWith(`/organization/${activeProfile?.slug}`) && 
+      !pathname?.endsWith('/settings') && 
+      !pathname?.endsWith('/events') &&
+      !pathname?.endsWith('/analytics'))
+  );
 
-  const settingsLink = activeProfile?.type === "COMPANY" && activeProfile.slug
+  const settingsLink = (isCompany || activeProfile?.type === "COMPANY") && activeProfile?.slug
     ? `/organization/${activeProfile.slug}/settings`
     : "/settings";
 
-  useEffect(() => {
-    // any route change logic if needed
-  }, [pathname]);
+  const analyticsLink = (isCompany || activeProfile?.type === "COMPANY") && activeProfile?.slug
+    ? `/organization/${activeProfile.slug}/analytics`
+    : "/analytics";
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full max-w-[100vw] h-[60px] bg-ds-bg z-40 flex items-center px-4 md:hidden gap-[16px] box-border">
@@ -39,22 +44,30 @@ export function MobileTopHeader() {
 
       {/* Actions */}
       <div className="flex items-center gap-[16px] shrink-0 pr-4 ml-auto">
-        {isProfileActive && (
-          <Link href={settingsLink} className="cursor-pointer shrink-0 group" aria-label="Settings">
-            <Settings className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
-          </Link>
+        {isProfileActive ? (
+          <>
+            <Link href={analyticsLink} className="cursor-pointer shrink-0 group" aria-label="Analytics">
+              <Icon name="analytics" className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
+            </Link>
+            <Link href={settingsLink} className="cursor-pointer shrink-0 group" aria-label="Settings">
+              <Settings className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link href="/messaging" className="cursor-pointer shrink-0 group" aria-label="Messages">
+              <Icon name="chat" className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
+            </Link>
+            <div className="shrink-0">
+              <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
+                <NotificationPopover
+                  className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
+                  icon={<Icon name="notification" className="w-[22px] h-[22px] text-ds-text-secondary transition-colors" />}
+                />
+              </FeatureGuard>
+            </div>
+          </>
         )}
-        <Link href="/messaging" className="cursor-pointer shrink-0 group" aria-label="Messages">
-          <Icon name="chat" className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
-        </Link>
-        <div className="shrink-0">
-          <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
-            <NotificationPopover
-              className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
-              icon={<Icon name="notification" className="w-[22px] h-[22px] text-ds-text-secondary transition-colors" />}
-            />
-          </FeatureGuard>
-        </div>
       </div>
     </header>
   );

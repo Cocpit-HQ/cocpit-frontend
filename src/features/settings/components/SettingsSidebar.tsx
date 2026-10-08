@@ -144,22 +144,20 @@ export function SettingsSidebar() {
 
       {/* --- MOBILE MENU --- */}
       <div className="flex md:hidden flex-col w-full min-h-full bg-ds-bg text-ds-text-primary font-sans pb-4">
-        {/* Mobile Header */}
-        <div className="flex flex-row items-center gap-2.5 px-4 py-2 sticky top-0 bg-ds-bg/95 backdrop-blur border-b border-ds-border z-10">
-          <button 
-            onClick={handleExitSettings}
-            aria-label="Back"
-            className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
-          >
-            <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
-          </button>
-          <div className="flex flex-col min-w-0 justify-center">
-            <h1 className="text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[22px] truncate m-0">
+        {/* Mobile Header: < Settings */}
+        <div className="flex items-center justify-between w-full px-4 h-6 mb-4 select-none shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={handleExitSettings}
+              aria-label="Back from Settings"
+              className="flex items-center justify-center w-5 h-5 p-0 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer shrink-0"
+            >
+              <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
+            </button>
+            <h1 className="text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[24px] h-6 flex items-center m-0 truncate">
               Settings
             </h1>
-            <p className="text-ds-text-secondary text-[12px] font-normal font-['DM_Sans'] leading-[16px] truncate m-0">
-              Manage your preferences
-            </p>
           </div>
         </div>
 
@@ -182,7 +180,7 @@ export function SettingsSidebar() {
                       <Link
                         key={`${item.id}-${itemIdx}`}
                         href={`${basePath}/${item.id}`}
-                        className="flex flex-row items-center justify-between py-3 w-full active:bg-ds-surface-1 transition-colors border-b border-ds-border/40 last:border-0"
+                        className="flex flex-row items-center justify-between py-3 w-full active:bg-ds-surface-1 transition-colors"
                       >
                         <div className="flex flex-row items-center gap-3">
                           <IconComp className="text-ds-text-secondary shrink-0" />

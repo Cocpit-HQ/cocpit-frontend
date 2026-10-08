@@ -42,18 +42,23 @@ export function AppShell({
     pathname?.startsWith('/settings/') ||
     pathname?.includes('/settings')
   );
+  const isRootSettings = Boolean(
+    pathname === '/settings' ||
+    pathname?.match(/^\/organization\/[^\/]+\/settings\/?$/)
+  );
+  const isSettingsSubpage = isSettingsRoute && !isRootSettings;
   const { activeModal, isArticleMode } = useUIStore();
   const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isNotificationsPage;
-  const shouldHideBottomNav = hideBottomNav || isDistractionFree || activeModal === 'create-post';
+  const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (
-    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground overflow-x-hidden`}>
+    <div className={`relative flex flex-col ${isSettingsRoute ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'} bg-ds-bg text-foreground overflow-x-hidden`}>
       {!isDistractionFree && (
         <div className="hidden sm:block fixed left-0 top-0 h-screen z-40">
           <Sidebar />
         </div>
       )}
-      
+
       {/* Top Header - hidden on distraction-free pages and settings routes */}
       {!isDistractionFree && !isSettingsRoute && (
         <>

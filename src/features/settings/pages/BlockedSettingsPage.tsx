@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { BlockIcon, UserIcon } from '@/components/icons';
 import { useBlockedUsers, BlockedUser } from '../hooks/useBlockedUsers';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
+import { MobileSettingsHeader } from '../components/MobileSettingsView';
 
 interface BlockedUserRowProps {
   user: BlockedUser;
@@ -77,24 +78,22 @@ export function BlockedSettingsPage() {
   const count = blockedUsers?.length || 0;
 
   return (
-    <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
-      {/* Count Label & Mobile Back - Fixed Header */}
-      <div className="sticky top-0 self-stretch inline-flex justify-start items-center gap-3 shrink-0 py-2 px-0 sm:px-4 bg-ds-bg z-30">
-        <button
-          type="button"
-          onClick={() => router.replace(basePath)}
-          aria-label="Back to settings menu"
-          className="-ml-1.5 flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
-        >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
-        </button>
+    <div className="w-full max-w-[712px] p-0 md:px-4 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-0 md:gap-3">
+      {/* Mobile Header: < Blocked accounts */}
+      <MobileSettingsHeader 
+        title="Blocked accounts" 
+        rightElement={<span className="text-ds-text-secondary text-[13px] font-['DM_Sans']">Block - {count}</span>} 
+      />
+
+      {/* Desktop Header */}
+      <div className="hidden md:inline-flex sticky top-0 self-stretch justify-start items-center gap-3 shrink-0 py-2 px-0 bg-ds-bg z-30">
         <div className="text-center justify-center ds-text-small text-ds-text-secondary">
           Block - {count}
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="w-full px-0 sm:px-4 flex flex-col gap-3">
+      <div className="w-full px-4 md:px-0 flex flex-col gap-3">
         {isLoading ? (
           <div className="self-stretch h-48 flex flex-col items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-ds-accent mb-3" />

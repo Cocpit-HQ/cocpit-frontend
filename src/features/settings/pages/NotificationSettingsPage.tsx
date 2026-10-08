@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { SettingToggle } from '../components/SettingToggle';
 import { useNotificationSettings } from '../hooks/useNotificationSettings';
+import { MobileSettingsHeader } from '../components/MobileSettingsView';
 
 type NotificationKey = 'all' | 'posts' | 'jobs' | 'messages' | 'emails';
 
@@ -145,18 +146,13 @@ export function NotificationSettingsPage() {
   );
 
   return (
-    <div className="w-full max-w-[712px] md:min-h-[490px] p-[8px_0px] flex flex-col items-start gap-[12px] rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
-      <div className="w-full max-w-[712px] px-3 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-2">
-        {/* Header / Mobile Back */}
-        <div className="self-stretch inline-flex justify-start items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.replace(basePath)}
-            aria-label="Back to settings menu"
-            className="-ml-1.5 flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
-          >
-            <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
-          </button>
+    <div className="w-full max-w-[712px] md:min-h-[490px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-[12px] rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
+      {/* Mobile Header: < Notification */}
+      <MobileSettingsHeader title="Notification" />
+
+      <div className="w-full max-w-[712px] px-4 md:px-4 py-0 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-2">
+        {/* Desktop Header */}
+        <div className="hidden md:block self-stretch mb-1">
           <div className="ds-text-body-2 text-ds-text-primary">Notifications</div>
         </div>
 

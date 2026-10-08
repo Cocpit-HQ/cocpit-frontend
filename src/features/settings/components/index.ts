@@ -31,3 +31,7 @@ export { ContactSupport } from './ContactSupport';
 export * from './activity';
 export * from './reports';
 
+// Mobile Views
+export * from './mobile';
+export * from './MobileSettingsView';
+

@@ -84,24 +84,24 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
   const isFormValid = issue.trim().length > 0 && !isSubmitting;
 
   return (
-    <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
+    <div className="w-full max-w-[712px] p-0 md:px-4 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-0 md:gap-3">
       {/* Header */}
-      <div className="self-stretch inline-flex justify-start items-center gap-2">
+      <div className="self-stretch flex items-center gap-2 shrink-0 px-4 h-6 mb-4 md:px-0 md:h-auto md:mb-1">
         <button
           type="button"
           onClick={onBack}
-          className="-ml-1.5 w-8 h-8 flex items-center justify-center cursor-pointer bg-transparent border border-ds-border hover:bg-ds-surface-1 p-0 ds-focus-ring rounded-full shrink-0"
+          className="flex items-center justify-center w-5 h-5 p-0 text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer shrink-0"
           aria-label="Back to Support"
         >
-          <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
+          <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
         </button>
-        <div className="flex-1 inline-flex flex-col justify-start items-start">
-          <div className="ds-text-body-2 text-ds-text-primary">Contact support</div>
-        </div>
+        <h1 className="text-ds-text-primary text-[16px] md:ds-text-body-2 font-medium leading-[24px] h-6 flex items-center m-0">
+          Contact support
+        </h1>
       </div>
 
       {/* Primary email row */}
-      <div className="self-stretch flex flex-col justify-start items-start gap-2">
+      <div className="self-stretch px-4 md:px-0 flex flex-col justify-start items-start gap-2">
         <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-1">
           <div className="ds-text-small-1 text-ds-text-secondary">Primary email</div>
           <div className="ds-text-secondary text-ds-text-primary">
