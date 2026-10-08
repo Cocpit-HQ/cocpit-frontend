@@ -129,7 +129,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
               <h2 className="ds-text-body-2 text-ds-text-primary">
                 Delete your {entityLabel} page?
               </h2>
-              <p className="ds-text-small text-ds-text-secondary max-w-sm">
+              <p className="ds-text-secondary text-ds-text-secondary max-w-sm">
                 Your account will be scheduled for deletion. You can reactivate it within 40 days from the &ldquo;Organization&rdquo; tab under your account Settings. After 40 days, your account and all associated data will be permanently deleted.
               </p>
             </div>

@@ -45,7 +45,7 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
           id: item.id,
           postId: media.postId,
           user: item.user || item.author?.name || item.author?.fullName || 'User',
-          role: item.role || item.author?.headline || 'Member',
+          role: (item.role === 'Member' ? '' : item.role) || (item.author?.headline === 'Member' ? '' : item.author?.headline) || '',
           avatarUrl: item.avatarUrl || item.author?.avatarUrl || item.author?.avatar || '',
           content: cleanActivityText(item.content || item.text || item.post?.content || item.post?.text || ''),
           type: (media.hasPoll ? 'poll' : (media.thumbnailUrl || media.videoUrl) ? 'media' : 'text') as 'media' | 'text' | 'poll',
@@ -92,9 +92,11 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
                 <span className="text-ds-text-primary ds-text-body-2 leading-6 group-hover:text-ds-text-primary truncate w-full max-w-[200px] sm:max-w-[300px]">
                   {item.user}
                 </span>
-                <span className="text-ds-text-secondary ds-text-meta leading-3 truncate w-full max-w-[200px] sm:max-w-[300px]">
-                  {item.role}
-                </span>
+                {item.role && (
+                  <span className="text-ds-text-secondary ds-text-meta leading-3 truncate w-full max-w-[200px] sm:max-w-[300px]">
+                    {item.role}
+                  </span>
+                )}
               </div>
             </div>
 

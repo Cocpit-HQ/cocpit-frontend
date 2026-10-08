@@ -102,13 +102,13 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
 
       {/* Action Buttons (Mobile typically) */}
       {actionButtons && (
-        <div className="w-full">
+        <div className="w-full px-4 md:px-0 md:pl-5">
           {actionButtons}
         </div>
       )}
 
       {/* User Details Block */}
-      <div className="w-full inline-flex flex-col justify-start items-start gap-1">
+      <div className="w-full inline-flex flex-col justify-start items-start gap-1 px-4 md:px-0 md:pl-5">
         {/* Name and Handle */}
         <div className="inline-flex justify-start items-center gap-2 flex-wrap">
           <h1 className="justify-start text-[var(--ds-text-primary)] text-xl md:text-2xl font-bold font-['DM_Sans'] leading-7 md:leading-8">

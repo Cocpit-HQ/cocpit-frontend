@@ -62,7 +62,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
         await hardLogout('account_deleted');
       },
       onError: (err: any) => {
-        setErrorMsg('incorrect password');
+        setErrorMsg('Incorrect password');
       }
     });
   };
@@ -132,7 +132,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
         {/* Title & Description */}
         <div className="flex flex-col items-center gap-2 w-full text-center">
           <h2 className="ds-text-body-1 text-ds-text-primary">Delete your Cocpit account?</h2>
-          <p className="ds-text-small text-ds-text-secondary">
+          <p className="ds-text-secondary text-ds-text-secondary">
             Your account will be scheduled for deletion. You can recover it within 40 days using the link sent to your email. After 40 days, your account and all associated data will be permanently deleted
           </p>
         </div>
@@ -182,6 +182,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
         )}
 
         <div className="flex flex-col w-full gap-[4px] shrink-0">
+          <label className="ds-text-small-1 text-ds-text-secondary text-left w-full">Enter Password</label>
           <div className={`flex flex-col justify-center items-start w-full pb-[6px] px-0 border-b ${errorMsg ? 'border-ds-error' : 'border-ds-border'}`}>
             <div className="flex flex-row justify-between items-center w-full gap-2.5 p-0 shrink-0">
               <input
@@ -194,22 +195,22 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
                   if (errorMsg) setErrorMsg('');
                 }}
               />
-            {password && (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <Eye className="w-4 h-4 shrink-0" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 shrink-0" />
-                  )}
-                </button>
-              </div>
-            )}
+              {password && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <Eye className="w-4 h-4 shrink-0" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 shrink-0" />
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           {/* Supporting Area */}
@@ -225,19 +226,18 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
           <button
             onClick={handleDelete}
             disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}
-            className={`flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full transition-all ${
-              isDeleteDisabled || !password
+            className={`flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full transition-all ${isDeleteDisabled || !password
                 ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                 : 'bg-ds-accent hover:opacity-90 active:scale-95 shadow-sm text-ds-text-primary'
-            }`}
+              }`}
           >
             {deleteAccountMutation.isPending ? (
-               <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <span className="ds-text-body-1">Delete</span>
             )}
           </button>
-          
+
           <button
             onClick={onClose}
             className="flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors text-ds-text-primary"

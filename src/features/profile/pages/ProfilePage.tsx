@@ -676,7 +676,7 @@ export default function ProfilePage() {
 
         {/* 1. Post Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center">
+          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[43px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Posts
             </div>
@@ -695,7 +695,7 @@ export default function ProfilePage() {
               <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full">
+          <div className="w-full px-4 md:px-0 md:pl-5">
             <ProfilePostsTab
               posts={posts}
               isOwnProfile={true}
@@ -743,7 +743,7 @@ export default function ProfilePage() {
 
         {/* 3. Experience Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center">
+          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[87px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Experience
             </div>
@@ -761,7 +761,7 @@ export default function ProfilePage() {
               <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full">
+          <div className="w-full px-4 md:px-0 md:pl-5">
             <ProfileExperienceTab
               experiences={flatExperiences}
               isOwnProfile={true}
@@ -788,7 +788,7 @@ export default function ProfilePage() {
 
         {/* 4. Education Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center">
+          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[79px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Education
             </div>
@@ -806,7 +806,7 @@ export default function ProfilePage() {
               <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full">
+          <div className="w-full px-4 md:px-0 md:pl-5">
             <ProfileEducationTab
               educations={educations}
               isOwnProfile={true}
@@ -833,7 +833,7 @@ export default function ProfilePage() {
 
         {/* 5. Project Section */}
         <div className="w-full flex flex-col items-start gap-4">
-          <div className="w-full flex justify-between items-center">
+          <div className="w-full flex justify-between items-center px-4 md:px-0 md:pl-5">
             <div className="w-[56px] h-[24px] text-ds-text-primary text-base font-semibold font-dm-sans leading-6 flex-none order-0 grow-0">
               Project
             </div>
@@ -851,7 +851,7 @@ export default function ProfilePage() {
               <AddIcon className="w-5 h-5 text-ds-text-primary" />
             </button>
           </div>
-          <div className="w-full">
+          <div className="w-full px-4 md:px-0 md:pl-5">
             <ProfileProjectsTab
               projects={projects}
               isOwnProfile={true}

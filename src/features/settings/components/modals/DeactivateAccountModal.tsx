@@ -28,7 +28,7 @@ export function DeactivateAccountModal({ isOpen, onClose }: DeactivateAccountMod
         router.push('/?reason=deactivated');
       },
       onError: (err: any) => {
-        setErrorMsg('incorrect password');
+        setErrorMsg('Incorrect password');
       }
     });
   };
