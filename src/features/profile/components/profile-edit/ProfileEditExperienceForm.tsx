@@ -549,7 +549,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         {isAddingNewRole ? (
           /* Add New Role Layout: New role + Location in Row 1 */
           <div className="w-full flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-[40px]">
-            <div className="w-full sm:w-[300px] flex-none flex flex-col gap-2.5">
+            <div className="w-full sm:flex-1 flex flex-col gap-2.5">
               <ProfileEditSearchableDropdown
                 id="exp_new_role"
                 label="New role"
@@ -595,12 +595,12 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               )}
             </div>
 
-            <div className="w-full sm:w-[300px] flex-none">
+            <div className="w-full sm:flex-1">
               <ProfileEditLocationInput
                 value={formData.location}
                 isGlobal={true}
                 onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
-                className="w-[300px]"
+                className="w-full"
               />
             </div>
           </div>
@@ -608,7 +608,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
           /* Standard Edit/Add Layout: Role + Organization in Row 1 */
           <>
             <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
-              <div className="w-full sm:w-[300px] flex-none">
+              <div className="w-full sm:flex-1">
                 <ProfileEditSearchableDropdown
                   id="exp_role"
                   label="Role"
@@ -625,7 +625,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                   labelClassName="w-[24px] h-[16px] text-center"
                 />
               </div>
-              <div className="w-full sm:w-[300px] flex-none">
+              <div className="w-full sm:flex-1">
                 <ProfileEditSearchableDropdown
                   id="exp_org"
                   label="Organization"
@@ -663,7 +663,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
 
         {/* Row 3: Work type & Work mode (640px width, 40px gap, 300px each) */}
         <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
-          <div className="w-full sm:w-[300px] flex-none">
+          <div className="w-full sm:flex-1">
             <ProfileEditDropdown
               label="Work type"
               value={formData.work_type}
@@ -677,7 +677,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               labelClassName="w-[59px] h-[16px] text-center"
             />
           </div>
-          <div className="w-full sm:w-[300px] flex-none">
+          <div className="w-full sm:flex-1">
             <ProfileEditDropdown
               label="Work mode"
               value={formData.work_mode}
@@ -696,7 +696,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
         {/* Row 4: Date Section (640px width, 20px vertical gap) */}
         <div className="w-full max-w-[640px] flex flex-col items-start gap-[20px] p-0">
           <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
-            <div className="w-full sm:w-[300px] flex-none">
+            <div className="w-full sm:flex-1">
               <ProfileEditDatePicker
                 id="exp_start_date"
                 label="Start date"
@@ -711,7 +711,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
               />
             </div>
             {!formData.is_current ? (
-              <div className="w-full sm:w-[300px] flex-none">
+              <div className="w-full sm:flex-1">
                 <ProfileEditDatePicker
                   id="exp_end_date"
                   label="End date"
@@ -726,7 +726,7 @@ export const ProfileEditExperienceForm: React.FC<ProfileEditExperienceFormProps>
                 />
               </div>
             ) : (
-              <div className="w-full sm:w-[300px] flex-none hidden sm:block" />
+              <div className="w-full sm:flex-1 hidden sm:block" />
             )}
           </div>
 

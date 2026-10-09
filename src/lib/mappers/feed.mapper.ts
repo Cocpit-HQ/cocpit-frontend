@@ -166,6 +166,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
       // Process shared post media
       const spImageDimensions: Array<{ width: number; height: number } | null> = [];
+      let spMediaWidth: number | undefined;
+      let spMediaHeight: number | undefined;
+
       if (Array.isArray(sp.media)) {
         sp.media.forEach((item) => {
           const isActuallyVideo = item.url?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|#|$)/);
@@ -176,8 +179,12 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
             spImageDimensions.push(
               (item.width && item.height) ? { width: item.width, height: item.height } : null
             );
+            if (!spMediaWidth && item.width) spMediaWidth = item.width;
+            if (!spMediaHeight && item.height) spMediaHeight = item.height;
           } else if (mediaType === "video") {
             spVideoSrc = item.url;
+            if (!spMediaWidth && item.width) spMediaWidth = item.width;
+            if (!spMediaHeight && item.height) spMediaHeight = item.height;
           }
         });
       }
@@ -247,6 +254,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         imageSrc: spImages.length > 0 ? spImages[0] : undefined,
         images: spImages.length > 0 ? spImages : undefined,
         imageDimensions: spImageDimensions.length > 0 ? spImageDimensions : undefined,
+        mediaWidth: spMediaWidth,
+        mediaHeight: spMediaHeight,
         videoSrc: spVideoSrc,
         //aspectRatio: sp.media?.[0]?.aspect_ratio || undefined,
         likes: sp.like_count || 0,

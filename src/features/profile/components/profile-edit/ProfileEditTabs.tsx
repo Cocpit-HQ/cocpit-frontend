@@ -37,21 +37,53 @@ export const ProfileEditTabs: React.FC<ProfileEditTabsProps> = ({
   onTabChange,
   tabs = PROFILE_EDIT_TABS,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const isFirstRender = useRef(true);
 
   const setTabRef = useCallback((key: string) => (el: HTMLButtonElement | null) => {
     tabRefs.current[key] = el;
   }, []);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      if (activeTab === "profile" && containerRef.current) {
+        containerRef.current.scrollLeft = 0;
+      }
+      return;
+    }
+
+    const container = containerRef.current;
     const activeEl = tabRefs.current[activeTab];
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    if (!container || !activeEl) return;
+
+    if (activeTab === "profile") {
+      container.scrollTo({ left: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Only scroll container if the active tab is actually out of visible bounds
+    const containerLeft = container.scrollLeft;
+    const containerRight = containerLeft + container.clientWidth;
+    const elLeft = activeEl.offsetLeft;
+    const elRight = elLeft + activeEl.offsetWidth;
+
+    if (elLeft < containerLeft) {
+      container.scrollTo({ left: Math.max(0, elLeft - 16), behavior: "smooth" });
+    } else if (elRight > containerRight) {
+      container.scrollTo({
+        left: elRight - container.clientWidth + 16,
+        behavior: "smooth",
+      });
     }
   }, [activeTab]);
 
   return (
-    <div className="w-full h-[36px] flex flex-row items-center gap-[12px] overflow-x-auto scrollbar-hide border-b border-transparent">
+    <div
+      ref={containerRef}
+      className="w-full h-[36px] flex flex-row items-center gap-[12px] overflow-x-auto overscroll-contain touch-pan-x scrollbar-hide border-b border-transparent"
+    >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         const config = TAB_CONFIG[tab.key] || { widthClass: "w-auto", orderClass: "order-0" };

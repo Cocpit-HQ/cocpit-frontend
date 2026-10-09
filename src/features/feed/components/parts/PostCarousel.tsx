@@ -7,6 +7,7 @@ import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CarouselDots } from "./CarouselDots";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface PostCarouselProps {
   images: string[];
@@ -88,13 +89,25 @@ export function PostCarousel({
   slideWidth = 'peek',
   dotsClassName,
 }: PostCarouselProps) {
-  const plugins = typeof WheelGesturesPlugin === 'function' ? [WheelGesturesPlugin()] : [];
+  const isMobile = useIsMobile();
+  const plugins = typeof WheelGesturesPlugin === 'function' && !isMobile ? [WheelGesturesPlugin()] : [];
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'start',
     containScroll: 'keepSnaps',
     dragFree: true,
+    duration: 20, // Faster duration for snappier feel like MobileStoryViewer
   }, plugins);
+
+  const [loadedDims, setLoadedDims] = useState<Array<{ width: number; height: number } | null>>(
+    imageDimensions || Array(images.length).fill(null)
+  );
+
+  useEffect(() => {
+    if (imageDimensions && imageDimensions.some(Boolean)) {
+      setLoadedDims(imageDimensions);
+    }
+  }, [imageDimensions]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -104,63 +117,10 @@ export function PostCarousel({
   const getActiveIndex = useCallback(() => {
     if (!emblaApi) return 0;
 
-    const slidesInView = emblaApi.slidesInView();
-    if (!slidesInView || slidesInView.length === 0) {
-      return Math.min(images.length - 1, Math.max(0, emblaApi.selectedScrollSnap()));
-    }
-
-    if (slidesInView.length === 1) {
-      return slidesInView[0];
-    }
-
-    // 1. If at the end of the scroll track and the final slide is in view, activate the final slide
-    if (!emblaApi.canScrollNext() && slidesInView.includes(images.length - 1)) {
-      return images.length - 1;
-    }
-
-    // 2. If at the beginning of the scroll track and the first slide is in view, activate the first slide
-    if (!emblaApi.canScrollPrev() && slidesInView.includes(0)) {
-      return 0;
-    }
-
-    const rootNode = emblaApi.rootNode();
-    const slideNodes = emblaApi.slideNodes();
-
-    if (rootNode && slideNodes && slideNodes.length > 0) {
-      const rootRect = rootNode.getBoundingClientRect();
-      const rootCenter = rootRect.left + rootRect.width / 2;
-
-      let bestScore = -Infinity;
-      let minCenterDist = Infinity;
-      let bestIndex = slidesInView[0];
-
-      for (const idx of slidesInView) {
-        const slideNode = slideNodes[idx];
-        if (!slideNode) continue;
-
-        const slideRect = slideNode.getBoundingClientRect();
-        const overlap = Math.max(
-          0,
-          Math.min(slideRect.right, rootRect.right) - Math.max(slideRect.left, rootRect.left)
-        );
-        const slideW = slideRect.width || 1;
-        const visibleRatio = overlap / slideW;
-        const slideCenter = slideRect.left + slideRect.width / 2;
-        const dist = Math.abs(slideCenter - rootCenter);
-
-        if (
-          visibleRatio > bestScore + 0.1 ||
-          (Math.abs(visibleRatio - bestScore) <= 0.1 && dist < minCenterDist)
-        ) {
-          bestScore = visibleRatio;
-          minCenterDist = dist;
-          bestIndex = idx;
-        }
-      }
-      return bestIndex;
-    }
-
-    return slidesInView[0];
+    const progress = emblaApi.scrollProgress();
+    // Mathematical approximation eliminates getBoundingClientRect() layout thrashing
+    const clampedProgress = Math.max(0, Math.min(1, progress || 0));
+    return Math.round(clampedProgress * (images.length - 1));
   }, [emblaApi, images.length]);
 
   const updateActiveState = useCallback(() => {
@@ -211,7 +171,7 @@ export function PostCarousel({
     };
   }, [emblaApi, onScroll, onSettle, updateActiveState]);
 
-  // Re-initialize Embla when images change or after mount/modal open layout shifts
+  // Re-initialize Embla when images change, after mount/modal open layout shifts, or hydration of isMobile
   useEffect(() => {
     if (!emblaApi) return;
     const timer = setTimeout(() => {
@@ -219,7 +179,7 @@ export function PostCarousel({
       onSettle();
     }, 50);
     return () => clearTimeout(timer);
-  }, [emblaApi, images, onSettle]);
+  }, [emblaApi, images, isMobile, onSettle]);
 
   const scrollPrev = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -238,17 +198,17 @@ export function PostCarousel({
   if (!images || images.length === 0) return null;
 
   // ── Dynamic sizing (X-style) vs legacy fixed height ──────────────────────
-  const hasDimensions = imageDimensions && imageDimensions.some(Boolean);
+  const hasDimensions = loadedDims && loadedDims.some(Boolean);
 
   // Container height in px
   const containerH = hasDimensions
-    ? computeContainerHeight(imageDimensions)
+    ? computeContainerHeight(loadedDims)
     : null; // null → use legacy viewportHeight class
 
   // Per-slide widths in px (null → use CSS percentage fallback)
   const slideWidths: (number | null)[] = images.map((_, i) =>
     hasDimensions
-      ? computeSlideWidth(imageDimensions?.[i], containerH!, MAX_CONTAINER_W)
+      ? computeSlideWidth(loadedDims?.[i], containerH!, MAX_CONTAINER_W)
       : null
   );
 
@@ -269,17 +229,17 @@ export function PostCarousel({
       >
         {/* Embla Viewport */}
         <div className="w-full h-full overflow-hidden" ref={emblaRef}>
-          <div className="flex h-full gap-2">
+          <div className="flex h-full gap-2 touch-pan-y">
             {images.map((src, index) => {
               const sw = slideWidths[index];
               const slideStyle: React.CSSProperties = sw
                 ? { width: `${sw}px`, maxWidth: '100%', flexShrink: 0, flexGrow: 0 }
                 : {};
               const slideCls = sw
-                ? "relative max-w-full h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
+                ? "relative max-w-full h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2"
                 : slideWidth === 'full'
-                  ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out"
-                  : "relative flex-[0_0_80%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2 transition-all duration-300 ease-in-out";
+                  ? "relative flex-[0_0_100%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2"
+                  : "relative flex-[0_0_80%] min-w-0 h-full rounded-[8px] border border-[var(--ds-media-border)] overflow-hidden select-none bg-ds-surface-2";
               const dim = imageDimensions ? imageDimensions[index] : null;
               let dynamicSizes = "(max-width: 768px) 100vw, 1200px";
               if (dim && dim.height > 0) {
@@ -309,6 +269,17 @@ export function PostCarousel({
                     sizes={dynamicSizes}
                     quality={90}
                     onLoad={(e) => {
+                      const img = e.currentTarget;
+                      if (img.naturalWidth && img.naturalHeight) {
+                        setLoadedDims(prev => {
+                          const newDims = [...prev];
+                          // Only update if not already set by props
+                          if (!imageDimensions?.[index]) {
+                            newDims[index] = { width: img.naturalWidth, height: img.naturalHeight };
+                          }
+                          return newDims;
+                        });
+                      }
                       if (index === 0 && onImageLoad) onImageLoad(e);
                     }}
                   />
@@ -361,7 +332,7 @@ export function PostCarousel({
         <CarouselDots
           total={images.length}
           activeIndex={selectedIndex}
-          imageDimensions={imageDimensions}
+          imageDimensions={loadedDims}
           onDotClick={(idx) => emblaApi?.scrollTo(idx)}
           className={dotsClassName || (arrowPlacement === 'inside' ? "py-3" : "mt-[12px]")}
         />

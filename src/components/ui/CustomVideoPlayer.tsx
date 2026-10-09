@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, VolumeX } from 'lucide-react';
 import { Icon } from '@iconify/react';
+import { Icon as CustomIcon } from '@/components/icons';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-
+import { usePathname } from 'next/navigation';
 interface CustomVideoPlayerProps extends React.VideoHTMLAttributes<HTMLVideoElement> {
   src: string;
   containerClassName?: string;
@@ -19,6 +20,9 @@ export function CustomVideoPlayer({ src, className, style, containerClassName, h
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
+
+  const pathname = usePathname();
+  const isPostDetailsPage = pathname?.startsWith('/post/');
 
   const togglePlay = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -99,9 +103,23 @@ export function CustomVideoPlayer({ src, className, style, containerClassName, h
     <div 
       ref={containerRef}
       className={cn("relative group flex items-center justify-center bg-transparent overflow-hidden w-full h-full", containerClassName)}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => { if (isPlaying) setShowControls(false); }}
-      onClick={togglePlay}
+      onMouseEnter={() => {
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+          setShowControls(true);
+        }
+      }}
+      onMouseLeave={() => {
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches && isPlaying) {
+          setShowControls(false);
+        }
+      }}
+      onClick={(e) => {
+        if (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) {
+          setShowControls(prev => !prev);
+        } else {
+          togglePlay(e);
+        }
+      }}
     >
       <video
         ref={videoRef}
@@ -119,9 +137,18 @@ export function CustomVideoPlayer({ src, className, style, containerClassName, h
       
       {/* Big Play Button Overlay */}
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-opacity">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-            <Play className="w-8 h-8 ml-1" fill="currentColor" />
+        <div 
+          className="absolute inset-0 flex items-center justify-center bg-black/10 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePlay(e);
+            if (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) {
+              setShowControls(true);
+            }
+          }}
+        >
+          <div className="w-[60px] h-[60px] rounded-full bg-black/50 backdrop-blur-md text-[#FFECE6] flex items-center justify-center hover:scale-110 pointer-events-auto transition-all shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)]">
+            <Play className="w-10 h-10 ml-1" strokeWidth={1.5} />
           </div>
         </div>
       )}
@@ -131,12 +158,18 @@ export function CustomVideoPlayer({ src, className, style, containerClassName, h
         <div 
         className={cn(
           "absolute bottom-0 left-0 right-0 p-4 pt-16 flex flex-col gap-2 transition-opacity duration-300 bg-gradient-to-t from-black/60 to-transparent",
-          showControls || !isPlaying ? "opacity-100" : "opacity-0 pointer-events-none"
+          showControls || !isPlaying || ((typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) && isPostDetailsPage) ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center w-full gap-3">
-          <button onClick={togglePlay} className="text-white hover:text-white/80 transition-colors outline-none focus:outline-none shrink-0">
+          <button 
+            onClick={togglePlay} 
+            className={cn(
+              "text-white hover:text-white/80 transition-opacity duration-300 outline-none focus:outline-none shrink-0",
+              (!showControls && isPlaying && (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) && isPostDetailsPage) ? "opacity-0 pointer-events-none" : "opacity-100"
+            )}
+          >
             {isPlaying ? (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
                 <rect x="5" y="3.75" width="5" height="16.5" stroke="currentColor" strokeWidth="1.5" />
@@ -157,7 +190,10 @@ export function CustomVideoPlayer({ src, className, style, containerClassName, h
             />
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className={cn(
+            "flex items-center gap-3 shrink-0 transition-opacity duration-300",
+            (!showControls && isPlaying && (typeof window !== 'undefined' && !window.matchMedia('(hover: hover)').matches) && isPostDetailsPage) ? "opacity-0 pointer-events-none" : "opacity-100"
+          )}>
             <div className="relative group/volume flex flex-col items-center justify-center w-[24px]">
               
               <div className="absolute bottom-[26px] left-1/2 -translate-x-1/2 w-[24px] h-[128px] py-2 bg-white rounded-[8px] flex items-center justify-center opacity-0 group-hover/volume:opacity-100 transition-opacity duration-200 pointer-events-none group-hover/volume:pointer-events-auto">
@@ -175,8 +211,8 @@ export function CustomVideoPlayer({ src, className, style, containerClassName, h
                 />
               </div>
 
-              <button onClick={toggleMute} className="w-[24px] h-[24px] flex items-center justify-center text-white hover:text-white/80 transition-colors outline-none focus:outline-none">
-                {isMuted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Icon icon="proicons:volume" className="w-5 h-5" />}
+              <button onClick={toggleMute} className="w-[28px] h-[28px] rounded-full bg-black/80 hover:bg-black/90 active:scale-95 backdrop-blur-md flex items-center justify-center text-[#FFECE6] transition-all cursor-pointer shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)] outline-none focus:outline-none shrink-0">
+                {isMuted || volume === 0 ? <CustomIcon name="volume-off" className="w-5 h-5" /> : <CustomIcon name="volume-on" className="w-5 h-5" />}
               </button>
             </div>
 

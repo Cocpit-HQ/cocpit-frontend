@@ -407,6 +407,219 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     );
   }
 
+  const profileActionButtons = blocked ? null : (
+    <>
+      {/* ── SCENARIO 2: pending_received — ACCEPT + DECLINE ── */}
+      {isPendingReceived && (
+        <>
+          <button
+            type="button"
+            onClick={handleAccept}
+            className="px-3 py-1.5 rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+          >
+            <span className="text-white text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+              Accept
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDecline}
+            className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+          >
+            <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+              Decline
+            </span>
+          </button>
+        </>
+      )}
+
+      {/* ── SCENARIO 1: pending_sent — WITHDRAW ── */}
+      {isPendingSent && !isCreatorMode && (
+        <button
+          type="button"
+          onClick={handleWithdraw}
+          className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+        >
+          <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+            Withdraw
+          </span>
+        </button>
+      )}
+
+      {/* ── SCENARIO 3a: no relationship, target < 2 connections → CONNECT ── */}
+      {showConnect && (
+        <button
+          type="button"
+          onClick={handleConnect}
+          className="px-3 py-1.5 rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+        >
+          <span className="text-white text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+            Connect
+          </span>
+        </button>
+      )}
+
+      {/* ── SCENARIO 3b: no relationship, target >= 500 connections → FOLLOW ── */}
+      {showFollow && (
+        <button
+          type="button"
+          onClick={handleFollowToggle}
+          disabled={followLoading}
+          className={cn(
+            "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
+            following
+              ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
+              : "bg-[var(--ds-accent)] hover:opacity-90"
+          )}
+        >
+          <span className={cn(
+            "text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap",
+            following ? "text-[var(--ds-text-primary)]" : "text-white"
+          )}>
+            {following ? "Unfollow" : "Follow"}
+          </span>
+        </button>
+      )}
+
+      {/* ── MESSAGE (Always Shown except for incoming requests) ── */}
+      {!isPendingReceived && (
+        <button
+          type="button"
+          onClick={handleMessage}
+          className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
+        >
+          <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+            Message
+          </span>
+        </button>
+      )}
+
+      {/* More button: Mobile → Drawer, Desktop → Dropdown */}
+      {isMobile ? (
+        <button
+          type="button"
+          onClick={() => setIsMobileMoreOpen(true)}
+          className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
+        >
+          <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+            More
+          </span>
+        </button>
+      ) : (
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
+            >
+              <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                More
+              </span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[155px]"
+            align="end"
+            sideOffset={8}
+          >
+            {/* Show Follow in More menu whenever Follow is not the primary header button and not connected */}
+            {!showFollow && !isConnected && (
+              <DropdownMenuItem
+                onClick={handleFollowToggle}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                {following ? "Unfollow" : "Follow"}
+              </DropdownMenuItem>
+            )}
+
+            {/* ── SCENARIO 2: pending_received — show Message in menu ── */}
+            {isPendingReceived && (
+              <DropdownMenuItem
+                onClick={handleMessage}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                Message
+              </DropdownMenuItem>
+            )}
+
+            {/* Connection actions in More menu when Follow is the primary header button */}
+            {isCreatorMode && connectionStatus === "none" && (
+              <DropdownMenuItem
+                onClick={handleConnect}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                Connect
+              </DropdownMenuItem>
+            )}
+
+            {isCreatorMode && isPendingSent && (
+              <DropdownMenuItem
+                onClick={handleWithdraw}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                Withdraw request
+              </DropdownMenuItem>
+            )}
+
+            {/* ── Connected state — Remove connection ── */}
+            {isConnected && (
+              <DropdownMenuItem
+                onClick={() => setShowRemoveConnectionDialog(true)}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                Remove connection
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuItem
+              onClick={() => setIsContactInfoModalOpen(true)}
+              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+            >
+              Contact info
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={handleViewResume}
+              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+            >
+              View resume
+            </DropdownMenuItem>
+
+            {Number(user?.profile_score?.score) >= 100 && (
+              <DropdownMenuItem
+                onClick={handleDownloadProfile}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                Download profile
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuItem
+              onClick={() => setIsShareModalOpen(true)}
+              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+            >
+              Share profile
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => setShowBlockDialog(true)}
+              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+            >
+              Block profile
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => setIsReportModalOpen(true)}
+              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+            >
+              Report profile
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </>
+  );
+
   return (
     <div className="w-full min-h-screen bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center pt-20 sm:pt-[100px] pb-16 px-4 select-text relative">
       {renderTopNavigation()}
@@ -422,213 +635,8 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           onEditAvatar={blocked ? undefined : () => setIsViewAvatarOpen(true)}
           actionButtons={
             blocked ? null : (
-              <div className="inline-flex justify-start items-center gap-3">
-
-                {/* ── SCENARIO 2: pending_received — ACCEPT + DECLINE ── */}
-                {isPendingReceived && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleAccept}
-                      className="px-3 py-1.5 rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                    >
-                      <span className="text-white text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                        Accept
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDecline}
-                      className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                    >
-                      <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                        Decline
-                      </span>
-                    </button>
-                  </>
-                )}
-
-                {/* ── SCENARIO 1: pending_sent — WITHDRAW ── */}
-                {isPendingSent && !isCreatorMode && (
-                  <button
-                    type="button"
-                    onClick={handleWithdraw}
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Withdraw
-                    </span>
-                  </button>
-                )}
-
-                {/* ── SCENARIO 3a: no relationship, target < 2 connections → CONNECT ── */}
-                {showConnect && (
-                  <button
-                    type="button"
-                    onClick={handleConnect}
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Connect
-                    </span>
-                  </button>
-                )}
-
-                {/* ── SCENARIO 3b: no relationship, target >= 500 connections → FOLLOW ── */}
-                {showFollow && (
-                  <button
-                    type="button"
-                    onClick={handleFollowToggle}
-                    disabled={followLoading}
-                    className={cn(
-                      "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
-                      following
-                        ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
-                        : "bg-[var(--ds-accent)] hover:opacity-90"
-                    )}
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      {following ? "Unfollow" : "Follow"}
-                    </span>
-                  </button>
-                )}
-
-                {/* ── MESSAGE (Always Shown except for incoming requests) ── */}
-                {!isPendingReceived && (
-                  <button
-                    type="button"
-                    onClick={handleMessage}
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Message
-                    </span>
-                  </button>
-                )}
-
-                {/* More button: Mobile → Drawer, Desktop → Dropdown */}
-                {isMobile ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsMobileMoreOpen(true)}
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      More
-                    </span>
-                  </button>
-                ) : (
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
-                      >
-                        <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                          More
-                        </span>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="p-3 !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-2xl flex flex-col justify-start items-start gap-4 overflow-hidden shadow-2xl z-50 outline-none min-w-[155px]"
-                      align="end"
-                      sideOffset={8}
-                    >
-                      {/* Show Follow in More menu whenever Follow is not the primary header button and not connected */}
-                      {!showFollow && !isConnected && (
-                        <DropdownMenuItem
-                          onClick={handleFollowToggle}
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                        >
-                          {following ? "Unfollow" : "Follow"}
-                        </DropdownMenuItem>
-                      )}
-
-                      {/* ── SCENARIO 2: pending_received — show Message in menu ── */}
-                      {isPendingReceived && (
-                        <DropdownMenuItem
-                          onClick={handleMessage}
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                        >
-                          Message
-                        </DropdownMenuItem>
-                      )}
-
-                      {/* Connection actions in More menu when Follow is the primary header button */}
-                      {isCreatorMode && connectionStatus === "none" && (
-                        <DropdownMenuItem
-                          onClick={handleConnect}
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                        >
-                          Connect
-                        </DropdownMenuItem>
-                      )}
-
-                      {isCreatorMode && isPendingSent && (
-                        <DropdownMenuItem
-                          onClick={handleWithdraw}
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                        >
-                          Withdraw request
-                        </DropdownMenuItem>
-                      )}
-
-                      {/* ── Connected state — Remove connection ── */}
-                      {isConnected && (
-                        <DropdownMenuItem
-                          onClick={() => setShowRemoveConnectionDialog(true)}
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                        >
-                          Remove connection
-                        </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuItem
-                        onClick={() => setIsContactInfoModalOpen(true)}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                      >
-                        Contact info
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={handleViewResume}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                      >
-                        View resume
-                      </DropdownMenuItem>
-
-                      {Number(user?.profile_score?.score) >= 100 && (
-                        <DropdownMenuItem
-                          onClick={handleDownloadProfile}
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                        >
-                          Download profile
-                        </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuItem
-                        onClick={() => setIsShareModalOpen(true)}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                      >
-                        Share profile
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => setShowBlockDialog(true)}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                      >
-                        Block profile
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => setIsReportModalOpen(true)}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-                      >
-                        Report profile
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+              <div className="hidden md:inline-flex justify-start items-center gap-3">
+                {profileActionButtons}
               </div>
             )
           }
@@ -639,66 +647,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           actionButtons={
             blocked ? null : (
               <div className="flex md:hidden w-full justify-start items-center gap-3 pt-2">
-                {/* Follow / Unfollow button */}
-                <button
-                  type="button"
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                  className={cn(
-                    "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
-                    following
-                      ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
-                      : "bg-[var(--ds-accent)] hover:opacity-90"
-                  )}
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    {following ? "Unfollow" : "Follow"}
-                  </span>
-                </button>
-
-                {/* Connect / Pending / Message button */}
-                {isConnected ? (
-                  <button
-                    type="button"
-                    onClick={handleMessage}
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Message
-                    </span>
-                  </button>
-                ) : (isPendingSent || isPendingReceived) ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 cursor-default opacity-50"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Pending
-                    </span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleConnect}
-                    className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer"
-                  >
-                    <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                      Connect
-                    </span>
-                  </button>
-                )}
-
-                {/* More button */}
-                <button
-                  type="button"
-                  onClick={() => setIsMobileMoreOpen(true)}
-                  className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer outline-none"
-                >
-                  <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
-                    More
-                  </span>
-                </button>
+                {profileActionButtons}
               </div>
             )
           }

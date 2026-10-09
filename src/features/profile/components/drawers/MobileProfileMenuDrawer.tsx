@@ -23,8 +23,8 @@ export const MobileProfileMenuDrawer: React.FC<MobileProfileMenuDrawerProps> = (
   return (
     <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/60 z-[99]" />
-        <Drawer.Content className="bg-[var(--ds-surface-1)] flex flex-col rounded-t-[20px] fixed bottom-0 left-0 right-0 z-[100] outline-none font-['DM_Sans'] border-t border-[var(--ds-border)] px-4 pb-8 pt-3">
+        <Drawer.Overlay className="fixed inset-0 bg-black/60 z-[99]" onClick={onClose} />
+        <Drawer.Content className="bg-[var(--ds-bg)] flex flex-col rounded-t-[20px] fixed bottom-0 left-0 right-0 z-[100] outline-none font-['DM_Sans'] border-t border-[var(--ds-border)] px-4 pb-8 pt-3">
           <Drawer.Title className="sr-only">Profile Options</Drawer.Title>
           <Drawer.Description className="sr-only">Options for your profile</Drawer.Description>
           

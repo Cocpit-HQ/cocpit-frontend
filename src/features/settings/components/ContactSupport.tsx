@@ -15,7 +15,10 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
   const { data: accountData } = useAccountSettings();
   const [email, setEmail] = useState('');
   const [issue, setIssue] = useState('');
+  const [issueError, setIssueError] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [rejectedFile, setRejectedFile] = useState<{ name: string; size: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,13 +31,18 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
 
 
   const validateAndSetFile = (selectedFile: File) => {
+    setFileError(null);
+    setRejectedFile(null);
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    
     if (!validTypes.includes(selectedFile.type)) {
-      toast.error("Please upload a valid image file (JPG, PNG, WEBP)");
+      setFileError("invalid_type");
+      setRejectedFile({ name: selectedFile.name, size: selectedFile.size });
       return;
     }
     if (selectedFile.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
+      setFileError("too_large");
+      setRejectedFile({ name: selectedFile.name, size: selectedFile.size });
       return;
     }
     setFile(selectedFile);
@@ -61,7 +69,13 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
     if (e) e.preventDefault();
     if (!issue.trim() || isSubmitting) return;
 
+    if (issue.trim().length < 10) {
+      setIssueError("Description must be at least 10 characters long");
+      return;
+    }
+
     setIsSubmitting(true);
+    setIssueError('');
     try {
       const formData = new FormData();
       formData.append('email', email || accountData?.primaryEmail || 'user@cocpit.io');
@@ -74,14 +88,15 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
       toast.success("Support ticket submitted successfully!");
       setIssue('');
       setFile(null);
+      setFileError(null);
+      setRejectedFile(null);
     } catch (error) {
       toast.error("Failed to submit support ticket. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const isFormValid = issue.trim().length > 0 && !isSubmitting;
+  const isFormValid = issue.trim().length > 0 && !isSubmitting && !fileError;
 
   return (
     <div className="w-full max-w-[712px] p-0 md:px-4 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-0 md:gap-3">
@@ -111,15 +126,27 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
       </div>
 
       {/* Describe your issue row */}
-      <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-1">
-        <div className="ds-text-small-1 text-ds-text-secondary">Describe your issue*</div>
-        <input
-          type="text"
-          value={issue}
-          onChange={(e) => setIssue(e.target.value)}
-          placeholder="Tell us what we can improve..."
-          className="w-full bg-transparent border-none outline-none ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted p-0"
-        />
+      <div className="self-stretch flex flex-col justify-start items-start w-full">
+        <div className={cn("self-stretch py-2 border-b flex flex-col justify-center items-start gap-1 transition-colors", issueError ? "border-ds-error" : "border-ds-border")}>
+          <div className="ds-text-small-1 text-ds-text-secondary">Describe your issue*</div>
+          <input
+            type="text"
+            value={issue}
+            onChange={(e) => {
+              setIssue(e.target.value);
+              if (issueError) setIssueError('');
+            }}
+            placeholder="Tell us what we can improve..."
+            className="w-full bg-transparent border-none outline-none ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted p-0"
+          />
+        </div>
+        <div className="ds-supporting-area min-h-[16px] w-full pt-1">
+          {issueError && (
+            <span className="ds-text-small text-ds-error">
+              {issueError}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Attachment area */}
@@ -134,29 +161,57 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
         onClick={() => fileInputRef.current?.click()}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className="self-stretch h-28 bg-ds-surface-1 rounded-2xl border border-ds-border flex flex-col justify-center items-center gap-2 overflow-hidden cursor-pointer hover:bg-ds-surface-2/60 transition-colors"
+        className={cn(
+          "self-stretch py-4 min-h-[7rem] bg-ds-surface-1 rounded-2xl border flex flex-col justify-center items-center overflow-hidden cursor-pointer hover:bg-ds-surface-2/60 transition-colors",
+          (fileError || rejectedFile) ? "border-ds-error gap-1" : "border-ds-border gap-2"
+        )}
       >
-        <div className="w-10 h-10 flex items-center justify-center">
-          <Upload className="w-7 h-7 text-ds-text-primary" strokeWidth={1.5} />
-        </div>
-        {file ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-ds-surface-2 rounded-full max-w-[90%] truncate">
-            <span className="ds-text-small text-ds-text-primary truncate">{file.name}</span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setFile(null);
-              }}
-              className="p-0.5 hover:bg-ds-surface-1 rounded-full text-ds-text-secondary hover:text-ds-text-primary"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+        {(fileError || rejectedFile) ? (
+          <div className="flex flex-col items-center justify-center gap-1 w-full px-4 text-center">
+            <Upload className="w-6 h-6 text-ds-text-primary mb-1" strokeWidth={1.5} />
+            <div className="ds-text-body-1 font-medium text-ds-text-primary truncate max-w-full">
+              {rejectedFile?.name}
+            </div>
+            <div className="flex flex-col items-center justify-center text-ds-error ds-text-small text-center">
+              {fileError === 'too_large' ? (
+                <>
+                  <div>File is too large ({(rejectedFile!.size / (1024 * 1024)).toFixed(1)}MB).</div>
+                  <div>Maximum size is 5MB</div>
+                </>
+              ) : (
+                <>
+                  <div>Please upload a valid image file.</div>
+                  <div>JPG, PNG, WEBP</div>
+                </>
+              )}
+            </div>
+            <div className="ds-text-body-1 font-medium text-ds-text-primary mt-1 hover:underline">Change</div>
           </div>
         ) : (
-          <div className="ds-text-small text-ds-text-primary">
-            JPG, PNG, WEBP · Max 5MB
-          </div>
+          <>
+            <div className="w-10 h-10 flex items-center justify-center shrink-0">
+              <Upload className="w-7 h-7 text-ds-text-primary" strokeWidth={1.5} />
+            </div>
+            {file ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-ds-surface-2 rounded-full max-w-[90%] truncate">
+                <span className="ds-text-small text-ds-text-primary truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFile(null);
+                  }}
+                  className="p-0.5 hover:bg-ds-surface-1 rounded-full text-ds-text-secondary hover:text-ds-text-primary shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="ds-text-small text-ds-text-primary text-center px-4">
+                JPG, PNG, WEBP · Max 5MB
+              </div>
+            )}
+          </>
         )}
       </div>
 

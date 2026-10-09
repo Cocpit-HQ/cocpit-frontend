@@ -428,6 +428,18 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         achievement_image_id: achievementImageId
       };
 
+      if (media.uploadedImages && media.uploadedImages.length > 0) {
+        payload.media_metadata = media.uploadedImages.map((img: any) => ({
+          width: img.naturalWidth || img.width || 800,
+          height: img.naturalHeight || img.height || 600
+        }));
+      } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
+        payload.media_metadata = media.uploadedVideos.map((vid: any) => ({
+          width: vid.naturalWidth || vid.width || undefined,
+          height: vid.naturalHeight || vid.height || undefined
+        })).filter((meta: any) => meta.width && meta.height);
+      }
+
       if (articleData) {
         payload.article_cover_image = articleData.coverImage;
         payload.article_title = articleData.title;

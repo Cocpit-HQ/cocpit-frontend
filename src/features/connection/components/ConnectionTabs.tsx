@@ -82,7 +82,7 @@ export function ConnectionTabs({ activeCount }: ConnectionTabsProps) {
               </div>
               {isActive && (
                 <span
-                  className="absolute bottom-0 left-0 right-0 w-full border-t-[1.5px] border-ds-accent"
+                  className="absolute bottom-0 inset-x-0 h-[1.5px] bg-ds-accent"
                   aria-hidden="true"
                 />
               )}

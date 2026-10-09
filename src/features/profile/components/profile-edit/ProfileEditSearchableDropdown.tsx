@@ -343,7 +343,7 @@ export const ProfileEditSearchableDropdown: React.FC<ProfileEditSearchableDropdo
       {/* Popover / Menu styled like OnboardingDropdown */}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-xl py-2 px-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div ref={listboxRef} className="w-full max-h-[240px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
+          <div ref={listboxRef} className="w-full max-h-[240px] overflow-y-auto overscroll-contain touch-pan-y flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
             {displayedOptions.length > 0 ? (
               displayedOptions.map((opt, idx) => {
                 const isSelected = opt.label.toLowerCase() === value.toLowerCase();

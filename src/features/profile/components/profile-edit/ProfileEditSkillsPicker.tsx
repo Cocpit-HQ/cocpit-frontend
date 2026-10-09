@@ -165,7 +165,7 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
       {/* Dropdown Suggestions */}
       {isOpen && (
         <div className="absolute top-[64px] left-0 right-0 bg-[var(--ds-bg)] border border-[var(--ds-border)] rounded-xl py-2 px-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="w-full max-h-[220px] overflow-y-auto flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
+          <div className="w-full max-h-[220px] overflow-y-auto overscroll-contain touch-pan-y flex flex-col gap-2.5 scrollbar-hide pr-1" role="listbox">
             {displayedOptions.length > 0 ? (
               displayedOptions.map((skill, idx) => (
                 <button

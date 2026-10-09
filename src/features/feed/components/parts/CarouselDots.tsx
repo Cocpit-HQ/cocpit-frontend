@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
+import { motion } from 'framer-motion';
 
 export interface CarouselDotsProps {
   total: number;
@@ -19,6 +20,8 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
   className = '',
   imageDimensions,
 }) => {
+  const instanceId = useId();
+
   if (total <= 1) return null;
 
   const clampedActive = Math.max(0, Math.min(activeIndex, total - 1));
@@ -74,7 +77,7 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
             if (isActive) {
               width = naturalWidth;
               height = 6;
-              bgColor = '#EC6229'; // Active color from Figma
+              bgColor = 'transparent'; // Let the motion.div handle the color
             } else if (isLeftEdge || isRightEdge) {
               width = 4; // Shrink edges
               height = 4;
@@ -107,14 +110,23 @@ export const CarouselDots: React.FC<CarouselDotsProps> = ({
               tabIndex={isInsideWindow ? 0 : -1}
             >
               <span
-                className="rounded-[2px] pointer-events-none block"
+                className="rounded-[2px] pointer-events-none block relative"
                 style={{
                   width: '100%',
                   height: `${height}px`,
-                  backgroundColor: bgColor,
+                  backgroundColor: isActive ? 'transparent' : bgColor,
                   transition: 'height 250ms ease, background-color 200ms ease',
                 }}
-              />
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId={`activeCarouselDot-${instanceId}`}
+                    className="absolute inset-0 rounded-[2px]"
+                    style={{ backgroundColor: '#EC6229' }}
+                    transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                  />
+                )}
+              </span>
             </button>
           );
         })}

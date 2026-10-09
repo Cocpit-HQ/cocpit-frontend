@@ -142,7 +142,7 @@ export const PostVideoCard = ({
   const canPlayPause = allowPlayPause !== undefined ? allowPlayPause : (!showHeader || isPreview);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -223,12 +223,11 @@ export const PostVideoCard = ({
   const handleToggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     const video = videoRef.current;
+    const newMuted = !isMuted;
     if (video) {
-      video.muted = !video.muted;
-      setIsMuted(video.muted);
-    } else {
-      setIsMuted(!isMuted);
+      video.muted = newMuted;
     }
+    setIsMuted(newMuted);
   };
 
   const handleTimeUpdate = () => {
@@ -452,7 +451,13 @@ export const PostVideoCard = ({
                 : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
             }`}
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-black/45 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl transition-transform duration-150 group-hover:scale-105 active:scale-95">
+            <div 
+              className="w-[72px] h-[72px] rounded-full bg-black/45 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl transition-transform duration-150 group-hover:scale-105 active:scale-95 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTogglePlay(e);
+              }}
+            >
               {!isPlaying ? (
                 /* When Paused / Stopped: Play Triangle (Figma 40x40 scale) */
                 <svg 
@@ -502,8 +507,7 @@ export const PostVideoCard = ({
 
         {/* ── Bottom In-Video Overlays ── */}
         <div 
-          className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-4 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-auto flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          onClick={(e) => e.stopPropagation()}
+          className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-4 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         >
           {/* Caption & Mute Row (Figma layout) */}
           <div className="flex items-end justify-between gap-3 w-full">
@@ -519,11 +523,11 @@ export const PostVideoCard = ({
             <button
               type="button"
               onClick={handleToggleMute}
-              className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
+              className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5 pointer-events-auto"
               title={isMuted ? "Unmute" : "Mute"}
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? (
+              {!isMuted ? (
                 <VolumeX className="w-4 h-4 text-white" />
               ) : (
                 <Volume2 className="w-4 h-4 text-white" />
@@ -532,12 +536,14 @@ export const PostVideoCard = ({
           </div>
 
           {/* ── Video Scrubber / Progress Bar (Figma spec: 410 Fill × 6 Hug) ── */}
-          <VideoScrubber
-            videoRef={videoRef}
-            progress={progress}
-            setProgress={setProgress}
-            isDraggingRef={isDraggingRef}
-          />
+          <div className="pointer-events-auto w-full">
+            <VideoScrubber
+              videoRef={videoRef}
+              progress={progress}
+              setProgress={setProgress}
+              isDraggingRef={isDraggingRef}
+            />
+          </div>
         </div>
       </div>
 

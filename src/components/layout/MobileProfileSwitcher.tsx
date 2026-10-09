@@ -65,7 +65,7 @@ export function MobileProfileSwitcher({
       )}
 
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-[99]" />
+        <Drawer.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-[99]" onClick={() => setOpen(false)} />
         <Drawer.Content
           className="bg-[var(--ds-bg)] flex flex-col rounded-t-[20px] fixed bottom-0 left-0 right-0 z-[100] outline-none font-['DM_Sans',sans-serif] border-t border-[var(--ds-border)] px-4 pt-3 max-h-[85vh] shadow-2xl"
           style={{

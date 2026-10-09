@@ -404,7 +404,7 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
 
         {/* Row 2: Specialization & Location */}
         <div className="w-full flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-[40px]">
-          <div className="w-full sm:w-[300px] flex-none">
+          <div className="w-full sm:flex-1">
             <ProfileEditSearchableDropdown
               id="edu_specialization"
               label="Specialization"
@@ -415,12 +415,12 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
               labelClassName="w-[79px] h-[16px] text-center"
             />
           </div>
-          <div className="w-full sm:w-[300px] flex-none">
+          <div className="w-full sm:flex-1">
             <ProfileEditLocationInput
               value={formData.location}
               isGlobal={true}
               onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
-              className="w-full sm:w-[300px]"
+              className="w-full sm:flex-1"
             />
           </div>
         </div>

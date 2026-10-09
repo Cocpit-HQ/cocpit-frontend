@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronRight, ChevronLeft, Star } from 'lucide-react';
 import { HelpCentre } from '../components/HelpCentre';
@@ -22,10 +22,11 @@ export function SupportSettingsPage() {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [feedbackComment, setFeedbackComment] = useState<string>('');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState<boolean>(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmitFeedback = useCallback(async () => {
-    if (feedbackRating === 0 && !feedbackComment.trim()) {
-      toast.error('Please select a star rating or provide feedback');
+    if (feedbackRating === 0) {
+      toast.error('Please select a star rating');
       return;
     }
 
@@ -40,6 +41,9 @@ export function SupportSettingsPage() {
       setFeedbackRating(0);
       setHoverRating(0);
       setFeedbackComment('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to submit feedback');
     } finally {
@@ -48,8 +52,8 @@ export function SupportSettingsPage() {
   }, [feedbackRating, feedbackComment]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSubmitFeedback();
       }
@@ -133,7 +137,7 @@ export function SupportSettingsPage() {
                 <button
                   key={star}
                   type="button"
-                  onClick={() => setFeedbackRating(star)}
+                  onClick={() => setFeedbackRating(feedbackRating === star ? 0 : star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
                   aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
@@ -143,7 +147,7 @@ export function SupportSettingsPage() {
                     className={`w-5 h-5 transition-colors ${
                       star <= (hoverRating || feedbackRating)
                         ? 'fill-ds-accent text-ds-accent'
-                        : 'text-ds-text-primary'
+                        : 'text-ds-text-muted'
                     }`}
                     strokeWidth={1.5}
                   />
@@ -152,26 +156,35 @@ export function SupportSettingsPage() {
             </div>
 
             {/* Feedback Input */}
-            <div className="self-stretch py-2 border-b border-ds-border inline-flex justify-start items-center">
-              <input
-                type="text"
+            <div className="self-stretch py-2 border-b border-ds-border flex items-end gap-2">
+              <textarea
+                ref={textareaRef}
                 value={feedbackComment}
-                onChange={(e) => setFeedbackComment(e.target.value)}
+                onChange={(e) => {
+                  setFeedbackComment(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                maxLength={500}
                 onKeyDown={handleKeyDown}
                 placeholder="Tell us what we can improve..."
-                className="w-full bg-transparent border-none outline-none ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted p-0"
+                rows={1}
+                className="w-full bg-transparent border-none outline-none ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted p-0 resize-none overflow-hidden"
               />
             </div>
 
-            {/* Submit Button */}
-            <div className="self-stretch flex flex-col justify-center items-end">
+            {/* Counter & Submit Button */}
+            <div className="self-stretch flex flex-col justify-center items-end gap-2 mt-1">
+              <div className={`ds-text-meta ${feedbackComment.length >= 500 ? 'text-ds-error' : 'text-ds-text-muted'}`}>
+                {feedbackComment.length}/500
+              </div>
               <button
                 type="button"
                 onClick={handleSubmitFeedback}
-                disabled={isSubmittingFeedback || (feedbackRating === 0 && !feedbackComment.trim())}
-                className="h-[36px] px-3 py-1.5 bg-ds-accent rounded-[100px] inline-flex justify-center items-center cursor-pointer hover:opacity-90 active:opacity-80 transition-opacity ds-focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmittingFeedback || feedbackRating === 0}
+                className="h-[36px] px-3 py-[6px] gap-[10px] rounded-[100px] inline-flex justify-center items-center transition-colors ds-focus-ring bg-ds-accent hover:opacity-90 active:opacity-80 cursor-pointer disabled:bg-ds-surface-1 disabled:opacity-100 disabled:cursor-not-allowed group"
               >
-                <span className="ds-text-body-1 text-ds-text-primary font-medium">
+                <span className="ds-text-body-1 font-medium text-ds-text-primary group-disabled:text-ds-text-muted">
                   {isSubmittingFeedback ? 'Sending...' : 'Send Feedback'}
                 </span>
               </button>

@@ -6,6 +6,8 @@ import { calculateDisplayDimensions, ImageDimensions, MAX_MEDIA_WIDTH, MAX_MEDIA
 import { LikeBar } from './LikeBar';
 import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { VideoScrubber } from './VideoScrubber';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface PostMediaProps {
   imageSrc?: string;
@@ -56,10 +58,11 @@ export const PostMedia = ({
   const activeDims = imgDims || fastDims;
 
   // Video overlay state
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const isDraggingRef = useRef(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -108,12 +111,11 @@ export const PostMedia = ({
   const handleToggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     const video = videoRef.current;
+    const newMuted = !isMuted;
     if (video) {
-      video.muted = !video.muted;
-      setIsMuted(video.muted);
-    } else {
-      setIsMuted(!isMuted);
+      video.muted = newMuted;
     }
+    setIsMuted(newMuted);
   };
 
   const handleTimeUpdate = () => {
@@ -224,14 +226,14 @@ export const PostMedia = ({
                     <button
                       type="button"
                       onClick={handleToggleMute}
-                      className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
+                      className="w-[28px] h-[28px] rounded-full bg-black/80 hover:bg-black/90 active:scale-95 backdrop-blur-md flex items-center justify-center text-[#FFECE6] transition-all cursor-pointer shrink-0 shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)] mb-0.5"
                       title={isMuted ? "Unmute" : "Mute"}
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
                       {isMuted ? (
-                        <VolumeX className="w-4 h-4 text-white" />
+                        <Icon name="volume-off" className="w-5 h-5" />
                       ) : (
-                        <Volume2 className="w-4 h-4 text-white" />
+                        <Icon name="volume-on" className="w-5 h-5" />
                       )}
                     </button>
                   </div>
@@ -248,8 +250,14 @@ export const PostMedia = ({
             ) : (
               /* Standard video mode: custom controls matching feed */
               <div 
-                className={`relative w-full h-full group flex items-center justify-center overflow-hidden ${isFullContent ? 'cursor-pointer' : ''}`}
-                onClick={isFullContent ? handleTogglePlay : undefined}
+                className={cn(
+                  "relative w-full h-full group flex items-center justify-center overflow-hidden",
+                  isFullContent ? "cursor-pointer" : ""
+                )}
+                onClick={(e) => {
+                  if (!isFullContent) return;
+                  handleTogglePlay(e);
+                }}
               >
                 <video
                   ref={videoRef}
@@ -257,19 +265,38 @@ export const PostMedia = ({
                   muted={isMuted}
                   loop
                   playsInline
+                  onClick={(e) => {
+                    if (!isFullContent) return;
+                    handleTogglePlay(e);
+                  }}
                   onLoadedMetadata={handleVideoLoad}
                   onTimeUpdate={handleTimeUpdate}
-                  className="w-full h-full object-contain object-left max-h-[589px] rounded-[8px]"
+                  className="w-full h-full object-contain object-left max-h-[589px] rounded-[8px] cursor-pointer"
                 />
                 
                 {/* Center Play/Pause Button on Hover (Only on post details page) */}
                 {isFullContent && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                    <div className="w-[64px] h-[64px] rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white shadow-lg">
+                  <div 
+                    className={cn(
+                      "absolute inset-0 flex items-center justify-center transition-opacity duration-200 z-10 pointer-events-none cursor-pointer",
+                      isMobile ? (!isPlaying ? "opacity-100 pointer-events-auto" : "opacity-0") : "opacity-0 group-hover:opacity-100"
+                    )}
+                    onClick={(e) => {
+                      if (!isFullContent) return;
+                      handleTogglePlay(e);
+                    }}
+                  >
+                    <div 
+                      className="w-[60px] h-[60px] rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-[#FFECE6] pointer-events-auto cursor-pointer shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)] transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePlay(e);
+                      }}
+                    >
                       {isPlaying ? (
-                        <Pause className="w-8 h-8 fill-white" />
+                        <Pause className="w-10 h-10" strokeWidth={1.5} />
                       ) : (
-                        <Play className="w-8 h-8 fill-white ml-1" />
+                        <Play className="w-10 h-10 ml-1" strokeWidth={1.5} />
                       )}
                     </div>
                   </div>
@@ -277,36 +304,39 @@ export const PostMedia = ({
 
                 {/* Bottom Overlay: Mute + Progress (Feed Style) */}
                 <div 
-                  className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-auto flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    "absolute bottom-0 inset-x-0 pt-4 pb-2 px-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none flex flex-col gap-1.5 select-none transition-opacity duration-200",
+                    isMobile && isFullContent ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  )}
                 >
                   {isFullContent && (
-                    <div className="flex items-end justify-end gap-3 w-full mb-1">
+                    <div className="flex items-end justify-end gap-3 w-full mb-1 transition-opacity duration-200 opacity-100">
                       {/* Mute Button */}
                       <button
                         type="button"
                         onClick={handleToggleMute}
-                        className="w-[32px] h-[32px] rounded-full bg-black/60 hover:bg-black/80 active:scale-95 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.6)] border border-white/20 mb-0.5"
+                        className="w-[28px] h-[28px] rounded-full bg-black/80 hover:bg-black/90 active:scale-95 backdrop-blur-md flex items-center justify-center text-[#FFECE6] transition-all cursor-pointer shrink-0 shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)] mb-0.5 pointer-events-auto"
                         title={isMuted ? "Unmute" : "Mute"}
                         aria-label={isMuted ? "Unmute" : "Mute"}
                       >
-                        {isMuted ? (
-                          <VolumeX className="w-4 h-4 text-white" />
+                        {!isMuted ? (
+                          <Icon name="volume-off" className="w-5 h-5" />
                         ) : (
-                          <Volume2 className="w-4 h-4 text-white" />
+                          <Icon name="volume-on" className="w-5 h-5" />
                         )}
                       </button>
                     </div>
                   )}
 
-
                   {/* Progress Bar */}
+                  <div className="w-full opacity-100 pointer-events-auto">
                   <VideoScrubber
                     videoRef={videoRef}
                     progress={progress}
                     setProgress={setProgress}
                     isDraggingRef={isDraggingRef}
                   />
+                  </div>
                 </div>
               </div>
             )

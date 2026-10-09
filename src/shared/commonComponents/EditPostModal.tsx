@@ -25,6 +25,7 @@ import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationM
 import DiscardConfirmOverlay from '@/features/feed/components/create-post/shared/DiscardConfirmOverlay';
 import { cn } from '@/lib/utils';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useBodyScrollLock } from '@/hooks';
 
 const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
 const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit (up to 12 images x 10MB)
@@ -724,6 +725,8 @@ export function EditPostModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isDeleteDialogOpen, showLocationSelector, showDiscardConfirm, handleRequestClose]);
 
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const isCompanyPost = activeProfile?.type === 'COMPANY' || Boolean(originalPost?.isCompanyPost || originalPost?.author_org_id || originalPost?.companyId);
@@ -756,7 +759,7 @@ export function EditPostModal({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onPaste={handlePaste}
-        className="fixed inset-0 z-[150] flex flex-col items-center justify-between overflow-hidden font-dm-sans"
+        className="fixed inset-0 z-[150] flex flex-col items-center justify-between overflow-hidden font-dm-sans !top-0 !bottom-0 !left-0 !right-0 h-full w-full overscroll-contain"
         style={{
           backgroundColor: 'var(--ds-bg)',
           color: 'var(--ds-text-primary)',
@@ -788,7 +791,7 @@ export function EditPostModal({
         </button>
 
         {/* Scrollable Main Edit Post Body (Fix: Keep Save bar fixed at bottom while post content scrolls and hide visible scrollbar track) */}
-        <div className="flex-1 w-full overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col items-center pt-[60px] pb-[24px]">
+        <div className="flex-1 w-full overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col items-center pt-[60px] pb-[24px]">
           <section className="relative z-[155] w-[371px] max-w-full mx-auto px-4 sm:px-0 flex flex-col items-start gap-[20px]">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 w-full">
@@ -1039,7 +1042,7 @@ export function EditPostModal({
 
         {/* Fixed Bottom Action Row (Fix: Keep Save bar fixed at the bottom of the screen consistent with Create Post UI) */}
         {!isLoading && (
-          <div className="shrink-0 w-full flex flex-col items-center justify-center pb-[24px] pt-[12px] bg-[var(--ds-bg)] z-[155]">
+          <div className="shrink-0 w-full flex flex-col items-center justify-center pb-[24px] pt-[12px] bg-[var(--ds-bg)] z-[155] touch-none">
             <div className="flex h-[38px] w-[371px] max-w-full shrink-0 flex-row items-center justify-between gap-[16px] px-4 sm:px-0">
               {/* Hidden File Input */}
               <input

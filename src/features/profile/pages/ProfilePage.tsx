@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -615,7 +616,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans px-4 sm:px-6 md:px-8 pt-5 pb-6 sm:pb-8 md:pb-10 md:pr-[253px] select-text">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary font-dm-sans px-4 sm:px-6 md:px-8 pt-0 sm:-mt-5 pb-6 sm:pb-8 md:pb-10 md:pr-[253px] select-text">
       {/* 800px Centered Main Profile Container */}
       <div className="w-full max-w-[800px] mx-auto flex flex-col gap-5">
         {/* Cover + Profile Image + Action Buttons */}
@@ -683,9 +684,13 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => {
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                  useUIStore.getState().setActiveModal('create-post');
-                } else {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem("scroll-/feed", "0");
+                  sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                  sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                  if (window.innerWidth < 768) {
+                    useUIStore.getState().setActiveModal('create-post');
+                  }
                   router.push("/feed");
                 }
               }}
@@ -704,9 +709,13 @@ export default function ProfilePage() {
               onDeletePost={handleDeletePost}
               onUpdatePost={() => refetchPosts()}
               onCreatePost={() => {
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                  useUIStore.getState().setActiveModal('create-post');
-                } else {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem("scroll-/feed", "0");
+                  sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                  sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                  if (window.innerWidth < 768) {
+                    useUIStore.getState().setActiveModal('create-post');
+                  }
                   router.push("/feed");
                 }
               }}
@@ -974,8 +983,8 @@ export default function ProfilePage() {
       )}
 
       {isAddExperienceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overscroll-contain">
+          <div className="bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y">
             <AddExperienceForm
               onCancel={() => {
                 setIsAddExperienceModalOpen(false);
@@ -992,8 +1001,8 @@ export default function ProfilePage() {
       )}
 
       {isAddEducationModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overscroll-contain">
+          <div className="bg-[var(--ds-surface-1)] border border-[var(--ds-border)] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y">
             <AddEducationForm
               onCancel={() => {
                 setIsAddEducationModalOpen(false);

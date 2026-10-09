@@ -171,6 +171,18 @@ export function MobileBottomNav() {
                 e.stopPropagation();
                 return;
               }
+              if (pathname !== "/feed" && pathname !== "/") {
+                if (typeof window !== "undefined") {
+                  sessionStorage.setItem("scroll-/feed", "0");
+                  sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                  sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                }
+                router.push("/feed");
+              } else {
+                if (typeof window !== "undefined") {
+                  window.scrollTo({ top: 0, behavior: 'instant' });
+                }
+              }
               setActiveModal('create-post');
             }}
             className={`w-[44px] h-[32px] rounded-[10px] flex items-center justify-center border border-[#3F3F46] bg-transparent ${canCreatePost ? 'text-[#EC6229]' : 'text-muted-foreground opacity-50 cursor-default'}`}

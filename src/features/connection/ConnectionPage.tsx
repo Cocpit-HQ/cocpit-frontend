@@ -184,7 +184,7 @@ export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProp
   };
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary py-6 sm:py-8 md:py-10 font-dm-sans px-4 sm:px-6 md:px-8 md:pr-[253px]">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary pb-6 sm:pb-8 md:pb-10 pt-0 font-dm-sans px-4 sm:px-6 md:px-8 md:pr-[253px]">
       <div className="w-full max-w-[800px] mx-auto">
         {/* Back header — only in expanded view */}
         {isExpanded && <ConnectionHeader />}

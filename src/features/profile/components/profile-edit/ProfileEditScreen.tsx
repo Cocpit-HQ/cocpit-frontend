@@ -13,6 +13,7 @@ import {
   useAvatarMutations,
   useSkillMutations,
 } from "@/hooks/use-my-profile";
+import { useBodyScrollLock } from "@/hooks";
 import {
   uploadCoverPhoto,
   deleteCoverPhoto,
@@ -68,15 +69,7 @@ export function ProfileEditScreen({
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (isOpen && mounted) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isOpen, mounted]);
+  useBodyScrollLock(isOpen && mounted);
 
   const [activeTab, setActiveTab] = useState<ProfileEditTabKey>(() => {
     if (typeof window !== "undefined") {
@@ -628,10 +621,10 @@ export function ProfileEditScreen({
   if (!isOpen) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[50] min-h-screen w-full bg-ds-bg text-ds-text-primary font-dm-sans flex flex-col items-center overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">
+    <div className="fixed inset-0 z-[50] h-[100dvh] max-h-[100dvh] w-full bg-ds-bg text-ds-text-primary font-dm-sans flex flex-col items-center overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] scrollbar-hide select-text animate-in fade-in-90 duration-200">
       
       {/* Mobile Sticky Header */}
-      <div className="md:hidden sticky top-0 w-full bg-ds-bg z-[60] px-4 py-4 border-b border-ds-border flex items-center justify-between">
+      <div className="md:hidden sticky top-0 w-full bg-ds-bg z-[60] px-4 py-4 border-b border-ds-border flex items-center justify-between touch-none">
          <div className="flex-1 flex justify-start">
            {showBackButton && (
              <button onClick={handleBackClick} className="p-2 -ml-2 text-ds-text-primary hover:bg-ds-surface-1 rounded-full transition-colors">
