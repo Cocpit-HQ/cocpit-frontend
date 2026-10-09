@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { Icon as CustomIcon, IconName, UserIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
+import { useMyProfile } from '@/hooks/use-my-profile';
 
 interface SidebarProps {
   className?: string;
@@ -14,6 +15,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const { activeProfile, isCompany, switchableCompanies, switchProfile } = useActiveProfile();
   const { user } = useAuth();
+  const { data: myProfile } = useMyProfile();
   const [showAllOrgs, setShowAllOrgs] = useState(false);
   const pathname = usePathname();
   
@@ -141,13 +143,18 @@ export function Sidebar({ className }: SidebarProps) {
                 }}
                 className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[33px] rounded-full transition-[var(--motion-quick)] group"
               >
-                <div className={`w-[20px] h-[20px] rounded-full shrink-0 flex items-center justify-center overflow-hidden ${(user.image || activeProfile?.avatar_url) ? 'bg-[#6366F1]' : 'bg-ds-surface-1 border border-ds-border'}`}>
-                  {user.image || activeProfile?.avatar_url ? (
-                    <img src={user.image || activeProfile?.avatar_url} alt={user.name || "Personal"} className="w-full h-full object-cover" />
-                  ) : (
-                    <UserIcon className="w-[60%] h-[60%] text-ds-text-secondary" />
-                  )}
-                </div>
+                {(() => {
+                  const personalAvatar = user.image || myProfile?.user?.avatar || (activeProfile?.type === 'USER' ? activeProfile?.avatar_url : undefined);
+                  return (
+                    <div className={`w-[20px] h-[20px] rounded-full shrink-0 flex items-center justify-center overflow-hidden ${personalAvatar ? 'bg-ds-surface-1' : 'bg-ds-surface-1 border border-ds-border'}`}>
+                      {personalAvatar ? (
+                        <img src={personalAvatar} alt={user.name || "Personal"} className="w-full h-full object-cover" />
+                      ) : (
+                        <UserIcon className="w-[60%] h-[60%] text-ds-text-secondary" />
+                      )}
+                    </div>
+                  );
+                })()}
                 <span className={`font-['DM_Sans'] truncate text-[16px] leading-[24px] ${!isCompany && activeProfile?.type === 'USER' ? 'font-medium text-ds-text-primary' : 'font-normal text-ds-text-secondary group-hover:text-ds-text-primary'}`}>
                   {user.name || "My Profile"}
                 </span>
@@ -163,9 +170,14 @@ export function Sidebar({ className }: SidebarProps) {
             <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-secondary">
               Organization
             </span>
-            <button className="w-[16px] h-[16px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity">
+            <Link
+              href="/company-onboarding"
+              aria-label="Create Organization"
+              title="Create Organization"
+              className="w-[24px] h-[24px] -mr-[4px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ds-accent)] rounded"
+            >
               <CustomIcon name="plus" className="w-[16px] h-[16px]" />
-            </button>
+            </Link>
           </div>
 
           {/* Organization Items */}

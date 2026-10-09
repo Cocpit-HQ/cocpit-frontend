@@ -39,6 +39,8 @@ export interface CompanyOnboardingState {
   // HQ Location
   hqCountry: string;
   hqCity: string;
+  hqLatitude?: number | null;
+  hqLongitude?: number | null;
   
   // Content
   headline: string;
@@ -46,6 +48,7 @@ export interface CompanyOnboardingState {
 
   // Stage 3: Verification
   countryOfOperation: string;
+  incorporationDate?: string;
   documents: DocumentData[];
   showValidationErrors: boolean;
 

@@ -18,6 +18,7 @@ export const env = {
   
   // External services
   UPLOAD_SERVICE_URL: process.env.NEXT_PUBLIC_UPLOAD_SERVICE_URL,
+  GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || "AIzaSyB1ZeC3mQJDW3jSgGJHw12B4fnj9CHVDHQ",
   
   // Development
   NODE_ENV: process.env.NODE_ENV,

@@ -25,11 +25,13 @@ const initialState = {
   phoneNumber: '',
   isPhoneVerified: false,
   website: '',
-  organizationSize: '',
+  organizationSize: '1–10 members',
   
   // HQ Location
   hqCountry: '',
   hqCity: '',
+  hqLatitude: null as number | null,
+  hqLongitude: null as number | null,
   
   // Content
   headline: '',
@@ -37,6 +39,7 @@ const initialState = {
 
   // Stage 3: Verification
   countryOfOperation: '',
+  incorporationDate: '',
   documents: [{ id: 'doc-1', file: null, preview: null }] as DocumentData[],
   showValidationErrors: false,
 };
@@ -151,7 +154,7 @@ export const useCompanyOnboardingStore = create<CompanyOnboardingState>()(
       phoneNumber: orgData.phone || '',
       isPhoneVerified: orgData.phone_verified || false,
       website: orgData.website || '',
-      organizationSize: orgData.size || '',
+      organizationSize: orgData.size || '1–10 members',
       hqCountry: orgData.country || '',
       hqCity: orgData.city || '',
       headline: orgData.headline || '',

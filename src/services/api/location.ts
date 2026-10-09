@@ -27,15 +27,31 @@ export interface StructuredLocation {
   country: string;
   state: string | null;
   city: string;
+  street?: string | null;
+  sublocality?: string | null;
+  village?: string | null;
+  postalCode?: string | null;
   formattedAddress: string;
   latitude: number | null;
   longitude: number | null;
 }
 
-export const searchPlaces = async (q: string, sessionToken: string, allowedCountryCodes?: string[], isGlobal?: boolean): Promise<PlacesSuggestion[]> => {
+export const searchPlaces = async (
+  q: string,
+  sessionToken: string,
+  allowedCountryCodes?: string[],
+  isGlobal?: boolean,
+  types?: string
+): Promise<PlacesSuggestion[]> => {
   if (!q || q.length < 2) return [];
   const response = await api.get("/places/autocomplete", { 
-    params: { q, sessionToken, allowedCountryCodes: allowedCountryCodes?.join(','), global: isGlobal } 
+    params: { 
+      q, 
+      sessionToken, 
+      allowedCountryCodes: allowedCountryCodes?.join(','), 
+      global: isGlobal,
+      types,
+    } 
   });
   return response.data.data || [];
 };
