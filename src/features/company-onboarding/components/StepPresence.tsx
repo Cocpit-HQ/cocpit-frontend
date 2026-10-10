@@ -68,7 +68,11 @@ const POPULAR_LOCATIONS = [
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const isValidEmail = (email: string): boolean => EMAIL_REGEX.test(email.trim());
-const isValidPhone = (phone: string): boolean => /^\d{10}$/.test(phone.trim());
+const isValidPhone = (phone: string, countryCode?: string): boolean => {
+  const digits = phone.trim();
+  if (countryCode === "+971") return /^\d{9}$/.test(digits);
+  return /^\d{10}$/.test(digits);
+};
 
 const URL_REGEX = /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d+)?(\/.*)?$/i;
 const isValidUrl = (url: string): boolean => {
@@ -144,6 +148,7 @@ const ResendOtpButton: React.FC<ResendOtpButtonProps> = ({
 
 export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
   const {
+    organizationName,
     officialEmail,
     isEmailVerified,
     phoneCountryCode,
@@ -255,6 +260,26 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
     }
   };
 
+  const handleResendEmailOtp = async () => {
+    if (!isValidEmail(officialEmail) || isEmailVerified || isSendingEmailOtp) return;
+    setIsSendingEmailOtp(true);
+    setEmailError("");
+    setEmailOtp("");
+    try {
+      await sendEmailOTP(officialEmail.trim());
+      setEmailCodeSent(true);
+      toast.success("Verification code resent to your email");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to send verification code";
+      toast.error(msg);
+    } finally {
+      setIsSendingEmailOtp(false);
+    }
+  };
+
   const handleEmailOtpChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -296,7 +321,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
 
   // Handlers for Phone Verification
   const handleSendPhoneOtp = async () => {
-    if (!isValidPhone(phoneNumber) || isPhoneVerified || isSendingPhoneOtp || phoneCodeSent) return;
+    if (!isValidPhone(phoneNumber, phoneCountryCode) || isPhoneVerified || isSendingPhoneOtp || phoneCodeSent) return;
     setIsSendingPhoneOtp(true);
     setPhoneError("");
     const fullPhone = `${phoneCountryCode}${phoneNumber.trim()}`;
@@ -304,6 +329,27 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
       await sendPhoneOTP(fullPhone);
       setPhoneCodeSent(true);
       toast.success("Verification code sent to your phone");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to send verification code";
+      toast.error(msg);
+    } finally {
+      setIsSendingPhoneOtp(false);
+    }
+  };
+
+  const handleResendPhoneOtp = async () => {
+    if (!isValidPhone(phoneNumber) || isPhoneVerified || isSendingPhoneOtp) return;
+    setIsSendingPhoneOtp(true);
+    setPhoneError("");
+    setPhoneOtp("");
+    const fullPhone = `${phoneCountryCode}${phoneNumber.trim()}`;
+    try {
+      await sendPhoneOTP(fullPhone);
+      setPhoneCodeSent(true);
+      toast.success("Verification code resent to your phone");
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -357,7 +403,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
 
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isPhoneVerified) return;
-    const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10);
+    const maxLen = phoneCountryCode === "+971" ? 9 : 10;
+    const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, maxLen);
     updateField("phoneNumber", digitsOnly);
     if (phoneCodeSent) setPhoneCodeSent(false);
     if (phoneOtp) setPhoneOtp("");
@@ -474,7 +521,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
   const isFormValid = Boolean(
     isValidEmail(officialEmail) &&
     isEmailVerified &&
-    isValidPhone(phoneNumber) &&
+    isValidPhone(phoneNumber, phoneCountryCode) &&
     isPhoneVerified &&
     headline.trim().length > 0 &&
     headline.trim().length <= 255 &&
@@ -515,7 +562,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
       {/* Title (800x48) */}
       <h1 className="w-full max-w-[800px] h-[48px] self-stretch flex items-center justify-center text-center font-['DM_Sans'] font-bold text-[32px] sm:text-[40px] leading-[48px] m-0">
         <span className="text-ds-text-primary">Stage 2: </span>
-        <span className="text-ds-accent">Presence</span>
+        <span className="text-ds-accent ml-2">Presence</span>
       </h1>
 
       {/* Steper Box (618x48) */}
@@ -605,7 +652,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 htmlFor="official-email"
                 className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer"
               >
-                Official Email
+                Official Email <span className="text-ds-text-secondary">*</span>
               </label>
               <input
                 id="official-email"
@@ -618,9 +665,9 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                   if (emailOtp) setEmailOtp("");
                   if (emailError) setEmailError("");
                 }}
-                placeholder="Input field"
+                placeholder={organizationName ? `${organizationName.replace(/\s+/g, "").toLowerCase()}@gmail.com` : "companyname@gmail.com"}
                 autoComplete="email"
-                className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted disabled:opacity-60 disabled:cursor-default"
               />
             </div>
             {isEmailVerified ? (
@@ -637,11 +684,10 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 type="button"
                 onClick={handleSendEmailOtp}
                 disabled={!isValidEmail(officialEmail) || isSendingEmailOtp || emailCodeSent}
-                className={`h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors shrink-0 text-sm font-medium font-['DM_Sans'] leading-6 ${
-                  isValidEmail(officialEmail) && !emailCodeSent && !isSendingEmailOtp
-                    ? "bg-ds-surface-2 hover:bg-ds-surface-1 text-ds-text-primary border border-ds-border cursor-pointer active:scale-95"
-                    : "bg-ds-surface-1 text-ds-text-muted cursor-not-allowed select-none pointer-events-none"
-                }`}
+                className={`h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors shrink-0 text-sm font-medium font-['DM_Sans'] leading-6 ${isValidEmail(officialEmail) && !emailCodeSent && !isSendingEmailOtp
+                  ? "bg-ds-surface-2 hover:bg-ds-surface-1 text-ds-text-primary border border-ds-border cursor-pointer active:scale-95"
+                  : "bg-ds-surface-1 text-ds-text-muted cursor-default select-none pointer-events-none"
+                  }`}
               >
                 {isSendingEmailOtp ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
@@ -655,17 +701,20 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
           {/* Verification Code for Email */}
           <div className="relative flex flex-col justify-start items-start w-full">
             <div
-              className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${
-                isEmailVerified
-                  ? "!border-ds-success"
-                  : emailError
+              className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${isEmailVerified
+                ? "!border-ds-success"
+                : emailError
                   ? "!border-ds-error"
+                  : !emailCodeSent
+                  ? "border-ds-border opacity-50"
                   : "border-ds-border focus-within:border-ds-accent"
-              }`}
+                }`}
             >
               <label
                 htmlFor="email-verification-code"
-                className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer"
+                className={`text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 ${
+                  !emailCodeSent || isEmailVerified ? "cursor-default" : "cursor-pointer"
+                }`}
               >
                 Verification Code
               </label>
@@ -676,14 +725,14 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={6}
-                  disabled={isEmailVerified || isCheckingEmailOtp}
+                  disabled={!emailCodeSent || isEmailVerified || isCheckingEmailOtp}
                   value={emailOtp}
                   onChange={handleEmailOtpChange}
                   onFocus={() => {
                     if (emailError) setEmailError("");
                   }}
                   placeholder="000000"
-                  className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted focus:placeholder:text-ds-text-muted tracking-widest disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted focus:placeholder:text-ds-text-muted tracking-widest disabled:opacity-60 disabled:cursor-default"
                 />
                 {isCheckingEmailOtp ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-secondary flex-none" />
@@ -710,7 +759,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               {!isEmailVerified && emailCodeSent && (
                 <div className="flex-none ml-2">
                   <ResendOtpButton
-                    onResend={handleSendEmailOtp}
+                    onResend={handleResendEmailOtp}
                     isSending={isSendingEmailOtp}
                     initialSeconds={60}
                     isExpired={emailError?.toLowerCase().includes("expired")}
@@ -730,7 +779,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 htmlFor="phone-number"
                 className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer"
               >
-                Phone Number
+                Phone Number <span className="text-ds-text-secondary">*</span>
               </label>
               <div className="w-full inline-flex justify-start items-center gap-2">
                 {/* Country Flag Selector */}
@@ -739,7 +788,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                     type="button"
                     disabled={isPhoneVerified}
                     onClick={() => setIsCountryDropdownOpen((prev) => !prev)}
-                    className="flex flex-row items-center p-0 gap-1 w-[36px] h-4 flex-none cursor-pointer hover:opacity-80 transition-opacity focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex flex-row items-center p-0 gap-1 w-[36px] h-4 flex-none cursor-pointer hover:opacity-80 transition-opacity focus:outline-none disabled:opacity-60 disabled:cursor-default"
                     aria-label="Select Country Code"
                   >
                     <Icon
@@ -750,9 +799,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                       fallback={<span className="text-base leading-none select-none">{currentCountry.flag}</span>}
                     />
                     <ChevronDown
-                      className={`w-4 h-4 flex-none shrink-0 text-ds-text-secondary transition-transform duration-200 ${
-                        isCountryDropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`w-4 h-4 flex-none shrink-0 text-ds-text-secondary transition-transform duration-200 ${isCountryDropdownOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -781,11 +829,10 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                               fallback={<span className="text-base leading-none select-none">{item.flag}</span>}
                             />
                             <span
-                              className={`text-sm font-['DM_Sans'] leading-5 truncate transition-colors ${
-                                isSelected
-                                  ? "text-ds-accent font-medium"
-                                  : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
-                              }`}
+                              className={`text-sm font-['DM_Sans'] leading-5 truncate transition-colors ${isSelected
+                                ? "text-ds-accent font-medium"
+                                : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
+                                }`}
                             >
                               {item.label}
                             </span>
@@ -799,12 +846,12 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 <input
                   id="phone-number"
                   type="tel"
-                  maxLength={10}
+                  maxLength={phoneCountryCode === "+971" ? 9 : 10}
                   disabled={isPhoneVerified}
                   value={phoneNumber}
                   onChange={handlePhoneNumberChange}
                   placeholder="9876543210"
-                  className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted disabled:opacity-60 disabled:cursor-default"
                 />
               </div>
             </div>
@@ -822,11 +869,10 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 type="button"
                 onClick={handleSendPhoneOtp}
                 disabled={!isValidPhone(phoneNumber) || isSendingPhoneOtp || phoneCodeSent}
-                className={`h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors shrink-0 text-sm font-medium font-['DM_Sans'] leading-6 ${
-                  isValidPhone(phoneNumber) && !phoneCodeSent && !isSendingPhoneOtp
-                    ? "bg-ds-surface-2 hover:bg-ds-surface-1 text-ds-text-primary border border-ds-border cursor-pointer active:scale-95"
-                    : "bg-ds-surface-1 text-ds-text-muted cursor-not-allowed select-none pointer-events-none"
-                }`}
+                className={`h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors shrink-0 text-sm font-medium font-['DM_Sans'] leading-6 ${isValidPhone(phoneNumber) && !phoneCodeSent && !isSendingPhoneOtp
+                  ? "bg-ds-surface-2 hover:bg-ds-surface-1 text-ds-text-primary border border-ds-border cursor-pointer active:scale-95"
+                  : "bg-ds-surface-1 text-ds-text-muted cursor-default select-none pointer-events-none"
+                  }`}
               >
                 {isSendingPhoneOtp ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
@@ -840,17 +886,20 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
           {/* Verification Code for Phone */}
           <div className="relative flex flex-col justify-start items-start w-full">
             <div
-              className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${
-                isPhoneVerified
-                  ? "!border-ds-success"
-                  : phoneError
+              className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${isPhoneVerified
+                ? "!border-ds-success"
+                : phoneError
                   ? "!border-ds-error"
+                  : !phoneCodeSent
+                  ? "border-ds-border opacity-50"
                   : "border-ds-border focus-within:border-ds-accent"
-              }`}
+                }`}
             >
               <label
                 htmlFor="phone-verification-code"
-                className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer"
+                className={`text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 ${
+                  !phoneCodeSent || isPhoneVerified ? "cursor-default" : "cursor-pointer"
+                }`}
               >
                 Verification Code
               </label>
@@ -861,14 +910,14 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={6}
-                  disabled={isPhoneVerified || isCheckingPhoneOtp}
+                  disabled={!phoneCodeSent || isPhoneVerified || isCheckingPhoneOtp}
                   value={phoneOtp}
                   onChange={handlePhoneOtpChange}
                   onFocus={() => {
                     if (phoneError) setPhoneError("");
                   }}
                   placeholder="000000"
-                  className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted focus:placeholder:text-ds-text-muted tracking-widest disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted focus:placeholder:text-ds-text-muted tracking-widest disabled:opacity-60 disabled:cursor-default"
                 />
                 {isCheckingPhoneOtp ? (
                   <Loader2 className="w-4 h-4 animate-spin text-ds-text-secondary flex-none" />
@@ -895,7 +944,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               {!isPhoneVerified && phoneCodeSent && (
                 <div className="flex-none ml-2">
                   <ResendOtpButton
-                    onResend={handleSendPhoneOtp}
+                    onResend={handleResendPhoneOtp}
                     isSending={isSendingPhoneOtp}
                     initialSeconds={60}
                     isExpired={phoneError?.toLowerCase().includes("expired")}
@@ -911,11 +960,10 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
           {/* Website */}
           <div className="flex flex-col justify-start items-start gap-1 w-full">
             <div
-              className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${
-                hasWebsiteError
-                  ? "!border-ds-error"
-                  : "border-ds-border focus-within:border-ds-accent"
-              }`}
+              className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${hasWebsiteError
+                ? "!border-ds-error"
+                : "border-ds-border focus-within:border-ds-accent"
+                }`}
             >
               <label
                 htmlFor="website-input"
@@ -937,13 +985,13 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted"
               />
             </div>
-            <span
-              className={`text-left text-xs font-normal font-['DM_Sans'] leading-4 transition-colors ${
-                hasWebsiteError ? "text-ds-error" : "text-ds-text-muted"
-              }`}
-            >
-              Enter a valid website URL
-            </span>
+            <div className="ds-supporting-area">
+              {hasWebsiteError && (
+                <span className="text-left text-xs font-normal font-['DM_Sans'] leading-4 transition-colors text-ds-error">
+                  Enter a valid website URL
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Organization Size */}
@@ -960,9 +1008,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                   {organizationSize || "1–10 members"}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 text-ds-text-primary transition-transform duration-200 ${
-                    isOrgSizeDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-ds-text-primary transition-transform duration-200 ${isOrgSizeDropdownOpen ? "rotate-180" : ""
+                    }`}
                 />
               </div>
             </div>
@@ -983,11 +1030,10 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                         className="self-stretch h-9 px-3 rounded-lg inline-flex justify-between items-center cursor-pointer transition-colors group"
                       >
                         <span
-                          className={`text-sm font-['DM_Sans'] leading-5 truncate transition-colors ${
-                            isSelected
-                              ? "text-ds-accent font-medium"
-                              : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
-                          }`}
+                          className={`text-sm font-['DM_Sans'] leading-5 truncate transition-colors ${isSelected
+                            ? "text-ds-accent font-medium"
+                            : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
+                            }`}
                         >
                           {size}
                         </span>
@@ -1003,7 +1049,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
         {/* Row 4: HEADQUARTERS LOCATION */}
         <div className="w-full flex flex-col justify-start items-start gap-3 mt-1">
           <label className="text-left text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6 uppercase tracking-wide">
-            HEADQUARTERS LOCATION
+            HEADQUARTERS LOCATION <span className="text-ds-text-secondary">*</span>
           </label>
 
           {/* Search Exact Location Input */}
@@ -1098,7 +1144,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               htmlFor="headline-input"
               className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer"
             >
-              Headline
+              Headline <span className="text-ds-text-secondary">*</span>
             </label>
             <input
               id="headline-input"
@@ -1106,7 +1152,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               maxLength={255}
               value={headline}
               onChange={(e) => updateField("headline", e.target.value)}
-              placeholder="Search and add skills (e.g. Figma, Project Management)"
+              placeholder="e.g., Accelerating global collaboration through kinetic tech"
               className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted"
             />
           </div>
@@ -1139,7 +1185,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 e.target.style.height = "auto";
                 e.target.style.height = `${Math.max(20, e.target.scrollHeight)}px`;
               }}
-              placeholder="Describe your work, impact, or achievements"
+              placeholder="Tell the world what your company does..."
               className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted resize-none overflow-hidden"
               style={{ minHeight: "20px" }}
             />
@@ -1170,7 +1216,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
         ) : (
           <div
             data-property-1="Disabled"
-            className="w-[260px] h-[36px] py-1.5 px-3 bg-ds-surface-1 text-ds-text-muted rounded-[100px] flex justify-center items-center gap-2.5 cursor-not-allowed select-none"
+            className="w-[260px] h-[36px] py-1.5 px-3 bg-ds-surface-1 text-ds-text-muted rounded-[100px] flex justify-center items-center gap-2.5 cursor-default select-none"
           >
             <span className="font-['DM_Sans'] font-medium text-base leading-6 text-ds-text-muted whitespace-nowrap">
               Next Step

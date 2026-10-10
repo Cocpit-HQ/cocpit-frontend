@@ -54,7 +54,7 @@ export const CompanyOnboardingFlow: React.FC = () => {
       case 3:
         return <StepVerification onNext={handleNext} onBack={handleBack} />;
       case 4:
-        return <StepCongratulations />;
+        return <StepCongratulations onClose={() => router.replace("/feed")} />;
       case 5:
         return (
           <StepError

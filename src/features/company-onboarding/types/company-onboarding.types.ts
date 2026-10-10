@@ -63,6 +63,7 @@ export interface CompanyOnboardingState {
   removeDocument: (id: string) => void;
   updateDocument: (id: string, file: File) => void;
   resetStore: () => void;
+  resetStage2And3: () => void;
   setOrgId: (id: string) => void;
   setIsSubmitting: (val: boolean) => void;
   setApiError: (msg: string | null) => void;

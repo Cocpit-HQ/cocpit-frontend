@@ -15,6 +15,7 @@ import {
   CalendarIcon,
   VerifyIcon,
   PdfFileIcon,
+  ImageIcon,
   DeleteIcon,
 } from "@/components/icons";
 import { DarkCalendar } from "@/features/onboarding/components/DarkCalendar";
@@ -212,7 +213,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
       }
 
       if (primaryDoc?.file) {
-        formData.append("document", primaryDoc.file);
+        formData.append("documents", primaryDoc.file);
       }
 
       const res = await publishNewOrganization(formData);
@@ -260,7 +261,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
       {/* Title (800x48) */}
       <h1 className="w-full max-w-[800px] h-[48px] self-stretch flex items-center justify-center text-center font-['DM_Sans'] font-bold text-[32px] sm:text-[40px] leading-[48px] m-0 mb-2">
         <span className="text-ds-text-primary">Stage 3: </span>
-        <span className="text-ds-accent">Verification</span>
+        <span className="text-ds-accent ml-2">Verification</span>
       </h1>
 
       {/* Steper Box (618x48) */}
@@ -425,37 +426,31 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
             )}
           </div>
 
-          {/* Field 2: Date of incorporation (input with icon and note - 449x60, gap 8px) */}
-          <div ref={datePickerContainerRef} className="relative w-full flex flex-col items-start p-0 gap-2 self-stretch flex-none order-1">
+          {/* Field 2: Date of incorporation (input with icon and note) */}
+          <div ref={datePickerContainerRef} className="relative w-full flex flex-col items-start p-0 gap-2 self-stretch flex-none order-1 h-[60px]">
             <div
               onClick={() => setIsDatePickerOpen((prev) => !prev)}
-              className="w-full py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-1 cursor-pointer transition-colors"
+              className="w-full h-[36px] py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-row justify-between items-center gap-1 cursor-pointer transition-colors"
             >
-              <label className="text-left text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4 cursor-pointer">
-                Date of incorporation
-              </label>
-              <div className="w-full flex justify-between items-center">
-                <span
-                  className={`text-sm font-normal font-['DM_Sans'] leading-5 ${
-                    displayDate ? "text-ds-text-primary" : "text-ds-text-muted"
-                  }`}
-                >
-                  {displayDate || "Date of incorporation"}
-                </span>
+              <span
+                className={`text-sm font-normal font-['DM_Sans'] leading-5 ${
+                  displayDate ? "text-ds-text-primary" : "text-ds-text-muted"
+                }`}
+              >
+                {displayDate || "Date of incorporation"}
+              </span>
 
-                {/* Calendar Icon matching exact Figma CSS */}
-                <div className="w-5 h-5 flex items-center justify-center text-ds-text-muted hover:text-ds-text-primary transition-colors">
-                  <CalendarIcon
-                    size={16}
-                    className="w-4 h-4 shrink-0 order-1 grow-0 m-auto text-ds-text-muted hover:text-ds-text-primary"
-                  />
-                </div>
+              {/* Calendar Icon matching exact Figma CSS */}
+              <div className="w-5 h-5 flex items-center justify-center text-ds-text-muted hover:text-ds-text-primary transition-colors">
+                <CalendarIcon
+                  size={16}
+                  className="w-4 h-4 shrink-0 order-1 grow-0 m-auto text-ds-text-muted hover:text-ds-text-primary"
+                />
               </div>
             </div>
 
-            <span className="text-left text-xs font-normal font-['DM_Sans'] leading-4 text-ds-text-muted">
-              Note: Optional · Required for verified badge
-            </span>
+            {/* Note / Reserved Supporting Area (16px) */}
+            <span className="w-full h-4 flex-none"></span>
 
             {/* Common User Onboarding DarkCalendar Popover */}
             {isDatePickerOpen && (
@@ -523,11 +518,19 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
               <div className="self-stretch w-full h-5 flex flex-row justify-between items-center gap-2.5 flex-none order-2">
                 {/* Frame 2609899: Left side icon and name */}
                 <div className="flex flex-row items-center gap-2 h-5 min-w-0">
-                  <PdfFileIcon
-                    size={20}
-                    className="w-5 h-5 shrink-0 order-0 grow-0 text-ds-text-primary"
-                    fill="var(--ds-text-primary)"
-                  />
+                  {primaryDoc.file.type === "application/pdf" ? (
+                    <PdfFileIcon
+                      size={20}
+                      className="w-5 h-5 shrink-0 order-0 grow-0 text-ds-text-primary"
+                      fill="var(--ds-text-primary)"
+                    />
+                  ) : (
+                    <ImageIcon
+                      size={20}
+                      className="w-5 h-5 shrink-0 order-0 grow-0 text-ds-text-primary"
+                      fill="var(--ds-text-primary)"
+                    />
+                  )}
                   <span className="font-['DM_Sans'] text-xs font-normal leading-4 text-ds-text-primary truncate">
                     {primaryDoc.file.name}
                   </span>
@@ -551,8 +554,8 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
           </div>
         </div>
 
-        {/* Right Column: PREVIEW ON PROFILE & Did you know Box (301px) */}
-        <div className="w-full md:w-[301px] max-w-full md:max-w-[301px] p-6 rounded-3xl outline outline-1 outline-offset-[-1px] outline-ds-border bg-ds-surface-1/30 flex flex-col justify-start items-start gap-4 shrink-0">
+        {/* Right Column: PREVIEW ON PROFILE & Did you know Box (300x420px as per Figma) */}
+        <div className="w-full md:w-[300px] max-w-full md:max-w-[300px] md:h-[420px] p-6 rounded-3xl outline outline-1 outline-offset-[-1px] outline-ds-border bg-ds-surface-1/30 flex flex-col justify-start items-start gap-4 shrink-0">
           <span className="w-full text-left text-ds-text-secondary text-xs sm:text-sm font-normal font-['DM_Sans'] uppercase tracking-wider leading-5">
             PREVIEW ON PROFILE
           </span>
@@ -613,7 +616,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
           </div>
 
           {/* Did you know? Callout */}
-          <div className="w-full p-4 bg-ds-surface-1 rounded-lg border-l-[3px] border-ds-accent flex flex-col justify-start items-start">
+          <div className="w-full mt-auto p-4 bg-ds-surface-1 rounded-lg border-l-[3px] border-ds-accent flex flex-col justify-start items-start">
             <p className="text-ds-text-primary text-sm font-['DM_Sans'] leading-5">
               <strong className="font-semibold text-ds-text-primary">
                 Did you know?

@@ -1,18 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Check } from "lucide-react";
 
 interface StepCongratulationsProps {
   onClose?: () => void;
 }
 
-export const StepCongratulations: React.FC<StepCongratulationsProps> = () => {
+export const StepCongratulations: React.FC<StepCongratulationsProps> = ({ onClose }) => {
+  useEffect(() => {
+    if (!onClose) return;
+    const timer = setTimeout(() => {
+      onClose();
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
   return (
     <div className="w-full max-w-[1024px] mx-auto p-4 rounded-3xl inline-flex flex-col justify-start items-center gap-10 overflow-hidden select-none animate-in fade-in duration-300">
       <div className="w-full max-w-[1024px] px-4 sm:px-10 py-6 flex flex-col justify-start items-center gap-10">
         {/* Success Icon Badge */}
-        <div className="p-3 bg-ds-surface-1 rounded-full border border-ds-border inline-flex justify-center items-center shadow-lg">
+        <div className="size-14 bg-ds-surface-1 rounded-full border border-ds-border inline-flex justify-center items-center shadow-lg">
           <div className="size-8 relative flex items-center justify-center">
             <div className="size-6 rounded-full border-2 border-ds-accent flex items-center justify-center">
               <Check className="size-3.5 text-ds-accent stroke-[2.5]" />

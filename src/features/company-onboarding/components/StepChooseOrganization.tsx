@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { OrgBuildingIcon, EduGraduationIcon } from "@/components/icons";
 import { useCompanyOnboardingStore } from "../store/company-onboarding.store";
 import { OrganizationType } from "../types/company-onboarding.types";
@@ -16,19 +16,21 @@ export const StepChooseOrganization: React.FC<StepChooseOrganizationProps> = ({ 
 
   const [selected, setSelected] = useState<OrganizationType | null>(organizationType || null);
 
+  useEffect(() => {
+    setSelected(organizationType || null);
+  }, [organizationType]);
+
   const handleSelect = useCallback((type: OrganizationType) => {
-    setSelected(type);
     setOrganizationType(type);
   }, [setOrganizationType]);
 
   const handleContinue = useCallback(() => {
-    if (!selected) return;
-    setOrganizationType(selected);
+    if (!organizationType) return;
     onNext();
-  }, [selected, setOrganizationType, onNext]);
+  }, [organizationType, onNext]);
 
   return (
-    <div className="w-full max-w-[560px] mx-auto p-4 rounded-3xl flex flex-col justify-start items-center gap-5 select-none animate-in fade-in duration-300">
+    <div className="w-full max-w-[560px] mx-auto p-4 rounded-[24px] flex flex-col justify-start items-center gap-5 select-none animate-in fade-in duration-300">
       {/* Title & Subtitle Header */}
       <div className="w-full flex flex-col justify-start items-center gap-2">
         <h1 className="text-center text-[32px] leading-[40px] sm:text-[40px] sm:leading-[48px] font-bold ds-text-title m-0 sm:whitespace-nowrap">
@@ -37,18 +39,18 @@ export const StepChooseOrganization: React.FC<StepChooseOrganizationProps> = ({ 
           <span className="text-ds-text-primary"> page</span>
         </h1>
         <p className="w-full max-w-[480px] text-center text-ds-text-primary text-[15px] sm:text-base font-semibold font-['DM_Sans'] leading-6">
-          Build a page for your organization to connect, share, and grow on Cocpit. Choose a page type to continue
+          Build a page for your organization to connect, share, and <br className="hidden sm:block" /> grow on Cocpit. Choose a page type to continue
         </p>
       </div>
 
       {/* Frame 2609478: Options Stack */}
-      <div className="w-[208px] h-[260px] flex flex-col items-center p-0 gap-3">
+      <div className="w-[208px] flex flex-col items-center p-0 gap-[12px]">
         {/* Frame 2609473: Company Card */}
         <button
           type="button"
           onClick={() => handleSelect("COMPANY")}
           className={`w-[208px] h-[110px] py-2 px-3 rounded-[16px] flex flex-col justify-center items-center gap-3 cursor-pointer transition-all outline-none border focus-visible:ring-1 focus-visible:ring-ds-accent ${
-            selected === "COMPANY"
+            organizationType === "COMPANY"
               ? "bg-ds-surface-2 border-ds-accent"
               : "bg-transparent border-transparent hover:bg-ds-surface-1/50"
           }`}
@@ -80,7 +82,7 @@ export const StepChooseOrganization: React.FC<StepChooseOrganizationProps> = ({ 
           type="button"
           onClick={() => handleSelect("INSTITUTION")}
           className={`w-[208px] h-[110px] py-2 px-3 rounded-[16px] flex flex-col justify-center items-center gap-3 cursor-pointer transition-all outline-none border focus-visible:ring-1 focus-visible:ring-ds-accent ${
-            selected === "INSTITUTION"
+            organizationType === "INSTITUTION"
               ? "bg-ds-surface-2 border-ds-accent"
               : "bg-transparent border-transparent hover:bg-ds-surface-1/50"
           }`}
@@ -102,9 +104,10 @@ export const StepChooseOrganization: React.FC<StepChooseOrganizationProps> = ({ 
       {/* Continue Button */}
       <PillButton
         type="button"
-        disabled={!selected}
+        disabled={!organizationType}
         onClick={handleContinue}
         label="Continue"
+        className="w-full sm:w-[260px]"
       />
     </div>
   );

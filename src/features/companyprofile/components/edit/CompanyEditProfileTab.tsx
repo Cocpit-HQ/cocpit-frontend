@@ -258,6 +258,17 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
     profileDraft.headline !== initialData.headline ||
     JSON.stringify(keyOfferings) !== JSON.stringify(initialOfferings);
 
+  const isYearError = React.useMemo(() => {
+    const trimmed = formData.foundedYear.trim();
+    if (!trimmed) return false;
+    const year = parseInt(trimmed, 10);
+    const currentYear = new Date().getFullYear();
+    if (trimmed.length === 4) {
+      return year < 1000 || year > currentYear;
+    }
+    return false;
+  }, [formData.foundedYear]);
+
   const updateMutation = useMutation({
     mutationFn: (data: any) => companyProfileService.updateOrgProfile(orgId, data),
     onSuccess: (response) => {
@@ -293,7 +304,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isDirty || updateMutation.isPending) return;
+    if (!isDirty || updateMutation.isPending || isYearError) return;
 
     updateMutation.mutate({
       name: formData.name,
@@ -380,7 +391,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       {/* 2-Column Row 2: Founded Year and Size */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {/* Founded Year */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
             Founded year
           </label>
@@ -388,9 +399,23 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
             type="text"
             name="foundedYear"
             value={formData.foundedYear}
-            onChange={handleChange}
-            className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+              handleChange({ target: { name: 'foundedYear', value: val } } as any);
+            }}
+            placeholder="e.g. 2024"
+            maxLength={4}
+            className={`w-full h-11 px-4 border rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white ${
+              isYearError ? "border-ds-error focus:border-ds-error" : "border-gray-300 dark:border-zinc-800 focus:border-[#1A73E8]"
+            }`}
           />
+          <div className="ds-supporting-area min-h-[16px]">
+            {isYearError && (
+              <span className="text-ds-error font-['DM_Sans'] text-[12px] leading-4">
+                Cannot be in the future
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Organization Size */}

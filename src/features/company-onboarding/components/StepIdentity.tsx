@@ -273,7 +273,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
     return false;
   }, [foundedYear]);
 
-  const isFormValid = 
+  const isFormValid =
     organizationName.trim().length > 0 &&
     foundedYear.trim().length === 4 &&
     !isYearError &&
@@ -289,9 +289,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
 
   return (
     /* Frame 1: Main Container */
-    <div className={`w-full max-w-[704px] mx-auto p-4 flex flex-col items-center gap-8 md:gap-[60px] rounded-3xl select-none animate-in fade-in duration-300 transition-all ${
-      isDropdownOpen ? "pb-[144px]" : "pb-4"
-    }`}>
+    <div className="w-full max-w-[704px] mx-auto p-4 flex flex-col items-center gap-8 md:gap-[60px] rounded-3xl select-none animate-in fade-in duration-300 transition-all pb-4">
       {/* Stage 1: Identity Title (672x48) */}
       <h1 className="w-full max-w-[672px] h-[48px] flex items-center justify-center text-center font-['DM_Sans'] font-bold text-[32px] sm:text-[40px] leading-[48px] m-0">
         <span className="text-ds-text-primary">Stage 1: </span>
@@ -299,8 +297,8 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
       </h1>
 
       {/* Steper Box (618x48) */}
-      <div 
-        data-amount="3" 
+      <div
+        data-amount="3"
         className="w-full max-w-[618px] h-[48px] flex justify-center items-start p-0"
       >
         {/* Step 1: Active (206x48) */}
@@ -355,7 +353,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
       </div>
 
       {/* Frame 2609887: Main Input Area (672x300) */}
-      <form 
+      <form
         onSubmit={handleSubmit}
         className="w-full max-w-[672px] md:h-[300px] flex flex-col md:flex-row items-center justify-between gap-6 md:gap-[60px] p-0"
       >
@@ -363,7 +361,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
         <div className="w-full md:w-[297px] md:h-[300px] flex flex-col justify-between items-center py-4 px-2 gap-5">
           {/* Input with label: Organization / Institution name (281x62) */}
           <div className="w-full md:w-[281px] h-[62px] py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 transition-colors">
-            <label 
+            <label
               htmlFor="organization-name"
               className="text-left text-ds-text-secondary font-['DM_Sans'] text-xs font-medium leading-4 cursor-pointer"
             >
@@ -380,45 +378,50 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
             />
           </div>
 
-          {/* Input with label: Founded year (281x62) */}
-          <div className={`w-full md:w-[281px] h-[62px] py-2 border-b focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 transition-colors ${
-            isYearError ? "border-ds-error" : "border-ds-border"
-          }`}>
-            <label 
-              htmlFor="founded-year"
-              className={`text-left font-['DM_Sans'] text-xs font-medium leading-4 cursor-pointer ${
-                isYearError ? "text-ds-error" : "text-ds-text-secondary"
-              }`}
-            >
-              Founded year
-            </label>
-            <input
-              id="founded-year"
-              type="text"
-              inputMode="numeric"
-              value={foundedYear}
-              onChange={handleYearChange}
-              placeholder="2024"
-              maxLength={4}
-              className="w-full bg-transparent text-ds-text-primary font-['DM_Sans'] text-sm leading-5 focus:outline-none placeholder:text-ds-text-muted"
-            />
+          {/* Input with label: Founded year */}
+          <div className="w-full md:w-[281px] flex flex-col">
+            <div className={`w-full h-[62px] py-2 border-b focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 transition-colors ${isYearError ? "border-ds-error" : "border-ds-border"
+              }`}>
+              <label
+                htmlFor="founded-year"
+                className="text-left font-['DM_Sans'] text-xs font-medium leading-4 cursor-pointer text-ds-text-secondary"
+              >
+                Founded year
+              </label>
+              <input
+                id="founded-year"
+                type="text"
+                inputMode="numeric"
+                value={foundedYear}
+                onChange={handleYearChange}
+                placeholder="2024"
+                maxLength={4}
+                className="w-full bg-transparent text-ds-text-primary font-['DM_Sans'] text-sm leading-5 focus:outline-none placeholder:text-ds-text-muted"
+              />
+            </div>
+            <div className="ds-supporting-area min-h-[16px] mt-1">
+              {isYearError && (
+                <span className="text-ds-error font-['DM_Sans'] text-[12px] leading-4">
+                  Founded year cannot be in the future
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Input with label and icon: Industry Selection (281x62) */}
-          <div 
+          <div
             ref={dropdownRef}
             className="w-full md:w-[281px] relative"
           >
-            <div 
+            <div
               onClick={() => {
-                searchInputRef.current?.focus();
+                searchInputRef.current?.focus({ preventScroll: true });
                 setIsDropdownOpen(true);
               }}
-              className={`w-full h-[62px] py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors cursor-text ${
-                isDropdownOpen ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
-              }`}
+              className={`w-full h-[62px] py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors cursor-text ${isDropdownOpen ? "border-ds-accent" : "border-ds-border hover:border-ds-text-muted"
+                }`}
             >
-              <label 
+              <label
                 htmlFor="industry-search-input"
                 className="text-left text-ds-text-secondary font-['DM_Sans'] text-xs font-medium leading-4 cursor-pointer"
               >
@@ -452,17 +455,16 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
                     setIsDropdownOpen((prev) => {
                       const next = !prev;
                       if (next) {
-                        setTimeout(() => searchInputRef.current?.focus(), 0);
+                        setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 0);
                       }
                       return next;
                     });
                   }}
                   className="p-1 -mr-1 flex items-center justify-center cursor-pointer text-ds-text-primary focus:outline-none"
                 >
-                  <ChevronDown 
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isDropdownOpen ? "rotate-180" : ""
-                    }`} 
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
               </div>
@@ -470,10 +472,10 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
 
             {/* Dropdown Menu - opens at bottom with hidden scroll */}
             {isDropdownOpen && (
-              <div 
+              <div
                 className="absolute top-full left-0 mt-2 w-full p-3 bg-ds-bg rounded-2xl border border-ds-border shadow-2xl inline-flex flex-col justify-start items-center gap-3 overflow-hidden z-40 animate-in fade-in zoom-in-95 duration-150"
               >
-                <div 
+                <div
                   ref={listboxRef}
                   role="listbox"
                   className="self-stretch flex flex-col justify-start items-start gap-2 max-h-48 overflow-y-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0"
@@ -493,19 +495,17 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
                           role="option"
                           aria-selected={isSelected}
                           onClick={() => handleSelectIndustry(opt.label)}
-                          className={`self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer transition-colors group select-none ${
-                            isHighlighted ? "bg-ds-surface-1" : "hover:bg-ds-surface-1/40"
-                          }`}
+                          className={`self-stretch h-9 inline-flex justify-between items-center px-2 rounded-lg cursor-pointer transition-colors group select-none ${isHighlighted ? "bg-ds-surface-1" : "hover:bg-ds-surface-1/40"
+                            }`}
                         >
-                          <span 
+                          <span
                             title={opt.label}
-                            className={`justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate ${
-                              isSelected
+                            className={`justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate ${isSelected
                                 ? "text-ds-accent font-medium"
                                 : isHighlighted
-                                ? "text-ds-text-primary"
-                                : "text-ds-text-secondary group-hover:text-ds-text-primary"
-                            }`}
+                                  ? "text-ds-text-primary"
+                                  : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                              }`}
                           >
                             {opt.label}
                           </span>
@@ -528,7 +528,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
           {/* Frame 2609888 (279x272) */}
           <div className="w-full md:w-[279px] h-[272px] flex flex-col justify-between items-center gap-3 p-0">
             {/* Background+Border+Shadow Upload Box (120x120) */}
-            <div 
+            <div
               onClick={handleBoxClick}
               className="w-[120px] h-[120px] rounded-lg border-2 border-ds-border hover:border-ds-accent bg-transparent flex flex-col justify-center items-center gap-2 overflow-hidden cursor-pointer transition-colors relative group select-none shrink-0"
             >
@@ -541,9 +541,9 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
               />
               {logoPreview ? (
                 <>
-                  <img 
-                    src={logoPreview} 
-                    alt="Organization Logo" 
+                  <img
+                    src={logoPreview}
+                    alt="Organization Logo"
                     className="w-full h-full object-cover"
                   />
                   <button
