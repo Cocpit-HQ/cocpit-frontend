@@ -77,9 +77,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <aside 
-      className={`h-screen w-[220px] flex flex-col justify-center bg-ds-bg pl-[16px] sm:pl-[24px] lg:pl-[40px] overflow-y-auto scrollbar-hide ${className || ''}`}
+      className={`h-screen w-[220px] flex flex-col bg-ds-bg pl-[16px] sm:pl-[24px] lg:pl-[40px] pt-[60px] sm:pt-[120px] overflow-hidden ${className || ''}`}
     >
-      <div className="w-full pr-[16px] lg:pr-[0px] flex flex-col my-auto py-6">
+      <div className="w-full pr-[16px] lg:pr-[0px] flex-1 flex flex-col overflow-y-auto scrollbar-hide pb-6">
         {/* Main Navigation Sections */}
         {sections.map((section) => (
           <div key={section.title} className={`flex flex-col shrink-0 ${section.gapTop}`}>

@@ -127,6 +127,8 @@ export default function ProfilePage() {
 
   // User & sub-entities
   const user = profileData?.user;
+  // SCRUM-998: Google profile picture should not be used automatically in Cocpit
+  const userAvatar = (user?.avatar && !user.avatar.includes("googleusercontent.com") && !user.avatar.includes("ggpht.com")) ? user.avatar : null;
   
   const flatExperiences = useMemo<Experience[]>(() => profileData?.experiences || [], [profileData?.experiences]);
 
@@ -189,7 +191,7 @@ export default function ProfilePage() {
 
   // Handlers for avatar upload/delete
   const handleOpenAvatarModal = () => {
-    if (user?.avatar) {
+    if (userAvatar) {
       setAvatarInitialFile(null);
       setIsEditAvatarOpen(true);
     } else {
@@ -622,7 +624,7 @@ export default function ProfilePage() {
         {/* Cover + Profile Image + Action Buttons */}
         <ProfileCoverSection
           coverImage={user?.cover_image}
-          avatarImage={user?.avatar}
+          avatarImage={userAvatar}
           userName={user?.name}
           isOwnProfile={true}
           completionPercentage={profileScore}
@@ -631,7 +633,7 @@ export default function ProfilePage() {
           hasEducation={(educations?.length ?? 0) > 0 || ((profileData?.educations as any)?.length ?? 0) > 0}
           hasProjects={(projects?.length ?? 0) > 0 || ((profileData?.projects as any)?.length ?? 0) > 0}
           hasSkills={(skills?.length ?? 0) > 0 || ((profileData?.skills as any)?.length ?? 0) > 0}
-          hasAvatar={Boolean(user?.avatar)}
+          hasAvatar={Boolean(userAvatar)}
           hasCoverImage={Boolean(user?.cover_image)}
           hasBasicInfo={Boolean(user?.about || user?.about_text)}
           onActionClick={handleScoreActionClick}
@@ -938,7 +940,7 @@ export default function ProfilePage() {
             setIsEditAvatarOpen(false);
             setAvatarInitialFile(null);
           }}
-          currentAvatarUrl={user?.avatar || null}
+          currentAvatarUrl={userAvatar}
           initialFile={avatarInitialFile}
           onUpload={handleAvatarUpload}
           onDelete={handleAvatarDelete}
@@ -958,7 +960,7 @@ export default function ProfilePage() {
         <ViewAvatarModal
           isOpen={isViewAvatarOpen}
           onClose={() => setIsViewAvatarOpen(false)}
-          avatarUrl={user?.avatar || null}
+          avatarUrl={userAvatar}
         />
       )}
 

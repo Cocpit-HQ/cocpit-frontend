@@ -92,7 +92,9 @@ export const ProfileCoverSection: React.FC<ProfileCoverSectionProps> = ({
   };
 
   const displayCover = !coverError && coverImage ? coverImage : null;
-  const displayAvatar = !avatarError && avatarImage ? avatarImage : null;
+  // SCRUM-998: Google profile picture should not be used automatically in Cocpit
+  const isGoogleAvatar = avatarImage && (avatarImage.includes("googleusercontent.com") || avatarImage.includes("ggpht.com"));
+  const displayAvatar = !avatarError && avatarImage && !isGoogleAvatar ? avatarImage : null;
 
   // Circular progress calculations for own profile (116px diameter, 5px stroke width, radius = 55.5)
   const radius = 55.5;

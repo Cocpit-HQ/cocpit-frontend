@@ -7,7 +7,7 @@ export interface User {
   account_name?: string;
   name: string;
   headline: string;
-  avatar: string; // URL or path
+  avatar: string | null; // URL or path
   location: string;
   website?: string;
   about: string;

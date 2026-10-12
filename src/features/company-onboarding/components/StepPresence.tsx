@@ -206,6 +206,23 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const orgSizeDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize description textarea on mount and whenever description changes so it doesn't collapse
+  useEffect(() => {
+    const resize = () => {
+      if (descriptionTextareaRef.current) {
+        descriptionTextareaRef.current.style.height = "auto";
+        descriptionTextareaRef.current.style.height = `${Math.max(
+          20,
+          descriptionTextareaRef.current.scrollHeight
+        )}px`;
+      }
+    };
+    resize();
+    const frameId = requestAnimationFrame(resize);
+    return () => cancelAnimationFrame(frameId);
+  }, [description]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -1176,6 +1193,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               Description
             </label>
             <textarea
+              ref={descriptionTextareaRef}
               id="description-input"
               rows={1}
               maxLength={500}

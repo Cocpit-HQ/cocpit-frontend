@@ -372,7 +372,7 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
               type="text"
               value={organizationName}
               onChange={handleNameChange}
-              placeholder={isInstitution ? "e.g. Stanford University" : "e.g. Nexus Global Systems"}
+              placeholder={isInstitution ? "e.g. Stanford University" : "e.g. Cocpit"}
               autoComplete="organization"
               className="w-full bg-transparent text-ds-text-primary font-['DM_Sans'] text-sm leading-5 focus:outline-none placeholder:text-ds-text-muted"
             />
@@ -501,10 +501,10 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
                           <span
                             title={opt.label}
                             className={`justify-start text-sm font-normal font-['DM_Sans'] leading-5 transition-colors cursor-pointer truncate ${isSelected
-                                ? "text-ds-accent font-medium"
-                                : isHighlighted
-                                  ? "text-ds-text-primary"
-                                  : "text-ds-text-secondary group-hover:text-ds-text-primary"
+                              ? "text-ds-accent font-medium"
+                              : isHighlighted
+                                ? "text-ds-text-primary"
+                                : "text-ds-text-secondary group-hover:text-ds-text-primary"
                               }`}
                           >
                             {opt.label}

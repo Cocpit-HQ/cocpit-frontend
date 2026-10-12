@@ -489,7 +489,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
             <input
               type="file"
               ref={fileInputRef}
-              accept=".jpg,.jpeg,.png,.webp,.pdf"
+              accept=".jpg,.jpeg,.png,.pdf"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -503,7 +503,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
                 <Upload className="w-4 h-4 text-ds-text-primary group-hover:text-ds-accent transition-colors" />
               </div>
               <span className="text-center text-ds-text-primary text-xs font-normal font-['DM_Sans'] leading-4">
-                JPG, PNG, WEBP · Max 5MB
+                JPG, PNG, PDF · Max 5MB
               </span>
             </div>
 

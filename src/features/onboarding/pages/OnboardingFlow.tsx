@@ -235,7 +235,10 @@ export default function OnboardingFlow() {
             setAccountName(u.account_name);
             setInitialAccountName(u.account_name);
           }
-          if (u.avatar) setProfileImage(u.avatar);
+          // SCRUM-998: Google profile picture should not be used automatically in Cocpit
+          if (u.avatar && !u.avatar.includes("googleusercontent.com") && !u.avatar.includes("ggpht.com")) {
+            setProfileImage(u.avatar);
+          }
           if (u.dob) setDob(typeof u.dob === "string" ? u.dob.split("T")[0] : String(u.dob).split("T")[0]);
 
           // ── Step 2: Location (structured) ──────────────────────────────

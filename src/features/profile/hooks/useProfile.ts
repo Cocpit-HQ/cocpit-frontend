@@ -66,7 +66,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
     account_name: user.account_name,
     name: user.name,
     headline: user.headline || '',
-    avatar: user.avatar || '/assets/pngegg.png',
+    avatar: (user.avatar && !user.avatar.includes('pngegg.png') && !user.avatar.includes('googleusercontent.com') && !user.avatar.includes('ggpht.com')) ? user.avatar : null,
     location: user.location || '',
     about: user.about || '',
     skills: Array.isArray(data.skills)
