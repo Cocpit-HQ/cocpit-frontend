@@ -22,6 +22,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { EditPostModal } from '@/shared/commonComponents/EditPostModal';
+import { MobileCreatePostModal } from '@/features/feed/components/create-post/MobileCreatePostModal';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
 import { useUIStore } from '@/store/ui.store';
@@ -62,6 +64,7 @@ export function PostOptionsMenu({
   const { mutate: notifyEmployees } = useNotifyEmployees();
   const { setEditMode } = useUIStore();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   // menuAccess (tri-state) takes precedence over the legacy isOwnPost boolean when provided.
   const effectiveIsOwnPost = menuAccess ? menuAccess === 'owner' : isOwnPost;
@@ -169,14 +172,21 @@ export function PostOptionsMenu({
       />
 
       {isEditModalOpen && (
-        <EditPostModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-          }}
-          editPostId={postId}
-          onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
-        />
+        isMobile ? (
+          <MobileCreatePostModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            editPostId={postId}
+            onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
+          />
+        ) : (
+          <EditPostModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            editPostId={postId}
+            onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
+          />
+        )
       )}
 
       <ReportModal

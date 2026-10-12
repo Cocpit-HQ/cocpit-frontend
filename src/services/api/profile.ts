@@ -8,6 +8,7 @@ export interface GetUserPostsParams {
   limit?: number;
   cursorCreatedAt?: string;
   cursorPostId?: string;
+  preview?: boolean;
 }
 
 export interface ProfilePostMedia {
@@ -136,6 +137,7 @@ export const getUserPosts = async (params: GetUserPostsParams): Promise<GetUserP
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.cursorCreatedAt) queryParams.append('cursorCreatedAt', params.cursorCreatedAt);
   if (params.cursorPostId) queryParams.append('cursorPostId', params.cursorPostId);
+  if (params.preview) queryParams.append('preview', 'true');
 
   const response = await api.get<GetUserPostsResponse>(`/users/me/posts?${queryParams.toString()}`);
   return response.data;

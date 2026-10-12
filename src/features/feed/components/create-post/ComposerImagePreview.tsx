@@ -228,11 +228,13 @@ export const ComposerImagePreview = ({
               <Reorder.Item
                 key={img.id}
                 value={img}
-                className="relative group min-w-0 rounded-[16px] overflow-hidden bg-ds-surface-2 select-none flex-shrink-0 cursor-grab active:cursor-grabbing will-change-transform"
+                onContextMenu={(e) => e.preventDefault()}
+                className="relative group min-w-0 rounded-[16px] overflow-hidden bg-ds-surface-2 select-none [-webkit-touch-callout:none] flex-shrink-0 cursor-grab active:cursor-grabbing will-change-transform"
                 style={{
                   width: `${itemWidth}px`,
                   height: `${CAROUSEL_ITEM_HEIGHT}px`,
                   marginRight: `${CAROUSEL_GAP}px`,
+                  WebkitTouchCallout: 'none',
                 }}
                 whileDrag={{
                   scale: 1.05,

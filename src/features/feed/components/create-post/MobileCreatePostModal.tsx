@@ -10,9 +10,14 @@ import { CarouselDots } from '../parts/CarouselDots';
 import { Icon } from '@/components/icons';
 import { useUIStore } from '@/store/ui.store';
 import { Reorder, useDragControls } from 'framer-motion';
+import { deletePost } from '@/services/api/posts';
+import { useFeed } from '@/hooks/use-feed';
+import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationModal';
+import { useBodyScrollLock } from '@/hooks';
+import { cn } from '@/lib/utils';
 
 // --- Draggable Image Component ---
-const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scrollContainerRef, dragBoundsRef }: any) => {
+const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scrollContainerRef, dragBoundsRef, isSingleImage }: any) => {
   const controls = useDragControls();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -20,6 +25,21 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
   const startX = useRef(0);
   const lastX = useRef<number | null>(null);
   const rAFRef = useRef<number | null>(null);
+
+  // Scoped global selection prevention while dragging
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const prevBodyUserSelect = document.body.style.userSelect;
+    const prevBodyWebkitUserSelect = document.body.style.webkitUserSelect;
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+
+    return () => {
+      document.body.style.userSelect = prevBodyUserSelect;
+      document.body.style.webkitUserSelect = prevBodyWebkitUserSelect;
+    };
+  }, [isDragging]);
 
   // Edge auto-scrolling and native scroll prevention
   useEffect(() => {
@@ -86,6 +106,16 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
   }, [isDragging, scrollContainerRef]);
 
   const startDrag = (e: React.PointerEvent) => {
+    // 1. Immediately wipe any accidental selection in the window
+    if (typeof window !== 'undefined') {
+      window.getSelection()?.removeAllRanges();
+    }
+
+    // 2. Unfocus any active input/textarea to disengage the iOS cursor/selection engine
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     startX.current = e.clientX;
     startY.current = e.clientY;
     lastX.current = e.clientX;
@@ -93,6 +123,10 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
+      // Clear selection again right as Framer Motion drag controls take over
+      if (typeof window !== 'undefined') {
+        window.getSelection()?.removeAllRanges();
+      }
       setIsDragging(true);
       controls.start(e);
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -126,9 +160,13 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
       onPointerUp={cancelDrag}
       onPointerCancel={cancelDrag}
       onPointerMove={handlePointerMoveItem}
-      className="relative w-[178px] h-[223px] flex-shrink-0 snap-center rounded-xl overflow-hidden bg-ds-surface-1"
+      onContextMenu={(e) => e.preventDefault()} // Prevent iOS context menu / callout on long press
+      className={`relative flex-shrink-0 snap-center rounded-xl overflow-hidden bg-ds-surface-1 select-none [-webkit-touch-callout:none] ${isSingleImage ? "w-full h-auto max-h-[500px]" : "w-[178px] h-[223px]"}`}
       style={{ 
-        touchAction: 'pan-x pan-y', // Fix: allow native horizontal scrolling
+        touchAction: isDragging ? 'none' : 'pan-x pan-y', // Lock touch action when dragging, allow native scrolling when idle
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
       }}
       animate={{
         scale: isDragging ? 0.95 : 1,
@@ -137,11 +175,13 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
       }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
-      <div className="w-full h-full relative">
+      <div className="w-full h-full relative select-none [-webkit-touch-callout:none]">
         <img
           src={img.url}
           alt="Upload preview"
-          className="w-full h-full object-cover pointer-events-none select-none rounded-[8px]"
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
+          className={`pointer-events-none select-none rounded-[8px] [-webkit-touch-callout:none] ${isSingleImage ? "w-full h-auto max-h-[500px] object-contain" : "w-full h-full object-cover"}`}
         />
 
         {/* Delete Button (Figma spec: top-right circular cross) */}
@@ -161,16 +201,17 @@ const DraggableImage = ({ img, imageToDelete, setImageToDelete, onRemove, scroll
     </Reorder.Item>
   );
 };
-import { useBodyScrollLock } from '@/hooks';
+
 
 interface MobileCreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSharedPost?: any;
   editPostId?: string | null;
+  onUpdate?: (updatedPost: any) => void;
 }
 
-export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, editPostId }: MobileCreatePostModalProps) => {
+export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, editPostId, onUpdate }: MobileCreatePostModalProps) => {
   const resolvedSharedPostId = initialSharedPost?.id || initialSharedPost?._id || (initialSharedPost as any)?.post_id;
 
   const { state, media, poll, actions } = useCreatePostForm({
@@ -179,7 +220,8 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
     isMobile: true,
     initialSharedPost,
     sharedPostId: resolvedSharedPostId,
-    editPostId: editPostId || undefined
+    editPostId: editPostId || undefined,
+    onUpdate
   });
 
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
@@ -190,6 +232,28 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
   const carouselRef = useRef<any>(null);
   const dragBoundsRef = useRef<HTMLDivElement>(null);
   const scrollRafRef = useRef<number | null>(null);
+
+  const { removePostFromFeed } = useFeed();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!editPostId) return;
+    try {
+      setIsDeleting(true);
+      await deletePost(editPostId);
+      removePostFromFeed(editPostId);
+      toast.success("Post deleted successfully");
+      setIsDeleteDialogOpen(false);
+      onClose();
+    } catch (err: any) {
+      console.error("Failed to delete post:", err);
+      toast.error(err.response?.data?.message || err.message || "Failed to delete post");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
 
   useEffect(() => {
     if (activeImageIndex >= media.uploadedImages.length) {
@@ -336,8 +400,8 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)] touch-none shrink-0">
-          <DialogTitle className="ds-text-body-2 text-ds-text-primary font-semibold">{editPostId ? 'Edit post' : 'Create post'}</DialogTitle>
+        <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)] touch-none shrink-0 select-none">
+          <DialogTitle className="ds-text-body-2 text-ds-text-primary font-semibold select-none">{editPostId ? 'Edit post' : 'Create post'}</DialogTitle>
           <button onClick={handleClose} className="p-2 -mr-2 text-ds-text-secondary hover:text-ds-text-primary transition-colors">
             <X className="w-5 h-5 ds-icon-20" />
           </button>
@@ -531,8 +595,8 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                 onReorder={(newOrder) => media.setUploadedImages(newOrder)}
                 ref={carouselRef}
                 onScroll={handleCarouselScroll}
-                className="flex overflow-x-auto snap-x snap-mandatory gap-[8px] no-scrollbar pb-2"
-                style={{ touchAction: 'pan-x pan-y' }} // Fix: allow native horizontal scrolling
+                className="flex overflow-x-auto snap-x snap-mandatory gap-[8px] no-scrollbar pb-2 select-none [-webkit-touch-callout:none]"
+                style={{ touchAction: 'pan-x pan-y', WebkitTouchCallout: 'none' }} // Fix: allow native horizontal scrolling
               >
                 {media.uploadedImages.map((img) => (
                   <DraggableImage
@@ -543,6 +607,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                     onRemove={(id: string) => media.removeMediaItem(id, media.setUploadedImages, false)}
                     scrollContainerRef={carouselRef}
                     dragBoundsRef={dragBoundsRef}
+                    isSingleImage={media.uploadedImages.length === 1}
                   />
                 ))}
               </Reorder.Group>
@@ -568,34 +633,24 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           {/* Video Preview */}
           {media.uploadedVideos.length > 0 && state.postType !== 'poll' && !state.sharedPost && (
             <div className="ml-11 flex flex-col gap-2">
-              <div
-                className="relative w-full rounded-xl overflow-hidden border border-ds-border"
-                onClick={() => setImageToDelete(imageToDelete === media.uploadedVideos[0].id ? null : media.uploadedVideos[0].id)}
-              >
+              <div className="relative w-full rounded-xl overflow-hidden border border-ds-border">
                 <video
                   src={media.uploadedVideos[0].url}
                   controls
                   className="w-full h-auto max-h-[300px] object-contain bg-black"
                 />
 
-                {/* Delete Overlay */}
-                {imageToDelete === media.uploadedVideos[0].id && (
-                  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center animate-in fade-in duration-200">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        media.removeMediaItem(media.uploadedVideos[0].id, media.setUploadedVideos, false);
-                        setImageToDelete(null);
-                      }}
-                      className="flex flex-col items-center"
-                    >
-                      <div className="w-12 h-12 bg-black/80 rounded-full flex items-center justify-center text-white mb-2">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                      </div>
-                      <span className="text-[var(--ds-error)] text-sm font-medium">Delete</span>
-                    </button>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    media.removeMediaItem(media.uploadedVideos[0].id, media.setUploadedVideos, false);
+                  }}
+                  className="absolute top-3 right-3 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors z-30 shadow-md cursor-pointer"
+                  title="Remove video"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
               </div>
             </div>
           )}
@@ -638,42 +693,77 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
                   >
                     <ImageIcon className="w-5 h-5 ds-icon-20" />
                   </button>
-                  <button
-                    onClick={() => state.setPostType(state.postType === 'poll' ? 'text' : 'poll')}
-                    className={`transition-colors ${state.postType === 'poll' ? 'text-ds-text-primary' : 'text-ds-text-secondary hover:text-ds-text-primary'}`}
-                    title={state.postType === 'poll' ? 'Remove Poll' : 'Add Poll'}
-                  >
-                    <BarChart3 className="w-5 h-5 ds-icon-20" />
-                  </button>
+                  {!editPostId && (
+                    <button
+                      onClick={() => state.setPostType(state.postType === 'poll' ? 'text' : 'poll')}
+                      className={`transition-colors ${state.postType === 'poll' ? 'text-ds-text-primary' : 'text-ds-text-secondary hover:text-ds-text-primary'}`}
+                      title={state.postType === 'poll' ? 'Remove Poll' : 'Add Poll'}
+                    >
+                      <BarChart3 className="w-5 h-5 ds-icon-20" />
+                    </button>
+                  )}
                 </>
               )}
             </div>
 
             <div className="flex items-center gap-[12px] ml-auto">
-              <button
-                onClick={handleClose}
-                disabled={state.isSubmitting}
-                className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
-              >
-                Cancel
-              </button>
-              {/* Bug Fix: Post button upload loading state matches Figma design (w-77px, h-36px, ds-surface-1, 24x24 ds-text-secondary loader) */}
-              <button
-                onClick={() => actions.handlePost()}
-                disabled={!isPostEnabled || state.isSubmitting}
-                className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans transition-all ${state.isSubmitting
-                    ? 'bg-ds-surface-1 border-none cursor-default'
-                    : isPostEnabled
-                      ? 'bg-[var(--ds-accent)] hover:opacity-90 text-white cursor-pointer'
-                      : 'bg-ds-surface-2 text-ds-text-muted opacity-50 cursor-default'
-                  }`}
-              >
-                {state.isSubmitting ? (
-                  <Loader className="w-[24px] h-[24px] text-ds-text-secondary animate-spin" />
-                ) : (
-                  editPostId ? 'Save' : 'Post'
-                )}
-              </button>
+              {editPostId ? (
+                <>
+                  <button
+                    onClick={() => actions.handlePost()}
+                    disabled={!isPostEnabled || state.isSubmitting}
+                    className={cn(
+                      "flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-all outline-none",
+                      isPostEnabled && !state.isSubmitting
+                        ? "bg-[var(--ds-accent)] text-[var(--ds-text-primary)] cursor-pointer hover:opacity-90 active:scale-95"
+                        : "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-default opacity-60"
+                    )}
+                  >
+                    {state.isSubmitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-[var(--ds-text-primary)]" />
+                    ) : (
+                      'Save'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    disabled={state.isSubmitting}
+                    className="box-border flex h-[36px] w-[77px] shrink-0 flex-row items-center justify-center gap-[10px] rounded-full border px-[12px] py-[6px] font-dm-sans text-[16px] font-medium leading-[24px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-default outline-none hover:opacity-85"
+                    style={{
+                      borderColor: 'var(--ds-border)',
+                      color: 'var(--ds-text-primary)',
+                    }}
+                  >
+                    Delete
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleClose}
+                    disabled={state.isSubmitting}
+                    className="h-[36px] w-[77px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 hover:bg-ds-surface-2 active:scale-[0.98] transition-colors duration-[120ms] flex flex-row items-center justify-center gap-[10px] cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => actions.handlePost()}
+                    disabled={!isPostEnabled || state.isSubmitting}
+                    className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans transition-all ${state.isSubmitting
+                        ? 'bg-ds-surface-1 border-none cursor-default'
+                        : isPostEnabled
+                          ? 'bg-[var(--ds-accent)] hover:opacity-90 text-white cursor-pointer'
+                          : 'bg-ds-surface-2 text-ds-text-muted opacity-50 cursor-default'
+                      }`}
+                  >
+                    {state.isSubmitting ? (
+                      <Loader className="w-[24px] h-[24px] text-ds-text-secondary animate-spin" />
+                    ) : (
+                      'Post'
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -690,6 +780,15 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
           multiple
           onChange={(e) => media.handleDesktopPhotoUpload(e, false)}
           className="hidden"
+        />
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
+          modalClassName="!z-[302]"
+          overlayClassName="!z-[301]"
         />
       </BareDialogContent>
     </Dialog>

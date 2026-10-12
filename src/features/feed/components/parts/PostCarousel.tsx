@@ -33,8 +33,8 @@ const MIN_CONTAINER_H = 200;
 //   portrait first-image         → X caps at ~642px → we use 640
 const MAX_CONTAINER_H_LANDSCAPE = 416;
 const MAX_CONTAINER_H_PORTRAIT  = 640;
-const MIN_SLIDE_W = 36;  // X allows ~42px; 36 is our safe minimum
 const MAX_CONTAINER_W = 416;
+const MIN_SLIDE_W = 36;  // X allows ~42px; 36 is our safe minimum
 
 /**
  * Compute the shared carousel container height.
@@ -49,13 +49,16 @@ function computeContainerHeight(
 ): number {
   const validDims = (dims || []).filter(Boolean) as Array<{ width: number; height: number }>;
   const first = validDims[0];
-  if (!first) return MAX_CONTAINER_H_LANDSCAPE;
+  if (!first || !first.width || !first.height) return MAX_CONTAINER_H_LANDSCAPE;
 
-  // Pick cap based on whether ANY image is landscape
-  const hasLandscape = validDims.some(d => d.width / d.height >= 1);
+  // Pick cap based on whether ANY image is landscape (AR > 1.05 to avoid square triggering landscape)
+  const hasLandscape = validDims.some(d => d.width / d.height > 1.05);
   const maxH = hasLandscape ? MAX_CONTAINER_H_LANDSCAPE : MAX_CONTAINER_H_PORTRAIT;
 
-  return Math.max(MIN_CONTAINER_H, Math.min(first.height, maxH));
+  const firstAr = first.width / first.height;
+  const targetH = Math.round(MAX_CONTAINER_W / firstAr);
+
+  return Math.max(MIN_CONTAINER_H, Math.min(targetH, maxH));
 }
 
 /**
@@ -91,12 +94,24 @@ export function PostCarousel({
 }: PostCarouselProps) {
   const isMobile = useIsMobile();
   const plugins = typeof WheelGesturesPlugin === 'function' && !isMobile ? [WheelGesturesPlugin()] : [];
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const rAFRef = useRef<number | null>(null);
+
+  const align = useCallback((viewSize: number, snapSize: number, index: number) => {
+    if (index === 0) return 0;
+    const slide = containerRef.current?.children[index] as HTMLElement | undefined;
+    if (slide) {
+      return Math.min(slide.offsetLeft, viewSize - snapSize);
+    }
+    return viewSize - snapSize;
+  }, []);
+
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
-    align: 'start',
-    containScroll: 'keepSnaps',
+    align,
+    containScroll: false,
     dragFree: true,
-    duration: 20, // Faster duration for snappier feel like MobileStoryViewer
+    duration: 25,
   }, plugins);
 
   const [loadedDims, setLoadedDims] = useState<Array<{ width: number; height: number } | null>>(
@@ -106,30 +121,42 @@ export function PostCarousel({
   useEffect(() => {
     if (imageDimensions && imageDimensions.some(Boolean)) {
       setLoadedDims(imageDimensions);
+    } else {
+      setLoadedDims(Array(images.length).fill(null));
     }
-  }, [imageDimensions]);
+  }, [imageDimensions, images.length]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
-  const rAFRef = useRef<number | null>(null);
-
-  const getActiveIndex = useCallback(() => {
-    if (!emblaApi) return 0;
-
-    const progress = emblaApi.scrollProgress();
-    // Mathematical approximation eliminates getBoundingClientRect() layout thrashing
-    const clampedProgress = Math.max(0, Math.min(1, progress || 0));
-    return Math.round(clampedProgress * (images.length - 1));
-  }, [emblaApi, images.length]);
 
   const updateActiveState = useCallback(() => {
     if (!emblaApi) return;
-    const activeIdx = getActiveIndex();
-    setSelectedIndex(activeIdx);
-    setCanScrollPrev(emblaApi.canScrollPrev() && activeIdx > 0);
-    setCanScrollNext(emblaApi.canScrollNext() && activeIdx < images.length - 1);
-  }, [emblaApi, getActiveIndex, images.length]);
+    const engine = emblaApi.internalEngine();
+    if (engine && engine.scrollSnaps && engine.scrollSnaps.length > 0) {
+      const snaps = engine.scrollSnaps;
+      const loc = engine.location.get();
+      let closest = 0;
+      let minD = Infinity;
+      for (let i = 0; i < snaps.length; i++) {
+        const d = Math.abs(snaps[i] - loc);
+        if (d < minD) {
+          minD = d;
+          closest = i;
+        }
+      }
+      setSelectedIndex(closest);
+
+      const hasScroll = Math.abs(snaps[0] - snaps[snaps.length - 1]) > 1;
+      setCanScrollPrev(hasScroll && closest > 0);
+      setCanScrollNext(hasScroll && closest < snaps.length - 1);
+    } else {
+      const idx = emblaApi.selectedScrollSnap();
+      setSelectedIndex(idx);
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+    }
+  }, [emblaApi]);
 
   const onScroll = useCallback(() => {
     if (rAFRef.current !== null) return;
@@ -139,61 +166,54 @@ export function PostCarousel({
     });
   }, [updateActiveState]);
 
-  const onSettle = useCallback(() => {
-    if (rAFRef.current !== null) {
-      cancelAnimationFrame(rAFRef.current);
-      rAFRef.current = null;
-    }
-    updateActiveState();
-  }, [updateActiveState]);
-
   useEffect(() => {
     if (!emblaApi) return;
 
     updateActiveState();
 
-    emblaApi.on("select", onSettle);
+    emblaApi.on("select", updateActiveState);
+    emblaApi.on("settle", updateActiveState);
+    emblaApi.on("reInit", updateActiveState);
     emblaApi.on("scroll", onScroll);
-    emblaApi.on("settle", onSettle);
-    emblaApi.on("reInit", onSettle);
-    emblaApi.on("slidesInView", onScroll);
 
     return () => {
       if (rAFRef.current !== null) {
         cancelAnimationFrame(rAFRef.current);
         rAFRef.current = null;
       }
-      emblaApi.off("select", onSettle);
+      emblaApi.off("select", updateActiveState);
+      emblaApi.off("settle", updateActiveState);
+      emblaApi.off("reInit", updateActiveState);
       emblaApi.off("scroll", onScroll);
-      emblaApi.off("settle", onSettle);
-      emblaApi.off("reInit", onSettle);
-      emblaApi.off("slidesInView", onScroll);
     };
-  }, [emblaApi, onScroll, onSettle, updateActiveState]);
+  }, [emblaApi, onScroll, updateActiveState]);
 
-  // Re-initialize Embla when images change, after mount/modal open layout shifts, or hydration of isMobile
+  // Re-initialize Embla when images change, dims load, or mobile changes
   useEffect(() => {
     if (!emblaApi) return;
     const timer = setTimeout(() => {
       emblaApi.reInit();
-      onSettle();
+      updateActiveState();
     }, 50);
     return () => clearTimeout(timer);
-  }, [emblaApi, images, isMobile, onSettle]);
+  }, [emblaApi, images, isMobile, loadedDims, updateActiveState]);
+
+  const scrollToSlide = useCallback((targetIdx: number) => {
+    if (!emblaApi) return;
+    emblaApi.scrollTo(targetIdx);
+  }, [emblaApi]);
 
   const scrollPrev = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!emblaApi) return;
-    const targetIdx = Math.max(0, selectedIndex - 1);
-    emblaApi.scrollTo(targetIdx);
-  }, [emblaApi, selectedIndex]);
+    emblaApi.scrollPrev();
+  }, [emblaApi]);
 
   const scrollNext = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!emblaApi) return;
-    const targetIdx = Math.min(images.length - 1, selectedIndex + 1);
-    emblaApi.scrollTo(targetIdx);
-  }, [emblaApi, images.length, selectedIndex]);
+    emblaApi.scrollNext();
+  }, [emblaApi]);
 
   if (!images || images.length === 0) return null;
 
@@ -229,7 +249,7 @@ export function PostCarousel({
       >
         {/* Embla Viewport */}
         <div className="w-full h-full overflow-hidden" ref={emblaRef}>
-          <div className="flex h-full gap-2 touch-pan-y">
+          <div className="flex h-full gap-2 touch-pan-y" ref={containerRef}>
             {images.map((src, index) => {
               const sw = slideWidths[index];
               const slideStyle: React.CSSProperties = sw
@@ -272,12 +292,13 @@ export function PostCarousel({
                       const img = e.currentTarget;
                       if (img.naturalWidth && img.naturalHeight) {
                         setLoadedDims(prev => {
-                          const newDims = [...prev];
-                          // Only update if not already set by props
-                          if (!imageDimensions?.[index]) {
+                          const curr = prev[index];
+                          if (!curr || curr.width !== img.naturalWidth || curr.height !== img.naturalHeight) {
+                            const newDims = [...prev];
                             newDims[index] = { width: img.naturalWidth, height: img.naturalHeight };
+                            return newDims;
                           }
-                          return newDims;
+                          return prev;
                         });
                       }
                       if (index === 0 && onImageLoad) onImageLoad(e);
@@ -333,7 +354,7 @@ export function PostCarousel({
           total={images.length}
           activeIndex={selectedIndex}
           imageDimensions={loadedDims}
-          onDotClick={(idx) => emblaApi?.scrollTo(idx)}
+          onDotClick={(idx) => scrollToSlide(idx)}
           className={dotsClassName || (arrowPlacement === 'inside' ? "py-3" : "mt-[12px]")}
         />
       )}

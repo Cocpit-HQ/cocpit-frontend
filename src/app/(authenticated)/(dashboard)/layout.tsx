@@ -9,6 +9,8 @@ import { useUIStore } from "@/store/ui.store";
 import { MobileCreatePostModal } from "@/features/feed/components/create-post";
 import { EditPostModal } from "@/shared/commonComponents/EditPostModal";
 import { useNavigationTracker } from "@/hooks/use-navigation-memory";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useFeed } from "@/hooks/use-feed";
 
 export default function DashboardLayout({
     children,
@@ -22,6 +24,8 @@ export default function DashboardLayout({
     const isEditMode = useUIStore(state => state.isEditMode);
     const editingPostId = useUIStore(state => state.editingPostId);
     const editingPostData = useUIStore(state => state.editingPostData);
+    const isMobile = useIsMobile();
+    const { updatePostInFeed } = useFeed(false);
 
     // Check if we are on mobile using window.innerWidth or just render it and use CSS to hide it?
     // The MobileCreatePostModal is a full-screen mobile modal, but we can just render it conditionally.
@@ -38,19 +42,27 @@ export default function DashboardLayout({
                     <AppShell>{children}</AppShell>
 
                     <MobileCreatePostModal
-                        isOpen={activeModal === 'create-post'}
+                        isOpen={activeModal === 'create-post' || (isEditMode && !!editingPostId && !!isMobile)}
                         onClose={() => {
-                            setActiveModal(null);
-                            useUIStore.getState().setSharedPostData(null);
-                            useUIStore.getState().setEditMode(false, null);
+                            if (activeModal === 'create-post') {
+                                setActiveModal(null);
+                                useUIStore.getState().setSharedPostData(null);
+                            } else {
+                                useUIStore.getState().setEditMode(false, null, null);
+                            }
                         }}
                         initialSharedPost={useUIStore(state => state.sharedPostData)}
                         editPostId={useUIStore(state => state.editingPostId)}
+                        onUpdate={(updatedPost) => {
+                            if (editingPostId) {
+                                updatePostInFeed(editingPostId, updatedPost);
+                            }
+                        }}
                     />
 
                     {/* Fullscreen Edit Post Modal */}
                     <EditPostModal
-                        isOpen={isEditMode && !!editingPostId}
+                        isOpen={isEditMode && !!editingPostId && !isMobile}
                         onClose={() => {
                             const closedPostId = editingPostId;
                             useUIStore.getState().setEditMode(false, null, null);

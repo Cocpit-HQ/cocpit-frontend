@@ -162,7 +162,7 @@ export function useProfilePostsPreview(userId: string) {
     return useQuery({
         queryKey: ["profile-posts-preview", userId],
         queryFn: async () => {
-            const data = await getPublicProfilePosts(userId, 'All', { limit: 10 });
+            const data = await getPublicProfilePosts(userId, 'All', { limit: 10, preview: true });
             return data.posts.map(mapPublicPostToPost);
         },
         enabled: !!userId,

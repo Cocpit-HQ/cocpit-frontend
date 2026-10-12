@@ -162,7 +162,7 @@ export default function ProfilePage() {
   // Posts Query
   const { data: userPostsData, isError: isPostsError, refetch: refetchPosts } = useQuery({
     queryKey: ["userPosts", user?.id],
-    queryFn: () => getUserPosts({ limit: 50 }),
+    queryFn: () => getUserPosts({ limit: 10, preview: true }),
     enabled: !!user?.id,
     staleTime: 0,
     refetchOnMount: "always",

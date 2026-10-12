@@ -158,7 +158,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             coverImage: media.uploadedImages[0] || null,
             description,
           }));
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }, [articleTitle, articleContent, media.uploadedImages, description, editPostId, postType]);
@@ -258,14 +258,46 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           setSelectedLocation(post.location ? { id: 0, name: post.location, latitude: '', longitude: '' } : null);
 
           if (post.images) {
-            media.setUploadedImages(post.images.map((url, i) => ({
-              id: `existing-${i}`,
-              url,
-              type: 'image',
-              crop: { x: 0, y: 0 },
-              zoom: 1,
-              isExisting: true
-            })));
+            const initialUploaded = post.images.map((url, i) => {
+              const dim = post.imageDimensions?.[i] || (post.media && post.media[i] ? { width: post.media[i].width, height: post.media[i].height } : null);
+              return {
+                id: `existing-${i}`,
+                url,
+                type: 'image' as const,
+                crop: { x: 0, y: 0 },
+                zoom: 1,
+                isExisting: true,
+                naturalWidth: dim?.width,
+                naturalHeight: dim?.height,
+              };
+            });
+            media.setUploadedImages(initialUploaded);
+
+            // Probe actual image natural dimensions to guarantee 100% accuracy:
+            post.images.forEach((url, i) => {
+              const probe = new window.Image();
+              probe.src = url;
+              probe.onload = () => {
+                if (probe.naturalWidth && probe.naturalHeight) {
+                  media.setUploadedImages(prev => {
+                    const idx = prev.findIndex(item => item.id === `existing-${i}` || item.url === url);
+                    if (idx !== -1) {
+                      const curr = prev[idx];
+                      if (!curr.naturalWidth || !curr.naturalHeight || curr.naturalWidth !== probe.naturalWidth || curr.naturalHeight !== probe.naturalHeight) {
+                        const next = [...prev];
+                        next[idx] = {
+                          ...curr,
+                          naturalWidth: probe.naturalWidth,
+                          naturalHeight: probe.naturalHeight,
+                        };
+                        return next;
+                      }
+                    }
+                    return prev;
+                  });
+                }
+              };
+            });
           }
           if (post.videoSrc) {
             media.setUploadedVideos([{
@@ -390,8 +422,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       let finalContent = "";
       if (postType === 'article') {
-        const bodyContent = overrideContent !== undefined 
-          ? overrideContent 
+        const bodyContent = overrideContent !== undefined
+          ? overrideContent
           : (articleContent || (articleData ? articleData.content : ''));
         finalContent = `${description.trim()}<!-- article_divider -->${bodyContent}`;
       } else {
@@ -430,8 +462,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       if (media.uploadedImages && media.uploadedImages.length > 0) {
         payload.media_metadata = media.uploadedImages.map((img: any) => ({
-          width: img.naturalWidth || img.width || 800,
-          height: img.naturalHeight || img.height || 600
+          width: img.naturalWidth || img.width || undefined,
+          height: img.naturalHeight || img.height || undefined
         }));
       } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
         payload.media_metadata = media.uploadedVideos.map((vid: any) => ({
@@ -540,8 +572,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             updatePayload.media_urls = media_urls;
             if (media.uploadedImages && media.uploadedImages.length > 0) {
               updatePayload.media_metadata = media.uploadedImages.map((img: any) => ({
-                width: img.naturalWidth || img.width || 800,
-                height: img.naturalHeight || img.height || 600
+                width: img.naturalWidth || img.width || undefined,
+                height: img.naturalHeight || img.height || undefined
               }));
             } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
               updatePayload.media_metadata = media.uploadedVideos.map((vid: any) => ({
@@ -553,29 +585,56 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
           await postApi.update(editPostId, updatePayload, combinedInlineFiles);
 
+          // Fetch fresh backend post so we get persisted media URLs and complete updated entity
+          let freshMappedPost: any = null;
+          try {
+            freshMappedPost = await postApi.getById(editPostId);
+          } catch (fetchErr) {
+            console.warn('Could not fetch fresh post after update:', fetchErr);
+          }
+
+          const updatedPostObj = freshMappedPost || {
+            ...originalPost,
+            ...updatePayload,
+            category: postCategory,
+            type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
+            post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
+            imageDimensions: updatePayload.media_metadata || undefined
+          };
+
+          // Guarantee immediate optimistic update of images order using local state
+          if (media_urls !== undefined) {
+             const imageList = media_urls.filter(url => !url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
+             updatedPostObj.images = imageList.length > 0 ? imageList : undefined;
+             updatedPostObj.imageSrc = imageList.length > 0 ? imageList[0] : undefined;
+             updatedPostObj.videoSrc = media_urls.find(url => url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
+          }
+          
+          if (postType === 'article' && !freshMappedPost) {
+            updatedPostObj.articleBody = overrideContent !== undefined ? overrideContent : articleContent;
+            updatedPostObj.title = articleTitle.trim();
+          }
+
           if (onUpdate) {
-            // Map the frontend fields for the feed optimistic/immediate update
-            const updatedPost: any = {
-              ...originalPost,
-              ...updatePayload,
-              category: postCategory,
-            };
-            if (postType === 'article') {
-              updatedPost.articleBody = overrideContent !== undefined ? overrideContent : articleContent;
-              updatedPost.title = articleTitle.trim();
-            }
-            if (media_urls !== undefined) {
-              const images = media_urls.filter(url => !url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
-              const video = media_urls.find(url => url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
-              updatedPost.images = images.length > 0 ? images : undefined;
-              updatedPost.imageSrc = images.length > 0 ? images[0] : undefined;
-              updatedPost.videoSrc = video || undefined;
-            }
-            onUpdate(updatedPost);
+            onUpdate(updatedPostObj);
+          }
+
+          // Emit global event for active pages (e.g. single post detail, profile)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('postUpdated', {
+                detail: updatedPostObj,
+              })
+            );
           }
 
           toast.success("Post updated");
-          onClose();
+          setIsSubmitting(false);
+
+          // Give React Query and Feed components 500ms to reconcile before unmounting
+          setTimeout(() => {
+            onClose();
+          }, 500);
         } catch (e) {
           console.error("Failed to update post:", e);
           toast.error("Failed to update post");
@@ -585,7 +644,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       }
 
       const uploadPromise = startUpload(payload, allFilesToUpload, activeTagUserIds);
-      
+
       uploadPromise.then((mappedPost) => {
         if (isCompanyPost && notifyEmployees && mappedPost) {
           postApi.notifyEmployees(postAsCompanyId!, mappedPost.id).then(() => {
@@ -598,7 +657,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         toast.success("Post reposted successfully!");
       }
       if (onPostCreated) onPostCreated();
-      
+
       // Scroll to the top of the feed to see the newly created post
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('scroll-/feed', '0');

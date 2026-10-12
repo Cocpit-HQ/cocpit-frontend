@@ -179,18 +179,46 @@ export function EditPostModal({
         setPostType('photo');
         const initialImages: ComposerImage[] = postImages.map((url: string, idx: number) => {
           const dim = post.imageDimensions?.[idx];
-          const w = dim?.width || 800;
-          const h = dim?.height || 600;
+          const w = dim?.width;
+          const h = dim?.height;
           return {
             id: `existing-${idx}-${encodeURIComponent(url.slice(-20))}`,
             file: new File([''], `existing-image-${idx}.jpg`, { type: 'image/jpeg' }),
             previewUrl: url,
             naturalWidth: w,
             naturalHeight: h,
-            aspectRatio: w / h,
+            aspectRatio: (w && h) ? w / h : undefined,
           };
         });
         setSelectedImages(initialImages);
+
+        // Probe real image natural dimensions asynchronously:
+        postImages.forEach((url: string) => {
+          const probe = new window.Image();
+          probe.src = url;
+          probe.onload = () => {
+            if (probe.naturalWidth && probe.naturalHeight) {
+              setSelectedImages((prev) => {
+                const targetIdx = prev.findIndex((i) => i.previewUrl === url);
+                if (targetIdx !== -1) {
+                  const curr = prev[targetIdx];
+                  if (!curr.naturalWidth || curr.naturalWidth !== probe.naturalWidth || curr.naturalHeight !== probe.naturalHeight) {
+                    const next = [...prev];
+                    next[targetIdx] = {
+                      ...curr,
+                      naturalWidth: probe.naturalWidth,
+                      naturalHeight: probe.naturalHeight,
+                      aspectRatio: probe.naturalWidth / probe.naturalHeight,
+                    };
+                    return next;
+                  }
+                }
+                return prev;
+              });
+            }
+          };
+        });
+
         setSelectedVideo(null);
         snapImages = postImages;
       } else if (post.videoSrc || post.video) {
