@@ -350,18 +350,24 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
         </div>
         {/* Content */}
         {contentText && (
-          <PostBody
-            content={contentText}
-            author={sharedName || 'Unknown User'}
-            authorSlug={sharedSlug}
-            isExpanded={isExpanded}
-            onToggleExpand={() => setIsExpanded(!isExpanded)}
-            onSeeMoreClick={onSeeMoreClick}
-            hasMedia={mediaUrls.length > 0 || !!videoSrc}
-            maxLines={mediaUrls.length > 0 || !!videoSrc ? 2 : 15}
-            disableLinks={disableNavigation}
-            mentionedUsers={sharedPost.mentioned_users}
-          />
+          rawPollOptions.length > 0 ? (
+            <div className="self-stretch justify-start text-[14px] font-medium font-dmsans leading-[20px] text-left text-ds-text-primary whitespace-pre-wrap break-words">
+              {contentText}
+            </div>
+          ) : (
+            <PostBody
+              content={contentText}
+              author={sharedName || 'Unknown User'}
+              authorSlug={sharedSlug}
+              isExpanded={isExpanded}
+              onToggleExpand={() => setIsExpanded(!isExpanded)}
+              onSeeMoreClick={onSeeMoreClick}
+              hasMedia={mediaUrls.length > 0 || !!videoSrc}
+              maxLines={mediaUrls.length > 0 || !!videoSrc ? 2 : 15}
+              disableLinks={disableNavigation}
+              mentionedUsers={sharedPost.mentioned_users}
+            />
+          )
         )}
 
         {/* Poll Options Capsules (if poll) */}
@@ -385,10 +391,16 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
                     className="self-stretch inline-flex justify-start items-center gap-2 w-full"
                   >
                     <div
-                      className={`flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border flex justify-start items-center gap-2.5 min-w-0 ${isSelected ? 'bg-ds-surface-2 border-ds-border' : 'bg-transparent'
+                      className={`relative flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border overflow-hidden flex justify-start items-center gap-2.5 min-w-0 ${isSelected ? 'border-ds-border' : 'bg-transparent'
                         }`}
                     >
-                      <span className="justify-start text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] truncate">
+                      <div
+                        className={`absolute inset-y-0 left-0 transition-all duration-300 ease-out rounded-[100px] ${
+                          isSelected ? 'bg-ds-surface-2' : 'bg-ds-surface-1'
+                        }`}
+                        style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+                      />
+                      <span className="relative z-10 justify-start text-ds-text-primary text-[12px] font-normal font-dmsans leading-[16px] truncate">
                         {optText}
                       </span>
                     </div>
@@ -413,24 +425,22 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
               );
             })}
 
-            {/* Poll Footer Info: Votes • Duration */}
-            {(pollData?.total_votes !== undefined || pollData?.duration) && (
+            {/* Poll Footer Info: Votes • Duration / Status */}
+            {(pollData?.total_votes !== undefined || pollData?.duration || pollData?.is_active === false) && (
               <div className="inline-flex items-center gap-2 text-[11px] font-normal font-dmsans text-ds-text-muted mt-0.5">
                 <span>
-                  {pollData?.is_active === false
-                    ? 'Ended'
-                    : `${pollData?.total_votes || 0} ${pollData?.total_votes === 1 ? 'vote' : 'votes'}`}
+                  {`${pollData?.total_votes || 0} ${pollData?.total_votes === 1 ? 'vote' : 'votes'}`}
                 </span>
-                {pollData?.duration && (
-                  <>
-                    <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
-                    <span>
-                      {pollData.duration.toLowerCase().includes('left')
+                <span className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+                <span>
+                  {pollData?.is_active === false
+                    ? 'Poll closed'
+                    : pollData?.duration
+                    ? (pollData.duration.toLowerCase().includes('left')
                         ? pollData.duration
-                        : `${pollData.duration} left`}
-                    </span>
-                  </>
-                )}
+                        : `${pollData.duration} left`)
+                    : '1 week left'}
+                </span>
               </div>
             )}
           </div>

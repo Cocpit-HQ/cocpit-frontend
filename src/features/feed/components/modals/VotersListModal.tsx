@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { CloseCrossIcon, UserIcon } from '@/components/icons';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { getPollAnalytics } from '@/services/api/posts';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { PollOptionItem } from '../parts/PostPoll';
 
 interface VoterItem {
@@ -63,6 +64,7 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
   const [voters, setVoters] = useState<VoterItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { activeProfile, isCompany } = useActiveProfile();
 
   useEffect(() => {
     if (!isOpen || !postId) return;
@@ -72,7 +74,8 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const data = await getPollAnalytics(postId.toString());
+        const companyId = isCompany ? activeProfile?.id : undefined;
+        const data = await getPollAnalytics(postId.toString(), companyId);
         if (isMounted) {
           setVoters(data?.voters || []);
         }
@@ -90,7 +93,7 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, postId]);
+  }, [isOpen, postId, isCompany, activeProfile?.id]);
 
   // Helper to resolve option label (Option A, Option B, etc.)
   const getOptionLabel = (voter: VoterItem): string => {

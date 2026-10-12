@@ -119,6 +119,8 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             onDurationChange={poll.setPollDuration}
             isEdit={isEdit}
             isMobile={isMobile}
+            questionError={poll.questionError}
+            optionErrors={poll.optionErrors}
           />
         );
       case 'article':

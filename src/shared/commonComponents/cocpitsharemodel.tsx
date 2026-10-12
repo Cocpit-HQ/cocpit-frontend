@@ -1,6 +1,5 @@
 
 "use client";
-"use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -9,6 +8,7 @@ import { Icon } from "@iconify/react";
 import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
+import { useBodyScrollLock } from "@/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { showToast as toast } from "@/shared/commonComponents/GlobalToast";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
@@ -51,6 +51,8 @@ export default function CocpitShareModel({
   entityId,
   customUrl,
 }: CocpitShareModelProps) {
+  useBodyScrollLock(isOpen);
+
   const { startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
   const { user } = useAuth();

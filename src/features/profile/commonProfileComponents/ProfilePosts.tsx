@@ -674,7 +674,7 @@ const ProfilePostCard = ({
 
               {pollQuestion && (
                 <div className="mb-3">
-                  <p className="font-['DM_Sans'] font-medium text-[13px] leading-[18px] text-foreground line-clamp-2">
+                  <p className="font-['DM_Sans'] font-medium text-[13px] leading-[18px] text-foreground whitespace-pre-wrap break-words">
                     {pollQuestion}
                   </p>
                 </div>

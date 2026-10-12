@@ -19,7 +19,7 @@ export const ProfileAboutSection: React.FC<ProfileAboutSectionProps> = ({
 
   return (
     <div className="w-full max-w-[800px] px-4 md:px-0 md:pl-5 flex flex-col items-start gap-3">
-      <div className="w-[48px] h-[24px] text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
+      <div className="w-[48px] h-[24px] text-[var(--ds-accent)] text-base font-semibold font-['DM_Sans'] leading-6 flex-none order-0 grow-0">
         About
       </div>
       <div className="w-full max-w-[780px] self-stretch flex-none order-1">

@@ -3,6 +3,11 @@ import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { X, Image as ImageIcon, BarChart3, Loader2, Loader, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreatePostForm } from '../../hooks/use-create-post-form';
+import {
+  MAX_POLL_QUESTION_LENGTH,
+  MAX_POLL_OPTION_LENGTH,
+  POLL_LIMIT_EXCEEDED_MSG,
+} from '../../hooks/use-post-poll';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import RichTextRenderer from '../parts/RichTextRenderer';
@@ -516,33 +521,77 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
 
           {/* Poll Flow */}
           {state.postType === 'poll' && !state.sharedPost && (
-            <div className="ml-11 -mt-2 flex flex-col pb-2 animate-in fade-in duration-200">
-              <input
-                type="text"
-                value={poll.pollQuestion}
-                onChange={(e) => poll.setPollQuestion(e.target.value)}
-                placeholder="Ask your network..."
-                className="w-full bg-transparent border-b border-ds-border py-[10px] text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none"
-              />
-              {poll.pollOptions.map((option, index) => (
-                <div key={option.id} className="relative flex items-center border-b border-ds-border">
+            <div className="ml-11 -mt-2 flex flex-col gap-2 pb-2 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1 w-full">
+                <div className="relative flex items-center border-b border-ds-border">
                   <input
                     type="text"
-                    value={option.text}
-                    onChange={(e) => poll.updatePollOption(option.id, e.target.value)}
-                    placeholder={`Option ${['A', 'B', 'C', 'D', 'E', 'F'][index] || index + 1}`}
-                    className="w-full bg-transparent py-[10px] pr-8 text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none"
+                    value={poll.pollQuestion}
+                    maxLength={MAX_POLL_QUESTION_LENGTH}
+                    onKeyDown={(e) => {
+                      const input = e.currentTarget;
+                      const hasSelection = (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+                      const isControlKey = e.ctrlKey || e.metaKey || e.altKey;
+                      const isNavKey = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Enter', 'Escape'].includes(e.key);
+                      if (!isControlKey && !isNavKey && e.key.length === 1 && !hasSelection && poll.pollQuestion.length >= MAX_POLL_QUESTION_LENGTH) {
+                        e.preventDefault();
+                        poll.setQuestionError(POLL_LIMIT_EXCEEDED_MSG);
+                      }
+                    }}
+                    onChange={(e) => poll.setPollQuestion(e.target.value)}
+                    placeholder="Ask your network..."
+                    className="w-full bg-transparent py-[10px] pr-2 text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none"
                   />
-                  {poll.pollOptions.length > 2 && (
-                    <button
-                      onClick={() => poll.removePollOption(option.id)}
-                      className="absolute right-0 p-1 text-ds-text-muted hover:text-ds-text-primary"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
-              ))}
+                {poll.questionError && (
+                  <p className="text-[var(--ds-error)] text-[12px] font-normal leading-[16px] animate-in fade-in duration-150 select-none">
+                    {poll.questionError}
+                  </p>
+                )}
+              </div>
+              {poll.pollOptions.map((option, index) => {
+                const optError = poll.optionErrors?.[option.id];
+                return (
+                  <div key={option.id} className="flex flex-col gap-1 w-full">
+                    <div className="relative flex items-center border-b border-ds-border">
+                      <input
+                        type="text"
+                        value={option.text}
+                        maxLength={MAX_POLL_OPTION_LENGTH}
+                        onKeyDown={(e) => {
+                          const input = e.currentTarget;
+                          const hasSelection = (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+                          const isControlKey = e.ctrlKey || e.metaKey || e.altKey;
+                          const isNavKey = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Enter', 'Escape'].includes(e.key);
+                          if (!isControlKey && !isNavKey && e.key.length === 1 && !hasSelection && option.text.length >= MAX_POLL_OPTION_LENGTH) {
+                            e.preventDefault();
+                            poll.setOptionErrors((prev: Record<string, string>) => ({ ...prev, [option.id]: POLL_LIMIT_EXCEEDED_MSG }));
+                          }
+                        }}
+                        onChange={(e) => poll.updatePollOption(option.id, e.target.value)}
+                        placeholder={`Option ${['A', 'B', 'C', 'D', 'E', 'F'][index] || index + 1}`}
+                        className="w-full bg-transparent py-[10px] pr-8 text-[14px] text-ds-text-primary placeholder:text-ds-text-muted focus:outline-none"
+                      />
+                      {poll.pollOptions.length > 2 && (
+                        <div className="absolute right-0 flex items-center select-none">
+                          <button
+                            onClick={() => poll.removePollOption(option.id)}
+                            className="p-1 text-ds-text-muted hover:text-ds-text-primary"
+                            type="button"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {optError && (
+                      <p className="text-[var(--ds-error)] text-[12px] font-normal leading-[16px] animate-in fade-in duration-150 select-none">
+                        {optError}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
               {poll.pollOptions.length < 4 && (
                 <div className="pt-4 pb-2">
                   <button

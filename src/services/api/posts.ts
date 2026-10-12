@@ -96,8 +96,9 @@ export const removeVote = async (postId: string, companyId?: string): Promise<{ 
   return response.data;
 };
 
-export const getPollAnalytics = async (postId: string): Promise<any> => {
-  const response = await api.get<any>(`/post/${postId}/poll/analytics`);
+export const getPollAnalytics = async (postId: string, companyId?: string): Promise<any> => {
+  const config = companyId ? { params: { companyId } } : undefined;
+  const response = await api.get<any>(`/post/${postId}/poll/analytics`, config);
   return response.data;
 };
 

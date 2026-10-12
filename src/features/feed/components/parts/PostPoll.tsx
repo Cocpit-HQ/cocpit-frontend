@@ -42,11 +42,15 @@ export const PostPoll: React.FC<PostPollProps> = ({
 
   const isVoted = !!pollData.user_vote;
   const isEnded = pollData.is_active === false;
+  // Automatically shows results if voted or ended, or toggled via Show result
   const displayResults = isVoted || showResult || isEnded;
 
   const durationText = pollData.duration
     ? (pollData.duration.toLowerCase().includes('left') ? pollData.duration : `${pollData.duration} left`)
     : '1 week left';
+
+  const totalVotes = pollData.total_votes || 0;
+  const voteCountLabel = `${totalVotes} ${totalVotes === 1 ? 'vote' : 'votes'}`;
 
   return (
     <div
@@ -55,7 +59,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
     >
       {/* 1. Poll Title / Question */}
       {title && (
-        <div className="self-stretch justify-start text-[14px] font-medium font-dmsans leading-[20px] line-clamp-2 text-left text-ds-text-primary">
+        <div className="self-stretch justify-start text-[14px] font-medium font-dmsans leading-[20px] text-left text-ds-text-primary whitespace-pre-wrap break-words">
           {title}
         </div>
       )}
@@ -71,38 +75,59 @@ export const PostPoll: React.FC<PostPollProps> = ({
           const isSelected = pollData.user_vote === option.option_id;
           const isDisabled = isVoting || isEnded;
 
-          // ── Option with Results / Voted State ─────────────────────────────
+          // ── Option with Results / Voted / Ended State (bars & %) ───────────
           if (displayResults) {
+            const canVoteFromResults = !isVoted && !isEnded && !isVoting;
+
             return (
               <div
                 key={option.option_id}
-                className="self-stretch inline-flex justify-start items-center gap-2"
+                className="self-stretch inline-flex justify-start items-center gap-2 w-full"
               >
-                {/* Option Pill */}
+                {/* Option Pill with Progress Fill Bar */}
                 <div
-                  className={`flex-1 px-3 py-1.5 rounded-[100px] flex justify-start items-center gap-2.5 min-w-0 ${
-                    isSelected ? 'bg-ds-surface-2' : ''
+                  onClick={() => canVoteFromResults && handleVote(option.option_id)}
+                  className={`relative flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border overflow-hidden flex justify-start items-center gap-2.5 min-w-0 transition-colors ${
+                    isSelected
+                      ? 'border-ds-border bg-ds-surface-1/40'
+                      : canVoteFromResults
+                      ? 'cursor-pointer hover:border-ds-border/80'
+                      : 'cursor-default'
                   }`}
                 >
-                  <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
-                    {option.option_text}
+                  {/* Background Progress Fill Bar */}
+                  <div
+                    className={`absolute inset-y-0 left-0 transition-all duration-300 ease-out rounded-[100px] ${
+                      isSelected ? 'bg-ds-surface-2' : 'bg-ds-surface-1'
+                    }`}
+                    style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+                  />
+
+                  {/* Option Label */}
+                  <div className="relative z-10 justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate flex items-center gap-1.5">
+                    <span className="truncate">{option.option_text}</span>
+                    {isSelected && (
+                      <span className="text-[10px] text-ds-text-secondary font-medium shrink-0">
+                        (You)
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Percentage Area */}
-                <div className="w-10 flex justify-end items-center gap-1 shrink-0">
-                  <div className="justify-start text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
+                <div className="w-10 flex justify-end items-center gap-0.5 shrink-0 select-none">
+                  <span className="justify-start text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
                     {percentage}
-                  </div>
-                  <div className="justify-start text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
+                  </span>
+                  <span className="justify-start text-[12px] font-medium font-dmsans leading-[16px] text-ds-text-primary">
                     %
-                  </div>
+                  </span>
                 </div>
               </div>
             );
           }
 
-          // ── Unvoted State (Capsule) ───────────────────────────────────────
+          // ── Unvoted State (Capsule Buttons) ──────────────────────────────────
           return (
             <button
               key={option.option_id}
@@ -111,7 +136,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
               disabled={isDisabled}
               className={`self-stretch px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent flex justify-start items-center gap-2.5 transition-colors outline-none text-left select-none ${
                 !isDisabled
-                  ? 'cursor-pointer hover:bg-ds-surface-2 active:scale-[0.99]'
+                  ? 'cursor-pointer hover:bg-ds-surface-2 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ds-accent'
                   : 'cursor-default opacity-60'
               }`}
             >
@@ -123,54 +148,76 @@ export const PostPoll: React.FC<PostPollProps> = ({
         })}
       </div>
 
-      {/* 3. Footer Info: Vote Count • Duration • Show result / Undo */}
+      {/* 3. Footer Info: Vote Count • Status / Duration • Action */}
       <div className="inline-flex justify-center items-center gap-2">
+        {/* Vote Count: Self taps to view Voters List; Others is plain text */}
         {isOwner && postId ? (
           <button
             type="button"
             onClick={() => setIsVotersModalOpen(true)}
-            className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
+            className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary hover:underline hover:opacity-90 cursor-pointer outline-none transition-all line-clamp-2"
             aria-label="View poll voters"
           >
-            {isEnded ? 'Ended' : `${pollData.total_votes || 0} votes`}
+            {voteCountLabel}
           </button>
         ) : (
-          <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary line-clamp-2">
-            {isEnded ? 'Ended' : `${pollData.total_votes || 0} votes`}
+          <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary line-clamp-2 select-none">
+            {voteCountLabel}
           </div>
         )}
 
         {/* Separator Dot */}
         <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
 
-        {/* Duration */}
-        <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-secondary line-clamp-2">
-          {durationText}
+        {/* Status: "Poll closed" if ended/inactive, otherwise duration text */}
+        <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-secondary line-clamp-2 select-none">
+          {isEnded ? 'Poll closed' : durationText}
         </div>
 
-        {/* Separator Dot */}
-        <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
-
-        {/* Show result / Undo */}
-        {isVoted ? (
-          <button
-            type="button"
-            onClick={() => !isVoting && pollData.user_vote && handleVote(pollData.user_vote)}
-            disabled={isVoting}
-            className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
-            aria-label="Undo vote"
-          >
-            Undo
-          </button>
+        {/* Actions: Undo / Show result / Hide result */}
+        {isEnded ? (
+          // Poll Closed / Inactive: Voting & "Undo" are disabled
+          isVoted ? (
+            <>
+              <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+              <button
+                type="button"
+                disabled
+                className="justify-start text-ds-text-muted text-[12px] font-medium font-dmsans leading-[16px] cursor-not-allowed opacity-50 outline-none select-none line-clamp-2"
+                aria-label="Undo disabled (poll closed)"
+              >
+                Undo
+              </button>
+            </>
+          ) : null
+        ) : isVoted ? (
+          // Active & Voted: Can tap "Undo" to cancel/change vote
+          <>
+            <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+            <button
+              type="button"
+              onClick={() => !isVoting && pollData.user_vote && handleVote(pollData.user_vote)}
+              disabled={isVoting}
+              className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2 disabled:opacity-50"
+              aria-label="Undo vote"
+            >
+              Undo
+            </button>
+          </>
         ) : (
-          <button
-            type="button"
-            onClick={() => setShowResult((prev) => !prev)}
-            className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2"
-            aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
-          >
-            {showResult ? 'Hide result' : 'Show result'}
-          </button>
+          // Active & Unvoted: Can toggle "Show result" / "Hide result"
+          <>
+            <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
+            <button
+              type="button"
+              onClick={() => setShowResult((prev) => !prev)}
+              disabled={isVoting}
+              className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2 disabled:opacity-50"
+              aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
+            >
+              {showResult ? 'Hide result' : 'Show result'}
+            </button>
+          </>
         )}
 
         {isVoting && (

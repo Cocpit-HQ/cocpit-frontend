@@ -913,7 +913,7 @@ export const FeedPost = (props: FeedPostProps) => {
             pollData={pollData}
             postId={id}
             title={props.title || targetTitle || targetContent || (pollData as any)?.question || (pollData as any)?.poll_question}
-            isOwner={activeProfile?.type === 'COMPANY' ? Boolean(props.isCompanyPost && activeProfile?.id?.toString() === props.authorId?.toString()) : (currentUserId === props.authorId?.toString())}
+            isOwner={isTargetAuthorMe || Boolean(props.isOwnPost)}
             isVoting={isVoting}
             handleVote={(optionId) => handleVote(optionId, isCompany, activeProfile?.id)}
           />

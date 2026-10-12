@@ -17,7 +17,12 @@ import { ComposerImagePreview, ComposerImage, MAX_COMPOSER_IMAGES } from '@/feat
 import { getImageDimensions, getVideoDimensions } from '@/features/feed/utils/imageBounds';
 import PostVideoCard from '@/features/feed/components/create-post/post-types/PostVideoCard';
 import SharedPreview from '@/features/feed/components/create-post/SharedPreview';
-import { usePostPoll } from '@/features/feed/hooks/use-post-poll';
+import {
+  usePostPoll,
+  MAX_POLL_QUESTION_LENGTH,
+  MAX_POLL_OPTION_LENGTH,
+  POLL_LIMIT_EXCEEDED_MSG,
+} from '@/features/feed/hooks/use-post-poll';
 import { MentionTextarea } from './MentionTextarea';
 import { parseMentionsForFrontend, formatMentionsForBackend } from '@/lib/mentions';
 import { UserMention } from '@/services/api/users';
@@ -882,46 +887,83 @@ export function EditPostModal({
                 {/* Poll Creator Mode */}
                 {postType === 'poll' && (
                   <div className="w-[371px] max-w-full flex flex-col gap-4">
-                    <div className="w-full">
-                      <input
-                        type="text"
-                        value={poll.pollQuestion}
-                        onChange={(e) => poll.setPollQuestion(e.target.value)}
-                        placeholder="Ask your network..."
-                        className="w-full bg-transparent border-b pb-2.5 text-[15px] outline-none transition-colors"
-                        style={{
-                          borderColor: 'var(--ds-border)',
-                          color: 'var(--ds-text-primary)',
-                        }}
-                      />
+                    <div className="w-full flex flex-col gap-1">
+                      <div className="relative flex items-center w-full">
+                        <input
+                          type="text"
+                          value={poll.pollQuestion}
+                          maxLength={MAX_POLL_QUESTION_LENGTH}
+                          onKeyDown={(e) => {
+                            const input = e.currentTarget;
+                            const hasSelection = (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+                            const isControlKey = e.ctrlKey || e.metaKey || e.altKey;
+                            const isNavKey = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Enter', 'Escape'].includes(e.key);
+                            if (!isControlKey && !isNavKey && e.key.length === 1 && !hasSelection && poll.pollQuestion.length >= MAX_POLL_QUESTION_LENGTH) {
+                              e.preventDefault();
+                              poll.setQuestionError(POLL_LIMIT_EXCEEDED_MSG);
+                            }
+                          }}
+                          onChange={(e) => poll.setPollQuestion(e.target.value)}
+                          placeholder="Ask your network..."
+                          className="w-full bg-transparent border-b pb-2.5 text-[15px] outline-none transition-colors"
+                          style={{
+                            borderColor: poll.questionError ? 'var(--ds-error)' : 'var(--ds-border)',
+                            color: 'var(--ds-text-primary)',
+                          }}
+                        />
+                      </div>
+                      {poll.questionError && (
+                        <p className="text-[var(--ds-error)] text-[12px] font-normal leading-[16px] animate-in fade-in duration-150 select-none">
+                          {poll.questionError}
+                        </p>
+                      )}
                     </div>
                     <div className="w-full flex flex-col gap-3">
                       {poll.pollOptions.map((opt, index) => {
                         const letter = ['A', 'B', 'C', 'D', 'E', 'F'][index] || `${index + 1}`;
+                        const optError = poll.optionErrors?.[opt.id];
                         return (
-                          <div key={opt.id} className="relative flex items-center w-full">
-                            <input
-                              type="text"
-                              value={opt.text}
-                              onChange={(e) => poll.updatePollOption(opt.id, e.target.value)}
-                              placeholder={`Option ${letter}`}
-                              className="w-full bg-transparent border-b pb-2.5 pr-8 text-[14px] outline-none transition-colors"
-                              style={{
-                                borderColor: 'var(--ds-border)',
-                                color: 'var(--ds-text-primary)',
-                              }}
-                            />
-                            {poll.pollOptions.length > 2 && index >= 2 && (
-                              <button
-                                type="button"
-                                onClick={() => poll.removePollOption(opt.id)}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:opacity-80 cursor-pointer transition-colors outline-none"
-                                style={{ color: 'var(--ds-text-muted)' }}
-                                title="Remove option"
-                                aria-label="Remove option"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                          <div key={opt.id} className="flex flex-col gap-1 w-full">
+                            <div className="relative flex items-center w-full">
+                              <input
+                                type="text"
+                                value={opt.text}
+                                maxLength={MAX_POLL_OPTION_LENGTH}
+                                onKeyDown={(e) => {
+                                  const input = e.currentTarget;
+                                  const hasSelection = (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+                                  const isControlKey = e.ctrlKey || e.metaKey || e.altKey;
+                                  const isNavKey = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Enter', 'Escape'].includes(e.key);
+                                  if (!isControlKey && !isNavKey && e.key.length === 1 && !hasSelection && opt.text.length >= MAX_POLL_OPTION_LENGTH) {
+                                    e.preventDefault();
+                                    poll.setOptionErrors((prev: Record<string, string>) => ({ ...prev, [opt.id]: POLL_LIMIT_EXCEEDED_MSG }));
+                                  }
+                                }}
+                                onChange={(e) => poll.updatePollOption(opt.id, e.target.value)}
+                                placeholder={`Option ${letter}`}
+                                className="w-full bg-transparent border-b pb-2.5 pr-8 text-[14px] outline-none transition-colors"
+                                style={{
+                                  borderColor: optError ? 'var(--ds-error)' : 'var(--ds-border)',
+                                  color: 'var(--ds-text-primary)',
+                                }}
+                              />
+                              {poll.pollOptions.length > 2 && index >= 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => poll.removePollOption(opt.id)}
+                                  className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:opacity-80 cursor-pointer transition-colors outline-none"
+                                  style={{ color: 'var(--ds-text-muted)' }}
+                                  title="Remove option"
+                                  aria-label="Remove option"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            {optError && (
+                              <p className="text-[var(--ds-error)] text-[12px] font-normal leading-[16px] animate-in fade-in duration-150 select-none">
+                                {optError}
+                              </p>
                             )}
                           </div>
                         );
