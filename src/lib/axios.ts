@@ -15,13 +15,15 @@ export const publicApi = axios.create({
 });
  
 publicApi.interceptors.request.use((config) => {
-  const actorHeaders = getActorHeadersFromStorage();
-  if (actorHeaders) {
-    config.headers["x-actor-type"] = actorHeaders.type;
-    config.headers["x-actor-id"] = actorHeaders.id;
-  } else {
-    delete config.headers["x-actor-type"];
-    delete config.headers["x-actor-id"];
+  if (!config.headers["x-actor-type"]) {
+    const actorHeaders = getActorHeadersFromStorage();
+    if (actorHeaders) {
+      config.headers["x-actor-type"] = actorHeaders.type;
+      config.headers["x-actor-id"] = actorHeaders.id;
+    } else {
+      delete config.headers["x-actor-type"];
+      delete config.headers["x-actor-id"];
+    }
   }
   return config;
 });
@@ -53,13 +55,15 @@ api.interceptors.request.use(
       config.headers["Content-Type"] = "application/json";
     }
 
-    const actorHeaders = getActorHeadersFromStorage();
-    if (actorHeaders) {
-      config.headers["x-actor-type"] = actorHeaders.type;
-      config.headers["x-actor-id"] = actorHeaders.id;
-    } else {
-      delete config.headers["x-actor-type"];
-      delete config.headers["x-actor-id"];
+    if (!config.headers["x-actor-type"]) {
+      const actorHeaders = getActorHeadersFromStorage();
+      if (actorHeaders) {
+        config.headers["x-actor-type"] = actorHeaders.type;
+        config.headers["x-actor-id"] = actorHeaders.id;
+      } else {
+        delete config.headers["x-actor-type"];
+        delete config.headers["x-actor-id"];
+      }
     }
  
     return config;

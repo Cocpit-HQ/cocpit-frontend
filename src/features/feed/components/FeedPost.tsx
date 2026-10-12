@@ -32,6 +32,7 @@ import SharedPreview from './create-post/SharedPreview';
 import { RepostIcon, NotInterestedIcon, InterestedIcon } from '@/components/icons';
 import { toast } from 'sonner';
 import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr: false });
 const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
@@ -706,13 +707,14 @@ export const FeedPost = (props: FeedPostProps) => {
         id={`post-${id}`}
         data-post-id={id}
         onClick={handleCardClick}
-        className={
+        className={cn(
           props.isFullContent
             ? "w-full max-w-[442px] mx-auto bg-ds-bg flex flex-col gap-[16px] cursor-default box-border"
             : props.isProfileView
               ? "w-full max-w-[442px] mx-auto flex flex-col gap-[12px] bg-ds-bg cursor-pointer group"
-              : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-[var(--ds-media-border)]'}`
-        }
+              : `w-full flex flex-col px-4 md:px-0 pt-[16px] pb-[8px] gap-[12px] bg-ds-bg max-w-[442px] mx-auto cursor-pointer ${isInterested ? '' : 'border-b border-[var(--ds-media-border)]'}`,
+          props.className
+        )}
       >
         {isRepostWithoutThoughts && shared_post && (
           <button

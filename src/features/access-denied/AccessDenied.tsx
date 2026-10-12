@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { RotateCw } from 'lucide-react';
 import './access-denied.css';

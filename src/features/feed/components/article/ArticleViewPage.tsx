@@ -18,7 +18,7 @@ import { constrainImageToBox } from '@/features/feed/utils/constrainArticleImage
 import { getPostMenuAccess } from '../../utils/postMenuAccess';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useSocial } from '@/context/SocialContext';
-import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
+import { companyProfileService } from '@/features/businessProfile';
 import { usePostInteractions } from '../../hooks/use-post-interactions';
 import { PostActions } from '../parts/PostActions';
 import { LikeBar } from '../parts/LikeBar';

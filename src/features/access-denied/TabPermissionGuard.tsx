@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import AccessDenied from './AccessDenied';
 
 interface TabPermissionGuardProps {

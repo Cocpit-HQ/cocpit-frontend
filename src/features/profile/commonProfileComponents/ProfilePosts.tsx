@@ -21,7 +21,7 @@ import { useSession } from "next-auth/react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSocial } from "@/context/SocialContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service";
+import { companyProfileService } from "@/features/businessProfile";
 import { toast } from "sonner";
 
 import { PostCarousel } from "@/components/shared/PostCarousel";

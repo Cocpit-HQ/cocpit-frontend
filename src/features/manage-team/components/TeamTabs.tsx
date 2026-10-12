@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TeamTabsProps {

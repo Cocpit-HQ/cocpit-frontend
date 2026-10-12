@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useSocial } from '@/context/SocialContext';
 import { useAuth } from '@/hooks/use-auth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
+import { companyProfileService } from '@/features/businessProfile';
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
 import { PostBody } from '../parts/PostBody';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';

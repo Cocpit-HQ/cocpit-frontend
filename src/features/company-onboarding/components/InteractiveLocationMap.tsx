@@ -17,6 +17,7 @@ interface InteractiveLocationMapProps {
   longitude?: number | null;
   onLocationChange?: (location: StructuredLocation) => void;
   className?: string;
+  readOnly?: boolean;
 }
 
 // Google Maps script loader singleton
@@ -124,6 +125,7 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
   longitude,
   onLocationChange,
   className = "",
+  readOnly = false,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -167,7 +169,8 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
           zoom: 15,
           disableDefaultUI: true, // Completely removes external Google Maps popups & links
           scrollwheel: false, // Disables mouse wheel scroll zoom on map
-          gestureHandling: "greedy", // Instant 1-finger / mouse drag without "use two fingers" prompt
+          gestureHandling: readOnly ? "none" : "greedy", // Instant 1-finger / mouse drag without "use two fingers" prompt
+          draggable: !readOnly,
           styles: DARK_MAP_STYLES,
           clickableIcons: false, // Prevents clicking POIs from opening Google info cards
           zoomControl: false,
@@ -180,11 +183,13 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
         lastCoordsRef.current = initialCenter;
         setIsMapLoaded(true);
 
-        // Map drag and movement event listeners for Zomato / Swiggy experience
-        map.addListener("dragstart", () => {
-          isDraggingRef.current = true;
-          setIsDragging(true);
-        });
+        if (!readOnly) {
+          // Map drag and movement event listeners for Zomato / Swiggy experience
+          map.addListener("dragstart", () => {
+            isDraggingRef.current = true;
+            setIsDragging(true);
+          });
+        }
 
         const handlePositionSettle = () => {
           if (!mapInstanceRef.current) return;
@@ -214,9 +219,49 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
           geocodeTimeoutRef.current = setTimeout(async () => {
             setIsResolvingAddress(true);
             try {
-              const result = await reverseGeocode(lat, lng);
+              let result: StructuredLocation | null = null;
+              try {
+                result = await reverseGeocode(lat, lng, true);
+              } catch (geoErr: any) {
+                // If backend does not support the country or endpoint fails, fallback to client-side Google Geocoder
+                if (geoErr?.message !== "UNSUPPORTED_COUNTRY") {
+                  console.warn("Reverse geocode service warning:", geoErr);
+                }
+              }
+
+              if (!result && window.google?.maps?.Geocoder) {
+                const geocoder = new window.google.maps.Geocoder();
+                const geoRes = await new Promise<any>((resolve) => {
+                  geocoder.geocode({ location: { lat, lng } }, (res: any, status: any) => {
+                    if (status === "OK" && res?.[0]) resolve(res[0]);
+                    else resolve(null);
+                  });
+                });
+                if (geoRes) {
+                  let city = "";
+                  let state = "";
+                  let country = "";
+                  geoRes.address_components?.forEach((c: any) => {
+                    if (c.types.includes("locality")) city = c.long_name;
+                    if (!city && (c.types.includes("administrative_area_level_2") || c.types.includes("sublocality"))) city = c.long_name;
+                    if (c.types.includes("administrative_area_level_1")) state = c.long_name;
+                    if (c.types.includes("country")) country = c.long_name;
+                  });
+                  result = {
+                    placeId: geoRes.place_id,
+                    country,
+                    state,
+                    city: city || state || country,
+                    formattedAddress: [city, state, country].filter(Boolean).join(", ") || geoRes.formatted_address,
+                    latitude: lat,
+                    longitude: lng,
+                  };
+                }
+              }
+
               if (result) {
                 const addr =
+                  [result.city, result.state, result.country].filter(Boolean).join(", ") ||
                   result.formattedAddress ||
                   [result.street, result.sublocality || result.village, result.city, result.state, result.country]
                     .filter(Boolean)
@@ -232,24 +277,20 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
                 }
               }
             } catch (err) {
-              console.error("Reverse geocoding error:", err);
+              console.warn("Location resolution warning:", err);
             } finally {
               setIsResolvingAddress(false);
             }
           }, 400);
         };
 
-        map.addListener("dragend", () => {
-          isDraggingRef.current = false;
-          setIsDragging(false);
-          handlePositionSettle();
-        });
-
-        map.addListener("dragend", () => {
-          isDraggingRef.current = false;
-          setIsDragging(false);
-          handlePositionSettle();
-        });
+        if (!readOnly) {
+          map.addListener("dragend", () => {
+            isDraggingRef.current = false;
+            setIsDragging(false);
+            handlePositionSettle();
+          });
+        }
       })
       .catch((err) => {
         console.error("Failed to load Google Maps script:", err);
@@ -358,7 +399,9 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
       {/* Map Canvas */}
       <div
         ref={mapContainerRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing outline-none"
+        className={`w-full h-full outline-none ${
+          readOnly ? "cursor-default pointer-events-none" : "cursor-grab active:cursor-grabbing"
+        }`}
         tabIndex={-1}
       />
 
@@ -425,8 +468,8 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
         </div>
       )}
 
-      {/* Top Floating Helper Badge */}
-      {isMapLoaded && (
+      {/* Top Floating Helper Badge (only in edit/interactive mode) */}
+      {!readOnly && isMapLoaded && (
         <div className="absolute top-3 left-3 px-3 py-1 bg-ds-surface-1/90 backdrop-blur-md rounded-full border border-ds-border flex items-center gap-1.5 shadow-md pointer-events-none z-10 animate-in fade-in duration-200">
           <span className="font-['DM_Sans'] text-[11px] font-medium text-ds-text-primary tracking-wide">
             {isDragging
@@ -441,8 +484,8 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
         </div>
       )}
 
-      {/* Floating Bottom Location Address Badge */}
-      {isMapLoaded && currentAddress && (
+      {/* Floating Bottom Location Address Badge (only in edit/interactive mode) */}
+      {!readOnly && isMapLoaded && currentAddress && (
         <div className="absolute bottom-3 left-3 right-16 px-3 py-1.5 bg-ds-surface-1/90 backdrop-blur-md rounded-2xl border border-ds-border flex items-center gap-2 shadow-lg pointer-events-none z-10 max-w-[calc(100%-80px)]">
           <MapPin className="w-3.5 h-3.5 text-ds-accent shrink-0" />
           <span className="font-['DM_Sans'] text-xs text-ds-text-primary truncate">
@@ -451,8 +494,8 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
         </div>
       )}
 
-      {/* Controls Overlay (Zoom In, Zoom Out, Locate Me) - 36px control height */}
-      {isMapLoaded && (
+      {/* Controls Overlay (Zoom In, Zoom Out, Locate Me) - only in edit/interactive mode */}
+      {!readOnly && isMapLoaded && (
         <div className="absolute bottom-3 right-3 flex flex-col gap-1.5 z-20">
           <button
             type="button"

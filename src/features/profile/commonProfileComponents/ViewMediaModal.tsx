@@ -11,6 +11,7 @@ export interface ViewMediaModalProps {
   avatarUrl?: string | null;
   type?: "avatar" | "banner";
   alt?: string;
+  shape?: "circle" | "square";
 }
 
 export function ViewMediaModal({
@@ -20,6 +21,7 @@ export function ViewMediaModal({
   avatarUrl,
   type = "avatar",
   alt,
+  shape = "circle",
 }: ViewMediaModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -56,8 +58,12 @@ export function ViewMediaModal({
 
       {/* Conditional Media View */}
       {type === "avatar" ? (
-        /* Ellipse 41 - Profile Photo: 200px on mobile, 240px sm, 300px on desktop, circular centered */
-        <div className="w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-[300px] md:h-[300px] max-w-[calc(100vw-32px)] max-h-[calc(100vw-32px)] rounded-full overflow-hidden flex items-center justify-center shadow-2xl z-10">
+        /* Profile Photo / Logo: 200px on mobile, 240px sm, 300px on desktop */
+        <div
+          className={`w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-[300px] md:h-[300px] max-w-[calc(100vw-32px)] max-h-[calc(100vw-32px)] ${
+            shape === "square" ? "rounded-2xl" : "rounded-full"
+          } overflow-hidden flex items-center justify-center shadow-2xl z-10 bg-[var(--ds-surface-2)]`}
+        >
           <img
             src={activeUrl}
             alt={alt || "Profile photo"}
@@ -66,7 +72,7 @@ export function ViewMediaModal({
         </div>
       ) : (
         /* Frame 2609600 - Banner: full width 4:1 aspect ratio on mobile, 800px by 200px on desktop */
-        <div className="w-full md:w-[800px] h-auto md:h-[200px] aspect-[800/200] md:aspect-auto max-h-[80vh] overflow-hidden flex items-center justify-center shadow-2xl z-10">
+        <div className="w-full md:w-[800px] h-auto md:h-[200px] aspect-[800/200] md:aspect-auto max-h-[80vh] rounded-[16px] overflow-hidden flex items-center justify-center shadow-2xl z-10 border border-[var(--ds-border)]">
           <img
             src={activeUrl}
             alt={alt || "Banner"}

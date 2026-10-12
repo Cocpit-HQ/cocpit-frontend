@@ -22,6 +22,7 @@ import { DarkCalendar } from "@/features/onboarding/components/DarkCalendar";
 import { useCompanyOnboardingStore } from "../store/company-onboarding.store";
 import { publishNewOrganization } from "../services/company-onboarding.api";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { getPreservedUserActorFromStorage } from "@/lib/actor-context";
 
 interface StepVerificationProps {
   onNext: () => void;
@@ -58,7 +59,7 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
   onBack,
 }) => {
   const router = useRouter();
-  const { refreshCompanies } = useActiveProfile();
+  const { activeProfile, refreshCompanies } = useActiveProfile();
   const {
     organizationType,
     organizationName,
@@ -216,7 +217,22 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
         formData.append("documents", primaryDoc.file);
       }
 
-      const res = await publishNewOrganization(formData);
+      let actorOverride: { 'x-actor-type': string; 'x-actor-id': string } | undefined = undefined;
+
+      // When the user is currently acting as a COMPANY/ORGANIZATION,
+      // preserve that org context for existing features, and explicitly execute
+      // the creation call under the human USER actor key.
+      if (activeProfile?.type === "COMPANY") {
+        const preservedUser = getPreservedUserActorFromStorage();
+        if (preservedUser?.id) {
+          actorOverride = {
+            'x-actor-type': 'USER',
+            'x-actor-id': preservedUser.id,
+          };
+        }
+      }
+
+      const res = await publishNewOrganization(formData, actorOverride);
       if (res && ((res as any).success === false || (res as any).error)) {
         const backendMsg = (res as any).message || (res as any).error?.message || (res as any).error || "Failed to publish organization";
         toast.error(backendMsg);

@@ -22,7 +22,7 @@ import ActivityLogFiltersBar from '../components/activity/ActivityLogFilters';
 import EditRoleModal from '../components/roles/EditRoleModal';
 import DeleteRoleConfirm from '../components/roles/DeleteRoleConfirm';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RoleDetailsPageProps {

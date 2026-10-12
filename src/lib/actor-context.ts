@@ -42,6 +42,40 @@ export function getActorHeadersFromStorage() {
   }
 }
 
+export function getPreservedUserActorFromStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const storedUser = sessionStorage.getItem("cocpit_user_actor");
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    const user = JSON.parse(storedUser);
+    if (!user || !user.id) return null;
+    return {
+      type: "USER" as const,
+      id: String(user.id),
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setPreservedUserActorInStorage(userId: string) {
+  if (typeof window === "undefined" || !userId) return;
+  try {
+    sessionStorage.setItem(
+      "cocpit_user_actor",
+      JSON.stringify({ type: "USER", id: userId })
+    );
+  } catch (e) {
+    // Ignore storage quota or disabled storage errors
+  }
+}
+
 export function trackActorMetric(name: string, detail?: Record<string, unknown>) {
   if (typeof window !== "undefined" && typeof window.performance?.mark === "function") {
     try {

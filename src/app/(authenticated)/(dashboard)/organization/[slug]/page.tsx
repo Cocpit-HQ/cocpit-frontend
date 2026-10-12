@@ -4,23 +4,9 @@ import React, { useState } from "react";
 import { useParams, useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { companyService } from "@/services/organization.service";
-import { OrganizationHeader } from "@/components/organizations/organization-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { OrganizationTechStack } from "@/components/organizations/organization-tech-stack";
-import { OrganizationGallery } from "@/components/organizations/organization-gallery";
-import { OrganizationPosts } from "@/components/organizations/organization-posts";
-import { CreatePostButton } from "@/components/organizations/CreatePostOrganizationButton";
-import { OrganizationEvents } from "@/components/organizations/OrganizationEvents";
-import { OrganizationPublicJobs } from "@/components/organizations/OrganizationPublicJobs";
-import { HomeRecentPosts } from "@/components/organizations/home-tab/HomeRecentPosts";
-import { HomeUpcomingEvents } from "@/components/organizations/home-tab/HomeUpcomingEvents";
-import { HomeGalleryPreview } from "@/components/organizations/home-tab/HomeGalleryPreview";
-import { OrgSubOrganizations } from "@/components/organizations/OrgSubOrganizations";
 import { recordProfileView } from "@/services/api/dashboard";
 import { useSession } from "next-auth/react";
-import CompanyProfilePage from "@/features/companyprofile/components/view/CompanyProfilePage";
+import { BusinessProfilePage } from "@/features/businessProfile";
 import { FeatureGuard } from "@/components/feature-flags";
 
 export default function CompanyPage() {
@@ -63,15 +49,12 @@ export default function CompanyPage() {
         );
     }
 
-    const isMember = !!company?.viewer_role_data;
+    const isExplicitPublic = searchParams?.get("view") === "public" || searchParams?.get("mode") === "public" || searchParams?.get("preview") === "true";
+    const isMember = !isExplicitPublic && !!company?.viewer_role_data;
 
     return (
         <FeatureGuard featureKey="enableOrganizations" moduleName="Organizations Showcase">
-            <div className="flex flex-col min-h-screen bg-background pb-12">
-                <div className="w-full px-0">
-                    <CompanyProfilePage isOwnProfile={isMember} />
-                </div>
-            </div>
+            <BusinessProfilePage isOwnProfile={isMember} />
         </FeatureGuard>
     );
 }

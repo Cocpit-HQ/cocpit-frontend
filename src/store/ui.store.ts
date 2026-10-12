@@ -50,6 +50,8 @@ interface UIState {
   addInterestedPostId: (id: string) => void;
   hiddenPostIds: string[];
   addHiddenPostId: (id: string) => void;
+  isOrgPublicView: boolean;
+  setOrgPublicView: (isPublic: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -104,4 +106,6 @@ export const useUIStore = create<UIState>((set) => ({
   addNotInterestedPostId: (id) => set((state) => ({ notInterestedPostIds: [...state.notInterestedPostIds, id] })),
   addInterestedPostId: (id) => set((state) => ({ interestedPostIds: [...state.interestedPostIds, id] })),
   addHiddenPostId: (id) => set((state) => ({ hiddenPostIds: [...state.hiddenPostIds, id] })),
+  isOrgPublicView: false,
+  setOrgPublicView: (isPublic) => set({ isOrgPublicView: isPublic }),
 }));

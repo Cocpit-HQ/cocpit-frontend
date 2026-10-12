@@ -13,7 +13,7 @@ import { getPendingInvitations, respondInvitation } from "@/services/api/group-c
 import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
 import { useSocket } from "@/context/SocketContext"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions"
+import { useCompanyPermissions } from "@/features/businessProfile"
 import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 import Avatar from "@/components/shared/Avatar"

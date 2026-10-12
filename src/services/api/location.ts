@@ -65,9 +65,9 @@ export const getPlaceDetails = async (placeId: string, sessionToken: string, isG
   }
 };
 
-export const reverseGeocode = async (lat: number, lng: number): Promise<StructuredLocation | null> => {
+export const reverseGeocode = async (lat: number, lng: number, isGlobal?: boolean): Promise<StructuredLocation | null> => {
   try {
-    const response = await api.get("/places/reverse-geocode", { params: { lat, lng } });
+    const response = await api.get("/places/reverse-geocode", { params: { lat, lng, global: isGlobal } });
     return response.data.data || null;
   } catch (err: any) {
     if (err?.response?.data?.code === "UNSUPPORTED_COUNTRY") {

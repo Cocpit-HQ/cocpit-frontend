@@ -1,4 +1,4 @@
-export { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+export { useBusinessPermissions, useCompanyPermissions } from '@/features/businessProfile';
 export {
     COMP_KEYS,
     useCompany,

@@ -70,9 +70,16 @@ export const confirmPhoneOTP = async (phone: string, otp: string): Promise<Verif
   return response.data;
 };
 
-export const publishNewOrganization = async (formData: FormData): Promise<CompleteOnboardingResponse> => {
+export const publishNewOrganization = async (
+  formData: FormData,
+  actorHeadersOverride?: { 'x-actor-type': string; 'x-actor-id': string }
+): Promise<CompleteOnboardingResponse> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'multipart/form-data',
+    ...(actorHeadersOverride || {}),
+  };
   const response = await api.post(`/organizations/publish-new`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers,
   });
   return response.data;
 };

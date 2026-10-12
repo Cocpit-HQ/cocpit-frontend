@@ -24,7 +24,7 @@ import GroupChat from "./components/group-chat/GroupChat";
 import { GroupChatProvider } from "./components/group-chat/groupChat.context";
 import CreateGroupModal from "./components/group-chat/CreateGroupModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
-import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions";
+import { useCompanyPermissions } from "@/features/businessProfile";
 import { useToast } from "@/hooks/use-toast";
 import { DUMMY_JOB_CHATS } from "@/features/messaging/data/companyMessagingMockData";
 import { companyService } from "@/services/organization.service";

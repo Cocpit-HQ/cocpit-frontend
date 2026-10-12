@@ -51,7 +51,7 @@ import {
 import Avatar from "@/components/shared/Avatar";
 import { hasMessageMedia } from "./MessageBubble";
 import { useSocial } from "@/context/SocialContext";
-import { companyProfileService } from "@/features/companyprofile/services/companyprofile.service";
+import { companyProfileService, useCompanyPermissions } from "@/features/businessProfile";
 import { cn } from "@/lib/utils";
 import { ReportModal } from "@/components/shared/ReportModal";
 import MessageInfoModal from "../../MessageInfoModal";
@@ -61,7 +61,6 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
 import { Plus } from "lucide-react";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
-import { useCompanyPermissions } from "@/features/companyprofile/hooks/useCompanyPermissions";
 import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
 import {
   DropdownMenu,

@@ -22,20 +22,44 @@ export function AppShell({
   children,
   hideBottomNav = false,
 }: AppShellProps) {
-  const { setActiveModal } = useUIStore();
-  const { isCompany } = useActiveProfile();
+  const { setActiveModal, activeModal, isArticleMode, isOrgPublicView } = useUIStore();
+  const { isCompany, activeProfile } = useActiveProfile();
   const { checkPermission } = useCompanyPermissions();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isCreateJobActive = searchParams?.get('view') === 'create-job';
 
-  // Automatically hide bottom nav and distraction-free elements on article pages, article mode, post detail, or public profile full view
+  // Automatically hide bottom nav and distraction-free elements on article pages, article mode, post detail, public profile full view, or edit pages
   const isArticlePage = pathname?.includes('/article/');
   const isPostDetailPage = pathname?.startsWith('/post/');
   const isPublicProfile = Boolean(
     pathname?.startsWith('/profile/') &&
     !['/profile/edit', '/profile/download', '/profile/posts'].includes(pathname)
   );
+  const isOrgProfilePage = Boolean(
+    pathname?.startsWith('/organization/') &&
+    !pathname?.includes('/edit') &&
+    !pathname?.includes('/settings') &&
+    !pathname?.includes('/analytics') &&
+    !pathname?.includes('/dashboard') &&
+    !pathname?.includes('/old-settings') &&
+    !pathname?.includes('/invite')
+  );
+  const isOwnActiveCompany = Boolean(
+    isCompany && activeProfile?.slug && (
+      pathname === `/organization/${activeProfile.slug}` ||
+      pathname === `/organization/${encodeURIComponent(activeProfile.slug)}` ||
+      decodeURIComponent(pathname || '') === `/organization/${activeProfile.slug}`
+    )
+  );
+  const isExplicitPublicOrg = Boolean(
+    isOrgProfilePage && (
+      searchParams?.get('view') === 'public' ||
+      searchParams?.get('mode') === 'public' ||
+      searchParams?.get('preview') === 'true'
+    )
+  );
+  const isPublicOrgProfile = (isOrgProfilePage && !isOwnActiveCompany) || isExplicitPublicOrg || Boolean(isOrgPublicView);
   const isNotificationsPage = pathname?.startsWith('/notifications');
   const isSettingsRoute = Boolean(
     pathname === '/settings' ||
@@ -47,8 +71,7 @@ export function AppShell({
     pathname?.match(/^\/organization\/[^\/]+\/settings\/?$/)
   );
   const isSettingsSubpage = isSettingsRoute && !isRootSettings;
-  const { activeModal, isArticleMode } = useUIStore();
-  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isNotificationsPage;
+  const isDistractionFree = isArticlePage || isArticleMode || isPostDetailPage || isPublicProfile || isPublicOrgProfile || isNotificationsPage;
   const shouldHideBottomNav = hideBottomNav || isDistractionFree || isSettingsSubpage || activeModal === 'create-post';
 
   return (

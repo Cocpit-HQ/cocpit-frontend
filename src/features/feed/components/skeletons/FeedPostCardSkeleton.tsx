@@ -2,10 +2,11 @@
 
 import React from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
-export function FeedPostCardSkeleton() {
+export function FeedPostCardSkeleton({ className }: { className?: string } = {}) {
   return (
-    <div className="w-full max-w-[442px] mx-auto rounded-[8px] border border-ds-border bg-ds-surface-1 p-3 flex flex-col gap-4 overflow-hidden animate-pulse">
+    <div className={cn("w-full max-w-[442px] mx-auto rounded-[8px] border border-ds-border bg-ds-surface-1 p-3 flex flex-col gap-4 overflow-hidden animate-pulse", className)}>
       {/* Header section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between">

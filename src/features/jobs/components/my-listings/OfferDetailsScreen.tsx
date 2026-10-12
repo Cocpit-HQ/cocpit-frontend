@@ -5,7 +5,7 @@ import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { useCompanyPermissions } from '@/features/companyprofile/hooks/useCompanyPermissions';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import { formatSalaryRange, getCurrencyIcon } from '../../utils/currency.utils';
 
 interface OfferDetailsScreenProps {

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { trackActorMetric } from "@/lib/actor-context";
+import { trackActorMetric, setPreservedUserActorInStorage } from "@/lib/actor-context";
 import { getActorContext, setActorContext } from "@/services/api/auth";
 import { Company } from "@/services/organization.service";
 
@@ -240,10 +240,22 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     useEffect(() => {
         if (activeProfile) {
             sessionStorage.setItem("cocpit_active_profile", JSON.stringify(activeProfile));
+            if (activeProfile.type === "USER" && activeProfile.id) {
+                setPreservedUserActorInStorage(activeProfile.id);
+            }
         } else {
             sessionStorage.removeItem("cocpit_active_profile");
         }
     }, [activeProfile]);
+
+    useEffect(() => {
+        if (session?.user) {
+            const userId = (session.user as any).id || (session.user as any).sub || session.user.email;
+            if (userId) {
+                setPreservedUserActorInStorage(String(userId));
+            }
+        }
+    }, [session?.user]);
 
     useEffect(() => {
         if (activeProfile?.type === "USER" && session?.user) {

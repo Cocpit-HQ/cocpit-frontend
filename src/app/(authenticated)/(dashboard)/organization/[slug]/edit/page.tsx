@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import CompanyProfileEditPage from "../../../../../../features/companyprofile/components/edit/CompanyProfileEditPage";
+import { BusinessProfileEditPage } from "@/features/businessProfile";
 
 export default function OrganizationEditRoute() {
-  return <CompanyProfileEditPage />;
+  return <BusinessProfileEditPage />;
 }

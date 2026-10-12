@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -25,6 +26,12 @@ import { CommentModal } from "../CommentModal";
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { LikesModal } from "@/shared/commonComponents/LikesModal";
+import dynamic from "next/dynamic";
+
+const SavePostModal = dynamic(
+  () => import("@/shared/commonComponents/SavePostModal").then((m) => m.SavePostModal),
+  { ssr: false }
+);
 import { useUIStore } from "@/store/ui.store";
 import { useSession } from "next-auth/react";
 import { LikeBar } from "@/features/feed/components/parts/LikeBar";
@@ -70,6 +77,7 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
   onUpdate,
 }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setEditMode } = useUIStore();
   const { data: session } = useSession();
   const viewerUsername = (session?.user as any)?.username;
@@ -83,6 +91,7 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
 
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isUndoRepostConfirmOpen, setIsUndoRepostConfirmOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -140,17 +149,30 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
       const res = await toggleLike(localPost.id);
       setIsLiked(res.liked);
       setLikesCount(res.likeCount);
+      queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     } catch {
       toast.error("Failed to update like");
     }
   };
 
   const handleBookmark = async () => {
+    if (!isSaved) {
+      setIsSaveModalOpen(true);
+      return;
+    }
+
+    const previousIsSaved = isSaved;
+    setIsSaved(false);
+
     try {
       const res = await toggleSavePost(localPost.id);
       setIsSaved(res.saved);
       toast.success(res.saved ? "Post saved" : "Post removed from saves");
+      queryClient.invalidateQueries({ queryKey: ["saved-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["saved_folders"] });
     } catch {
+      setIsSaved(previousIsSaved);
       toast.error("Failed to update save status");
     }
   };
@@ -169,6 +191,8 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
           ...prev,
           shares: (Number(prev.shares) || 0) + 1 + "",
         }));
+        queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
+        queryClient.invalidateQueries({ queryKey: ["feed"] });
         toast.success("Post reposted successfully!");
       } catch (err: any) {
         toast.error(err.response?.data?.message || "Failed to repost");
@@ -500,6 +524,18 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
           isOpen={isLikesModalOpen}
           onClose={() => setIsLikesModalOpen(false)}
           postId={localPost.id}
+        />
+      )}
+
+      {isSaveModalOpen && (
+        <SavePostModal
+          isOpen={isSaveModalOpen}
+          onClose={() => setIsSaveModalOpen(false)}
+          postId={localPost.id}
+          onSaved={(saved) => {
+            setIsSaved(saved);
+            setIsSaveModalOpen(false);
+          }}
         />
       )}
     </div>

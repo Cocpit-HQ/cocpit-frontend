@@ -394,7 +394,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
     <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
       <div 
         ref={dropdownRef}
-        className="w-full pointer-events-auto pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8"
+        className={`w-full pointer-events-auto ${hasSidebar ? 'pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8' : 'px-4 sm:px-6'}`}
       >
         <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
           <div className="relative w-full max-w-[442px]">

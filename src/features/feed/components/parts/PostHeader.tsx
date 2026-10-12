@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/icons';
 import { useSocial } from '@/context/SocialContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
+import { companyProfileService } from '@/features/businessProfile';
 import { PostMenuAccess } from '../../utils/postMenuAccess';
 
 interface PostHeaderProps {

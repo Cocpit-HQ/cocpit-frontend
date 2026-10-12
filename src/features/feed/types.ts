@@ -32,6 +32,7 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   authorRole?: string;
   /** z-index override for the post-options dropdown (useful inside high-z overlays). */
   menuZIndex?: number;
+  className?: string;
 }
 
 export type FeedInteraction = {
