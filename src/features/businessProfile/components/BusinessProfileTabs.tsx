@@ -43,7 +43,11 @@ export function BusinessProfileTabs({
   const router = useRouter();
   const pathname = usePathname();
   const tabParam = searchParams?.get("tab");
-  const isEdu = data.entityType === "INSTITUTION" || (data as any)?.entity_type === "INSTITUTION";
+  const isEdu =
+    data.entityType === "INSTITUTION" ||
+    (data as any)?.entity_type === "INSTITUTION" ||
+    Boolean((data as any)?.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const activeTabKey = isEdu ? "alumni" : "people";
   const [activeTab, setActiveTab] = React.useState(() => normalizeTab(tabParam, isEdu));
 

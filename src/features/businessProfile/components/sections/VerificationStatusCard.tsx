@@ -32,7 +32,7 @@ export default function VerificationStatusCard({
           <div className="flex items-center shrink-0">
             <span
               className={`ds-text-small ${
-                isVerified ? "text-ds-success" : "text-ds-warning"
+                isVerified ? "text-[#22C55E]" : "text-ds-warning"
               }`}
             >
               {isVerified ? "Verified" : "Unverified"}

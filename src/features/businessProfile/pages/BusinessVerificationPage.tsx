@@ -110,13 +110,15 @@ export function BusinessVerificationPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size exceeds 10MB limit.");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size exceeds 5MB limit.");
+      e.target.value = "";
       return;
     }
 
     setSelectedFile(file);
     toast.success("Document attached successfully");
+    e.target.value = "";
   };
 
   const displayDate = useMemo(() => {
@@ -269,49 +271,36 @@ export function BusinessVerificationPage() {
 
         {/* Conditional Screen View */}
         {showStatusView ? (
-          /* Image 3: Account Verification Status List */
-          <div className="self-stretch flex flex-col items-start gap-4 animate-in fade-in-50 duration-150">
-            {isVerified && (
-              <div className="self-stretch flex items-center justify-between py-3 border-b border-ds-border">
-                <div className="flex flex-col items-start gap-0.5">
-                  <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
-                    Account verification
-                  </span>
-                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-                    Your identity has been verified
-                  </span>
-                </div>
-                <span className="text-ds-success text-sm font-medium font-['DM_Sans'] leading-5">
-                  Verified
+          /* Account Verification Status List (Matching Figma Design) */
+          <div className="self-stretch flex flex-col items-start animate-in fade-in-50 duration-150">
+            {/* Identity Verified Row */}
+            <div className="self-stretch flex items-center justify-between py-3 border-b border-ds-border">
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+                  Account verification
+                </span>
+                <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
+                  Your identity has been verified
                 </span>
               </div>
-            )}
+              <span className="text-[#22C55E] text-sm font-medium font-['DM_Sans'] leading-5">
+                Verified
+              </span>
+            </div>
 
-            {isSubmitted && (
-              <div className="self-stretch flex items-center justify-between py-3 border-b border-ds-border">
-                <div className="flex flex-col items-start gap-0.5">
-                  <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
-                    Account verification
-                  </span>
-                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-                    Document sent for verification
-                  </span>
-                </div>
-                <span className="text-ds-text-muted text-sm font-medium font-['DM_Sans'] leading-5">
-                  Submitted
+            {/* Document Verification Row */}
+            <div className="self-stretch flex items-center justify-between py-3">
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+                  Account verification
+                </span>
+                <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
+                  Document sent for verification
                 </span>
               </div>
-            )}
-
-            {/* Optional Re-upload CTA */}
-            <div className="self-stretch flex justify-center items-center mt-6">
-              <button
-                type="button"
-                onClick={() => setIsEditingForm(true)}
-                className="h-9 px-4 rounded-[100px] border border-ds-border text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5 hover:bg-ds-surface-1 transition-colors cursor-pointer"
-              >
-                Submit New Document
-              </button>
+              <span className="text-ds-text-muted text-sm font-medium font-['DM_Sans'] leading-5">
+                Submitted
+              </span>
             </div>
           </div>
         ) : (
@@ -434,7 +423,7 @@ export function BusinessVerificationPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                  accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,application/pdf,image/png,image/jpeg,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileChange}
                   className="hidden"
                 />

@@ -34,16 +34,23 @@ const POPULAR_OFFICE_LOCATIONS = [
 ];
 
 const MEDIA_OPTIONS = [
-  { value: "instagram", label: "Instagram" },
-  { value: "website", label: "Website" },
-  { value: "x", label: "X" },
-  { value: "facebook", label: "Facebook" },
-  { value: "youtube", label: "YouTube" },
-  { value: "discord", label: "Discord" },
-  { value: "linkedin", label: "LinkedIn" },
-  { value: "github", label: "GitHub" },
-  { value: "cocpit", label: "Cocpit" },
+  { value: "instagram", label: "Instagram", placeholder: "www.instagram.com" },
+  { value: "website", label: "Website", placeholder: "www.example.com" },
+  { value: "x", label: "X", placeholder: "www.x.com" },
+  { value: "facebook", label: "Facebook", placeholder: "www.facebook.com" },
+  { value: "youtube", label: "YouTube", placeholder: "www.youtube.com" },
+  { value: "discord", label: "Discord", placeholder: "www.discord.com" },
+  { value: "linkedin", label: "LinkedIn", placeholder: "www.linkedin.com" },
+  { value: "github", label: "GitHub", placeholder: "www.github.com" },
+  { value: "cocpit", label: "Cocpit", placeholder: "www.cocpit.com" },
 ];
+
+function getMediaPlaceholder(platform?: string): string {
+  const p = (platform || "").toLowerCase().trim();
+  if (p === "twitter") return "www.x.com";
+  const matched = MEDIA_OPTIONS.find((m) => m.value === p);
+  return matched?.placeholder || "www.example.com";
+}
 
 interface BusinessEditAboutTabProps {
   onCancel: () => void;
@@ -84,8 +91,16 @@ function parseAboutPayload(rawAbout: any, rawProfile?: any) {
   }));
 
   const links: CustomLink[] = linksArr.map((l: any, idx: number) => {
-    const rawP = (l.platform || "").toLowerCase();
-    const p = rawP === "twitter" ? "x" : rawP;
+    const rawP = (l.platform || "").toLowerCase().trim();
+    let p = rawP === "twitter" ? "x" : rawP;
+    if (p === "other") {
+      const labelLower = (l.display_label || l.label || "").toLowerCase().trim();
+      if (labelLower === "x" || labelLower === "twitter") {
+        p = "x";
+      } else if (labelLower === "website") {
+        p = "website";
+      }
+    }
     const matched = MEDIA_OPTIONS.find((m) => m.value === p);
     return {
       id: l.link_id || l.id || String(idx),
@@ -94,7 +109,7 @@ function parseAboutPayload(rawAbout: any, rawProfile?: any) {
         matched?.label ||
         l.label ||
         (p ? p.charAt(0).toUpperCase() + p.slice(1) : "Link"),
-      platform: matched ? matched.value : p || "website",
+      platform: matched ? matched.value : "website",
       url: l.url || "",
     };
   });
@@ -194,6 +209,23 @@ export default function BusinessEditAboutTab({
     profileQueryData?.org ||
     profileQueryData?.organization ||
     profileQueryData;
+
+  const org =
+    effectiveProfile?.org ||
+    effectiveProfile?.organization ||
+    effectiveProfile ||
+    {};
+  const about = aboutData?.about || aboutData || {};
+
+  const isInstitution =
+    org.entity_type === "INSTITUTION" ||
+    org.entityType === "INSTITUTION" ||
+    about.entity_type === "INSTITUTION" ||
+    about.entityType === "INSTITUTION" ||
+    Boolean(org.institution_type || about.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(
+      ((org.institution_type || org.industry || about.industry) || "").toLowerCase().trim()
+    );
 
   const isLoading = isAboutLoading || (!orgProfile && isProfileLoading);
 
@@ -546,13 +578,13 @@ export default function BusinessEditAboutTab({
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["orgAbout", slug],
+        queryKey: ["orgAbout"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["orgProfile", slug],
+        queryKey: ["orgProfile"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["companyProfile", slug],
+        queryKey: ["companyProfile"],
       });
     },
     onError: (error: any) => {
@@ -641,7 +673,11 @@ export default function BusinessEditAboutTab({
                 setIsDirty(true);
                 setAboutDraft({ description: e.target.value });
               }}
-              placeholder="Describe your company and what makes it unique."
+              placeholder={
+                isInstitution
+                  ? "Describe your institute and what makes it unique."
+                  : "Describe your company and what makes it unique."
+              }
             />
           </div>
           <div className="text-center justify-start text-ds-text-muted text-xs font-normal font-['DM_Sans'] leading-4">
@@ -910,7 +946,7 @@ export default function BusinessEditAboutTab({
                     <div className="w-[95px] h-9 rounded-3xl flex justify-start items-center gap-2">
                       <Icon
                         name={
-                          (link.platform || "instagram").toLowerCase() as any
+                          (link.platform || "website").toLowerCase() as any
                         }
                         size={20}
                         className="w-5 h-5 shrink-0"
@@ -919,7 +955,7 @@ export default function BusinessEditAboutTab({
                         {MEDIA_OPTIONS.find((m) => m.value === link.platform)
                           ?.label ||
                           link.platform ||
-                          "Instagram"}
+                          "Website"}
                       </span>
                     </div>
                     <ChevronDown
@@ -932,7 +968,7 @@ export default function BusinessEditAboutTab({
 
                   {/* Media Dropdown Panel */}
                   {openMediaDropdownId === link.id && (
-                    <div className="absolute top-full left-0 mt-2 z-[100] w-[122px] h-[300px] p-3 flex flex-col items-center gap-3 bg-ds-bg border border-ds-border rounded-[16px] shadow-2xl overflow-hidden box-border">
+                    <div className="absolute top-full left-0 mt-2 z-[100] w-[122px] max-h-[300px] p-3 flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border rounded-[16px] shadow-2xl overflow-y-auto overflow-x-hidden scrollbar-hide box-border">
                       {MEDIA_OPTIONS.map((m) => (
                         <button
                           key={m.value}
@@ -968,7 +1004,7 @@ export default function BusinessEditAboutTab({
                     onChange={(e) =>
                       handleLinkChange(link.id, "url", e.target.value)
                     }
-                    placeholder="www.instagram.com"
+                    placeholder={getMediaPlaceholder(link.platform)}
                     maxLength={255}
                     className="self-stretch text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none p-0 m-0 placeholder:text-ds-text-muted"
                   />

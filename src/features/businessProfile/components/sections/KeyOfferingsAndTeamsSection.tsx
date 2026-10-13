@@ -18,7 +18,11 @@ export default function KeyOfferingsAndTeamsSection({
   onViewMoreClick,
   onViewMoreTeamsClick,
 }: KeyOfferingsAndTeamsSectionProps) {
-  const isEdu = data.entityType === "INSTITUTION";
+  const isEdu =
+    data.entityType === "INSTITUTION" ||
+    (data as any)?.entity_type === "INSTITUTION" ||
+    Boolean((data as any)?.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const sectionTitle =
     title || (isOwnProfile ? "Teams" : isEdu ? "Alumni" : "People");
   const handleViewMore = onViewMoreClick || onViewMoreTeamsClick;
@@ -96,7 +100,7 @@ export default function KeyOfferingsAndTeamsSection({
       {/* Right Column: Teams */}
       {hasTeams && (
         <div className="flex-1 self-stretch flex flex-col justify-start items-start gap-5 min-w-0">
-          {/* Members list block (constrained so View more aligns right under items) */}
+          {/* Members list block */}
           <div className="w-full max-w-[280px] sm:max-w-[320px] flex flex-col justify-start items-start gap-4 min-w-0">
             <h2 className="self-stretch text-ds-text-primary ds-text-body-2">
               {sectionTitle}
@@ -132,8 +136,8 @@ export default function KeyOfferingsAndTeamsSection({
               </div>
             ))}
 
-            {/* View more CTA aligned at bottom-right of the team list */}
-            <div className="w-full flex justify-end pt-1">
+            {/* View more CTA centered at bottom of the team list */}
+            <div className="w-full flex justify-center pt-1">
               <button
                 type="button"
                 aria-label={`View more ${sectionTitle.toLowerCase()}`}

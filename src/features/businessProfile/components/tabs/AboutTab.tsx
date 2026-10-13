@@ -62,11 +62,15 @@ export default function AboutTab({ data }: AboutTabProps) {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
   };
-  const isEdu = about.entity_type === "INSTITUTION" || data.entityType === "INSTITUTION";
-  const rawIndustry = (isEdu ? about.institution_type : about.industry) || data.industry;
+  const isEdu =
+    about.entity_type === "INSTITUTION" ||
+    data.entityType === "INSTITUTION" ||
+    Boolean(about.institution_type || (data as any)?.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((about.industry || data.industry) || "").toLowerCase().trim());
+  const rawIndustry = (isEdu ? (about.institution_type || about.industry) : about.industry) || data.industry;
   const industry = formatIndustryType(rawIndustry);
 
-  const location = (about.location || data.location || "").trim();
+  const location = (about.location || about.headquarter || data.location || about.city || "").trim();
 
   // ── Part 2: Row 3 (Organization size & Founded) ──
   const rawSize = about.size || about.employeeCount || data.employeeCount;
@@ -279,7 +283,7 @@ export default function AboutTab({ data }: AboutTabProps) {
                   return (
                     <a
                       key={idx}
-                      href={link.url}
+                      href={link.url?.startsWith("http") ? link.url : `https://${link.url}`}
                       target="_blank"
                       rel="noreferrer"
                       title={label}

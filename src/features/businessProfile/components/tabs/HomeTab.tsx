@@ -36,7 +36,11 @@ export default function HomeTab({
     router.push(`/organization/${rawSlug}/verify`);
   };
 
-  const isEdu = data.entityType === "INSTITUTION";
+  const isEdu =
+    data.entityType === "INSTITUTION" ||
+    (data as any)?.entity_type === "INSTITUTION" ||
+    Boolean((data as any)?.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const peopleSectionTitle = isOwnProfile
     ? "Teams"
     : isEdu
@@ -47,7 +51,7 @@ export default function HomeTab({
     if (isOwnProfile) {
       router.push("/team");
     } else {
-      onTabChange?.("people");
+      onTabChange?.(isEdu ? "alumni" : "people");
     }
   };
 

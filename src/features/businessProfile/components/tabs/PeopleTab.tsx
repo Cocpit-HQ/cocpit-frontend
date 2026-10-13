@@ -23,7 +23,11 @@ interface PeopleTabProps {
 export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const isEdu = data.entityType === "INSTITUTION" || (data as any)?.entity_type === "INSTITUTION";
+  const isEdu =
+    data.entityType === "INSTITUTION" ||
+    (data as any)?.entity_type === "INSTITUTION" ||
+    Boolean((data as any)?.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const { activeProfile, isCompany } = useActiveProfile();
   const { data: session } = useSession();
   const queryClient = useQueryClient();

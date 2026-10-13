@@ -124,7 +124,9 @@ export default function BusinessEditProfileTab({
 
   const isInstitution =
     (profileData?.org || profileData)?.entity_type === "INSTITUTION" ||
-    (profileData?.org || profileData)?.entityType === "INSTITUTION";
+    (profileData?.org || profileData)?.entityType === "INSTITUTION" ||
+    Boolean((profileData?.org || profileData)?.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((profileData?.org || profileData)?.industry || "").toLowerCase().trim());
 
   const [initialData, setInitialData] = useState<{
     name: string;
@@ -372,7 +374,11 @@ export default function BusinessEditProfileTab({
   useEffect(() => {
     if (profileData) {
       const org = profileData.org || profileData;
-      const isInst = org.entity_type === "INSTITUTION" || org.entityType === "INSTITUTION";
+      const isInst =
+        org.entity_type === "INSTITUTION" ||
+        org.entityType === "INSTITUTION" ||
+        Boolean(org.institution_type) ||
+        ["school", "college", "university", "coaching", "tuition", "higher education"].includes((org.industry || "").toLowerCase().trim());
 
       // Cleanly resolve and deduplicate location (City, State, Country)
       const rawLocation = org.location || org.headquarter || org.city || "";
@@ -569,12 +575,31 @@ export default function BusinessEditProfileTab({
 
         queryClient.setQueryData(["companyProfile", slug], (old: any) => {
           if (!old) return old;
-          return {
-            ...old,
+          const wrapped = "org" in old;
+          const prevOrg = wrapped ? old.org : old;
+          const nextOrg = {
+            ...prevOrg,
+            ...response?.organization,
+            ...response?.org,
+            city: locationFormatted,
+            location: locationFormatted,
+            headquarter: locationFormatted,
+            latitude: latitude ?? prevOrg.latitude,
+            longitude: longitude ?? prevOrg.longitude,
+          };
+          return wrapped ? { ...old, org: nextOrg } : nextOrg;
+        });
+
+        queryClient.setQueryData(["orgAbout", slug], (old: any) => {
+          if (!old) return old;
+          const prevAbout = old.about || old;
+          const nextAbout = {
+            ...prevAbout,
             city: locationFormatted,
             location: locationFormatted,
             headquarter: locationFormatted,
           };
+          return "about" in old ? { ...old, about: nextAbout } : nextAbout;
         });
       }
 
@@ -616,9 +641,11 @@ export default function BusinessEditProfileTab({
         slug
       );
 
-      queryClient.invalidateQueries({ queryKey: ["orgProfile", slug] });
-      queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
-      queryClient.invalidateQueries({ queryKey: ["orgAbout", orgId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["orgProfile"] }),
+        queryClient.invalidateQueries({ queryKey: ["companyProfile"] }),
+        queryClient.invalidateQueries({ queryKey: ["orgAbout"] }),
+      ]);
     } catch (error: any) {
       console.error("Save profile error:", error);
       toast({

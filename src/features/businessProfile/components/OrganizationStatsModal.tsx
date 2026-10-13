@@ -250,9 +250,9 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
 
           {/* Row 3: Tabs */}
           <div className="w-full flex flex-row mt-3">
-            {(["following", "followers"] as const).map((tabKey) => {
+            {(["followers", "following"] as const).map((tabKey) => {
               const isActive = activeTab === tabKey;
-              const label = tabKey === "following" ? "Following" : "Followers";
+              const label = tabKey === "followers" ? "Followers" : "Following";
 
               return (
                 <button

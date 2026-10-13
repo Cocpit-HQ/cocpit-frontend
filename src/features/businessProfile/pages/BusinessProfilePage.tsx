@@ -66,7 +66,11 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   }, [socket, derivedOrgId, rawSlug, queryClient]);
 
   const company = profileResponse?.org || profileResponse?.organization || {};
-  const isEdu = company.entity_type === "INSTITUTION";
+  const isEdu =
+    company.entity_type === "INSTITUTION" ||
+    (company as any)?.entityType === "INSTITUTION" ||
+    Boolean(company.institution_type) ||
+    ["school", "college", "university", "coaching", "tuition", "higher education"].includes((company.industry || "").toLowerCase().trim());
   const orgId = company.company_id || company.org_id || company.id || derivedOrgId;
 
   const { data: peopleResponse } = useQuery({
@@ -230,7 +234,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       company.verified
     ),
     tagline: company.headline || company.slogan || "",
-    industry: (isEdu ? company.institution_type : company.industry) || (isEdu ? "Higher Education" : ""),
+    industry: (isEdu ? (company.institution_type || company.industry) : company.industry) || (isEdu ? "Higher Education" : ""),
     location: (() => {
       const raw = company.location || (company.city && company.country ? (company.city.toLowerCase().includes(company.country.toLowerCase()) ? company.city : `${company.city}, ${company.country}`) : (company.city || company.country || ""));
       if (!raw) return "";

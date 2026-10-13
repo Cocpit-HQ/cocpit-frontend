@@ -4,14 +4,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { Icon } from "@iconify/react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { BusinessProfileData } from "../types/business-profile.types";
 import { businessProfileService } from "../services/businessProfile.service";
 import { OrganizationStatsModal } from "./OrganizationStatsModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useToast } from "@/hooks/use-toast";
-import { Ban, Info } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -288,24 +286,30 @@ export default function BusinessProfileHeader({
                       More
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="end" className="w-48 bg-ds-surface-1 border border-ds-border text-ds-text-primary rounded-xl p-1.5 shadow-2xl">
-                    <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-ds-surface-2 rounded-lg outline-none transition-colors">
-                      <span className="text-sm font-medium text-ds-text-primary">Share profile</span>
-                      <Icon icon="fluent:share-24-regular" className="w-5 h-5 text-ds-text-secondary" />
+                  <DropdownMenuContent
+                    side="right"
+                    align="end"
+                    sideOffset={8}
+                    className="p-[12px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[16px] flex flex-col justify-start items-start gap-[16px] overflow-hidden shadow-2xl z-50 outline-none w-[135px] box-border"
+                  >
+                    <DropdownMenuItem
+                      onClick={onShareClick}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-0 grow-0"
+                    >
+                      Share profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-ds-surface-2 rounded-lg outline-none transition-colors">
-                      <span className="text-sm font-medium text-ds-text-primary">Report profile</span>
-                      <Info className="w-5 h-5 text-ds-text-secondary" />
+                    <DropdownMenuItem
+                      onClick={() => setIsReportModalOpen(true)}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0"
+                    >
+                      Report profile
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleBlockToggle}
                       disabled={blockMutation.isPending}
-                      className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-ds-surface-2 rounded-lg outline-none transition-colors"
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0 disabled:opacity-50"
                     >
-                      <span className="text-sm font-medium text-ds-text-primary">
-                        {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock profile" : "Block profile"}
-                      </span>
-                      <Ban className="w-5 h-5 text-ds-text-secondary" />
+                      {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock profile" : "Block profile"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
