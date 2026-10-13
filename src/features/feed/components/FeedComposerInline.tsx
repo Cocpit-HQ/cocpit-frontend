@@ -41,13 +41,25 @@ interface FeedComposerInlineProps {
   onClearEdit?: () => void;
   repostData?: any | null;
   onClearRepost?: () => void;
+  disabled?: boolean;
+  disabledPlaceholder?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPostData, onClearEdit, repostData, onClearRepost }: FeedComposerInlineProps) => {
+const FeedComposerInline = ({
+  onOpenArticle,
+  onPostCreated,
+  editPostId,
+  editPostData,
+  onClearEdit,
+  repostData,
+  onClearRepost,
+  disabled = false,
+  disabledPlaceholder = "Posting is disabled for your role",
+}: FeedComposerInlineProps) => {
   const { data: session } = useSession();
   const { activeProfile } = useActiveProfile();
   // Pass false to avoid redundant initial feed fetch in composer
@@ -688,9 +700,11 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
   return (
     <>
       <div
-        className="hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] max-h-[calc(100vh-140px)] mx-auto gap-[16px] relative"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
+        className={`hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] max-h-[calc(100vh-140px)] mx-auto gap-[16px] relative ${
+          disabled ? 'opacity-50 pointer-events-none select-none cursor-not-allowed' : ''
+        }`}
+        onDrop={disabled ? undefined : handleDrop}
+        onDragOver={disabled ? undefined : handleDragOver}
       >
 
         {/* Hidden file input for uploading images & videos */}
@@ -893,14 +907,15 @@ const FeedComposerInline = ({ onOpenArticle, onPostCreated, editPostId, editPost
                   <MentionTextarea
                     ref={textareaRef}
                     value={text}
+                    disabled={disabled}
                     onChange={handleTextChange}
-                    onFocus={handleFocus}
+                    onFocus={disabled ? undefined : handleFocus}
                     onMentionsChange={handleMentionsChange}
-                    onPaste={handlePaste}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
+                    onPaste={disabled ? undefined : handlePaste}
+                    onDrop={disabled ? undefined : handleDrop}
+                    onDragOver={disabled ? undefined : handleDragOver}
                     initialMentions={inlineMentions}
-                    placeholder="What would you like to share today?"
+                    placeholder={disabled ? disabledPlaceholder : "What would you like to share today?"}
                     className="ds-text-body text-ds-text-primary placeholder:text-ds-text-muted bg-transparent"
                   />
                 </div>

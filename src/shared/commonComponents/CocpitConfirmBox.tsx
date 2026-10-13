@@ -12,6 +12,8 @@ export interface CocpitConfirmBoxProps {
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
+  buttonWidthClass?: string;
+  modalClassName?: string;
 }
 
 export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
@@ -23,6 +25,8 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
   onConfirm,
   onCancel,
   isLoading = false,
+  buttonWidthClass,
+  modalClassName,
 }) => {
   return (
     <ActionConfirmModal
@@ -34,6 +38,8 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
       confirmText={confirmText}
       cancelText={cancelText}
       isLoading={isLoading}
+      buttonWidthClass={buttonWidthClass}
+      modalClassName={modalClassName}
     />
   );
 };

@@ -5,7 +5,7 @@ import {
   getChannelInvitations,
 } from '@/services/api/connections';
 import type { ConnectionTab, InvitationSubTab, ConnectionRequest, ConnectionRequestsResponse } from '../types';
-import { getUserPendingInvites } from '@/features/manage-team/services/team.service';
+import { getUserPendingInvites } from '@/features/org-team/services/team.service';
 
 const EMPTY_RESPONSE: ConnectionRequestsResponse = { data: [], totalCount: 0, page: 1, limit: 10 };
 

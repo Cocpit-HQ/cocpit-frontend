@@ -18,6 +18,8 @@ import { feedApi } from '../api/feed.api';
 import { unhidePost, submitPostFeedback } from '@/services/api/feed';
 import { useUIStore } from '@/store/ui.store';
 
+import { getPostMenuAccess, PostMenuAccess } from '../utils/postMenuAccess';
+
 // New Parts
 import { PostHeader } from './parts/PostHeader';
 import { PostBody } from './parts/PostBody';
@@ -43,8 +45,8 @@ const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then
 
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type } = props;
-  const { activeProfile, isCompany } = useActiveProfile();
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess } = props;
+  const { activeProfile, isCompany, userCompanies } = useActiveProfile();
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.id;
   const router = useRouter();
@@ -104,6 +106,18 @@ export const FeedPost = (props: FeedPostProps) => {
   const isTargetAuthorMe = activeProfile?.type === 'COMPANY'
     ? !!(targetIsCompanyPost && activeProfile?.id?.toString() === targetAuthorId?.toString())
     : (currentUserId === targetAuthorId?.toString());
+
+  const resolvedMenuAccess: PostMenuAccess = useMemo(() => {
+    if (props.menuAccess) return props.menuAccess;
+    return getPostMenuAccess({
+      isCompanyPost: targetIsCompanyPost,
+      companyId: targetAuthorId?.toString(),
+      createdByUserId: (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id,
+      currentUserId: currentUserId?.toString(),
+      userCompanies,
+      activeProfile,
+    });
+  }, [props.menuAccess, targetIsCompanyPost, targetAuthorId, interactionTargetProps, currentUserId, userCompanies, activeProfile]);
 
   // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(
@@ -751,6 +765,7 @@ export const FeedPost = (props: FeedPostProps) => {
               timeAgo={targetTimeAgo}
               visibility={targetVisibility}
               isMe={isTargetAuthorMe}
+              menuAccess={resolvedMenuAccess}
               isCompanyPost={targetIsCompanyPost}
               optionsBtnRef={optionsBtnRef}
               showOptions={showOptions}
@@ -845,6 +860,7 @@ export const FeedPost = (props: FeedPostProps) => {
               timeAgo={targetTimeAgo}
               visibility={targetVisibility}
               isMe={isTargetAuthorMe}
+              menuAccess={resolvedMenuAccess}
               isCompanyPost={targetIsCompanyPost}
               optionsBtnRef={optionsBtnRef}
               showOptions={showOptions}
@@ -964,7 +980,7 @@ export const FeedPost = (props: FeedPostProps) => {
           <div onClick={(e) => e.stopPropagation()} className="prevent-card-click">
             <CommentSection
               postId={targetId.toString()}
-              isPostOwner={isTargetAuthorMe}
+              isPostOwner={resolvedMenuAccess === 'owner'}
               incrementCommentCount={handleIncrementCommentCount}
               decrementCommentCount={handleDecrementCommentCount}
             />
@@ -975,7 +991,7 @@ export const FeedPost = (props: FeedPostProps) => {
           isOpen={isMobileDrawerOpen}
           onClose={() => setIsMobileDrawerOpen(false)}
           postId={targetId.toString()}
-          isPostOwner={isTargetAuthorMe}
+          isPostOwner={resolvedMenuAccess === 'owner'}
           incrementCommentCount={handleIncrementCommentCount}
           decrementCommentCount={handleDecrementCommentCount}
         />
@@ -1036,7 +1052,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onClose={() => setShowOptions(false)}
           position={optionsPos}
           triggerRef={optionsBtnRef}
-          isMe={isTargetAuthorMe}
+          isMe={resolvedMenuAccess === 'owner'}
           isPollPost={!!pollData}
           visibility={targetVisibility}
           zIndex={props.menuZIndex}

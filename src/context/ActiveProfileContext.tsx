@@ -89,7 +89,10 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const companies = bootstrappedCompanies;
     const bootstrapLockRef = React.useRef<string | null>(null);
 
-    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string } | null }) => {
+    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string; is_owner?: boolean; name?: string } | null; role?: string }) => {
+        if (company.viewer_role_data?.is_owner) return true;
+        const roleName = company.viewer_role_data?.name || company.role || '';
+        if (!roleName || roleName.toLowerCase().includes('_deleted_')) return false;
         return true;
     };
 

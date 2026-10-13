@@ -8,7 +8,7 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import api from '@/lib/axios';
 import { Suspense } from 'react';
 
-import * as teamService from '@/features/manage-team/services/team.service';
+import * as teamService from '@/features/org-team/services/team.service';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 function InviteContent() {

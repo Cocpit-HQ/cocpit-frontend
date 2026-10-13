@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { ManageTeamPage } from '@/features/manage-team';
+import { ManageTeamPage } from '@/features/org-team';
 
 export default function TeamPage() {
   return (

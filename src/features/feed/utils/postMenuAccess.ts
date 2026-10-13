@@ -33,7 +33,13 @@ export interface GetPostMenuAccessParams {
 }
 
 function hasFullAccess(perms: string[]): boolean {
-  return perms.includes('*') || perms.includes('MANAGE_COMPANY_DETAILS');
+  return (
+    perms.includes('*') ||
+    perms.includes('MANAGE_COMPANY_DETAILS') ||
+    perms.includes('MANAGE_ORGANIZATION_DETAILS') ||
+    perms.includes('MANAGE_COMPANY') ||
+    perms.includes('MANAGE_ORGANIZATION')
+  );
 }
 
 export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAccess {
@@ -60,25 +66,39 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
     (c) => String(c.org_id || c.company_id) === String(companyId)
   );
 
-  // Admin/Owner can manage any of their company's posts, independent of who's logged in as what.
-  const isCreator = Boolean(company && company.created_by && String(company.created_by) === String(currentUserId));
-  if (isCreator) return 'owner';
+  // Admin/Owner can manage any of their company's posts
+  const isOrgCreator = Boolean(company && company.created_by && String(company.created_by) === String(currentUserId));
+  const isOwnerFlag = Boolean(
+    (company?.viewer_role_data as any)?.is_owner ||
+    (params.activeProfile && String(params.activeProfile.id) === String(companyId) && (params.activeProfile as any)?.viewer_role_data?.is_owner)
+  );
+  const roleName = String(
+    (company?.viewer_role_data as any)?.name ||
+    (params.activeProfile && String(params.activeProfile.id) === String(companyId) ? (params.activeProfile as any)?.viewer_role_data?.name : '') ||
+    (company as any)?.role ||
+    ''
+  ).toUpperCase();
+  const isAdminOrOwnerRole = roleName === 'ADMIN' || roleName === 'OWNER';
+
+  if (isOrgCreator || isOwnerFlag || isAdminOrOwnerRole) return 'owner';
 
   const rawPerms =
     params.explicitPermissions ??
     company?.viewer_role_data?.permissions ??
+    (params.activeProfile && String(params.activeProfile.id) === String(companyId) ? (params.activeProfile as any)?.viewer_role_data?.permissions : null) ??
     null;
 
   if (!rawPerms || rawPerms.length === 0) return 'outsider'; // not a member of this company
 
-  const perms = rawPerms.map((p) => String(p).toUpperCase().trim());
+  const perms = rawPerms.map((p: any) => String(p).toUpperCase().trim());
 
   if (hasFullAccess(perms)) return 'owner';
 
   if (!currentUserId) return 'internal';
 
-  const hasCreatePost = perms.includes('CREATE_POST');
-  if (hasCreatePost && createdByUserId && String(createdByUserId) === String(currentUserId)) {
+  // Only the original post author (who created this post) gets owner rights (edit/delete)
+  const isAuthor = Boolean(createdByUserId && String(createdByUserId) === String(currentUserId));
+  if (isAuthor) {
     return 'owner';
   }
 

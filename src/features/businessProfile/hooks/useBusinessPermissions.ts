@@ -24,9 +24,9 @@ export function useBusinessPermissions(company?: any | null) {
   const originalRoleName = name || '';
   const roleName = originalRoleName.toUpperCase();
 
-  // Use permission-based ownership detection for both companies and institutions
-  const isOwner = permissions.includes('*');
-  const isAdmin = roleName === 'ADMIN';
+  // Use role and is_owner flag for accurate ownership detection
+  const isOwner = Boolean(company.viewer_role_data?.is_owner) || roleName === 'OWNER' || (permissions.includes('*') && roleName !== 'ADMIN');
+  const isAdmin = roleName === 'ADMIN' && !isOwner;
 
   // Helper to check specific permission
   const checkPermission = (perm: string) => {

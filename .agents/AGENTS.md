@@ -214,6 +214,7 @@ State changes must **not unexpectedly change component dimensions**.
 | **Pagination** | Content-driven page numbers in plain text. Active page gets orange underline (`#EC6229`), NOT a filled circle. Prev/Next controls disabled when no corresponding page exists. |
 | **Navigation / Header** | Responsive adapt. Logo left, nav items flow left to right, actions (search, notifications, profile) right. No overlap or clipping at smaller widths. Keyboard accessible. |
 | **Icon Button** | Defined control size (`36px` or `40px` hit area). Icon is centered. Must have an accessible name/label (`aria-label`). Don't rely on tooltip as the only accessible name. |
+| **Lists (Tags/Pills)** | When displaying a series of tags, labels, or inline items (like permissions), **limit the display to a maximum of 3 items**. If there are more than 3, display the first 3 and append a truncation indicator pill (e.g. `...` or `+X more`) rather than allowing the list to grow unbounded. |
 
 ---
 

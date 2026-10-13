@@ -62,13 +62,15 @@ export default function Avatar({
     const gradientKey = (url && url.startsWith('gradient-')) ? url : fallbackGradient;
     const backgroundClass = isUnknown
         ? "bg-transparent"
-        : `bg-ds-surface-1 text-ds-text-primary border border-ds-border`;
+        : isUrl
+            ? "bg-ds-surface-1 text-ds-text-primary"
+            : `bg-ds-surface-1 text-ds-text-primary ring-1 ring-inset ring-ds-border`;
 
     const roundedClass = isCompany ? companyRoundedClasses[size] : "rounded-full";
 
     return (
-        <div className={`relative shrink-0 ${className}`}>
-            <div className={`relative ${sizeClasses[size]} ${roundedClass} overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center select-none`}>
+        <div className={`relative shrink-0 ${sizeClasses[size]} ${className}`}>
+            <div className={`relative w-full h-full ${roundedClass} overflow-hidden flex-shrink-0 ${backgroundClass} font-semibold flex items-center justify-center select-none`}>
                 {!isUrl && (
                     isCompany ? (
                         <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0 w-full h-full">
@@ -78,7 +80,7 @@ export default function Avatar({
                             <path d="M14 29V13C14 12.4696 14.2107 11.9609 14.5858 11.5858C14.9609 11.2107 15.4696 11 16 11H24C24.5304 11 25.0391 11.2107 25.4142 11.5858C25.7893 11.9609 26 12.4696 26 13V29" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                     ) : (
-                        <UserIcon className="w-full h-full p-2 text-ds-text-primary" />
+                        <UserIcon className="w-full h-full p-1.5 text-ds-text-primary" />
                     )
                 )}
                 {isUrl ? (

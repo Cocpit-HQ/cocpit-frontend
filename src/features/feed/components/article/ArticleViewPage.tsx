@@ -523,17 +523,19 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
                   </button>
                 )}
 
-                <div className="flex items-center shrink-0">
-                  <button
-                    ref={menuBtnRef}
-                    type="button"
-                    onClick={handleMenuClick}
-                    className="flex h-[24px] w-[24px] items-center justify-center rounded hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors"
-                    aria-label="More options"
-                  >
-                    <MoreHorizontal className="w-[16px] h-[16px]" />
-                  </button>
-                </div>
+                {menuAccess !== 'internal' && (
+                  <div className="flex items-center shrink-0">
+                    <button
+                      ref={menuBtnRef}
+                      type="button"
+                      onClick={handleMenuClick}
+                      className="flex h-[24px] w-[24px] items-center justify-center rounded hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors"
+                      aria-label="More options"
+                    >
+                      <MoreHorizontal className="w-[16px] h-[16px]" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Comments Section (Scrollable list + input) */}

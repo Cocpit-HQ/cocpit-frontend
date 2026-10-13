@@ -22,6 +22,7 @@ import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadPr
 // Removed CreatePostModal
 
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration';
+import { useCompanyPermissions } from '@/components/organizations/hooks/use-company';
 
 interface FeedSectionProps {
     groups: StoryGroup[];
@@ -45,6 +46,8 @@ export const FeedSection = ({
     const router = useRouter();
     const { posts, sessionId, currentUser, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading, isError } = useFeed();
     const { activeProfile, isCompany, userCompanies } = useActiveProfile();
+    const { checkPermission } = useCompanyPermissions(activeProfile);
+    const canCreatePost = !isCompany || checkPermission('create_post') || checkPermission('CREATE_POST');
 
     // Restore page scroll position when returning to feed after viewing a post or repost
     useScrollRestoration(!feedLoading && posts.length > 0);
@@ -89,6 +92,8 @@ export const FeedSection = ({
                 <FeedComposer onOpenComposer={() => setIsCreateModalOpen(true)} />
                 ===== END OLD COMPOSER ===== */}
                 <FeedComposerInline
+                    disabled={!canCreatePost}
+                    disabledPlaceholder="Posting is disabled for your role"
                     onOpenArticle={() => {
                         const { setArticleMode } = useUIStore.getState();
                         setArticleMode(true);

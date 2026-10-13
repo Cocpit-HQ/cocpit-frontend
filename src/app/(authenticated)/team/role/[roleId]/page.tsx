@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
-import { RoleDetailsPage } from '@/features/manage-team';
+import { RoleDetailsPage } from '@/features/org-team';
 
 export default function RoleDetailRoute() {
   const params = useParams();

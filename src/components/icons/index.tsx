@@ -47,6 +47,7 @@ export type IconName =
   | "edit"
   | "edit-profile"
   | "search"
+  | "check"
   | "crop"
   | "flip"
   | "rotate"
@@ -159,6 +160,9 @@ export type IconName =
   | "link"
   | "format-link"
   | "format-image"
+  | "streamline-ultimate:team-meeting"
+  | "hugeicons:job-search"
+  | "hugeicons:analytics-up"
   | "comment-poll"
   | "poll-bar"
   | "comment-article"
@@ -1663,6 +1667,28 @@ export const LockPrivateIcon: React.FC<IconProps> = ({
 export const LockIcon = LockPrivateIcon;
 export const PrivateLockIcon = LockPrivateIcon;
 
+export const CheckIcon: React.FC<IconProps> = ({
+  className = "w-6 h-6",
+  fill = "currentColor",
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M20 6L9 17L4 12"
+      stroke={fill}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const DrivingLicenceIcon: React.FC<IconProps> = ({
   className = "w-5 h-5",
   size = 20,
@@ -2032,6 +2058,36 @@ export const BusinessIcon = BusinessBuildingIcon;
 
 // ─── Icon Dictionary Map ──────────────────────────────────────────────────────
 
+// Custom Icons for Permissions
+export const TeamMeetingIcon: React.FC<IconProps> = ({ className = "w-6 h-6", fill = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className} {...props}>
+    <g fill="none" stroke={fill} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+      <path d="M1.874 17.625a2.625 2.625 0 1 0 5.25 0a2.625 2.625 0 0 0-5.25 0"/>
+      <path d="M8.249 23.25a4.25 4.25 0 0 0-7.5 0m16.125-5.625a2.625 2.625 0 1 0 5.25 0a2.625 2.625 0 0 0-5.25 0"/>
+      <path d="M23.249 23.25a4.25 4.25 0 0 0-7.5 0M9.374 3.375a2.625 2.625 0 1 0 5.25 0a2.625 2.625 0 0 0-5.25 0m5.874 4.875a4.27 4.27 0 0 0-6.5 0m.302 11.457a8.28 8.28 0 0 0 5.944-.018M6.348 6a8.22 8.22 0 0 0-2.6 6c0 .253.015.5.038.75m16.425 0c.022-.248.038-.5.038-.75a8.22 8.22 0 0 0-2.6-6"/>
+    </g>
+  </svg>
+);
+
+export const JobSearchIcon: React.FC<IconProps> = ({ className = "w-6 h-6", fill = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className} {...props}>
+    <g fill="none" stroke={fill} strokeWidth="1.5">
+      <path strokeLinecap="round" d="M11.007 21H9.605c-3.585 0-5.377 0-6.491-1.135S2 16.904 2 13.25c0-3.653 0-5.48 1.114-6.615S6.02 5.5 9.605 5.5h3.803c3.585 0 5.378 0 6.492 1.135c.857.873 1.054 2.156 1.1 4.365"/>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.017 20.023L22 22m-.947-4.474a3.527 3.527 0 1 0-7.053 0a3.527 3.527 0 0 0 7.053 0"/>
+      <path d="m16 5.5l-.1-.31c-.495-1.54-.742-2.31-1.331-2.75C13.979 2 13.197 2 11.63 2h-.263c-1.565 0-2.348 0-2.937.44c-.59.44-.837 1.21-1.332 2.75L7 5.5"/>
+    </g>
+  </svg>
+);
+
+export const AnalyticsUpIcon: React.FC<IconProps> = ({ className = "w-6 h-6", fill = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className} {...props}>
+    <g fill="none" stroke={fill} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+      <path d="M7 18v-2m5 2v-3m5 3v-5M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12"/>
+      <path d="M5.992 11.486c2.155.072 7.042-.253 9.822-4.665m-1.822-.533l1.876-.302c.228-.029.564.152.647.367l.495 1.638"/>
+    </g>
+  </svg>
+);
+
 export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   cocpit: CocpitSocialIcon,
   "cocpit-logo": CocpitLogoIcon,
@@ -2186,6 +2242,10 @@ export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   lock: LockPrivateIcon,
   "lock-private": LockPrivateIcon,
   "private-lock": LockPrivateIcon,
+  check: CheckIcon,
+  "streamline-ultimate:team-meeting": TeamMeetingIcon,
+  "hugeicons:job-search": JobSearchIcon,
+  "hugeicons:analytics-up": AnalyticsUpIcon,
   "notification-lock": NotificationLockIcon,
   "org-avatar-fallback": OrgAvatarFallbackIcon,
   tag: TagUserIcon,
@@ -2230,3 +2290,4 @@ export const Icon: React.FC<IconProps> = ({ name, ...props }) => {
 };
 
 export default Icon;
+

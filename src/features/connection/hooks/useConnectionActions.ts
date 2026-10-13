@@ -18,7 +18,7 @@ import {
   acceptInvite as acceptTeamInvite, 
   declineInvite as declineTeamInvite,
   batchDeclineTeamInvites
-} from '@/features/manage-team/services/team.service';
+} from '@/features/org-team/services/team.service';
 import { useConnectionStore } from '@/store/connection.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 

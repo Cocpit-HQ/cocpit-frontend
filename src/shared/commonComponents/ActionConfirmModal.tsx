@@ -108,7 +108,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   const resolvedTitle = title || (preset ? preset.getTitle(targetName) : "Are you sure?");
   const resolvedDescription = description || (preset ? preset.description : "");
   const resolvedConfirmText = confirmText || (preset ? preset.confirmText : "Confirm");
-  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[85px]";
+  const buttonWidthClass = customButtonWidthClass || preset?.buttonWidthClass || "w-[84px]";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -118,12 +118,12 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         onOpenAutoFocus={(e) => e.preventDefault()}
         overlayClassName={overlayClassName}
         className={cn(
-          "box-border w-[237px] min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          "box-border w-fit min-w-[202px] max-w-[280px] min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
           modalClassName
         )}
       >
         {/* Frame 2609475: Text Container */}
-        <div className="w-full self-stretch flex flex-col items-center gap-2">
+        <div className="w-full self-stretch flex flex-col items-center gap-[8px]">
           <DialogTitle
             className={cn(
               "text-ds-text-primary text-center w-full m-0 p-0",
@@ -133,7 +133,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
             {resolvedTitle}
           </DialogTitle>
           {resolvedDescription && (
-            <DialogDescription className="ds-text-secondary text-ds-text-secondary text-center w-full m-0 p-0">
+            <DialogDescription className="font-['DM_Sans'] text-[14px] font-normal leading-[20px] text-[var(--ds-text-secondary)] text-center w-full m-0 p-0 whitespace-normal">
               {resolvedDescription}
             </DialogDescription>
           )}
