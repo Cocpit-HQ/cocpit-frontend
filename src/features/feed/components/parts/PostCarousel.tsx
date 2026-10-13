@@ -126,6 +126,44 @@ export function PostCarousel({
     }
   }, [imageDimensions, images.length]);
 
+  // Synchronously measure cached images or probe images when imageDimensions is missing
+  useEffect(() => {
+    if (imageDimensions && imageDimensions.every(Boolean)) return;
+    if (typeof window === "undefined") return;
+
+    let isMounted = true;
+    images.forEach((src, index) => {
+      if (!src) return;
+      const probe = new window.Image();
+      probe.src = src;
+
+      const applyDims = () => {
+        if (!isMounted) return;
+        if (probe.naturalWidth && probe.naturalHeight) {
+          setLoadedDims((prev) => {
+            const curr = prev[index];
+            if (!curr || curr.width !== probe.naturalWidth || curr.height !== probe.naturalHeight) {
+              const next = [...prev];
+              next[index] = { width: probe.naturalWidth, height: probe.naturalHeight };
+              return next;
+            }
+            return prev;
+          });
+        }
+      };
+
+      if (probe.complete) {
+        applyDims();
+      } else {
+        probe.onload = applyDims;
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [images, imageDimensions]);
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);

@@ -253,8 +253,20 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
   }, [isCompany, activeProfile?.id, session?.user?.id]);
 
   const onCommentAdded = useCallback((data: { postId: string; comment: any }) => {
-    // Only update if it's from another user
-    if (data.comment && data.comment.author_id !== (isCompany ? activeProfile?.id : session?.user?.id)) {
+    if (!data.comment) return;
+
+    const commentAuthorUserId = data.comment.author_id || data.comment.authorId;
+    const commentAuthorOrgId = data.comment.author_org_id || data.comment.authorOrgId;
+    const currentUserId = session?.user?.id;
+    const currentOrgId = isCompany ? activeProfile?.id : undefined;
+
+    // Check if the comment was authored by the current session user or current active company
+    const isOurComment = 
+      Boolean(currentUserId && commentAuthorUserId === currentUserId) ||
+      Boolean(currentOrgId && commentAuthorOrgId === currentOrgId);
+
+    // Only update if it's from another user to avoid double counting local optimistic updates
+    if (!isOurComment) {
       hasLocalCountChange.current = true;
       setCommentCount(prev => prev + 1);
     }

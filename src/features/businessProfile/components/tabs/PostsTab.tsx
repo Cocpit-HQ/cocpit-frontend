@@ -6,11 +6,9 @@ import { BusinessProfileData } from "../../types/business-profile.types";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
 import { FeedPost } from "@/features/feed/components/FeedPost";
-import { FeedPostProps } from "@/features/feed/types";
-import { formatTimeAgo } from "@/lib/timeFormatter";
+import type { Post } from "@/types/entities";
+import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { useInView } from "@/hooks/use-in-view";
-import { deletePost as apiDeletePost } from "@/services/api/posts";
-import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/store/ui.store";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -30,9 +28,7 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
-  const { setActiveModal } = useUIStore();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, userCompanies } = useActiveProfile();
 
   const {
     data: queryData,
@@ -69,8 +65,6 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleDeletePost = async (postId: string) => {
-    // The actual API call and toast are handled by FeedPost -> usePostOptions -> useFeed.
-    // We just need to refresh our local query cache to remove the deleted post from the UI immediately.
     try {
       queryClient.setQueryData(["orgPosts", data.id], (oldData: any) => {
         if (!oldData) return oldData;
@@ -88,8 +82,8 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
           }),
         };
       });
-      queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
       queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgPostsFallback", data.id] });
       queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
     } catch (error) {
       console.error("Failed to update cache after deleting post:", error);
@@ -119,8 +113,27 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
       };
     });
     queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
-    queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
+    queryClient.invalidateQueries({ queryKey: ["orgPostsFallback", data.id] });
   };
+
+  useEffect(() => {
+    const handlePostCreated = () => {
+      queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgPostsFallback", data.id] });
+    };
+    const handlePostDeleted = (e: any) => {
+      const deletedId = e.detail?.id;
+      if (deletedId) {
+        handleDeletePost(deletedId);
+      }
+    };
+    window.addEventListener("postCreated", handlePostCreated);
+    window.addEventListener("postDeleted", handlePostDeleted);
+    return () => {
+      window.removeEventListener("postCreated", handlePostCreated);
+      window.removeEventListener("postDeleted", handlePostDeleted);
+    };
+  }, [data.id, queryClient]);
 
   const allRawPosts = queryData?.pages.flatMap((page) => page.posts || page.data || page) || [];
   const seen = new Set();
@@ -131,55 +144,20 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
 
     const vis = p.visibility || 'public';
     if (!isOwnProfile && vis === 'private') return false;
-    if (p.post_type === 'article') return false;
 
     return true;
   });
 
-  const mapPost = (p: any): FeedPostProps => ({
-    id: p.post_id || p.id || p._id,
-    author: p.author?.full_name || data.name,
-    authorId: p.author?.id || (data as any)._id || data.id,
-    authorSlug: data.slug || "",
-    authorAvatar: data.logoUrl || p.author?.avatar_url || "/images/companyonboarding/companyprofileDefault.jpg",
-    authorHeadline: data.tagline || data.industry,
-    location: p.location || data.location,
-    tags: p.tags || [],
-    isCompanyPost: true,
-    timeAgo: (p.created_at || p.timestamp) ? formatTimeAgo(p.created_at || p.timestamp) : "Just now",
-    content: p.content || "",
-    imageSrc: p.image_url || p.imageUrl || (p.media && p.media.length > 0 ? p.media[0].url : undefined),
-    images: p.images || (p.media ? p.media.filter((m:any) => m.type==='image').map((m:any)=>m.url) : []),
-    videoSrc: p.videoSrc || (p.media ? p.media.filter((m:any) => m.type==='video').map((m:any)=>m.url)[0] : undefined),
-    likes: p.like_count || p.likes_count || p.likesCount || 0,
-    comments: (p.comment_count || p.comments_count || p.commentsCount || 0).toString(),
-    shares: (p.share_count || p.shares_count || p.sharesCount || 0).toString(),
-    isLiked: p.isLiked || p.is_liked || false,
-    isReposted: p.isReposted || p.is_reposted || false,
-    repostId: p.repostId || p.repost_id || null,
-    is_commented: p.isCommented || p.is_commented || false,
-    is_saved: p.isSaved || p.is_saved || false,
-    menuAccess: getPostMenuAccess({
+  const postsToRender: Post[] = rawPosts.map((p: any) => {
+    const post = mapProfilePostToPost(p);
+    return {
+      ...post,
       isCompanyPost: true,
-      companyId: data.id,
-      createdByUserId: p.created_by_user_id,
-      currentUserId,
-      explicitPermissions: viewerPermissions,
-      activeProfile,
-    }),
-    visibility: p.visibility || 'public',
-    poll: p.poll,
-    shared_post: p.shared_post ? mapPost(p.shared_post) : undefined,
-    category: p.category,
-    title: p.title,
-    articleBody: p.articleBody,
-    sampleLikerUsername: p.sample_liker_username || undefined,
-    isProfileView: true,
-    onDelete: handleDeletePost,
-    onToggleVisibility: handleToggleVisibilityPost,
+      authorSlug: post.authorSlug || data.slug || "",
+      authorAvatar: post.authorAvatar || data.logoUrl || "/images/companyonboarding/companyprofileDefault.jpg",
+      authorHeadline: post.authorHeadline || data.tagline || data.industry,
+    };
   });
-
-  const postsToRender: FeedPostProps[] = rawPosts.map(mapPost);
 
   return (
     <div className="w-full max-w-[800px] pl-5 flex flex-col justify-start items-start gap-2.5 pb-12">
@@ -237,8 +215,28 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
                 <FeedPost 
                   {...post} 
                   isProfileView={true}
+                  sessionId="org-posts-tab"
                   className="w-full max-w-[442px] !mx-0 !ml-0"
                   initialShowComments={shouldShowComments} 
+                  menuAccess={getPostMenuAccess({
+                    isCompanyPost: true,
+                    companyId: data.id,
+                    createdByUserId: (post as any).createdByUserId,
+                    currentUserId,
+                    explicitPermissions: viewerPermissions,
+                    userCompanies,
+                    activeProfile,
+                  })}
+                  onDelete={handleDeletePost}
+                  onToggleVisibility={handleToggleVisibilityPost}
+                  onRepostWithThoughts={(postToQuote) => {
+                    useUIStore.getState().setSharedPostData(postToQuote);
+                    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                      useUIStore.getState().setActiveModal('create-post');
+                    } else {
+                      router.push('/feed');
+                    }
+                  }}
                 />
                 <div className="w-full max-w-[442px] h-0 border-b border-[var(--ds-border)]" />
               </React.Fragment>

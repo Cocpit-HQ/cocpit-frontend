@@ -129,7 +129,9 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
 
   return {
     id: backendPost.post_id,
-    authorId: backendPost.author_id,
+    authorId: ((backendPost as any).is_company_post || (backendPost as any).author_org_id || (backendPost as any).is_organization_post || (backendPost as any).isCompanyPost)
+      ? ((backendPost as any).author_org_id || (backendPost as any).authorOrgId || backendPost.author_id)
+      : backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
     title: backendPost.title || "",
@@ -242,5 +244,9 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     achievementImageKey: backendPost.achievement_image_key || undefined,
     media: backendPost.media,
     mentioned_users: backendPost.mentioned_users,
+    authorSlug: (backendPost as any).author_slug || (backendPost as any).authorSlug || undefined,
+    createdByUserId: (backendPost as any).created_by_user_id || (backendPost as any).createdByUserId || undefined,
+    author_org_id: (backendPost as any).author_org_id || (backendPost as any).authorOrgId || undefined,
+    isCompanyPost: (backendPost as any).is_company_post ?? (backendPost as any).isCompanyPost ?? !!((backendPost as any).author_org_id || (backendPost as any).authorOrgId || (backendPost as any).is_organization_post || (backendPost as any).is_institution_post),
   };
 };

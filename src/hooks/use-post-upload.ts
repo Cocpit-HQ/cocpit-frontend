@@ -56,6 +56,7 @@ export const usePostUpload = () => {
                 window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
                 
                 queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
+                queryClient.invalidateQueries({ queryKey: ["orgPostsFallback"] });
                 queryClient.invalidateQueries({ queryKey: ["orgPostsPreview"] });
                 queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
                 queryClient.invalidateQueries({ queryKey: ["userPosts"] });

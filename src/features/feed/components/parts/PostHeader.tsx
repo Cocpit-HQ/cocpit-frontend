@@ -146,11 +146,11 @@ export const PostHeader = ({
     setShowOptions(!showOptions);
   };
 
-  const profileHref = isMe
-    ? '/profile'
-    : isCompanyPost && authorSlug
-      ? `/organization/${authorSlug}`
-      : `/profile/${authorUserId}`;
+  const isOwnerOrInternal = isMe || menuAccess === 'owner' || menuAccess === 'internal';
+
+  const profileHref = isCompanyPost
+    ? (authorSlug ? `/organization/${authorSlug}` : '/business-profile')
+    : (isMe ? '/profile' : `/profile/${authorUserId}`);
 
   return (
     <div className="flex flex-row justify-between items-center w-full min-h-[40px]">
@@ -219,7 +219,7 @@ export const PostHeader = ({
 
       {/* Follow and Menu Actions */}
       <div className="flex flex-row items-center gap-2 shrink-0 h-[24px]">
-        {!isMe && (!isAuthorFollowing || hasInteracted) && (
+        {!isOwnerOrInternal && (!isAuthorFollowing || hasInteracted) && (
           <button
             onClick={handleToggleFollow}
             disabled={isFollowActionLoading}

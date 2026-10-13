@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCompanyOnboardingStore } from "../store/company-onboarding.store";
@@ -25,10 +25,17 @@ export const CompanyOnboardingFlow: React.FC = () => {
   const goBack = useCompanyOnboardingStore((s) => s.goBack);
   const resetStore = useCompanyOnboardingStore((s) => s.resetStore);
 
-  // Reset store when mounting a new flow
+  const [hasMounted, setHasMounted] = useState(false);
+
   useEffect(() => {
-    resetStore();
-  }, [resetStore]);
+    if (useCompanyOnboardingStore.persist?.hasHydrated && !useCompanyOnboardingStore.persist.hasHydrated()) {
+      const unsub = useCompanyOnboardingStore.persist.onFinishHydration(() => {
+        setHasMounted(true);
+      });
+      return () => unsub();
+    }
+    setHasMounted(true);
+  }, []);
 
   const handleNext = () => {
     goNext();
@@ -54,7 +61,14 @@ export const CompanyOnboardingFlow: React.FC = () => {
       case 3:
         return <StepVerification onNext={handleNext} onBack={handleBack} />;
       case 4:
-        return <StepCongratulations onClose={() => router.replace("/feed")} />;
+        return (
+          <StepCongratulations
+            onClose={() => {
+              resetStore();
+              router.replace("/feed");
+            }}
+          />
+        );
       case 5:
         return (
           <StepError
@@ -73,12 +87,29 @@ export const CompanyOnboardingFlow: React.FC = () => {
     }
   };
 
+  if (!hasMounted) {
+    return (
+      <CompanyOnboardingLayout showBack={false} showClose={false}>
+        <div className="w-full h-96 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-ds-accent border-t-transparent animate-spin" />
+        </div>
+      </CompanyOnboardingLayout>
+    );
+  }
+
   return (
     <CompanyOnboardingLayout
       showBack={currentStage > 0 && currentStage < 4}
       onBack={handleBack}
       showClose={true}
-      onClose={currentStage >= 4 ? () => router.replace("/feed") : undefined}
+      onClose={
+        currentStage >= 4
+          ? () => {
+              resetStore();
+              router.replace("/feed");
+            }
+          : undefined
+      }
     >
       <AnimatePresence mode="wait">
         <motion.div

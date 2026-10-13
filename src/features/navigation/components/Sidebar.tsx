@@ -7,6 +7,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { Icon as CustomIcon, IconName, UserIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProfile } from '@/hooks/use-my-profile';
+import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store';
 
 interface SidebarProps {
   className?: string;
@@ -175,6 +176,7 @@ export function Sidebar({ className }: SidebarProps) {
               href="/company-onboarding"
               aria-label="Create Organization"
               title="Create Organization"
+              onClick={() => useCompanyOnboardingStore.getState().resetStore()}
               className="w-[24px] h-[24px] -mr-[4px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ds-accent)] rounded"
             >
               <CustomIcon name="plus" className="w-[16px] h-[16px]" />

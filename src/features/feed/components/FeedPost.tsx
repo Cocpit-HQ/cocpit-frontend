@@ -101,23 +101,64 @@ export const FeedPost = (props: FeedPostProps) => {
   const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
 
   const targetIsCompanyPost = interactionTargetProps.isCompanyPost || false;
-  const targetAuthorId = interactionTargetProps.authorId || (interactionTargetProps as any).author_id;
-
-  const isTargetAuthorMe = activeProfile?.type === 'COMPANY'
-    ? !!(targetIsCompanyPost && activeProfile?.id?.toString() === targetAuthorId?.toString())
-    : (currentUserId === targetAuthorId?.toString());
+  const targetCompanyId = (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId;
+  const targetAuthorId = targetIsCompanyPost
+    ? (targetCompanyId || interactionTargetProps.authorId || (interactionTargetProps as any).author_id)
+    : (interactionTargetProps.authorId || (interactionTargetProps as any).author_id);
+  const targetCreatedByUserId = (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id;
 
   const resolvedMenuAccess: PostMenuAccess = useMemo(() => {
     if (props.menuAccess) return props.menuAccess;
     return getPostMenuAccess({
       isCompanyPost: targetIsCompanyPost,
-      companyId: targetAuthorId?.toString(),
-      createdByUserId: (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id,
+      companyId: targetCompanyId?.toString() || targetAuthorId?.toString(),
+      createdByUserId: targetCreatedByUserId?.toString(),
       currentUserId: currentUserId?.toString(),
       userCompanies,
       activeProfile,
     });
-  }, [props.menuAccess, targetIsCompanyPost, targetAuthorId, interactionTargetProps, currentUserId, userCompanies, activeProfile]);
+  }, [props.menuAccess, targetIsCompanyPost, targetCompanyId, targetAuthorId, targetCreatedByUserId, currentUserId, userCompanies, activeProfile]);
+
+  const isTargetAuthorMe = useMemo(() => {
+    if (resolvedMenuAccess === 'owner') return true;
+
+    if (targetIsCompanyPost) {
+      if (
+        activeProfile?.type === 'COMPANY' &&
+        (String(activeProfile?.id) === String(targetCompanyId) || String(activeProfile?.id) === String(targetAuthorId))
+      ) {
+        return true;
+      }
+      if (
+        userCompanies?.some(
+          (c) =>
+            String(c.org_id || c.company_id) === String(targetCompanyId) ||
+            String(c.org_id || c.company_id) === String(targetAuthorId)
+        )
+      ) {
+        return true;
+      }
+      if (currentUserId && targetCreatedByUserId && String(currentUserId) === String(targetCreatedByUserId)) {
+        return true;
+      }
+      return false;
+    }
+
+    return Boolean(
+      currentUserId &&
+      (String(currentUserId) === String(targetAuthorId) ||
+       (targetCreatedByUserId && String(currentUserId) === String(targetCreatedByUserId)))
+    );
+  }, [
+    resolvedMenuAccess,
+    targetIsCompanyPost,
+    activeProfile,
+    targetCompanyId,
+    targetAuthorId,
+    userCompanies,
+    currentUserId,
+    targetCreatedByUserId,
+  ]);
 
   // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(

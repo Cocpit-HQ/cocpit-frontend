@@ -211,6 +211,21 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
 
       if (logoFile) {
         formData.append("logo", logoFile);
+      } else if (logoPreview && logoPreview.startsWith("data:")) {
+        // Reconstruct File from persisted Data URL (after page refresh)
+        try {
+          const arr = logoPreview.split(",");
+          const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
+          const bstr = atob(arr[1]);
+          const u8arr = new Uint8Array(bstr.length);
+          for (let i = 0; i < bstr.length; i++) {
+            u8arr[i] = bstr.charCodeAt(i);
+          }
+          const reconstructedFile = new File([u8arr], "organization-logo.png", { type: mime });
+          formData.append("logo", reconstructedFile);
+        } catch {
+          // If reconstruction fails, logo won't be sent — non-blocking
+        }
       }
 
       if (primaryDoc?.file) {

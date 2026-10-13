@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CloseCrossIcon, CocpitLogoIcon, LeftArrowIcon } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import { useCompanyOnboardingStore } from "../store/company-onboarding.store";
 
 interface CompanyOnboardingLayoutProps {
   children: React.ReactNode;
@@ -38,6 +39,7 @@ export const CompanyOnboardingLayout: React.FC<CompanyOnboardingLayoutProps> = (
 
   const handleLeave = useCallback(() => {
     setShowConfirmClose(false);
+    useCompanyOnboardingStore.getState().resetStore();
     router.replace("/feed");
   }, [router]);
 

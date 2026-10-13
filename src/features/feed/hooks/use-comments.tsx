@@ -387,7 +387,14 @@ export const useComments = (postId: string, enabled: boolean = true): UseComment
     const commentIdStr = (data.comment.comment_id || data.comment.id)?.toString();
     if (!commentIdStr) return;
 
-    const isOurComment = data.comment.author_id === (isCompany ? activeProfile?.id : session?.user?.id);
+    const commentAuthorUserId = data.comment.author_id || data.comment.authorId;
+    const commentAuthorOrgId = data.comment.author_org_id || data.comment.authorOrgId;
+    const currentUserId = session?.user?.id;
+    const currentOrgId = isCompany ? activeProfile?.id : undefined;
+
+    const isOurComment = 
+      Boolean(currentUserId && commentAuthorUserId === currentUserId) ||
+      Boolean(currentOrgId && commentAuthorOrgId === currentOrgId);
 
     setComments(prev => {
       // Prevent duplicate if already in state

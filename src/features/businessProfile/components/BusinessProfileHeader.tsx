@@ -230,10 +230,8 @@ export default function BusinessProfileHeader({
           )}
         </div>
 
-        {/* Right Section: Action Buttons + Frame 2609861 Stats (vertically aligned start line) */}
-        <div className="right-0 top-[216px] absolute flex flex-col items-start gap-5 z-10">
-          {/* Action Buttons Row */}
-          <div className="inline-flex justify-start items-center gap-3">
+        {/* Right Section: Action Buttons */}
+        <div className="right-0 top-[216px] absolute inline-flex justify-end items-center gap-3 z-10">
             {canEdit ? (
               <>
                 {/* Edit profile (accent pill) */}
@@ -313,43 +311,13 @@ export default function BusinessProfileHeader({
                 </DropdownMenu>
               </>
             )}
-          </div>
-
-          {/* Frame 2609861: Followers & Following Stats (148x40px, gap-6, start-aligned with Edit button) */}
-          <div className="flex flex-row items-center p-0 gap-6 w-[148px] h-[40px] shrink-0">
-            {/* 1.2k Followers (62x40px, Secondary body 1, 14px/20px, Medium 500, #FFECE6) */}
-            <button
-              type="button"
-              onClick={() => {
-                setStatsModalTab("followers");
-                setIsStatsModalOpen(true);
-              }}
-              className="w-[62px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0"
-            >
-              <span className="w-full text-center truncate">{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
-              <span className="w-full text-center">Followers</span>
-            </button>
-
-            {/* 340 Following (62x40px, Secondary body 1, 14px/20px, Medium 500, #FFECE6) */}
-            <button
-              type="button"
-              onClick={() => {
-                setStatsModalTab("following");
-                setIsStatsModalOpen(true);
-              }}
-              className="w-[62px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0"
-            >
-              <span className="w-full text-center truncate">{formatNumber(data.stats?.following || 0)}</span>
-              <span className="w-full text-center">Following</span>
-            </button>
-          </div>
         </div>
       </div>
 
       {/* 2. Info Block: Frame 2609613 (800 Fill x 100 Hug, pl-[20px]) */}
       <div className="w-full max-w-[800px] min-h-[100px] flex flex-row items-start pl-5 pr-0 self-stretch">
-        {/* Frame 2609607: Left Column (max-w-[508px], flex-1, min-w-0, gap-1) */}
-        <div className="flex-1 max-w-[508px] min-w-0 flex flex-col items-start gap-1 p-0">
+        {/* Frame 2609607: Left Column (w-full, flex-1, min-w-0, gap-1) */}
+        <div className="flex-1 w-full max-w-full min-w-0 flex flex-col items-start gap-1 p-0">
           {/* Frame 2609650 / NameRow (gap: 8px, height: 32px, max-w-full, min-w-0) */}
           <div className="flex flex-row items-center p-0 gap-2 h-8 max-w-full min-w-0">
             <h1 className="text-ds-text-primary text-2xl font-bold font-['DM_Sans'] leading-8 truncate min-w-0">
@@ -365,9 +333,9 @@ export default function BusinessProfileHeader({
             )}
           </div>
 
-          {/* SaaS and Fintech Solutions (Tagline: 14px/20px, regular, #FFECE6, max-w-full, truncate) */}
+          {/* Tagline / Headline: break-words to show full text without premature truncation */}
           {data.tagline && (
-            <p className="text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 min-h-[20px] max-w-full truncate">
+            <p className="text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 min-h-[20px] max-w-full break-words [overflow-wrap:anywhere] whitespace-pre-wrap">
               {data.tagline}
             </p>
           )}
@@ -408,6 +376,35 @@ export default function BusinessProfileHeader({
               {formatDisplayUrl(data.websiteUrl)}
             </a>
           )}
+
+          {/* Followers & Following Stats (Left-aligned under website link) */}
+          <div className="flex flex-row items-center p-0 gap-6 mt-3 shrink-0">
+            {/* Followers */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatsModalTab("followers");
+                setIsStatsModalOpen(true);
+              }}
+              className="min-w-[54px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0"
+            >
+              <span className="w-full text-center truncate">{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
+              <span className="w-full text-center">Followers</span>
+            </button>
+
+            {/* Following */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatsModalTab("following");
+                setIsStatsModalOpen(true);
+              }}
+              className="min-w-[54px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0"
+            >
+              <span className="w-full text-center truncate">{formatNumber(data.stats?.following || 0)}</span>
+              <span className="w-full text-center">Following</span>
+            </button>
+          </div>
         </div>
       </div>
 

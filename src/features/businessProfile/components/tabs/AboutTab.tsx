@@ -135,7 +135,7 @@ export default function AboutTab({ data }: AboutTabProps) {
               <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
                 Description
               </h2>
-              <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 whitespace-pre-line">
+              <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 whitespace-pre-line break-words [overflow-wrap:anywhere]">
                 {description}
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function AboutTab({ data }: AboutTabProps) {
                 Slogan
               </h2>
               <div className="w-full max-w-[780px] min-h-[40px] py-2 pl-3 border-l-4 border-ds-accent flex flex-col justify-center">
-                <p className="text-ds-text-secondary text-base font-normal italic font-['Poppins'] leading-6">
+                <p className="text-ds-text-secondary text-base font-normal italic font-['Poppins'] leading-6 break-words [overflow-wrap:anywhere]">
                   &quot;{slogan}&quot;
                 </p>
               </div>
@@ -168,7 +168,7 @@ export default function AboutTab({ data }: AboutTabProps) {
               <span className="text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
                 Specialties
               </span>
-              <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
+              <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
                 {specialtiesText}
               </p>
             </div>

@@ -97,10 +97,16 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     (normalizedActiveName && (normalizedActiveName === normalizedCompanyName || normalizedActiveName === normalizedPageSlug))
   );
 
-  const hasEditPermission = Boolean(
-    isOwnProfile ||
+  const isOrgAdminOrOwner = Boolean(
     profileResponse?.is_own_profile ||
     profileResponse?.viewer_permissions?.includes('*') ||
+    profileResponse?.viewer_permissions?.includes('MANAGE_COMPANY') ||
+    profileResponse?.viewer_permissions?.includes('MANAGE_ORGANIZATION')
+  );
+
+  const hasEditPermission = Boolean(
+    isOwnProfile ||
+    isOrgAdminOrOwner ||
     profileResponse?.viewer_permissions?.includes('MANAGE_COMPANY_DETAILS') ||
     isActorThisCompany
   );
@@ -108,7 +114,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   // When visiting as a user (not active company actor) or with ?view=public, open as public profile
   const isPublicView = isExplicitPublic || !isActorThisCompany;
   const ownProfile = !isPublicView;
-  const canManageCompany = ownProfile;
+  const canManageCompany = ownProfile && isOrgAdminOrOwner;
 
   React.useEffect(() => {
     if (isLoading) return;
@@ -202,7 +208,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     ownProfile && (canManageCompany || profileResponse.viewer_permissions?.includes('CREATE_POST'))
   );
 
-  const effectiveViewerPermissions = canManageCompany
+  const effectiveViewerPermissions = isOrgAdminOrOwner
     ? Array.from(new Set([...(profileResponse.viewer_permissions || []), '*']))
     : (profileResponse.viewer_permissions || []);
 

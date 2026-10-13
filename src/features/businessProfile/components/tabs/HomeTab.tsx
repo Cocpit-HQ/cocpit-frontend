@@ -25,6 +25,8 @@ export default function HomeTab({
   canManageCompany,
   canManageOwnPosts,
   onTabChange,
+  currentUserId,
+  viewerPermissions,
 }: HomeTabProps) {
   const router = useRouter();
   const params = useParams();
@@ -61,6 +63,8 @@ export default function HomeTab({
         canManageCompany={canManageCompany}
         canManageOwnPosts={canManageOwnPosts}
         onSeeAllClick={() => onTabChange?.("posts")}
+        currentUserId={currentUserId}
+        viewerPermissions={viewerPermissions}
       />
 
       {/* 3. Verification Status Card (only for unverified company owner/admin) */}
