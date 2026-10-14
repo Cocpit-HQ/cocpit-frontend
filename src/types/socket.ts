@@ -23,6 +23,12 @@ export interface NotificationPayload {
     post_id?: string;
     [key: string]: unknown;
   };
+  sender_id?: string;
+  senderId?: string;
+  targetProfileType?: 'USER' | 'COMPANY';
+  targetCompanyId?: string | null;
+  recipient_org_id?: string | null;
+  recipient_company_id?: string | null;
 }
 
 export interface ErrorPayload {

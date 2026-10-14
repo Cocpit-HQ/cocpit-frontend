@@ -311,6 +311,43 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // 1. Suppress self-action toasts: user who triggered the action should not receive a notification toast
+      const currentUserId = session?.user?.id;
+      const senderId = payload.from || (payload as any).sender_id || (payload as any).senderId;
+      if (currentUserId && senderId && String(senderId) === String(currentUserId)) {
+        console.log("[DEBUG] Toast suppressed: self action");
+        return;
+      }
+
+      // 2. Suppress cross-profile / cross-actor toast notifications:
+      // When viewing as a company, only show toasts targeted to that exact company.
+      // When viewing as a personal user, only show toasts targeted to the personal user.
+      const targetCompanyId = (payload as any).targetCompanyId || 
+                              (payload as any).recipient_org_id || 
+                              (payload as any).recipient_company_id || 
+                              (payload as any).target_org_id ||
+                              (payload.metadata as any)?.recipient_org_id ||
+                              (payload.metadata as any)?.org_id_recipient ||
+                              (payload.type?.startsWith('company_') && (payload as any).companyId ? (payload as any).companyId : null);
+
+      const targetProfileType = (payload as any).targetProfileType || (targetCompanyId ? 'COMPANY' : 'USER');
+
+      const currentProfileType = currentProfile?.type || 'USER';
+      const currentProfileId = currentProfile?.id;
+
+      if (currentProfileType === 'COMPANY') {
+        if (targetProfileType !== 'COMPANY' || (targetCompanyId && String(currentProfileId) !== String(targetCompanyId))) {
+          console.log("[DEBUG] Toast suppressed: notification targeted to", targetProfileType, targetCompanyId, "while active actor is COMPANY", currentProfileId);
+          return;
+        }
+      } else {
+        // Active actor is USER: suppress company-targeted notification toasts
+        if (targetProfileType === 'COMPANY' || targetCompanyId) {
+          console.log("[DEBUG] Toast suppressed: notification targeted to COMPANY", targetCompanyId, "while active actor is USER");
+          return;
+        }
+      }
+
       if (isMessage) {
         refreshMessagingCaches(payload.conversationId);
 

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import { VerifyIcon } from '@/components/icons';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -57,8 +58,10 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
       setCode('');
       setErrorMsg('');
       setCountdown(30);
+      confirmPhoneMutation.reset();
+      setPhoneMutation.reset();
     }, 200);
-  }, [onClose]);
+  }, [onClose, confirmPhoneMutation, setPhoneMutation]);
 
   // Keyboard accessibility: Escape to close
   useEffect(() => {
@@ -77,9 +80,21 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
   const isPhoneValid = phone.length === requiredLength;
   const isCodeValid = code.length === 6;
 
+  const checkIsSameNumber = useCallback((inputPhone: string, code: string) => {
+    const existingPhone = (currentPhone || accountData?.phone || '').trim();
+    const existingCountryCode = accountData?.countryCode || '+91';
+    const reqLen = code === '+971' ? 9 : 10;
+    return Boolean(
+      existingPhone &&
+      inputPhone.trim() === existingPhone &&
+      code === existingCountryCode &&
+      inputPhone.length === reqLen
+    );
+  }, [currentPhone, accountData?.phone, accountData?.countryCode]);
+
   const getIsDisabled = () => {
-    if (step === 1) return !phone || setPhoneMutation.isPending;
-    if (step === 2) return !isCodeValid || confirmPhoneMutation.isPending;
+    if (step === 1) return !isPhoneValid || checkIsSameNumber(phone, countryCode) || setPhoneMutation.isPending;
+    if (step === 2) return !confirmPhoneMutation.isSuccess || confirmPhoneMutation.isPending;
     return false;
   };
 
@@ -89,6 +104,11 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
     if (step === 1) {
       if (phone.length !== requiredLength) {
         setErrorMsg(`Please enter a valid ${requiredLength}-digit phone number.`);
+        return;
+      }
+
+      if (checkIsSameNumber(phone, countryCode)) {
+        setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
         return;
       }
 
@@ -138,6 +158,8 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
     if (countdown > 0) return;
     setCountdown(30);
     setErrorMsg('');
+    confirmPhoneMutation.reset();
+    setCode('');
     setPhoneMutation.mutate(
       { countryCode, phone },
       {
@@ -199,7 +221,11 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                         className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
                         onClick={() => {
                           setCountryCode('+91');
-                          setErrorMsg('');
+                          if (checkIsSameNumber(phone, '+91')) {
+                            setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
+                          } else {
+                            setErrorMsg('');
+                          }
                         }}
                       >
                         India (+91)
@@ -208,7 +234,11 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                         className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
                         onClick={() => {
                           setCountryCode('+971');
-                          setErrorMsg('');
+                          if (checkIsSameNumber(phone, '+971')) {
+                            setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
+                          } else {
+                            setErrorMsg('');
+                          }
                         }}
                       >
                         United Arab Emirates (+971)
@@ -224,7 +254,11 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     onChange={(e) => {
                       const numericValue = e.target.value.replace(/\D/g, '');
                       setPhone(numericValue);
-                      if (errorMsg) setErrorMsg('');
+                      if (checkIsSameNumber(numericValue, countryCode)) {
+                        setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
+                      } else if (errorMsg) {
+                        setErrorMsg('');
+                      }
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !getIsDisabled()) handleNext();
@@ -255,6 +289,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     type="text"
                     maxLength={6}
                     autoFocus
+                    disabled={confirmPhoneMutation.isSuccess || confirmPhoneMutation.isPending}
                     value={code}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '');
@@ -276,10 +311,10 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                       if (e.key === 'Enter' && !getIsDisabled()) handleNext();
                     }}
                     placeholder="000000"
-                    className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0 tracking-wider"
+                    className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0 tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   {confirmPhoneMutation.isSuccess && !errorMsg && (
-                    <CheckCircle2 className="w-4 h-4 text-ds-success shrink-0" />
+                    <VerifyIcon className="w-5 h-5 shrink-0 text-ds-success" size={20} fill="#3FB950" />
                   )}
                 </div>
                 {/* Form layout stability: reserved space prevents shifting */}

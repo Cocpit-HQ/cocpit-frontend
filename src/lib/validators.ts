@@ -21,6 +21,9 @@ export function getFirstMissingPasswordRequirement(password: string): string | n
   if (!password || password.length < 8 || password.length > 15) {
     return "*Use 8 to 15 characters";
   }
+  if (!/[a-zA-Z]/.test(password)) {
+    return "*Use at least 1 alphabet";
+  }
   if (!/[A-Z]/.test(password)) {
     return "*Use at least 1 uppercase letter (A–Z)";
   }

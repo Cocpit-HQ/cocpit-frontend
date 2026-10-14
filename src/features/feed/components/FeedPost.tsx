@@ -108,7 +108,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const targetCreatedByUserId = (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id;
 
   const resolvedMenuAccess: PostMenuAccess = useMemo(() => {
-    if (props.menuAccess) return props.menuAccess;
+    if (props.menuAccess && !isRepostWithoutThoughts) return props.menuAccess;
     return getPostMenuAccess({
       isCompanyPost: targetIsCompanyPost,
       companyId: targetCompanyId?.toString() || targetAuthorId?.toString(),
@@ -117,7 +117,7 @@ export const FeedPost = (props: FeedPostProps) => {
       userCompanies,
       activeProfile,
     });
-  }, [props.menuAccess, targetIsCompanyPost, targetCompanyId, targetAuthorId, targetCreatedByUserId, currentUserId, userCompanies, activeProfile]);
+  }, [props.menuAccess, isRepostWithoutThoughts, targetIsCompanyPost, targetCompanyId, targetAuthorId, targetCreatedByUserId, currentUserId, userCompanies, activeProfile]);
 
   const isTargetAuthorMe = useMemo(() => {
     if (resolvedMenuAccess === 'owner') return true;

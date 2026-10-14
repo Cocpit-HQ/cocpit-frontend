@@ -73,6 +73,186 @@ const formatCommentText = (
   });
 };
 
+interface ExpandableCommentTextProps {
+  text: string | null | undefined;
+  postId?: string | number;
+  commentId?: string | number;
+  mentionedUsers?: { user_id: string; full_name: string; account_name: string }[];
+  maxLines?: number;
+}
+
+function ExpandableCommentText({
+  text,
+  postId,
+  commentId,
+  mentionedUsers,
+  maxLines = 4,
+}: ExpandableCommentTextProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [truncatedText, setTruncatedText] = useState<string | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const measurerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [text]);
+
+  useEffect(() => {
+    if (!text) {
+      setIsOverflowing(false);
+      setTruncatedText(null);
+      return;
+    }
+
+    const measurer = measurerRef.current;
+    if (!measurer) return;
+
+    const measure = () => {
+      // Clean display text for measurer by unwrapping mentions @[Display](handle) -> Display
+      const getMeasurerContent = (raw: string) => {
+        return raw.replace(/@\[([^\]]+)\]\([^)]+\)/g, '$1');
+      };
+
+      const computedStyle = window.getComputedStyle(measurer);
+      const lineHeight = parseFloat(computedStyle.lineHeight) || 16;
+      const maxHeight = maxLines * lineHeight;
+
+      measurer.textContent = getMeasurerContent(text);
+      if (measurer.scrollHeight <= maxHeight + 2) {
+        setIsOverflowing(false);
+        setTruncatedText(null);
+        return;
+      }
+
+      setIsOverflowing(true);
+
+      // Split keeping structured mentions and whitespace tokens intact
+      const tokens = text.split(/(@\[[^\]]+\]\([^)]+\)|\s+)/);
+      if (tokens.length === 0) {
+        setTruncatedText(null);
+        return;
+      }
+
+      const testFit = (candidateText: string) => {
+        measurer.innerHTML = '';
+        measurer.appendChild(document.createTextNode(getMeasurerContent(candidateText)));
+        const seeMoreSpan = document.createElement('span');
+        seeMoreSpan.textContent = '...See more';
+        measurer.appendChild(seeMoreSpan);
+        return measurer.scrollHeight <= maxHeight + 2;
+      };
+
+      let low = 1;
+      let high = tokens.length;
+      let best = 0;
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const candidate = tokens.slice(0, mid).join('').trimEnd();
+        const cleanCandidate = candidate.replace(/[,;:\s—\-]+$/, '');
+
+        if (testFit(cleanCandidate)) {
+          best = mid;
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      let finalTruncated = '';
+      if (best > 0) {
+        finalTruncated = tokens.slice(0, best).join('').trimEnd().replace(/[,;:\s—\-]+$/, '');
+      }
+
+      // Fallback for single long token exceeding maxLines
+      if ((best === 0 || !testFit(finalTruncated)) && tokens[0]) {
+        let charLow = 1;
+        let charHigh = tokens[0].length;
+        let bestChar = 1;
+        while (charLow <= charHigh) {
+          const charMid = Math.floor((charLow + charHigh) / 2);
+          const charCandidate = tokens[0].slice(0, charMid);
+          if (testFit(charCandidate)) {
+            bestChar = charMid;
+            charLow = charMid + 1;
+          } else {
+            charHigh = charMid - 1;
+          }
+        }
+        finalTruncated = tokens[0].slice(0, bestChar);
+      }
+
+      setTruncatedText(finalTruncated || null);
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      const observer = new ResizeObserver(() => {
+        measure();
+      });
+      observer.observe(containerRef.current);
+      return () => observer.disconnect();
+    }
+  }, [text, maxLines]);
+
+  const activeText = !isExpanded && isOverflowing && truncatedText !== null ? truncatedText : text;
+
+  return (
+    <div ref={containerRef} className="w-full relative mb-2">
+      {/* Offscreen measurer that accurately mirrors typography and width */}
+      <div
+        ref={measurerRef}
+        aria-hidden="true"
+        className="ds-text-small leading-[16px] whitespace-pre-wrap break-words pointer-events-none invisible absolute top-0 left-0 right-0 -z-50"
+      />
+
+      {/* Main Comment Text */}
+      <div
+        style={
+          !isExpanded && isOverflowing
+            ? { maxHeight: `${maxLines * 16 + 4}px`, overflow: 'hidden' }
+            : undefined
+        }
+        className="ds-text-small text-ds-text-primary leading-[16px] whitespace-pre-wrap break-words"
+      >
+        {formatCommentText(activeText, postId, commentId, mentionedUsers)}
+
+        {isOverflowing && !isExpanded && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsExpanded(true);
+            }}
+            className="inline whitespace-nowrap select-none cursor-pointer border-none bg-transparent p-0 align-baseline ml-0.5 hover:opacity-80 transition-opacity"
+          >
+            <span className="text-ds-text-primary">...</span>
+            <span className="text-ds-accent font-semibold">See more</span>
+          </button>
+        )}
+      </div>
+
+      {isOverflowing && isExpanded && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsExpanded(false);
+          }}
+          className="block mt-1 cursor-pointer font-semibold text-[11px] leading-[14px] text-ds-accent hover:opacity-80 transition-opacity border-none bg-transparent p-0"
+        >
+          See less
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport, onHide, onUndo }: CommentProps) {
   const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending, is_edited } = comment;
   const { data: session } = useSession();
@@ -323,10 +503,16 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                   `}</style>
                   {isOwner && (
                     <DropdownMenuItem
-                      onSelect={() => onEdit?.(id, text)}
+                      onSelect={() => {
+                        setTimeout(() => {
+                          onEdit?.(id, text);
+                        }, 50);
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEdit?.(id, text);
+                        setTimeout(() => {
+                          onEdit?.(id, text);
+                        }, 50);
                       }}
                       className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
                     >
@@ -382,10 +568,13 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         </div>
 
         {/* Comment Body */}
-        {/* ORIGINAL: <div className="text-[14px] text-black/90 leading-normal mb-2 break-words"> */}
-        <div className="ds-text-small text-ds-text-primary leading-normal mb-2 break-words">
-          {formatCommentText(text, postId, id, comment.mentioned_users)}
-        </div>
+        <ExpandableCommentText
+          text={text}
+          postId={postId}
+          commentId={id}
+          mentionedUsers={comment.mentioned_users}
+          maxLines={4}
+        />
 
         {/* Action Bar (Styled like Figma) */}
         {/* ORIGINAL: <div className="flex items-center gap-1.5 text-[12px] font-semibold text-black"> */}

@@ -40,7 +40,9 @@ export function useBlockedUsers() {
     queryKey: BLOCKED_USERS_QUERY_KEY,
     queryFn: async () => {
       const users = await getBlockedUsers();
-      return users.map(mapBlockedUser);
+      return (users || [])
+        .filter((u: any) => Boolean(u && (u.id || u.user_id) && u.name && u.name !== 'Unknown User' && u.name !== 'Blocked Account'))
+        .map(mapBlockedUser);
     },
   });
 

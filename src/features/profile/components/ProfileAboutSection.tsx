@@ -27,7 +27,7 @@ export const ProfileAboutSection: React.FC<ProfileAboutSectionProps> = ({
           text={trimmedBio}
           maxLines={2}
           lineHeight={20}
-          textClassName="text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5"
+          textClassName="text-[var(--ds-text-primary)] text-sm font-normal font-['DM_Sans'] leading-5"
         />
       </div>
     </div>

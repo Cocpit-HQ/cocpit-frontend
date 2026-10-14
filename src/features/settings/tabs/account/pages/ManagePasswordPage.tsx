@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUpdatePassword, useRequestPasswordResetLink, useResetLinkStatus } from '../../../hooks/useAccountSettings';
 import { getFirstMissingPasswordRequirement, isPasswordFullyValid } from '@/lib/validators';
-import { PasswordRequirementsCard } from '@/components/shared/PasswordRequirementsCard';
 
 
 
@@ -188,7 +187,9 @@ export function ManagePasswordPage() {
             {newPassword && currentPassword && newPassword === currentPassword ? (
               <span className="text-[12px] text-[#FF6B6B] mt-1">New password must be different from current password.</span>
             ) : null}
-            <PasswordRequirementsCard password={newPassword} className="mt-1" />
+            {newPassword && getFirstMissingPasswordRequirement(newPassword) ? (
+              <span className="text-[12px] text-[#FF6B6B] mt-1">{getFirstMissingPasswordRequirement(newPassword)}</span>
+            ) : null}
           </div>
 
 

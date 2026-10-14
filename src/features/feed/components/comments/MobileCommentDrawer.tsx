@@ -17,7 +17,7 @@ interface MobileCommentDrawerProps {
 
 export default function MobileCommentDrawer({ postId, isOpen, onClose, incrementCommentCount, decrementCommentCount, isPostOwner }: MobileCommentDrawerProps) {
   const { 
-    comments, isLoading, handleAddComment, handleDeleteComment, handleHideComment, handleReportComment, handleUndo, currentUserId 
+    comments, isLoading, handleAddComment, handleDeleteComment, handleUpdateComment, handleHideComment, handleReportComment, handleUndo, currentUserId 
   } = useComments(postId, isOpen);
 
   // Named handlers for consistency with CommentSection.tsx
@@ -30,10 +30,16 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
   };
 
   return (
-    <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground>
+    <Drawer.Root 
+      open={isOpen} 
+      onOpenChange={(open) => !open && onClose()} 
+      shouldScaleBackground
+      fixed={true}
+      repositionInputs={false}
+    >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[99]" onClick={onClose} />
-        <Drawer.Content className="bg-ds-bg flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none font-dmsans border-t border-ds-border">
+        <Drawer.Content className="bg-ds-bg flex flex-col rounded-t-[20px] max-h-[85dvh] h-[85dvh] fixed bottom-0 left-0 right-0 z-[100] outline-none font-dmsans border-t border-ds-border overflow-hidden">
           <div className="p-4 bg-ds-bg border-b border-ds-border flex items-center justify-between rounded-t-[20px]">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-ds-border mb-4 absolute top-3 left-1/2 -translate-x-1/2" />
             <Drawer.Title className="flex items-center gap-2 mt-2">
@@ -57,6 +63,7 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
               isLoading={isLoading}
               onAddComment={handleAdd}
               onDeleteComment={handleDelete}
+              onEditComment={handleUpdateComment}
               onHideComment={handleHideComment}
               handleReportComment={handleReportComment}
               onUndoComment={handleUndo}

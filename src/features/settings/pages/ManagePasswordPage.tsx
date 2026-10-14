@@ -11,8 +11,7 @@ import {
   useRequestPasswordResetLink,
   useResetLinkStatus
 } from '../hooks/useAccountSettings';
-import { getFirstMissingPasswordRequirement, isPasswordFullyValid } from '@/lib/validators';
-import { PasswordRequirementsCard } from '@/components/shared/PasswordRequirementsCard';
+import { getFirstMissingPasswordRequirement } from '@/lib/validators';
 
 interface ManagePasswordPageProps {
   mode?: 'change' | 'add';
@@ -41,6 +40,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
   const [errorMsg, setErrorMsg] = useState('');
   const [resetSuccessMsg, setResetSuccessMsg] = useState('');
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const updatePasswordMutation = useUpdatePassword();
   const requestResetLinkMutation = useRequestPasswordResetLink();
@@ -77,20 +77,47 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const currentPasswordError =
+    errorMsg === "Current password is incorrect"
+      ? "Current password is incorrect."
+      : errorMsg === "Current password is required"
+      ? "Current password is required."
+      : hasSubmitted && !isAddMode && !currentPassword
+      ? "Current password is required."
+      : "";
+
+  const newPasswordError =
+    !isAddMode && currentPassword && newPassword && newPassword === currentPassword
+      ? "New password must be different from current password."
+      : newPassword
+      ? getFirstMissingPasswordRequirement(newPassword)
+      : hasSubmitted
+      ? "*Use 8 to 15 characters"
+      : "";
+
+  const confirmPasswordError =
+    confirmPassword && newPassword && confirmPassword !== newPassword
+      ? "Passwords do not match."
+      : hasSubmitted && !confirmPassword
+      ? "Passwords do not match."
+      : "";
+
   const handleUpdatePassword = () => {
+    setHasSubmitted(true);
     setErrorMsg('');
     setResetSuccessMsg('');
-    const missingReq = getFirstMissingPasswordRequirement(newPassword);
-    if (missingReq) {
-      setErrorMsg(missingReq);
+
+    if (!isAddMode && !currentPassword) {
       return;
     }
-    if (newPassword !== confirmPassword) {
-      setErrorMsg("Passwords do not match.");
+    const missingReq = getFirstMissingPasswordRequirement(newPassword);
+    if (missingReq) {
       return;
     }
     if (!isAddMode && currentPassword && newPassword === currentPassword) {
-      setErrorMsg("New password must be different from current password.");
+      return;
+    }
+    if (!confirmPassword || newPassword !== confirmPassword) {
       return;
     }
 
@@ -98,6 +125,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
       { currentPassword: isAddMode ? '' : currentPassword, newPassword },
       {
         onSuccess: () => {
+          setHasSubmitted(false);
           setCurrentPassword('');
           setNewPassword('');
           setConfirmPassword('');
@@ -127,15 +155,6 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
     });
   };
 
-  const isFormValid =
-    !updatePasswordMutation.isPending &&
-    (isAddMode || Boolean(currentPassword)) &&
-    Boolean(newPassword) &&
-    Boolean(confirmPassword) &&
-    newPassword === confirmPassword &&
-    (isAddMode || newPassword !== currentPassword) &&
-    isPasswordFullyValid(newPassword);
-
   return (
     <div className="w-full max-w-[712px] py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 select-none">
       {/* Header */}
@@ -157,14 +176,14 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (isFormValid) handleUpdatePassword();
+          handleUpdatePassword();
         }}
         className="self-stretch px-4 flex flex-col justify-start items-start gap-2"
       >
         {/* Current Password - Only in Change mode */}
         {!isAddMode && (
           <div className="self-stretch flex flex-col justify-start items-start">
-            <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+            <div className={`self-stretch py-2 border-b ${currentPasswordError ? '!border-ds-error' : 'border-ds-border'} flex flex-col justify-center items-start gap-2.5 transition-colors`}>
               <label className="text-left text-ds-text-secondary ds-text-small-1">
                 Enter your current password
               </label>
@@ -174,7 +193,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                   value={currentPassword}
                   onChange={(e) => {
                     setCurrentPassword(e.target.value);
-                    if (errorMsg === "Current password is incorrect") setErrorMsg('');
+                    if (errorMsg === "Current password is incorrect" || errorMsg === "Current password is required") setErrorMsg('');
                   }}
                   placeholder="Current password"
                   autoComplete="current-password"
@@ -195,9 +214,9 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                 </button>
               </div>
             </div>
-            {errorMsg === "Current password is incorrect" && (
+            {currentPasswordError && (
               <span className="ds-text-small text-ds-error pt-1">
-                Current password is incorrect.
+                {currentPasswordError}
               </span>
             )}
           </div>
@@ -205,7 +224,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
 
         {/* New Password */}
         <div className="self-stretch flex flex-col justify-start items-start">
-          <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+          <div className={`self-stretch py-2 border-b ${newPasswordError ? '!border-ds-error' : 'border-ds-border'} flex flex-col justify-center items-start gap-2.5 transition-colors`}>
             <label className="text-left text-ds-text-secondary ds-text-small-1">
               New password
             </label>
@@ -215,7 +234,7 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
-                  if (errorMsg === "New password must be different from current password.") setErrorMsg('');
+                  if (errorMsg) setErrorMsg('');
                 }}
                 placeholder="New password"
                 maxLength={15}
@@ -237,16 +256,16 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
               </button>
             </div>
           </div>
-          {!isAddMode && currentPassword && newPassword && newPassword === currentPassword && (
+          {newPasswordError && (
             <span className="ds-text-small text-ds-error pt-1">
-              New password must be different from current password.
+              {newPasswordError}
             </span>
           )}
         </div>
 
         {/* Confirm new password */}
         <div className="self-stretch flex flex-col justify-start items-start">
-          <div className="self-stretch pb-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
+          <div className={`self-stretch pb-2 border-b ${confirmPasswordError ? '!border-ds-error' : 'border-ds-border'} flex flex-col justify-center items-start gap-2.5 transition-colors`}>
             <label className="text-left text-ds-text-secondary ds-text-small-1">
               Confirm new password
             </label>
@@ -278,28 +297,23 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
               </button>
             </div>
           </div>
-          {confirmPassword && newPassword && confirmPassword !== newPassword && (
+          {confirmPasswordError && (
             <span className="ds-text-small text-ds-error pt-1">
-              Passwords do not match.
+              {confirmPasswordError}
             </span>
           )}
         </div>
 
-        {/* Password Requirements helper card */}
-        {newPassword ? (
-          <div className="w-full pt-1">
-            <PasswordRequirementsCard password={newPassword} />
-          </div>
-        ) : null}
-
         {/* Error / Feedback area */}
         {((errorMsg &&
           errorMsg !== "Current password is incorrect" &&
+          errorMsg !== "Current password is required" &&
           errorMsg !== "Passwords do not match." &&
           errorMsg !== "New password must be different from current password.") || resetSuccessMsg) ? (
           <div className="ds-supporting-area w-full">
             {errorMsg &&
               errorMsg !== "Current password is incorrect" &&
+              errorMsg !== "Current password is required" &&
               errorMsg !== "Passwords do not match." &&
               errorMsg !== "New password must be different from current password." && (
                 <span className="ds-text-small text-ds-error">{errorMsg}</span>
@@ -330,28 +344,17 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
             )
           )}
 
-          {isFormValid ? (
-            <button
-              type="submit"
-              disabled={updatePasswordMutation.isPending}
-              className={`${isAddMode ? 'w-[132px]' : 'w-[80px]'} h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-opacity ds-focus-ring`}
-            >
-              <span className="text-white ds-text-body-1 whitespace-nowrap">
-                {updatePasswordMutation.isPending
-                  ? (isAddMode ? "Adding..." : "Updating...")
-                  : (isAddMode ? "Add password" : "Update")}
-              </span>
-            </button>
-          ) : (
-            <div
-              data-property-1="Disabled"
-              className={`${isAddMode ? 'w-[132px]' : 'w-[80px]'} h-[36px] px-4 py-1.5 bg-ds-surface-1 rounded-full flex justify-center items-center gap-2 cursor-not-allowed select-none border border-ds-border/40`}
-            >
-              <span className="text-ds-text-muted ds-text-body-1 whitespace-nowrap">
-                {isAddMode ? "Add password" : "Update"}
-              </span>
-            </div>
-          )}
+          <button
+            type="submit"
+            disabled={updatePasswordMutation.isPending}
+            className={`${isAddMode ? 'w-[132px]' : 'w-[80px]'} h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-opacity ds-focus-ring disabled:opacity-50`}
+          >
+            <span className="text-white ds-text-body-1 whitespace-nowrap">
+              {updatePasswordMutation.isPending
+                ? (isAddMode ? "Adding..." : "Updating...")
+                : (isAddMode ? "Add password" : "Update")}
+            </span>
+          </button>
         </div>
 
 

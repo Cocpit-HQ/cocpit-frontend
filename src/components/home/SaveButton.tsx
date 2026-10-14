@@ -19,6 +19,7 @@ interface SaveButtonProps {
 export function SaveButton({ postId, initialIsSaved = false, className, onSaveChange, onToggle }: SaveButtonProps) {
     const [isSaved, setIsSaved] = useState(initialIsSaved)
     const [isLoading, setIsLoading] = useState(false)
+    const isSavingRef = React.useRef(false)
     const queryClient = useQueryClient()
 
     // Sync state with props
@@ -32,12 +33,14 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
         e.preventDefault()
         e.stopPropagation()
 
-        if (isLoading) return
+        if (isLoading || isSavingRef.current) return
 
         if (onToggle && !isSaved) {
             onToggle()
             return
         }
+
+        isSavingRef.current = true
 
         // Optimistic Update
         const previousState = isSaved
@@ -66,6 +69,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             // Revert on error
             setIsSaved(previousState)
         } finally {
+            isSavingRef.current = false
             setIsLoading(false)
         }
     }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Plus } from 'lucide-react'
@@ -27,6 +27,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     const [isLoading, setIsLoading] = useState(true)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [savingToFolderId, setSavingToFolderId] = useState<string | null>(null)
+    const isSavingRef = useRef(false)
     const queryClient = useQueryClient()
 
     const { isCompany, activeProfile } = useActiveProfile()
@@ -34,6 +35,9 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     useEffect(() => {
         if (isOpen) {
             fetchFolders()
+        } else {
+            isSavingRef.current = false
+            setSavingToFolderId(null)
         }
     }, [isOpen, activeProfile?.id])
 
@@ -53,6 +57,8 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     }
 
     const handleSaveToFolder = async (folderId: string | null | undefined) => {
+        if (isSavingRef.current) return
+        isSavingRef.current = true
         setSavingToFolderId(folderId || 'all')
         try {
             const companyId = isCompany ? activeProfile?.id : undefined;
@@ -67,6 +73,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
             console.error("Failed to save to folder:", error)
             toast.error("Failed to save")
         } finally {
+            isSavingRef.current = false
             setSavingToFolderId(null)
         }
     }

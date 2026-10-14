@@ -66,7 +66,12 @@ export default function CommentInput({
         }
         if (editingComment && textareaRef.current) {
             setCommentText(editingComment.text);
-            textareaRef.current.focus();
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.focus();
+                    textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 60);
         }
     }, [replyingTo, editingComment, variant]);
 
@@ -107,6 +112,17 @@ export default function CommentInput({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        // On mobile/touch devices or inside mobile drawer, Enter key should insert a newline rather than submitting
+        const isMobileDevice = isDrawer || (typeof window !== 'undefined' && (
+            window.innerWidth < 768 || 
+            'ontouchstart' in window || 
+            navigator.maxTouchPoints > 0
+        ));
+
+        if (isMobileDevice) {
+            return;
+        }
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSubmit();
@@ -226,7 +242,7 @@ export default function CommentInput({
                             </button>
                         )}
                     </div>
-                    <div className="w-full border border-ds-border rounded-[16px] p-3 bg-transparent focus-within:border-ds-text-secondary transition-all flex flex-col justify-between gap-2 relative">
+                    <div className="w-full border border-ds-border rounded-[16px] p-3 bg-ds-surface-1 focus-within:border-ds-text-secondary transition-all flex flex-col justify-between gap-2 relative">
                         <div className="flex flex-col items-start w-full min-w-0">
                             <MentionTextarea
                                 ref={textareaRef as any}
@@ -394,7 +410,7 @@ export default function CommentInput({
                     </div>
                 </div>
             ) : (
-                <div className={`flex w-full mt-2 relative border border-ds-border rounded-[24px] bg-transparent transition-colors overflow-hidden focus-within:border-ds-text-secondary min-h-[40px] ${commentText.trim().length > 0 ? 'flex-col p-3' : 'flex-row items-center pl-4 pr-1 py-1'}`}>
+                <div className={`flex w-full mt-2 relative border border-ds-border rounded-[24px] bg-ds-surface-1 transition-colors overflow-hidden focus-within:border-ds-text-secondary min-h-[40px] ${commentText.trim().length > 0 ? 'flex-col p-3' : 'flex-row items-center pl-4 pr-1 py-1'}`}>
                     <div className={`w-full relative flex-1 ${commentText.trim().length > 0 ? 'min-h-[20px]' : 'flex items-center min-h-[20px]'}`}>
                         <MentionTextarea
                             ref={textareaRef as any}

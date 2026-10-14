@@ -313,7 +313,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
           <div className="flex flex-col flex-1 min-w-0">
             <span 
               onClick={handleProfileClick}
-              className="text-ds-text-primary text-[16px] font-semibold font-dmsans leading-[24px] truncate cursor-pointer hover:underline"
+              className="text-ds-text-primary text-[16px] font-semibold font-dmsans leading-[24px] truncate cursor-pointer hover:opacity-80 transition-opacity"
             >
               {sharedName || 'Unknown User'}
             </span>
