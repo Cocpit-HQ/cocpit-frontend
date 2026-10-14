@@ -15,7 +15,7 @@ import {
   handleDescriptionPaste,
 } from '../../utils/role-description.util';
 
-const DISABLED_ROLE_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT'];
+const DISABLED_ROLE_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT', 'SETTINGS'];
 
 interface EditRoleModalProps {
   isOpen: boolean;
@@ -111,27 +111,30 @@ export default function EditRoleModal({
       />
 
       {/* Modal */}
-      <div className="relative w-[600px] max-h-[90vh] bg-ds-bg border border-ds-border rounded-[16px] p-[12px] shadow-2xl grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-center h-[64px] relative border-b border-transparent">
-          <h2 className="text-[18px] leading-[26px] font-medium font-['Poppins'] text-center text-ds-text-primary">
+      <div className="relative w-[600px] max-h-[90vh] bg-ds-bg border border-ds-border rounded-[16px] shadow-2xl grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
+        {/* Close Button - Figma Frame 2609536: top 12px, right 12px, 20x20px */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-[12px] top-[12px] w-[20px] h-[20px] flex items-center justify-center text-ds-text-secondary transition-colors hover:text-ds-text-primary cursor-pointer z-10"
+        >
+          <Icon name="close" className="w-5 h-5" />
+        </button>
+
+        {/* Header - Starts at y=32px (12px top offset + 20px Frame 2609536 height) */}
+        <div className="flex items-center justify-center pt-[32px] pb-4 px-7 relative">
+          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans',sans-serif] text-center text-ds-text-primary">
             Edit role
           </h2>
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-text-secondary transition-colors hover:text-ds-text-primary"
-          >
-            <Icon name="close" className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto min-h-0 pb-6 flex flex-col scrollbar-hide">
+        <div className="overflow-y-auto min-h-0 px-7 pb-6 flex flex-col scrollbar-hide">
           
           <div className="flex flex-col gap-6 pt-2">
             {/* Role name */}
             <div className="flex flex-col gap-2 border-b border-ds-border pb-1">
-              <label className="text-[14px] leading-[20px] text-ds-text-secondary font-['DM_Sans'] font-medium">
+              <label className="text-[16px] leading-[24px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-medium">
                 Role name
               </label>
               <input
@@ -139,13 +142,13 @@ export default function EditRoleModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="HR Manager"
-                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans'] outline-none placeholder-ds-text-muted"
+                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans',sans-serif] outline-none placeholder-ds-text-muted"
               />
             </div>
 
             {/* Color picker */}
             <div className="flex flex-col gap-3">
-              <label className="text-[14px] leading-[20px] text-ds-text-secondary font-['DM_Sans'] font-medium">
+              <label className="text-[16px] leading-[24px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-medium">
                 Role color
               </label>
               <div className="flex gap-[19.2px] flex-wrap items-center">
@@ -171,7 +174,7 @@ export default function EditRoleModal({
 
             {/* Description */}
             <div className="flex flex-col gap-2 border-b border-ds-border pb-1 relative mb-[20px]">
-              <label className="text-[14px] leading-[20px] text-ds-text-secondary font-['DM_Sans'] font-medium">
+              <label className="text-[12px] leading-[16px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-medium">
                 Role description
               </label>
               <textarea
@@ -187,10 +190,10 @@ export default function EditRoleModal({
                 onPaste={(e) => handleDescriptionPaste(e, description, setDescription, MAX_ROLE_DESCRIPTION_CHARS)}
                 maxLength={MAX_ROLE_DESCRIPTION_CHARS}
                 placeholder="Describe the responsibilities and scope of this role..."
-                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans'] outline-none resize-none max-h-[140px] overflow-y-auto scrollbar-hide placeholder-ds-text-muted p-0 m-0"
+                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans',sans-serif] outline-none resize-none max-h-[140px] overflow-y-auto scrollbar-hide placeholder-ds-text-muted p-0 m-0"
               />
               <div className="flex justify-end items-center mt-1 absolute top-full right-0">
-                <span className={`text-[12px] font-['DM_Sans'] ${description.length >= MAX_ROLE_DESCRIPTION_CHARS ? 'text-ds-error' : 'text-ds-text-secondary'}`}>
+                <span className={`text-[12px] font-['DM_Sans',sans-serif] ${description.length >= MAX_ROLE_DESCRIPTION_CHARS ? 'text-ds-error' : 'text-ds-text-secondary'}`}>
                   {description.length}/{MAX_ROLE_DESCRIPTION_CHARS}
                 </span>
               </div>
@@ -198,7 +201,7 @@ export default function EditRoleModal({
           </div>
 
           {/* Permissions */}
-          <div className="mt-4">
+          <div className="mt-[28px]">
             <PermissionCheckList
               selected={permissions}
               onChange={setPermissions}
@@ -207,19 +210,19 @@ export default function EditRoleModal({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 flex items-center justify-center gap-4 pt-4 pb-2 mt-auto border-t border-transparent">
+        <div className="shrink-0 flex items-center justify-center gap-4 pt-4 pb-6 mt-auto border-t border-transparent">
           <button
             type="submit"
             onClick={handleSubmit}
             disabled={!name.trim() || isSubmitting || description.length > MAX_ROLE_DESCRIPTION_CHARS}
-            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-ds-accent text-[16px] leading-[24px] font-medium font-['DM_Sans'] flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 text-white"
+            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-ds-accent text-[16px] leading-[24px] font-medium font-['DM_Sans',sans-serif] flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 text-ds-text-primary"
           >
             {isSubmitting ? '...' : 'Save'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] border border-ds-border bg-transparent text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans'] flex items-center justify-center hover:bg-ds-surface-2 transition-colors"
+            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] border border-ds-border bg-transparent text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans',sans-serif] flex items-center justify-center hover:bg-ds-surface-2 transition-colors"
           >
             Cancel
           </button>

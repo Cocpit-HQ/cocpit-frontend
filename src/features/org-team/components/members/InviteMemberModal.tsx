@@ -74,7 +74,7 @@ export default function InviteMemberModal({
       <div className="flex flex-col items-center p-3 gap-3 w-[442px] h-[338px] bg-ds-bg border border-ds-border rounded-[16px] relative box-border z-10 overflow-hidden">
         
         {/* Invite members */}
-        <h2 className="ds-text-body-1 text-ds-text-primary text-center m-0">
+        <h2 className="text-[16px] leading-[24px] font-medium font-['DM_Sans',sans-serif] text-ds-text-primary text-center m-0">
           Invite members
         </h2>
 
@@ -135,26 +135,30 @@ export default function InviteMemberModal({
                     size="sm"
                   />
                   <div className="flex flex-col justify-center items-start min-w-0 flex-1">
-                    <span className="ds-text-secondary text-ds-text-primary truncate w-full">
+                    <span className="text-[14px] leading-[20px] font-medium font-['DM_Sans',sans-serif] text-ds-text-primary truncate w-full">
                       {c.name}
                     </span>
-                    <span
-                      className="ds-text-small text-ds-text-secondary truncate max-w-[50%] min-h-[16px] block"
-                      title={c.headline || undefined}
-                    >
-                      {c.headline || '\u00A0'}
-                    </span>
+                    {c.headline && (
+                      <span
+                        className="text-[12px] leading-[16px] font-normal font-['DM_Sans',sans-serif] text-ds-text-secondary truncate max-w-[50%] block"
+                        title={c.headline}
+                      >
+                        {c.headline}
+                      </span>
+                    )}
                   </div>
                 </div>
                 
                 {/* Checkbox */}
-                <div className={`shrink-0 flex items-center justify-center w-[24px] h-[24px] rounded-[4px] box-border transition-colors ${
-                  selectedIds.includes(c.id)
-                    ? 'bg-[var(--ds-accent)]'
-                    : 'bg-ds-surface-1 border border-ds-border'
-                }`}>
+                <div
+                  className={`shrink-0 flex items-center justify-center w-[24px] h-[24px] rounded-[4px] box-border transition-colors ${
+                    selectedIds.includes(c.id)
+                      ? 'bg-ds-accent'
+                      : 'bg-ds-surface-1 border border-ds-border'
+                  }`}
+                >
                   {selectedIds.includes(c.id) && (
-                    <Icon name="check" className="w-[16px] h-[13px] text-[var(--ds-bg)]" />
+                    <Icon name="checkbox-check" className="w-[16px] h-[13px] text-ds-bg shrink-0" />
                   )}
                 </div>
               </div>
@@ -165,15 +169,21 @@ export default function InviteMemberModal({
         {/* Buttons */}
         <div className="flex flex-row justify-center items-start gap-2 w-[162px] h-[36px] shrink-0">
           <button
+            type="button"
             onClick={handleInvite}
             disabled={selectedIds.length === 0}
-            className="flex flex-row justify-center items-center py-[6px] px-[12px] gap-[10px] w-[77px] h-[36px] bg-[var(--ds-accent)] rounded-[100px] ds-text-body-1 text-ds-text-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className={`flex flex-row justify-center items-center py-[6px] px-[12px] gap-[10px] w-[77px] h-[36px] rounded-[100px] text-[16px] leading-[24px] font-medium font-['DM_Sans',sans-serif] transition-all ${
+              selectedIds.length === 0
+                ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
+                : 'bg-ds-accent text-ds-text-primary hover:opacity-90 cursor-pointer'
+            }`}
           >
             Invite
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="flex flex-row justify-center items-center py-[6px] px-[12px] gap-[10px] w-[77px] h-[36px] bg-transparent border border-ds-border rounded-[100px] ds-text-body-1 text-ds-text-primary hover:bg-ds-surface-1 transition-colors"
+            className="flex flex-row justify-center items-center py-[6px] px-[12px] gap-[10px] w-[77px] h-[36px] bg-transparent border border-ds-border rounded-[100px] text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans',sans-serif] hover:bg-ds-surface-1 transition-colors cursor-pointer"
           >
             Cancel
           </button>

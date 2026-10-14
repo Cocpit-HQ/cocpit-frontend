@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
 import api from "@/lib/axios";
 import { SearchedUser } from "@/types/user";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export type HistoryItem = 
     | { type: 'QUERY', value: string, id: string }
@@ -9,8 +10,13 @@ export type HistoryItem =
 
 export const useSearchHistory = () => {
     const { data: session } = useSession();
+    const { activeProfile, isCompany } = useActiveProfile();
     const userId = session?.user?.id || session?.user?.email || 'guest';
-    const storageKey = useMemo(() => `cocpit_search_history_${userId}`, [userId]);
+
+    // Scope search history by active profile context (personal vs organization)
+    const orgId = isCompany && activeProfile?.id ? activeProfile.id : null;
+    const contextKey = orgId ? `org_${orgId}` : 'personal';
+    const storageKey = useMemo(() => `cocpit_search_history_${userId}_${contextKey}`, [userId, contextKey]);
     
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,8 +26,10 @@ export const useSearchHistory = () => {
     useEffect(() => {
         if (!userId) return;
         
-        // Step 1: Read localStorage for instant UI
-        const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        // Step 1: Read localStorage for instant UI (with fallback to legacy key for personal mode)
+        const storedJson = localStorage.getItem(storageKey) 
+            || (contextKey === 'personal' ? localStorage.getItem(`cocpit_search_history_${userId}`) : null);
+        const stored = JSON.parse(storedJson || "[]");
         setHistory(stored);
         
         // Step 2: Fetch from database if authenticated
@@ -64,7 +72,7 @@ export const useSearchHistory = () => {
         };
 
         fetchHistory();
-    }, [storageKey, userId]);
+    }, [storageKey, userId, contextKey]);
 
     // Save search
     const saveSearch = (item: any) => {

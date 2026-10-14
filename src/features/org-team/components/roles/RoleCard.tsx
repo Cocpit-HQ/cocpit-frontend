@@ -123,7 +123,12 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
 
   const formatPermissions = (perms: TeamPermission[]) => {
     if (!perms || perms.length === 0) return 'No permissions';
-    const mapped = perms.map(p => getPermissionLabel(p));
+    const filtered = perms.filter((p) => {
+      const u = String(p).toUpperCase().trim();
+      return u !== 'CHANNEL' && u !== 'CHANNELS';
+    });
+    if (filtered.length === 0) return 'No permissions';
+    const mapped = filtered.map(p => getPermissionLabel(p));
     const shouldTruncate = mapped.length > 3;
     const displayPerms = shouldTruncate ? mapped.slice(0, 3) : mapped;
     const str = displayPerms.join(', ') + (shouldTruncate ? '...' : '');

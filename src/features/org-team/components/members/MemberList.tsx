@@ -16,15 +16,15 @@ interface MemberListProps {
 
 export default function MemberList({ members, pendingInvites = [], onRemoveMember, onInviteClick, onWithdrawInvitation }: MemberListProps) {
   return (
-    <div className="w-full flex flex-col gap-5">
+    <div className="w-full flex flex-col gap-5 font-['DM_Sans',sans-serif]">
       {/* Header */}
       <div className="flex h-9 w-full items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-[16px] leading-6 font-medium text-ds-text-primary">
+          <span className="font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium text-ds-text-primary">
             All members
           </span>
           <span className="h-1 w-1 rounded-full bg-ds-text-muted shrink-0" />
-          <span className="text-[14px] leading-5 text-ds-text-secondary">
+          <span className="font-['DM_Sans',sans-serif] text-[14px] leading-5 text-ds-text-secondary">
             {members.length} total
           </span>
         </div>
@@ -32,9 +32,9 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
         {onInviteClick && (
           <button
             onClick={onInviteClick}
-            className="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-ds-border px-3.5 text-[14px] leading-5 font-medium text-ds-text-primary hover:bg-ds-surface-1 transition-colors"
+            className="flex w-[160px] h-[36px] shrink-0 items-center justify-center gap-2 rounded-full border border-ds-border font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium text-ds-text-primary hover:bg-ds-surface-1 transition-colors box-border"
           >
-            <AddIcon size={16} className="w-4 h-4 text-ds-text-primary" />
+            <AddIcon size={16} className="w-4 h-4 text-ds-text-primary shrink-0" />
             Invite member
           </button>
         )}
@@ -49,7 +49,7 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
           />
         ))}
         {members.length === 0 && (
-          <p className="ds-text-secondary text-ds-text-muted py-4 text-center">No members assigned to this role.</p>
+          <p className="font-['DM_Sans',sans-serif] text-[14px] leading-5 text-ds-text-muted py-4 text-center">No members assigned to this role.</p>
         )}
       </div>
 
@@ -57,11 +57,11 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
         <div className="flex w-full flex-col gap-3 mt-2">
           <div className="flex h-9 w-full items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[16px] leading-6 font-medium text-ds-text-primary">
+              <span className="font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium text-ds-text-primary">
                 Sent invitation{pendingInvites.length > 1 ? 's' : ''}
               </span>
               <span className="h-1 w-1 rounded-full bg-ds-text-muted shrink-0" />
-              <span className="text-[14px] leading-5 text-ds-text-secondary">
+              <span className="font-['DM_Sans',sans-serif] text-[14px] leading-5 text-ds-text-secondary">
                 {pendingInvites.length} total
               </span>
             </div>
@@ -83,17 +83,17 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
                       size="sm"
                     />
                     <div className="flex min-w-0 flex-col gap-1">
-                      <span className="text-[14px] leading-5 font-normal text-ds-text-primary truncate">
+                      <span className="font-['DM_Sans',sans-serif] text-[14px] leading-5 font-normal text-ds-text-primary truncate">
                         {invite.name}
                       </span>
-                      <span className="text-[12px] leading-4 text-ds-text-secondary truncate">
+                      <span className="font-['DM_Sans',sans-serif] text-[12px] leading-4 text-ds-text-secondary truncate">
                         {displayEmail}
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={() => onWithdrawInvitation?.(invite.id)}
-                    className="shrink-0 text-[14px] leading-5 font-medium text-ds-text-secondary hover:text-ds-text-primary transition-colors"
+                    className="font-['DM_Sans',sans-serif] shrink-0 text-[14px] leading-5 font-medium text-ds-text-secondary hover:text-ds-text-primary transition-colors"
                   >
                     Withdraw Invitation
                   </button>

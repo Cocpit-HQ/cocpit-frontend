@@ -39,13 +39,17 @@ function mapRole(row: any): TeamRole {
   const rawPerms = parsePermissionsList(row.permissions);
   const permissions = rawPerms
     .map((p: any) => (typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : ''))
-    .filter((p: string) => p.length > 0);
+    .filter((p: string) => p.length > 0 && p !== 'CHANNEL' && p !== 'CHANNELS');
+
+  const roleName = row.name || '';
+  const isDefaultAdmin = roleName.toLowerCase() === 'admin' || roleName.toLowerCase() === 'owner';
+  const roleColor = isDefaultAdmin ? '#06B6D4' : (row.color || '#808080');
 
   return {
     id: row.role_id || row.id,
     orgId: row.org_id || row.orgId,
-    name: row.name,
-    color: row.color || '#808080',
+    name: roleName,
+    color: roleColor,
     description: row.description || '',
     permissions: permissions as any,
     priority: row.priority ?? 0,
@@ -89,8 +93,10 @@ function formatAction(action: string, metadata?: any): string {
   switch (upper) {
     case 'ACTOR_SWITCH':
       return 'successfully switched to the Organization account.';
+    case 'CREATE_ORGANIZATION':
     case 'CREATE_PAGE':
-      return 'created the company page';
+    case 'ONBOARDING_COMPLETED':
+      return 'created the Organization account.';
     case 'UPDATE_PROFILE':
       return 'updated organization profile';
     case 'UPLOAD_VERIFICATION_DOC':
@@ -98,13 +104,17 @@ function formatAction(action: string, metadata?: any): string {
     case 'VERIFICATION_STATUS_CHANGED':
       return 'updated verification status';
     case 'INVITE_MEMBER':
-      return 'invited team member';
+      return 'invited';
     case 'WITHDRAW_INVITE':
-      return 'withdrew team invitation';
+      return 'withdrew invitation for';
     case 'ACCEPT_INVITE':
+    case 'JOIN_ORGANIZATION':
       return 'joined organization';
+    case 'DECLINE_INVITE':
+    case 'DECLINE_INVITATION':
+      return 'declined invitation';
     case 'REMOVE_MEMBER':
-      return 'removed team member';
+      return 'removed';
     case 'ASSIGN_ROLE':
       return 'updated role for';
     case 'CREATE_ROLE':
@@ -126,13 +136,14 @@ function formatAction(action: string, metadata?: any): string {
     case 'DECLINE_APPLICATION':
       return 'declined application for';
     case 'CREATE_POST':
-      return 'created a post';
+      return 'created a';
     case 'EDIT_POST':
-      return 'edited a post';
+    case 'UPDATE_POST':
+      return 'edited a';
     case 'CHANGE_VISIBILITY':
       return 'changed post visibility';
     case 'DELETE_POST':
-      return 'deleted a post';
+      return 'deleted a';
     case 'LIKE':
     case 'LIKED':
       return 'liked post by';
@@ -141,13 +152,13 @@ function formatAction(action: string, metadata?: any): string {
       return 'commented on';
     case 'REPOST':
     case 'REPOSTED':
-      return 'reposted post by';
+      return 'reposted a';
     case 'SHARE_POST':
-      return 'shared a post';
+      return 'shared a';
     case 'REPORT_POST':
-      return 'reported a post';
+      return 'reported a';
     case 'SAVE_POST':
-      return 'saved a post';
+      return 'saved a';
     case 'CREATE_CHANNEL':
       return 'created channel';
     case 'CREATE_ARTICLE':
@@ -190,33 +201,119 @@ function formatAction(action: string, metadata?: any): string {
 
 function mapActivityLog(row: any): ActivityLogEntry {
   const metadata = row.metadata || {};
-  let targetName = row.target_name || metadata.targetName || metadata.roleName || metadata.title || '';
-  let targetId = metadata.targetId || metadata.postId || metadata.jobId || metadata.roleId || '';
+  let targetName = row.target_name || metadata.targetName || metadata.targetUserName || metadata.name || '';
+  let targetId = metadata.targetUserId || metadata.removedUserId || metadata.targetId || metadata.postId || metadata.id || metadata.jobId || metadata.roleId || '';
   let targetType = metadata.targetType || '';
   let linkUrl = metadata.linkUrl || '';
   let highlightedText = metadata.highlightedText || '';
 
+  let actionFormatted = formatAction(row.action, metadata);
+
   const actionUpper = (row.action || '').toUpperCase().trim();
-  if (actionUpper === 'LIKE' || actionUpper === 'COMMENT' || actionUpper === 'REPOST' || actionUpper === 'CREATE_POST') {
-    if (!highlightedText) highlightedText = 'post';
+  if (actionUpper === 'ACTOR_SWITCH' || actionUpper === 'CREATE_ORGANIZATION' || actionUpper === 'CREATE_PAGE' || actionUpper === 'ONBOARDING_COMPLETED') {
+    targetName = '';
+  } else if (actionUpper === 'INVITE_MEMBER') {
+    if (!targetName && metadata.email) {
+      targetName = metadata.email;
+    }
+    if (!targetName) {
+      targetName = 'team member';
+    }
+    if (metadata.roleName || metadata.role) {
+      highlightedText = `as ${metadata.roleName || metadata.role}`;
+    }
+    if (!linkUrl && (metadata.targetUserId || row.target_user_id)) {
+      linkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+    }
+  } else if (actionUpper === 'WITHDRAW_INVITE') {
+    if (!targetName && metadata.email) {
+      targetName = metadata.email;
+    }
+    if (!targetName) {
+      targetName = 'team member';
+    }
+    if (!linkUrl && (metadata.targetUserId || row.target_user_id)) {
+      linkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+    }
+  } else if (actionUpper === 'ASSIGN_ROLE') {
+    if (!targetName) {
+      targetName = 'team member';
+    }
+    if (metadata.roleName || metadata.role) {
+      highlightedText = `as ${metadata.roleName || metadata.role}`;
+    }
+    if (!linkUrl && (metadata.targetUserId || row.target_user_id)) {
+      linkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+    }
+  } else if (actionUpper === 'REMOVE_MEMBER') {
+    if (!targetName) {
+      targetName = 'team member';
+    }
+    if (!linkUrl && (metadata.targetUserId || metadata.removedUserId || row.target_user_id)) {
+      linkUrl = `/profile/${metadata.targetUserId || metadata.removedUserId || row.target_user_id}`;
+    }
+  } else if (actionUpper === 'ACCEPT_INVITE' || actionUpper === 'JOIN_ORGANIZATION') {
+    targetName = '';
+    if (metadata.roleName || metadata.role) {
+      highlightedText = `as ${metadata.roleName || metadata.role}`;
+    }
+  } else if (actionUpper === 'DECLINE_INVITE' || actionUpper === 'DECLINE_INVITATION') {
+    targetName = '';
+    if (metadata.roleName || metadata.role) {
+      highlightedText = `as ${metadata.roleName || metadata.role}`;
+    }
+  } else if (actionUpper === 'CREATE_ROLE' || actionUpper === 'UPDATE_ROLE' || actionUpper === 'DELETE_ROLE') {
+    if (!targetName) {
+      targetName = metadata.roleName || '';
+    }
+    if (!highlightedText && metadata.roleId && actionUpper !== 'DELETE_ROLE') {
+      linkUrl = `/team/role/${metadata.roleId}`;
+    }
+  } else if (actionUpper === 'LIKE' || actionUpper === 'LIKED') {
+    const author = targetName || metadata.authorName || '';
+    targetName = '';
+    if (author) {
+      actionFormatted = 'liked post by';
+      highlightedText = author;
+    } else {
+      actionFormatted = 'liked a';
+      highlightedText = 'post';
+    }
     if (!linkUrl && targetId) linkUrl = `/post/${targetId}`;
-  } else if (actionUpper === 'CREATE_JOB' || actionUpper === 'CLOSE_JOB' || actionUpper === 'SEND_OFFER') {
-    if (!highlightedText) highlightedText = 'job';
-    if (!linkUrl && targetId) linkUrl = `/jobs/${targetId}`;
-  } else if (actionUpper === 'ASSIGN_ROLE' || actionUpper === 'CREATE_ROLE') {
-    if (!highlightedText && metadata.roleId) highlightedText = 'role';
-    if (!linkUrl && metadata.roleId) linkUrl = `/team/role/${metadata.roleId}`;
+  } else if (
+    actionUpper === 'COMMENT' ||
+    actionUpper === 'COMMENTED' ||
+    actionUpper === 'REPOST' ||
+    actionUpper === 'REPOSTED' ||
+    actionUpper === 'CREATE_POST' ||
+    actionUpper === 'EDIT_POST' ||
+    actionUpper === 'UPDATE_POST' ||
+    actionUpper === 'DELETE_POST' ||
+    actionUpper === 'SHARE_POST' ||
+    actionUpper === 'REPORT_POST' ||
+    actionUpper === 'SAVE_POST'
+  ) {
+    targetName = '';
+    if (!highlightedText) highlightedText = 'post';
+    if (!linkUrl && targetId && actionUpper !== 'DELETE_POST') linkUrl = `/post/${targetId}`;
+  } else if (actionUpper === 'CREATE_JOB' || actionUpper === 'CLOSE_JOB' || actionUpper === 'DELETE_JOB' || actionUpper === 'SEND_OFFER') {
+    if (!targetName) targetName = metadata.jobTitle || metadata.title || '';
+    if (!linkUrl && targetId && actionUpper !== 'DELETE_JOB') linkUrl = `/jobs/${targetId}`;
   } else if (actionUpper === 'VIEW_USER_PROFILE') {
     if (!highlightedText) highlightedText = 'profile';
     if (!linkUrl && metadata.targetHandle) linkUrl = `/u/${metadata.targetHandle}`;
     else if (!linkUrl && targetId) linkUrl = `/profile/${targetId}`;
+  } else {
+    if (!targetName) {
+      targetName = metadata.roleName || metadata.title || '';
+    }
   }
 
   return {
     id: row.log_id || row.id,
     actorName: row.actor_name || 'Team member',
     actorAvatarUrl: row.actor_avatar || row.actor_avatar_url || '/assets/pngegg.png',
-    action: formatAction(row.action, metadata),
+    action: actionFormatted,
     targetName: targetName,
     targetRole: row.target_role || row.actor_role,
     targetId: targetId,
@@ -312,9 +409,11 @@ export async function createRole(
 ): Promise<TeamRole> {
   const payload = {
     ...input,
-    permissions: input.permissions?.map((p) =>
-      typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : p
-    ),
+    permissions: input.permissions
+      ?.filter((p) => typeof p === 'string' && p.toUpperCase().trim() !== 'CHANNEL' && p.toUpperCase().trim() !== 'CHANNELS')
+      ?.map((p) =>
+        typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : p
+      ),
   };
   const res = await api.post(`/organizations/${orgId}/teams/roles`, payload);
   return mapRole(res.data);
@@ -327,9 +426,11 @@ export async function updateRole(
 ): Promise<TeamRole> {
   const payload = {
     ...input,
-    permissions: input.permissions?.map((p) =>
-      typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : p
-    ),
+    permissions: input.permissions
+      ?.filter((p) => typeof p === 'string' && p.toUpperCase().trim() !== 'CHANNEL' && p.toUpperCase().trim() !== 'CHANNELS')
+      ?.map((p) =>
+        typeof p === 'string' ? p.toUpperCase().trim().replace(/\s+/g, '_') : p
+      ),
   };
   const res = await api.put(`/organizations/${orgId}/teams/roles/${roleId}`, payload);
   return mapRole(res.data);

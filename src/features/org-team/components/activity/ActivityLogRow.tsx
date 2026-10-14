@@ -39,26 +39,30 @@ function ActivityLogRow({ entry }: ActivityLogRowProps) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-[#FFECE6]">
-          <span>
-            {entry.actorName}
-          </span>{' '}
-          {entry.action}{' '}
-          {entry.targetName && (
-            <span
-              onClick={handleLinkClick}
-              className={`${entry.linkUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-            >
-              {entry.targetName}
-            </span>
-          )}{' '}
-          {entry.highlightedText && (
-            <span
-              onClick={handleLinkClick}
-              className={`text-[var(--ds-accent)] ${entry.linkUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-            >
-              {entry.highlightedText}
-            </span>
-          )}
+          <span>{entry.actorName}</span>
+          {' '}{entry.action}
+          {entry.targetName ? (
+            <>
+              {' '}
+              <span
+                onClick={handleLinkClick}
+                className={`${entry.linkUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              >
+                {entry.targetName}
+              </span>
+            </>
+          ) : null}
+          {entry.highlightedText ? (
+            <>
+              {' '}
+              <span
+                onClick={handleLinkClick}
+                className={`text-[var(--ds-accent)] ${entry.linkUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              >
+                {entry.highlightedText}
+              </span>
+            </>
+          ) : null}
         </p>
       </div>
 

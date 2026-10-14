@@ -77,6 +77,33 @@ export function Sidebar({ className }: SidebarProps) {
     ];
   }, [analyticsHref, profileHref, settingsHref, isCompany]);
 
+  // Sort switchableCompanies so the currently active/open company is at the top of the list
+  const sortedCompanies = useMemo(() => {
+    if (!switchableCompanies || switchableCompanies.length === 0) return [];
+
+    const activeIndex = switchableCompanies.findIndex((company) => {
+      const companyId = company.org_id || company.company_id;
+      const isActorActive = isCompany && (
+        (companyId && activeProfile?.id === companyId) ||
+        (company.slug && activeProfile?.slug && company.slug === activeProfile.slug)
+      );
+      const isPathActive = company.slug
+        ? (pathname === `/organization/${company.slug}` || pathname?.startsWith(`/organization/${company.slug}/`))
+        : false;
+      return isActorActive || isPathActive;
+    });
+
+    if (activeIndex <= 0) return switchableCompanies;
+
+    const activeCompany = switchableCompanies[activeIndex];
+    const rest = switchableCompanies.filter((_, idx) => idx !== activeIndex);
+    return [activeCompany, ...rest];
+  }, [switchableCompanies, isCompany, activeProfile?.id, activeProfile?.slug, pathname]);
+
+  const isPersonalActive = !isCompany && activeProfile?.type === 'USER' && (
+    !pathname || !pathname.startsWith('/organization/')
+  );
+
   return (
     <aside 
       className={`h-screen w-[220px] flex flex-col bg-ds-bg pl-[16px] sm:pl-[24px] lg:pl-[40px] pt-[60px] sm:pt-[120px] overflow-hidden ${className || ''}`}
@@ -157,7 +184,7 @@ export function Sidebar({ className }: SidebarProps) {
                     </div>
                   );
                 })()}
-                <span className={`font-['DM_Sans'] truncate text-[16px] leading-[24px] ${!isCompany && activeProfile?.type === 'USER' ? 'font-medium text-ds-text-primary' : 'font-normal text-ds-text-secondary group-hover:text-ds-text-primary'}`}>
+                <span className={`font-['DM_Sans'] truncate text-[16px] leading-[24px] ${isPersonalActive ? 'font-medium text-ds-text-primary' : 'font-normal text-ds-text-secondary group-hover:text-ds-text-primary'}`}>
                   {user.name || "My Profile"}
                 </span>
               </Link>
@@ -185,9 +212,17 @@ export function Sidebar({ className }: SidebarProps) {
 
           {/* Organization Items */}
           <div className="flex flex-col gap-[8px]">
-            {(showAllOrgs ? switchableCompanies : switchableCompanies?.slice(0, 2))?.map((company, index) => {
+            {(showAllOrgs ? sortedCompanies : sortedCompanies.slice(0, 2))?.map((company, index) => {
+              const companyId = company.org_id || company.company_id;
+              const isCurrentActor = isCompany && (
+                (companyId && activeProfile?.id === companyId) ||
+                (company.slug && activeProfile?.slug && company.slug === activeProfile.slug)
+              );
+              const isCurrentPath = company.slug
+                ? (pathname === `/organization/${company.slug}` || pathname?.startsWith(`/organization/${company.slug}/`))
+                : false;
+              const isOrgActive = isCurrentActor || isCurrentPath;
               const orgHref = `/organization/${company.slug}`;
-              const isOrgActive = isActive(orgHref);
               const firstLetter = company.name ? company.name.charAt(0).toUpperCase() : 'C';
               
               // Alternate fallback colors
@@ -196,11 +231,16 @@ export function Sidebar({ className }: SidebarProps) {
 
               return (
                 <Link
-                  key={company.org_id || company.company_id || index}
+                  key={companyId || company.slug || index}
                   href={orgHref}
-                  onClick={() => {
-                    const id = company.org_id || company.company_id;
-                    if (id) switchProfile('COMPANY', id);
+                  onClick={(e) => {
+                    if (companyId) {
+                      if (activeProfile?.type === 'COMPANY' && activeProfile.id === companyId && pathname?.startsWith(`/organization/${company.slug}`)) {
+                        return;
+                      }
+                      e.preventDefault();
+                      switchProfile('COMPANY', companyId);
+                    }
                   }}
                   className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[33px] rounded-full transition-[var(--motion-quick)] group"
                 >
@@ -219,7 +259,7 @@ export function Sidebar({ className }: SidebarProps) {
             })}
 
             {/* See more link */}
-            {switchableCompanies && switchableCompanies.length > 2 && (
+            {sortedCompanies && sortedCompanies.length > 2 && (
               <div className="pl-[40px] mt-[4px]">
                 <button 
                   onClick={() => setShowAllOrgs(!showAllOrgs)}
@@ -231,6 +271,7 @@ export function Sidebar({ className }: SidebarProps) {
             )}
           </div>
         </div>
+
 
       </div>
     </aside>

@@ -48,6 +48,8 @@ export type IconName =
   | "edit-profile"
   | "search"
   | "check"
+  | "checkbox-check"
+  | "check-tick"
   | "crop"
   | "flip"
   | "rotate"
@@ -1689,6 +1691,30 @@ export const CheckIcon: React.FC<IconProps> = ({
   </svg>
 );
 
+export const CheckboxCheckIcon: React.FC<IconProps> = ({
+  className = "w-[16px] h-[13px]",
+  fill = "currentColor",
+  ...props
+}) => (
+  <svg
+    width={16}
+    height={13}
+    viewBox="0 0 16 13"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M1.5 6.5L5.5 11L14.5 2"
+      stroke={fill}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const DrivingLicenceIcon: React.FC<IconProps> = ({
   className = "w-5 h-5",
   size = 20,
@@ -2243,6 +2269,8 @@ export const SVG_ICONS: Record<IconName, React.FC<IconProps>> = {
   "lock-private": LockPrivateIcon,
   "private-lock": LockPrivateIcon,
   check: CheckIcon,
+  "checkbox-check": CheckboxCheckIcon,
+  "check-tick": CheckboxCheckIcon,
   "streamline-ultimate:team-meeting": TeamMeetingIcon,
   "hugeicons:job-search": JobSearchIcon,
   "hugeicons:analytics-up": AnalyticsUpIcon,

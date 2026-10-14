@@ -10,6 +10,8 @@ import BusinessEditProfileTab from "../components/edit/BusinessEditProfileTab";
 import BusinessEditAboutTab from "../components/edit/BusinessEditAboutTab";
 import { BusinessBuildingIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { AccessDenied } from "@/features/access-denied";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export function BusinessProfileEditPage() {
   const router = useRouter();
@@ -19,31 +21,47 @@ export function BusinessProfileEditPage() {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") === "about" ? "about" : "profile";
 
+  const { activeProfile } = useActiveProfile();
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const { data: profileData, isLoading } = useQuery({
+    queryKey: ["orgProfile", rawSlug],
+    queryFn: () => businessProfileService.getOrgProfile(rawSlug),
+  });
+
+  const actingCompanyRole = activeProfile?.viewer_role_data;
+  const actingRoleName = (actingCompanyRole?.name || profileData?.viewer_role || "").toLowerCase();
+  const isOwner = Boolean(
+    actingCompanyRole?.is_owner ||
+    profileData?.is_own_profile ||
+    actingRoleName === "owner"
+  );
+  const isAdmin = actingRoleName === "admin";
+  const actingPermissions: string[] =
+    actingCompanyRole?.permissions ||
+    profileData?.viewer_permissions ||
+    [];
+  const canEditCompany = isOwner || isAdmin || actingPermissions.includes("*") || actingPermissions.includes("MANAGE_COMPANY_DETAILS");
+
   useEffect(() => {
-    if (mounted) {
+    if (mounted && canEditCompany) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [mounted]);
+  }, [mounted, canEditCompany]);
 
   const setActiveTab = (tab: "profile" | "about") => {
     const p = new URLSearchParams(searchParams.toString());
     p.set("tab", tab);
     router.replace(`/organization/${rawSlug}/edit?${p.toString()}`);
   };
-
-  const { data: profileData } = useQuery({
-    queryKey: ["orgProfile", rawSlug],
-    queryFn: () => businessProfileService.getOrgProfile(rawSlug),
-  });
 
   const org = profileData?.org || profileData || {};
   const orgId = org.org_id || org.company_id || org.id || profileData?.orgId || rawSlug;
@@ -54,6 +72,23 @@ export function BusinessProfileEditPage() {
   const handleClose = () => {
     router.push(`/organization/${rawSlug}`);
   };
+
+  if (isLoading || !mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--ds-bg)]">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[var(--ds-accent)]" />
+      </div>
+    );
+  }
+
+  if (!canEditCompany) {
+    return (
+      <AccessDenied
+        title="You don't have access to this screen"
+        roleName={actingCompanyRole?.name || profileData?.viewer_role || 'Member'}
+      />
+    );
+  }
 
   const content = (
     <div className="fixed inset-0 z-[60] min-h-screen w-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">

@@ -56,10 +56,9 @@ export function getPermissionLabel(perm: string): string {
 }
 
 
-// All available permissions in display order
+// All available permissions in display order (Channels removed per SCRUM-1132)
 export const ALL_PERMISSIONS: TeamPermission[] = [
   'CREATE_POST',
-  'CHANNEL',
   'CHAT',
   'TEAMS',
   'ACTIVITY_LOGS',
@@ -71,6 +70,7 @@ export const ALL_PERMISSIONS: TeamPermission[] = [
 
 // Predefined role colors from the design
 export const ROLE_COLORS: string[] = [
+  '#06B6D4',
   '#EF4444',
   '#F97316',
   '#EAB308',

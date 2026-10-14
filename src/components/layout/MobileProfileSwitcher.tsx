@@ -51,6 +51,18 @@ export function MobileProfileSwitcher({
     (c) => c.entity_type === "INSTITUTION",
   );
 
+  const allOrgs = React.useMemo(() => {
+    const list = [...institutions, ...companies];
+    if (!isCompany || !activeProfile?.id) return list;
+    const activeIdx = list.findIndex(
+      (org) => (org.org_id || org.company_id) === activeProfile.id
+    );
+    if (activeIdx <= 0) return list;
+    const activeOrg = list[activeIdx];
+    const rest = list.filter((_, idx) => idx !== activeIdx);
+    return [activeOrg, ...rest];
+  }, [institutions, companies, isCompany, activeProfile?.id]);
+
   if (!activeProfile || !user) return null;
 
   const handleSwitch = (type: "USER" | "COMPANY", id: string) => {
@@ -124,8 +136,8 @@ export function MobileProfileSwitcher({
                 </div>
                 <div className="space-y-1 max-h-[240px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {(showAllOrgs
-                    ? [...institutions, ...companies]
-                    : [...institutions, ...companies].slice(0, 3)
+                    ? allOrgs
+                    : allOrgs.slice(0, 3)
                   ).map((org: SwitchableOrg) => {
                     const orgId = org.org_id || org.company_id;
                     const isActive = activeProfile.id === orgId;

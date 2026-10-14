@@ -115,11 +115,11 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
 
   if (!role) {
     return (
-      <div className="w-full flex flex-col items-center justify-center py-16 gap-4">
-        <p className="ds-text-body text-ds-text-muted">Role not found.</p>
+      <div className="w-full flex flex-col items-center justify-center py-16 gap-4 font-['DM_Sans',sans-serif]">
+        <p className="font-['DM_Sans',sans-serif] ds-text-body text-ds-text-muted">Role not found.</p>
         <button
           onClick={() => router.push('/team')}
-          className="text-[var(--ds-accent)] ds-text-secondary-1 hover:underline"
+          className="text-[var(--ds-accent)] ds-text-secondary-1 hover:underline font-['DM_Sans',sans-serif]"
         >
           ← Back to team
         </button>
@@ -152,7 +152,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
   };
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary pt-[60px] pb-16 relative">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary pt-[60px] pb-16 relative font-['DM_Sans',sans-serif]">
       {/* Back button (Frame 2609475: top: 40px, left: 40px, width: hug 65px, height: hug 24px, gap: 8px) */}
       <div className="absolute left-[40px] top-[40px] hidden md:block">
         <button
@@ -163,13 +163,13 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
           <div className="w-[20px] h-[20px] flex items-center justify-center">
             <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
           </div>
-          <span className="h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
+          <span className="h-[24px] font-['DM_Sans',sans-serif] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
             Back
           </span>
         </button>
       </div>
 
-      <main className="mx-auto flex w-full max-w-[800px] flex-col gap-5 px-4 md:px-0">
+      <main className="mx-auto flex w-full max-w-[800px] flex-col gap-5 px-4 md:px-0 font-['DM_Sans',sans-serif]">
         {/* Mobile back button (shows only on small screens) */}
         <div className="md:hidden flex items-center mb-1">
           <button
@@ -180,14 +180,14 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             <div className="w-[20px] h-[20px] flex items-center justify-center">
               <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
             </div>
-            <span className="h-[24px] font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
+            <span className="h-[24px] font-['DM_Sans',sans-serif] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
               Back
             </span>
           </button>
         </div>
 
         {/* Page title */}
-        <h2 className="h-6 text-[16px] leading-6 font-semibold text-ds-text-primary">
+        <h2 className="h-6 font-['DM_Sans',sans-serif] text-[16px] leading-6 font-semibold text-ds-text-primary">
           Role details
         </h2>
 
@@ -199,18 +199,18 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
                 className="h-6 w-6 shrink-0 rounded-full"
                 style={{ backgroundColor: role.color || 'var(--ds-accent)' }}
               />
-              <h1 className="text-[16px] leading-6 font-semibold text-ds-text-primary">
+              <h1 className="font-['DM_Sans',sans-serif] text-[16px] leading-6 font-semibold text-ds-text-primary">
                 {role.name}
               </h1>
             </div>
             {!role.isSystemRole && (
               <button
                 onClick={() => setIsDeleteOpen(true)}
-                className="flex h-6 w-6 items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity"
+                className="flex h-[20px] w-[20px] items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity"
                 aria-label="Delete role"
                 title="Delete role"
               >
-                <DeleteIcon size={16} className="w-4 h-4" />
+                <DeleteIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary shrink-0" />
               </button>
             )}
           </div>
@@ -219,7 +219,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             className="box-border flex min-h-10 w-full items-center border-l-2 pl-2"
             style={{ borderColor: role.color || 'var(--ds-accent)' }}
           >
-            <p className="text-[14px] leading-5 text-ds-text-secondary">
+            <p className="font-['DM_Sans',sans-serif] text-[14px] leading-5 text-ds-text-secondary">
               {role.description || (isAdminRole ? 'Administrator Has full access to all modules and features of the application. Administrators can view, manage, create, edit, and delete any data, as well as configure settings and oversee all system activities' : 'No description provided.')}
             </p>
           </div>
@@ -229,7 +229,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         <div className="flex h-9 w-full items-center gap-6">
           <button
             onClick={() => setActiveTab('members')}
-            className={`flex h-9 items-center justify-center px-3 text-[16px] leading-6 font-medium transition-colors ${
+            className={`flex h-9 items-center justify-center px-3 font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium transition-colors ${
               activeTab === 'members'
                 ? 'border-b-[1.5px] border-ds-accent text-ds-text-primary'
                 : 'border-b-[1.5px] border-transparent text-ds-text-secondary hover:text-ds-text-primary'
@@ -240,7 +240,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
           {hasActivityPermission ? (
             <button
               onClick={() => setActiveTab('activity')}
-              className={`flex h-9 items-center justify-center px-3 text-[16px] leading-6 font-medium transition-colors ${
+              className={`flex h-9 items-center justify-center px-3 font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium transition-colors ${
                 activeTab === 'activity'
                   ? 'border-b-[1.5px] border-ds-accent text-ds-text-primary'
                   : 'border-b-[1.5px] border-transparent text-ds-text-secondary hover:text-ds-text-primary'
@@ -255,13 +255,13 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
                   <div className="!cursor-not-allowed">
                     <button
                       disabled
-                      className="flex h-9 items-center text-[16px] leading-6 font-medium opacity-50 !cursor-not-allowed bg-transparent text-ds-text-muted"
+                      className="flex h-9 items-center font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium opacity-50 !cursor-not-allowed bg-transparent text-ds-text-muted"
                     >
                       Team activity
                     </button>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="bg-ds-surface-2 text-ds-text-primary border-ds-border">
+                <TooltipContent side="top" className="bg-ds-surface-2 text-ds-text-primary border-ds-border font-['DM_Sans',sans-serif]">
                   <p>You don't have permission to access this</p>
                 </TooltipContent>
               </Tooltip>

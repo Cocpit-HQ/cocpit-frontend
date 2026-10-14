@@ -11,7 +11,7 @@ interface PermissionCheckListProps {
   disabled?: boolean;
 }
 
-const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT'];
+const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT', 'SETTINGS'];
 
 const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
@@ -23,7 +23,7 @@ const PERMISSION_GROUPS = [
     { id: 'JOBS_CHAT', label: 'Jobs chat', disabled: true }
   ]},
   { id: 'ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up', disabled: true },
-  { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings' }
+  { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings', disabled: true }
 ] as const;
 
 export default function PermissionCheckList({
@@ -64,7 +64,7 @@ export default function PermissionCheckList({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <span className="text-[14px] leading-[20px] font-medium text-ds-text-primary font-['DM_Sans']">
+        <span className="text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans',sans-serif]">
           Permissions
         </span>
       </div>
@@ -86,7 +86,7 @@ export default function PermissionCheckList({
                       <Icon name={group.icon.replace("lucide:", "") as any} className="w-6 h-6 text-ds-text-primary shrink-0" />
                     )}
                   </div>
-                  <div className="text-[14px] leading-[20px] font-normal text-ds-text-primary font-['DM_Sans']">
+                  <div className="text-[16px] leading-[24px] font-normal text-ds-text-primary font-['DM_Sans',sans-serif]">
                     {group.label}
                   </div>
                 </div>
@@ -116,7 +116,7 @@ export default function PermissionCheckList({
                     
                     return (
                       <div key={child.id} className={`flex items-center justify-between pl-[36px] w-full h-[26px] ${isChildDisabled ? 'opacity-50' : ''}`}>
-                        <div className="text-[14px] leading-[20px] font-normal text-ds-text-primary font-['DM_Sans']">
+                        <div className="text-[16px] leading-[24px] font-normal text-ds-text-primary font-['DM_Sans',sans-serif]">
                           {child.label}
                         </div>
                         

@@ -16,6 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ReportModal } from "@/components/shared/ReportModal";
 import { BusinessBuildingIcon, VerifyIcon } from "@/components/icons";
 import { ViewMediaModal } from "@/features/profile/commonProfileComponents/ViewMediaModal";
@@ -78,6 +84,19 @@ export default function BusinessProfileHeader({
   const queryClient = useQueryClient();
 
   const actingCompanyRole = activeProfile?.viewer_role_data;
+  const actingRoleName = (actingCompanyRole?.name || (data as any)?.viewer_role || "").toLowerCase();
+  const isOwner = Boolean(
+    actingCompanyRole?.is_owner ||
+    (data as any)?.is_own_profile ||
+    actingRoleName === "owner"
+  );
+  const isAdmin = actingRoleName === "admin";
+  const actingPermissions: string[] =
+    actingCompanyRole?.permissions ||
+    (data as any)?.viewer_permissions ||
+    [];
+  const canEditProfile = isOwner || isAdmin || actingPermissions.includes("*") || actingPermissions.includes("MANAGE_COMPANY_DETAILS");
+
   const actingCompanyCanFollow =
     activeProfile?.type !== "COMPANY" ||
     actingCompanyRole?.is_owner ||
@@ -230,15 +249,37 @@ export default function BusinessProfileHeader({
 
         {/* Right Section: Action Buttons */}
         <div className="right-0 top-[216px] absolute inline-flex justify-end items-center gap-3 z-10">
-            {canEdit ? (
+            {isOwnProfile ? (
               <>
                 {/* Edit profile (accent pill) */}
-                <Link
-                  href={`/organization/${rawSlug}/edit`}
-                  className="px-3 py-1.5 bg-ds-accent rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity shadow-sm cursor-pointer"
-                >
-                  Edit profile
-                </Link>
+                {canEditProfile ? (
+                  <Link
+                    href={`/organization/${rawSlug}/edit`}
+                    className="px-3 py-1.5 bg-ds-accent rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity shadow-sm cursor-pointer"
+                  >
+                    Edit profile
+                  </Link>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-not-allowed" tabIndex={0} title="You don't have access to this screen">
+                          <button
+                            type="button"
+                            disabled
+                            aria-label="Edit profile disabled"
+                            className="px-3 py-1.5 bg-ds-accent opacity-50 rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none shadow-sm cursor-not-allowed"
+                          >
+                            Edit profile
+                          </button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
+                        You don't have access to this screen
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {/* Share page (outline pill) */}
                 <button
                   type="button"
