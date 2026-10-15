@@ -54,9 +54,10 @@ export default function MemberRow({ member, onRemove }: MemberRowProps) {
         ) : onRemove && !isSelf ? (
           <button
             onClick={onRemove}
-            className="font-['DM_Sans',sans-serif] shrink-0 text-[14px] leading-5 font-medium text-ds-accent hover:opacity-80 transition-opacity"
+            className="font-['DM_Sans',sans-serif] shrink-0 text-[14px] leading-5 font-medium text-ds-accent hover:opacity-80 transition-opacity cursor-pointer"
           >
-            Remove member
+            <span className="md:hidden">Remove</span>
+            <span className="hidden md:inline">Remove member</span>
           </button>
         ) : null}
       </div>

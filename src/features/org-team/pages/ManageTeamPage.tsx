@@ -82,10 +82,10 @@ export default function ManageTeamPage() {
 
   return (
     <div className="w-full h-full min-h-[calc(100vh-120px)] bg-ds-bg text-ds-text-primary flex flex-col items-center sm:-mt-[40px] pt-[20px] pb-16 px-0 md:px-4 md:pr-[253px] select-text">
-      <div className="w-full max-w-[780px] flex flex-col gap-5 items-start px-4 lg:px-0">
+      <div className="w-full max-w-[780px] flex flex-col gap-4 lg:gap-5 items-start px-4 lg:px-0">
 
         {/* Tabs and Actions */}
-        <div className="flex flex-wrap justify-between items-center w-full gap-3 lg:gap-0 pl-0 lg:pl-[20px]">
+        <div className="flex flex-row justify-between items-center w-full gap-3 lg:gap-0 pl-0 lg:pl-[20px]">
           <TeamTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
           {activeTab === 'team' && (

@@ -40,9 +40,10 @@ export default function EditRoleModal({
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      const scrollH = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = `${Math.min(scrollH, 140)}px`;
+      textareaRef.current.style.height = '24px';
+      if (textareaRef.current.scrollHeight > 24) {
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
+      }
     }
   }, [description, isOpen]);
 
@@ -103,37 +104,48 @@ export default function EditRoleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[9999] md:flex md:items-center md:justify-center">
+      {/* Backdrop — hidden on mobile */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="hidden md:block absolute inset-0 bg-black/50"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative w-[600px] max-h-[90vh] bg-ds-bg border border-ds-border rounded-[16px] shadow-2xl grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
-        {/* Close Button - Figma Frame 2609536: top 12px, right 12px, 20x20px */}
+      {/* Modal / Full-screen sheet on mobile */}
+      <div className="relative w-full h-full md:w-[600px] md:h-auto md:max-h-[90vh] bg-ds-bg md:border md:border-ds-border md:rounded-[16px] md:shadow-2xl flex flex-col md:grid md:grid-rows-[auto_minmax(0,1fr)_auto] overflow-y-auto md:overflow-hidden select-text">
+        {/* Close Button - Desktop only */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-[12px] top-[12px] w-[20px] h-[20px] flex items-center justify-center text-ds-text-secondary transition-colors hover:text-ds-text-primary cursor-pointer z-10"
+          className="hidden md:flex absolute right-[12px] top-[12px] w-[20px] h-[20px] items-center justify-center text-ds-text-secondary transition-colors hover:text-ds-text-primary cursor-pointer z-10"
         >
           <Icon name="close" className="w-5 h-5" />
         </button>
 
-        {/* Header - Starts at y=32px (12px top offset + 20px Frame 2609536 height) */}
-        <div className="flex items-center justify-center pt-[32px] pb-4 px-7 relative">
-          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans',sans-serif] text-center text-ds-text-primary">
+        {/* Top Header - Back button on mobile, centered title on desktop */}
+        <div className="flex flex-col md:items-center md:justify-center pt-4 md:pt-[24px] pb-3 md:pb-4 px-4 md:px-[12px] gap-4 md:gap-0 relative shrink-0">
+          {/* Mobile Back Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="md:hidden flex items-center gap-2 text-ds-text-primary w-fit cursor-pointer -ml-1"
+          >
+            <Icon name="arrow-left" className="w-5 h-5 text-ds-text-primary" />
+            <span className="font-['DM_Sans',sans-serif] font-medium text-[16px] leading-[24px]">
+              Back
+            </span>
+          </button>
+
+          <h2 className="text-[18px] leading-[26px] font-medium font-['DM_Sans',sans-serif] text-ds-text-primary text-left md:text-center w-full">
             Edit role
           </h2>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto min-h-0 px-7 pb-6 flex flex-col scrollbar-hide">
-          
-          <div className="flex flex-col gap-6 pt-2">
+        <div className="overflow-y-auto min-h-0 px-4 md:px-[12px] pb-6 flex flex-col scrollbar-hide flex-1">
+          <div className="flex flex-col gap-6 md:gap-[16px] pt-2 md:pt-0">
             {/* Role name */}
-            <div className="flex flex-col gap-2 border-b border-ds-border pb-1">
+            <div className="flex flex-col gap-2 md:gap-[10px] border-b border-ds-border pb-2 md:py-[8px]">
               <label className="text-[16px] leading-[24px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-medium">
                 Role name
               </label>
@@ -141,17 +153,17 @@ export default function EditRoleModal({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="HR Manager"
-                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans',sans-serif] outline-none placeholder-ds-text-muted"
+                placeholder="HR manager"
+                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans',sans-serif] outline-none placeholder:text-ds-text-secondary"
               />
             </div>
 
             {/* Color picker */}
-            <div className="flex flex-col gap-3">
-              <label className="text-[16px] leading-[24px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-medium">
+            <div className="flex flex-col gap-3 md:gap-[11.5px]">
+              <label className="text-[16px] leading-[24px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-normal">
                 Role color
               </label>
-              <div className="flex gap-[19.2px] flex-wrap items-center">
+              <div className="flex items-center justify-between w-full md:flex-nowrap overflow-x-auto md:overflow-visible scrollbar-hide py-1">
                 {ROLE_COLORS.map((c) => (
                   <button
                     key={c}
@@ -173,7 +185,7 @@ export default function EditRoleModal({
             </div>
 
             {/* Description */}
-            <div className="flex flex-col gap-2 border-b border-ds-border pb-1 relative mb-[20px]">
+            <div className="flex flex-col gap-2 md:gap-[10px] border-b border-ds-border pb-2 md:py-[8px] relative mb-4">
               <label className="text-[12px] leading-[16px] text-ds-text-secondary font-['DM_Sans',sans-serif] font-medium">
                 Role description
               </label>
@@ -183,14 +195,15 @@ export default function EditRoleModal({
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value);
-                  e.target.style.height = 'auto';
-                  const scrollH = e.target.scrollHeight;
-                  e.target.style.height = `${Math.min(scrollH, 140)}px`;
+                  e.target.style.height = '24px';
+                  if (e.target.scrollHeight > 24) {
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+                  }
                 }}
                 onPaste={(e) => handleDescriptionPaste(e, description, setDescription, MAX_ROLE_DESCRIPTION_CHARS)}
                 maxLength={MAX_ROLE_DESCRIPTION_CHARS}
                 placeholder="Describe the responsibilities and scope of this role..."
-                className="w-full bg-transparent text-[14px] leading-[20px] text-ds-text-primary font-['DM_Sans',sans-serif] outline-none resize-none max-h-[140px] overflow-y-auto scrollbar-hide placeholder-ds-text-muted p-0 m-0"
+                className="w-full h-[24px] min-h-[24px] bg-transparent text-[16px] leading-[24px] text-ds-text-primary font-['DM_Sans',sans-serif] outline-none resize-none max-h-[140px] overflow-y-auto scrollbar-hide placeholder:text-ds-text-secondary p-0 m-0"
               />
               <div className="flex justify-end items-center mt-1 absolute top-full right-0">
                 <span className={`text-[12px] font-['DM_Sans',sans-serif] ${description.length >= MAX_ROLE_DESCRIPTION_CHARS ? 'text-ds-error' : 'text-ds-text-secondary'}`}>
@@ -201,7 +214,7 @@ export default function EditRoleModal({
           </div>
 
           {/* Permissions */}
-          <div className="mt-[28px]">
+          <div className="mt-4 md:mt-[16px]">
             <PermissionCheckList
               selected={permissions}
               onChange={setPermissions}
@@ -210,19 +223,23 @@ export default function EditRoleModal({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 flex items-center justify-center gap-4 pt-4 pb-6 mt-auto border-t border-transparent">
+        <div className="shrink-0 flex items-center justify-center gap-2 pt-4 pb-8 md:pb-6 mt-auto border-t border-transparent">
           <button
             type="submit"
             onClick={handleSubmit}
             disabled={!name.trim() || isSubmitting || description.length > MAX_ROLE_DESCRIPTION_CHARS}
-            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-ds-accent text-[16px] leading-[24px] font-medium font-['DM_Sans',sans-serif] flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 text-ds-text-primary"
+            className={`w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] text-[16px] leading-[24px] font-medium font-['DM_Sans',sans-serif] flex items-center justify-center transition-all ${
+              !name.trim() || isSubmitting
+                ? 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
+                : 'bg-ds-accent text-white hover:brightness-110 cursor-pointer'
+            }`}
           >
             {isSubmitting ? '...' : 'Save'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] border border-ds-border bg-transparent text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans',sans-serif] flex items-center justify-center hover:bg-ds-surface-2 transition-colors"
+            className="w-[82px] h-[36px] px-[12px] py-[6px] rounded-[100px] border border-ds-border bg-transparent text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans',sans-serif] flex items-center justify-center hover:bg-ds-surface-2 transition-colors cursor-pointer"
           >
             Cancel
           </button>

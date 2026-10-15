@@ -372,16 +372,16 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
     return (
       <>
         <div 
-          className="flex-1 relative ml-2 cursor-text"
+          className="flex-1 relative cursor-text"
           onClick={() => setIsMobileSearchOpen(true)}
         >
-          <div className="flex flex-row items-center justify-between border-b border-[#3F3F46] pb-1 cursor-text">
-            <div className="flex-1 bg-transparent font-['DM_Sans'] text-[15px] text-[#A1A1AA] pl-2 h-[24px] flex items-center">
+          <div className="box-border flex flex-row items-center justify-between px-3 py-[6px] gap-[10px] h-[36px] border-b border-ds-text-primary cursor-text">
+            <div className="flex-1 bg-transparent font-['DM_Sans'] text-[16px] leading-[24px] font-normal text-ds-text-muted h-[24px] flex items-center">
               Search
             </div>
             <Icon
               name="search"
-              className="w-[20px] h-[20px] text-[#A1A1AA] shrink-0 mr-1"
+              className="w-[20px] h-[20px] text-ds-text-primary shrink-0"
             />
           </div>
         </div>

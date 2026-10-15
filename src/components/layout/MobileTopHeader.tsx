@@ -36,14 +36,14 @@ export function MobileTopHeader() {
     : "/analytics";
 
   return (
-    <header className="fixed top-0 left-0 right-0 w-full max-w-[100vw] h-[60px] bg-ds-bg z-40 flex items-center px-4 md:hidden gap-[16px] box-border">
+    <header className="fixed top-0 left-0 right-0 w-full max-w-[100vw] h-[52px] bg-ds-bg z-40 flex items-center px-4 md:hidden gap-5 box-border">
       {/* Search Input */}
       <FeatureGuard featureKey="enableGlobalSearch" mode="silent">
         <GlobalSearch variant="mobile" />
       </FeatureGuard>
 
       {/* Actions */}
-      <div className="flex items-center gap-[16px] shrink-0 pr-4 ml-auto">
+      <div className="flex items-center gap-5 shrink-0 ml-auto">
         {isProfileActive ? (
           <>
             <Link href={analyticsLink} className="cursor-pointer shrink-0 group" aria-label="Analytics">
@@ -56,13 +56,13 @@ export function MobileTopHeader() {
         ) : (
           <>
             <Link href="/messaging" className="cursor-pointer shrink-0 group" aria-label="Messages">
-              <Icon name="chat" className="w-[20px] h-[20px] text-ds-text-secondary group-hover:text-ds-accent transition-colors" />
+              <Icon name="chat" className="w-[20px] h-[20px] text-ds-text-primary hover:text-ds-accent transition-colors" />
             </Link>
             <div className="shrink-0">
               <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
                 <NotificationPopover
                   className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
-                  icon={<Icon name="notification" className="w-[22px] h-[22px] text-ds-text-secondary transition-colors" />}
+                  icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary transition-colors" />}
                 />
               </FeatureGuard>
             </div>

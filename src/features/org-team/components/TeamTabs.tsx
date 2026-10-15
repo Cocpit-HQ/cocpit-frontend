@@ -21,7 +21,7 @@ export default function TeamTabs({ activeTab, onTabChange }: TeamTabsProps) {
   ];
 
   return (
-    <div className="flex justify-start items-center gap-6">
+    <div className="flex justify-start items-center gap-3 lg:gap-6">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
 

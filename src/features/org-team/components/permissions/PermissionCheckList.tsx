@@ -16,13 +16,13 @@ const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT'
 const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
   { id: 'CHAT', label: 'Chat', icon: 'chat', disabled: true },
-  { id: 'TEAMS', label: 'Teams', icon: 'streamline-ultimate:team-meeting', children: [
+  { id: 'TEAMS', label: 'Teams', icon: 'teams', children: [
     { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
   ]},
-  { id: 'JOBS', label: 'Jobs', icon: 'hugeicons:job-search', disabled: true, children: [
+  { id: 'JOBS', label: 'Jobs', icon: 'jobs', disabled: true, children: [
     { id: 'JOBS_CHAT', label: 'Jobs chat', disabled: true }
   ]},
-  { id: 'ANALYTICS', label: 'Analytics', icon: 'hugeicons:analytics-up', disabled: true },
+  { id: 'ANALYTICS', label: 'Analytics', icon: 'analytics', disabled: true },
   { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings', disabled: true }
 ] as const;
 
@@ -64,12 +64,12 @@ export default function PermissionCheckList({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <span className="text-[16px] leading-[24px] font-medium text-ds-text-primary font-['DM_Sans',sans-serif]">
+        <span className="text-[16px] leading-[24px] font-semibold text-ds-text-primary font-['DM_Sans',sans-serif]">
           Permissions
         </span>
       </div>
       
-      <div className="flex flex-col gap-6 px-4">
+      <div className="flex flex-col gap-6 px-0 md:px-4">
         {PERMISSION_GROUPS.map((group) => {
           const isChecked = selected.includes(group.id as TeamPermission);
           const hasChildren = 'children' in group;
@@ -81,9 +81,9 @@ export default function PermissionCheckList({
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 flex items-center justify-center shrink-0">
                     {group.id === 'CREATE_POST' ? (
-                      <Plus className="w-6 h-6 text-ds-text-primary shrink-0" strokeWidth={1.5} />
+                      <Plus className="w-5 h-5 text-ds-text-primary shrink-0" strokeWidth={1.5} />
                     ) : (
-                      <Icon name={group.icon.replace("lucide:", "") as any} className="w-6 h-6 text-ds-text-primary shrink-0" />
+                      <Icon name={group.icon.replace("lucide:", "") as any} className="w-5 h-5 text-ds-text-primary shrink-0" />
                     )}
                   </div>
                   <div className="text-[16px] leading-[24px] font-normal text-ds-text-primary font-['DM_Sans',sans-serif]">
@@ -125,12 +125,12 @@ export default function PermissionCheckList({
                           type="button"
                           onClick={() => toggle(child.id as TeamPermission)}
                           disabled={isChildDisabled}
-                          className={`flex items-center justify-center w-[20px] h-[20px] rounded-[4px] transition-colors border ${
+                          className={`flex items-center justify-center w-[24px] h-[24px] rounded-[4px] transition-colors border ${
                             isChildChecked ? 'bg-ds-accent border-ds-accent' : 'bg-ds-surface-1 border-ds-border'
                           } ${isChildDisabled ? '!cursor-not-allowed' : ''}`}
                         >
                           {isChildChecked && (
-                            <Icon name="check" className="w-[12px] h-[12px] text-white" />
+                            <Icon name="check" className="w-[14px] h-[14px] text-white" />
                           )}
                         </button>
                       </div>

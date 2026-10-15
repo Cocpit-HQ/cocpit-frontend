@@ -51,8 +51,8 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
 
   const isAdminRole = role.name?.toLowerCase() === 'admin';
   const canInviteToRole = isAdminRole
-    ? Boolean(perms.isOwner || perms.isAdmin)
-    : Boolean(perms.isOwner || perms.canManageMembers);
+    ? Boolean(perms.isOwner || perms.isAdmin || perms.canManageMembers || perms.canManageRoles)
+    : Boolean(perms.isOwner || perms.canManageMembers || perms.canManageRoles);
 
   const hasMenuActions = canInviteToRole || (role.name !== 'Admin');
 
@@ -144,11 +144,11 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
   return (
     <div
       onClick={onClick}
-      className="w-full px-4 py-3 lg:py-0 lg:h-[60px] flex flex-col lg:flex-row justify-between lg:items-center transition-colors cursor-pointer rounded-[8px] hover:bg-ds-surface-1 gap-2 lg:gap-0"
+      className="w-full px-0 lg:px-4 py-2 lg:py-0 h-[40px] lg:h-[60px] flex flex-row justify-between items-center transition-colors cursor-pointer rounded-[8px] hover:bg-ds-surface-1"
     >
       {/* Top row on mobile/tablet: Name + Menu */}
-      <div className="flex items-center justify-between lg:justify-start lg:w-[200px] lg:flex-shrink-0 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center justify-between lg:justify-start w-full lg:w-[200px] lg:flex-shrink-0 gap-2 lg:gap-3">
+        <div className="flex items-center gap-2 lg:gap-3 min-w-0">
           <div
             className="w-6 h-6 rounded-full flex-shrink-0"
             style={{ backgroundColor: role.color }}
@@ -203,8 +203,8 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
         )}
       </div>
 
-      {/* Bottom row on mobile/tablet: Member count + Avatars */}
-      <div className="flex items-center gap-4 lg:contents">
+      {/* Member count + Avatars — hidden on mobile (< lg), desktop only */}
+      <div className="hidden lg:contents">
         <div className="lg:w-[120px] lg:flex-shrink-0 flex justify-start items-center">
           <div className="text-ds-text-primary ds-text-body-1 truncate">
             {totalCount} Member{totalCount !== 1 ? 's' : ''}

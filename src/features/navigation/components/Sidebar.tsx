@@ -64,7 +64,7 @@ export function Sidebar({ className }: SidebarProps) {
         title: 'Insights',
         items: [
           { iconName: 'analytics' as IconName, label: 'Analytics', href: analyticsHref },
-          ...(isCompanyActor ? [{ iconName: 'user' as IconName, label: 'Teams', href: '/team' }] : []),
+          ...(isCompanyActor ? [{ iconName: 'teams' as IconName, label: 'Teams', href: '/team' }] : []),
         ],
         gapTop: 'mt-[12px]'
       },

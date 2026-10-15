@@ -152,7 +152,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
   };
 
   return (
-    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary pt-[60px] pb-16 relative font-['DM_Sans',sans-serif]">
+    <div className="w-full min-h-screen bg-ds-bg text-ds-text-primary pt-4 md:pt-[60px] pb-16 relative font-['DM_Sans',sans-serif]">
       {/* Back button (Frame 2609475: top: 40px, left: 40px, width: hug 65px, height: hug 24px, gap: 8px) */}
       <div className="absolute left-[40px] top-[40px] hidden md:block">
         <button
@@ -169,18 +169,18 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         </button>
       </div>
 
-      <main className="mx-auto flex w-full max-w-[800px] flex-col gap-5 px-4 md:px-0 font-['DM_Sans',sans-serif]">
+      <main className="mx-auto flex w-full max-w-[800px] flex-col gap-4 md:gap-5 px-4 md:px-0 font-['DM_Sans',sans-serif]">
         {/* Mobile back button (shows only on small screens) */}
-        <div className="md:hidden flex items-center mb-1">
+        <div className="md:hidden flex items-center">
           <button
             onClick={() => router.push('/team')}
             aria-label="Back"
-            className="h-[24px] flex flex-row items-center p-0 gap-[8px] cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity"
+            className="h-[24px] flex flex-row items-center p-0 gap-2 cursor-pointer text-ds-text-primary hover:opacity-80 transition-opacity -ml-1"
           >
-            <div className="w-[20px] h-[20px] flex items-center justify-center">
-              <LeftArrowIcon size={20} className="w-[20px] h-[20px] text-ds-text-primary" />
+            <div className="w-5 h-5 flex items-center justify-center">
+              <LeftArrowIcon size={20} className="w-5 h-5 text-ds-text-primary" />
             </div>
-            <span className="h-[24px] font-['DM_Sans',sans-serif] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
+            <span className="font-['DM_Sans',sans-serif] font-medium text-[16px] leading-[24px] text-center text-ds-text-primary">
               Back
             </span>
           </button>
@@ -196,7 +196,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
           <div className="flex w-full h-6 items-center justify-between">
             <div className="flex items-center gap-2">
               <span
-                className="h-6 w-6 shrink-0 rounded-full"
+                className="w-4 h-4 md:w-6 md:h-6 shrink-0 rounded-full"
                 style={{ backgroundColor: role.color || 'var(--ds-accent)' }}
               />
               <h1 className="font-['DM_Sans',sans-serif] text-[16px] leading-6 font-semibold text-ds-text-primary">
@@ -226,10 +226,10 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
         </section>
 
         {/* Sub-tabs: Members | Activity logs */}
-        <div className="flex h-9 w-full items-center gap-6">
+        <div className="flex h-9 w-full items-center gap-[12px] md:gap-6">
           <button
             onClick={() => setActiveTab('members')}
-            className={`flex h-9 items-center justify-center px-3 font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium transition-colors ${
+            className={`flex h-9 items-center justify-center px-2 md:px-3 font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium transition-colors ${
               activeTab === 'members'
                 ? 'border-b-[1.5px] border-ds-accent text-ds-text-primary'
                 : 'border-b-[1.5px] border-transparent text-ds-text-secondary hover:text-ds-text-primary'

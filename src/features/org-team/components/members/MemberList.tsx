@@ -32,10 +32,12 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
         {onInviteClick && (
           <button
             onClick={onInviteClick}
-            className="flex w-[160px] h-[36px] shrink-0 items-center justify-center gap-2 rounded-full border border-ds-border font-['DM_Sans',sans-serif] text-[16px] leading-6 font-medium text-ds-text-primary hover:bg-ds-surface-1 transition-colors box-border"
+            aria-label="Invite member"
+            title="Invite member"
+            className="flex items-center justify-center shrink-0 text-ds-text-primary md:w-[160px] md:h-[36px] md:gap-2 md:rounded-full md:border md:border-ds-border font-['DM_Sans',sans-serif] md:text-[16px] md:leading-6 md:font-medium md:hover:bg-ds-surface-1 transition-colors box-border cursor-pointer"
           >
-            <AddIcon size={16} className="w-4 h-4 text-ds-text-primary shrink-0" />
-            Invite member
+            <AddIcon size={20} className="w-5 h-5 md:w-4 md:h-4 text-ds-text-primary shrink-0" />
+            <span className="hidden md:inline">Invite member</span>
           </button>
         )}
       </div>
@@ -93,9 +95,10 @@ export default function MemberList({ members, pendingInvites = [], onRemoveMembe
                   </div>
                   <button
                     onClick={() => onWithdrawInvitation?.(invite.id)}
-                    className="font-['DM_Sans',sans-serif] shrink-0 text-[14px] leading-5 font-medium text-ds-text-secondary hover:text-ds-text-primary transition-colors"
+                    className="font-['DM_Sans',sans-serif] shrink-0 text-[14px] leading-5 font-medium text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
                   >
-                    Withdraw Invitation
+                    <span className="md:hidden">Withdraw</span>
+                    <span className="hidden md:inline">Withdraw Invitation</span>
                   </button>
                 </div>
               );

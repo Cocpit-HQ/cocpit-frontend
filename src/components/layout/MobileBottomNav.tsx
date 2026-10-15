@@ -20,7 +20,7 @@ export function MobileBottomNav() {
   const { isFeatureActive } = useFeatureFlags()
   const { setActiveModal } = useUIStore()
 
-  const showJobs = !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS')
+  const showJobs = true;
   const canCreatePost = !isCompany || checkPermission('create_post') || checkPermission('CREATE_POST')
 
   const isActive = (route: string) => {
@@ -47,6 +47,7 @@ export function MobileBottomNav() {
   }
 
   const activeColor = "text-ds-accent" // Using the approved orange token for active states
+  const inactiveColor = "text-ds-text-primary"
 
   const [isKeyboardOpen, setIsKeyboardOpen] = React.useState(false);
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = React.useState(false);
@@ -131,7 +132,7 @@ export function MobileBottomNav() {
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t bg-ds-bg/95 border-ds-border backdrop-blur-md transform-gpu pb-[env(safe-area-inset-bottom,0px)]">
-      <div className="max-w-md mx-auto flex items-center justify-between px-4 py-3">
+      <div className="max-w-md mx-auto flex items-center justify-between px-6 py-2 h-[50px] gap-[15px]">
         {/* Home */}
         {isFeatureActive('enableFeedAccess') && (
           <Link
@@ -139,26 +140,26 @@ export function MobileBottomNav() {
             onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/feed')}
             className="flex flex-col items-center justify-center flex-1"
           >
-            <Icon name="feed" className={`w-[22px] h-[22px] ${isActive("/feed") ? activeColor : "text-[#A1A1AA]"}`} />
+            <Icon name="feed" className={`w-[20px] h-[20px] ${isActive("/feed") ? activeColor : inactiveColor}`} />
           </Link>
         )}
 
         {/* Network / Teams */}
         {isCompany ? (
-            <Link
-              href="/team"
-              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
-              className="flex flex-col items-center justify-center flex-1"
-            >
-              <Icon name="connection" className={`w-[22px] h-[22px] ${isActive("/team") ? activeColor : "text-[#A1A1AA]"}`} />
-            </Link>
-          ) : (
+          <Link
+            href="/team"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
+            className="flex flex-col items-center justify-center flex-1"
+          >
+            <Icon name="teams" className={`w-[20px] h-[20px] ${isActive("/team") ? activeColor : inactiveColor}`} />
+          </Link>
+        ) : (
           <Link
             href="/connections"
             onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/connections')}
             className="flex flex-col items-center justify-center flex-1"
           >
-            <Icon name="connection" className={`w-[22px] h-[22px] ${isActive("/connections") ? activeColor : "text-[#A1A1AA]"}`} />
+            <Icon name="connection" className={`w-[20px] h-[20px] ${isActive("/connections") ? activeColor : inactiveColor}`} />
           </Link>
         )}
 
@@ -185,7 +186,7 @@ export function MobileBottomNav() {
               }
               setActiveModal('create-post');
             }}
-            className={`w-[44px] h-[32px] rounded-[10px] flex items-center justify-center border border-[#3F3F46] bg-transparent ${canCreatePost ? 'text-[#EC6229]' : 'text-muted-foreground opacity-50 cursor-default'}`}
+            className={`w-[46px] h-[34px] rounded-[8px] flex items-center justify-center border border-ds-border bg-transparent ${canCreatePost ? 'text-ds-accent' : 'text-muted-foreground opacity-50 cursor-default'}`}
             aria-label="Create Post"
           >
             <Icon name="plus" className="w-[20px] h-[20px]" />
@@ -199,7 +200,7 @@ export function MobileBottomNav() {
             onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/jobs')}
             className="flex flex-col items-center justify-center flex-1"
           >
-            <Icon name="jobs" className={`w-[22px] h-[22px] ${isActive("/jobs") ? activeColor : "text-[#A1A1AA]"}`} />
+            <Icon name="jobs" className={`w-[20px] h-[20px] ${isActive("/jobs") ? activeColor : inactiveColor}`} />
           </Link>
         )}
 
@@ -230,7 +231,7 @@ export function MobileBottomNav() {
                 className="flex flex-col items-center justify-center w-full focus-visible:outline-none cursor-pointer"
                 aria-label="Profile"
               >
-                <Icon name="profile" className={`w-[22px] h-[22px] ${isProfActive ? activeColor : "text-[#A1A1AA]"}`} />
+                <Icon name="profile" className={`w-[20px] h-[20px] ${isProfActive ? activeColor : inactiveColor}`} />
               </button>
             </div>
           );
