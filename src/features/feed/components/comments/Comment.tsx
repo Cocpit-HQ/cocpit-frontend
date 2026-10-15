@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ThumbsUp, Trash2, Heart, Flag, Ban, Link as LinkIcon, Pin } from 'lucide-react';
-import { UserIcon } from '@/components/icons';
+import { UserIcon, BusinessBuildingIcon } from '@/components/icons';
 import { toggleCommentLike, toggleCommentPin } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import Link from 'next/link';
@@ -419,7 +419,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
               <img 
                 src={author.avatar} 
                 alt={author?.name || 'User'} 
-                className="w-full h-full object-cover rounded-full" 
+                className={`w-full h-full object-cover ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'}`} 
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                   const parent = (e.target as HTMLImageElement).parentElement;
@@ -431,7 +431,11 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
               />
             ) : null}
             <span data-fallback className="p-0.5 w-full h-full flex items-center justify-center text-ds-text-primary" style={{ display: hasCustomAvatar ? 'none' : 'flex' }}>
-              <UserIcon className="w-full h-full text-ds-text-primary" />
+              {author?.isCompanyPost ? (
+                <BusinessBuildingIcon className="w-full h-full text-ds-text-primary" />
+              ) : (
+                <UserIcon className="w-full h-full text-ds-text-primary" />
+              )}
             </span>
           </div>
         </Link>

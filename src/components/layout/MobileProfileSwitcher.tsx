@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { BusinessBuildingIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface SwitchableOrg {
@@ -155,13 +156,13 @@ export function MobileProfileSwitcher({
                           "focus:outline-none focus-visible:ring-1 focus-visible:ring-ds-accent border border-transparent",
                         )}
                       >
-                        <Avatar className="h-9 w-9 shrink-0">
+                        <Avatar className="h-9 w-9 shrink-0 rounded-[8px]">
                           <AvatarImage
                             src={org.logo_url}
-                            className="object-cover"
+                            className="object-cover rounded-[8px]"
                           />
-                          <AvatarFallback>
-                            {org.name?.slice(0, 1).toUpperCase()}
+                          <AvatarFallback className="rounded-[8px] bg-ds-surface-1">
+                            <BusinessBuildingIcon className="w-5 h-5 text-ds-text-primary" />
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-[14px] leading-[20px] font-normal text-ds-text-primary font-sans truncate flex-1">

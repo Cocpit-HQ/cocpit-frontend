@@ -11,6 +11,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import PillButton from "./PillButton";
+import { toTitleCase } from "@/lib/nameNormalizer";
 
 interface StepSkillsProps {
   onNext: (skills?: string[]) => void;
@@ -162,15 +163,16 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
 
   // Toggle skill selection directly in store
   const handleToggleSkill = (skillName: string) => {
-    const exists = selectedSkills.includes(skillName);
+    const normalized = toTitleCase(skillName);
+    const exists = selectedSkills.some((s) => s.toLowerCase() === normalized.toLowerCase());
 
     if (!exists && selectedSkills.length >= 7) {
       return;
     }
 
     const updated = exists
-      ? selectedSkills.filter((s) => s !== skillName)
-      : [...selectedSkills, skillName];
+      ? selectedSkills.filter((s) => s.toLowerCase() !== normalized.toLowerCase())
+      : [...selectedSkills, normalized];
     setSelectedSkills(updated);
   };
 
@@ -182,7 +184,7 @@ export const StepSkills: React.FC<StepSkillsProps> = ({
     const isAvailable = availableSkills.some((s) => s.toLowerCase() === q) || apiSearchResults.some((s) => s.toLowerCase() === q);
     const exactMatch = isAvailable || isAlreadySelected;
 
-    const customOption = !exactMatch ? [search.trim()] : [];
+    const customOption = !exactMatch ? [toTitleCase(search)] : [];
     const matchedAvailable = availableSkills.filter((s) => s.toLowerCase().includes(q));
     return Array.from(new Set([...customOption, ...apiSearchResults, ...matchedAvailable]));
   }, [search, availableSkills, apiSearchResults, selectedSkills]);

@@ -12,7 +12,7 @@ import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import RichTextRenderer from '../parts/RichTextRenderer';
 import { CarouselDots } from '../parts/CarouselDots';
-import { Icon } from '@/components/icons';
+import { Icon, BusinessBuildingIcon } from '@/components/icons';
 import { useUIStore } from '@/store/ui.store';
 import { Reorder, useDragControls } from 'framer-motion';
 import { deletePost } from '@/services/api/posts';
@@ -346,7 +346,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
     : state.description.trim().length > 0 || hasMedia || !!state.sharedPost;
 
   const posterImage = state.isCompanyPost
-    ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || (state.currentPoster as any)?.image)
+    ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.company_logo || (state.currentPoster as any)?.logo || (state.currentPoster as any)?.image)
     : state.currentUser?.image;
 
   // Repost logic
@@ -416,16 +416,18 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] px-4 pt-4 pb-4 flex flex-col gap-4 no-scrollbar">
           <div className="flex gap-3">
             {/* Avatar */}
-            <div className="w-8 h-8 rounded-full flex-shrink-0 bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-ds-border overflow-hidden select-none">
-              {posterImage && posterImage !== '/assets/pngegg.png' ? (
+            <div className={`w-8 h-8 ${state.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} flex-shrink-0 bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-ds-border overflow-hidden select-none`}>
+              {posterImage && posterImage !== '/assets/pngegg.png' && posterImage !== '/images/companyonboarding/companyprofileDefault.jpg' ? (
                 <img
                   src={posterImage}
                   alt="Profile"
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
-                  className="w-full h-full object-cover select-none pointer-events-none"
+                  className={`w-full h-full object-cover select-none pointer-events-none ${state.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'}`}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
+              ) : state.isCompanyPost ? (
+                <BusinessBuildingIcon className="w-5 h-5 p-0.5 text-ds-text-secondary" />
               ) : (
                 <Icon name="user" className="w-[18px] h-[18px] text-ds-text-secondary" />
               )}

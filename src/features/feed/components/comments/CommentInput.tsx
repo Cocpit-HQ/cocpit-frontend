@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Smile, X, Send } from 'lucide-react';
-import { UserIcon } from '@/components/icons';
+import { UserIcon, BusinessBuildingIcon } from '@/components/icons';
 import { searchUsers, UserMention } from '@/services/api/users';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { formatMentionsForBackend } from '@/lib/mentions';
@@ -43,7 +43,8 @@ export default function CommentInput({
     isDrawer = false,
     hideCancelButton = false,
 }: CommentInputProps) {
-    const { activeProfile } = useActiveProfile();
+    const { activeProfile, isCompany } = useActiveProfile();
+    const isCompanyActor = Boolean(isCompany || activeProfile?.type === 'COMPANY');
     const [commentText, setCommentText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [emojiPickerPos, setEmojiPickerPos] = useState<EmojiPickerPosition | null>(null);
@@ -295,12 +296,12 @@ export default function CommentInput({
                         const avatarUrl = currentUserAvatar || activeProfile?.avatar_url;
                         const hasCustomAvatar = avatarUrl && avatarUrl !== '/assets/pngegg.png';
                         return (
-                            <div className="w-6 h-6 rounded-full bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] select-none shrink-0 border border-ds-border mt-1">
+                            <div className={`w-6 h-6 ${isCompanyActor ? 'rounded-[4px]' : 'rounded-full'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] select-none shrink-0 border border-ds-border mt-1`}>
                                 {hasCustomAvatar && (
                                     <img
                                         src={avatarUrl}
                                         alt="Current user"
-                                        className="w-full h-full object-cover rounded-full"
+                                        className={`w-full h-full object-cover ${isCompanyActor ? 'rounded-[4px]' : 'rounded-full'}`}
                                         onError={(e) => {
                                             (e.target as HTMLImageElement).style.display = 'none';
                                             const parent = (e.target as HTMLImageElement).parentElement;
@@ -312,7 +313,11 @@ export default function CommentInput({
                                     />
                                 )}
                                 <span data-fallback className="p-0.5 w-full h-full flex items-center justify-center text-ds-text-primary" style={{ display: hasCustomAvatar ? 'none' : 'flex' }}>
-                                    <UserIcon className="w-full h-full text-ds-text-primary" />
+                                    {isCompanyActor ? (
+                                        <BusinessBuildingIcon className="w-full h-full text-ds-text-primary" />
+                                    ) : (
+                                        <UserIcon className="w-full h-full text-ds-text-primary" />
+                                    )}
                                 </span>
                             </div>
                         );

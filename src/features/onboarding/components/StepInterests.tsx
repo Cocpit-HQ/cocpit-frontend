@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { showToast } from "@/shared/commonComponents/GlobalToast";
 import { useDebounce } from "@/hooks/use-debounce";
 import PillButton from "./PillButton";
+import { toTitleCase } from "@/lib/nameNormalizer";
 
 interface StepInterestsProps {
   onNext?: (interests?: string[]) => void;
@@ -166,15 +167,16 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
 
   // Toggle interest selection directly in store
   const handleToggleInterest = (interestName: string) => {
-    const exists = selectedInterests.includes(interestName);
+    const normalized = toTitleCase(interestName);
+    const exists = selectedInterests.some((i) => i.toLowerCase() === normalized.toLowerCase());
 
     if (!exists && selectedInterests.length >= 7) {
       return;
     }
 
     const updated = exists
-      ? selectedInterests.filter((i) => i !== interestName)
-      : [...selectedInterests, interestName];
+      ? selectedInterests.filter((i) => i.toLowerCase() !== normalized.toLowerCase())
+      : [...selectedInterests, normalized];
     setSelectedInterests(updated);
   };
 
@@ -186,7 +188,7 @@ export const StepInterests: React.FC<StepInterestsProps> = ({
     const isAvailable = availableInterests.some((i) => i.toLowerCase() === q) || apiSearchResults.some((i) => i.toLowerCase() === q);
     const exactMatch = isAvailable || isAlreadySelected;
 
-    const customOption = !exactMatch ? [search.trim()] : [];
+    const customOption = !exactMatch ? [toTitleCase(search)] : [];
     const matchedAvailable = availableInterests.filter((i) => i.toLowerCase().includes(q));
     return Array.from(new Set([...customOption, ...apiSearchResults, ...matchedAvailable]));
   }, [search, availableInterests, apiSearchResults, selectedInterests]);

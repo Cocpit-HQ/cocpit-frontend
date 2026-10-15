@@ -148,11 +148,12 @@ export default function FeaturedPostsSection({
       })
       .map((p: any) => {
         const post = mapProfilePostToPost(p);
+        const avatar = post.authorAvatar || data.logoUrl;
         return {
           ...post,
           isCompanyPost: true,
           authorSlug: post.authorSlug || data.slug || "",
-          authorAvatar: post.authorAvatar || data.logoUrl || "/images/companyonboarding/companyprofileDefault.jpg",
+          authorAvatar: avatar !== "/images/companyonboarding/companyprofileDefault.jpg" ? avatar : undefined,
           authorHeadline: post.authorHeadline || data.tagline || data.industry,
         };
       });

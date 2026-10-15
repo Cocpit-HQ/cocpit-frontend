@@ -5,6 +5,7 @@ import React, { useMemo, useState, useEffect, useRef, useCallback } from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X, Mail, Facebook, Search, User, Briefcase, Link } from "lucide-react";
 import { Icon } from "@iconify/react";
+import { BusinessBuildingIcon } from "@/components/icons";
 import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
@@ -455,6 +456,7 @@ export default function CocpitShareModel({
                 ) : (
                   displayUsers.map((u, index) => {
                     const checked = selectedUsers.includes(u.id);
+                    const isCompany = u.type === 'company' || (u as any).type === 'COMPANY' || Boolean((u as any).is_company) || (u as any).account_type === 'company' || (u as any).account_type === 'COMPANY';
                     return (
                       <div
                         key={`${u.id}-${index}`}
@@ -462,10 +464,14 @@ export default function CocpitShareModel({
                         onClick={() => toggleSelected(u)}
                       >
                         <div className="flex items-center gap-[8px]">
-                          <div className="relative h-[20px] w-[20px] rounded-full overflow-hidden bg-ds-surface-1 flex items-center justify-center text-[10px] text-ds-text-primary shrink-0">
-                            <span className="absolute inset-0 flex items-center justify-center">{(u.name || 'U').charAt(0).toUpperCase()}</span>
+                          <div className={`relative h-[20px] w-[20px] ${isCompany ? 'rounded-[4px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 flex items-center justify-center text-[10px] text-ds-text-primary shrink-0`}>
+                            {isCompany ? (
+                              <BusinessBuildingIcon className="w-[12px] h-[12px] text-ds-text-primary" />
+                            ) : (
+                              <span className="absolute inset-0 flex items-center justify-center">{(u.name || 'U').charAt(0).toUpperCase()}</span>
+                            )}
                             {u.avatar && u.avatar !== '/assets/pngegg.png' && (
-                              <img src={u.avatar} alt={u.name} className="absolute inset-0 w-full h-full object-cover z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                              <img src={u.avatar} alt={u.name} className={`absolute inset-0 w-full h-full object-cover z-10 ${isCompany ? 'rounded-[4px]' : 'rounded-full'}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                             )}
                           </div>
                           <span className="text-ds-text-primary ds-text-secondary line-clamp-1">

@@ -28,6 +28,7 @@ import {
   EmptyFollowIcon,
   EmptyConnectionIcon,
   UserIcon,
+  BusinessBuildingIcon,
 } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { cn } from "@/lib/utils";
@@ -809,7 +810,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     const id = user.user_id || user.follower_id || user.following_id || user.id;
                     const name = user.full_name || user.name || "User";
                     const avatar = user.avatar_url || user.avatar;
-                    const isCompany = user.type === "company";
+                    const isCompany = user.type === "company" || user.type === "COMPANY" || user.account_type === "company" || user.account_type === "COMPANY" || Boolean(user.org_id);
                     const linkHref = isCompany
                       ? `/organization/${user.slug}`
                       : `/profile/${user.account_name || id}`;
@@ -825,9 +826,11 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                           onClick={onClose}
                           className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1 hover:opacity-80 transition-opacity"
                         >
-                          <div className="w-5 h-5 rounded-full overflow-hidden bg-[var(--ds-surface-1)] flex items-center justify-center shrink-0">
+                          <div className={`w-5 h-5 ${isCompany ? 'rounded-[4px]' : 'rounded-full'} overflow-hidden bg-[var(--ds-surface-1)] flex items-center justify-center shrink-0`}>
                             {avatar ? (
-                              <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                              <img src={avatar} alt={name} className={`w-full h-full object-cover ${isCompany ? 'rounded-[4px]' : 'rounded-full'}`} />
+                            ) : isCompany ? (
+                              <BusinessBuildingIcon className="w-full h-full text-[var(--ds-text-secondary)]" />
                             ) : (
                               <UserIcon className="w-full h-full text-[var(--ds-text-secondary)]" />
                             )}

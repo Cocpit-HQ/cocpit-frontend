@@ -118,12 +118,23 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     duration: backendPost.poll.duration,
     is_active: backendPost.poll.is_active,
     user_vote: backendPost.poll.user_vote,
-    options: backendPost.poll.options.map(opt => ({
+    options: Array.isArray(backendPost.poll.options) ? backendPost.poll.options.map(opt => ({
       option_id: opt.option_id,
       option_text: opt.option_text,
       vote_count: opt.vote_count
+    })) : []
+  } : ((backendPost as any).options && Array.isArray((backendPost as any).options) && (backendPost as any).options.length > 0) ? {
+    poll_id: (backendPost as any).poll_id || '',
+    total_votes: (backendPost as any).votes || 0,
+    duration: (backendPost as any).duration || '1 week',
+    is_active: (backendPost as any).isPollActive ?? true,
+    user_vote: null,
+    options: (backendPost as any).options.map((opt: any) => ({
+      option_id: opt.option_id || opt.id || '',
+      option_text: opt.option_text || opt.text || (typeof opt === 'string' ? opt : ''),
+      vote_count: opt.vote_count || 0
     }))
-  } : undefined; // Post expects undefined or null, but let's be safe with undefined if null causes issues, or keep null if interface allows
+  } : undefined;
 
   const { content, articleBody } = splitArticleContent(backendPost.content, backendPost.post_type);
 
@@ -133,7 +144,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
       ? ((backendPost as any).author_org_id || (backendPost as any).authorOrgId || backendPost.author_id)
       : backendPost.author_id,
     author: backendPost.author_name,
-    authorAvatar: backendPost.author_avatar || undefined,
+    authorAvatar:
+      backendPost.author_avatar &&
+      backendPost.author_avatar !== "/images/companyonboarding/companyprofileDefault.jpg"
+        ? backendPost.author_avatar
+        : undefined,
     title: backendPost.title || "",
     timeAgo: shortTimeAgo,
     content: content,
@@ -174,7 +189,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
           id: "unavailable",
           authorId: sp.author?.user_id || "",
           author: sp.author?.full_name || "Unknown",
-          authorAvatar: sp.author?.avatar_url || null,
+          authorAvatar:
+            sp.author?.avatar_url &&
+            sp.author.avatar_url !== "/images/companyonboarding/companyprofileDefault.jpg"
+              ? sp.author.avatar_url
+              : null,
           timeAgo: "",
           content: content,
           likes: 0,
@@ -191,7 +210,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
           id: sp.post_id,
           authorId: sp.author.user_id,
           author: sp.author.full_name,
-          authorAvatar: sp.author.avatar_url,
+          authorAvatar:
+            sp.author.avatar_url &&
+            sp.author.avatar_url !== "/images/companyonboarding/companyprofileDefault.jpg"
+              ? sp.author.avatar_url
+              : undefined,
           timeAgo: sp.created_at ? dayjs(sp.created_at).fromNow() : "",
           title: sp.title || "",
           content: sharedContent,

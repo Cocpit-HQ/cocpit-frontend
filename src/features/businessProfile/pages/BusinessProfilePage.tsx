@@ -321,11 +321,13 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
 
       return resolvedMembers;
     })(),
-    posts: profileResponse.latest_posts ? profileResponse.latest_posts.map((p: any) => ({
-      id: p.post_id || p.id || p._id,
-      authorName: p.author?.full_name || p.author_name || company.name,
-      authorAvatarUrl: p.author?.avatar_url || p.author_avatar_url || company.logo_url || "/images/companyonboarding/companyprofileDefault.jpg",
-      authorSubLabel: "Company Post",
+    posts: profileResponse.latest_posts ? profileResponse.latest_posts.map((p: any) => {
+      const avatar = p.author?.avatar_url || p.author_avatar_url || company.logo_url;
+      return {
+        id: p.post_id || p.id || p._id,
+        authorName: p.author?.full_name || p.author_name || company.name,
+        authorAvatarUrl: avatar !== "/images/companyonboarding/companyprofileDefault.jpg" ? avatar : undefined,
+        authorSubLabel: "Company Post",
       timestamp: p.created_at || p.timestamp || "Just now",
       content: p.content || "",
       imageUrl:
@@ -344,7 +346,8 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       likedBy: p.liked_by || p.likedBy || [],
       sampleLikerUsername: p.sample_liker_username || p.sampleLikerUsername || undefined,
       isLiked: p.is_liked || p.isLiked || false,
-    })) : [],
+    };
+  }) : [],
     entityType: isEdu ? "INSTITUTION" : "COMPANY",
     isFollowing: !isActorThisCompany && Boolean(profileResponse.relationship?.is_following),
     isSubscribed: profileResponse.relationship?.is_subscribed || false,

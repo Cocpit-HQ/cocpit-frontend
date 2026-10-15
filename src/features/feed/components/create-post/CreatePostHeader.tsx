@@ -2,6 +2,7 @@ import React from 'react';
 import { X, ChevronDown, Check, Zap } from 'lucide-react';
 import VisibilityToggle from './shared/VisibilityToggle';
 import { PostVisibility } from '@/types/entities';
+import { BusinessBuildingIcon } from '@/components/icons';
 
 interface CreatePostHeaderProps {
   onClose: () => void;
@@ -76,14 +77,16 @@ const CreatePostHeader = ({
             onClick={() => !isEdit && setShowAccountSelector(!showAccountSelector)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted transition-colors border border-border/50 group"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden border border-border shadow-sm bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs relative font-dmsans">
-              {currentPosterLogo ? (
+            <div className={`w-6 h-6 ${isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} overflow-hidden border border-border shadow-sm bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs relative font-dmsans`}>
+              {currentPosterLogo && currentPosterLogo !== '/images/companyonboarding/companyprofileDefault.jpg' && currentPosterLogo !== '/assets/pngegg.png' ? (
                 <>
-                  <img src={currentPosterLogo} alt={currentPosterName} className="w-full h-full object-cover relative z-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img src={currentPosterLogo} alt={currentPosterName} className={`w-full h-full object-cover relative z-10 ${isCompanyPost ? 'rounded-[4px]' : 'rounded-full'}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   <span className="absolute inset-0 flex items-center justify-center z-0">
-                    {(currentPosterName || 'O').charAt(0).toUpperCase()}
+                    {isCompanyPost ? <BusinessBuildingIcon className="w-full h-full p-0.5 text-ds-text-primary" /> : (currentPosterName || 'O').charAt(0).toUpperCase()}
                   </span>
                 </>
+              ) : isCompanyPost ? (
+                <BusinessBuildingIcon className="w-full h-full p-0.5 text-ds-text-primary" />
               ) : (
                 <span>{(currentPosterName || 'O').charAt(0).toUpperCase()}</span>
               )}
@@ -121,11 +124,11 @@ const CreatePostHeader = ({
                          onClick={() => { onContextSwitch(cid); setShowAccountSelector(false); }}
                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
                        >
-                          <div className="w-8 h-8 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-border overflow-hidden shrink-0 font-dmsans select-none">
+                          <div className="w-8 h-8 rounded-[4px] bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-xs border border-border overflow-hidden shrink-0 font-dmsans select-none">
                             {(c.logo_url || c.avatar_url) && (c.logo_url || c.avatar_url) !== '/assets/pngegg.png' ? (
-                              <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                              <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover rounded-[4px]" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                             ) : (
-                              <span>{(c.name || 'O').charAt(0).toUpperCase()}</span>
+                              <BusinessBuildingIcon className="w-4 h-4 text-ds-text-primary" />
                             )}
                           </div>
                           <div className="flex-grow flex flex-col min-w-0">
@@ -183,11 +186,11 @@ const AccountSelectorOverlay = ({ userCompanies, onSelect, currentUser, onClose,
               onClick={() => { onSelect(cid); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-muted border border-transparent hover:border-border transition-all"
             >
-              <div className="w-12 h-12 rounded-full bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base border border-border shadow-sm overflow-hidden shrink-0 font-dmsans select-none">
+              <div className="w-12 h-12 rounded-[8px] bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-base border border-border shadow-sm overflow-hidden shrink-0 font-dmsans select-none">
                 {(c.logo_url || c.avatar_url) && (c.logo_url || c.avatar_url) !== '/assets/pngegg.png' ? (
-                  <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img src={c.logo_url || c.avatar_url} className="w-full h-full object-cover rounded-[8px]" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 ) : (
-                  <span>{(c.name || 'O').charAt(0).toUpperCase()}</span>
+                  <BusinessBuildingIcon className="w-6 h-6 text-ds-text-primary" />
                 )}
               </div>
               <div className="flex flex-col text-left flex-grow">

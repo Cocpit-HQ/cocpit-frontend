@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
-import { UserIcon } from "@/components/icons";
+import { UserIcon, BusinessBuildingIcon } from "@/components/icons";
 
 const formatCompanyName = (name?: string): string => {
   if (!name) return "";
@@ -461,14 +461,16 @@ const ProfilePostCard = ({
             router.push(authorLink);
           }}
         >
-          <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['DM_Sans'] select-none">
-            {mainPost.authorAvatar && mainPost.authorAvatar !== '/assets/profilephoto.png' && mainPost.authorAvatar !== '/assets/pngegg.png' ? (
+          <div className={`w-8 h-8 ${mainPost.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} bg-ds-surface-2 flex items-center justify-center font-semibold text-xs overflow-hidden flex-shrink-0 font-['DM_Sans'] select-none`}>
+            {mainPost.authorAvatar && mainPost.authorAvatar !== '/assets/profilephoto.png' && mainPost.authorAvatar !== '/assets/pngegg.png' && mainPost.authorAvatar !== '/images/companyonboarding/companyprofileDefault.jpg' ? (
               <img
                 src={mainPost.authorAvatar}
                 alt={mainPost.author || "User"}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${mainPost.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
+            ) : mainPost.isCompanyPost ? (
+              <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
             ) : (
               <UserIcon className="w-full h-full text-ds-text-primary p-1" />
             )}
@@ -621,9 +623,11 @@ const ProfilePostCard = ({
         <div className="w-full h-[300px] mb-4 relative overflow-hidden">
           <div className="w-full h-full p-3 bg-[#F8FAFF] dark:bg-[#131C2E]/30 border border-[#E3E9FF] dark:border-[#232F45] rounded-[16px] flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-[10px] overflow-hidden flex-shrink-0 font-['DM_Sans'] select-none">
-                {localPost.shared_post.authorAvatar && localPost.shared_post.authorAvatar !== '/assets/pngegg.png' ? (
-                  <img src={localPost.shared_post.authorAvatar} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <div className={`w-6 h-6 ${localPost.shared_post.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} bg-ds-surface-2 flex items-center justify-center font-semibold text-[10px] overflow-hidden flex-shrink-0 font-['DM_Sans'] select-none`}>
+                {localPost.shared_post.authorAvatar && localPost.shared_post.authorAvatar !== '/assets/pngegg.png' && localPost.shared_post.authorAvatar !== '/images/companyonboarding/companyprofileDefault.jpg' ? (
+                  <img src={localPost.shared_post.authorAvatar} className={`w-full h-full object-cover ${localPost.shared_post.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : localPost.shared_post.isCompanyPost ? (
+                  <BusinessBuildingIcon className="w-full h-full text-ds-text-primary p-0.5" />
                 ) : (
                   <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
                 )}

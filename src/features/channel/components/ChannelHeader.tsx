@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { Channel } from '../types/channel.types';
+import { BusinessBuildingIcon } from '@/components/icons';
 
 interface ChannelHeaderProps {
   channel: Channel;
@@ -11,6 +12,9 @@ interface ChannelHeaderProps {
 
 export default function ChannelHeader({ channel, onEdit, onInvite }: ChannelHeaderProps) {
   const router = useRouter();
+  const [logoError, setLogoError] = React.useState(false);
+  const hasLogo =
+    !!channel.logoUrl && channel.logoUrl !== "/images/companyonboarding/companyprofileDefault.jpg";
 
   const handleOrgClick = () => {
     const targetSlugOrId = channel.companySlug || channel.orgId;
@@ -52,11 +56,16 @@ export default function ChannelHeader({ channel, onEdit, onInvite }: ChannelHead
             title={channel.companyName ? `View ${channel.companyName} profile` : 'View organization profile'}
             className="w-[66px] h-[66px] min-w-[66px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] border border-gray-200 dark:border-[#2A2D35] flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
           >
-            <img
-              src={channel.logoUrl || "/images/companyonboarding/companyprofileDefault.jpg"}
-              alt={channel.companyName || channel.name}
-              className="w-full h-full object-cover rounded-[12px]"
-            />
+            {hasLogo && !logoError ? (
+              <img
+                src={channel.logoUrl}
+                alt={channel.companyName || channel.name}
+                className="w-full h-full object-cover rounded-[12px]"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <BusinessBuildingIcon className="w-8 h-8 text-ds-text-primary" />
+            )}
           </div>
           <div className="flex flex-col gap-0.5 min-w-0">
             <div className="flex flex-col">

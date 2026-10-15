@@ -40,8 +40,8 @@ const VideoFlow = ({
 
   const authorName = (isCompanyPost ? currentPoster?.name : (currentPoster?.name || currentUser?.name)) || 'Marcus avery';
   const authorAvatar = (isCompanyPost 
-    ? (currentPoster?.logo_url || currentPoster?.avatar_url || currentPoster?.logo || currentPoster?.image)
-    : (currentUser?.image || currentPoster?.logo_url || '/assets/pngegg.png')) || '/assets/pngegg.png';
+    ? (currentPoster?.logo_url || currentPoster?.company_logo || currentPoster?.logo || currentPoster?.image)
+    : (currentUser?.image || '/assets/pngegg.png')) || '';
   const authorRole = (isCompanyPost ? 'Company' : (currentUser?.headline || currentUser?.role)) || 'Senior product designer';
 
   if (isMobile) {

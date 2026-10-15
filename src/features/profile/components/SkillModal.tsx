@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Icon } from '@iconify/react';
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getProfileSkills } from "@/services/api/profile";
+import { toTitleCase } from "@/lib/nameNormalizer";
 
 interface SkillModalProps {
   isOpen: boolean;
@@ -73,8 +74,11 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
     );
 
     const query = searchQuery.trim();
-    if (query && !filtered.some(s => typeof s === 'string' && s.toLowerCase() === query.toLowerCase())) {
-      return [query, ...filtered];
+    if (query) {
+      const normalizedQuery = toTitleCase(query);
+      if (!filtered.some(s => typeof s === 'string' && s.toLowerCase() === normalizedQuery.toLowerCase())) {
+        return [normalizedQuery, ...filtered];
+      }
     }
 
     return filtered;
@@ -97,12 +101,13 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   }, [currentPage, totalPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggleSkill = (skill: string) => {
+    const normalized = toTitleCase(skill);
     setSelectedSkills(prev => {
-      const exists = prev.some(s => typeof s === 'string' && s.toLowerCase() === skill.toLowerCase());
+      const exists = prev.some(s => typeof s === 'string' && s.toLowerCase() === normalized.toLowerCase());
       if (exists) {
-        return prev.filter(s => typeof s === 'string' && s.toLowerCase() !== skill.toLowerCase());
+        return prev.filter(s => typeof s === 'string' && s.toLowerCase() !== normalized.toLowerCase());
       }
-      return [...prev, skill];
+      return [...prev, normalized];
     });
   };
 

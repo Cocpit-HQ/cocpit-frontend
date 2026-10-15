@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { BusinessBuildingIcon } from '@/components/icons';
 
 import { Post } from '@/types/entities';
 import { FeedPostProps } from '../../types';
@@ -489,12 +490,16 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
                   href={authorProfileHref}
                   className="flex h-[36px] items-center gap-[8px] min-w-0 flex-1 hover:opacity-90 transition-opacity"
                 >
-                  {post.authorAvatar ? (
+                  {post.authorAvatar && post.authorAvatar !== "/images/companyonboarding/companyprofileDefault.jpg" ? (
                     <img
                       src={post.authorAvatar}
                       alt={post.author}
-                      className="h-[32px] w-[32px] rounded-full object-cover shrink-0"
+                      className={`h-[32px] w-[32px] ${post.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} object-cover shrink-0`}
                     />
+                  ) : post.isCompanyPost ? (
+                    <div className="h-[32px] w-[32px] rounded-[8px] bg-[var(--ds-surface-2)] text-[var(--ds-text-primary)] flex items-center justify-center shrink-0">
+                      <BusinessBuildingIcon className="w-4 h-4 text-ds-text-primary" />
+                    </div>
                   ) : (
                     <div className="h-[32px] w-[32px] rounded-full bg-[var(--ds-surface-2)] text-[var(--ds-text-primary)] flex items-center justify-center font-bold text-xs shrink-0">
                       {(post.author || 'U').charAt(0).toUpperCase()}

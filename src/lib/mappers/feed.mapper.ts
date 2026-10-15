@@ -101,10 +101,21 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     duration: backendPost.poll.duration,
     is_active: backendPost.poll.is_active,
     user_vote: backendPost.poll.user_vote,
-    options: backendPost.poll.options.map(opt => ({
+    options: Array.isArray(backendPost.poll.options) ? backendPost.poll.options.map(opt => ({
       option_id: opt.option_id,
       option_text: opt.option_text,
       vote_count: opt.vote_count
+    })) : []
+  } : ((backendPost as any).options && Array.isArray((backendPost as any).options) && (backendPost as any).options.length > 0) ? {
+    poll_id: (backendPost as any).poll_id || '',
+    total_votes: (backendPost as any).votes || 0,
+    duration: (backendPost as any).duration || '1 week',
+    is_active: (backendPost as any).isPollActive ?? true,
+    user_vote: null,
+    options: (backendPost as any).options.map((opt: any) => ({
+      option_id: opt.option_id || opt.id || '',
+      option_text: opt.option_text || opt.text || (typeof opt === 'string' ? opt : ''),
+      vote_count: opt.vote_count || 0
     }))
   } : null;
 
@@ -247,7 +258,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         author_org_id: sp.author.author_org_id,
         createdByUserId: sp.author.created_by_user_id,
         author: sp.author.full_name,
-        authorAvatar: sp.author.avatar_url || undefined,
+        authorAvatar: (sp.author.avatar_url && sp.author.avatar_url !== '/images/companyonboarding/companyprofileDefault.jpg') ? sp.author.avatar_url : undefined,
         timeAgo: spShortTimeAgo,
         content: spContent,
         articleBody: spArticleBody,
@@ -346,7 +357,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       ? (backendPost.author_org_id || backendPost.author_id)
       : backendPost.author_id,
     author: backendPost.author_name,
-    authorAvatar: backendPost.author_avatar || undefined,
+    authorAvatar: (backendPost.author_avatar && backendPost.author_avatar !== '/images/companyonboarding/companyprofileDefault.jpg') ? backendPost.author_avatar : undefined,
     title: backendPost.title || "",
     timeAgo: shortTimeAgo,
     content: content,
@@ -429,7 +440,12 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
       name: backendComment.full_name,
       avatar: backendComment.avatar_url || undefined,
       authorSlug: backendComment.author_slug,
-      isCompanyPost: backendComment.is_organization_comment,
+      isCompanyPost: Boolean(
+        backendComment.is_organization_comment ??
+        (backendComment as any).is_organization_post ??
+        (backendComment as any).author_org_id ??
+        (backendComment as any).isCompanyPost
+      ),
       headline: backendComment.headline,
     },
     text: backendComment.content,

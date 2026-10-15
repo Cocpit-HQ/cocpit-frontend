@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
 import { PublicChannelSummary } from '../data/dummy-public-channel-data';
+import { BusinessBuildingIcon } from '@/components/icons';
 
 interface PublicChannelHeaderProps {
   channel: PublicChannelSummary;
@@ -10,6 +11,9 @@ interface PublicChannelHeaderProps {
 
 export default function PublicChannelHeader({ channel, onToggleSubscribe }: PublicChannelHeaderProps) {
   const router = useRouter();
+  const [logoError, setLogoError] = React.useState(false);
+  const hasLogo =
+    !!channel.logoUrl && channel.logoUrl !== "/images/companyonboarding/companyprofileDefault.jpg";
 
   const handleOrgClick = () => {
     const targetSlugOrId = channel.companySlug || channel.orgId;
@@ -37,11 +41,16 @@ export default function PublicChannelHeader({ channel, onToggleSubscribe }: Publ
           title={channel.companyName ? `View ${channel.companyName} profile` : 'View organization profile'}
           className="hidden md:flex w-[114px] h-[114px] min-w-[114px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),_0px_8px_10px_-6px_rgba(0,0,0,0.1)]"
         >
-          <img
-            src={channel.logoUrl || "/images/companyonboarding/companyprofileDefault.jpg"}
-            alt={channel.companyName || channel.name}
-            className="w-full h-full object-cover"
-          />
+          {hasLogo && !logoError ? (
+            <img
+              src={channel.logoUrl}
+              alt={channel.companyName || channel.name}
+              className="w-full h-full object-cover"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <BusinessBuildingIcon className="w-12 h-12 text-ds-text-primary" />
+          )}
         </div>
 
         <div className="flex flex-col items-start gap-4 md:gap-[8px] flex-1 min-w-0">
@@ -53,13 +62,18 @@ export default function PublicChannelHeader({ channel, onToggleSubscribe }: Publ
               <div 
                 onClick={handleOrgClick}
                 title={channel.companyName ? `View ${channel.companyName} profile` : 'View organization profile'}
-                className="md:hidden flex w-[48px] h-[48px] min-w-[48px] rounded-[12px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] items-center justify-center flex-shrink-0 cursor-pointer"
+                className="md:hidden flex w-[48px] h-[48px] min-w-[48px] rounded-[8px] overflow-hidden bg-gray-100 dark:bg-[#1C2333] items-center justify-center flex-shrink-0 cursor-pointer"
               >
-                <img
-                  src={channel.logoUrl || "/images/companyonboarding/companyprofileDefault.jpg"}
-                  alt={channel.companyName || channel.name}
-                  className="w-full h-full object-cover"
-                />
+                {hasLogo && !logoError ? (
+                  <img
+                    src={channel.logoUrl}
+                    alt={channel.companyName || channel.name}
+                    className="w-full h-full object-cover"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <BusinessBuildingIcon className="w-6 h-6 text-ds-text-primary" />
+                )}
               </div>
 
               <div className="flex flex-col min-w-0 flex-1 justify-center gap-1 md:gap-0">

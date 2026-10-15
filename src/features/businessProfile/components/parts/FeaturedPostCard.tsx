@@ -11,6 +11,7 @@ import {
   SaveIcon,
   SaveFilledIcon,
   MenuIcon,
+  BusinessBuildingIcon,
 } from "@/components/icons";
 import { formatCount } from "../../utils/postMediaUtils";
 
@@ -56,6 +57,12 @@ export function FeaturedPostCard({
   onShare,
 }: FeaturedPostCardProps) {
   const router = useRouter();
+  const [avatarError, setAvatarError] = React.useState(false);
+  const rawAvatar = post.authorAvatarUrl || orgLogo;
+  const avatarUrl =
+    rawAvatar && rawAvatar !== "/images/companyonboarding/companyprofileDefault.jpg"
+      ? rawAvatar
+      : undefined;
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -86,15 +93,18 @@ export function FeaturedPostCard({
       <div className="self-stretch w-full flex justify-between items-center h-8 gap-2 min-w-0">
         {/* Frame 2608571: Avatar + Name / Headline */}
         <div className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden">
-          <img
-            className="w-8 h-8 rounded-[12px] object-cover shrink-0"
-            src={
-              post.authorAvatarUrl ||
-              orgLogo ||
-              "/images/companyonboarding/companyprofileDefault.jpg"
-            }
-            alt={post.authorName || orgName}
-          />
+          {avatarUrl && !avatarError ? (
+            <img
+              className="w-8 h-8 rounded-[8px] object-cover shrink-0"
+              src={avatarUrl}
+              alt={post.authorName || orgName}
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-[8px] bg-ds-surface-2 border border-ds-border flex items-center justify-center shrink-0">
+              <BusinessBuildingIcon className="w-4 h-4 text-ds-text-primary" />
+            </div>
+          )}
           <div className="flex-1 flex flex-col justify-start items-start min-w-0 w-full overflow-hidden">
             <span className="w-full text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 truncate block">
               {post.authorName || orgName}

@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
-import { Icon } from "@/components/icons";
+import { Icon, BusinessBuildingIcon } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { cn } from "@/lib/utils";
 
@@ -48,8 +48,9 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
       ? `/organization/${activeProfile.slug}`
       : "/profile";
 
-  const avatarUrl =
-    activeProfile?.avatar_url || user?.image || undefined;
+  const avatarUrl = isOrgActor
+    ? (activeProfile?.avatar_url || undefined)
+    : (activeProfile?.avatar_url || user?.image || undefined);
   const displayName =
     activeProfile?.name || user?.name || "User";
 
@@ -91,6 +92,8 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
       >
         {avatarUrl ? (
           <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+        ) : isOrgActor ? (
+          <BusinessBuildingIcon className="w-full h-full p-0.5 text-ds-text-primary" />
         ) : (
           <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
         )}
@@ -219,6 +222,8 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
                     alt={displayName}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
+                ) : isOrgActor ? (
+                  <BusinessBuildingIcon className="w-3.5 h-3.5 text-[#B8ADA8]" />
                 ) : (
                   <span
                     style={{

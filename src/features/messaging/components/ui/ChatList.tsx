@@ -275,7 +275,11 @@ export function ChatList({
             <div className="flex flex-row items-center p-0 gap-[8px] min-w-0 flex-1">
               <div className="w-[40px] h-[40px] flex-none">
                 <Avatar
-                  url={(activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image}
+                  url={
+                    activeProfile?.type === 'COMPANY'
+                      ? ((activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar)
+                      : ((activeProfile as any)?.avatar_url || (activeProfile as any)?.avatar || session?.user?.image)
+                  }
                   name={activeProfile?.name || session?.user?.name || "User"}
                   size="md"
                   isCompany={activeProfile?.type === 'COMPANY'}

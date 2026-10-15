@@ -16,6 +16,7 @@ import {
   LinkIcon,
   EditIcon,
   DeleteIcon,
+  BusinessBuildingIcon,
 } from '@/components/icons';
 import { Icon } from '@iconify/react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -1128,7 +1129,7 @@ const ArticleFlow = ({
   });
 
   const rawAvatarSrc = isCompanyPost
-    ? (currentPoster?.logo_url || currentPoster?.avatar_url || currentPoster?.company_logo || currentPoster?.logo || currentPoster?.image)
+    ? (currentPoster?.logo_url || currentPoster?.company_logo || currentPoster?.logo || currentPoster?.image)
     : (currentUser?.image || (currentUser as any)?.avatar);
 
   const avatarSrc = isCompanyPost
@@ -1162,7 +1163,15 @@ const ArticleFlow = ({
           </button>
 
           <div className="flex items-center gap-3">
-            <img src={avatarSrc} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+            <div className={`w-10 h-10 ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden shrink-0 border border-ds-border bg-ds-surface-1 flex items-center justify-center`}>
+              {avatarSrc && avatarSrc !== '/images/companyonboarding/companyprofileDefault.jpg' && !avatarSrc.includes('pngegg') ? (
+                <img src={avatarSrc} alt="" className={`w-full h-full ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} object-cover flex-shrink-0`} />
+              ) : isCompanyPost ? (
+                <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
+              ) : (
+                <div className="font-normal text-[14px] text-ds-text-primary">{(authorName || 'U').charAt(0).toUpperCase()}</div>
+              )}
+            </div>
             <div className="flex min-w-0 flex-col">
               <h5 className="font-semibold text-[15px] text-foreground leading-tight truncate">{authorName}</h5>
               <p className="text-[12px] text-muted-foreground truncate">{subtitleText}</p>
@@ -1281,11 +1290,13 @@ const ArticleFlow = ({
 
           {/* Frame 2609563: Author (w-[119px] h-[32px] gap-[8px]) */}
           <div className="flex w-[119px] h-[32px] items-center gap-[8px] shrink-0">
-            <div className="w-[32px] h-[32px] rounded-full overflow-hidden shrink-0 border border-[#2C2C33] bg-[#1A1A20]">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt={authorName} className="w-full h-full object-cover" onError={(e) => { if (!isCompanyPost) (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <div className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden shrink-0 border border-ds-border bg-ds-surface-1 flex items-center justify-center`}>
+              {avatarSrc && avatarSrc !== '/images/companyonboarding/companyprofileDefault.jpg' && !avatarSrc.includes('pngegg') ? (
+                <img src={avatarSrc} alt={authorName} className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              ) : isCompanyPost ? (
+                <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center font-normal text-[14px] text-[#FFECE6]">
+                <div className="w-full h-full flex items-center justify-center font-normal text-[14px] text-ds-text-primary">
                   {(authorName || 'U').charAt(0).toUpperCase()}
                 </div>
               )}

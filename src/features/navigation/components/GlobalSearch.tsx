@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Icon } from '@/components/icons';
+import { Icon, BusinessBuildingIcon } from '@/components/icons';
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers, getUserById } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
@@ -148,19 +148,24 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   };
   
   const renderAvatar = (user: SearchedUser) => {
-    const fallbackInitial = (user.full_name || user.name || 'U').charAt(0).toUpperCase();
+    const isCompany = user.type === 'COMPANY' || (user as any).type === 'company' || (user as any).account_type === 'COMPANY' || (user as any).account_type === 'company';
+    const roundedClass = isCompany ? 'rounded-[8px]' : 'rounded-full';
     if (user.avatar_url || user.avatar) {
       return (
         <img 
           src={user.avatar_url || user.avatar || ''} 
           alt={user.full_name || user.name || ''} 
-          className="w-8 h-8 rounded-full object-cover shrink-0" 
+          className={`w-8 h-8 ${roundedClass} object-cover shrink-0`} 
         />
       );
     }
     return (
-      <div className="w-8 h-8 rounded-full bg-ds-surface-1 flex items-center justify-center overflow-hidden shrink-0">
-        <Icon name="user" className="w-[18px] h-[18px] text-ds-text-primary" />
+      <div className={`w-8 h-8 ${roundedClass} bg-ds-surface-1 flex items-center justify-center overflow-hidden shrink-0`}>
+        {isCompany ? (
+          <BusinessBuildingIcon className="w-[18px] h-[18px] text-ds-text-primary" />
+        ) : (
+          <Icon name="user" className="w-[18px] h-[18px] text-ds-text-primary" />
+        )}
       </div>
     );
   };

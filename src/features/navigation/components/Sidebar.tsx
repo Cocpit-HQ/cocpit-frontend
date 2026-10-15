@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { Icon as CustomIcon, IconName, UserIcon } from '@/components/icons';
+import { Icon as CustomIcon, IconName, UserIcon, BusinessBuildingIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store';
@@ -225,11 +225,7 @@ export function Sidebar({ className }: SidebarProps) {
                 : false;
               const isOrgActive = isCurrentActor || isCurrentPath;
               const orgHref = `/organization/${company.slug}`;
-              const firstLetter = company.name ? company.name.charAt(0).toUpperCase() : 'C';
-              
-              // Alternate fallback colors
-              const fallbackColors = ['bg-blue-500', 'bg-gray-500', 'bg-purple-500', 'bg-green-500'];
-              const fallbackColor = fallbackColors[index % fallbackColors.length];
+              const hasLogo = Boolean(company.logo_url && company.logo_url !== '/assets/pngegg.png');
 
               return (
                 <Link
@@ -246,12 +242,29 @@ export function Sidebar({ className }: SidebarProps) {
                   }}
                   className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[33px] rounded-full transition-[var(--motion-quick)] group"
                 >
-                  <div className={`w-[20px] h-[20px] rounded shrink-0 ${fallbackColor} flex items-center justify-center overflow-hidden`}>
-                    {company.logo_url ? (
-                      <img src={company.logo_url} alt={company.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-[10px] text-white font-bold">{firstLetter}</span>
-                    )}
+                  <div className="w-[20px] h-[20px] rounded-[4px] shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center overflow-hidden select-none">
+                    {hasLogo ? (
+                      <img
+                        src={company.logo_url}
+                        alt={company.name}
+                        className="w-full h-full object-cover rounded-[4px]"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const parent = (e.target as HTMLImageElement).parentElement;
+                          if (parent) {
+                            const fallback = parent.querySelector('[data-fallback]');
+                            if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <span
+                      data-fallback
+                      className="w-full h-full flex items-center justify-center text-ds-text-primary"
+                      style={{ display: hasLogo ? 'none' : 'flex' }}
+                    >
+                      <BusinessBuildingIcon className="w-[60%] h-[60%] text-ds-text-primary" />
+                    </span>
                   </div>
                   <span className={`font-['DM_Sans'] truncate text-[16px] leading-[24px] ${isOrgActive ? 'font-medium text-ds-text-primary' : 'font-normal text-ds-text-secondary group-hover:text-ds-text-primary'}`}>
                     {company.name}

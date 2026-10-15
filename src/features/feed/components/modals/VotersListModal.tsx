@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
-import { CloseCrossIcon, UserIcon } from '@/components/icons';
+import { CloseCrossIcon, UserIcon, BusinessBuildingIcon } from '@/components/icons';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { getPollAnalytics } from '@/services/api/posts';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -34,20 +34,22 @@ interface VotersListModalProps {
   options?: PollOptionItem[];
 }
 
-const VoterAvatar: React.FC<{ avatarUrl?: string; name: string }> = ({ avatarUrl, name }) => {
+const VoterAvatar: React.FC<{ avatarUrl?: string; name: string; isCompany?: boolean }> = ({ avatarUrl, name, isCompany }) => {
   const [imgError, setImgError] = useState(false);
   const initial = name ? name.charAt(0).toUpperCase() : '?';
   const hasValidAvatar = !!avatarUrl && avatarUrl !== '/assets/pngegg.png' && !imgError;
 
   return (
-    <div className="relative w-[20px] h-[20px] rounded-[100px] overflow-hidden bg-ds-surface-1 flex items-center justify-center text-ds-text-primary text-[10px] font-medium shrink-0 flex-none select-none">
+    <div className={`relative w-[20px] h-[20px] ${isCompany ? 'rounded-[4px]' : 'rounded-[100px]'} overflow-hidden bg-ds-surface-1 flex items-center justify-center text-ds-text-primary text-[10px] font-medium shrink-0 flex-none select-none`}>
       {hasValidAvatar ? (
         <img
           src={avatarUrl}
           alt={name}
-          className="w-full h-full object-cover rounded-[100px]"
+          className={`w-full h-full object-cover ${isCompany ? 'rounded-[4px]' : 'rounded-[100px]'}`}
           onError={() => setImgError(true)}
         />
+      ) : isCompany ? (
+        <BusinessBuildingIcon className="w-[60%] h-[60%] text-current" />
       ) : (
         <UserIcon className="w-[60%] h-[60%] text-current" />
       )}
@@ -182,7 +184,7 @@ export const VotersListModal: React.FC<VotersListModalProps> = ({
                       }}
                       className="flex flex-row items-center gap-[8px] h-[20px] min-w-0 group hover:opacity-90 transition-opacity"
                     >
-                      <VoterAvatar avatarUrl={avatarUrl} name={name} />
+                      <VoterAvatar avatarUrl={avatarUrl} name={name} isCompany={isCompany} />
 
                       {/* Name */}
                       <span className="font-dmsans text-[14px] font-normal leading-[20px] text-ds-text-primary group-hover:text-ds-text-secondary truncate">

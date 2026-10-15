@@ -23,6 +23,7 @@ import { getOnboardingOptions } from "@/services/api/onboarding";
 import { CocpitUserProfileImageEditor } from "@/shared/commonComponents/CocpitUserProfileImageEditor";
 import { CocpitUserCoverImageEditor } from "@/shared/commonComponents/CocpitUserCoverImageEditor";
 import { BusinessBuildingIcon, ProfileEditIcon } from "@/components/icons";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { cn } from "@/lib/utils";
 
 interface BusinessEditProfileTabProps {
@@ -111,6 +112,7 @@ export default function BusinessEditProfileTab({
   const { slug } = useParams() as { slug: string };
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { refreshCompanies, refreshProfile } = useActiveProfile();
 
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
 
@@ -645,7 +647,10 @@ export default function BusinessEditProfileTab({
         queryClient.invalidateQueries({ queryKey: ["orgProfile"] }),
         queryClient.invalidateQueries({ queryKey: ["companyProfile"] }),
         queryClient.invalidateQueries({ queryKey: ["orgAbout"] }),
+        queryClient.invalidateQueries({ queryKey: ["switchableCompanies"] }),
       ]);
+      await refreshCompanies?.();
+      await refreshProfile?.();
     } catch (error: any) {
       console.error("Save profile error:", error);
       toast({

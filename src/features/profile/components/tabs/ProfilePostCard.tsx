@@ -21,6 +21,7 @@ import {
   SaveIcon,
   SaveFilledIcon,
   MenuIcon,
+  BusinessBuildingIcon,
 } from "@/components/icons";
 import { CommentModal } from "../CommentModal";
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
@@ -290,14 +291,16 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
           className="flex flex-row items-center gap-2 cursor-pointer group flex-1 min-w-0 prevent-card-click"
         >
           {/* Avatar (32x32px) */}
-          <div className="w-8 h-8 rounded-[100px] overflow-hidden bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center flex-shrink-0">
-            {localPost.authorAvatar && !avatarError ? (
+          <div className={`w-8 h-8 ${localPost.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden bg-[var(--ds-surface-1)] border border-[var(--ds-border)] flex items-center justify-center flex-shrink-0`}>
+            {localPost.authorAvatar && localPost.authorAvatar !== "/images/companyonboarding/companyprofileDefault.jpg" && !avatarError ? (
               <img
                 src={localPost.authorAvatar}
                 alt={localPost.author || "Author"}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${localPost.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 onError={() => setAvatarError(true)}
               />
+            ) : localPost.isCompanyPost ? (
+              <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
             ) : (
               <span className="text-[var(--ds-text-primary)] text-xs font-semibold font-['DM_Sans']">
                 {(localPost.author || "U").charAt(0).toUpperCase()}

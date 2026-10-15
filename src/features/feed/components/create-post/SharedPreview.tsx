@@ -7,7 +7,7 @@ import { companyProfileService } from '@/features/businessProfile';
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
 import { PostBody } from '../parts/PostBody';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
-import { UserIcon } from '@/components/icons';
+import { UserIcon, BusinessBuildingIcon } from '@/components/icons';
 interface SharedPreviewProps {
   sharedPost: any;
   sharedPostId?: string;
@@ -299,13 +299,15 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
             onClick={handleProfileClick}
             className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} bg-ds-surface-2 text-ds-text-primary flex items-center justify-center font-semibold text-[14px] overflow-hidden flex-shrink-0 font-dmsans select-none cursor-pointer`}
           >
-            {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' && sharedAvatar !== 'null' && !avatarError ? (
+            {sharedAvatar && sharedAvatar !== '/assets/pngegg.png' && sharedAvatar !== '/images/companyonboarding/companyprofileDefault.jpg' && sharedAvatar !== 'null' && !avatarError ? (
               <img
                 className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 src={sharedAvatar}
                 alt={sharedName || 'avatar'}
                 onError={() => setAvatarError(true)}
               />
+            ) : isCompanyPost ? (
+              <BusinessBuildingIcon className="w-[60%] h-[60%] text-current" />
             ) : (
               <UserIcon className="w-[60%] h-[60%] text-current" />
             )}

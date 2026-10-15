@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Icon } from '@/components/icons';
+import { Icon, BusinessBuildingIcon } from '@/components/icons';
 import { useSocial } from '@/context/SocialContext';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -174,13 +174,15 @@ export const PostHeader = ({
         <Link href={profileHref} className={`shrink-0 flex-none block outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}>
           <div className={`w-[32px] h-[32px] overflow-hidden flex items-center justify-center shrink-0 flex-none ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} ${variant === 'overlay' ? 'bg-black/40 border border-white/30 shadow-md' : 'bg-ds-surface-2'
             }`}>
-            {authorAvatar && !imgError ? (
+            {authorAvatar && authorAvatar !== "/images/companyonboarding/companyprofileDefault.jpg" && !imgError ? (
               <img
                 src={authorAvatar}
                 alt={author}
                 className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                 onError={() => setImgError(true)}
               />
+            ) : isCompanyPost ? (
+              <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
             ) : (
               <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
             )}

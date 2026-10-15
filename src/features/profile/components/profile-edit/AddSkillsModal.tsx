@@ -7,6 +7,7 @@ import { getOnboardingSkills, Skill } from "@/services/api/onboarding";
 import { getProfileSkills } from "@/services/api/profile";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
+import { toTitleCase } from "@/lib/nameNormalizer";
 
 // Curated master list of 50 initial popular skills (mirrors onboarding dataset)
 export const INITIAL_POPULAR_SKILLS: string[] = [
@@ -224,7 +225,7 @@ export const AddSkillsModal: React.FC<AddSkillsModalProps> = ({
     if (q.length > 0 && !existingLower.has(q)) {
       const hasExactMatch = filtered.some((s) => s.toLowerCase() === q);
       if (!hasExactMatch) {
-        filtered = [search.trim(), ...filtered];
+        filtered = [toTitleCase(search), ...filtered];
       }
     }
 

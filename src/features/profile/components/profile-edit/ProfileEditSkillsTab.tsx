@@ -7,6 +7,7 @@ import { AddSkillsModal } from "@/features/profile/components/profile-edit/AddSk
 import { SkillChip } from "@/features/profile/components/SkillChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { toTitleCase } from "@/lib/nameNormalizer";
 
 interface ProfileEditSkillsTabProps {
   skills: string[];
@@ -44,13 +45,13 @@ export const ProfileEditSkillsTab: React.FC<ProfileEditSkillsTabProps> = ({
   };
 
   const handleAddSkill = (newSkill: string) => {
-    const trimmed = newSkill.trim();
-    if (!trimmed) return;
-    if (stagedSkills.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
+    const normalized = toTitleCase(newSkill);
+    if (!normalized) return;
+    if (stagedSkills.some((s) => s.toLowerCase() === normalized.toLowerCase())) {
       toast.info("Skill already added");
       return;
     }
-    setStagedSkills((prev) => [...prev, trimmed]);
+    setStagedSkills((prev) => [...prev, normalized]);
   };
 
   const handleSaveClick = async () => {

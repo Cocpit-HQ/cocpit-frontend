@@ -7,7 +7,7 @@ import { followUser } from "@/services/api/social";
 import { followCompany } from "@/services/api/social";
 import Link from "next/link";
 import { X, Loader2 } from "lucide-react";
-import { UserIcon } from "@/components/icons";
+import { UserIcon, BusinessBuildingIcon } from "@/components/icons";
 
 interface LikesModalProps {
   isOpen: boolean;
@@ -93,6 +93,8 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
                 ? `/organization/${liker.username}`
                 : `/profile/${liker.username || liker.userId}`;
 
+              const isCompany = Boolean(liker.isOrganization || liker.organizationId);
+
               return (
                 <div
                   key={liker.userId}
@@ -100,16 +102,20 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
                 >
                   {/* User info */}
                   <Link href={profileUrl} onClick={onClose} className="flex flex-row items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded ds-focus-ring">
-                    <div className="w-5 h-5 rounded-full overflow-hidden shrink-0">
+                    <div className={`w-5 h-5 ${isCompany ? 'rounded-[4px]' : 'rounded-full'} overflow-hidden shrink-0`}>
                       {liker.avatar ? (
                         <img
                           src={liker.avatar}
                           alt={liker.fullName || liker.username || "Avatar"}
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full object-cover ${isCompany ? 'rounded-[4px]' : 'rounded-full'}`}
                         />
                       ) : (
-                        <div className="w-full h-full border border-ds-border bg-ds-surface-1 flex items-center justify-center text-ds-text-secondary">
-                          <UserIcon className="w-[60%] h-[60%] text-current" />
+                        <div className={`w-full h-full border border-ds-border bg-ds-surface-1 flex items-center justify-center text-ds-text-secondary ${isCompany ? 'rounded-[4px]' : 'rounded-full'}`}>
+                          {isCompany ? (
+                            <BusinessBuildingIcon className="w-[60%] h-[60%] text-current" />
+                          ) : (
+                            <UserIcon className="w-[60%] h-[60%] text-current" />
+                          )}
                         </div>
                       )}
                     </div>

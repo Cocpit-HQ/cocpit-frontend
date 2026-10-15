@@ -15,6 +15,7 @@ import {
 import { PostMenuAccess } from '../../../utils/postMenuAccess';
 import { useSocial } from '@/context/SocialContext';
 import { VideoScrubber } from '../../parts/VideoScrubber';
+import { BusinessBuildingIcon } from '@/components/icons';
 
 export interface FloatingBadge {
   avatar?: string;
@@ -389,16 +390,18 @@ export const PostVideoCard = ({
                 }
               }}
             >
-              <div className="w-[36px] h-[36px] rounded-full overflow-hidden border border-white/20 flex-shrink-0 bg-black/40 shadow-md">
-                {displayAvatar ? (
+              <div className={`w-[36px] h-[36px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden border border-white/20 flex-shrink-0 bg-black/40 shadow-md`}>
+                {displayAvatar && displayAvatar !== '/images/companyonboarding/companyprofileDefault.jpg' && !displayAvatar.includes('pngegg') ? (
                   <img 
                     src={displayAvatar} 
                     alt={displayAuthor} 
-                    className="w-full h-full object-cover rounded-full" 
+                    className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`} 
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/assets/pngegg.png';
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
                     }}
                   />
+                ) : isCompanyPost ? (
+                  <BusinessBuildingIcon className="w-full h-full p-1.5 text-white" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white font-medium text-xs bg-white/20">
                     {displayAuthor.charAt(0).toUpperCase()}

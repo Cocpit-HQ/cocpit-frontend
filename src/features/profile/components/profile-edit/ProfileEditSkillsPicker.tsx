@@ -7,6 +7,7 @@ import { getOnboardingSkills, Skill } from "@/services/api/onboarding";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SkillChip } from "@/features/profile/components/SkillChip";
 import { cn } from "@/lib/utils";
+import { toTitleCase } from "@/lib/nameNormalizer";
 
 interface ProfileEditSkillsPickerProps {
   label?: string;
@@ -80,22 +81,23 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
 
   const displayedOptions = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const isSelected = (s: string) => selectedSkills.some(sel => sel.toLowerCase() === s.toLowerCase());
     if (!q) {
-      return INITIAL_POPULAR_SKILLS.filter((s) => !selectedSkills.includes(s)).slice(0, 10);
+      return INITIAL_POPULAR_SKILLS.filter((s) => !isSelected(s)).slice(0, 10);
     }
     const localMatches = INITIAL_POPULAR_SKILLS.filter(
-      (s) => s.toLowerCase().includes(q) && !selectedSkills.includes(s)
+      (s) => s.toLowerCase().includes(q) && !isSelected(s)
     );
     const combined = Array.from(new Set([...localMatches, ...apiResults])).filter(
-      (s) => !selectedSkills.includes(s)
+      (s) => !isSelected(s)
     );
     return combined.slice(0, 15);
   }, [query, apiResults, selectedSkills]);
 
   const handleAddSkill = (skill: string) => {
-    const trimmed = skill.trim();
-    if (trimmed && !selectedSkills.includes(trimmed)) {
-      onChange([...selectedSkills, trimmed]);
+    const normalized = toTitleCase(skill);
+    if (normalized && !selectedSkills.some(s => s.toLowerCase() === normalized.toLowerCase())) {
+      onChange([...selectedSkills, normalized]);
     }
     setQuery("");
     setIsOpen(false);
@@ -103,7 +105,7 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
-    onChange(selectedSkills.filter((s) => s !== skillToRemove));
+    onChange(selectedSkills.filter((s) => s.toLowerCase() !== skillToRemove.toLowerCase()));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -182,10 +184,10 @@ export const ProfileEditSkillsPicker: React.FC<ProfileEditSkillsPickerProps> = (
               <div className="p-1">
                 <button
                   type="button"
-                  onClick={() => handleAddSkill(query.trim())}
+                  onClick={() => handleAddSkill(query)}
                   className="self-stretch w-full text-left font-['DM_Sans'] text-sm font-normal leading-normal py-1.5 px-2 rounded-md min-h-[30px] flex items-center transition-colors cursor-pointer truncate text-[var(--ds-accent)] hover:opacity-80 bg-transparent focus:outline-none"
                 >
-                  Add &quot;{query.trim()}&quot; as custom skill
+                  Add &quot;{toTitleCase(query)}&quot; as custom skill
                 </button>
               </div>
             ) : (

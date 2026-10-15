@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeed } from '@/hooks/use-feed';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
-import { Icon } from '@/components/icons';
+import { Icon, BusinessBuildingIcon } from '@/components/icons';
 import { postApi } from '@/features/feed/api/post.api';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { formatMentionsForBackend } from '@/lib/mentions';
@@ -762,6 +762,8 @@ const FeedComposerInline = ({
                         onDragStart={(e) => e.preventDefault()}
                         className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} select-none pointer-events-none`}
                       />
+                    ) : isCompanyPost ? (
+                      <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
                     ) : (
                       <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
                     )}
@@ -920,6 +922,8 @@ const FeedComposerInline = ({
                       onDragStart={(e) => e.preventDefault()}
                       className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} select-none pointer-events-none`}
                     />
+                  ) : isCompanyPost ? (
+                    <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
                   ) : (
                     <Icon name="user" className="w-full h-full p-1 text-ds-text-primary" />
                   )}

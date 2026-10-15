@@ -8,6 +8,7 @@ import { SearchedUser } from '@/types/user';
 import { ArrowLeft, Search, Hash, User as UserIcon, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { BusinessBuildingIcon } from '@/components/icons';
 
 import { useDebounce } from '@/hooks/use-debounce';
 
@@ -185,19 +186,26 @@ export default function SearchPage() {
                                                 <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">People & Organizations</h2>
                                             </div>
                                             <div className="grid gap-2">
-                                                {users.map((user) => (
+                                                {users.map((user) => {
+                                                    const isCompany = user.type === 'COMPANY' || (user as any).type === 'company' || (user as any).account_type === 'COMPANY' || (user as any).account_type === 'company';
+                                                    const roundedClass = isCompany ? 'rounded-[8px]' : 'rounded-full';
+                                                    return (
                                                     <Link 
                                                         key={user.id}
-                                                        href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                                        href={isCompany ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
                                                         className="flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all group"
                                                     >
-                                                        <div className="relative w-12 h-12 rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base flex-shrink-0 overflow-hidden font-['Poppins'] select-none shadow-sm group-hover:scale-110 transition-transform">
-                                                            <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                        <div className={`relative w-12 h-12 ${roundedClass} bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-semibold text-base flex-shrink-0 overflow-hidden font-['Poppins'] select-none shadow-sm group-hover:scale-110 transition-transform`}>
+                                                            {isCompany ? (
+                                                                <BusinessBuildingIcon className="w-6 h-6 text-[#6366F1]" />
+                                                            ) : (
+                                                                <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
+                                                            )}
                                                             {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
                                                                 <img 
                                                                     src={user.avatar_url} 
                                                                     alt={user.full_name} 
-                                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                                    className={`absolute inset-0 w-full h-full object-cover ${roundedClass}`}
                                                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                                                 />
                                                             ) : null}
@@ -214,7 +222,8 @@ export default function SearchPage() {
                                                             </p>
                                                         </div>
                                                     </Link>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </section>
                                     )}

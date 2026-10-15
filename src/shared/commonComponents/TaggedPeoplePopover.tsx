@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
+import { BusinessBuildingIcon } from "@/components/icons";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { PeopleListModal } from "@/shared/commonComponents/PeopleListModal";
 import { useRouter } from "next/navigation";
@@ -72,6 +73,9 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
           const isCurrentActor =
             activeActorId && (tag.id === activeActorId || tag.user_id === activeActorId);
 
+          const isCompany = String(tag.type || tag.entity_type || '').toLowerCase() === "company";
+          const roundedClass = isCompany ? "rounded-[8px]" : "rounded-full";
+
           return (
             <div
               key={idx}
@@ -81,10 +85,6 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
                 className="flex items-center gap-4 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const isCompany =
-                    tag.type === "company" ||
-                    tag.type === "COMPANY" ||
-                    tag.entity_type === "COMPANY";
                   const slug = tag.account_name || tag.slug || tag.id || tag.user_id;
                   if (slug) {
                     if (isCompany) {
@@ -96,23 +96,23 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
                   }
                 }}
               >
-                <div className="w-8 h-8 relative overflow-hidden flex-shrink-0">
+                <div className={`w-8 h-8 relative overflow-hidden flex-shrink-0 ${roundedClass}`}>
                   {tag.avatar_url || tag.avatar || tag.logo_url ? (
                     <img
                       src={tag.avatar_url || tag.avatar || tag.logo_url}
                       alt=""
-                      className="w-full h-full object-cover rounded-full"
+                      className={`w-full h-full object-cover ${roundedClass}`}
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-[1.5px] border-indigo-500 bg-indigo-50/5 flex items-center justify-center text-indigo-500">
-                      <Icon
-                        icon={
-                          tag.type === "company" || tag.type === "COMPANY"
-                            ? "lucide:building-2"
-                            : "ph:user-light"
-                        }
-                        className="w-5 h-5"
-                      />
+                    <div className={`w-8 h-8 ${roundedClass} border border-ds-border bg-ds-surface-1 flex items-center justify-center text-ds-text-secondary`}>
+                      {isCompany ? (
+                        <BusinessBuildingIcon className="w-5 h-5 text-ds-text-primary" />
+                      ) : (
+                        <Icon
+                          icon="ph:user-light"
+                          className="w-5 h-5"
+                        />
+                      )}
                     </div>
                   )}
                 </div>

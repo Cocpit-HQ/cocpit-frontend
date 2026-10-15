@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, ArrowLeft } from 'lucide-react';
+import { BusinessBuildingIcon } from '@/components/icons';
 import { ArticleUIProps } from './ArticleUIProps';
 import CommentSection from '../comments/CommentSection';
 import { LikeBar } from '../parts/LikeBar';
@@ -95,12 +96,16 @@ export function MobileArticleView(props: ArticleUIProps) {
             href={authorProfileHref}
             className="flex items-center gap-[12px] min-w-0 flex-1 hover:opacity-90 transition-opacity"
           >
-            {post.authorAvatar ? (
+            {post.authorAvatar && post.authorAvatar !== "/images/companyonboarding/companyprofileDefault.jpg" ? (
               <img
                 src={post.authorAvatar}
                 alt={post.author}
-                className="h-[40px] w-[40px] rounded-full object-cover shrink-0"
+                className={`h-[40px] w-[40px] ${post.isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} object-cover shrink-0`}
               />
+            ) : post.isCompanyPost ? (
+              <div className="h-[40px] w-[40px] rounded-[8px] bg-[var(--ds-surface-2)] text-[var(--ds-text-primary)] flex items-center justify-center shrink-0">
+                <BusinessBuildingIcon className="w-5 h-5 text-ds-text-primary" />
+              </div>
             ) : (
               <div className="h-[40px] w-[40px] rounded-full bg-[var(--ds-surface-2)] text-[var(--ds-text-primary)] flex items-center justify-center font-bold text-sm shrink-0">
                 {(post.author || 'U').charAt(0).toUpperCase()}
