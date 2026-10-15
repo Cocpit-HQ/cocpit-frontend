@@ -225,7 +225,12 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
 
   const currentUserId = (session?.user as any)?.id;
   const canManageOwnPosts = Boolean(
-    ownProfile && (canManageCompany || profileResponse.viewer_permissions?.includes('CREATE_POST'))
+    ownProfile && (
+      canManageCompany ||
+      profileResponse.viewer_permissions?.includes('CREATE_POST') ||
+      profileResponse.viewer_permissions?.includes('CREATE_CONTENT') ||
+      profileResponse.viewer_permissions?.includes('*')
+    )
   );
 
   const effectiveViewerPermissions = isOrgAdminOrOwner

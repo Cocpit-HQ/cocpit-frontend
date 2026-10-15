@@ -16,19 +16,45 @@ import { Plus } from "lucide-react";
 import { EmptyPostsIcon } from "@/components/icons";
 import { FeedPostCardSkeleton } from "@/features/feed/components/skeletons/FeedPostCardSkeleton";
 
+import { CreatePostModal } from "@/features/feed/components/create-post";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 interface PostsTabProps {
   data: BusinessProfileData;
   isOwnProfile?: boolean;
   currentUserId?: string;
   canManageOwnPosts?: boolean;
   viewerPermissions?: string[];
+  canManageCompany?: boolean;
 }
 
-export default function PostsTab({ data, isOwnProfile = false, currentUserId, canManageOwnPosts, viewerPermissions }: PostsTabProps) {
+export default function PostsTab({
+  data,
+  isOwnProfile = false,
+  currentUserId,
+  canManageOwnPosts,
+  viewerPermissions,
+  canManageCompany,
+}: PostsTabProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const { activeProfile, userCompanies } = useActiveProfile();
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+
+  const hasCreatePostPermission = Boolean(
+    canManageCompany ||
+    canManageOwnPosts ||
+    viewerPermissions?.includes("*") ||
+    viewerPermissions?.includes("MANAGE_COMPANY") ||
+    viewerPermissions?.includes("CREATE_POST") ||
+    viewerPermissions?.includes("CREATE_CONTENT")
+  );
 
   const {
     data: queryData,
@@ -204,20 +230,47 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
           </div>
 
           {/* Create Post Action Button */}
-          {(canManageOwnPosts || isOwnProfile) && (
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/feed");
-                if (typeof window !== "undefined") {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-              className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
-              <span>Create post</span>
-            </button>
+          {(isOwnProfile || hasCreatePostPermission) && (
+            hasCreatePostPermission ? (
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/feed");
+                  if (typeof window !== "undefined") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+                className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
+                <span>Create post</span>
+              </button>
+            ) : (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-not-allowed" tabIndex={0}>
+                      <button
+                        type="button"
+                        disabled
+                        aria-disabled="true"
+                        className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 opacity-50 cursor-not-allowed pointer-events-none"
+                      >
+                        <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
+                        <span>Create post</span>
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    sideOffset={6}
+                    className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded shadow-lg z-[100]"
+                  >
+                    You don't have access to this screen
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )
           )}
         </div>
       ) : (
@@ -260,6 +313,22 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
           {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} className="py-2 w-full" />
         </div>
+      )}
+
+      {isCreatePostModalOpen && (
+        <CreatePostModal
+          isOpen={isCreatePostModalOpen}
+          onClose={() => setIsCreatePostModalOpen(false)}
+          companyId={data.id}
+          companyName={data.name}
+          companyLogo={data.logoUrl}
+          onPostCreated={() => {
+            setIsCreatePostModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+            queryClient.invalidateQueries({ queryKey: ["orgPostsFallback", data.id] });
+            queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
+          }}
+        />
       )}
     </div>
   );

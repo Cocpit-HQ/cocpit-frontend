@@ -10,13 +10,15 @@ interface TabPermissionGuardProps {
   /** Explicit active tab name (optional; if omitted, reads `?tab=` from searchParams) */
   activeTab?: string;
   /** Explicit permission override for the tab */
-  permission?: string;
+  permission?: string | string[];
+  viewerPermissions?: string[];
+  canManageCompany?: boolean;
+  isOwnProfile?: boolean;
   children: React.ReactNode;
 }
 
 /** Mapping of organization tabs to required permission keys */
 const TAB_PERMISSION_MAP: Record<string, string | string[]> = {
-  jobs: ['POST_JOBS', 'JOBS', 'VIEW_APPLICANTS'],
   analytics: ['VIEW_ANALYTICS', 'ANALYTICS'],
   members: ['TEAMS', 'MANAGE_MEMBERS', 'INVITE_MEMBERS'],
   settings: ['SETTINGS'],
@@ -27,14 +29,17 @@ const TAB_PERMISSION_MAP: Record<string, string | string[]> = {
 export default function TabPermissionGuard({
   activeTab,
   permission,
+  viewerPermissions,
+  canManageCompany,
+  isOwnProfile,
   children,
 }: TabPermissionGuardProps) {
   const searchParams = useSearchParams();
   const { activeProfile, isCompany, isLoading } = useActiveProfile();
   const { checkPermission } = useCompanyPermissions(activeProfile);
 
-  // If loading or personal profile, render children
-  if (isLoading || !isCompany) {
+  // If loading or completely external public profile, render children
+  if (isLoading || (!isCompany && !isOwnProfile)) {
     return <>{children}</>;
   }
 
@@ -57,10 +62,14 @@ export default function TabPermissionGuard({
     ? requiredPermissions
     : [requiredPermissions];
 
-  const hasPermission = permsArray.some((p) => checkPermission(p));
+  const hasPermission =
+    Boolean(canManageCompany) ||
+    (viewerPermissions && (viewerPermissions.includes('*') || viewerPermissions.includes('MANAGE_COMPANY'))) ||
+    permsArray.some((p) => viewerPermissions?.includes(p)) ||
+    (isCompany && (checkPermission('*') || permsArray.some((p) => checkPermission(p))));
 
   if (!hasPermission) {
-    return <AccessDenied />;
+    return <AccessDenied title="You don't have access to this screen" />;
   }
 
   return <>{children}</>;

@@ -54,7 +54,7 @@ interface AccessDeniedProps {
 }
 
 export default function AccessDenied({
-  title = "You don't have access to this page",
+  title = "You don't have access to this screen",
   message = "Your current role doesn't include permission to view this page.",
   roleName,
   roleDescription,

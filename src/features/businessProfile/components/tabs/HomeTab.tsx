@@ -41,6 +41,18 @@ export default function HomeTab({
     (data as any)?.entity_type === "INSTITUTION" ||
     Boolean((data as any)?.institution_type) ||
     ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
+  const hasTeamsPermission = Boolean(
+    canManageCompany ||
+    viewerPermissions?.includes("*") ||
+    viewerPermissions?.includes("TEAMS") ||
+    viewerPermissions?.includes("VIEW_MEMBERS")
+  );
+
+  // If viewing own company profile, show Teams ONLY if user has TEAMS permission.
+  // When member lacks TEAMS permission, hide completely.
+  // For external public visitor (!isOwnProfile), show public People/Alumni.
+  const showTeamsSection = !isOwnProfile || hasTeamsPermission;
+
   const peopleSectionTitle = isOwnProfile
     ? "Teams"
     : isEdu
@@ -48,7 +60,7 @@ export default function HomeTab({
     : "People";
 
   const handleViewMorePeopleOrTeams = () => {
-    if (isOwnProfile) {
+    if (isOwnProfile && hasTeamsPermission) {
       router.push("/team");
     } else {
       onTabChange?.(isEdu ? "alumni" : "people");
@@ -84,6 +96,7 @@ export default function HomeTab({
         data={data}
         isOwnProfile={isOwnProfile}
         title={peopleSectionTitle}
+        showTeams={showTeamsSection}
         onViewMoreClick={handleViewMorePeopleOrTeams}
       />
 

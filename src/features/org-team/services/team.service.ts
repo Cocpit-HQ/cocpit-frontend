@@ -98,7 +98,8 @@ function formatAction(action: string, metadata?: any): string {
     case 'ONBOARDING_COMPLETED':
       return 'created the Organization account.';
     case 'UPDATE_PROFILE':
-      return 'updated organization profile';
+    case 'UPDATE_PROFILE_DETAILS':
+      return 'updated company details';
     case 'UPLOAD_VERIFICATION_DOC':
       return 'uploaded verification document';
     case 'VERIFICATION_STATUS_CHANGED':
@@ -188,12 +189,36 @@ function formatAction(action: string, metadata?: any): string {
     case 'UNAUTHORIZED_ACCESS_ATTEMPT':
       return 'attempted unauthorized access';
     case 'VIEW_USER_PROFILE':
-      return 'viewed profile of';
+      return 'viewed';
+    case 'UPDATE_LOGO':
+      return 'updated company logo';
+    case 'DELETE_LOGO':
+    case 'REMOVE_LOGO':
+      return 'removed company logo';
+    case 'UPDATE_COVER':
+      return 'updated company cover banner';
+    case 'DELETE_COVER':
+    case 'REMOVE_COVER':
+      return 'removed company cover banner';
     case 'VIEW':
     case 'VIEWED':
       return 'viewed public profile';
     case 'TRANSFER_OWNERSHIP':
       return 'transferred ownership';
+    case 'ORGANIZATION_BLOCK_ADDED':
+    case 'BLOCK_USER':
+    case 'BLOCK':
+      return 'blocked';
+    case 'ORGANIZATION_BLOCK_REMOVED':
+    case 'UNBLOCK_USER':
+    case 'UNBLOCK':
+      return 'unblocked';
+    case 'DOCUMENTS_SUBMITTED':
+    case 'SUBMIT_DOCUMENTS':
+    case 'DOCUMENT_SUBMITTED':
+      return 'submitted verification documents';
+    case 'DOMAIN_VERIFIED':
+      return 'verified company domain';
     default:
       return action.replace(/_/g, ' ').toLowerCase();
   }
@@ -210,8 +235,26 @@ function mapActivityLog(row: any): ActivityLogEntry {
   let actionFormatted = formatAction(row.action, metadata);
 
   const actionUpper = (row.action || '').toUpperCase().trim();
-  if (actionUpper === 'ACTOR_SWITCH' || actionUpper === 'CREATE_ORGANIZATION' || actionUpper === 'CREATE_PAGE' || actionUpper === 'ONBOARDING_COMPLETED') {
+  if (
+    actionUpper === 'ACTOR_SWITCH' ||
+    actionUpper === 'CREATE_ORGANIZATION' ||
+    actionUpper === 'CREATE_PAGE' ||
+    actionUpper === 'ONBOARDING_COMPLETED' ||
+    actionUpper === 'UPDATE_LOGO' ||
+    actionUpper === 'DELETE_LOGO' ||
+    actionUpper === 'REMOVE_LOGO' ||
+    actionUpper === 'UPDATE_COVER' ||
+    actionUpper === 'DELETE_COVER' ||
+    actionUpper === 'REMOVE_COVER' ||
+    actionUpper === 'UPDATE_PROFILE' ||
+    actionUpper === 'UPDATE_PROFILE_DETAILS' ||
+    actionUpper === 'DOCUMENTS_SUBMITTED' ||
+    actionUpper === 'SUBMIT_DOCUMENTS' ||
+    actionUpper === 'DOCUMENT_SUBMITTED' ||
+    actionUpper === 'DOMAIN_VERIFIED'
+  ) {
     targetName = '';
+    highlightedText = '';
   } else if (actionUpper === 'INVITE_MEMBER') {
     if (!targetName && metadata.email) {
       targetName = metadata.email;
@@ -280,9 +323,19 @@ function mapActivityLog(row: any): ActivityLogEntry {
       highlightedText = 'post';
     }
     if (!linkUrl && targetId) linkUrl = `/post/${targetId}`;
+  } else if (actionUpper === 'COMMENT' || actionUpper === 'COMMENTED') {
+    actionFormatted = 'commented on';
+    const rawAuthor = (targetName || metadata.authorName || metadata.postAuthorName || '').trim();
+    if (rawAuthor) {
+      const apostrophe = rawAuthor.endsWith('s') || rawAuthor.endsWith('S') ? "'" : "'s";
+      targetName = `${rawAuthor}${apostrophe}`;
+    } else {
+      targetName = '';
+    }
+    highlightedText = 'post';
+    const postId = metadata.postId || metadata.post_id || targetId;
+    if (!linkUrl && postId) linkUrl = `/post/${postId}`;
   } else if (
-    actionUpper === 'COMMENT' ||
-    actionUpper === 'COMMENTED' ||
     actionUpper === 'REPOST' ||
     actionUpper === 'REPOSTED' ||
     actionUpper === 'CREATE_POST' ||
@@ -300,9 +353,41 @@ function mapActivityLog(row: any): ActivityLogEntry {
     if (!targetName) targetName = metadata.jobTitle || metadata.title || '';
     if (!linkUrl && targetId && actionUpper !== 'DELETE_JOB') linkUrl = `/jobs/${targetId}`;
   } else if (actionUpper === 'VIEW_USER_PROFILE') {
-    if (!highlightedText) highlightedText = 'profile';
-    if (!linkUrl && metadata.targetHandle) linkUrl = `/u/${metadata.targetHandle}`;
-    else if (!linkUrl && targetId) linkUrl = `/profile/${targetId}`;
+    actionFormatted = 'viewed';
+    const rawTargetName = (targetName || metadata.targetName || metadata.targetUserName || metadata.name || '').trim();
+    if (rawTargetName) {
+      const apostrophe = rawTargetName.endsWith('s') || rawTargetName.endsWith('S') ? "'" : "'s";
+      targetName = `${rawTargetName}${apostrophe}`;
+    } else {
+      targetName = '';
+      actionFormatted = 'viewed a';
+    }
+    highlightedText = 'profile';
+
+    // Normalize any legacy '/u/' route to '/profile/'
+    if (linkUrl && linkUrl.startsWith('/u/')) {
+      linkUrl = linkUrl.replace(/^\/u\//, '/profile/');
+    }
+    if (!linkUrl) {
+      const handleOrId = metadata.targetHandle || targetId || metadata.targetUserId || row.target_user_id;
+      if (handleOrId) {
+        linkUrl = `/profile/${handleOrId}`;
+      }
+    }
+  } else if (
+    actionUpper === 'ORGANIZATION_BLOCK_ADDED' ||
+    actionUpper === 'ORGANIZATION_BLOCK_REMOVED' ||
+    actionUpper === 'BLOCK_USER' ||
+    actionUpper === 'UNBLOCK_USER'
+  ) {
+    if (!targetName) {
+      targetName = metadata.targetName || metadata.blockedName || '';
+    }
+    highlightedText = '';
+    const blockTargetId = metadata.targetId || metadata.blockedId || targetId;
+    if (!linkUrl && blockTargetId) {
+      linkUrl = `/profile/${blockTargetId}`;
+    }
   } else {
     if (!targetName) {
       targetName = metadata.roleName || metadata.title || '';

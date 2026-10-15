@@ -1,4 +1,3 @@
-/*
 import React, { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -372,6 +371,3 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
     </Dialog>
   );
 };
-*/
-
-export const CreatePostModal = (props: any) => null;

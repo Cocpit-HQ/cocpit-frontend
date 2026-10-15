@@ -145,14 +145,14 @@ export function MobileBottomNav() {
 
         {/* Network / Teams */}
         {isCompany ? (
-          <Link
-            href="/team"
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
-            className="flex flex-col items-center justify-center flex-1"
-          >
-            <Icon name="connection" className={`w-[22px] h-[22px] ${isActive("/team") ? activeColor : "text-[#A1A1AA]"}`} />
-          </Link>
-        ) : (
+            <Link
+              href="/team"
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
+              className="flex flex-col items-center justify-center flex-1"
+            >
+              <Icon name="connection" className={`w-[22px] h-[22px] ${isActive("/team") ? activeColor : "text-[#A1A1AA]"}`} />
+            </Link>
+          ) : (
           <Link
             href="/connections"
             onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/connections')}

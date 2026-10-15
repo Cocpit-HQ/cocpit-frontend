@@ -77,7 +77,13 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
   const isCompanyPost = !!postAsCompanyId;
   const currentPoster = isCompanyPost
-    ? userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId)
+    ? (userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId || (c as any).id === postAsCompanyId) || (props.companyName ? {
+        company_id: postAsCompanyId,
+        org_id: postAsCompanyId,
+        id: postAsCompanyId,
+        name: props.companyName,
+        logo_url: props.companyLogo,
+      } : null))
     : currentUser;
 
   const getAllowedCategories = useCallback((): CategoryType[] => {
@@ -90,10 +96,14 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     return getAllowedCategories()[0] || 'Professional';
   }, [getAllowedCategories]);
 
-  // Sync with active profile
+  // Sync with active profile or passed companyId
   useEffect(() => {
-    if (!propCompanyId && isOpen) {
-      setPostAsCompanyId(activeProfile?.type === 'COMPANY' ? activeProfile.id : null);
+    if (isOpen) {
+      if (propCompanyId) {
+        setPostAsCompanyId(propCompanyId);
+      } else {
+        setPostAsCompanyId(activeProfile?.type === 'COMPANY' ? activeProfile.id : null);
+      }
     }
   }, [isOpen, activeProfile, propCompanyId]);
 
@@ -671,7 +681,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         sessionStorage.removeItem('cocpit_last_interacted_post_viewport_top');
         if (window.location.pathname === '/feed' || window.location.pathname === '/') {
           window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
+        } else if (!propCompanyId && !window.location.pathname.startsWith('/organization/') && !window.location.pathname.startsWith('/profile')) {
           router.push('/feed');
         }
       }

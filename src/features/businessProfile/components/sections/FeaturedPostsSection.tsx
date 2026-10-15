@@ -15,6 +15,13 @@ import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useUIStore } from "@/store/ui.store";
 import { useShallow } from "zustand/react/shallow";
 import type { Post } from "@/types/entities";
+import { CreatePostModal } from "@/features/feed/components/create-post";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FeaturedPostsSectionProps {
   data: BusinessProfileData;
@@ -39,6 +46,16 @@ export default function FeaturedPostsSection({
   const queryClient = useQueryClient();
   const { activeProfile, userCompanies } = useActiveProfile();
   const hiddenPostIds = useUIStore(useShallow((s) => s.hiddenPostIds));
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+
+  const hasCreatePostPermission = Boolean(
+    canManageCompany ||
+    canManageOwnPosts ||
+    viewerPermissions?.includes("*") ||
+    viewerPermissions?.includes("MANAGE_COMPANY") ||
+    viewerPermissions?.includes("CREATE_POST") ||
+    viewerPermissions?.includes("CREATE_CONTENT")
+  );
 
   // Detect mobile viewport (mobile: 1, desktop: 2)
   const [isMobile, setIsMobile] = useState(
@@ -168,99 +185,144 @@ export default function FeaturedPostsSection({
   }
 
   return (
-    <div className="w-full max-w-[800px] px-5 flex flex-col items-center gap-5">
-      {/* Header */}
-      <div className="self-stretch w-full flex justify-between items-center h-6">
-        <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
-          Featured Posts
-        </h2>
-      </div>
-
-      {displayedPosts.length === 0 ? (
-        /* Empty State */
-        <div className="w-full py-8 flex flex-col justify-center items-center gap-4">
-          {/* Icon Circle */}
-          <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
-            <EmptyPostsIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
-          </div>
-
-          {/* Title & Description */}
-          <div className="self-stretch flex flex-col justify-start items-center gap-1.5">
-            <div className="text-center text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
-              No posts yet
-            </div>
-            <div className="w-80 max-w-full text-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-              {isOwnProfile || canManageCompany || canManageOwnPosts
-                ? "Share your thoughts, articles, or updates with your network."
-                : `${data.name || "Company"} doesn’t have any posts yet.`}
-            </div>
-          </div>
-
-          {/* Create Post Action Button */}
-          {(isOwnProfile || canManageCompany || canManageOwnPosts) && (
-            <button
-              type="button"
-              onClick={() => {
-                router.push("/feed");
-                if (typeof window !== "undefined") {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-              className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
-              <span>Create post</span>
-            </button>
-          )}
+    <>
+      <div className="w-full max-w-[800px] px-5 flex flex-col items-center gap-5">
+        {/* Header */}
+        <div className="self-stretch w-full flex justify-between items-center h-6">
+          <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
+            Featured Posts
+          </h2>
         </div>
-      ) : (
-        <>
-          {/* 2 Cards Grid: canonical FeedPost matching profile layout */}
-          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-            {displayedPosts.map((post) => (
-              <div key={post.id} className="w-full">
-                <FeedPost
-                  {...post}
-                  isProfileView={true}
-                  sessionId="featured-posts"
-                  initialComments={post.commentData}
-                  menuAccess={getPostMenuAccess({
-                    isCompanyPost: true,
-                    companyId: data.id,
-                    createdByUserId: (post as any).createdByUserId,
-                    currentUserId,
-                    explicitPermissions: viewerPermissions,
-                    userCompanies,
-                    activeProfile,
-                  })}
-                  onDelete={handleDeletePost}
-                  onToggleVisibility={handleToggleVisibilityPost}
-                  priority={false}
-                  onRepostWithThoughts={(postToQuote) => {
-                    useUIStore.getState().setSharedPostData(postToQuote);
-                    if (typeof window !== "undefined" && window.innerWidth < 768) {
-                      useUIStore.getState().setActiveModal("create-post");
-                    } else {
-                      router.push("/feed");
+
+        {displayedPosts.length === 0 ? (
+          /* Empty State */
+          <div className="w-full py-8 flex flex-col justify-center items-center gap-4">
+            {/* Icon Circle */}
+            <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
+              <EmptyPostsIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
+            </div>
+
+            {/* Title & Description */}
+            <div className="self-stretch flex flex-col justify-start items-center gap-1.5">
+              <div className="text-center text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
+                No posts yet
+              </div>
+              <div className="w-80 max-w-full text-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
+                {isOwnProfile || canManageCompany || canManageOwnPosts
+                  ? "Share your thoughts, articles, or updates with your network."
+                  : `${data.name || "Company"} doesn’t have any posts yet.`}
+              </div>
+            </div>
+
+            {/* Create Post Action Button */}
+            {(isOwnProfile || hasCreatePostPermission) && (
+              hasCreatePostPermission ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/feed");
+                    if (typeof window !== "undefined") {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
                     }
                   }}
-                />
-              </div>
-            ))}
+                  className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
+                  <span>Create post</span>
+                </button>
+              ) : (
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-not-allowed" tabIndex={0}>
+                        <button
+                          type="button"
+                          disabled
+                          aria-disabled="true"
+                          className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 opacity-50 cursor-not-allowed pointer-events-none"
+                        >
+                          <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
+                          <span>Create post</span>
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      sideOffset={6}
+                      className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded shadow-lg z-[100]"
+                    >
+                      You don't have access to this screen
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )
+            )}
           </div>
+        ) : (
+          <>
+            {/* 2 Cards Grid: canonical FeedPost matching profile layout */}
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+              {displayedPosts.map((post) => (
+                <div key={post.id} className="w-full">
+                  <FeedPost
+                    {...post}
+                    isProfileView={true}
+                    sessionId="featured-posts"
+                    initialComments={post.commentData}
+                    menuAccess={getPostMenuAccess({
+                      isCompanyPost: true,
+                      companyId: data.id,
+                      createdByUserId: (post as any).createdByUserId,
+                      currentUserId,
+                      explicitPermissions: viewerPermissions,
+                      userCompanies,
+                      activeProfile,
+                    })}
+                    onDelete={handleDeletePost}
+                    onToggleVisibility={handleToggleVisibilityPost}
+                    priority={false}
+                    onRepostWithThoughts={(postToQuote) => {
+                      useUIStore.getState().setSharedPostData(postToQuote);
+                      if (typeof window !== "undefined" && window.innerWidth < 768) {
+                        useUIStore.getState().setActiveModal("create-post");
+                      } else {
+                        router.push("/feed");
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
 
-          {/* See all CTA */}
-          {onSeeAllClick && (
-            <button
-              type="button"
-              onClick={onSeeAllClick}
-              className="self-center text-center text-ds-accent text-xs font-medium font-['DM_Sans'] leading-4 hover:opacity-85 transition-opacity cursor-pointer select-none"
-            >
-              See all
-            </button>
-          )}
-        </>
+            {/* See all CTA */}
+            {onSeeAllClick && (
+              <button
+                type="button"
+                onClick={onSeeAllClick}
+                className="self-center text-center text-ds-accent text-xs font-medium font-['DM_Sans'] leading-4 hover:opacity-85 transition-opacity cursor-pointer select-none"
+              >
+                See all
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      {isCreatePostModalOpen && (
+        <CreatePostModal
+          isOpen={isCreatePostModalOpen}
+          onClose={() => setIsCreatePostModalOpen(false)}
+          companyId={data.id}
+          companyName={data.name}
+          companyLogo={data.logoUrl}
+          onPostCreated={() => {
+            setIsCreatePostModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["orgPostsFallback", data.id] });
+            queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+            queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
+          }}
+        />
       )}
-    </div>
+    </>
   );
 }

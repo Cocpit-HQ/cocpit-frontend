@@ -49,6 +49,7 @@ export function BusinessProfileTabs({
     Boolean((data as any)?.institution_type) ||
     ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const activeTabKey = isEdu ? "alumni" : "people";
+
   const [activeTab, setActiveTab] = React.useState(() => normalizeTab(tabParam, isEdu));
 
   React.useEffect(() => {
@@ -95,6 +96,7 @@ export function BusinessProfileTabs({
       <Tabs.List className="w-full max-w-[800px] pl-5 inline-flex justify-start items-center gap-3 border-b border-transparent">
         {tabs.map((tab) => {
           const isSelected = activeTab === tab.value;
+
           return (
             <Tabs.Trigger
               key={tab.value}
@@ -125,7 +127,12 @@ export function BusinessProfileTabs({
         })}
       </Tabs.List>
 
-      <TabPermissionGuard activeTab={activeTab}>
+      <TabPermissionGuard
+        activeTab={activeTab}
+        viewerPermissions={viewerPermissions}
+        canManageCompany={canManageCompany}
+        isOwnProfile={isOwnProfile}
+      >
         <Tabs.Content value="home" className="mt-5 outline-none">
           <HomeTab
             data={data}
@@ -155,6 +162,7 @@ export function BusinessProfileTabs({
           <PostsTab
             data={data}
             isOwnProfile={isOwnProfile}
+            canManageCompany={canManageCompany}
             currentUserId={currentUserId}
             canManageOwnPosts={canManageOwnPosts}
             viewerPermissions={viewerPermissions}

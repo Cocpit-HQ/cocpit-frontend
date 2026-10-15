@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import { RoleDetailsPage } from '@/features/org-team';
+import RouteGuard from '@/features/access-denied/RouteGuard';
 
 export default function RoleDetailRoute() {
   const params = useParams();
@@ -10,7 +11,9 @@ export default function RoleDetailRoute() {
 
   return (
     <Suspense fallback={null}>
-      <RoleDetailsPage roleId={roleId} />
+      <RouteGuard permission="TEAMS">
+        <RoleDetailsPage roleId={roleId} />
+      </RouteGuard>
     </Suspense>
   );
 }

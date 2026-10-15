@@ -15,6 +15,14 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+
 interface JobsTabProps {
   data: BusinessProfileData;
   isOwnProfile?: boolean;
@@ -218,14 +226,34 @@ export default function JobsTab({
   viewerPermissions,
 }: JobsTabProps) {
   const router = useRouter();
+  const { activeProfile, switchProfile } = useActiveProfile();
+
   const isOwner = Boolean(
     isOwnProfile ||
     canManageCompany ||
     viewerPermissions?.includes("POST_JOBS") ||
     viewerPermissions?.includes("MANAGE_COMPANY_DETAILS") ||
+    viewerPermissions?.includes("MANAGE_COMPANY") ||
+    viewerPermissions?.includes("MANAGE_JOBS") ||
+    viewerPermissions?.includes("JOBS") ||
     viewerPermissions?.includes("*")
   );
-  const canManageJobs = Boolean(canManageCompany || viewerPermissions?.includes("POST_JOBS"));
+
+  const hasCreateJobPermission = Boolean(
+    canManageCompany ||
+    viewerPermissions?.includes("*") ||
+    viewerPermissions?.includes("MANAGE_COMPANY") ||
+    viewerPermissions?.includes("POST_JOBS") ||
+    viewerPermissions?.includes("MANAGE_JOBS") ||
+    viewerPermissions?.includes("JOBS")
+  );
+
+  const handleCreateJob = () => {
+    if (activeProfile?.id !== data.id && typeof switchProfile === "function") {
+      switchProfile("COMPANY", data.id);
+    }
+    router.push(`/jobs?view=create-job&companyId=${data.id}`);
+  };
 
   const { data: jobsResponse, isLoading } = useQuery({
     queryKey: ["orgJobs", data.id],
@@ -363,16 +391,43 @@ export default function JobsTab({
           </div>
         </div>
 
-        {/* Create Job Action Button — owners only */}
-        {canManageJobs && (
-          <button
-            type="button"
-            onClick={() => router.push("/jobs")}
-            className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
-          >
-            <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
-            <span>Create job</span>
-          </button>
+        {/* Create Job Action Button */}
+        {(isOwnProfile || hasCreateJobPermission) && (
+          hasCreateJobPermission ? (
+            <button
+              type="button"
+              onClick={handleCreateJob}
+              className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+            >
+              <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
+              <span>Create job</span>
+            </button>
+          ) : (
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed" tabIndex={0}>
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 opacity-50 cursor-not-allowed pointer-events-none"
+                    >
+                      <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
+                      <span>Create job</span>
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={6}
+                  className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded shadow-lg z-[100]"
+                >
+                  You don't have access to this screen
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )
         )}
       </div>
     );

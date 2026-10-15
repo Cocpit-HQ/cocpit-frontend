@@ -418,7 +418,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
     return () => { delete document.body.dataset.hideSearch; };
   }, [urlView]);
 
-  if (activeTab === "My Listings" || isCompanyMode) {
+  if (activeTab === "My Listings" || isCompanyMode || urlView === 'create-job') {
     return (
       <div className={`w-full max-w-[998px] mx-auto min-h-screen bg-white ${isCompanyMode ? "dark:bg-[#0F1115]" : "dark:bg-[#0B0F19]"} pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]`}>
         <MyListingsDashboard

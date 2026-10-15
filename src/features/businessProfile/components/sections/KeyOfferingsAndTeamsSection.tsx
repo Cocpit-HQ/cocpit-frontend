@@ -9,6 +9,7 @@ interface KeyOfferingsAndTeamsSectionProps {
   title?: string;
   onViewMoreClick?: () => void;
   onViewMoreTeamsClick?: () => void;
+  showTeams?: boolean;
 }
 
 export default function KeyOfferingsAndTeamsSection({
@@ -17,6 +18,7 @@ export default function KeyOfferingsAndTeamsSection({
   title,
   onViewMoreClick,
   onViewMoreTeamsClick,
+  showTeams = true,
 }: KeyOfferingsAndTeamsSectionProps) {
   const isEdu =
     data.entityType === "INSTITUTION" ||
@@ -53,7 +55,7 @@ export default function KeyOfferingsAndTeamsSection({
       : [];
 
   const hasOfferings = offerings.length > 0;
-  const hasTeams = teamMembers.length > 0;
+  const hasTeams = showTeams && teamMembers.length > 0;
   const hasBoth = hasOfferings && hasTeams;
 
   // If neither key offerings nor teams are present, hide the section completely

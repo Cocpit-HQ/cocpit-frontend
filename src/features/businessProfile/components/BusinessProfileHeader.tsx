@@ -275,7 +275,7 @@ export default function BusinessProfileHeader({
                   <TooltipProvider>
                     <Tooltip delayDuration={100}>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex cursor-not-allowed" tabIndex={0} title="You don't have access to this screen">
+                        <span className="inline-flex cursor-not-allowed" tabIndex={0}>
                           <button
                             type="button"
                             disabled
