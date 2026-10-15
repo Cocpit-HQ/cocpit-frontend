@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@/components/icons';
 import { useSocial } from '@/context/SocialContext';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { companyProfileService } from '@/features/businessProfile';
+import { companyProfileService, businessProfileService } from '@/features/businessProfile';
 import { PostMenuAccess } from '../../utils/postMenuAccess';
 
 interface PostHeaderProps {
@@ -36,7 +37,7 @@ export const PostHeader = ({
   const queryClient = useQueryClient();
   const initial = author ? author.charAt(0).toUpperCase() : '?';
 
-  const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
+  const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus, isFollowingInitialized } = useSocial();
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
@@ -94,23 +95,37 @@ export const PostHeader = ({
     ]
     : subtitleItems;
 
+  const { activeProfile, isCompany } = useActiveProfile();
+
   const followCompanyMutation = useMutation({
-    mutationFn: ({ orgId, sourcePostId }: { orgId: string; sourcePostId?: string }) => companyProfileService.followOrganization(orgId, sourcePostId),
+    mutationFn: ({ orgId, sourcePostId }: { orgId: string; sourcePostId?: string }) => {
+      if (isCompany && activeProfile?.id) {
+        return businessProfileService.organizationFollowOrganization(activeProfile.id, orgId, sourcePostId);
+      }
+      return companyProfileService.followOrganization(orgId, sourcePostId);
+    },
     onSuccess: (_, { orgId }) => {
       syncFollowStatus(orgId, true);
       queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
       queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["org_following", activeProfile?.id] });
       queryClient.invalidateQueries({ queryKey: ["profileStats"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
     }
   });
 
   const unfollowCompanyMutation = useMutation({
-    mutationFn: (orgId: string) => companyProfileService.unfollowOrganization(orgId),
+    mutationFn: (orgId: string) => {
+      if (isCompany && activeProfile?.id) {
+        return businessProfileService.organizationUnfollowOrganization(activeProfile.id, orgId);
+      }
+      return companyProfileService.unfollowOrganization(orgId);
+    },
     onSuccess: (_, orgId) => {
       syncFollowStatus(orgId, false);
       queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
       queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["org_following", activeProfile?.id] });
       queryClient.invalidateQueries({ queryKey: ["profileStats"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
     }
@@ -219,7 +234,7 @@ export const PostHeader = ({
 
       {/* Follow and Menu Actions */}
       <div className="flex flex-row items-center gap-2 shrink-0 h-[24px]">
-        {!isOwnerOrInternal && (!isAuthorFollowing || hasInteracted) && (
+        {!isOwnerOrInternal && isFollowingInitialized && (!isAuthorFollowing || hasInteracted) && (
           <button
             onClick={handleToggleFollow}
             disabled={isFollowActionLoading}

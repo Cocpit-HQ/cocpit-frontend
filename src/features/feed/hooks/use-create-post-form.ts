@@ -255,7 +255,13 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             setInlineMentions(parsedMentions);
           }
 
-          setSelectedLocation(post.location ? { id: 0, name: post.location, latitude: '', longitude: '' } : null);
+          setSelectedLocation(
+            post.location
+              ? typeof post.location === 'object' && post.location !== null
+                ? post.location
+                : ({ id: 0, name: post.location, latitude: '', longitude: '' } as any)
+              : null
+          );
 
           if (post.images) {
             const initialUploaded = post.images.map((url, i) => {

@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { Icon } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import { cn } from "@/lib/utils";
 
 interface ProfileDropdownProps {
   className?: string;
@@ -17,8 +18,10 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { logout, user } = useAuth();
-  const { activeProfile } = useActiveProfile();
+  const { activeProfile, isCompany } = useActiveProfile();
   const router = useRouter();
+
+  const isOrgActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -46,9 +49,9 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
       : "/profile";
 
   const avatarUrl =
-    (activeProfile as any)?.avatar_url || user?.image || undefined;
+    activeProfile?.avatar_url || user?.image || undefined;
   const displayName =
-    (activeProfile as any)?.name || user?.name || "User";
+    activeProfile?.name || user?.name || "User";
 
   const handleProfileClick = () => {
     setOpen(false);
@@ -75,11 +78,14 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
 
   return (
     <div className={`relative flex items-center ${className || ""}`} ref={dropdownRef}>
-      {/* Trigger: Frame 2609490 (24x24px, rounded-[100px], flex-none, order-1, grow-0) */}
+      {/* Trigger: Frame 2609490 (24x24px, rounded-[4px] for org actor, rounded-[100px] for user actor, flex-none, order-1, grow-0) */}
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-[24px] h-[24px] rounded-[100px] overflow-hidden flex-none order-1 grow-0 hover:opacity-80 transition-opacity flex items-center justify-center bg-ds-surface-1 text-ds-text-primary cursor-pointer border-0 p-0 outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+        className={cn(
+          "w-[24px] h-[24px] overflow-hidden flex-none order-1 grow-0 hover:opacity-80 transition-opacity flex items-center justify-center bg-ds-surface-1 text-ds-text-primary cursor-pointer border-0 p-0 outline-none focus-visible:ring-2 focus-visible:ring-ds-accent",
+          isOrgActor ? "rounded-[4px]" : "rounded-[100px]"
+        )}
         aria-label="Profile menu"
         aria-expanded={open}
       >
@@ -174,7 +180,7 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
                 gap: "8px",
                 width: "89px",
                 height: "20px",
-                borderRadius: "100px",
+                borderRadius: isOrgActor ? "4px" : "100px",
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
@@ -186,7 +192,7 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
               }}
               className="hover:opacity-80 transition-opacity focus-visible:outline-none"
             >
-              {/* User Avatar: Background+Border+Shadow */}
+              {/* User/Org Avatar: Background+Border+Shadow */}
               <div
                 style={{
                   display: "flex",
@@ -199,7 +205,7 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
                   height: "20px",
                   boxShadow:
                     "0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                  borderRadius: "100px",
+                  borderRadius: isOrgActor ? "4px" : "100px",
                   overflow: "hidden",
                   flex: "none",
                   order: 0,

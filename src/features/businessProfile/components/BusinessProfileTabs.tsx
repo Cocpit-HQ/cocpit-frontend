@@ -57,12 +57,23 @@ export function BusinessProfileTabs({
     }
   }, [tabParam, isEdu]);
 
-  const handleTabChange = (value: string) => {
+  const handleTabChange = (value: string, shouldScrollToStart = false) => {
     const normalized = normalizeTab(value, isEdu);
     setActiveTab(normalized);
     const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
     params.set("tab", normalized);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+    if (shouldScrollToStart || ["posts", "people", "alumni", "about", "jobs"].includes(normalized)) {
+      requestAnimationFrame(() => {
+        const tabsEl = document.getElementById("business-profile-tabs");
+        if (tabsEl) {
+          tabsEl.scrollIntoView({ behavior: "instant", block: "start" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "instant" });
+        }
+      });
+    }
   };
 
   const tabs = [
@@ -74,7 +85,12 @@ export function BusinessProfileTabs({
   ];
 
   return (
-    <Tabs.Root value={activeTab} onValueChange={handleTabChange} className="w-full mt-2">
+    <Tabs.Root
+      id="business-profile-tabs"
+      value={activeTab}
+      onValueChange={handleTabChange}
+      className="w-full scroll-mt-[70px] sm:scroll-mt-[110px]"
+    >
       {/* Tabs Header: w-[800px] pl-5 inline-flex justify-start items-center gap-3 */}
       <Tabs.List className="w-full max-w-[800px] pl-5 inline-flex justify-start items-center gap-3 border-b border-transparent">
         {tabs.map((tab) => {
@@ -110,7 +126,7 @@ export function BusinessProfileTabs({
       </Tabs.List>
 
       <TabPermissionGuard activeTab={activeTab}>
-        <Tabs.Content value="home" className="mt-4 outline-none">
+        <Tabs.Content value="home" className="mt-5 outline-none">
           <HomeTab
             data={data}
             isOwnProfile={isOwnProfile}
@@ -122,11 +138,11 @@ export function BusinessProfileTabs({
           />
         </Tabs.Content>
 
-        <Tabs.Content value="about" className="mt-4 outline-none">
+        <Tabs.Content value="about" className="mt-5 outline-none">
           <AboutTab data={data} isOwnProfile={isOwnProfile} />
         </Tabs.Content>
 
-        <Tabs.Content value="jobs" className="mt-4 outline-none">
+        <Tabs.Content value="jobs" className="mt-5 outline-none">
           <JobsTab
             data={data}
             isOwnProfile={isOwnProfile}
@@ -135,7 +151,7 @@ export function BusinessProfileTabs({
           />
         </Tabs.Content>
 
-        <Tabs.Content value="posts" className="mt-4 outline-none">
+        <Tabs.Content value="posts" className="mt-5 outline-none">
           <PostsTab
             data={data}
             isOwnProfile={isOwnProfile}
@@ -145,11 +161,11 @@ export function BusinessProfileTabs({
           />
         </Tabs.Content>
 
-        <Tabs.Content value="people" className="mt-4 outline-none">
+        <Tabs.Content value="people" className="mt-5 outline-none">
           <PeopleTab data={data} isOwnProfile={isOwnProfile} />
         </Tabs.Content>
 
-        <Tabs.Content value="alumni" className="mt-4 outline-none">
+        <Tabs.Content value="alumni" className="mt-5 outline-none">
           <PeopleTab data={data} isOwnProfile={isOwnProfile} />
         </Tabs.Content>
       </TabPermissionGuard>

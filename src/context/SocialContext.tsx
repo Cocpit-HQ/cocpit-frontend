@@ -10,12 +10,14 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface SocialContextType {
   followingIds: string[];
+  isFollowingInitialized: boolean;
   followUser: (id: string, sourcePostId?: string, userName?: string) => Promise<void> | void;
   unfollowUser: (id: string, userName?: string) => Promise<void> | void;
   isFollowing: (id: string) => boolean;
   startChat: (userId: string, companyId?: string) => void;
   isFollowLoading: (id: string) => boolean;
   syncFollowStatus: (userId: string, isFollowing: boolean) => void;
+  notifyFollowEvent: (targetId: string, isFollowing: boolean) => void;
 
   blockedIds: string[];
   blockUser: (id: string) => Promise<{ success: boolean; message?: string }>;
@@ -42,6 +44,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   const { activeProfile, isCompany } = useActiveProfile();
   const { data: session, status } = useSession();
   const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [isFollowingInitialized, setIsFollowingInitialized] = useState<boolean>(false);
   const [followingLoading, setFollowingLoading] = useState<Set<string>>(
     new Set(),
   );
@@ -52,6 +55,8 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const notifyFollowEvent = (targetId: string, isFollowing: boolean) => {
+    syncFollowStatus(targetId, isFollowing);
+
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("cocpit:follow_status_changed", {
@@ -113,7 +118,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       return next;
     });
 
-    setFollowingIds((prev) => [...prev, id]);
+    syncFollowStatus(id, true);
 
     try {
       const payload = sourcePostId ? { sourcePostId } : undefined;
@@ -141,6 +146,8 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       queryClient.invalidateQueries({ queryKey: ["followers", id] });
       queryClient.invalidateQueries({ queryKey: ["following", id] });
       queryClient.invalidateQueries({ queryKey: ["followersCount", id] });
+      queryClient.invalidateQueries({ queryKey: ["organization-following"] });
+      queryClient.invalidateQueries({ queryKey: ["org_following"] });
 
       if (currentUserId) {
         queryClient.invalidateQueries({
@@ -156,7 +163,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       }
     } catch (error) {
       console.error("Failed to follow user:", error);
-      setFollowingIds((prev) => prev.filter((userId) => userId !== id));
+      syncFollowStatus(id, false);
 
       setFollowingLoading((prev) => {
         const next = new Set(prev);
@@ -175,7 +182,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       return next;
     });
 
-    setFollowingIds((prev) => prev.filter((userId) => userId !== id));
+    syncFollowStatus(id, false);
 
     try {
       if (isCompany && activeProfile?.id) {
@@ -221,7 +228,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     } catch (error) {
       console.error("Failed to unfollow user:", error);
 
-      setFollowingIds((prev) => [...prev, id]);
+      syncFollowStatus(id, true);
 
       setFollowingLoading((prev) => {
         const next = new Set(prev);
@@ -234,7 +241,9 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const isFollowing = (id: string) => {
-    return followingIds.includes(id);
+    if (!id) return false;
+    const target = id.toString().toLowerCase().trim();
+    return followingIds.some((fId) => fId?.toString().toLowerCase().trim() === target);
   };
 
   const startChat = (userId: string, companyId?: string) => {
@@ -251,12 +260,14 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const syncFollowStatus = (userId: string, isFollowing: boolean) => {
+    if (!userId) return;
+    const normTarget = userId.toString().toLowerCase().trim();
     setFollowingIds((prev) => {
-      const exists = prev.includes(userId);
+      const exists = prev.some((id) => id?.toString().toLowerCase().trim() === normTarget);
       if (isFollowing && !exists) {
-        return [...prev, userId];
+        return [...prev, userId.toString()];
       } else if (!isFollowing && exists) {
-        return prev.filter((id) => id !== userId);
+        return prev.filter((id) => id?.toString().toLowerCase().trim() !== normTarget);
       }
       return prev;
     });
@@ -387,32 +398,66 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       }
     };
 
+    const handleFollowEvent = (e: any) => {
+      const detail = e.detail || {};
+      if (detail.targetId) {
+        syncFollowStatus(detail.targetId, Boolean(detail.isFollowing));
+      }
+    };
+
+    const handleStorageFollowEvent = (e: StorageEvent) => {
+      if (e.key === "cocpit_follow_event" && e.newValue) {
+        try {
+          const payload = JSON.parse(e.newValue);
+          if (payload.targetId) {
+            syncFollowStatus(payload.targetId, Boolean(payload.isFollowing));
+          }
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener("cocpit:follow_status_changed", handleFollowEvent);
     window.addEventListener("cocpit:block_status_changed", handleBlockEvent);
     window.addEventListener("storage", handleStorageEvent);
+    window.addEventListener("storage", handleStorageFollowEvent);
 
     return () => {
+      window.removeEventListener(
+        "cocpit:follow_status_changed",
+        handleFollowEvent,
+      );
       window.removeEventListener(
         "cocpit:block_status_changed",
         handleBlockEvent,
       );
       window.removeEventListener("storage", handleStorageEvent);
+      window.removeEventListener("storage", handleStorageFollowEvent);
     };
   }, [queryClient]);
 
   React.useEffect(() => {
+    if (status === "unauthenticated") {
+      setIsFollowingInitialized(true);
+      return;
+    }
+
     if (status === "authenticated" && !session?.user?.error) {
       if (isCompany && activeProfile?.id) {
         // Fetch the users the organization is following to correctly seed followingIds
         api
           .get(`/organizations/${activeProfile.id}/following`)
           .then((res) => {
-            const ids = res.data
-              .map((u: any) => (u.user_id || u.id)?.toString())
+            const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            const ids = list
+              .map((u: any) => (u.user_id || u.id || u.org_id || u.following_org_id)?.toString())
               .filter(Boolean);
             setFollowingIds(ids);
           })
           .catch((err) => {
             console.warn("Failed to fetch org following users", err);
+          })
+          .finally(() => {
+            setIsFollowingInitialized(true);
           });
 
         // Fetch users blocked by organization
@@ -456,7 +501,12 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
             })
             .catch((err) => {
               console.warn("Failed to fetch following users", err);
+            })
+            .finally(() => {
+              setIsFollowingInitialized(true);
             });
+        } else {
+          setIsFollowingInitialized(true);
         }
       }
     }
@@ -466,12 +516,14 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     <SocialContext.Provider
       value={{
         followingIds,
+        isFollowingInitialized,
         followUser,
         unfollowUser,
         isFollowing,
         startChat,
         isFollowLoading,
         syncFollowStatus,
+        notifyFollowEvent,
         blockedIds,
         blockUser,
         unblockUser,

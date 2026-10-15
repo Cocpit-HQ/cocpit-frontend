@@ -32,6 +32,8 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   const analyticsHref = isCompany && activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics";
+  const isCompanyActor = Boolean(isCompany || activeProfile?.type === 'COMPANY');
+
   const profileHref = activeProfile?.type === 'COMPANY' && activeProfile.slug
     ? `/organization/${activeProfile.slug}`
     : '/profile';
@@ -45,7 +47,7 @@ export function Sidebar({ className }: SidebarProps) {
         title: 'Core',
         items: [
           { iconName: 'feed' as IconName, label: 'Feed', href: '/feed' },
-          { iconName: 'connection' as IconName, label: 'Connection', href: '/connections' },
+          ...(!isCompanyActor ? [{ iconName: 'connection' as IconName, label: 'Connection', href: '/connections' }] : []),
           { iconName: 'chat' as IconName, label: 'Chat', href: '/messaging' },
           // { iconName: 'channel' as IconName, label: 'Channel', href: '/channels' },
         ],
@@ -62,7 +64,7 @@ export function Sidebar({ className }: SidebarProps) {
         title: 'Insights',
         items: [
           { iconName: 'analytics' as IconName, label: 'Analytics', href: analyticsHref },
-          ...(isCompany ? [{ iconName: 'user' as IconName, label: 'Teams', href: '/team' }] : []),
+          ...(isCompanyActor ? [{ iconName: 'user' as IconName, label: 'Teams', href: '/team' }] : []),
         ],
         gapTop: 'mt-[12px]'
       },
@@ -75,7 +77,7 @@ export function Sidebar({ className }: SidebarProps) {
         gapTop: 'mt-[12px]'
       }
     ];
-  }, [analyticsHref, profileHref, settingsHref, isCompany]);
+  }, [analyticsHref, profileHref, settingsHref, isCompanyActor]);
 
   // Sort switchableCompanies so the currently active/open company is at the top of the list
   const sortedCompanies = useMemo(() => {

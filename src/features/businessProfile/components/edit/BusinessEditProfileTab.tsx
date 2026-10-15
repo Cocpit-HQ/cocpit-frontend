@@ -317,14 +317,13 @@ export default function BusinessEditProfileTab({
           const details = await getPlaceDetails(loc.placeId, sessionToken.current, true);
           sessionToken.current = uuidv4();
           if (details) {
-            // Format as City, State, Country
-            const formattedAddress =
-              [details.city, details.state, details.country].filter(Boolean).join(", ") ||
+            const fullAddress =
               details.formattedAddress ||
+              [details.street, details.sublocality, details.city, details.state, details.country].filter(Boolean).join(", ") ||
               fallbackText;
-            setLocationQuery(formattedAddress);
+            setLocationQuery(fullAddress);
             setProfileDraft({
-              city: formattedAddress,
+              city: fullAddress,
               country: details.country || formData.country,
             });
             if (details.latitude != null) setLatitude(details.latitude);
@@ -340,16 +339,15 @@ export default function BusinessEditProfileTab({
 
   const handleMapLocationChange = useCallback(
     (loc: StructuredLocation) => {
-      const finalAddress =
-        [loc.city, loc.state, loc.country].filter(Boolean).join(", ") ||
+      const fullAddress =
         loc.formattedAddress ||
         [loc.street, loc.sublocality || loc.village, loc.city, loc.state, loc.country]
           .filter(Boolean)
           .join(", ");
-      if (finalAddress) {
-        setLocationQuery(finalAddress);
+      if (fullAddress) {
+        setLocationQuery(fullAddress);
         setProfileDraft({
-          city: finalAddress,
+          city: fullAddress,
           country: loc.country || formData.country,
         });
       }
@@ -380,11 +378,8 @@ export default function BusinessEditProfileTab({
         Boolean(org.institution_type) ||
         ["school", "college", "university", "coaching", "tuition", "higher education"].includes((org.industry || "").toLowerCase().trim());
 
-      // Cleanly resolve and deduplicate location (City, State, Country)
-      const rawLocation = org.location || org.headquarter || org.city || "";
-      const tokens = rawLocation ? rawLocation.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
-      const dedupedCity = tokens.filter((t: string, idx: number) => tokens.indexOf(t) === idx).join(", ");
-      const resolvedCity = dedupedCity || "";
+      // In edit profile, show the full address so the user can see and edit the exact location
+      const fullAddress = (org.location_formatted || org.location || org.headquarter || org.city || "").trim();
 
       const newForm = {
         name: org.name || "",
@@ -393,11 +388,11 @@ export default function BusinessEditProfileTab({
         size: normalizeCompanySize(org.size || org.employeeCount),
         website: org.website || org.websiteUrl || "",
         country: org.country || "India",
-        city: resolvedCity,
+        city: fullAddress,
         headline: org.headline || org.tagline || "",
       };
       setInitialData(newForm);
-      setLocationQuery(resolvedCity);
+      setLocationQuery(fullAddress);
       hydrateProfileDraft({ ...newForm }, slug);
 
       if (org.latitude != null) setLatitude(org.latitude);
@@ -550,6 +545,7 @@ export default function BusinessEditProfileTab({
           country: formData.country,
           city: locationFormatted,
           location: locationFormatted,
+          formattedAddress: locationFormatted,
           headquarter: locationFormatted,
           latitude: latitude,
           longitude: longitude,
@@ -560,13 +556,15 @@ export default function BusinessEditProfileTab({
           if (!old) return old;
           const wrapped = "org" in old;
           const prevOrg = wrapped ? old.org : old;
+          const serverOrg = response?.organization || response?.org;
+          const displayLoc = serverOrg?.location || locationFormatted;
           const nextOrg = {
             ...prevOrg,
-            ...response?.organization,
-            ...response?.org,
-            city: locationFormatted,
-            location: locationFormatted,
-            headquarter: locationFormatted,
+            ...serverOrg,
+            city: displayLoc,
+            location: displayLoc,
+            headquarter: displayLoc,
+            location_formatted: locationFormatted,
             latitude: latitude ?? prevOrg.latitude,
             longitude: longitude ?? prevOrg.longitude,
           };
@@ -577,13 +575,15 @@ export default function BusinessEditProfileTab({
           if (!old) return old;
           const wrapped = "org" in old;
           const prevOrg = wrapped ? old.org : old;
+          const serverOrg = response?.organization || response?.org;
+          const displayLoc = serverOrg?.location || locationFormatted;
           const nextOrg = {
             ...prevOrg,
-            ...response?.organization,
-            ...response?.org,
-            city: locationFormatted,
-            location: locationFormatted,
-            headquarter: locationFormatted,
+            ...serverOrg,
+            city: displayLoc,
+            location: displayLoc,
+            headquarter: displayLoc,
+            location_formatted: locationFormatted,
             latitude: latitude ?? prevOrg.latitude,
             longitude: longitude ?? prevOrg.longitude,
           };
@@ -775,7 +775,7 @@ export default function BusinessEditProfileTab({
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Organization name"
+              placeholder={isInstitution ? "Institution name" : "Organization name"}
               required
               minLength={2}
               maxLength={100}

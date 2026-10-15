@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icons";
 
 const POPULAR_OFFICE_LOCATIONS = [
-  "London, UK",
   "Mumbai, Maharashtra, India",
   "Bengaluru, Karnataka, India",
   "New York, NY, USA",
@@ -34,22 +33,19 @@ const POPULAR_OFFICE_LOCATIONS = [
 ];
 
 const MEDIA_OPTIONS = [
-  { value: "instagram", label: "Instagram", placeholder: "www.instagram.com" },
-  { value: "website", label: "Website", placeholder: "www.example.com" },
-  { value: "x", label: "X", placeholder: "www.x.com" },
-  { value: "facebook", label: "Facebook", placeholder: "www.facebook.com" },
-  { value: "youtube", label: "YouTube", placeholder: "www.youtube.com" },
-  { value: "discord", label: "Discord", placeholder: "www.discord.com" },
-  { value: "linkedin", label: "LinkedIn", placeholder: "www.linkedin.com" },
-  { value: "github", label: "GitHub", placeholder: "www.github.com" },
-  { value: "cocpit", label: "Cocpit", placeholder: "www.cocpit.com" },
+  { value: "cocpit", label: "Cocpit", shortLabel: "Cocpit", placeholder: "www.cocpit.com" },
+  { value: "x", label: "X (Twitter)", shortLabel: "X (Twitter)", placeholder: "www.x.com" },
+  { value: "instagram", label: "Instagram", shortLabel: "Instagram", placeholder: "www.instagram.com" },
+  { value: "facebook", label: "Facebook", shortLabel: "Facebook", placeholder: "www.facebook.com" },
+  { value: "youtube", label: "YouTube", shortLabel: "YouTube", placeholder: "www.youtube.com" },
+  { value: "discord", label: "Discord", shortLabel: "Discord", placeholder: "www.discord.com" },
 ];
 
 function getMediaPlaceholder(platform?: string): string {
   const p = (platform || "").toLowerCase().trim();
   if (p === "twitter") return "www.x.com";
   const matched = MEDIA_OPTIONS.find((m) => m.value === p);
-  return matched?.placeholder || "www.example.com";
+  return matched?.placeholder || "www.cocpit.com";
 }
 
 interface BusinessEditAboutTabProps {
@@ -91,16 +87,8 @@ function parseAboutPayload(rawAbout: any, rawProfile?: any) {
   }));
 
   const links: CustomLink[] = linksArr.map((l: any, idx: number) => {
-    const rawP = (l.platform || "").toLowerCase().trim();
-    let p = rawP === "twitter" ? "x" : rawP;
-    if (p === "other") {
-      const labelLower = (l.display_label || l.label || "").toLowerCase().trim();
-      if (labelLower === "x" || labelLower === "twitter") {
-        p = "x";
-      } else if (labelLower === "website") {
-        p = "website";
-      }
-    }
+    let p = (l.platform || "cocpit").toLowerCase().trim();
+    if (p === "twitter") p = "x";
     const matched = MEDIA_OPTIONS.find((m) => m.value === p);
     return {
       id: l.link_id || l.id || String(idx),
@@ -108,8 +96,8 @@ function parseAboutPayload(rawAbout: any, rawProfile?: any) {
         l.display_label ||
         matched?.label ||
         l.label ||
-        (p ? p.charAt(0).toUpperCase() + p.slice(1) : "Link"),
-      platform: matched ? matched.value : "website",
+        (p ? p.charAt(0).toUpperCase() + p.slice(1) : "Cocpit"),
+      platform: matched ? matched.value : "cocpit",
       url: l.url || "",
     };
   });
@@ -448,7 +436,7 @@ export default function BusinessEditAboutTab({
     setIsDirty(true);
     setKeyOfferings((prev) => {
       const next = [...prev];
-      next[idx] = val.slice(0, 40);
+      next[idx] = val.slice(0, 60);
       return next;
     });
   };
@@ -457,8 +445,8 @@ export default function BusinessEditAboutTab({
     setIsDirty(true);
     const newLink: CustomLink = {
       id: uuidv4(),
-      label: "Instagram",
-      platform: "instagram",
+      label: "Cocpit",
+      platform: "cocpit",
       url: "",
     };
     setAboutDraft({ links: [...links, newLink] });
@@ -617,20 +605,26 @@ export default function BusinessEditAboutTab({
     updateMutation.mutate({
       description,
       slogan,
-      offices: offices.map((o) => ({
-        country: o.country,
-        city: o.city,
-        address: o.address,
-      })),
+      offices: offices
+        .filter((o) => Boolean(o.city?.trim() || o.address?.trim() || o.country?.trim()))
+        .map((o) => ({
+          country: o.country?.trim() || "",
+          city: o.city?.trim() || "",
+          address: o.address?.trim() || "",
+        })),
       links: links.map((l) => ({
         platform: l.platform,
         url: l.url,
         display_label: l.label,
       })),
-      specialties: specialties
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      specialties: Array.from(
+        new Set(
+          specialties
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        )
+      ),
       keyOfferings: formattedOfferings,
     });
   };
@@ -656,7 +650,10 @@ export default function BusinessEditAboutTab({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full flex flex-col items-center gap-10"
+      className={cn(
+        "w-full flex flex-col items-center gap-10 transition-[padding] duration-200",
+        openMediaDropdownId ? "pb-30" : "pb-12",
+      )}
     >
       {/* Form Container (w-[640px] matching Figma layout) */}
       <div className="w-full max-w-[640px] flex flex-col justify-start items-start gap-10">
@@ -698,7 +695,11 @@ export default function BusinessEditAboutTab({
                 setIsDirty(true);
                 setAboutDraft({ slogan: e.target.value });
               }}
-              placeholder="Add a short slogan that represents your company’s vision"
+              placeholder={
+                isInstitution
+                  ? "Add a short slogan that represents your institute’s vision"
+                  : "Add a short slogan that represents your company’s vision"
+              }
             />
           </div>
           <div className="text-center justify-start text-ds-text-muted text-xs font-normal font-['DM_Sans'] leading-4">
@@ -774,7 +775,7 @@ export default function BusinessEditAboutTab({
             </button>
           </div>
 
-          {offices.map((office) => {
+          {offices.map((office, idx) => {
             const officeLocationText =
               citySearchQueries[office.id] !== undefined
                 ? citySearchQueries[office.id]
@@ -793,7 +794,7 @@ export default function BusinessEditAboutTab({
                   className="self-stretch py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 relative transition-colors"
                 >
                   <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
-                    Location
+                    Office Location #{idx + 1}
                   </label>
                   <div className="w-full inline-flex justify-between items-center gap-2">
                     <input
@@ -881,7 +882,7 @@ export default function BusinessEditAboutTab({
                 {/* Interactive Map */}
                 <div className="self-stretch rounded-2xl overflow-hidden">
                   <InteractiveLocationMap
-                    locationAddress={officeLocationText || "London, UK"}
+                    locationAddress={officeLocationText || "Mumbai, Maharashtra, India"}
                     latitude={office.latitude}
                     longitude={office.longitude}
                     onLocationChange={(loc) => handleMapLocationChange(office.id, loc)}
@@ -923,81 +924,105 @@ export default function BusinessEditAboutTab({
               key={link.id}
               className="self-stretch flex flex-col justify-start items-end gap-2"
             >
-              <div className="self-stretch inline-flex justify-start items-center gap-5">
+              <div className="self-stretch inline-flex justify-start items-center gap-3 sm:gap-5">
                 {/* Media Selector */}
                 <div
                   ref={(el) => {
                     mediaDropdownRefs.current[link.id] = el;
                   }}
-                  className="w-[125px] py-2 inline-flex flex-col justify-center items-start gap-2.5 relative shrink-0"
+                  className="w-[130px] sm:w-[140px] py-2 inline-flex flex-col justify-center items-start gap-2.5 relative shrink-0"
                 >
-                  <div className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
+                  <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
                     Media
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenMediaDropdownId(
-                        openMediaDropdownId === link.id ? null : link.id,
-                      )
-                    }
-                    className="inline-flex justify-start items-center gap-2.5 bg-transparent cursor-pointer py-0.5"
-                  >
-                    <div className="w-[95px] h-9 rounded-3xl flex justify-start items-center gap-2">
-                      <Icon
-                        name={
-                          (link.platform || "website").toLowerCase() as any
-                        }
-                        size={20}
-                        className="w-5 h-5 shrink-0"
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      aria-label="Select social media platform"
+                      aria-expanded={openMediaDropdownId === link.id}
+                      aria-haspopup="listbox"
+                      onClick={() => {
+                        const next =
+                          openMediaDropdownId === link.id ? null : link.id;
+                        setOpenMediaDropdownId(next);
+                      }}
+                      className="inline-flex justify-start items-center gap-1.5 sm:gap-2.5 bg-transparent cursor-pointer py-0.5 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ds-accent"
+                    >
+                      <div className="w-[100px] sm:w-[110px] h-9 rounded-3xl flex justify-start items-center gap-2">
+                        <Icon
+                          name={
+                            (link.platform === "twitter" ? "x" : link.platform || "cocpit").toLowerCase() as any
+                          }
+                          size={20}
+                          className="w-5 h-5 shrink-0 text-ds-text-primary"
+                        />
+                        <span className="text-start justify-start text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 truncate">
+                          {MEDIA_OPTIONS.find(
+                            (m) =>
+                              m.value ===
+                              (link.platform === "twitter" ? "x" : link.platform),
+                          )?.label || "Cocpit"}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 sm:w-5 sm:h-5 text-ds-text-primary shrink-0 flex-none transition-transform duration-150",
+                          openMediaDropdownId === link.id && "rotate-180",
+                        )}
                       />
-                      <span className="text-center justify-start text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 truncate capitalize">
-                        {MEDIA_OPTIONS.find((m) => m.value === link.platform)
-                          ?.label ||
-                          link.platform ||
-                          "Website"}
-                      </span>
-                    </div>
-                    <ChevronDown
-                      className={cn(
-                        "w-5 h-5 text-ds-text-primary shrink-0 flex-none transition-transform duration-150",
-                        openMediaDropdownId === link.id && "rotate-180",
-                      )}
-                    />
-                  </button>
+                    </button>
 
-                  {/* Media Dropdown Panel */}
-                  {openMediaDropdownId === link.id && (
-                    <div className="absolute top-full left-0 mt-2 z-[100] w-[122px] max-h-[300px] p-3 flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border rounded-[16px] shadow-2xl overflow-y-auto overflow-x-hidden scrollbar-hide box-border">
-                      {MEDIA_OPTIONS.map((m) => (
-                        <button
-                          key={m.value}
-                          type="button"
-                          onClick={() => {
-                            handleLinkChange(link.id, "platform", m.value);
-                            setOpenMediaDropdownId(null);
-                          }}
-                          className="w-[98px] h-9 px-0 rounded-[24px] flex flex-row items-center gap-2.5 hover:bg-ds-surface-1 focus:bg-ds-surface-1 cursor-pointer outline-none transition-colors shrink-0"
-                        >
-                          <Icon
-                            name={m.value as any}
-                            size={20}
-                            className="w-5 h-5 shrink-0"
-                          />
-                          <span className="text-sm font-normal font-['DM_Sans'] leading-5 text-ds-text-primary whitespace-nowrap">
-                            {m.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    {/* Media Dropdown Panel */}
+                    {openMediaDropdownId === link.id && (
+                      <div
+                        role="listbox"
+                        aria-label="Social media platforms"
+                        className="absolute top-[calc(100%+4px)] left-0 z-[100] w-[122px] h-[300px] p-3 flex flex-col items-center gap-3 rounded-[16px] bg-ds-bg border border-ds-border box-border shadow-2xl overflow-hidden"
+                      >
+                        {MEDIA_OPTIONS.map((m) => {
+                          const isSelected = link.platform === m.value;
+                          return (
+                            <button
+                              key={m.value}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              aria-label={m.label}
+                              onClick={() => {
+                                handleLinkChange(link.id, "platform", m.value);
+                                setOpenMediaDropdownId(null);
+                              }}
+                              className="w-[98px] h-9 px-1 rounded-[24px] flex flex-row items-center gap-2.5 transition-colors shrink-0 cursor-pointer outline-none bg-transparent hover:bg-ds-surface-1 focus-visible:bg-ds-surface-1 focus-visible:ring-1 focus-visible:ring-ds-accent"
+                            >
+                              <Icon
+                                name={m.value as any}
+                                size={20}
+                                className={cn(
+                                  "w-5 h-5 shrink-0 transition-colors",
+                                  isSelected ? "text-ds-accent" : "text-ds-text-primary",
+                                )}
+                              />
+                              <span
+                                className={cn(
+                                  "text-sm font-normal font-['DM_Sans'] leading-5 whitespace-nowrap transition-colors",
+                                  isSelected ? "text-ds-accent" : "text-ds-text-primary",
+                                )}
+                              >
+                                {m.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Link URL */}
-                <div className="flex-1 py-2 border-b border-ds-border inline-flex flex-col justify-center items-start gap-2.5">
-                  <div className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
+                <div className="flex-1 min-w-0 py-2 border-b border-ds-border inline-flex flex-col justify-center items-start gap-2.5">
+                  <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
                     Link
-                  </div>
+                  </label>
                   <input
                     type="text"
                     value={link.url}
@@ -1006,7 +1031,7 @@ export default function BusinessEditAboutTab({
                     }
                     placeholder={getMediaPlaceholder(link.platform)}
                     maxLength={255}
-                    className="self-stretch text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none p-0 m-0 placeholder:text-ds-text-muted"
+                    className="self-stretch w-full text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none p-0 m-0 placeholder:text-ds-text-muted"
                   />
                 </div>
               </div>

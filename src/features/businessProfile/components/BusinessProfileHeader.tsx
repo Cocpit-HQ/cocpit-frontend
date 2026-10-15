@@ -9,6 +9,7 @@ import { BusinessProfileData } from "../types/business-profile.types";
 import { businessProfileService } from "../services/businessProfile.service";
 import { OrganizationStatsModal } from "./OrganizationStatsModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSocial } from "@/context/SocialContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -83,6 +84,8 @@ export default function BusinessProfileHeader({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { syncFollowStatus, notifyFollowEvent } = useSocial();
+
   const actingCompanyRole = activeProfile?.viewer_role_data;
   const actingRoleName = (actingCompanyRole?.name || (data as any)?.viewer_role || "").toLowerCase();
   const isOwner = Boolean(
@@ -117,6 +120,11 @@ export default function BusinessProfileHeader({
         : businessProfileService.followOrganization(orgId!, sourcePostId);
     },
     onMutate: async () => {
+      const nextFollowState = !data.isFollowing;
+      if (orgId) {
+        syncFollowStatus(orgId, nextFollowState);
+        notifyFollowEvent(orgId, nextFollowState);
+      }
       await queryClient.cancelQueries({ queryKey: ["companyProfile", rawSlug] });
       const previousProfile = queryClient.getQueryData(["companyProfile", rawSlug]);
       queryClient.setQueryData(["companyProfile", rawSlug], (old: Record<string, unknown> | undefined) => {
@@ -125,13 +133,17 @@ export default function BusinessProfileHeader({
           ...old,
           relationship: {
             ...((old.relationship as Record<string, unknown>) || {}),
-            is_following: !data.isFollowing,
+            is_following: nextFollowState,
           },
         };
       });
       return { previousProfile };
     },
     onError: (err, variables, context) => {
+      if (orgId) {
+        syncFollowStatus(orgId, Boolean(data.isFollowing));
+        notifyFollowEvent(orgId, Boolean(data.isFollowing));
+      }
       if (context?.previousProfile) {
         queryClient.setQueryData(["companyProfile", rawSlug], context.previousProfile);
       }
@@ -214,7 +226,7 @@ export default function BusinessProfileHeader({
               alt={`${data.name} Cover`}
               className="w-full h-full object-cover"
             />
-          ) : (
+          ) : (isOwnProfile || canManageCompany) ? (
             <div className="w-full h-full flex flex-col justify-center items-center gap-2 p-[10px] select-none">
               <div className="text-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 select-none">
                 Add banner
@@ -223,7 +235,7 @@ export default function BusinessProfileHeader({
                 Recommended: 16:9 · At least 1200 × 675 px · JPG, PNG
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Logo Avatar: Frame 2609490 (120x120, left: 20px, top: 140px, rounded-[12px]) */}
@@ -328,7 +340,6 @@ export default function BusinessProfileHeader({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
-                    side="right"
                     align="end"
                     sideOffset={8}
                     className="p-[12px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[16px] flex flex-col justify-start items-start gap-[16px] overflow-hidden shadow-2xl z-50 outline-none w-[135px] box-border"
@@ -337,20 +348,20 @@ export default function BusinessProfileHeader({
                       onClick={onShareClick}
                       className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-0 grow-0"
                     >
-                      Share profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setIsReportModalOpen(true)}
-                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0"
-                    >
-                      Report profile
+                      Share page
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleBlockToggle}
                       disabled={blockMutation.isPending}
-                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0 disabled:opacity-50"
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0 disabled:opacity-50"
                     >
-                      {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock profile" : "Block profile"}
+                      {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setIsReportModalOpen(true)}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0"
+                    >
+                      Report page
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

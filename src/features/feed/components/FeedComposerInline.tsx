@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useFeed } from '@/hooks/use-feed';
@@ -61,6 +62,7 @@ const FeedComposerInline = ({
   disabledPlaceholder = "Posting is disabled for your role",
 }: FeedComposerInlineProps) => {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { activeProfile } = useActiveProfile();
   // Pass false to avoid redundant initial feed fetch in composer
   const { addPost, updatePostInFeed } = useFeed(false);
@@ -587,6 +589,13 @@ const FeedComposerInline = ({
 
         const { mappedPost } = await postApi.create(payload, []);
         addPost(mappedPost);
+        queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+        queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+        queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
+        queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+        queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
+        queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
+        queryClient.invalidateQueries({ queryKey: ['company-posts'] });
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
 
         setUploadPhase('success');
@@ -620,6 +629,13 @@ const FeedComposerInline = ({
         const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
 
         addPost(mappedPost);
+        queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+        queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+        queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
+        queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+        queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
+        queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
+        queryClient.invalidateQueries({ queryKey: ['company-posts'] });
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
         if (resolvedRepostData?.id) toast.success("Post reposted successfully!");
 
@@ -652,6 +668,13 @@ const FeedComposerInline = ({
       };
       const { mappedPost } = await postApi.create(payload, files, undefined, uploadConfig);
       addPost(mappedPost);
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
+      queryClient.invalidateQueries({ queryKey: ['company-posts'] });
       window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
       if (sharedPostId) toast.success("Post reposted successfully!");
 
@@ -672,7 +695,7 @@ const FeedComposerInline = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, canPost, mode, poll, text, selectedImages, selectedVideo, inlineMentions, location, companyId, addPost, resetComposer, onPostCreated, isEditMode, editPostId, editPostData, repostData, uploadPhase]);
+  }, [isSubmitting, canPost, mode, poll, text, selectedImages, selectedVideo, inlineMentions, location, companyId, addPost, resetComposer, onPostCreated, isEditMode, editPostId, editPostData, repostData, uploadPhase, queryClient]);
 
   // ── Toolbar Actions ───────────────────────────────────────────────────────
   const handlePollClick = useCallback(() => {

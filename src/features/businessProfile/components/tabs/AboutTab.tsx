@@ -127,12 +127,12 @@ export default function AboutTab({ data }: AboutTabProps) {
   }
 
   return (
-    <div className="w-full max-w-[800px] px-4 sm:pl-5 sm:pr-0 flex flex-col items-start gap-5 pb-16 font-['DM_Sans']">
+    <div className="w-full max-w-[800px] px-5 flex flex-col items-start gap-5 pb-16 font-['DM_Sans']">
       {/* ══════════════════════════════════════════════════════
           PART 1: Description & Slogan
           ══════════════════════════════════════════════════════ */}
       {hasPart1 && (
-        <div className="w-full max-w-[780px] flex flex-col items-start gap-4">
+        <div className="w-full max-w-[780px] flex flex-col items-start gap-5">
           {/* Description */}
           {description && (
             <div className="w-full max-w-[780px] flex flex-col items-start gap-3">
@@ -165,7 +165,7 @@ export default function AboutTab({ data }: AboutTabProps) {
           PART 2: Specialties, Details Grid, Social, Offices
           ══════════════════════════════════════════════════════ */}
       {hasPart2 && (
-        <div className="w-full max-w-[780px] flex flex-col items-start gap-4">
+        <div className="w-full max-w-[780px] flex flex-col items-start gap-5">
           {/* Specialties */}
           {hasSpecialties && (
             <div className="w-full max-w-[780px] flex flex-col justify-center items-start py-2 gap-2.5">
@@ -269,16 +269,15 @@ export default function AboutTab({ data }: AboutTabProps) {
 
           {/* Social links */}
           {hasSocial && (
-            <div className="w-full max-w-[780px] flex flex-col items-start gap-2.5">
+            <div className="w-full max-w-[780px] flex flex-col items-start gap-3">
               <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                 Social links
               </span>
               <div className="w-full max-w-[780px] h-5 flex flex-row items-center gap-4">
                 {socialLinks.map((link: any, idx: number) => {
-                  const platformKey = (link.platform || "").toLowerCase();
-                  const meta = getSocialPlatformMeta(platformKey);
-                  const iconName = meta?.icon || DEFAULT_SOCIAL_PLATFORM_ICON;
-                  const label = link.display_label || link.label || meta?.label || link.platform || "Social link";
+                  const meta = getSocialPlatformMeta(link.platform);
+                  const iconName = meta.icon;
+                  const label = link.display_label || link.label || meta.label;
 
                   return (
                     <a
@@ -307,7 +306,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
               {offices.map((office: any, idx: number) => {
                 const cityLabel = office.city || office.name || "";
-                const isHQ = office.is_headquarters || idx === 0;
+                const isHQ = Boolean(office.is_headquarters);
                 const fullAddress =
                   [office.address, office.city, office.country].filter(Boolean).join(", ");
 

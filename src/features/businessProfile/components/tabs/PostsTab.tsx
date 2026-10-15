@@ -36,6 +36,7 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
     hasNextPage,
     isFetchingNextPage,
     status,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ["orgPosts", data.id],
     queryFn: async ({ pageParam }) => {
@@ -51,10 +52,18 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
       return lastPage.nextCursor || lastPage.next_cursor || null;
     },
     initialPageParam: undefined as { cursorCreatedAt?: string; cursorPostId?: string } | undefined,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
     gcTime: 1000 * 60 * 10,
+    refetchOnMount: "always",
     retry: false,
   });
+
+  // Always sync latest posts when mounting the posts tab
+  useEffect(() => {
+    if (data.id) {
+      refetch();
+    }
+  }, [data.id, refetch]);
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0, rootMargin: '200px' });
 
@@ -117,9 +126,10 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
   };
 
   useEffect(() => {
-    const handlePostCreated = () => {
-      queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
-      queryClient.invalidateQueries({ queryKey: ["orgPostsFallback", data.id] });
+    const handleSyncPosts = () => {
+      queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["orgPostsFallback"] });
+      refetch();
     };
     const handlePostDeleted = (e: any) => {
       const deletedId = e.detail?.id;
@@ -127,13 +137,15 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
         handleDeletePost(deletedId);
       }
     };
-    window.addEventListener("postCreated", handlePostCreated);
+    window.addEventListener("postCreated", handleSyncPosts);
+    window.addEventListener("postUpdated", handleSyncPosts);
     window.addEventListener("postDeleted", handlePostDeleted);
     return () => {
-      window.removeEventListener("postCreated", handlePostCreated);
+      window.removeEventListener("postCreated", handleSyncPosts);
+      window.removeEventListener("postUpdated", handleSyncPosts);
       window.removeEventListener("postDeleted", handlePostDeleted);
     };
-  }, [data.id, queryClient]);
+  }, [data.id, queryClient, refetch]);
 
   const allRawPosts = queryData?.pages.flatMap((page) => page.posts || page.data || page) || [];
   const seen = new Set();
@@ -185,7 +197,9 @@ export default function PostsTab({ data, isOwnProfile = false, currentUserId, ca
               No posts yet
             </div>
             <div className="w-80 max-w-full text-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-              Share your thoughts, articles, or updates with your network.
+              {isOwnProfile || canManageOwnPosts
+                ? "Share your thoughts, articles, or updates with your network."
+                : `${data.name || "Company"} doesn’t have any posts yet.`}
             </div>
           </div>
 

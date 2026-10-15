@@ -175,6 +175,13 @@ export default function ProfilePage() {
   // Restore scroll position when profile and posts are loaded
   useScrollRestoration(!isLoading && (userPostsData !== undefined || isPostsError));
 
+  // Always refetch fresh user posts on mount so posts published elsewhere appear immediately
+  useEffect(() => {
+    if (user?.id) {
+      refetchPosts();
+    }
+  }, [user?.id, refetchPosts]);
+
   // Handlers for edit profile
   const handleUpdateProfile = useCallback(
     async (data: any) => {
@@ -494,11 +501,26 @@ export default function ProfilePage() {
         handleDeletePost(customEvent.detail.id);
       }
     };
+
+    const onPostCreated = () => {
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      refetchPosts();
+    };
+
+    const onPostUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      refetchPosts();
+    };
+
     window.addEventListener("postDeleted", onPostDeleted);
+    window.addEventListener("postCreated", onPostCreated);
+    window.addEventListener("postUpdated", onPostUpdated);
     return () => {
       window.removeEventListener("postDeleted", onPostDeleted);
+      window.removeEventListener("postCreated", onPostCreated);
+      window.removeEventListener("postUpdated", onPostUpdated);
     };
-  }, [handleDeletePost]);
+  }, [handleDeletePost, queryClient, refetchPosts]);
 
 
   const openFollowList = (tab: "followers" | "following" | "connections") => {

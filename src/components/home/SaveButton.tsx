@@ -63,6 +63,9 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             
             // Invalidate the saved folders query to update the post_count in the UI
             queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY })
+            queryClient.invalidateQueries({ queryKey: ['orgPosts'] })
+            queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] })
+            queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] })
         } catch (error) {
             console.error("Save Error:", error)
             toast.error("Something went wrong")

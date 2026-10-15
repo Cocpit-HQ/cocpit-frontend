@@ -133,7 +133,11 @@ export function EditPostModal({
 
     // Location
     if (post.location) {
-      setSelectedLocation({ id: 0, name: post.location, latitude: '', longitude: '' } as unknown as StructuredLocation);
+      if (typeof post.location === 'object' && post.location !== null) {
+        setSelectedLocation(post.location);
+      } else {
+        setSelectedLocation({ id: 0, name: post.location, latitude: '', longitude: '' } as unknown as StructuredLocation);
+      }
     } else {
       setSelectedLocation(null);
     }
@@ -244,9 +248,14 @@ export function EditPostModal({
       }
     }
 
+    const rawLoc = post.location as any;
+    const snapLocation = typeof rawLoc === 'object' && rawLoc !== null
+      ? (rawLoc.formattedAddress || rawLoc.name || null)
+      : (rawLoc || null);
+
     const snap: PostEditSnapshot = {
       description: parsedContent.trim(),
-      location: post.location || null,
+      location: snapLocation,
       imageUrls: snapImages,
       videoUrl: snapVideo,
       pollQuestion: snapPollQ,
@@ -269,6 +278,31 @@ export function EditPostModal({
     // If pre-loaded post data passed in, use it immediately
     if (postData) {
       populateData(postData);
+
+      // Defensive fallback: If postData lacked location, fetch single post to verify if location exists in DB
+      if (!postData.location && editPostId) {
+        postApi
+          .getById(editPostId)
+          .then((freshPost) => {
+            if (freshPost?.location) {
+              const locAny = freshPost.location as any;
+              const freshLoc = typeof locAny === 'object' && locAny !== null
+                ? locAny
+                : ({ id: 0, name: String(locAny), latitude: '', longitude: '' } as unknown as StructuredLocation);
+              setSelectedLocation(freshLoc);
+              const freshLocStr = typeof locAny === 'object' && locAny !== null
+                ? (locAny.formattedAddress || locAny.name || null)
+                : (locAny || null);
+              if (initialSnapshotRef.current) {
+                initialSnapshotRef.current.location = freshLocStr;
+              }
+              setSnapshotState((prev) => (prev ? { ...prev, location: freshLocStr } : null));
+            }
+          })
+          .catch((err) => {
+            console.warn('Could not fetch fresh post location fallback:', err);
+          });
+      }
     } else {
       setIsLoading(true);
       postApi

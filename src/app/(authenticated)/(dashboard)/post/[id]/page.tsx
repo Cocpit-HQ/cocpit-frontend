@@ -137,14 +137,33 @@ export default function SinglePostPage({ params }: PageProps) {
     }
   };
 
-  const menuAccess = getPostMenuAccess({
+  const isActorOrg = activeProfile?.type === "COMPANY";
+  const currentActorId = isActorOrg
+    ? activeProfile?.id
+    : ((session?.user as any)?.id || activeProfile?.id);
+
+  const postOwnerId = isActorOrg
+    ? (post?.author_org_id || (post?.isCompanyPost ? post?.authorId : undefined))
+    : (post?.createdByUserId || post?.authorId);
+
+  const isOwnPost = Boolean(
+    post &&
+    currentActorId &&
+    postOwnerId &&
+    (isActorOrg === Boolean(post.isCompanyPost)) &&
+    String(currentActorId).toLowerCase() === String(postOwnerId).toLowerCase()
+  );
+
+  const calculatedMenuAccess = getPostMenuAccess({
     isCompanyPost: post?.isCompanyPost,
-    companyId: post?.author_org_id,
-    createdByUserId: post?.createdByUserId,
-    currentUserId: session?.user?.id,
+    companyId: post?.author_org_id || (post?.isCompanyPost ? post?.authorId : undefined),
+    createdByUserId: post?.createdByUserId || post?.authorId,
+    currentUserId: (session?.user as any)?.id || (activeProfile?.type === "USER" ? activeProfile?.id : undefined),
     userCompanies,
     activeProfile,
   });
+
+  const menuAccess = isOwnPost ? "owner" : calculatedMenuAccess;
 
   return (
     <div className="min-h-screen bg-ds-bg text-ds-text-primary flex flex-col items-center pb-16 select-none relative">
@@ -209,6 +228,7 @@ export default function SinglePostPage({ params }: PageProps) {
         ) : post ? (
           <FeedPost
             {...post}
+            isOwnPost={isOwnPost}
             menuAccess={menuAccess}
             isFullContent={true}
             initialShowComments={showComments}

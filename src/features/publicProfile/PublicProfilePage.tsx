@@ -20,6 +20,7 @@ import {
   getRelationshipStatus,
 } from "@/services/api/social";
 import { useConnectionActions } from "@/features/connection/hooks/useConnectionActions";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 // Layout & Header Components
 import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
@@ -70,6 +71,8 @@ interface PublicProfileProps {
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
   const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
+  const { activeProfile, isCompany } = useActiveProfile();
+  const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
 
   const queryClient = useQueryClient();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
@@ -109,9 +112,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const projects = useMemo(() => user?.projects || [], [user?.projects]);
   const skills = useMemo(() => (user?.skills || []) as any[], [user?.skills]);
 
-  const blocked = isBlocked(targetUserId) || Boolean(user?.is_blocked_by_me);
-  const following = isFollowing(targetUserId);
-  const followLoading = isFollowLoading(targetUserId);
+  const blocked = isBlocked(targetUserId) || (user?.id ? isBlocked(user.id) : false) || Boolean(user?.is_blocked_by_me);
+  const following = Boolean(
+    (targetUserId && isFollowing(targetUserId)) ||
+    (user?.id && isFollowing(user.id)) ||
+    (isCompanyActor ? (user as any)?.is_following : false)
+  );
+  const followLoading = isFollowLoading(targetUserId) || (user?.id ? isFollowLoading(user.id) : false);
 
   // Fetch Relationship / Connection status
   const { data: relationshipData } = useQuery({
@@ -124,12 +131,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         return { status: "none", request_id: null };
       }
     },
-    enabled: !!targetUserId,
+    enabled: !!targetUserId && !isCompanyActor,
   });
 
   // ─── Derived connection state ────────────────────────────────────────────────
   // Priority: query cache > profile response fallback
   const connectionStatus = useMemo(() => {
+    if (isCompanyActor) return "none";
     if (relationshipData?.status) return relationshipData.status as string;
     // Fallback: map the profile-level connection_request_sender to directional status
     const profileStatus = (user as any)?.connection_request_status;
@@ -140,7 +148,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     }
     if ((user as any)?.is_connected) return "connected";
     return "none";
-  }, [relationshipData, user]);
+  }, [relationshipData, user, isCompanyActor]);
 
   // The request_id needed for cancel / accept / decline
   const pendingRequestId = relationshipData?.request_id ||
@@ -155,8 +163,8 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   // 500-threshold: threshold for Creator Mode
   const targetConnectionCount = blocked ? 0 : ((user as any)?.connections_count ?? 0);
   const isCreatorMode = targetConnectionCount >= 500;
-  const showConnect = connectionStatus === "none" && !isCreatorMode;
-  const showFollow = isCreatorMode && (connectionStatus === "none" || isPendingSent);
+  const showConnect = !isCompanyActor && connectionStatus === "none" && !isCreatorMode;
+  const showFollow = isCompanyActor || (isCreatorMode && (connectionStatus === "none" || isPendingSent));
 
   // ─── Action handlers ─────────────────────────────────────────────────────────
 
@@ -168,12 +176,13 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleFollowToggle = async () => {
-    if (!targetUserId) return;
+    const targetIdToUse = user?.id || targetUserId;
+    if (!targetIdToUse) return;
     if (following) {
       setShowUnfollowDialog(true);
     } else {
       const userName = user?.name;
-      await followUser(targetUserId, undefined, userName);
+      await followUser(targetIdToUse, undefined, userName);
       refetchProfile();
     }
   };
@@ -410,7 +419,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const profileActionButtons = blocked ? null : (
     <>
       {/* ── SCENARIO 2: pending_received — ACCEPT + DECLINE ── */}
-      {isPendingReceived && (
+      {!isCompanyActor && isPendingReceived && (
         <>
           <button
             type="button"
@@ -434,7 +443,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       )}
 
       {/* ── SCENARIO 1: pending_sent — WITHDRAW ── */}
-      {isPendingSent && !isCreatorMode && (
+      {!isCompanyActor && isPendingSent && !isCreatorMode && (
         <button
           type="button"
           onClick={handleWithdraw}
@@ -543,7 +552,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             )}
 
             {/* Connection actions in More menu when Follow is the primary header button */}
-            {isCreatorMode && connectionStatus === "none" && (
+            {!isCompanyActor && isCreatorMode && connectionStatus === "none" && (
               <DropdownMenuItem
                 onClick={handleConnect}
                 className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
@@ -552,7 +561,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
               </DropdownMenuItem>
             )}
 
-            {isCreatorMode && isPendingSent && (
+            {!isCompanyActor && isCreatorMode && isPendingSent && (
               <DropdownMenuItem
                 onClick={handleWithdraw}
                 className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
@@ -562,7 +571,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             )}
 
             {/* ── Connected state — Remove connection ── */}
-            {isConnected && (
+            {!isCompanyActor && isConnected && (
               <DropdownMenuItem
                 onClick={() => setShowRemoveConnectionDialog(true)}
                 className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
@@ -887,9 +896,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         isOpen={showUnfollowDialog}
         onClose={() => setShowUnfollowDialog(false)}
         onConfirm={async () => {
-          if (targetUserId) {
+          const targetIdToUse = user?.id || targetUserId;
+          if (targetIdToUse) {
             const userName = user?.name || undefined;
-            await unfollowUser(targetUserId, userName);
+            await unfollowUser(targetIdToUse, userName);
             refetchProfile();
           }
           setShowUnfollowDialog(false);
@@ -902,6 +912,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       <MobilePublicProfileMenuDrawer
         isOpen={isMobileMoreOpen}
         onClose={() => setIsMobileMoreOpen(false)}
+        isCompanyActor={isCompanyActor}
         connectionStatus={connectionStatus}
         showFollowPrimary={showFollow}
         isFollowing={following}

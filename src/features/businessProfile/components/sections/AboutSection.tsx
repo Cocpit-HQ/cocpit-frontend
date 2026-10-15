@@ -2,7 +2,7 @@
 
 import React from "react";
 import { BusinessProfileData } from "../../types/business-profile.types";
-import { Icon } from "@/components/icons";
+import { Icon, SVG_ICONS } from "@/components/icons";
 
 interface AboutSectionProps {
   data: BusinessProfileData;
@@ -17,11 +17,17 @@ export default function AboutSection({ data }: AboutSectionProps) {
     data.socialLinks && data.socialLinks.length > 0
       ? data.socialLinks
           .filter((link) => Boolean(link.url && link.url.trim() && link.url !== "#"))
-          .map((link) => ({
-            platform: (link.platform || "").toLowerCase(),
-            label: link.label || link.platform,
-            url: link.url.startsWith("http") ? link.url : `https://${link.url}`,
-          }))
+          .map((link) => {
+            const raw = (link.platform || "website").toLowerCase().trim();
+            const platform = raw === "twitter" ? "x" : raw;
+            const iconName = platform in SVG_ICONS ? platform : "website";
+            return {
+              platform,
+              iconName: iconName as any,
+              label: link.label || (platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : "Website"),
+              url: link.url.startsWith("http") ? link.url : `https://${link.url}`,
+            };
+          })
       : [];
 
   if (!description && socialLinks.length === 0) {
@@ -58,7 +64,7 @@ export default function AboutSection({ data }: AboutSectionProps) {
                 aria-label={link.label}
                 className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
               >
-                <Icon name={(link.platform || "website").toLowerCase() as any} size={20} className="w-5 h-5" />
+                <Icon name={link.iconName} size={20} className="w-5 h-5" />
               </a>
             ))}
           </div>

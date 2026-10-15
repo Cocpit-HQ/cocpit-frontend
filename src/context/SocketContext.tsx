@@ -896,7 +896,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
       queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
+      queryClient.invalidateQueries({ queryKey: ['company-posts'] });
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('postCreated', { detail: payload }));
       }
@@ -907,7 +911,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
       queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] });
+      queryClient.invalidateQueries({ queryKey: ['company-posts'] });
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('postUpdated', { detail: payload }));
       }

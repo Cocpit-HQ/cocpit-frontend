@@ -45,7 +45,7 @@ const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then
 
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess, isOwnPost } = props;
   const { activeProfile, isCompany, userCompanies } = useActiveProfile();
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.id;
@@ -107,19 +107,36 @@ export const FeedPost = (props: FeedPostProps) => {
     : (interactionTargetProps.authorId || (interactionTargetProps as any).author_id);
   const targetCreatedByUserId = (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id;
 
+  const isActorOrg = activeProfile?.type === 'COMPANY';
+  const effectivePostOwnerId = targetIsCompanyPost
+    ? (targetCompanyId || targetAuthorId)
+    : (targetCreatedByUserId || targetAuthorId);
+  const currentActorId = isActorOrg
+    ? activeProfile?.id
+    : (currentUserId || activeProfile?.id);
+
+  const isActorOwner = Boolean(
+    currentActorId &&
+    effectivePostOwnerId &&
+    (isActorOrg === Boolean(targetIsCompanyPost)) &&
+    String(currentActorId).toLowerCase() === String(effectivePostOwnerId).toLowerCase()
+  );
+
   const resolvedMenuAccess: PostMenuAccess = useMemo(() => {
+    if (props.isOwnPost || isActorOwner) return 'owner';
     if (props.menuAccess && !isRepostWithoutThoughts) return props.menuAccess;
     return getPostMenuAccess({
       isCompanyPost: targetIsCompanyPost,
       companyId: targetCompanyId?.toString() || targetAuthorId?.toString(),
-      createdByUserId: targetCreatedByUserId?.toString(),
+      createdByUserId: targetCreatedByUserId?.toString() || targetAuthorId?.toString(),
       currentUserId: currentUserId?.toString(),
       userCompanies,
       activeProfile,
     });
-  }, [props.menuAccess, isRepostWithoutThoughts, targetIsCompanyPost, targetCompanyId, targetAuthorId, targetCreatedByUserId, currentUserId, userCompanies, activeProfile]);
+  }, [props.isOwnPost, isActorOwner, props.menuAccess, isRepostWithoutThoughts, targetIsCompanyPost, targetCompanyId, targetAuthorId, targetCreatedByUserId, currentUserId, userCompanies, activeProfile]);
 
   const isTargetAuthorMe = useMemo(() => {
+    if (props.isOwnPost || isActorOwner) return true;
     if (resolvedMenuAccess === 'owner') return true;
 
     if (targetIsCompanyPost) {
@@ -1093,7 +1110,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onClose={() => setShowOptions(false)}
           position={optionsPos}
           triggerRef={optionsBtnRef}
-          isMe={resolvedMenuAccess === 'owner'}
+          isMe={resolvedMenuAccess === 'owner' || isTargetAuthorMe || Boolean(props.isOwnPost) || isActorOwner}
           isPollPost={!!pollData}
           visibility={targetVisibility}
           zIndex={props.menuZIndex}

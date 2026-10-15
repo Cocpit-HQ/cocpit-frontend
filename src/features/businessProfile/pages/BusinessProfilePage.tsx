@@ -4,7 +4,7 @@
 import React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { businessProfileService } from "../services/businessProfile.service";
 import { BusinessProfileData } from "../types/business-profile.types";
 import BusinessProfileHeader from "../components/BusinessProfileHeader";
@@ -13,9 +13,10 @@ import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSocket } from "@/context/SocketContext";
 import { Icon } from "@iconify/react";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, X, Building2 } from "lucide-react";
 import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
 import { useUIStore } from "@/store/ui.store";
+import { toast } from "sonner";
 
 interface BusinessProfilePageProps {
   isOwnProfile?: boolean;
@@ -82,6 +83,18 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     enabled: Boolean(orgId),
     staleTime: 60000,
   });
+  const unblockMutation = useMutation({
+    mutationFn: () => businessProfileService.unblockTarget(orgId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", rawSlug] });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      toast.success("Profile unblocked successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to unblock company");
+    },
+  });
 
   // Normalized comparisons to detect if activeProfile actor is this organization
   const normalizedActiveSlug = activeProfile?.slug ? decodeURIComponent(activeProfile.slug).toLowerCase().trim() : "";
@@ -140,7 +153,18 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     );
   }
 
-  if (isError || !profileResponse || !profileResponse.org || profileResponse.relationship?.is_blocked) {
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/feed");
+    }
+  };
+
+  const handleClose = () => {
+    router.push("/feed");
+  };
+  if (isError || !profileResponse || !profileResponse.org) {
     return (
       <div className="min-h-screen bg-[var(--ds-bg)] flex flex-col items-center justify-center p-4">
         <div className="text-center space-y-4 max-w-md mx-auto bg-[var(--ds-surface-1)] border border-[var(--ds-border)] p-8 rounded-[16px]">
@@ -162,17 +186,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     );
   }
 
-  const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/feed");
-    }
-  };
-
-  const handleClose = () => {
-    router.push("/feed");
-  };
+  const isBlocked = Boolean(profileResponse?.relationship?.is_blocked);
 
   const renderTopNavigation = () => (
     <>
@@ -191,9 +205,11 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       </button>
 
       {/* Center Search (Figma top: 40px) */}
-      <div className="w-full">
-        <GlobalSearch hasSidebar={false} />
-      </div>
+      {!isBlocked && (
+        <div className="w-full">
+          <GlobalSearch hasSidebar={false} />
+        </div>
+      )}
 
       {/* Cross / Close to Feed button (top: 40px, right: 40px) */}
       <button
@@ -235,12 +251,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     ),
     tagline: company.headline || company.slogan || "",
     industry: (isEdu ? (company.institution_type || company.industry) : company.industry) || (isEdu ? "Higher Education" : ""),
-    location: (() => {
-      const raw = company.location || (company.city && company.country ? (company.city.toLowerCase().includes(company.country.toLowerCase()) ? company.city : `${company.city}, ${company.country}`) : (company.city || company.country || ""));
-      if (!raw) return "";
-      const tokens = raw.split(",").map((s: string) => s.trim()).filter(Boolean);
-      return tokens.filter((t: string, idx: number) => tokens.indexOf(t) === idx).join(", ");
-    })(),
+    location: company.location || company.city || "",
     employeeCount: company.size || "",
     websiteUrl: company.website || "",
     description: company.description || "",
@@ -264,11 +275,12 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       const backendPeopleList = profileResponse?.people || profileResponse?.alumni || [];
       const coreTeamList = profileResponse?.core_team || [];
 
-      // For public view, prioritize recent people from the people endpoint,
-      // followed by backend people, then core team.
-      // For own profile, prioritize core team first, then people.
+      // For public view, strictly show people/alumni associated with the company through Experience.
+      // Do not fall back to internal core_team (company owner/admin).
+      // If no people are associated, the People section remains hidden on public view.
+      // For own profile view, display the company's core team members.
       const rawCandidates = isPublicView
-        ? [...fetchedPeopleList, ...backendPeopleList, ...coreTeamList]
+        ? [...fetchedPeopleList, ...backendPeopleList]
         : [...coreTeamList, ...fetchedPeopleList, ...backendPeopleList];
 
       const seenIds = new Set<string>();
@@ -387,28 +399,87 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
             : "w-full max-w-[800px] mx-auto flex flex-col justify-start items-center gap-5 px-4 md:px-0 pt-5 sm:pt-0 sm:-mt-5"
         }
       >
-        <BusinessProfileHeader
-          data={data}
-          isOwnProfile={ownProfile}
-          canManageCompany={canManageCompany}
-          logoUrl={company.logo_url}
-          coverUrl={company.cover_url}
-          orgId={orgId}
-          slug={rawSlug}
-          onShareClick={() => setIsShareModalOpen(true)}
-        />
+        {isBlocked ? (
+          <>
+            {/* Hero Block (w-full h-64 relative) */}
+            <div className="w-full h-64 relative">
+              {/* Banner (w-full h-48 left-0 top-0 absolute rounded-2xl bg-[#17171C] overflow-hidden) */}
+              <div className="w-full h-48 left-0 top-0 absolute rounded-2xl bg-[#17171C] overflow-hidden" />
+              
+              {/* Avatar (w-28 h-28 left-[20px] top-[140px] absolute bg-neutral-800 rounded-xl overflow-hidden border border-[#2C2C33] flex items-center justify-center) */}
+              <div className="w-28 h-28 left-[20px] top-[140px] absolute bg-neutral-800 rounded-xl overflow-hidden border border-[#2C2C33] flex items-center justify-center">
+                <Building2 className="w-10 h-10 text-ds-text-primary" />
+              </div>
+            </div>
 
-        {/* Tabs and Content Section */}
-        <div className="w-full">
-          <BusinessProfileTabs
-            data={data}
-            isOwnProfile={ownProfile}
-            canManageCompany={canManageCompany}
-            currentUserId={currentUserId}
-            canManageOwnPosts={canManageOwnPosts}
-            viewerPermissions={effectiveViewerPermissions}
-          />
-        </div>
+            {/* Info Block (self-stretch pl-5 flex justify-between items-center gap-4) */}
+            <div className="w-full pl-5 flex justify-between items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-ds-text-primary text-2xl font-bold font-['DM_Sans'] leading-8 truncate">
+                  {company.name || "Cocpit Technologies"}
+                </h1>
+              </div>
+              <div className="flex justify-start items-center gap-6 shrink-0">
+                <div className="text-center text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
+                  0<br />Followers
+                </div>
+                <div className="text-center text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
+                  0<br />Following
+                </div>
+              </div>
+            </div>
+
+            {/* Blocked Message and Unblock Action */}
+            <div className="w-full px-4 flex flex-col justify-center items-center gap-4 mt-6 sm:mt-10">
+              <div className="w-full flex flex-col justify-center items-center gap-2">
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <Icon icon="lucide:ban" className="w-10 h-10 text-ds-text-primary" />
+                </div>
+                <div className="w-full text-center text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
+                  You&apos;ve blocked
+                </div>
+                <div className="w-full text-center text-stone-400 text-xs font-normal font-['DM_Sans'] leading-4">
+                  Unblock this member to view their profile, posts, and professional information again.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => unblockMutation.mutate()}
+                disabled={unblockMutation.isPending}
+                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-50"
+              >
+                <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+                  {unblockMutation.isPending ? "Unblocking..." : "Unblock"}
+                </span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <BusinessProfileHeader
+              data={data}
+              isOwnProfile={ownProfile}
+              canManageCompany={canManageCompany}
+              logoUrl={company.logo_url}
+              coverUrl={company.cover_url}
+              orgId={orgId}
+              slug={rawSlug}
+              onShareClick={() => setIsShareModalOpen(true)}
+            />
+
+            {/* Tabs and Content Section */}
+            <div className="w-full">
+              <BusinessProfileTabs
+                data={data}
+                isOwnProfile={ownProfile}
+                canManageCompany={canManageCompany}
+                currentUserId={currentUserId}
+                canManageOwnPosts={canManageOwnPosts}
+                viewerPermissions={effectiveViewerPermissions}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <CocpitShareModel

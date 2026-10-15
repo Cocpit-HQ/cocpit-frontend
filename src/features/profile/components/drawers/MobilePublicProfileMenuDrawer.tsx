@@ -12,6 +12,7 @@ interface MobilePublicProfileMenuDrawerProps {
   showFollowPrimary?: boolean;
   /** Whether the current user is already following the target */
   isFollowing?: boolean;
+  isCompanyActor?: boolean;
   onFollow: () => void;
   onConnect: () => void;
   onWithdraw: () => void;
@@ -35,6 +36,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
   connectionStatus,
   showFollowPrimary = false,
   isFollowing = false,
+  isCompanyActor = false,
   onFollow,
   onConnect,
   onWithdraw,
@@ -51,9 +53,9 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
   onReportProfile,
   profileScore,
 }) => {
-  const isConnected       = connectionStatus === "connected";
-  const isPendingSent     = connectionStatus === "pending_sent";
-  const isPendingReceived = connectionStatus === "pending_received";
+  const isConnected       = !isCompanyActor && connectionStatus === "connected";
+  const isPendingSent     = !isCompanyActor && connectionStatus === "pending_sent";
+  const isPendingReceived = !isCompanyActor && connectionStatus === "pending_received";
 
   const closeAnd = (fn: () => void) => () => {
     onClose();
@@ -86,7 +88,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
             )}
 
             {/* Show Connect in drawer whenever Follow is the primary header button and no connection request */}
-            {showFollowPrimary && connectionStatus === "none" && (
+            {!isCompanyActor && showFollowPrimary && connectionStatus === "none" && (
               <button
                 type="button"
                 onClick={closeAnd(onConnect)}

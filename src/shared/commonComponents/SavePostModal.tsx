@@ -73,6 +73,9 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
             if (response.success) {
                 toast.success(folderId ? "Saved to folder" : "Saved to All Posts")
                 queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY })
+                queryClient.invalidateQueries({ queryKey: ['orgPosts'] })
+                queryClient.invalidateQueries({ queryKey: ['orgPostsFallback'] })
+                queryClient.invalidateQueries({ queryKey: ['orgPostsPreview'] })
                 onSaved(true)
                 onClose()
             }

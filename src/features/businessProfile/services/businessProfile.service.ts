@@ -75,6 +75,7 @@ export const businessProfileService = {
     country?: string;
     city?: string;
     location?: string;
+    formattedAddress?: string;
     headquarter?: string;
     latitude?: number | null;
     longitude?: number | null;

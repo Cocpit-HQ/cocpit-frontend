@@ -289,7 +289,8 @@ export const PostVideoCard = ({
   // 3. If not following, show "Follow".
   // 4. If user just interacted to follow, show "Unfollow".
   const effectiveIsMe = Boolean(isMe || isPreview);
-  const canShowFollow = !effectiveIsMe && (!isAuthorFollowing || hasInteracted);
+  const isFollowingInitialized = social ? social.isFollowingInitialized : true;
+  const canShowFollow = !effectiveIsMe && isFollowingInitialized && (!isAuthorFollowing || hasInteracted);
 
   const handleFollowClick = (e: React.MouseEvent) => {
     e.stopPropagation();

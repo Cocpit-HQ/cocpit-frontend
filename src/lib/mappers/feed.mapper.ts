@@ -395,7 +395,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     achievementImageTitle: backendPost.achievement_image_title || (backendPost.category_name === 'Achievement' ? 'Achievement' : undefined),
     is_community_article: backendPost.is_community_article,
     author_org_id: backendPost.author_org_id,
-    createdByUserId: backendPost.created_by_user_id,
+    createdByUserId: backendPost.created_by_user_id || backendPost.author_id,
     communityId: backendPost.community_id,
     mentioned_users: backendPost.mentioned_users,
   };

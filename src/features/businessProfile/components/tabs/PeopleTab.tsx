@@ -10,10 +10,12 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { sendConnectionRequest, cancelConnectionRequest } from "@/services/api/connections";
 import { companyService } from "@/services/organization.service";
+import { useSocial } from "@/context/SocialContext";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { EmptyPostsIcon } from "@/components/icons";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 
 interface PeopleTabProps {
   data: BusinessProfileData;
@@ -29,12 +31,17 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
     Boolean((data as any)?.institution_type) ||
     ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const { activeProfile, isCompany } = useActiveProfile();
+  const { syncFollowStatus, notifyFollowEvent } = useSocial();
+  const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [followLoadingId, setFollowLoadingId] = useState<string | null>(null);
+  const [unfollowConfirmEmp, setUnfollowConfirmEmp] = useState<any | null>(null);
   const [optimisticActions, setOptimisticActions] = useState<Record<string, "connect" | "withdraw" | "message">>({});
+  const [optimisticFollows, setOptimisticFollows] = useState<Record<string, boolean>>({});
 
   const { data: peopleData, isLoading } = useQuery({
     queryKey: ["orgPeople", data.id, debouncedSearch, isEdu],
@@ -92,8 +99,78 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
     ""
   ).toLowerCase();
 
-  const getActionForEmp = (emp: any): "empty" | "connect" | "withdraw" | "message" => {
+  const handleFollow = async (emp: any) => {
+    const actingOrgId = activeProfile?.id;
+    if (!actingOrgId) return;
+    const empId = emp.id;
+    try {
+      setFollowLoadingId(empId);
+      setOptimisticFollows((prev) => ({ ...prev, [empId]: true }));
+      syncFollowStatus(empId, true);
+      notifyFollowEvent(empId, true);
+      await businessProfileService.organizationFollowUser(actingOrgId, empId);
+      toast.success(`Followed ${emp.name}`);
+      queryClient.invalidateQueries({ queryKey: ["orgPeople", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgPeoplePreview", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["org_following", actingOrgId] });
+      queryClient.invalidateQueries({ queryKey: ["org_followers", actingOrgId] });
+    } catch (error: any) {
+      setOptimisticFollows((prev) => ({ ...prev, [empId]: false }));
+      syncFollowStatus(empId, false);
+      notifyFollowEvent(empId, false);
+      const msg = error?.response?.data?.message || "Failed to follow";
+      toast.error(msg);
+    } finally {
+      setFollowLoadingId(null);
+    }
+  };
+
+  const handleUnfollow = async (emp: any) => {
+    const actingOrgId = activeProfile?.id;
+    if (!actingOrgId) return;
+    const empId = emp.id;
+    try {
+      setFollowLoadingId(empId);
+      setOptimisticFollows((prev) => ({ ...prev, [empId]: false }));
+      syncFollowStatus(empId, false);
+      notifyFollowEvent(empId, false);
+      await businessProfileService.organizationUnfollowUser(actingOrgId, empId);
+      toast.success(`Unfollowed ${emp.name}`);
+      queryClient.invalidateQueries({ queryKey: ["orgPeople", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgPeoplePreview", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["org_following", actingOrgId] });
+      queryClient.invalidateQueries({ queryKey: ["org_followers", actingOrgId] });
+    } catch (error: any) {
+      setOptimisticFollows((prev) => ({ ...prev, [empId]: true }));
+      syncFollowStatus(empId, true);
+      notifyFollowEvent(empId, true);
+      const msg = error?.response?.data?.message || "Failed to unfollow";
+      toast.error(msg);
+    } finally {
+      setFollowLoadingId(null);
+    }
+  };
+
+  const handleConfirmUnfollow = async () => {
+    if (!unfollowConfirmEmp) return;
+    const target = unfollowConfirmEmp;
+    setUnfollowConfirmEmp(null);
+    await handleUnfollow(target);
+  };
+
+  const getActionForEmp = (emp: any): "empty" | "connect" | "withdraw" | "message" | "follow" | "unfollow" => {
     const empId = String(emp.user_id || emp.id || emp._id || "").toLowerCase();
+
+    if (isCompanyActor) {
+      if (empId && activeProfile?.id && empId === activeProfile.id.toLowerCase()) {
+        return "empty";
+      }
+      if (empId in optimisticFollows) {
+        return optimisticFollows[empId] ? "unfollow" : "follow";
+      }
+      const isFollowing = Boolean(emp.is_following || emp.isFollowing);
+      return isFollowing ? "unfollow" : "follow";
+    }
 
     // Check optimistic override first
     if (optimisticActions[empId]) {
@@ -273,6 +350,30 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
 
       {/* Action Button */}
       <div className="shrink-0 ml-2 sm:ml-3">
+        {emp.action === "follow" && (
+          <button
+            type="button"
+            onClick={() => handleFollow(emp)}
+            disabled={followLoadingId === emp.id}
+            aria-label={`Follow ${emp.name}`}
+            className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2 transition-all cursor-pointer text-white ds-text-body-1 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+          >
+            {followLoadingId === emp.id ? "..." : "Follow"}
+          </button>
+        )}
+
+        {emp.action === "unfollow" && (
+          <button
+            type="button"
+            onClick={() => setUnfollowConfirmEmp(emp)}
+            disabled={followLoadingId === emp.id}
+            aria-label={`Unfollow ${emp.name}`}
+            className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2 transition-all cursor-pointer text-[var(--ds-text-primary)] ds-text-body-1 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+          >
+            {followLoadingId === emp.id ? "..." : "Unfollow"}
+          </button>
+        )}
+
         {emp.action === "connect" && (
           <button
             type="button"
@@ -464,6 +565,21 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
           {employeesList.map((emp: any) => renderEmployeeRow(emp))}
         </div>
       </div>
+
+      {/* Confirmation Modal for Unfollow */}
+      {unfollowConfirmEmp && (
+        <ActionConfirmModal
+          isOpen={!!unfollowConfirmEmp}
+          onClose={() => setUnfollowConfirmEmp(null)}
+          onConfirm={handleConfirmUnfollow}
+          type="unfollow"
+          targetName={unfollowConfirmEmp.name}
+          title="Unfollow this account?"
+          description="You’ll no longer see their updates in your following feed"
+          confirmText="Unfollow"
+          isLoading={followLoadingId === unfollowConfirmEmp.id}
+        />
+      )}
     </div>
   );
 }

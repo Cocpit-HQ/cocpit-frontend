@@ -23,6 +23,7 @@ export interface GetPostMenuAccessParams {
   isCompanyPost?: boolean;
   companyId?: string | null;
   createdByUserId?: string | null;
+  authorId?: string | null;
   currentUserId?: string | null;
   /** Pass permissions directly when already loaded (e.g. the company's own profile response). */
   explicitPermissions?: string[] | null;
@@ -43,7 +44,7 @@ function hasFullAccess(perms: string[]): boolean {
 }
 
 export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAccess {
-  const { isCompanyPost, companyId, createdByUserId, currentUserId, activeProfile } = params;
+  const { isCompanyPost, companyId, createdByUserId, authorId, currentUserId, activeProfile } = params;
 
   if (!isCompanyPost) {
     if (!currentUserId) return 'outsider';
@@ -53,7 +54,8 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
       return 'outsider';
     }
 
-    return String(createdByUserId) === String(currentUserId) ? 'owner' : 'outsider';
+    const effectiveAuthorId = createdByUserId || authorId;
+    return (effectiveAuthorId && String(effectiveAuthorId).toLowerCase() === String(currentUserId).toLowerCase()) ? 'owner' : 'outsider';
   }
 
   // If activeProfile is provided, enforce that the user must be acting as this exact company.
