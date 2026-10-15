@@ -1076,16 +1076,19 @@ export const FeedPost = (props: FeedPostProps) => {
             entityId={targetId.toString()}
             onShare={(selectedIds) => {
               if (selectedIds.length > 0) {
-                incrementExternalShareCount(selectedIds.length);
-                const updatedCount = externalShareCount + selectedIds.length;
-                
-                // Force sync with other components like ProfileAllPostsScreen
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(
-                    new CustomEvent("postUpdated", {
-                      detail: { id: targetId.toString(), externalShares: updatedCount, external_share_count: updatedCount },
-                    })
-                  );
+                // If room is managed (e.g. post details view), backend post_share_updated socket event handles the count update
+                if (!shouldManageRoom) {
+                  incrementExternalShareCount(selectedIds.length);
+                  const updatedCount = externalShareCount + selectedIds.length;
+                  
+                  // Force sync with other components like ProfileAllPostsScreen
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                      new CustomEvent("postUpdated", {
+                        detail: { id: targetId.toString(), externalShares: updatedCount, external_share_count: updatedCount },
+                      })
+                    );
+                  }
                 }
               }
             }}

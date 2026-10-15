@@ -46,7 +46,7 @@ export default function AboutSection({ data }: AboutSectionProps) {
       <div className="w-full max-w-[780px] flex flex-col justify-start items-start gap-5 min-w-0">
         {/* Description: 14px / 20px LH, Regular 400, color #B8ADA8 */}
         {description && (
-          <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] whitespace-pre-wrap">
+          <p className="w-full max-w-[780px] text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] whitespace-pre-wrap">
             {description}
           </p>
         )}

@@ -51,7 +51,7 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
 
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
-  const { isFollowing, startChat, syncFollowStatus, notifyFollowEvent } = useSocial();
+  const { isFollowing, startChat, syncFollowStatus, notifyFollowEvent, followUser, unfollowUser } = useSocial();
   const { activeProfile, isCompany } = useActiveProfile();
   const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
   const actingOrgId = (isCompanyActor && activeProfile?.id) ? activeProfile.id : orgId;
@@ -90,13 +90,19 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: (data: { type: string; targetId: string }) => {
+    mutationFn: async (data: { type: string; targetId: string }) => {
       setOptimisticFollows((prev) => ({ ...prev, [data.targetId]: false }));
       syncFollowStatus(data.targetId, false);
       notifyFollowEvent(data.targetId, false);
-      return data.type === "company"
-        ? businessProfileService.organizationUnfollowOrganization(actingOrgId, data.targetId)
-        : businessProfileService.organizationUnfollowUser(actingOrgId, data.targetId);
+      if (isCompanyActor && actingOrgId) {
+        return data.type === "company"
+          ? businessProfileService.organizationUnfollowOrganization(actingOrgId, data.targetId)
+          : businessProfileService.organizationUnfollowUser(actingOrgId, data.targetId);
+      } else {
+        return data.type === "company"
+          ? businessProfileService.unfollowOrganization(data.targetId)
+          : await unfollowUser(data.targetId);
+      }
     },
     onError: (err, data) => {
       setOptimisticFollows((prev) => ({ ...prev, [data.targetId]: true }));
@@ -118,13 +124,19 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
   });
 
   const followMutation = useMutation({
-    mutationFn: (data: { type: string; targetId: string }) => {
+    mutationFn: async (data: { type: string; targetId: string }) => {
       setOptimisticFollows((prev) => ({ ...prev, [data.targetId]: true }));
       syncFollowStatus(data.targetId, true);
       notifyFollowEvent(data.targetId, true);
-      return data.type === "company"
-        ? businessProfileService.organizationFollowOrganization(actingOrgId, data.targetId)
-        : businessProfileService.organizationFollowUser(actingOrgId, data.targetId);
+      if (isCompanyActor && actingOrgId) {
+        return data.type === "company"
+          ? businessProfileService.organizationFollowOrganization(actingOrgId, data.targetId)
+          : businessProfileService.organizationFollowUser(actingOrgId, data.targetId);
+      } else {
+        return data.type === "company"
+          ? businessProfileService.followOrganization(data.targetId)
+          : await followUser(data.targetId);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org_followers", orgId] });
@@ -190,82 +202,46 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
       return null;
     }
 
-    if (activeTab === "following") {
-      const isCurrentlyFollowed = id in optimisticFollows ? optimisticFollows[id] : true;
-      if (isCurrentlyFollowed) {
-        return (
-          <button
-            type="button"
-            onClick={() =>
-              setConfirmAction({
-                type: "unfollow",
-                id,
-                name,
-                entityType: item.type,
-              })
-            }
-            className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
-          >
-            Unfollow
-          </button>
-        );
-      }
+    const isTargetFollowed =
+      id in optimisticFollows
+        ? optimisticFollows[id]
+        : activeTab === "following" && isOwnProfile
+        ? true
+        : Boolean(
+            isFollowing(id) ||
+            item.is_following ||
+            (isOwnProfile && (item.isFollowedBack || item.is_following_back))
+          );
 
+    if (isTargetFollowed) {
       return (
         <button
           type="button"
-          onClick={() => followMutation.mutate({ type: item.type || "user", targetId: id })}
-          disabled={followMutation.isPending}
-          className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap disabled:opacity-50"
+          onClick={() =>
+            setConfirmAction({
+              type: "unfollow",
+              id,
+              name,
+              entityType: item.type,
+            })
+          }
+          className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
         >
-          Follow
+          Unfollow
         </button>
       );
     }
 
-    if (activeTab === "followers") {
-      const isAlreadyFollowed =
-        id in optimisticFollows
-          ? optimisticFollows[id]
-          : Boolean(
-              item.isFollowedBack ||
-              item.is_following_back ||
-              item.is_following ||
-              (!isCompanyActor && isFollowing(id))
-            );
-
-      if (isAlreadyFollowed) {
-        return (
-          <button
-            type="button"
-            onClick={() =>
-              setConfirmAction({
-                type: "unfollow",
-                id,
-                name,
-                entityType: item.type,
-              })
-            }
-            className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
-          >
-            Unfollow
-          </button>
-        );
-      }
-
-      return (
-        <button
-          type="button"
-          onClick={() => followMutation.mutate({ type: item.type || "user", targetId: id })}
-          disabled={followMutation.isPending}
-          className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap disabled:opacity-50"
-        >
-          Follow
-        </button>
-      );
-    }
-
-    return null;
+    return (
+      <button
+        type="button"
+        onClick={() => followMutation.mutate({ type: item.type || "user", targetId: id })}
+        disabled={followMutation.isPending}
+        className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none hover:opacity-80 transition-opacity cursor-pointer whitespace-nowrap disabled:opacity-50"
+      >
+        Follow
+      </button>
+    );
   };
 
   return (

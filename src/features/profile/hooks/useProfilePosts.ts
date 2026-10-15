@@ -15,7 +15,8 @@ export function useProfilePosts(userId: string, filterOrOptions?: string | GetPu
       return data.posts.map(mapPublicPostToPost);
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 

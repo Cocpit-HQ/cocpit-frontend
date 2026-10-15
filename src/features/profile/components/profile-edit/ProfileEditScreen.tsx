@@ -348,7 +348,21 @@ export function ProfileEditScreen({
     }
   };
 
+  const clearAllDrafts = () => {
+    if (typeof window === "undefined") return;
+    try {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("profile_draft_") || key.startsWith("profile_edit_edu_")) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch {
+      // ignore
+    }
+  };
+
   const handleCancel = () => {
+    clearAllDrafts();
     if (initialFormData) {
       setFormData(initialFormData);
     }
@@ -693,6 +707,7 @@ export function ProfileEditScreen({
               } else if (tab === "education") {
                 sessionStorage.removeItem("profile_edit_edu_mode");
                 sessionStorage.removeItem("profile_edit_edu_id");
+                sessionStorage.removeItem("profile_draft_edu_new");
               } else if (tab === "project") {
                 sessionStorage.removeItem("profile_edit_proj_mode");
                 sessionStorage.removeItem("profile_edit_proj_id");

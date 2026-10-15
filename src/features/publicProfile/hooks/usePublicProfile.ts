@@ -150,7 +150,8 @@ export function useProfilePosts(userId: string, filterOrOptions?: string | { fil
         },
         enabled: !!userId,
         retry: false,
-        staleTime: 1000 * 60 * 2, // 2 minutes
+        staleTime: 0,
+        refetchOnMount: "always",
     });
 }
 
@@ -163,6 +164,7 @@ export function useProfilePostsPreview(userId: string) {
         },
         enabled: !!userId,
         retry: false,
-        staleTime: 1000 * 60 * 2, // 2 minutes
+        staleTime: 0,
+        refetchOnMount: "always",
     });
 }

@@ -84,18 +84,23 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     }
 
     if (typeof window !== "undefined") {
-      const draftKey = `profile_draft_edu_${initialEducation?.education_id || "new"}`;
-      const savedDraft = sessionStorage.getItem(draftKey);
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          // Only use draft if it has the same ID or both are new
-          if (parsed.education_id === initialData.education_id) {
-            initialData = parsed;
+      // Only restore draft if explicitly editing an existing entry; new education forms must always start clean
+      if (initialEducation?.education_id) {
+        const draftKey = `profile_draft_edu_${initialEducation.education_id}`;
+        const savedDraft = sessionStorage.getItem(draftKey);
+        if (savedDraft) {
+          try {
+            const parsed = JSON.parse(savedDraft);
+            if (parsed.education_id === initialData.education_id) {
+              initialData = parsed;
+            }
+          } catch (e) {
+            // ignore
           }
-        } catch (e) {
-          // ignore
         }
+      } else {
+        // Ensure any residual draft for new education is wiped
+        sessionStorage.removeItem("profile_draft_edu_new");
       }
     }
 
@@ -142,8 +147,8 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
   }, [formData.start_date, formData.end_date, formData.is_current, formData.degree, formData.school_name, formData.education_id, allEducations]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && formData) {
-      const draftKey = `profile_draft_edu_${initialEducation?.education_id || "new"}`;
+    if (typeof window !== "undefined" && formData && initialEducation?.education_id) {
+      const draftKey = `profile_draft_edu_${initialEducation.education_id}`;
       sessionStorage.setItem(draftKey, JSON.stringify(formData));
     }
   }, [formData, initialEducation]);
@@ -152,8 +157,18 @@ export const ProfileEditEducationForm: React.FC<ProfileEditEducationFormProps> =
     if (typeof window !== "undefined") {
       const draftKey = `profile_draft_edu_${initialEducation?.education_id || "new"}`;
       sessionStorage.removeItem(draftKey);
+      sessionStorage.removeItem("profile_draft_edu_new");
     }
   }, [initialEducation]);
+
+  // Clean up any residual drafts when component unmounts without saving
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("profile_draft_edu_new");
+      }
+    };
+  }, []);
 
   const isEditing = Boolean(formData.education_id);
 

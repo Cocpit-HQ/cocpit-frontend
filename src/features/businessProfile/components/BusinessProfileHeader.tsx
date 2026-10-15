@@ -26,6 +26,7 @@ import {
 import { ReportModal } from "@/components/shared/ReportModal";
 import { BusinessBuildingIcon, VerifyIcon } from "@/components/icons";
 import { ViewMediaModal } from "@/features/profile/commonProfileComponents/ViewMediaModal";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { cn } from "@/lib/utils";
 
 interface BusinessProfileHeaderProps {
@@ -74,6 +75,7 @@ export default function BusinessProfileHeader({
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [statsModalTab, setStatsModalTab] = useState<"followers" | "following">("followers");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
     type: "avatar" | "banner";
@@ -305,7 +307,13 @@ export default function BusinessProfileHeader({
               <>
                 {/* Follow Button */}
                 <button
-                  onClick={() => followMutation.mutate()}
+                  onClick={() => {
+                    if (data.isFollowing) {
+                      setShowUnfollowModal(true);
+                    } else {
+                      followMutation.mutate();
+                    }
+                  }}
                   disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
                   title={!actingCompanyCanFollow ? "Only company admins/owners can follow on behalf of the company" : ""}
                   className={cn(
@@ -498,6 +506,19 @@ export default function BusinessProfileHeader({
           alt={mediaModal.type === "avatar" ? data.name || "Organization logo" : `${data.name} banner`}
         />
       )}
+
+      {/* Unfollow Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={showUnfollowModal}
+        onClose={() => setShowUnfollowModal(false)}
+        onConfirm={() => {
+          setShowUnfollowModal(false);
+          followMutation.mutate();
+        }}
+        type="unfollow"
+        targetName={data.name}
+        isLoading={followMutation.isPending}
+      />
     </div>
   );
 }

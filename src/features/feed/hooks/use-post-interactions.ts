@@ -226,6 +226,10 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
         window.dispatchEvent(new CustomEvent('repostDeleted', { 
            detail: { originalPostId: id.toString(), repostId: prevRepostId, instanceId } 
         }));
+        // Invalidate profile posts on un-repost
+        queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
+        queryClient.invalidateQueries({ queryKey: ["profile-posts-preview"] });
+        queryClient.invalidateQueries({ queryKey: ["userPosts"] });
       } else {
         setIsReposted(true);
         // Purpose of Bug Fix: Extract repost ID safely from API response (postId, post_id, or id) to update repost state
@@ -233,6 +237,10 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
         if (createdPostId) {
           setRepostId(createdPostId);
         }
+        // Purpose of Bug Fix: Invalidate profile posts cache so profile page shows active repost state immediately
+        queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
+        queryClient.invalidateQueries({ queryKey: ["profile-posts-preview"] });
+        queryClient.invalidateQueries({ queryKey: ["userPosts"] });
       }
       return result;
     } catch (error) {
@@ -273,6 +281,7 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
   }, [isCompany, activeProfile?.id, session?.user?.id]);
 
   const onShareUpdated = useCallback((data: { postId: string; externalShareCount: number }) => {
+    hasLocalExternalShareChange.current = false;
     setExternalShareCount(data.externalShareCount);
   }, []);
 

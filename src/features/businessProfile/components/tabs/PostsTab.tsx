@@ -235,10 +235,8 @@ export default function PostsTab({
               <button
                 type="button"
                 onClick={() => {
+                  sessionStorage.setItem("scroll-/feed", "0");
                   router.push("/feed");
-                  if (typeof window !== "undefined") {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }
                 }}
                 className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
               >

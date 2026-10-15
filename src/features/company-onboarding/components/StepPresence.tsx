@@ -148,6 +148,7 @@ const ResendOtpButton: React.FC<ResendOtpButtonProps> = ({
 
 export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
   const {
+    organizationType,
     organizationName,
     officialEmail,
     isEmailVerified,
@@ -164,6 +165,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
     description,
     updateField,
   } = useCompanyOnboardingStore();
+
+  const isInstitution = organizationType === "INSTITUTION";
 
   // Verification & input states
   const [emailOtp, setEmailOtp] = useState("");
@@ -1203,7 +1206,11 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 e.target.style.height = "auto";
                 e.target.style.height = `${Math.max(20, e.target.scrollHeight)}px`;
               }}
-              placeholder="Tell the world what your company does..."
+              placeholder={
+                isInstitution
+                  ? "Describe your institute and what makes it unique."
+                  : "Describe your company and what makes it unique."
+              }
               className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 focus:outline-none placeholder:text-ds-text-muted resize-none overflow-hidden"
               style={{ minHeight: "20px" }}
             />

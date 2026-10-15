@@ -86,6 +86,9 @@ export const ProfileEditEducationTab: React.FC<ProfileEditEducationTabProps> = (
       : educations.find((e) => e.education_id === activeEduId) || null;
 
   const handleAddNew = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("profile_draft_edu_new");
+    }
     setActiveEduId("new");
     setViewMode("form");
     setHasVisitedList(true);

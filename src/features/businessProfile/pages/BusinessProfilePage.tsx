@@ -47,6 +47,11 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
 
   const derivedOrgId = profileResponse?.org?.company_id || profileResponse?.org?.org_id || null;
 
+  // Always ensure Company Profile opens scrolled to the top (0, 0)
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [rawSlug]);
+
   React.useEffect(() => {
     if (!socket) return;
 
@@ -406,21 +411,21 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       >
         {isBlocked ? (
           <>
-            {/* Hero Block (w-full h-64 relative) */}
-            <div className="w-full h-64 relative">
-              {/* Banner (w-full h-48 left-0 top-0 absolute rounded-2xl bg-[#17171C] overflow-hidden) */}
-              <div className="w-full h-48 left-0 top-0 absolute rounded-2xl bg-[#17171C] overflow-hidden" />
+            {/* Hero Block (Responsive: h-[190px] mobile, h-[260px] desktop) */}
+            <div className="w-full max-w-[800px] h-[190px] sm:h-[235px] md:h-[260px] relative select-none">
+              {/* Banner (800x200 max, bg-ds-surface-1, border-ds-border) */}
+              <div className="w-full max-w-[800px] h-[140px] sm:h-[180px] md:h-[200px] left-0 top-0 absolute rounded-xl sm:rounded-2xl bg-ds-surface-1 border border-ds-border overflow-hidden" />
               
-              {/* Avatar (w-28 h-28 left-[20px] top-[140px] absolute bg-neutral-800 rounded-xl overflow-hidden border border-[#2C2C33] flex items-center justify-center) */}
-              <div className="w-28 h-28 left-[20px] top-[140px] absolute bg-neutral-800 rounded-xl overflow-hidden border border-[#2C2C33] flex items-center justify-center">
-                <Building2 className="w-10 h-10 text-ds-text-primary" />
+              {/* Avatar (120x120 desktop, 88x88 mobile, bg-ds-surface-2, border-ds-border) */}
+              <div className="w-[88px] h-[88px] sm:w-[104px] sm:h-[104px] md:w-[120px] md:h-[120px] left-4 sm:left-5 top-[90px] sm:top-[125px] md:top-[140px] absolute bg-ds-surface-2 rounded-xl overflow-hidden border border-ds-border flex items-center justify-center z-10">
+                <Building2 className="w-8 h-8 sm:w-10 sm:h-10 text-ds-text-primary" />
               </div>
             </div>
 
-            {/* Info Block (self-stretch pl-5 flex justify-between items-center gap-4) */}
-            <div className="w-full pl-5 flex justify-between items-center gap-4">
+            {/* Info Block (responsive padding, alignment, and typography) */}
+            <div className="w-full px-4 sm:px-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-ds-text-primary text-2xl font-bold font-['DM_Sans'] leading-8 truncate">
+                <h1 className="text-ds-text-primary text-xl sm:text-2xl font-bold font-['DM_Sans'] leading-7 sm:leading-8 truncate">
                   {company.name || "Cocpit Technologies"}
                 </h1>
               </div>
@@ -436,14 +441,14 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
 
             {/* Blocked Message and Unblock Action */}
             <div className="w-full px-4 flex flex-col justify-center items-center gap-4 mt-6 sm:mt-10">
-              <div className="w-full flex flex-col justify-center items-center gap-2">
+              <div className="w-full max-w-[420px] flex flex-col justify-center items-center gap-2">
                 <div className="w-10 h-10 flex items-center justify-center">
-                  <Icon icon="lucide:ban" className="w-10 h-10 text-ds-text-primary" />
+                  <Icon icon="lucide:ban" className="w-8 h-8 sm:w-10 sm:h-10 text-ds-text-primary" />
                 </div>
-                <div className="w-full text-center text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
+                <div className="w-full text-center text-ds-text-primary text-base sm:text-lg font-semibold font-['DM_Sans'] leading-6">
                   You&apos;ve blocked
                 </div>
-                <div className="w-full text-center text-stone-400 text-xs font-normal font-['DM_Sans'] leading-4">
+                <div className="w-full text-center text-ds-text-secondary text-xs sm:text-sm font-normal font-['DM_Sans'] leading-5 max-w-[360px]">
                   Unblock this member to view their profile, posts, and professional information again.
                 </div>
               </div>
@@ -451,9 +456,9 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
                 type="button"
                 onClick={() => unblockMutation.mutate()}
                 disabled={unblockMutation.isPending}
-                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-50"
+                className="px-4 py-1.5 min-h-[36px] bg-ds-accent hover:opacity-90 active:scale-95 rounded-[100px] inline-flex justify-center items-center gap-2 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-50 disabled:pointer-events-none"
               >
-                <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+                <span className="text-ds-text-primary text-sm sm:text-base font-medium font-['DM_Sans'] leading-6">
                   {unblockMutation.isPending ? "Unblocking..." : "Unblock"}
                 </span>
               </button>
