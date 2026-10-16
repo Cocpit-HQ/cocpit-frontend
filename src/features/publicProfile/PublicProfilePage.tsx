@@ -3,7 +3,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
-import { Share2, Flag, Ban, ChevronLeft, X } from "lucide-react";
+import { Share2, Flag, ChevronLeft, X } from "lucide-react";
+import { BlockIcon } from "@/components/icons";
 import { toast } from "sonner";
 import { FeatureDisabledTooltip } from "@/components/feature-flags";
 import { cn } from "@/lib/utils";
@@ -396,20 +397,40 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   if (userError || !user) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-md mx-auto">
-          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <Ban className="w-10 h-10 text-muted-foreground" />
+      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none">
+        {/* FullPageError: max-w-[800px], flex flex-col items-center justify-center, gap: 24px */}
+        <div className="w-full max-w-[800px] flex flex-col items-center justify-center gap-6 text-center animate-in fade-in duration-200">
+          {/* IconFrame: 64x64px, rounded-full, bg #1A1A20, p-4 (16px) */}
+          <div className="w-16 h-16 rounded-full bg-[var(--ds-surface-1)] p-4 flex items-center justify-center shrink-0">
+            <BlockIcon
+              size={32}
+              className="w-8 h-8 text-[var(--ds-text-muted)] shrink-0"
+              fill="var(--ds-text-muted)"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Profile Unavailable</h1>
-          <p className="text-muted-foreground">
-            The user you are looking for could not be found. They may have been removed or the link is incorrect.
-          </p>
+
+          {/* TextBlock: w: 760px, gap: 8px, text-center */}
+          <div className="w-full max-w-[760px] flex flex-col items-center gap-2">
+            {/* Title: 16px semibold (600), line-height: 24px, #FFECE6 */}
+            <h1 className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 text-center">
+              Profile unavailable
+            </h1>
+
+            {/* Description: 14px regular (400), line-height: 20px, #B8ADA8, max-w-[360px] */}
+            <p className="w-full max-w-[360px] text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 text-center">
+              This profile could not be found. It may have been removed, or the link may be incorrect.
+            </p>
+          </div>
+
+          {/* Primary emphasis button: h: 36px, px: 12px, py: 6px, gap: 10px, bg: #EC6229, rounded: 100px */}
           <button
+            type="button"
             onClick={() => router.push('/feed')}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mt-4 cursor-pointer"
+            className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
-            Return to Feed
+            <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+              Back to Feed
+            </span>
           </button>
         </div>
       </div>

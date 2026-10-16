@@ -39,37 +39,89 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [resetSuccessMsg, setResetSuccessMsg] = useState('');
-  const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
+  // Track absolute expiration timestamp in sessionStorage to retain timer state across navigation
+  const [targetExpiry, setTargetExpiry] = useState<number | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('cocpit_reset_link_target_expiry');
+      if (stored) {
+        const expiry = parseInt(stored, 10);
+        if (!isNaN(expiry) && expiry > Date.now()) {
+          return expiry;
+        }
+      }
+    }
+    return null;
+  });
+
+  const [cooldownSeconds, setCooldownSeconds] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('cocpit_reset_link_target_expiry');
+      if (stored) {
+        const expiry = parseInt(stored, 10);
+        if (!isNaN(expiry) && expiry > Date.now()) {
+          return Math.max(0, Math.ceil((expiry - Date.now()) / 1000));
+        }
+      }
+    }
+    return 0;
+  });
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const updatePasswordMutation = useUpdatePassword();
   const requestResetLinkMutation = useRequestPasswordResetLink();
   const { data: resetStatus, refetch: refetchResetStatus } = useResetLinkStatus();
 
-  // Sync active reset link timer from server
+  // Sync active reset link timer with live server status and update persistent target expiry
   useEffect(() => {
-    if (resetStatus?.hasActiveLink && resetStatus?.remainingSeconds > 0) {
-      setCooldownSeconds(resetStatus.remainingSeconds);
+    if (resetStatus) {
+      if (resetStatus.hasActiveLink && resetStatus.remainingSeconds > 0) {
+        const serverExpiry = Date.now() + resetStatus.remainingSeconds * 1000;
+        setTargetExpiry((prev) => {
+          if (prev && Math.abs(prev - serverExpiry) < 2000) {
+            return prev;
+          }
+          return serverExpiry;
+        });
+        setCooldownSeconds(resetStatus.remainingSeconds);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('cocpit_reset_link_target_expiry', serverExpiry.toString());
+        }
+      } else {
+        setTargetExpiry(null);
+        setCooldownSeconds(0);
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('cocpit_reset_link_target_expiry');
+        }
+      }
     }
   }, [resetStatus]);
 
-  // Interval countdown manager
+  // Drift-free countdown timer updating against target expiration timestamp
   useEffect(() => {
-    if (cooldownSeconds <= 0) return;
+    if (!targetExpiry) return;
 
-    const timer = setInterval(() => {
-      setCooldownSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          refetchResetStatus();
-          return 0;
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.ceil((targetExpiry - Date.now()) / 1000));
+      setCooldownSeconds(remaining);
+      if (remaining <= 0) {
+        setTargetExpiry(null);
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('cocpit_reset_link_target_expiry');
         }
-        return prev - 1;
-      });
-    }, 1000);
+        refetchResetStatus();
+      }
+    };
 
-    return () => clearInterval(timer);
-  }, [cooldownSeconds, refetchResetStatus]);
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+    window.addEventListener('focus', updateTimer);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', updateTimer);
+    };
+  }, [targetExpiry, refetchResetStatus]);
+
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -146,7 +198,13 @@ export function ManagePasswordPage({ mode: modeProp }: ManagePasswordPageProps =
     requestResetLinkMutation.mutate(undefined, {
       onSuccess: (data: any) => {
         setResetSuccessMsg(data?.message || "Password reset link sent to your registered email!");
-        setCooldownSeconds(900); // 15 minutes = 900 seconds
+        // Set 15-minute target expiration and save to sessionStorage for persistence across navigation
+        const newExpiry = Date.now() + 900 * 1000;
+        setTargetExpiry(newExpiry);
+        setCooldownSeconds(900);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('cocpit_reset_link_target_expiry', newExpiry.toString());
+        }
         refetchResetStatus();
       },
       onError: (error: any) => {

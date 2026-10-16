@@ -27,7 +27,7 @@ const LEGAL_ITEMS: LegalItem[] = [
   {
     title: 'Community guidelines',
     description: 'Standards for posts and behavior',
-    href: 'https://cocpit.in/home',
+    href: 'https://cocpit.in/community-guidelines',
   },
   {
     title: 'Cookie policy',

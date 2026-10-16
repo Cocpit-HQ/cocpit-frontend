@@ -361,7 +361,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
   };
 
   const handleResendPhoneOtp = async () => {
-    if (!isValidPhone(phoneNumber) || isPhoneVerified || isSendingPhoneOtp) return;
+    if (!isValidPhone(phoneNumber, phoneCountryCode) || isPhoneVerified || isSendingPhoneOtp) return;
     setIsSendingPhoneOtp(true);
     setPhoneError("");
     setPhoneOtp("");
@@ -888,8 +888,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
               <button
                 type="button"
                 onClick={handleSendPhoneOtp}
-                disabled={!isValidPhone(phoneNumber) || isSendingPhoneOtp || phoneCodeSent}
-                className={`h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors shrink-0 text-sm font-medium font-['DM_Sans'] leading-6 ${isValidPhone(phoneNumber) && !phoneCodeSent && !isSendingPhoneOtp
+                disabled={!isValidPhone(phoneNumber, phoneCountryCode) || isSendingPhoneOtp || phoneCodeSent}
+                className={`h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-colors shrink-0 text-sm font-medium font-['DM_Sans'] leading-6 ${isValidPhone(phoneNumber, phoneCountryCode) && !phoneCodeSent && !isSendingPhoneOtp
                   ? "bg-ds-surface-2 hover:bg-ds-surface-1 text-ds-text-primary border border-ds-border cursor-pointer active:scale-95"
                   : "bg-ds-surface-1 text-ds-text-muted cursor-default select-none pointer-events-none"
                   }`}

@@ -132,22 +132,31 @@ export function SupportSettingsPage() {
             </div>
 
             {/* Stars */}
-            <div className="self-stretch inline-flex justify-start items-center gap-4">
+            <div
+              className="inline-flex justify-start items-center gap-4"
+              onMouseLeave={() => setHoverRating(0)}
+            >
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
-                  onClick={() => setFeedbackRating(feedbackRating === star ? 0 : star)}
+                  onClick={() => {
+                    setFeedbackRating(feedbackRating === star ? 0 : star);
+                    setHoverRating(0);
+                  }}
                   onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
+                  onFocus={() => setHoverRating(star)}
+                  onBlur={() => setHoverRating(0)}
                   aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                   className="w-5 h-5 flex items-center justify-center p-0 cursor-pointer bg-transparent border-none ds-focus-ring"
                 >
                   <Star
                     className={`w-5 h-5 transition-colors ${
-                      star <= (hoverRating || feedbackRating)
+                      feedbackRating > 0 && star <= feedbackRating
                         ? 'fill-ds-accent text-ds-accent'
-                        : 'text-ds-text-muted'
+                        : hoverRating > 0 && star <= hoverRating
+                        ? 'fill-ds-text-secondary text-ds-text-secondary'
+                        : 'fill-transparent text-ds-text-muted'
                     }`}
                     strokeWidth={1.5}
                   />

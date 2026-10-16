@@ -109,10 +109,15 @@ export function useUpdatePassword() {
 }
 
 export function useRequestPasswordResetLink() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const response = await api.post('/auth/forgot-password-link');
       return response.data;
+    },
+    // Invalidate resetLinkStatus query so fresh cooldown is fetched immediately after sending reset link
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['resetLinkStatus'] });
     },
   });
 }
@@ -124,9 +129,13 @@ export function useResetLinkStatus() {
       const response = await api.get('/auth/reset-link-status');
       return response.data as { hasActiveLink: boolean; remainingSeconds: number };
     },
+    // Keep staleTime 0 and refetch on mount so returning to page always gets current elapsed timer
+    staleTime: 0,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
 }
+
 
 export function useSetPhone() {
   return useMutation({
