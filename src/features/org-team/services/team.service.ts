@@ -153,7 +153,7 @@ function formatAction(action: string, metadata?: any): string {
       return 'commented on';
     case 'REPOST':
     case 'REPOSTED':
-      return 'reposted a';
+      return metadata.authorName || metadata.targetName ? 'reposted post by' : 'reposted a';
     case 'SHARE_POST':
       return 'shared a';
     case 'REPORT_POST':
@@ -230,7 +230,12 @@ function mapActivityLog(row: any): ActivityLogEntry {
   let targetId = metadata.targetUserId || metadata.removedUserId || metadata.targetId || metadata.postId || metadata.id || metadata.jobId || metadata.roleId || '';
   let targetType = metadata.targetType || '';
   let linkUrl = metadata.linkUrl || '';
+  let targetLinkUrl = '';
+  let highlightedLinkUrl = '';
   let highlightedText = metadata.highlightedText || '';
+  let suffixText = '';
+  let isTargetClickable = true;
+  const roleId = row.role_id || metadata.roleId || metadata.role_id || '';
 
   let actionFormatted = formatAction(row.action, metadata);
 
@@ -264,9 +269,12 @@ function mapActivityLog(row: any): ActivityLogEntry {
     }
     if (metadata.roleName || metadata.role) {
       highlightedText = `as ${metadata.roleName || metadata.role}`;
+      if (roleId) {
+        highlightedLinkUrl = `/team/role/${roleId}`;
+      }
     }
-    if (!linkUrl && (metadata.targetUserId || row.target_user_id)) {
-      linkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+    if (metadata.targetUserId || row.target_user_id) {
+      targetLinkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
     }
   } else if (actionUpper === 'WITHDRAW_INVITE') {
     if (!targetName && metadata.email) {
@@ -275,8 +283,9 @@ function mapActivityLog(row: any): ActivityLogEntry {
     if (!targetName) {
       targetName = 'team member';
     }
-    if (!linkUrl && (metadata.targetUserId || row.target_user_id)) {
-      linkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+    if (metadata.targetUserId || row.target_user_id) {
+      targetLinkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+      linkUrl = targetLinkUrl;
     }
   } else if (actionUpper === 'ASSIGN_ROLE') {
     if (!targetName) {
@@ -284,45 +293,57 @@ function mapActivityLog(row: any): ActivityLogEntry {
     }
     if (metadata.roleName || metadata.role) {
       highlightedText = `as ${metadata.roleName || metadata.role}`;
+      if (roleId) {
+        highlightedLinkUrl = `/team/role/${roleId}`;
+      }
     }
-    if (!linkUrl && (metadata.targetUserId || row.target_user_id)) {
-      linkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
+    if (metadata.targetUserId || row.target_user_id) {
+      targetLinkUrl = `/profile/${metadata.targetUserId || row.target_user_id}`;
     }
   } else if (actionUpper === 'REMOVE_MEMBER') {
     if (!targetName) {
       targetName = 'team member';
     }
-    if (!linkUrl && (metadata.targetUserId || metadata.removedUserId || row.target_user_id)) {
-      linkUrl = `/profile/${metadata.targetUserId || metadata.removedUserId || row.target_user_id}`;
+    if (metadata.targetUserId || metadata.removedUserId || row.target_user_id) {
+      targetLinkUrl = `/profile/${metadata.targetUserId || metadata.removedUserId || row.target_user_id}`;
+      linkUrl = targetLinkUrl;
     }
   } else if (actionUpper === 'ACCEPT_INVITE' || actionUpper === 'JOIN_ORGANIZATION') {
     targetName = '';
     if (metadata.roleName || metadata.role) {
       highlightedText = `as ${metadata.roleName || metadata.role}`;
+      if (roleId) {
+        highlightedLinkUrl = `/team/role/${roleId}`;
+      }
     }
   } else if (actionUpper === 'DECLINE_INVITE' || actionUpper === 'DECLINE_INVITATION') {
     targetName = '';
     if (metadata.roleName || metadata.role) {
       highlightedText = `as ${metadata.roleName || metadata.role}`;
+      if (roleId) {
+        highlightedLinkUrl = `/team/role/${roleId}`;
+      }
     }
   } else if (actionUpper === 'CREATE_ROLE' || actionUpper === 'UPDATE_ROLE' || actionUpper === 'DELETE_ROLE') {
     if (!targetName) {
       targetName = metadata.roleName || '';
     }
-    if (!highlightedText && metadata.roleId && actionUpper !== 'DELETE_ROLE') {
-      linkUrl = `/team/role/${metadata.roleId}`;
+    if (roleId && actionUpper !== 'DELETE_ROLE') {
+      targetLinkUrl = `/team/role/${roleId}`;
+      linkUrl = targetLinkUrl;
     }
   } else if (actionUpper === 'LIKE' || actionUpper === 'LIKED') {
-    const author = targetName || metadata.authorName || '';
+    const author = (targetName || metadata.authorName || '').trim();
     targetName = '';
+    highlightedText = 'post';
     if (author) {
-      actionFormatted = 'liked post by';
-      highlightedText = author;
+      actionFormatted = 'liked';
+      suffixText = `by ${author}`;
     } else {
       actionFormatted = 'liked a';
-      highlightedText = 'post';
     }
     if (!linkUrl && targetId) linkUrl = `/post/${targetId}`;
+    highlightedLinkUrl = linkUrl;
   } else if (actionUpper === 'COMMENT' || actionUpper === 'COMMENTED') {
     actionFormatted = 'commented on';
     const rawAuthor = (targetName || metadata.authorName || metadata.postAuthorName || '').trim();
@@ -334,10 +355,27 @@ function mapActivityLog(row: any): ActivityLogEntry {
     }
     highlightedText = 'post';
     const postId = metadata.postId || metadata.post_id || targetId;
-    if (!linkUrl && postId) linkUrl = `/post/${postId}`;
+    if (postId) {
+      highlightedLinkUrl = `/post/${postId}`;
+      linkUrl = `/post/${postId}`;
+    }
+    isTargetClickable = false;
+  } else if (actionUpper === 'REPOST' || actionUpper === 'REPOSTED') {
+    const author = (targetName || metadata.authorName || '').trim();
+    targetName = '';
+    highlightedText = 'post';
+    if (author) {
+      actionFormatted = 'reposted';
+      suffixText = `by ${author}`;
+    } else {
+      actionFormatted = 'reposted a';
+    }
+    const postId = metadata.postId || metadata.id || targetId;
+    if (postId) {
+      highlightedLinkUrl = `/post/${postId}`;
+      linkUrl = `/post/${postId}`;
+    }
   } else if (
-    actionUpper === 'REPOST' ||
-    actionUpper === 'REPOSTED' ||
     actionUpper === 'CREATE_POST' ||
     actionUpper === 'EDIT_POST' ||
     actionUpper === 'UPDATE_POST' ||
@@ -349,9 +387,11 @@ function mapActivityLog(row: any): ActivityLogEntry {
     targetName = '';
     if (!highlightedText) highlightedText = 'post';
     if (!linkUrl && targetId && actionUpper !== 'DELETE_POST') linkUrl = `/post/${targetId}`;
+    highlightedLinkUrl = linkUrl;
   } else if (actionUpper === 'CREATE_JOB' || actionUpper === 'CLOSE_JOB' || actionUpper === 'DELETE_JOB' || actionUpper === 'SEND_OFFER') {
     if (!targetName) targetName = metadata.jobTitle || metadata.title || '';
     if (!linkUrl && targetId && actionUpper !== 'DELETE_JOB') linkUrl = `/jobs/${targetId}`;
+    targetLinkUrl = linkUrl;
   } else if (actionUpper === 'VIEW_USER_PROFILE') {
     actionFormatted = 'viewed';
     const rawTargetName = (targetName || metadata.targetName || metadata.targetUserName || metadata.name || '').trim();
@@ -374,6 +414,8 @@ function mapActivityLog(row: any): ActivityLogEntry {
         linkUrl = `/profile/${handleOrId}`;
       }
     }
+    highlightedLinkUrl = linkUrl;
+    targetLinkUrl = linkUrl;
   } else if (
     actionUpper === 'ORGANIZATION_BLOCK_ADDED' ||
     actionUpper === 'ORGANIZATION_BLOCK_REMOVED' ||
@@ -388,9 +430,13 @@ function mapActivityLog(row: any): ActivityLogEntry {
     if (!linkUrl && blockTargetId) {
       linkUrl = `/profile/${blockTargetId}`;
     }
+    targetLinkUrl = linkUrl;
   } else {
     if (!targetName) {
       targetName = metadata.roleName || metadata.title || '';
+    }
+    if (roleId) {
+      targetLinkUrl = `/team/role/${roleId}`;
     }
   }
 
@@ -404,9 +450,13 @@ function mapActivityLog(row: any): ActivityLogEntry {
     targetId: targetId,
     targetType: targetType,
     linkUrl: linkUrl,
+    targetLinkUrl: targetLinkUrl,
+    highlightedLinkUrl: highlightedLinkUrl,
     details: row.details || (row.metadata ? JSON.stringify(row.metadata) : ''),
     highlightedText: highlightedText,
+    suffixText: suffixText,
     timestamp: row.created_at || row.timestamp,
+    isTargetClickable: isTargetClickable,
   };
 }
 

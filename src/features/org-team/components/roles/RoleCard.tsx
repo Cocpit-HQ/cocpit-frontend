@@ -51,10 +51,10 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
 
   const isAdminRole = role.name?.toLowerCase() === 'admin';
   const canInviteToRole = isAdminRole
-    ? Boolean(perms.isOwner || perms.isAdmin || perms.canManageMembers || perms.canManageRoles)
+    ? Boolean(perms.isOwner || perms.isAdmin)
     : Boolean(perms.isOwner || perms.canManageMembers || perms.canManageRoles);
 
-  const hasMenuActions = canInviteToRole || (role.name !== 'Admin');
+  const hasMenuActions = canInviteToRole || !isAdminRole;
 
   const [showMenu, setShowMenu] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -179,7 +179,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
                     Add member
                   </button>
                 )}
-                {role.name !== 'Admin' && (
+                {!isAdminRole && (
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(); }}
@@ -235,7 +235,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
       {/* Permissions — hidden below lg */}
       <div className="hidden lg:flex flex-1 min-w-0 justify-start items-center pr-4">
         <div className="text-ds-text-primary ds-text-body-1 truncate w-full">
-          {role.name === 'Admin' ? 'All permissions' : formatPermissions(role.permissions)}
+          {isAdminRole ? 'All permissions' : formatPermissions(role.permissions)}
         </div>
       </div>
 
@@ -262,7 +262,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
                   Add member
                 </button>
               )}
-              {role.name !== 'Admin' && (
+              {!isAdminRole && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(); }}

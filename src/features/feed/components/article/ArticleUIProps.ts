@@ -14,6 +14,7 @@ export interface ArticleUIProps {
   isCompany: boolean;
   session: Session | null;
   activeProfileId?: string | number;
+  menuAccess?: import('../../utils/postMenuAccess').PostMenuAccess;
 
   likeCount: number;
   isLiked: boolean;

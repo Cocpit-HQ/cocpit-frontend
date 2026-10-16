@@ -137,33 +137,29 @@ export default function SinglePostPage({ params }: PageProps) {
     }
   };
 
+  const isPostCompany = Boolean(post?.isCompanyPost || post?.author_org_id);
   const isActorOrg = activeProfile?.type === "COMPANY";
-  const currentActorId = isActorOrg
-    ? activeProfile?.id
-    : ((session?.user as any)?.id || activeProfile?.id);
 
-  const postOwnerId = isActorOrg
-    ? (post?.author_org_id || (post?.isCompanyPost ? post?.authorId : undefined))
-    : (post?.createdByUserId || post?.authorId);
-
-  const isOwnPost = Boolean(
+  const isOwnPersonalPost = Boolean(
+    !isPostCompany &&
+    !isActorOrg &&
     post &&
-    currentActorId &&
-    postOwnerId &&
-    (isActorOrg === Boolean(post.isCompanyPost)) &&
-    String(currentActorId).toLowerCase() === String(postOwnerId).toLowerCase()
+    ((session?.user as any)?.id || (activeProfile?.type === "USER" ? activeProfile?.id : undefined)) &&
+    (post?.createdByUserId || post?.authorId) &&
+    String((session?.user as any)?.id || activeProfile?.id).toLowerCase() === String(post?.createdByUserId || post?.authorId).toLowerCase()
   );
 
   const calculatedMenuAccess = getPostMenuAccess({
-    isCompanyPost: post?.isCompanyPost,
-    companyId: post?.author_org_id || (post?.isCompanyPost ? post?.authorId : undefined),
-    createdByUserId: post?.createdByUserId || post?.authorId,
+    isCompanyPost: isPostCompany,
+    companyId: post?.author_org_id || (isPostCompany ? post?.authorId : undefined),
+    createdByUserId: isPostCompany ? post?.createdByUserId : (post?.createdByUserId || post?.authorId),
     currentUserId: (session?.user as any)?.id || (activeProfile?.type === "USER" ? activeProfile?.id : undefined),
     userCompanies,
     activeProfile,
   });
 
-  const menuAccess = isOwnPost ? "owner" : calculatedMenuAccess;
+  const menuAccess = isPostCompany ? calculatedMenuAccess : (isOwnPersonalPost ? "owner" : calculatedMenuAccess);
+  const isOwnPost = isPostCompany ? (menuAccess === "owner") : isOwnPersonalPost;
 
   return (
     <div className="min-h-screen bg-ds-bg text-ds-text-primary flex flex-col items-center pb-16 select-none relative">

@@ -154,7 +154,7 @@ export const FeedSection = ({
                                         initialComments={post.commentData}
                                         menuAccess={getPostMenuAccess({
                                             isCompanyPost: post.isCompanyPost,
-                                            companyId: post.authorId,
+                                            companyId: (post as any).author_org_id || post.authorId,
                                             createdByUserId: (post as any).createdByUserId,
                                             currentUserId: currentUser?.id,
                                             userCompanies,

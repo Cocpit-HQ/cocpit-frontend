@@ -124,7 +124,8 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
 
     setIsNavigating(true);
     try {
-      const liveProfile = await getUserById(user.id);
+      // Pass skipAudit: true so this pre-validation check does not trigger a duplicate VIEW_USER_PROFILE audit log
+      const liveProfile = await getUserById(user.id, undefined, { skipAudit: true });
       const newUsername = liveProfile.user?.account_name;
       
       if (!newUsername) {

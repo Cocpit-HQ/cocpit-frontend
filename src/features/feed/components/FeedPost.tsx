@@ -100,7 +100,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const hasVideo = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
   const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
 
-  const targetIsCompanyPost = interactionTargetProps.isCompanyPost || false;
+  const targetIsCompanyPost = Boolean(interactionTargetProps.isCompanyPost || (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId);
   const targetCompanyId = (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId;
   const targetAuthorId = targetIsCompanyPost
     ? (targetCompanyId || interactionTargetProps.authorId || (interactionTargetProps as any).author_id)
@@ -109,16 +109,15 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const isActorOrg = activeProfile?.type === 'COMPANY';
   const effectivePostOwnerId = targetIsCompanyPost
-    ? (targetCompanyId || targetAuthorId)
+    ? targetCreatedByUserId
     : (targetCreatedByUserId || targetAuthorId);
   const currentActorId = isActorOrg
-    ? activeProfile?.id
+    ? (currentUserId || activeProfile?.id)
     : (currentUserId || activeProfile?.id);
 
   const isActorOwner = Boolean(
     currentActorId &&
     effectivePostOwnerId &&
-    (isActorOrg === Boolean(targetIsCompanyPost)) &&
     String(currentActorId).toLowerCase() === String(effectivePostOwnerId).toLowerCase()
   );
 
@@ -128,7 +127,7 @@ export const FeedPost = (props: FeedPostProps) => {
     return getPostMenuAccess({
       isCompanyPost: targetIsCompanyPost,
       companyId: targetCompanyId?.toString() || targetAuthorId?.toString(),
-      createdByUserId: targetCreatedByUserId?.toString() || targetAuthorId?.toString(),
+      createdByUserId: targetCreatedByUserId ? targetCreatedByUserId.toString() : undefined,
       currentUserId: currentUserId?.toString(),
       userCompanies,
       activeProfile,
@@ -175,6 +174,8 @@ export const FeedPost = (props: FeedPostProps) => {
     userCompanies,
     currentUserId,
     targetCreatedByUserId,
+    props.isOwnPost,
+    isActorOwner,
   ]);
 
   // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
@@ -1113,7 +1114,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onClose={() => setShowOptions(false)}
           position={optionsPos}
           triggerRef={optionsBtnRef}
-          isMe={resolvedMenuAccess === 'owner' || isTargetAuthorMe || Boolean(props.isOwnPost) || isActorOwner}
+          isMe={resolvedMenuAccess === 'owner'}
           isPollPost={!!pollData}
           visibility={targetVisibility}
           zIndex={props.menuZIndex}

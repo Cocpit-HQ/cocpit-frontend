@@ -129,9 +129,13 @@ export interface ActivityLogEntry {
   targetId?: string;
   targetType?: string;
   linkUrl?: string;
+  targetLinkUrl?: string;
+  highlightedLinkUrl?: string;
   details?: string;
   highlightedText?: string;
+  suffixText?: string;
   timestamp: string;
+  isTargetClickable?: boolean;
 }
 
 // Filter state for activity logs

@@ -13,11 +13,25 @@ function ActivityLogRow({ entry }: ActivityLogRowProps) {
   const router = useRouter();
   const timeAgo = getTimeAgo(entry.timestamp);
 
-  const handleLinkClick = () => {
-    if (entry.linkUrl) {
-      router.push(entry.linkUrl);
+  const targetUrl = entry.targetLinkUrl || (!entry.highlightedLinkUrl ? entry.linkUrl : undefined);
+  const highlightedUrl = entry.highlightedLinkUrl || entry.linkUrl;
+
+  const handleTargetClick = () => {
+    if (targetUrl) {
+      router.push(targetUrl);
     }
   };
+
+  const handleHighlightedClick = () => {
+    if (highlightedUrl) {
+      router.push(highlightedUrl);
+    }
+  };
+
+  const isTargetClickable = Boolean(
+    targetUrl && entry.isTargetClickable !== false && entry.action !== 'commented on'
+  );
+  const isHighlightedClickable = Boolean(highlightedUrl);
 
   return (
     <div className="w-full flex items-center gap-2 md:gap-3 py-2 md:py-3 min-h-[48px]">
@@ -44,25 +58,34 @@ function ActivityLogRow({ entry }: ActivityLogRowProps) {
           {entry.targetName ? (
             <>
               {' '}
-              <span
-                onClick={handleLinkClick}
-                className={`${entry.linkUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-              >
-                {entry.targetName}
-              </span>
+              {isTargetClickable ? (
+                <span
+                  onClick={handleTargetClick}
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  {entry.targetName}
+                </span>
+              ) : (
+                <span>{entry.targetName}</span>
+              )}
             </>
           ) : null}
           {entry.highlightedText ? (
             <>
               {' '}
-              <span
-                onClick={handleLinkClick}
-                className={`text-ds-accent ${entry.linkUrl ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-              >
-                {entry.highlightedText}
-              </span>
+              {isHighlightedClickable ? (
+                <span
+                  onClick={handleHighlightedClick}
+                  className="text-ds-accent cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  {entry.highlightedText}
+                </span>
+              ) : (
+                <span className="text-ds-accent">{entry.highlightedText}</span>
+              )}
             </>
           ) : null}
+          {entry.suffixText ? <> {entry.suffixText}</> : null}
         </p>
       </div>
 

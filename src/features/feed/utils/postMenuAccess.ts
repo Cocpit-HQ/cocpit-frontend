@@ -39,7 +39,8 @@ function hasFullAccess(perms: string[]): boolean {
     perms.includes('MANAGE_COMPANY_DETAILS') ||
     perms.includes('MANAGE_ORGANIZATION_DETAILS') ||
     perms.includes('MANAGE_COMPANY') ||
-    perms.includes('MANAGE_ORGANIZATION')
+    perms.includes('MANAGE_ORGANIZATION') ||
+    perms.includes('MANAGE_CONTENT')
   );
 }
 
@@ -60,23 +61,23 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
 
   // If activeProfile is provided, enforce that the user must be acting as this exact company.
   // If they are acting as a USER, or as a DIFFERENT company, treat them as a normal user (outsider).
-  if (activeProfile && (activeProfile.type !== 'COMPANY' || String(activeProfile.id) !== String(companyId))) {
+  if (activeProfile && (activeProfile.type !== 'COMPANY' || String(activeProfile.id).toLowerCase() !== String(companyId).toLowerCase())) {
     return 'outsider';
   }
 
   const company = params.userCompanies?.find(
-    (c) => String(c.org_id || c.company_id) === String(companyId)
+    (c) => String(c.org_id || c.company_id).toLowerCase() === String(companyId).toLowerCase()
   );
 
   // Admin/Owner can manage any of their company's posts
-  const isOrgCreator = Boolean(company && company.created_by && String(company.created_by) === String(currentUserId));
+  const isOrgCreator = Boolean(company && company.created_by && String(company.created_by).toLowerCase() === String(currentUserId).toLowerCase());
   const isOwnerFlag = Boolean(
     (company?.viewer_role_data as any)?.is_owner ||
-    (params.activeProfile && String(params.activeProfile.id) === String(companyId) && (params.activeProfile as any)?.viewer_role_data?.is_owner)
+    (params.activeProfile && String(params.activeProfile.id).toLowerCase() === String(companyId).toLowerCase() && (params.activeProfile as any)?.viewer_role_data?.is_owner)
   );
   const roleName = String(
     (company?.viewer_role_data as any)?.name ||
-    (params.activeProfile && String(params.activeProfile.id) === String(companyId) ? (params.activeProfile as any)?.viewer_role_data?.name : '') ||
+    (params.activeProfile && String(params.activeProfile.id).toLowerCase() === String(companyId).toLowerCase() ? (params.activeProfile as any)?.viewer_role_data?.name : '') ||
     (company as any)?.role ||
     ''
   ).toUpperCase();
@@ -87,7 +88,7 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
   const rawPerms =
     params.explicitPermissions ??
     company?.viewer_role_data?.permissions ??
-    (params.activeProfile && String(params.activeProfile.id) === String(companyId) ? (params.activeProfile as any)?.viewer_role_data?.permissions : null) ??
+    (params.activeProfile && String(params.activeProfile.id).toLowerCase() === String(companyId).toLowerCase() ? (params.activeProfile as any)?.viewer_role_data?.permissions : null) ??
     null;
 
   if (!rawPerms || rawPerms.length === 0) return 'outsider'; // not a member of this company
@@ -99,7 +100,12 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
   if (!currentUserId) return 'internal';
 
   // Only the original post author (who created this post) gets owner rights (edit/delete)
-  const isAuthor = Boolean(createdByUserId && String(createdByUserId) === String(currentUserId));
+  // Ensure createdByUserId is a human user ID (not matching companyId)
+  const isAuthor = Boolean(
+    createdByUserId &&
+    String(companyId).toLowerCase() !== String(createdByUserId).toLowerCase() &&
+    String(createdByUserId).toLowerCase() === String(currentUserId).toLowerCase()
+  );
   if (isAuthor) {
     return 'owner';
   }

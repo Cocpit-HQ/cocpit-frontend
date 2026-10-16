@@ -7,9 +7,16 @@ export const searchUsers = async (query: string): Promise<SearchedUser[]> => {
   return response.data;
 };
 
-export const getUserById = async (id: string, sourcePostId?: string): Promise<PublicUserProfileResponse> => {
+export const getUserById = async (
+  id: string,
+  sourcePostId?: string,
+  options?: { skipAudit?: boolean }
+): Promise<PublicUserProfileResponse> => {
+  const params: Record<string, any> = {};
+  if (sourcePostId) params.sourcePostId = sourcePostId;
+  if (options?.skipAudit) params.skipAudit = 'true';
   const response = await api.get(`/users/${id}`, {
-    params: sourcePostId ? { sourcePostId } : undefined,
+    params: Object.keys(params).length > 0 ? params : undefined,
   });
   return response.data;
 };

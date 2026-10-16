@@ -85,7 +85,7 @@ export default function HashtagPage() {
                     {...post}
                     menuAccess={getPostMenuAccess({
                       isCompanyPost: post.isCompanyPost,
-                      companyId: (post as any).author_org_id,
+                      companyId: (post as any).author_org_id || post.authorId,
                       createdByUserId: (post as any).createdByUserId,
                       currentUserId: session?.user?.id,
                       userCompanies,

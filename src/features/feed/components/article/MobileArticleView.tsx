@@ -49,6 +49,7 @@ export function MobileArticleView(props: ArticleUIProps) {
     setIsLikesModalOpen,
     handleRepostWithThoughts,
     contentRef,
+    menuAccess,
   } = props;
 
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = React.useState(false);
@@ -135,14 +136,16 @@ export function MobileArticleView(props: ArticleUIProps) {
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={handleMenuClick}
-              className="flex h-[32px] w-[32px] items-center justify-center rounded-full hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors border-none bg-transparent"
-              aria-label="More options"
-            >
-              <MoreHorizontal className="w-[20px] h-[20px]" />
-            </button>
+            {menuAccess !== 'internal' && (
+              <button
+                type="button"
+                onClick={handleMenuClick}
+                className="flex h-[32px] w-[32px] items-center justify-center rounded-full hover:bg-[var(--ds-surface-2)] text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition-colors border-none bg-transparent"
+                aria-label="More options"
+              >
+                <MoreHorizontal className="w-[20px] h-[20px]" />
+              </button>
+            )}
           </div>
         </div>
 

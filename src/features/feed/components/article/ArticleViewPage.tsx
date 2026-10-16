@@ -94,18 +94,14 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   const { removePostFromFeed } = useFeed(false);
 
   // Author identity checks
-  const isCompanyPost = post.isCompanyPost || false;
+  const isCompanyPost = Boolean(post.isCompanyPost || post.author_org_id || (post as any).companyId);
   const authorUserId = isCompanyPost
     ? (post.author_org_id || (post as any).companyId)?.toString()
     : (post.authorId || (post as any).author_id)?.toString();
 
-  const isMe = activeProfile?.type === 'COMPANY'
-    ? !!(isCompanyPost && activeProfile?.id?.toString() === authorUserId)
-    : (currentUserId === authorUserId);
-
   const menuAccess = getPostMenuAccess({
-    isCompanyPost: post.isCompanyPost,
-    companyId: post.author_org_id,
+    isCompanyPost: isCompanyPost,
+    companyId: post.author_org_id || (post as any).companyId,
     createdByUserId: post.createdByUserId,
     currentUserId: session?.user?.id,
     userCompanies,
@@ -113,6 +109,12 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   });
 
   const canManage = menuAccess === 'owner';
+
+  const isMe = isCompanyPost
+    ? canManage
+    : (activeProfile?.type !== 'COMPANY' && Boolean(currentUserId && authorUserId && String(currentUserId).toLowerCase() === String(authorUserId).toLowerCase()));
+
+  const isOwnerOrInternal = isMe || menuAccess === 'owner' || menuAccess === 'internal';
 
   // Follow / Unfollow logic
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
@@ -386,6 +388,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
     isCompany,
     session,
     activeProfileId: activeProfile?.id,
+    menuAccess,
     likeCount,
     isLiked,
     commentCount,
@@ -517,7 +520,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
                 </Link>
 
                 {/* Follow / Following Button */}
-                {!isMe && authorUserId && (
+                {!isOwnerOrInternal && authorUserId && (
                   <button
                     type="button"
                     onClick={handleToggleFollow}
@@ -547,7 +550,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
               <div className="w-full flex-1 min-h-0 flex flex-col">
                 <CommentSection
                   postId={id}
-                  isPostOwner={isMe}
+                  isPostOwner={canManage}
                   incrementCommentCount={handleIncrementCommentCount}
                   decrementCommentCount={handleDecrementCommentCount}
                   isSidebar={true}
