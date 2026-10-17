@@ -223,7 +223,7 @@ export const CocpitUserCoverImageEditor: React.FC<
 
     // Drag-to-pan handlers
     const handlePointerDown = (clientX: number, clientY: number) => {
-      if (!previewUrl) return;
+      if (!previewUrl || !isCropMode) return;
       lastPointer.current = { x: clientX, y: clientY };
       setIsDragging(true);
     };
@@ -284,7 +284,7 @@ export const CocpitUserCoverImageEditor: React.FC<
 
     // Wheel to zoom
     const handleWheel = (e: React.WheelEvent) => {
-      if (!previewUrl) return;
+      if (!previewUrl || !isCropMode) return;
       e.preventDefault();
       const delta = e.deltaY < 0 ? 5 : -5;
       setZoom((prev) => Math.min(Math.max(prev + delta, 0), 150));
@@ -517,12 +517,18 @@ export const CocpitUserCoverImageEditor: React.FC<
                         src={previewUrl}
                         alt="Banner Preview"
                         draggable={false}
-                        className="absolute max-w-none origin-center select-none pointer-events-none transition-transform duration-75"
+                        className={cn(
+                          "absolute max-w-none origin-center select-none pointer-events-none",
+                          isDragging ? "transition-none" : "transition-transform duration-75"
+                        )}
                         style={{
+                          position: "absolute",
                           width: `${geometry.imgWidth}px`,
                           height: `${geometry.imgHeight}px`,
                           maxWidth: "none",
                           maxHeight: "none",
+                          left: `calc(50% - ${geometry.imgWidth / 2}px)`,
+                          top: `calc(50% - ${geometry.imgHeight / 2}px)`,
                           transform: `translate(${positionX}px, ${positionY}px) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1
                             }) scaleY(${flipV ? -1 : 1})`,
                           transformOrigin: "center center",

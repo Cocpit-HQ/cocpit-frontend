@@ -551,20 +551,37 @@ export function ProfileEditScreen({
     e.target.value = "";
   };
 
-  const handleAvatarUpload = (file: File) => {
-    setStagedAvatarFile(file);
-    setStagedAvatarPreview(URL.createObjectURL(file));
-    setIsAvatarDeleted(false);
-    setIsEditAvatarOpen(false);
-    setAvatarInitialFile(null);
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      const avatarFd = new FormData();
+      avatarFd.append("avatar", file);
+      await avatarMutations.upload.mutateAsync(avatarFd);
+      setStagedAvatarFile(null);
+      setIsAvatarDeleted(false);
+      setIsEditAvatarOpen(false);
+      setAvatarInitialFile(null);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast.success("Profile photo updated successfully.");
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      toast.error("Failed to upload profile photo");
+    }
   };
 
-  const handleAvatarDelete = () => {
-    setStagedAvatarFile(null);
-    setStagedAvatarPreview(null);
-    setIsAvatarDeleted(true);
-    setIsEditAvatarOpen(false);
-    setAvatarInitialFile(null);
+  const handleAvatarDelete = async () => {
+    try {
+      await avatarMutations.remove.mutateAsync();
+      setStagedAvatarFile(null);
+      setStagedAvatarPreview(null);
+      setIsAvatarDeleted(false);
+      setIsEditAvatarOpen(false);
+      setAvatarInitialFile(null);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast.success("Profile photo removed.");
+    } catch (err) {
+      console.error("Avatar delete error:", err);
+      toast.error("Failed to delete profile photo");
+    }
   };
 
   // Cover handlers
@@ -587,26 +604,37 @@ export function ProfileEditScreen({
   };
 
   const handleCoverUpload = async (fd: FormData): Promise<{ coverUrl: string }> => {
-    const file = fd.get("cover") as File;
-    if (file) {
-      setStagedCoverFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setStagedCoverPreview(previewUrl);
+    try {
+      const res = await uploadCoverPhoto(fd);
+      const newUrl = res?.coverUrl || "";
+      setStagedCoverPreview(newUrl);
+      setStagedCoverFile(null);
       setIsCoverDeleted(false);
       setIsEditCoverOpen(false);
       setCoverInitialFile(null);
-      return { coverUrl: previewUrl };
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      return { coverUrl: newUrl };
+    } catch (err) {
+      console.error("Cover upload error:", err);
+      toast.error("Failed to upload cover photo");
+      setIsEditCoverOpen(false);
+      return { coverUrl: "" };
     }
-    setIsEditCoverOpen(false);
-    return { coverUrl: "" };
   };
 
   const handleCoverDelete = async () => {
-    setStagedCoverFile(null);
-    setStagedCoverPreview(null);
-    setIsCoverDeleted(true);
-    setIsEditCoverOpen(false);
-    setCoverInitialFile(null);
+    try {
+      await deleteCoverPhoto();
+      setStagedCoverFile(null);
+      setStagedCoverPreview(null);
+      setIsCoverDeleted(false);
+      setIsEditCoverOpen(false);
+      setCoverInitialFile(null);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+    } catch (err) {
+      console.error("Cover delete error:", err);
+      toast.error("Failed to delete cover photo");
+    }
   };
 
   // Skills Save handler
