@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { BusinessProfileData } from "../../types/business-profile.types";
-import { getSocialPlatformMeta, DEFAULT_SOCIAL_PLATFORM_ICON } from "../../constants/socialPlatforms";
-import { Icon } from "@iconify/react";
+import { Icon, SVG_ICONS } from "@/components/icons";
 import { useQuery } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
 import InteractiveLocationMap from "@/features/company-onboarding/components/InteractiveLocationMap";
@@ -120,7 +119,7 @@ export default function AboutTab({ data }: AboutTabProps) {
     return (
       <div className="w-full max-w-[800px] px-4 sm:pl-5 sm:pr-0 py-16 flex flex-col items-center justify-center gap-3 font-['DM_Sans'] text-center">
         <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
-          <Icon icon="lucide:info" className="w-6 h-6 text-ds-text-secondary" />
+          <Icon name="info" size={24} className="w-6 h-6 text-ds-text-secondary" />
         </div>
         <div className="text-ds-text-primary text-base font-semibold leading-6">
           No about information provided yet
@@ -324,23 +323,28 @@ export default function AboutTab({ data }: AboutTabProps) {
               <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                 Social links
               </span>
-              <div className="w-full max-w-[780px] h-5 flex flex-row items-center gap-4">
+              <div className="w-full max-w-[780px] h-5 inline-flex flex-row items-center gap-4">
                 {socialLinks.map((link: any, idx: number) => {
-                  const meta = getSocialPlatformMeta(link.platform);
-                  const iconName = meta.icon;
-                  const label = link.display_label || link.label || meta.label;
+                  const rawPlatform = (link.platform || "website").toLowerCase().trim();
+                  const platform = rawPlatform === "twitter" ? "x" : rawPlatform;
+                  const iconName = platform in SVG_ICONS ? platform : "website";
+                  const label =
+                    link.display_label ||
+                    link.label ||
+                    (platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : "Website");
+                  const url = link.url?.startsWith("http") ? link.url : `https://${link.url}`;
 
                   return (
                     <a
                       key={idx}
-                      href={link.url?.startsWith("http") ? link.url : `https://${link.url}`}
+                      href={url}
                       target="_blank"
                       rel="noreferrer"
                       title={label}
                       aria-label={label}
-                      className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:text-ds-accent transition-colors"
+                      className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
                     >
-                      <Icon icon={iconName} className="w-5 h-5 shrink-0" />
+                      <Icon name={iconName as any} size={20} className="w-5 h-5" />
                     </a>
                   );
                 })}
