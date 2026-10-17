@@ -187,7 +187,7 @@ export default function FeaturedPostsSection({
 
   return (
     <>
-      <div className="w-full max-w-[800px] px-5 flex flex-col items-center gap-5">
+      <div className="w-full max-w-[800px] px-4 sm:px-5 flex flex-col items-center gap-5">
         {/* Header */}
         <div className="self-stretch w-full flex justify-between items-center h-6">
           <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
@@ -221,8 +221,15 @@ export default function FeaturedPostsSection({
                 <button
                   type="button"
                   onClick={() => {
-                    sessionStorage.setItem("scroll-/feed", "0");
-                    router.push("/feed");
+                    if (typeof window !== "undefined") {
+                      sessionStorage.setItem("scroll-/feed", "0");
+                      sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                      sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                      if (window.innerWidth < 768) {
+                        useUIStore.getState().setActiveModal("create-post");
+                      }
+                      router.push("/feed");
+                    }
                   }}
                   className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
                 >

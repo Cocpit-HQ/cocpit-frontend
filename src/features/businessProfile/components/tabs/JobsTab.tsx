@@ -130,23 +130,23 @@ const JobCardItem = React.memo(function JobCardItem({
         )}
       </div>
 
-      {/* ── Content row: content-driven height, naturally wraps on mobile ── */}
-      <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-0">
+      {/* ── Content row: exact 2-column horizontal layout matching Figma ── */}
+      <div className="w-full inline-flex justify-between items-center gap-4 p-0">
         {/* Left Column: Title, Company, Location, Posted time */}
-        <div className="flex flex-col items-start gap-3 min-w-0 flex-1">
+        <div className="inline-flex flex-col justify-start items-start gap-1 min-w-0 flex-1">
           {/* Title & Company */}
           <div className="flex flex-col items-start gap-1 min-w-0 max-w-full">
-            <h3 className="text-base font-medium leading-6 text-ds-text-primary truncate max-w-full">
+            <h3 className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-primary truncate max-w-full">
               {job.title}
             </h3>
-            <span className="text-sm font-normal leading-5 text-ds-text-secondary truncate max-w-full">
+            <span className="text-sm font-normal font-['DM_Sans'] leading-5 text-ds-text-secondary truncate max-w-full">
               {job.company}
             </span>
           </div>
 
           {/* Location row */}
           {(job.workMode || job.location) && (
-            <div className="flex flex-row items-center gap-x-2 gap-y-1 min-h-[20px] flex-wrap max-w-full">
+            <div className="inline-flex items-center gap-1.5 min-h-[20px] flex-wrap max-w-full">
               {/* Location Icon */}
               <svg
                 width="16"
@@ -162,15 +162,15 @@ const JobCardItem = React.memo(function JobCardItem({
                 />
               </svg>
               {job.workMode && (
-                <span className="text-sm font-normal leading-5 text-ds-text-secondary whitespace-nowrap">
+                <span className="text-sm font-normal font-['DM_Sans'] leading-5 text-ds-text-secondary whitespace-nowrap">
                   {job.workMode}
                 </span>
               )}
               {job.workMode && job.location && (
-                <span className="w-1 h-1 rounded-full bg-ds-text-muted shrink-0" />
+                <span className="w-1 h-1 rounded-full bg-stone-500 shrink-0" />
               )}
               {job.location && (
-                <span className="text-sm font-normal leading-5 text-ds-text-secondary truncate max-w-[200px]">
+                <span className="text-sm font-normal font-['DM_Sans'] leading-5 text-ds-text-secondary truncate max-w-[140px] sm:max-w-[200px]">
                   {job.location}
                 </span>
               )}
@@ -179,37 +179,33 @@ const JobCardItem = React.memo(function JobCardItem({
 
           {/* Posted time */}
           {job.posted && (
-            <span className="text-sm font-normal leading-5 text-ds-text-secondary">
+            <span className="text-sm font-normal font-['DM_Sans'] leading-5 text-ds-text-secondary">
               {job.posted}
             </span>
           )}
         </div>
 
         {/* Right Column: Salary, Experience, and Action CTA */}
-        <div className="w-full sm:w-auto flex flex-row sm:flex-col justify-between sm:justify-center items-center sm:items-end gap-2 sm:gap-2 pt-2.5 sm:pt-0 border-t border-ds-border/40 sm:border-t-0 shrink-0">
-          {(job.salary || job.experience) && (
-            <div className="flex flex-col items-start sm:items-end">
-              {job.salary && (
-                <span className="text-[18px] font-bold leading-6 text-ds-text-primary whitespace-nowrap">
-                  {job.salary}
-                </span>
-              )}
-              {job.experience && (
-                <span className="text-sm sm:text-base font-medium leading-5 sm:leading-6 text-ds-text-primary whitespace-nowrap">
-                  {job.experience}
-                </span>
-              )}
+        <div className="inline-flex flex-col justify-center items-end gap-1 shrink-0">
+          {job.salary && (
+            <div className="text-right text-ds-text-primary text-base sm:text-lg font-semibold font-['DM_Sans'] leading-6 whitespace-nowrap">
+              {job.salary}
+            </div>
+          )}
+          {job.experience && (
+            <div className="text-right text-ds-text-primary text-sm sm:text-base font-medium font-['DM_Sans'] leading-5 sm:leading-6 whitespace-nowrap">
+              {job.experience}
             </div>
           )}
 
-          {/* Primary CTA Button: Standard 36px control height, 6px 12px padding, pill rounded */}
+          {/* Action CTA Button */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onNavigate(job.id);
             }}
-            className="h-[36px] px-3.5 py-1.5 bg-ds-accent hover:opacity-90 active:scale-[0.98] text-white rounded-full font-medium text-sm sm:text-base leading-6 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent shrink-0 ml-auto sm:ml-0"
+            className="px-3 py-1.5 bg-ds-accent hover:opacity-90 active:scale-[0.98] text-white rounded-[100px] font-medium font-['DM_Sans'] text-sm sm:text-base leading-6 transition-all cursor-pointer inline-flex justify-center items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent mt-0.5"
           >
             {isOwner ? "Job details" : "Apply now"}
           </button>

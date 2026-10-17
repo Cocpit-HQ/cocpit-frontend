@@ -96,7 +96,7 @@ export function BusinessProfileEditPage() {
       <button
         type="button"
         onClick={handleClose}
-        className="fixed top-8 right-8 md:top-10 md:right-10 z-[70] p-2 text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer focus:outline-none"
+        className="hidden sm:block fixed top-8 right-8 md:top-10 md:right-10 z-[70] p-2 text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer focus:outline-none"
         aria-label="Close edit mode"
       >
         <X className="w-5 h-5 text-ds-text-primary" />
@@ -105,13 +105,13 @@ export function BusinessProfileEditPage() {
       {/* Main Centered Container (Profile: 800px, About: 640px matching Figma) */}
       <div
         className={cn(
-          "w-full mx-auto px-4 pt-[60px] pb-24 flex flex-col items-center gap-5 relative transition-[max-width] duration-150",
+          "w-full mx-auto px-4 pt-4 sm:pt-[60px] pb-6 sm:pb-8 flex flex-col items-center gap-4 sm:gap-5 relative transition-[max-width] duration-150",
           activeTab === "about" ? "max-w-[640px]" : "max-w-[800px]"
         )}
       >
         
-        {/* Header Breadcrumb */}
-        <div className="self-stretch inline-flex justify-start items-center gap-2">
+        {/* Header Breadcrumb (Desktop) */}
+        <div className="hidden sm:inline-flex self-stretch justify-start items-center gap-2">
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -132,6 +132,34 @@ export function BusinessProfileEditPage() {
               {activeTab === "profile" ? "Edit profile" : "Edit about"}
             </span>
           </div>
+        </div>
+
+        {/* Mobile Header Bar (Matching Figma Mobile Frame: Logo, Name, Close X) */}
+        <div className="sm:hidden self-stretch h-8 flex justify-between items-center">
+          <div className="flex justify-start items-center gap-2 min-w-0">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={orgName}
+                className="size-8 rounded-lg object-cover bg-[var(--ds-surface-1)] border border-[var(--ds-border)] shrink-0"
+              />
+            ) : (
+              <div className="size-8 rounded-lg bg-[var(--ds-surface-2)] border border-[var(--ds-border)] flex items-center justify-center shrink-0">
+                <BusinessBuildingIcon className="w-4 h-4 text-[var(--ds-text-primary)]" size={16} />
+              </div>
+            )}
+            <span className="text-[var(--ds-text-primary)] text-base font-normal font-['DM_Sans'] leading-6 truncate">
+              {orgName}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-1 -mr-1 text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer focus:outline-none shrink-0"
+            aria-label="Close edit mode"
+          >
+            <X className="w-5 h-5 text-ds-text-primary" />
+          </button>
         </div>
 
         {/* Tab Switcher (Matching Figma Frame 2609634) */}
@@ -188,6 +216,22 @@ export function BusinessProfileEditPage() {
             ) : (
               <div className="self-stretch h-[2px] bg-transparent" />
             )}
+          </button>
+
+          {/* Verification Tab (Mobile only to match Figma mobile, hidden on desktop) */}
+          <button
+            type="button"
+            onClick={() => router.push(`/organization/${rawSlug}/verify`)}
+            className="sm:hidden inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
+          >
+            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
+              <div className="inline-flex justify-center items-center gap-1">
+                <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                  Verification
+                </span>
+              </div>
+            </div>
+            <div className="self-stretch h-[2px] bg-transparent" />
           </button>
         </div>
 

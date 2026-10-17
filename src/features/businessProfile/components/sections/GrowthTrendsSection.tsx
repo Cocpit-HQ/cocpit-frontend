@@ -15,9 +15,10 @@ interface GrowthTrendsSectionProps {
 export default function GrowthTrendsSection({
   growthPercentage,
   employeeGrowth,
-  subtitle = "Hiring velocity over the last 6 months",
+  subtitle,
 }: GrowthTrendsSectionProps) {
   const gradientId = useId();
+  const displaySubtitle = subtitle || `Hiring velocity over the last ${employeeGrowth?.trend?.length || (new Date().getMonth() + 1)} months`;
 
   // Check if real growth data exists from backend
   const hasGrowthData = Boolean(
@@ -200,24 +201,24 @@ export default function GrowthTrendsSection({
               Growth trends
             </h2>
             <p className="self-stretch text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-              {subtitle}
+              {displaySubtitle}
             </p>
           </div>
 
           <div
-            className={`inline-flex justify-end items-center gap-2 ${
+            className={`inline-flex justify-end items-center gap-1.5 sm:gap-2 ${
               isNegative ? "text-ds-error" : "text-ds-success"
             }`}
           >
             <ArrowUpwardAltIcon
-              size={24}
-              className={`w-6 h-6 shrink-0 transition-transform ${
+              size={20}
+              className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 transition-transform ${
                 isNegative ? "rotate-180 text-ds-error" : "text-ds-success"
               }`}
               aria-hidden="true"
             />
             <span
-              className={`text-[32px] font-bold font-['DM_Sans'] leading-[40px] shrink-0 ${
+              className={`text-base sm:text-[32px] font-bold font-['DM_Sans'] leading-6 sm:leading-[40px] shrink-0 ${
                 isNegative ? "text-ds-error" : "text-ds-success"
               }`}
             >

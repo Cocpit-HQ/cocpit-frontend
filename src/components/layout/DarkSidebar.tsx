@@ -66,7 +66,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         {
           title: 'Work',
           items: [
-            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: isFeatureActive('enableJobsBoard'), disabled: !(checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS')) },
+            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: true },
             { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
           ]
         },
@@ -101,7 +101,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       {
         title: 'Work',
         items: [
-          { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: isFeatureActive('enableJobsBoard') },
+          { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: true },
           { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
         ]
       },

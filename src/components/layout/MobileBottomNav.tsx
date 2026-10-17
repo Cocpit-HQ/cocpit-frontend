@@ -33,8 +33,8 @@ export function MobileBottomNav() {
     if (route === "/feed" && normalizedPath === "/") return true;
 
     // Exact match for organization profile to avoid highlighting on settings/events
-    if (route.startsWith('/organization/') && !route.endsWith('/settings') && !route.endsWith('/events')) {
-      return normalizedPath === route;
+    if (route.startsWith('/organization/') && !route.endsWith('/settings') && !route.endsWith('/events') && !route.endsWith('/analytics')) {
+      return normalizedPath.startsWith(route);
     }
 
     // Profile special case: highlight when viewing any profile page
@@ -206,8 +206,18 @@ export function MobileBottomNav() {
 
         {/* Profile */}
         {isFeatureActive('enableProfileTab') && (() => {
-          const isProfActive = isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`));
-          const profileHref = activeProfile?.type === "COMPANY" ? `/organization/${activeProfile.slug}` : "/profile";
+          const isProfActive = Boolean(
+            pathname === "/profile" ||
+            pathname === "/profile/posts" ||
+            pathname?.startsWith("/profile/edit") ||
+            ((isCompany || activeProfile?.type === "COMPANY") &&
+              activeProfile?.slug &&
+              pathname?.startsWith(`/organization/${activeProfile.slug}`) &&
+              !pathname?.endsWith("/settings") &&
+              !pathname?.endsWith("/events") &&
+              !pathname?.endsWith("/analytics"))
+          );
+          const profileHref = activeProfile?.type === "COMPANY" && activeProfile?.slug ? `/organization/${activeProfile.slug}` : "/profile";
 
           const handleProfileClick = (e: React.MouseEvent) => {
             clearLongPress();

@@ -334,13 +334,13 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
 
         <div className="flex flex-col justify-between items-start min-w-0 flex-1 h-9">
           <span
-            className="text-left text-[var(--ds-text-primary)] ds-text-body-2 truncate w-full"
+            className="text-left text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 truncate w-full"
             title={emp.name}
           >
             {emp.name}
           </span>
           <span
-            className="text-left text-[var(--ds-text-secondary)] ds-text-meta truncate w-full"
+            className="text-left text-[var(--ds-text-secondary)] text-[10px] font-normal font-['DM_Sans'] leading-3 truncate w-full line-clamp-1"
             title={emp.role}
           >
             {emp.role || "Member"}
@@ -356,7 +356,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
             onClick={() => handleFollow(emp)}
             disabled={followLoadingId === emp.id}
             aria-label={`Follow ${emp.name}`}
-            className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2 transition-all cursor-pointer text-white ds-text-body-1 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+            className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-white text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             {followLoadingId === emp.id ? "..." : "Follow"}
           </button>
@@ -368,7 +368,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
             onClick={() => setUnfollowConfirmEmp(emp)}
             disabled={followLoadingId === emp.id}
             aria-label={`Unfollow ${emp.name}`}
-            className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2 transition-all cursor-pointer text-[var(--ds-text-primary)] ds-text-body-1 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+            className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             {followLoadingId === emp.id ? "..." : "Unfollow"}
           </button>
@@ -380,7 +380,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
             onClick={() => handleConnect(emp)}
             disabled={connectingId === emp.id}
             aria-label={`Connect with ${emp.name}`}
-            className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2 transition-all cursor-pointer text-white ds-text-body-1 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+            className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-white text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             {connectingId === emp.id ? "..." : "Connect"}
           </button>
@@ -392,7 +392,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
             onClick={() => handleWithdraw(emp)}
             disabled={withdrawingId === emp.id}
             aria-label={`Withdraw connection request to ${emp.name}`}
-            className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2 transition-all cursor-pointer text-[var(--ds-text-primary)] ds-text-body-1 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+            className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
             {withdrawingId === emp.id ? "..." : "Withdraw"}
           </button>
@@ -471,10 +471,10 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
     <div className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 flex flex-col justify-start items-start gap-4 pb-12 font-['DM_Sans']">
       {/* Title & Subtitle */}
       <div className="self-stretch flex flex-col justify-start items-start gap-1">
-        <h2 className="text-left text-[var(--ds-text-primary)] ds-text-body-1">
+        <h2 className="text-left text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6">
           {isEdu ? "Students at this institute" : "People at this company"}
         </h2>
-        <p className="text-left text-[var(--ds-text-secondary)] ds-text-small">
+        <p className="text-left text-[var(--ds-text-secondary)] text-xs font-normal font-['DM_Sans'] leading-4">
           {isEdu ? "find and explore alumni and current students" : "find and explore employees"}
         </p>
       </div>
@@ -490,22 +490,22 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
               aria-label="Search employees"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none outline-none text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] ds-text-body flex-1 min-w-0"
+              className="bg-transparent border-none outline-none text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-muted)] text-base font-normal font-['DM_Sans'] leading-6 flex-1 min-w-0"
             />
             <Search className="size-5 text-[var(--ds-text-primary)] shrink-0" />
           </div>
 
-          {/* Count Badge */}
-          <div className="h-8 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-3xl flex justify-end sm:justify-center items-center gap-2.5 shrink-0 self-end sm:self-auto">
+          {/* Count Badge (Hidden on mobile to match Figma, visible on desktop) */}
+          <div className="hidden sm:flex h-8 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-3xl justify-end sm:justify-center items-center gap-2.5 shrink-0 self-end sm:self-auto">
             <span className="text-center text-[var(--ds-text-secondary)] font-poppins text-sm leading-4">
               {isEdu ? `${totalCount} Alumni` : `${totalCount} Associates`}
             </span>
           </div>
         </div>
 
-        {/* Distribution Breakdown Cards */}
+        {/* Distribution Breakdown Cards (Hidden on mobile to match Figma, visible on desktop) */}
         {distributions.length > 0 && (
-          <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          <div className="self-stretch hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             {distributions.map((dist: any, idx: number) => (
               <div
                 key={idx}

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { BusinessProfileData } from "../../types/business-profile.types";
 import { getSocialPlatformMeta, DEFAULT_SOCIAL_PLATFORM_ICON } from "../../constants/socialPlatforms";
 import { Icon } from "@iconify/react";
@@ -24,6 +24,7 @@ interface AboutTabProps {
 }
 
 export default function AboutTab({ data }: AboutTabProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const orgSlug = data.slug || data.id;
   const { data: aboutData, isLoading } = useQuery({
     queryKey: ["orgAbout", orgSlug],
@@ -126,33 +127,51 @@ export default function AboutTab({ data }: AboutTabProps) {
     );
   }
 
+  // Description truncation threshold for mobile "See more"
+  const isLongDescription = description.length > 180;
+
   return (
-    <div className="w-full max-w-[800px] px-5 flex flex-col items-start gap-5 pb-16 font-['DM_Sans']">
+    <div className="w-full max-w-[800px] px-4 sm:px-5 flex flex-col items-start gap-4 sm:gap-5 pb-16 font-['DM_Sans']">
       {/* ══════════════════════════════════════════════════════
           PART 1: Description & Slogan
           ══════════════════════════════════════════════════════ */}
       {hasPart1 && (
-        <div className="w-full max-w-[780px] flex flex-col items-start gap-5">
+        <div className="w-full max-w-[780px] flex flex-col items-start gap-4 sm:gap-5">
           {/* Description */}
           {description && (
-            <div className="w-full max-w-[780px] flex flex-col items-start gap-3">
+            <div className="w-full max-w-[780px] flex flex-col items-start gap-2 sm:gap-3">
               <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
                 Description
               </h2>
-              <p className="w-full max-w-[780px] text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 whitespace-pre-line break-words [overflow-wrap:anywhere]">
-                {description}
-              </p>
+              <div className="w-full max-w-[780px]">
+                <p
+                  className={`w-full max-w-[780px] text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 whitespace-pre-line break-words [overflow-wrap:anywhere] ${
+                    !isDescriptionExpanded && isLongDescription ? "line-clamp-4 sm:line-clamp-none" : ""
+                  }`}
+                >
+                  {description}
+                </p>
+                {isLongDescription && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="sm:hidden text-ds-accent text-sm font-normal font-['DM_Sans'] leading-5 mt-0.5 hover:underline cursor-pointer bg-transparent border-0 p-0"
+                  >
+                    {isDescriptionExpanded ? "See less" : "See more"}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
           {/* Slogan */}
           {slogan && (
-            <div className="w-full max-w-[780px] flex flex-col items-start gap-3">
+            <div className="w-full max-w-[780px] flex flex-col items-start gap-2 sm:gap-3">
               <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
                 Slogan
               </h2>
               <div className="w-full max-w-[780px] min-h-[40px] py-2 pl-3 border-l-4 border-ds-accent flex flex-col justify-center">
-                <p className="text-ds-text-secondary text-base font-normal italic font-['Poppins'] leading-6 break-words [overflow-wrap:anywhere]">
+                <p className="text-ds-text-secondary text-sm sm:text-base font-normal sm:italic font-['DM_Sans'] sm:font-['Poppins'] leading-6 break-words [overflow-wrap:anywhere]">
                   &quot;{slogan}&quot;
                 </p>
               </div>
@@ -165,10 +184,10 @@ export default function AboutTab({ data }: AboutTabProps) {
           PART 2: Specialties, Details Grid, Social, Offices
           ══════════════════════════════════════════════════════ */}
       {hasPart2 && (
-        <div className="w-full max-w-[780px] flex flex-col items-start gap-5">
+        <div className="w-full max-w-[780px] flex flex-col items-start gap-4 sm:gap-5">
           {/* Specialties */}
           {hasSpecialties && (
-            <div className="w-full max-w-[780px] flex flex-col justify-center items-start py-2 gap-2.5">
+            <div className="w-full max-w-[780px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
               <span className="text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
                 Specialties
               </span>
@@ -182,7 +201,7 @@ export default function AboutTab({ data }: AboutTabProps) {
           {hasRow1 && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
               {websiteUrl && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-2 gap-2.5">
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Website
                   </span>
@@ -192,13 +211,13 @@ export default function AboutTab({ data }: AboutTabProps) {
                     rel="noreferrer"
                     className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full hover:no-underline hover:opacity-85 transition-opacity"
                   >
-                    {formatDisplayUrl(websiteUrl)}
+                    {websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`}
                   </a>
                 </div>
               )}
 
               {phoneNumber && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-2 gap-2.5">
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Phone number
                   </span>
@@ -217,7 +236,7 @@ export default function AboutTab({ data }: AboutTabProps) {
           {hasRow2 && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
               {industry && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-2 gap-2.5">
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Industry
                   </span>
@@ -228,7 +247,7 @@ export default function AboutTab({ data }: AboutTabProps) {
               )}
 
               {location && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-2 gap-2.5">
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Headquarter
                   </span>
@@ -244,7 +263,7 @@ export default function AboutTab({ data }: AboutTabProps) {
           {hasRow3 && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
               {employeeCount && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-2 gap-2.5">
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Organization size
                   </span>
@@ -255,7 +274,7 @@ export default function AboutTab({ data }: AboutTabProps) {
               )}
 
               {founded && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-2 gap-2.5">
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Founded
                   </span>
@@ -269,7 +288,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
           {/* Social links */}
           {hasSocial && (
-            <div className="w-full max-w-[780px] flex flex-col items-start gap-3">
+            <div className="w-full max-w-[780px] flex flex-col items-start gap-2.5 sm:gap-3">
               <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                 Social links
               </span>
@@ -299,7 +318,7 @@ export default function AboutTab({ data }: AboutTabProps) {
 
           {/* Offices */}
           {hasOffices && (
-            <div className="w-full max-w-[780px] flex flex-col items-start py-2 gap-2">
+            <div className="w-full max-w-[780px] flex flex-col items-start py-1 sm:py-2 gap-2">
               <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
                 Offices
               </h2>
@@ -311,8 +330,8 @@ export default function AboutTab({ data }: AboutTabProps) {
                   [office.address, office.city, office.country].filter(Boolean).join(", ");
 
                 return (
-                  <div key={office.id || idx} className="w-full flex flex-col items-start gap-3">
-                    <div className="w-full max-w-[300px] flex flex-col justify-center items-start py-2 gap-2">
+                  <div key={office.id || idx} className="w-full flex flex-col items-start gap-2 sm:gap-3">
+                    <div className="w-full max-w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2">
                       {cityLabel && (
                         <span className="text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
                           {cityLabel}{isHQ ? " HQ" : ""}
@@ -330,7 +349,7 @@ export default function AboutTab({ data }: AboutTabProps) {
                       latitude={office.latitude ? Number(office.latitude) : null}
                       longitude={office.longitude ? Number(office.longitude) : null}
                       readOnly={true}
-                      className="w-full max-w-[780px] h-[191px] rounded-2xl"
+                      className="w-full max-w-[780px] h-[88px] sm:h-[191px] rounded-2xl"
                     />
                   </div>
                 );

@@ -36,7 +36,7 @@ export default function AboutSection({ data }: AboutSectionProps) {
 
   return (
     /* AboutSection: width: 800px; padding: 0 20px; gap: 12px; */
-    <div className="w-full max-w-[800px] px-5 flex flex-col justify-start items-start gap-3 min-w-0">
+    <div className="w-full max-w-[800px] px-4 sm:px-5 flex flex-col justify-start items-start gap-3 min-w-0">
       {/* About: 16px / 24px LH, Semibold 600, color #FFECE6 */}
       <h2 className="w-full text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
         About

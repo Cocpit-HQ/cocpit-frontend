@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessProfileService } from "../services/businessProfile.service";
 import { BusinessBuildingIcon, CalendarIcon, PdfFileIcon } from "@/components/icons";
 import { DarkCalendar } from "@/features/onboarding/components/DarkCalendar";
+import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 const MONTH_NAMES = [
@@ -230,20 +231,20 @@ export function BusinessVerificationPage() {
 
   const content = (
     <div className="fixed inset-0 z-[60] min-h-screen w-full bg-[var(--ds-bg)] text-[var(--ds-text-primary)] font-['DM_Sans'] flex flex-col items-center overflow-y-auto overflow-x-hidden scrollbar-hide select-text animate-in fade-in-90 duration-200">
-      {/* Top right close button */}
+      {/* Desktop Close button (hidden on mobile, fixed top-right on desktop) */}
       <button
         type="button"
         onClick={handleClose}
-        className="fixed top-8 right-8 md:top-10 md:right-10 z-[70] p-2 text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-full"
+        className="hidden sm:flex fixed top-8 right-8 md:top-10 md:right-10 z-[70] p-2 text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-full"
         aria-label="Close verification screen"
       >
         <X className="w-5 h-5 text-ds-text-primary" />
       </button>
 
-      {/* Main Container (matching Figma w-[640px] centered, top: 60px, gap: 20px, height: 272px) */}
-      <div className="w-full max-w-[640px] mx-auto px-4 pt-[60px] pb-24 flex flex-col items-center gap-5 relative">
-        {/* Header Breadcrumb (Frame 2609631 - 640px x 32px, gap: 8px) */}
-        <div className="self-stretch inline-flex justify-start items-center gap-2 h-8">
+      {/* Main Container: pt-4 sm:pt-[60px] pb-24 max-w-[640px] */}
+      <div className="w-full max-w-[640px] mx-auto px-4 pt-4 sm:pt-[60px] pb-24 flex flex-col items-center gap-5 relative">
+        {/* Desktop Header Breadcrumb (Frame 2609631 - hidden on mobile) */}
+        <div className="hidden sm:inline-flex self-stretch justify-start items-center gap-2 h-8">
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -258,7 +259,6 @@ export function BusinessVerificationPage() {
               />
             </div>
           )}
-          {/* Frame 2609632 */}
           <div className="flex items-center gap-2 flex-wrap h-6">
             <span className="text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6">
               {orgName}
@@ -270,12 +270,87 @@ export function BusinessVerificationPage() {
           </div>
         </div>
 
+        {/* Mobile Header Bar (Matching Figma Mobile Frame: Logo, Name, Close X) */}
+        <div className="sm:hidden self-stretch h-8 flex justify-between items-center">
+          <div className="flex justify-start items-center gap-2 min-w-0">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={orgName}
+                className="size-8 rounded-lg object-cover bg-ds-surface-1 border border-ds-border shrink-0"
+              />
+            ) : (
+              <div className="size-8 rounded-lg bg-ds-surface-2 border border-ds-border flex items-center justify-center shrink-0">
+                <BusinessBuildingIcon
+                  className="w-4 h-4 text-ds-text-primary"
+                  size={16}
+                />
+              </div>
+            )}
+            <span className="text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 truncate">
+              {orgName}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-1 -mr-1 text-ds-text-primary hover:opacity-75 transition-opacity cursor-pointer focus:outline-none shrink-0"
+            aria-label="Close verification screen"
+          >
+            <X className="w-5 h-5 text-ds-text-primary" />
+          </button>
+        </div>
+
+        {/* Mobile Tab Switcher (Profile, About, Verification) */}
+        <div className="sm:hidden self-stretch inline-flex justify-start items-center gap-3">
+          {/* Profile Tab */}
+          <button
+            type="button"
+            onClick={() => router.push(`/organization/${rawSlug}/edit?tab=profile`)}
+            className="inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
+          >
+            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
+              <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                Profile
+              </span>
+            </div>
+            <div className="self-stretch h-[2px] bg-transparent" />
+          </button>
+
+          {/* About Tab */}
+          <button
+            type="button"
+            onClick={() => router.push(`/organization/${rawSlug}/edit?tab=about`)}
+            className="inline-flex flex-col justify-start items-center cursor-pointer group focus:outline-none bg-transparent border-0 p-0"
+          >
+            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
+              <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                About
+              </span>
+            </div>
+            <div className="self-stretch h-[2px] bg-transparent" />
+          </button>
+
+          {/* Verification Tab (Active) */}
+          <button
+            type="button"
+            className="inline-flex flex-col justify-start items-center cursor-default focus:outline-none bg-transparent border-0 p-0"
+          >
+            <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
+              <span className="text-base font-medium font-['DM_Sans'] leading-6 text-ds-text-primary">
+                Verification
+              </span>
+            </div>
+            <div className="self-stretch h-[2px] bg-ds-accent" />
+          </button>
+        </div>
+
         {/* Conditional Screen View */}
         {showStatusView ? (
           /* Account Verification Status List (Matching Figma Design) */
-          <div className="self-stretch flex flex-col items-start animate-in fade-in-50 duration-150">
+          <div className="self-stretch flex flex-col items-start gap-4 animate-in fade-in-50 duration-150">
             {/* Identity Verified Row */}
-            <div className="self-stretch flex items-center justify-between py-3 border-b border-ds-border">
+            <div className="self-stretch flex items-center justify-between py-2 sm:py-3 border-b border-ds-border">
               <div className="flex flex-col items-start gap-0.5">
                 <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                   Account verification
@@ -284,13 +359,13 @@ export function BusinessVerificationPage() {
                   Your identity has been verified
                 </span>
               </div>
-              <span className="text-[#22C55E] text-sm font-medium font-['DM_Sans'] leading-5">
+              <span className="text-ds-success text-sm font-normal font-['DM_Sans'] leading-5 shrink-0">
                 Verified
               </span>
             </div>
 
             {/* Document Verification Row */}
-            <div className="self-stretch flex items-center justify-between py-3">
+            <div className="self-stretch flex items-center justify-between py-2 sm:py-3">
               <div className="flex flex-col items-start gap-0.5">
                 <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                   Account verification
@@ -299,17 +374,17 @@ export function BusinessVerificationPage() {
                   Document sent for verification
                 </span>
               </div>
-              <span className="text-ds-text-muted text-sm font-medium font-['DM_Sans'] leading-5">
+              <span className="text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 shrink-0">
                 Submitted
               </span>
             </div>
           </div>
         ) : (
-          /* Form View: Frame 2609638 / Frame 2609683 / Frame 2609684 / Frame 2609476 with gap: 20px */
+          /* Form View: Single Column on Mobile, 2-Column Row 1 on Desktop */
           <div className="self-stretch flex flex-col items-start gap-5">
-            {/* Row 1: Legal Name & Incorporation Date (Frame 2609683: 640px x 62px, gap: 40px) */}
+            {/* Row 1: Legal Name & Incorporation Date */}
             <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-5 sm:gap-10 sm:h-[62px]">
-              {/* Organization legal full name (300px x 62px, py-2, gap: 10px, border-b) */}
+              {/* Organization legal full name */}
               <div className="flex-1 w-full py-2 border-b border-ds-border focus-within:border-ds-accent transition-colors flex flex-col justify-center items-start gap-[10px]">
                 <label className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
                   Organization legal full name
@@ -323,7 +398,7 @@ export function BusinessVerificationPage() {
                 />
               </div>
 
-              {/* Incorporation date (300px x 62px, py-2, gap: 10px, border-b) */}
+              {/* Incorporation date */}
               <div
                 ref={datePickerRef}
                 className="flex-1 w-full py-2 border-b border-ds-border focus-within:border-ds-accent transition-colors flex flex-col justify-center items-start gap-[10px] relative"
@@ -344,10 +419,12 @@ export function BusinessVerificationPage() {
                   aria-label="Select incorporation date"
                 >
                   <span
-                    className={`text-sm font-normal font-['DM_Sans'] leading-5 ${displayDate
+                    className={cn(
+                      "text-sm font-normal font-['DM_Sans'] leading-5",
+                      displayDate
                         ? "text-ds-text-primary"
                         : "text-ds-text-muted"
-                      }`}
+                    )}
                   >
                     {displayDate || "Select"}
                   </span>
@@ -377,7 +454,7 @@ export function BusinessVerificationPage() {
               </div>
             </div>
 
-            {/* Row 2: Verification Document Upload (Frame 2609684: 640px x 82px, gap: 8px) */}
+            {/* Row 2: Verification Document Upload */}
             <div className="self-stretch flex flex-col justify-start items-end gap-2">
               <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-[10px] h-[58px]">
                 <label className="text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
@@ -393,20 +470,20 @@ export function BusinessVerificationPage() {
                         className="w-4 h-4 text-ds-text-primary shrink-0"
                         fill="currentColor"
                       />
-                      <span className="text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-[260px] sm:max-w-[420px]">
+                      <span className="text-ds-text-primary text-xs sm:text-sm font-medium sm:font-normal font-['DM_Sans'] leading-4 sm:leading-5 truncate max-w-[220px] sm:max-w-[420px]">
                         {selectedFile.name}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-ds-accent text-sm font-medium font-['DM_Sans'] leading-5  cursor-pointer shrink-0"
+                      className="text-ds-accent text-xs sm:text-sm font-medium font-['DM_Sans'] leading-4 sm:leading-5 cursor-pointer shrink-0 hover:opacity-80 transition-opacity"
                     >
                       Change
                     </button>
                   </div>
                 ) : (
-                  /* Empty State: Centered Upload Icon (Frame 2609494: h-4, center) */
+                  /* Empty State: Centered Upload Icon */
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     className="self-stretch flex justify-center items-center h-4 cursor-pointer group"
@@ -433,20 +510,20 @@ export function BusinessVerificationPage() {
                 />
               </div>
 
-              {/* Reserved Supporting Area / 0/120 Placeholder (h-4 / 16px) */}
+              {/* Reserved Supporting Area / 0/120 Placeholder */}
               <div className="h-4 min-h-[16px] text-xs text-ds-bg select-none" aria-hidden="true">
                 0/120
               </div>
             </div>
 
-            {/* Row 3: Action Buttons (Frame 2609476: 162px x 36px, gap: 8px) */}
-            <div className="self-stretch flex flex-row justify-center items-start gap-2 h-9">
+            {/* Row 3: Action Buttons */}
+            <div className="self-stretch inline-flex justify-center items-center gap-2 h-9">
               {canSubmit ? (
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="w-[77px] h-9 px-3 py-1.5 bg-ds-accent text-white text-base font-medium font-['DM_Sans'] leading-6 rounded-[100px] hover:brightness-110 active:brightness-95 transition-all cursor-pointer flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+                  className="w-20 h-9 px-3 py-1.5 bg-ds-accent text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 rounded-[100px] hover:brightness-110 active:brightness-95 transition-all cursor-pointer flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
                 >
                   {isSubmitting ? "..." : "Submit"}
                 </button>
@@ -454,7 +531,7 @@ export function BusinessVerificationPage() {
                 <button
                   type="button"
                   disabled
-                  className="w-[77px] h-9 px-3 py-1.5 bg-ds-surface-1 text-ds-text-muted text-base font-medium font-['DM_Sans'] leading-6 rounded-[100px] cursor-not-allowed flex items-center justify-center gap-2.5"
+                  className="w-20 h-9 px-3 py-1.5 bg-ds-surface-1 text-ds-text-muted text-base font-medium font-['DM_Sans'] leading-6 rounded-[100px] cursor-not-allowed flex items-center justify-center gap-2.5"
                 >
                   Submit
                 </button>
@@ -463,7 +540,7 @@ export function BusinessVerificationPage() {
               <button
                 type="button"
                 onClick={handleClose}
-                className="w-[77px] h-9 px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
+                className="w-20 h-9 px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors cursor-pointer flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent"
               >
                 Cancel
               </button>

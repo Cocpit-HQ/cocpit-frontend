@@ -194,38 +194,40 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   const isBlocked = Boolean(profileResponse?.relationship?.is_blocked);
 
   const renderTopNavigation = () => (
-    <>
-      {/* Occlusion bar for smooth scrolling under top navigation */}
-      <div className="fixed top-0 left-0 right-0 h-[88px] sm:h-[100px] bg-ds-bg z-40 pointer-events-none" />
-
-      {/* Back button (top: 40px, left: 40px) */}
+    <div className="fixed top-0 left-0 right-0 h-12 sm:h-[100px] bg-ds-bg z-40 px-4 flex items-center justify-between sm:block">
+      {/* Back button */}
       <button
         type="button"
         onClick={handleBack}
         aria-label="Back"
-        className="fixed top-6 left-4 sm:top-10 sm:left-10 flex items-center gap-2 h-9 px-2 rounded-md text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-[60] group"
+        className="sm:fixed sm:top-10 sm:left-10 flex items-center gap-1.5 sm:gap-2 h-9 px-1 rounded-md text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-[60] group"
       >
         <ChevronLeft className="w-5 h-5 text-ds-text-primary group-hover:text-ds-text-secondary transition-colors shrink-0" />
         <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px]">Back</span>
       </button>
 
-      {/* Center Search (Figma top: 40px) */}
+      {/* Center Search: Mobile input bar & Desktop Figma top: 40px */}
       {!isBlocked && (
-        <div className="w-full">
-          <GlobalSearch hasSidebar={false} />
-        </div>
+        <>
+          <div className="hidden sm:block w-full">
+            <GlobalSearch hasSidebar={false} />
+          </div>
+          <div className="sm:hidden flex-1 mx-2">
+            <GlobalSearch variant="mobile" />
+          </div>
+        </>
       )}
 
-      {/* Cross / Close to Feed button (top: 40px, right: 40px) */}
+      {/* Cross / Close to Feed button */}
       <button
         type="button"
         onClick={handleClose}
         aria-label="Close to feed"
-        className="fixed top-6 right-4 sm:top-10 sm:right-10 flex items-center justify-center w-9 h-9 rounded-md text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-[60]"
+        className="sm:fixed sm:top-10 sm:right-10 flex items-center justify-center w-9 h-9 rounded-md text-ds-text-primary hover:text-ds-text-secondary transition-colors cursor-pointer bg-transparent border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent z-[60]"
       >
         <X className="w-5 h-5" />
       </button>
-    </>
+    </div>
   );
 
   const currentUserId = (session?.user as any)?.id;
@@ -387,8 +389,8 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     <div
       className={
         isPublicView
-          ? "w-full min-h-screen bg-ds-bg text-ds-text-primary font-sans flex flex-col items-center pt-20 sm:pt-[100px] pb-24 px-4 select-text relative"
-          : "min-h-screen bg-ds-bg text-ds-text-primary font-sans pb-24 sm:pr-[220px]"
+          ? "w-full min-h-screen bg-ds-bg text-ds-text-primary font-sans flex flex-col items-center pt-12 sm:pt-[100px] pb-24 px-0 sm:px-4 select-text relative"
+          : "min-h-screen bg-ds-bg text-ds-text-primary font-sans pt-0 sm:pt-0 pb-24 px-0 sm:px-0 sm:pr-[220px]"
       }
     >
       {isPublicView && renderTopNavigation()}
@@ -409,7 +411,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
         className={
           isPublicView
             ? "w-full max-w-[800px] flex flex-col justify-start items-center gap-5"
-            : "w-full max-w-[800px] mx-auto flex flex-col justify-start items-center gap-5 px-4 md:px-0 pt-5 sm:pt-0 sm:-mt-5"
+            : "w-full max-w-[800px] mx-auto flex flex-col justify-start items-center gap-5 px-0 md:px-0 pt-0 sm:pt-0 sm:-mt-5"
         }
       >
         {isBlocked ? (

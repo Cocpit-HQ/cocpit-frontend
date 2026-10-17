@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +28,7 @@ import { ReportModal } from "@/components/shared/ReportModal";
 import { BusinessBuildingIcon, VerifyIcon } from "@/components/icons";
 import { ViewMediaModal } from "@/features/profile/commonProfileComponents/ViewMediaModal";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import { MobileBusinessProfileMenuDrawer } from "./drawers/MobileBusinessProfileMenuDrawer";
 import { cn } from "@/lib/utils";
 
 interface BusinessProfileHeaderProps {
@@ -75,6 +77,7 @@ export default function BusinessProfileHeader({
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [statsModalTab, setStatsModalTab] = useState<"followers" | "following">("followers");
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
@@ -210,16 +213,16 @@ export default function BusinessProfileHeader({
 
   return (
     <div className="w-full max-w-[800px] flex flex-col justify-start items-start gap-3">
-      {/* 1. Hero Block: w-full max-w-[800px] h-[260px] relative */}
-      <div className="w-full h-[260px] relative">
-        {/* Cover Banner: Frame 2609600 (800x200px) */}
+      {/* 1. Hero Block: Responsive h-[185px] on mobile, h-[260px] on desktop */}
+      <div className="w-full h-[185px] sm:h-[260px] relative">
+        {/* Cover Banner: Full bleed edge-to-edge on mobile, rounded-2xl on desktop */}
         <div
           onClick={handleBannerClick}
           className={cn(
-            "w-full max-w-[800px] h-[200px] left-0 top-0 absolute rounded-2xl overflow-hidden select-none",
+            "w-full max-w-[800px] h-[135px] sm:h-[200px] left-0 top-0 absolute rounded-none sm:rounded-2xl overflow-hidden select-none",
             displayCover
               ? "cursor-pointer"
-              : "bg-ds-surface-1 border border-ds-border flex flex-col justify-center items-center"
+              : "bg-ds-surface-1 border-b sm:border border-ds-border flex flex-col justify-center items-center"
           )}
         >
           {displayCover ? (
@@ -240,14 +243,14 @@ export default function BusinessProfileHeader({
           ) : null}
         </div>
 
-        {/* Logo Avatar: Frame 2609490 (120x120, left: 20px, top: 140px, rounded-[12px]) */}
+        {/* Logo Avatar: Frame 2609490 (84x84 mobile, 120x120 desktop; left-4 top-[90px] mobile, left-[20px] top-[140px] desktop) */}
         <div
           onClick={handleAvatarClick}
           className={cn(
-            "w-[120px] h-[120px] left-[20px] top-[140px] absolute rounded-[12px] overflow-hidden z-10 select-none",
+            "w-[84px] h-[84px] sm:w-[120px] sm:h-[120px] left-4 sm:left-[20px] top-[90px] sm:top-[140px] absolute rounded-[16px] sm:rounded-[12px] overflow-hidden z-10 select-none border-4 border-ds-bg sm:border-0",
             displayAvatar
-              ? "cursor-pointer"
-              : "bg-ds-surface-2 flex flex-col justify-center items-center p-[10px]"
+              ? "cursor-pointer bg-white"
+              : "bg-white flex flex-col justify-center items-center p-[6px] sm:p-[10px]"
           )}
         >
           {displayAvatar ? (
@@ -257,12 +260,24 @@ export default function BusinessProfileHeader({
               className="w-full h-full object-cover rounded-[12px]"
             />
           ) : (
-            <BusinessBuildingIcon className="w-10 h-10 text-ds-text-primary flex-none order-0 grow-0" />
+            <BusinessBuildingIcon className="w-8 h-8 sm:w-10 sm:h-10 text-black flex-none order-0 grow-0" />
           )}
         </div>
 
-        {/* Right Section: Action Buttons */}
-        <div className="right-0 top-[216px] absolute inline-flex justify-end items-center gap-3 z-10">
+        {/* Mobile 3-dots button (only on public profile, matching Figma below banner on dark background) */}
+        {!isOwnProfile && (
+          <button
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            aria-label="More options"
+            className="sm:hidden absolute right-4 top-[148px] p-2 text-ds-text-secondary hover:text-ds-text-primary active:scale-95 transition-all cursor-pointer z-10"
+          >
+            <MoreHorizontal className="w-6 h-6 text-ds-text-secondary" />
+          </button>
+        )}
+
+        {/* Right Section: Desktop Action Buttons (hidden on mobile, inline-flex on sm:) */}
+        <div className="right-0 top-[216px] absolute hidden sm:inline-flex justify-end items-center gap-3 z-10">
             {isOwnProfile ? (
               <>
                 {/* Edit profile (accent pill) */}
@@ -379,17 +394,17 @@ export default function BusinessProfileHeader({
       </div>
 
       {/* 2. Info Block: Frame 2609613 (800 Fill x 100 Hug, pl-[20px]) */}
-      <div className="w-full max-w-[800px] min-h-[100px] flex flex-row items-start pl-5 pr-0 self-stretch">
+      <div className="w-full max-w-[800px] min-h-[100px] flex flex-row items-start px-4 sm:px-0 sm:pl-5 self-stretch">
         {/* Frame 2609607: Left Column (w-full, flex-1, min-w-0, gap-1) */}
         <div className="flex-1 w-full max-w-full min-w-0 flex flex-col items-start gap-1 p-0">
           {/* Frame 2609650 / NameRow (gap: 8px, height: 32px, max-w-full, min-w-0) */}
           <div className="flex flex-row items-center p-0 gap-2 h-8 max-w-full min-w-0">
-            <h1 className="text-ds-text-primary text-2xl font-bold font-['DM_Sans'] leading-8 truncate min-w-0">
+            <h1 className="text-ds-text-primary text-xl sm:text-2xl font-bold font-['DM_Sans'] leading-7 sm:leading-8 truncate min-w-0">
               {data.name}
             </h1>
             {data.isVerified && (
               <VerifyIcon
-                className="w-6 h-6 shrink-0 order-1 grow-0"
+                className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 order-1 grow-0"
                 size={24}
                 fill="var(--ds-accent)"
                 aria-label="Verified organization badge"
@@ -437,12 +452,133 @@ export default function BusinessProfileHeader({
               rel="noreferrer"
               className="profile-website-link text-[var(--ds-accent)] hover:no-underline hover:opacity-85 transition-opacity text-sm font-medium font-['DM_Sans'] leading-5 min-h-[20px] max-w-full truncate"
             >
-              {formatDisplayUrl(data.websiteUrl)}
+              {data.websiteUrl.startsWith("http") ? data.websiteUrl : `https://${data.websiteUrl}`}
             </a>
           )}
 
-          {/* Followers & Following Stats (Left-aligned under website link) */}
-          <div className="flex flex-row items-center p-0 gap-6 mt-3 shrink-0">
+          {/* Mobile Buttons and Stats: Own Profile vs Public Profile */}
+          {isOwnProfile ? (
+            <div className="flex sm:hidden flex-col justify-start items-start gap-3 mt-3 w-full">
+              {/* Row 1: Action Buttons */}
+              <div className="self-stretch inline-flex justify-start items-center gap-3">
+                {canEditProfile ? (
+                  <Link
+                    href={`/organization/${rawSlug}/edit`}
+                    className="px-4 py-1.5 bg-ds-accent text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity text-center"
+                  >
+                    Edit profile
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="px-4 py-1.5 bg-ds-accent opacity-50 text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
+                  >
+                    Edit profile
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onShareClick}
+                  className="px-4 py-1.5 rounded-[100px] border border-ds-border text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors cursor-pointer"
+                >
+                  Share page
+                </button>
+              </div>
+
+              {/* Row 2: Stats */}
+              <div className="self-stretch inline-flex justify-start items-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatsModalTab("followers");
+                    setIsStatsModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
+                >
+                  <span>{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
+                  <span>Followers</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatsModalTab("following");
+                    setIsStatsModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
+                >
+                  <span>{formatNumber(data.stats?.following || 0)}</span>
+                  <span>Following</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex sm:hidden flex-col justify-start items-start gap-3 mt-3 w-full">
+              {/* Row 1: Stats */}
+              <div className="self-stretch inline-flex justify-start items-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatsModalTab("followers");
+                    setIsStatsModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
+                >
+                  <span>{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
+                  <span>Followers</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatsModalTab("following");
+                    setIsStatsModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
+                >
+                  <span>{formatNumber(data.stats?.following || 0)}</span>
+                  <span>Following</span>
+                </button>
+              </div>
+
+              {/* Row 2: Action Buttons */}
+              <div className="self-stretch inline-flex justify-start items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (data.isFollowing) {
+                      setShowUnfollowModal(true);
+                    } else {
+                      followMutation.mutate();
+                    }
+                  }}
+                  disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
+                  className={cn(
+                    "w-24 px-3 py-1.5 rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center transition-all cursor-pointer",
+                    data.isFollowing
+                      ? "border border-ds-border text-ds-text-secondary"
+                      : "bg-ds-accent text-white hover:opacity-90",
+                    !actingCompanyCanFollow && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
+                </button>
+
+                {data.showMessage !== false && (
+                  <Link
+                    href={`/messaging?companyId=${orgId}`}
+                    className="w-24 px-3 py-1.5 rounded-[100px] border border-ds-border text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center hover:bg-ds-surface-2 transition-colors cursor-pointer"
+                  >
+                    Message
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Followers & Following Stats (hidden sm:flex - 100% UNTOUCHED DESKTOP) */}
+          <div className="hidden sm:flex flex-row items-center p-0 gap-6 mt-3 shrink-0">
             {/* Followers */}
             <button
               type="button"
@@ -471,6 +607,24 @@ export default function BusinessProfileHeader({
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      <MobileBusinessProfileMenuDrawer
+        isOpen={isMobileDrawerOpen}
+        onClose={() => setIsMobileDrawerOpen(false)}
+        onSharePage={onShareClick}
+        onBlockToggle={handleBlockToggle}
+        isBlocked={Boolean(data.isBlocked)}
+        isBlocking={blockMutation.isPending}
+        onReportCompany={() => setIsReportModalOpen(true)}
+        onEditProfile={() => {
+          if (canEditProfile) {
+            window.location.href = `/organization/${rawSlug}/edit`;
+          }
+        }}
+        canEditProfile={canEditProfile}
+        isOwnProfile={isOwnProfile}
+      />
 
       {/* Stats Modal */}
       {orgId && isStatsModalOpen && (

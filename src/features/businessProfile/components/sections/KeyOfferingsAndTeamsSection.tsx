@@ -66,7 +66,7 @@ export default function KeyOfferingsAndTeamsSection({
   return (
     /* Outer container: 800px max, responsive padding and auto-layout */
     <div
-      className={`w-full max-w-[800px] pl-5 pr-5 md:pr-0 flex flex-col ${
+      className={`w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 sm:pr-5 md:pr-0 flex flex-col ${
         hasBoth
           ? "md:flex-row md:items-center md:gap-10"
           : "items-start"

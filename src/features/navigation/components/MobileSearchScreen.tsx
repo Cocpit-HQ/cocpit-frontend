@@ -42,12 +42,12 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
       if (window.visualViewport) {
         setViewportStyle({
           height: `${window.visualViewport.height}px`,
-          top: `${window.visualViewport.offsetTop}px`,
+          transform: `translateY(${window.visualViewport.offsetTop}px)`,
         });
       } else {
         setViewportStyle({
           height: '100dvh',
-          top: 0,
+          transform: 'none',
         });
       }
     };
@@ -61,6 +61,18 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
       window.addEventListener('resize', updateViewport);
     }
 
+    // Lock background scroll completely when search is open
+    const scrollY = window.scrollY;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
+    if (inputRef.current) {
+      inputRef.current.focus({ preventScroll: true });
+    }
+
     return () => {
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', updateViewport);
@@ -68,25 +80,13 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
       } else {
         window.removeEventListener('resize', updateViewport);
       }
-    };
-  }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (inputRef.current) {
-        inputRef.current.focus({ preventScroll: true });
-      }
-      window.scrollTo(0, 0);
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-    } else {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-    }
-    
-    return () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
@@ -198,12 +198,13 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
   const showLive = searchQuery.trim().length > 0;
 
   return createPortal(
-    <div 
-      className="fixed inset-x-0 z-[99999] bg-ds-bg flex flex-col w-full sm:hidden"
-      style={viewportStyle}
-    >
-      {/* Top Bar */}
-      <div className="flex flex-row items-center px-4 pt-12 pb-4 gap-3">
+    <div className="fixed inset-0 z-[99999] bg-ds-bg w-full h-full overflow-hidden select-text overscroll-contain sm:hidden">
+      <div 
+        className="absolute inset-x-0 top-0 flex flex-col w-full bg-ds-bg"
+        style={viewportStyle}
+      >
+        {/* Top Bar */}
+        <div className="flex flex-row items-center px-4 pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 gap-3 bg-ds-bg">
         <button onClick={onClose} className="text-[#A1A1AA] hover:text-white transition-colors outline-none shrink-0" aria-label="Close search">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
@@ -358,6 +359,7 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>,
     document.body

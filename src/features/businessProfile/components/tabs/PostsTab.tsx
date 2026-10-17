@@ -199,7 +199,7 @@ export default function PostsTab({
   });
 
   return (
-    <div className="w-full max-w-[800px] pl-5 flex flex-col justify-start items-start gap-2.5 pb-12">
+    <div className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 flex flex-col justify-start items-center sm:items-start gap-5 pb-12">
       {status === "pending" ? (
         <div className="w-full max-w-[442px] flex flex-col justify-start items-center gap-5">
           <div className="w-full">
@@ -212,7 +212,7 @@ export default function PostsTab({
           </div>
         </div>
       ) : postsToRender.length === 0 ? (
-        <div className="w-full max-w-[800px] px-5 py-10 flex flex-col justify-center items-center gap-4">
+        <div className="w-full max-w-[800px] px-4 sm:px-5 py-10 flex flex-col justify-center items-center gap-4">
           {/* Icon Circle */}
           <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
             <EmptyPostsIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
@@ -236,8 +236,15 @@ export default function PostsTab({
               <button
                 type="button"
                 onClick={() => {
-                  sessionStorage.setItem("scroll-/feed", "0");
-                  router.push("/feed");
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("scroll-/feed", "0");
+                    sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                    sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                    if (window.innerWidth < 768) {
+                      useUIStore.getState().setActiveModal("create-post");
+                    }
+                    router.push("/feed");
+                  }
                 }}
                 className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-1 transition-colors cursor-pointer"
               >

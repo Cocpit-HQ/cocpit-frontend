@@ -676,13 +676,13 @@ export default function BusinessEditProfileTab({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-10">
+    <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-10 pb-12 sm:pb-0">
       {/* Media: Cover Banner & Avatar matching Figma Frame 2609634 (w-full / 800px, h-[268px] relative) */}
-      <div className="w-full h-[268px] relative select-none">
-        {/* Banner: 800px x 200px, top-0, rounded-2xl */}
+      <div className="w-full h-40 sm:h-[268px] relative select-none">
+        {/* Banner: 800px x 200px, top-0, rounded-2xl on desktop; h-28 rounded-lg on mobile */}
         <div
           className={cn(
-            "w-full max-w-[800px] h-[200px] left-0 top-0 absolute rounded-2xl overflow-hidden flex flex-col justify-center items-center",
+            "w-full max-w-[800px] h-28 sm:h-[200px] left-0 top-0 absolute rounded-lg sm:rounded-2xl overflow-hidden flex flex-col justify-center items-center",
             coverPreview ? "" : "bg-ds-surface-1 border border-ds-border"
           )}
         >
@@ -692,42 +692,42 @@ export default function BusinessEditProfileTab({
               alt="Cover banner"
               onDoubleClick={() => coverFileInputRef.current?.click()}
               title="Double-click to change banner"
-              className="w-full h-full object-cover rounded-2xl cursor-pointer"
+              className="w-full h-full object-cover rounded-lg sm:rounded-2xl cursor-pointer"
             />
           ) : (
             <div
               onClick={handleCoverClick}
-              className="w-full h-full flex flex-col justify-center items-center gap-2 p-[10px] cursor-pointer"
+              className="w-full h-full flex flex-col justify-center items-center pl-[92px] pr-12 sm:px-4 gap-1 sm:gap-2 p-2 sm:p-[10px] cursor-pointer"
             >
-              <div className="text-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+              <div className="text-center text-ds-text-primary text-xs sm:text-base font-medium font-['DM_Sans'] leading-4 sm:leading-6">
                 Add banner
               </div>
-              <div className="text-center text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
+              <div className="text-center text-ds-text-secondary text-[11px] sm:text-xs font-normal font-['DM_Sans'] leading-4">
                 Recommended: 16:9 · At least 1200 × 675 px · JPG, PNG
               </div>
             </div>
           )}
 
-          {/* Cover Edit Button: right-4 bottom-4 inside banner */}
+          {/* Cover Edit Button: right-4 bottom-2 on mobile, right-4 bottom-4 inside banner on desktop */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleCoverClick();
             }}
-            className="absolute right-4 bottom-4 w-8 h-8 rounded-full bg-ds-surface-1/80 backdrop-blur-sm p-1.5 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-md border border-ds-border"
+            className="absolute right-3 sm:right-4 bottom-2 sm:bottom-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--ds-surface-1)]/90 backdrop-blur-sm p-1 sm:p-1.5 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-md border border-[var(--ds-border)]"
             aria-label="Edit cover photo"
           >
-            <ProfileEditIcon size={18} className="w-4 h-4 text-ds-accent" />
+            <ProfileEditIcon size={18} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--ds-accent)]" />
           </button>
         </div>
 
-        {/* Square Avatar: 120px x 120px, left-[20px] top-[140px] absolute, 12px radius, no border (Frame 2609490) */}
-        <div className="absolute left-[20px] top-[140px] w-[120px] h-[120px] rounded-[12px] shrink-0 z-10">
+        {/* Square Avatar: 80x80 left-4 top-[72px] on mobile; 120px x 120px, left-[20px] top-[140px] on desktop */}
+        <div className="absolute left-4 top-[72px] sm:left-[20px] sm:top-[140px] w-20 h-20 sm:w-[120px] sm:h-[120px] rounded-xl sm:rounded-[12px] shrink-0 z-10">
           <div
             className={cn(
-              "w-full h-full rounded-[12px] overflow-hidden flex flex-col justify-center items-center",
-              logoPreview ? "" : "bg-ds-surface-2"
+              "w-full h-full rounded-xl sm:rounded-[12px] overflow-hidden flex flex-col justify-center items-center border border-[var(--ds-border)]/40 sm:border-0",
+              logoPreview ? "" : "bg-[var(--ds-surface-2)]"
             )}
           >
             {logoPreview ? (
@@ -743,9 +743,9 @@ export default function BusinessEditProfileTab({
                 type="button"
                 onClick={handleLogoClick}
                 aria-label="Add organization logo"
-                className="w-full h-full flex flex-col justify-center items-center cursor-pointer bg-transparent border-none p-[10px]"
+                className="w-full h-full flex flex-col justify-center items-center cursor-pointer bg-transparent border-none p-2 sm:p-[10px]"
               >
-                <BusinessBuildingIcon className="w-10 h-10 text-ds-text-primary flex-none" />
+                <BusinessBuildingIcon className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--ds-text-primary)] flex-none" />
               </button>
             )}
           </div>
@@ -757,10 +757,10 @@ export default function BusinessEditProfileTab({
               e.stopPropagation();
               handleLogoClick();
             }}
-            className="absolute -right-2 -bottom-2 w-[34px] h-[34px] rounded-full bg-ds-surface-1 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-md"
+            className="absolute -right-1 -bottom-1 sm:-right-2 sm:-bottom-2 w-7 h-7 sm:w-[34px] sm:h-[34px] rounded-full bg-[var(--ds-surface-1)] flex items-center justify-center hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-md border border-[var(--ds-border)] sm:border-0"
             aria-label="Edit organization logo"
           >
-            <ProfileEditIcon size={18} className="w-[18px] h-[18px] text-ds-accent" />
+            <ProfileEditIcon size={18} className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] text-[var(--ds-accent)]" />
           </button>
         </div>
       </div>
@@ -1110,14 +1110,14 @@ export default function BusinessEditProfileTab({
           )}
         </div>
 
-        {/* Interactive Draggable Map (Matching Onboarding) */}
-        <div className="self-stretch">
+        {/* Interactive Draggable Map (h-[132px] on mobile with +20px clearance, h-56 on desktop) */}
+        <div className="self-stretch h-[132px] sm:h-56 rounded-2xl overflow-hidden border border-ds-border">
           <InteractiveLocationMap
             locationAddress={locationQuery.trim() || formData.city || ""}
             latitude={latitude}
             longitude={longitude}
             onLocationChange={handleMapLocationChange}
-            className="w-full"
+            className="!w-full !h-[132px] sm:!h-56 !rounded-2xl !border-0"
           />
         </div>
 
@@ -1145,6 +1145,9 @@ export default function BusinessEditProfileTab({
           Cancel
         </button>
       </div>
+
+      {/* Mobile bottom clearance: matches About tab clearance for Safari/Chrome navigation bar */}
+      <div className="w-full h-[max(20px,env(safe-area-inset-bottom,20px))] sm:hidden shrink-0 pointer-events-none" aria-hidden="true" />
 
       {/* Hidden file inputs for direct file picker */}
       <input

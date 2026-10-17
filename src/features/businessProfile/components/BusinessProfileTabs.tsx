@@ -92,8 +92,8 @@ export function BusinessProfileTabs({
       onValueChange={handleTabChange}
       className="w-full scroll-mt-[70px] sm:scroll-mt-[110px]"
     >
-      {/* Tabs Header: w-[800px] pl-5 inline-flex justify-start items-center gap-3 */}
-      <Tabs.List className="w-full max-w-[800px] pl-5 inline-flex justify-start items-center gap-3 border-b border-transparent">
+      {/* Tabs Header: w-[800px] responsive px-4 / pl-5 overflow-x-auto */}
+      <Tabs.List className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 flex flex-nowrap overflow-x-auto no-scrollbar justify-start items-center gap-3 border-b border-transparent">
         {tabs.map((tab) => {
           const isSelected = activeTab === tab.value;
 
@@ -103,24 +103,22 @@ export function BusinessProfileTabs({
               value={tab.value}
               className="inline-flex flex-col justify-start items-center cursor-pointer group outline-none select-none p-0 bg-transparent border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded-sm"
             >
-              <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center gap-2.5">
-                <div className="inline-flex justify-center items-center gap-1">
-                  <span
-                    className={cn(
-                      "text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
-                      isSelected
-                        ? "text-[var(--ds-text-primary)]"
-                        : "text-[var(--ds-text-secondary)] group-hover:text-[var(--ds-text-primary)]"
-                    )}
-                  >
-                    {tab.label}
-                  </span>
-                </div>
+              <div className="self-stretch px-3 py-1.5 flex flex-col justify-center items-center">
+                <span
+                  className={cn(
+                    "text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
+                    isSelected
+                      ? "text-[var(--ds-text-primary)]"
+                      : "text-[var(--ds-text-secondary)] group-hover:text-[var(--ds-text-primary)]"
+                  )}
+                >
+                  {tab.label}
+                </span>
               </div>
               {isSelected ? (
-                <div className="self-stretch h-[2px] bg-[var(--ds-accent)]" />
+                <div className="self-stretch w-full h-[2px] bg-[var(--ds-accent)]" />
               ) : (
-                <div className="self-stretch h-[2px] bg-transparent" />
+                <div className="self-stretch w-full h-[2px] bg-transparent" />
               )}
             </Tabs.Trigger>
           );

@@ -652,11 +652,11 @@ export default function BusinessEditAboutTab({
       onSubmit={handleSubmit}
       className={cn(
         "w-full flex flex-col items-center gap-10 transition-[padding] duration-200",
-        openMediaDropdownId ? "pb-30" : "pb-12",
+        openMediaDropdownId ? "pb-30 sm:pb-20" : "pb-12 sm:pb-0",
       )}
     >
       {/* Form Container (w-[640px] matching Figma layout) */}
-      <div className="w-full max-w-[640px] flex flex-col justify-start items-start gap-10">
+      <div className="w-full max-w-[640px] flex flex-col justify-start items-start gap-4 sm:gap-10">
         {/* Field 1: Description (Frame 2609639) */}
         <div className="self-stretch flex flex-col justify-start items-end gap-2">
           <div className="self-stretch py-2 border-b border-ds-border flex flex-col justify-center items-start gap-2.5">
@@ -784,7 +784,7 @@ export default function BusinessEditAboutTab({
             return (
               <div
                 key={office.id}
-                className="self-stretch flex flex-col justify-start items-end gap-2"
+                className="self-stretch flex flex-col justify-start items-end gap-3"
               >
                 {/* Location Input with Search & Suggestions */}
                 <div
@@ -794,7 +794,8 @@ export default function BusinessEditAboutTab({
                   className="self-stretch py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 relative transition-colors"
                 >
                   <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
-                    Office Location #{idx + 1}
+                    <span className="sm:hidden">Location</span>
+                    <span className="hidden sm:inline">Office Location #{idx + 1}</span>
                   </label>
                   <div className="w-full inline-flex justify-between items-center gap-2">
                     <input
@@ -879,14 +880,14 @@ export default function BusinessEditAboutTab({
                   )}
                 </div>
 
-                {/* Interactive Map */}
-                <div className="self-stretch rounded-2xl overflow-hidden">
+                {/* Interactive Map (h-[132px] on mobile with +20px clearance, h-56 on desktop) */}
+                <div className="self-stretch h-[132px] sm:h-56 rounded-2xl overflow-hidden border border-ds-border">
                   <InteractiveLocationMap
                     locationAddress={officeLocationText || "Mumbai, Maharashtra, India"}
                     latitude={office.latitude}
                     longitude={office.longitude}
                     onLocationChange={(loc) => handleMapLocationChange(office.id, loc)}
-                    className="w-full"
+                    className="!w-full !h-[132px] sm:!h-56 !rounded-2xl !border-0"
                   />
                 </div>
 
@@ -894,7 +895,7 @@ export default function BusinessEditAboutTab({
                 <button
                   type="button"
                   onClick={() => handleRemoveOffice(office.id)}
-                  className="text-center justify-start text-ds-error text-xs font-normal font-['DM_Sans'] leading-4 no-underline hover:opacity-80 transition-opacity cursor-pointer"
+                  className="text-center justify-start text-[var(--ds-error)] text-xs font-normal font-['DM_Sans'] leading-4 no-underline hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   Delete
                 </button>
@@ -930,7 +931,7 @@ export default function BusinessEditAboutTab({
                   ref={(el) => {
                     mediaDropdownRefs.current[link.id] = el;
                   }}
-                  className="w-[130px] sm:w-[140px] py-2 inline-flex flex-col justify-center items-start gap-2.5 relative shrink-0"
+                  className="w-auto sm:w-[140px] py-2 inline-flex flex-col justify-center items-start gap-2.5 relative shrink-0"
                 >
                   <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
                     Media
@@ -948,7 +949,7 @@ export default function BusinessEditAboutTab({
                       }}
                       className="inline-flex justify-start items-center gap-1.5 sm:gap-2.5 bg-transparent cursor-pointer py-0.5 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ds-accent"
                     >
-                      <div className="w-[100px] sm:w-[110px] h-9 rounded-3xl flex justify-start items-center gap-2">
+                      <div className="w-auto sm:w-[110px] h-9 rounded-3xl flex justify-start items-center gap-2">
                         <Icon
                           name={
                             (link.platform === "twitter" ? "x" : link.platform || "cocpit").toLowerCase() as any
@@ -956,7 +957,7 @@ export default function BusinessEditAboutTab({
                           size={20}
                           className="w-5 h-5 shrink-0 text-ds-text-primary"
                         />
-                        <span className="text-start justify-start text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 truncate">
+                        <span className="hidden sm:inline text-start justify-start text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 truncate">
                           {MEDIA_OPTIONS.find(
                             (m) =>
                               m.value ===
@@ -977,7 +978,7 @@ export default function BusinessEditAboutTab({
                       <div
                         role="listbox"
                         aria-label="Social media platforms"
-                        className="absolute top-[calc(100%+4px)] left-0 z-[100] w-[122px] h-[300px] p-3 flex flex-col items-center gap-3 rounded-[16px] bg-ds-bg border border-ds-border box-border shadow-2xl overflow-hidden"
+                        className="absolute top-[calc(100%+4px)] left-0 z-[100] w-[44px] sm:w-[122px] h-[300px] p-3 flex flex-col items-center gap-3 rounded-[16px] bg-ds-bg border border-ds-border box-border shadow-2xl overflow-hidden"
                       >
                         {MEDIA_OPTIONS.map((m) => {
                           const isSelected = link.platform === m.value;
@@ -992,7 +993,7 @@ export default function BusinessEditAboutTab({
                                 handleLinkChange(link.id, "platform", m.value);
                                 setOpenMediaDropdownId(null);
                               }}
-                              className="w-[98px] h-9 px-1 rounded-[24px] flex flex-row items-center gap-2.5 transition-colors shrink-0 cursor-pointer outline-none bg-transparent hover:bg-ds-surface-1 focus-visible:bg-ds-surface-1 focus-visible:ring-1 focus-visible:ring-ds-accent"
+                              className="w-5 sm:w-[98px] h-9 px-0 sm:px-1 rounded-[24px] flex flex-row items-center justify-center sm:justify-start gap-0 sm:gap-2.5 transition-colors shrink-0 cursor-pointer outline-none bg-transparent hover:bg-ds-surface-1 focus-visible:bg-ds-surface-1 focus-visible:ring-1 focus-visible:ring-ds-accent"
                             >
                               <Icon
                                 name={m.value as any}
@@ -1004,7 +1005,7 @@ export default function BusinessEditAboutTab({
                               />
                               <span
                                 className={cn(
-                                  "text-sm font-normal font-['DM_Sans'] leading-5 whitespace-nowrap transition-colors",
+                                  "hidden sm:inline text-sm font-normal font-['DM_Sans'] leading-5 whitespace-nowrap transition-colors",
                                   isSelected ? "text-ds-accent" : "text-ds-text-primary",
                                 )}
                               >
@@ -1039,7 +1040,7 @@ export default function BusinessEditAboutTab({
               <button
                 type="button"
                 onClick={() => handleRemoveLink(link.id)}
-                className="text-center text-ds-error text-xs font-normal font-['DM_Sans'] leading-4 no-underline hover:opacity-80 transition-opacity cursor-pointer"
+                className="text-center text-[var(--ds-error)] text-xs font-normal font-['DM_Sans'] leading-4 no-underline hover:opacity-80 transition-opacity cursor-pointer"
               >
                 Delete
               </button>
@@ -1054,7 +1055,7 @@ export default function BusinessEditAboutTab({
           type="submit"
           disabled={!isDirty || updateMutation.isPending}
           className={cn(
-            "w-[77px] h-9 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
+            "w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
             !isDirty || updateMutation.isPending
               ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed pointer-events-none"
               : "bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer",
@@ -1065,11 +1066,22 @@ export default function BusinessEditAboutTab({
         <button
           type="button"
           onClick={handleCancel}
-          className="w-[77px] h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 hover:bg-[var(--ds-surface-1)] cursor-pointer transition-colors flex justify-center items-center"
+          className="px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 hover:bg-[var(--ds-surface-1)] cursor-pointer transition-colors flex justify-center items-center"
         >
           Cancel
         </button>
       </div>
+
+      {/* Bottom clearance: matches Profile tab on mobile (sm:hidden when closed); expands dynamically when links dropdown is open */}
+      <div
+        className={cn(
+          "w-full shrink-0 pointer-events-none transition-[height] duration-200 ease-out",
+          openMediaDropdownId !== null
+            ? "h-[180px] pb-[max(16px,env(safe-area-inset-bottom,16px))]"
+            : "h-[max(20px,env(safe-area-inset-bottom,20px))] sm:hidden"
+        )}
+        aria-hidden="true"
+      />
     </form>
   );
 }
