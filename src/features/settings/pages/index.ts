@@ -1,0 +1,17 @@
+export { AccountSettingsPage } from './AccountSettingsPage';
+export { ActivitySettingsPage } from './ActivitySettingsPage';
+export { AppearanceSettingsPage } from './AppearanceSettingsPage';
+export { BlockedSettingsPage } from './BlockedSettingsPage';
+export { CompanyAccountSettingsPage } from './CompanyAccountSettingsPage';
+export { CompanyNotificationSettingsPage } from './CompanyNotificationSettingsPage';
+export { CompanyPrivacySettingsPage } from './CompanyPrivacySettingsPage';
+export { LegalSettingsPage } from './LegalSettingsPage';
+export { ManageEmailPage } from './ManageEmailPage';
+export { ManagePasswordPage } from './ManagePasswordPage';
+export { ManagePhonePage } from './ManagePhonePage';
+export { NotificationSettingsPage } from './NotificationSettingsPage';
+export { OrganizationsSettingsPage } from './OrganizationsSettingsPage';
+export { PrivacySettingsPage } from './PrivacySettingsPage';
+export { ReportsSettingsPage } from './ReportsSettingsPage';
+export { SavedSettingsPage } from './SavedSettingsPage';
+export { SupportSettingsPage } from './SupportSettingsPage';

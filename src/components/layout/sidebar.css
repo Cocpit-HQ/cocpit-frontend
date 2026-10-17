@@ -1,0 +1,280 @@
+@reference "tailwindcss";
+
+/* ============================================
+   Sidebar Styles — Cocpit Sidebar
+   ============================================ */
+
+/* Sidebar Container */
+.sidebar {
+  @apply w-[232px] h-screen fixed left-0 top-0 flex flex-col justify-between z-40;
+  padding: 20px 16px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--feed-sidebar-border, rgba(199, 210, 254, 0.2));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ---- Logo Area ---- */
+.sidebar__logo {
+  @apply pb-2 flex items-center;
+}
+
+.sidebar__logo-img {
+  @apply w-14 h-14 object-contain;
+  mix-blend-mode: difference;
+}
+
+/* ---- Navigation Container ---- */
+.sidebar__nav {
+  @apply flex-1 overflow-y-auto pt-1 pb-4;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar__nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Section Group ---- */
+.sidebar__section {
+  @apply mb-6;
+}
+
+/* ---- Section Title ---- */
+.sidebar__section-title {
+  @apply px-3 mb-4 text-[14px] font-normal leading-[20px];
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  color: #A5B4FC;
+  letter-spacing: 0;
+}
+
+/* ---- Navigation Item (base) ---- */
+.sidebar__item {
+  @apply w-full flex items-center cursor-pointer transition-all duration-100 ease-out no-underline text-[16px] font-normal leading-[24px];
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  color: #6B7280;
+  height: 40px;
+  width: 200px;
+  padding: 8px 16px;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+/* Hover state */
+.sidebar__item:hover {
+  background-color: var(--feed-ultra-light, #EEF2FF);
+  color: var(--feed-primary, #6366F1);
+}
+
+.sidebar__item:hover .sidebar__item-icon {
+  color: var(--feed-primary, #6366F1);
+}
+
+/* ---- Active Item ---- */
+.sidebar__item--active {
+  background-color: var(--feed-light, #E0E7FF);
+  color: var(--feed-primary, #6366F1);
+  border-right: 5px solid var(--feed-primary, #6366F1);
+}
+
+.sidebar__item--active:hover {
+  background-color: var(--feed-light, #E0E7FF);
+  color: var(--feed-primary, #6366F1);
+}
+
+.sidebar__item--active .sidebar__item-icon {
+  color: var(--feed-primary, #6366F1);
+}
+
+/* ---- Active Item (Company) ---- */
+.sidebar__item--company-active {
+  background-color: #E8F1FF;
+  color: #1A73E8;
+  border-right: 3px solid #1A73E8;
+  border-radius: 8px;
+}
+
+.sidebar__item--company-active:hover {
+  background-color: #E8F1FF;
+  color: #1A73E8;
+}
+
+.sidebar__item--company-active .sidebar__item-icon {
+  color: #1A73E8;
+}
+
+/* ---- Hover Item (Company) ---- */
+.sidebar__item--company:not(.sidebar__item--company-active):hover {
+  background-color: #E8F1FF;
+  color: #1A73E8;
+}
+
+.sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-icon {
+  color: #1A73E8;
+}
+
+/* ---- Item Icon ---- */
+.sidebar__item-icon {
+  @apply shrink-0 transition-all duration-100 ease-out;
+  width: 24px;
+  height: 24px;
+  color: #6B7280;
+  stroke-width: 1.5px;
+}
+
+/* ---- Item Label ---- */
+.sidebar__item-label {
+  @apply text-[16px] font-normal leading-[24px] whitespace-nowrap;
+}
+
+/* ---- Navigation Items Container ---- */
+.sidebar__items {
+  @apply flex flex-col gap-4;
+}
+
+/* ---- Business CTA Button ---- */
+.sidebar__business-cta {
+  @apply mt-4;
+}
+
+.sidebar__business-btn {
+  @apply w-full flex items-center justify-center py-3 rounded-2xl cursor-pointer transition-all duration-200 ease-out text-[13px] font-semibold no-underline;
+  background-color: #ebe6ff;
+  color: #6366f1;
+  border: 1.5px solid #d9d1ff;
+}
+
+.sidebar__business-btn:hover {
+  background-color: #e0d9ff;
+  border-color: #c5baff;
+  @apply -translate-y-px shadow-md;
+}
+
+.sidebar__business-btn:active {
+  @apply translate-y-0;
+}
+
+/* ============================================
+   Dark Mode Overrides
+   ============================================ */
+
+[data-theme="dark"] .sidebar,
+[data-theme="navy"] .sidebar {
+  background-color: #0B0F19;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .sidebar.sidebar--company,
+[data-theme="navy"] .sidebar.sidebar--company {
+  background-color: #0F1115;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .sidebar__section-title,
+[data-theme="navy"] .sidebar__section-title {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item,
+[data-theme="navy"] .sidebar__item {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item .sidebar__item-label,
+[data-theme="navy"] .sidebar__item .sidebar__item-label {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item .sidebar__item-icon {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item:hover,
+[data-theme="navy"] .sidebar__item:hover,
+[data-theme="dark"] .sidebar__item--active,
+[data-theme="navy"] .sidebar__item--active {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 8px;
+  width: 200px;
+  height: 40px;
+  background: #818CF8;
+  border-right: 5px solid #F9FAFB;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__item--company-active,
+[data-theme="navy"] .sidebar__item--company-active,
+[data-theme="dark"] .sidebar__item--company:not(.sidebar__item--company-active):hover,
+[data-theme="navy"] .sidebar__item--company:not(.sidebar__item--company-active):hover {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 8px;
+  width: 200px;
+  height: 40px;
+  background-color: #16365F;
+  border-right: 3px solid #4D9CFF;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #4D9CFF;
+}
+
+[data-theme="dark"] .sidebar__item:hover .sidebar__item-label,
+[data-theme="navy"] .sidebar__item:hover .sidebar__item-label,
+[data-theme="dark"] .sidebar__item--active .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--active .sidebar__item-label {
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__item--company-active .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--company-active .sidebar__item-label,
+[data-theme="dark"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-label {
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #4D9CFF;
+}
+
+[data-theme="dark"] .sidebar__item:hover .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item:hover .sidebar__item-icon,
+[data-theme="dark"] .sidebar__item--active .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--active .sidebar__item-icon {
+  width: 24px;
+  height: 24px;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__item--company-active .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--company-active .sidebar__item-icon,
+[data-theme="dark"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-icon {
+  width: 24px;
+  height: 24px;
+  color: #4D9CFF;
+}
+
+[data-theme="dark"] .sidebar__business-btn,
+[data-theme="navy"] .sidebar__business-btn {
+  background-color: #1F2937;
+  color: #9CA3AF;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .sidebar__business-btn:hover,
+[data-theme="navy"] .sidebar__business-btn:hover {
+  background-color: #374151;
+  color: #ffffff;
+}

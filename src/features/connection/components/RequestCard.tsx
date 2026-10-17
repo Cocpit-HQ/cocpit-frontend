@@ -1,0 +1,217 @@
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
+import { UserIcon } from '@/components/icons';
+import type { ConnectionRequest } from '../types';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
+import { formatImgSrc } from '@/lib/utils';
+
+interface RequestCardProps {
+  request: ConnectionRequest;
+  mode: 'received' | 'sent' | 'invitations';
+  onAccept?: (id: string) => void;
+  onDecline?: (id: string) => void;
+  onUndo?: (id: string) => void;
+  isActing?: boolean;
+}
+
+// ── MutualAvatar — avatar for mutuals with fallback ─────────────────────────
+function MutualAvatar({ src, index }: { src: string; index: number }) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div
+        className="w-4 h-4 rounded-full border border-[#222228] bg-ds-surface-1 flex items-center justify-center shrink-0"
+        style={{ zIndex: 10 - index }}
+      >
+        <UserIcon className="w-2.5 h-2.5 text-ds-text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={formatImgSrc(src)}
+      alt=""
+      className="w-4 h-4 rounded-full border border-[#222228] object-cover"
+      style={{ zIndex: 10 - index }}
+      onError={() => setError(true)}
+    />
+  );
+}
+
+export function RequestCard({
+  request,
+  mode,
+  onAccept,
+  onDecline,
+  onUndo,
+  isActing = false,
+}: RequestCardProps) {
+  const { user, reason_tag, mutuals } = request;
+  const [imgError, setImgError] = useState(false);
+
+  const showAvatar = !!user.avatar && !imgError;
+  const hasMutuals = mutuals && mutuals.count > 0;
+  const isCompany = request.isCompanyRequest || mode === 'invitations';
+  const profileId = mode === 'received' ? request.sender_id : request.receiver_id;
+  const targetHref = isCompany
+    ? `/organization/${user.slug || profileId}`
+    : `/profile/${profileId}`;
+
+  return (
+    <article
+      className="w-full min-h-[68px] flex flex-row items-center justify-between py-2 px-0 sm:px-2 border-b border-ds-border last:border-b-0 hover:bg-ds-surface-1/30 transition-colors gap-2 rounded-2xl font-dm-sans"
+      aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}
+    >
+      {/* Left: Avatar + Details */}
+      <div className="flex-1 min-w-0 min-h-[52px] flex items-center gap-2">
+        <Link
+          href={targetHref}
+          className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ds-accent"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          {showAvatar ? (
+            <Image
+              src={formatImgSrc(user.avatar)}
+              alt={user.name}
+              width={32}
+              height={32}
+              className={`w-8 h-8 object-cover shrink-0 bg-ds-surface-1 border border-ds-border ${isCompany ? 'rounded-[8px]' : 'rounded-full'
+                }`}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div
+              className={`flex items-center justify-center w-8 h-8 shrink-0 bg-ds-surface-1 text-ds-text-primary p-1.5 border border-ds-border ${isCompany ? 'rounded-[8px]' : 'rounded-full'
+                }`}
+              aria-hidden="true"
+            >
+              <UserIcon className="w-full h-full text-ds-text-primary" />
+            </div>
+          )}
+        </Link>
+
+        {/* Text stack */}
+        <div className="flex flex-col justify-center items-start gap-1 min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 min-w-0 w-full">
+            <Link
+              href={targetHref}
+              className="outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded-sm group shrink-0"
+            >
+              <span className="font-dm-sans font-normal text-[14px] leading-5 text-ds-text-primary group-hover:text-ds-accent transition-colors whitespace-nowrap">
+                {user.name}
+              </span>
+            </Link>
+            {user.headline && (
+              <>
+                <span className="text-ds-text-muted text-[13px] shrink-0" aria-hidden="true">•</span>
+                <span className="text-ds-text-secondary text-xs leading-4 font-normal truncate min-w-0 max-w-[160px] sm:max-w-[180px]">
+                  {user.headline}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Contextual badge text with #B8ADA8 (text-ds-text-secondary) color per Figma spec */}
+          {hasMutuals ? (
+            <div className="w-fit max-w-full inline-flex items-center gap-1.5 text-[12px] leading-4 font-normal text-ds-text-secondary">
+              <span className="truncate">
+                {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
+              </span>
+              <div className="flex items-center -space-x-1 shrink-0" aria-hidden="true">
+                {/* Mutual avatar with 1px #222228 stroke per Figma spec */}
+                {Array.from({ length: Math.min(mutuals.count, 3) }).map((_, i) => (
+                  <MutualAvatar key={i} src={mutuals.avatars?.[i] || ''} index={i} />
+                ))}
+              </div>
+            </div>
+          ) : reason_tag ? (
+            <div className="w-fit max-w-full inline-flex items-center text-[12px] leading-4 font-normal text-ds-text-secondary">
+              <span className="truncate">{reason_tag}</span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Right: Actions */}
+      <div className="flex items-center gap-2 shrink-0 justify-end mt-0">
+        {(mode === 'received' || mode === 'invitations') && (
+          <FeatureDisabledTooltip featureKey="enableConnectionManagement">
+            <>
+              <button
+                type="button"
+                disabled={isActing}
+                onClick={() => onAccept?.(request.id)}
+                aria-label={`Accept request from ${user.name}`}
+                className="w-auto px-4 sm:px-3 sm:w-[89px] inline-flex items-center justify-center h-9 py-1.5 gap-2.5 rounded-full bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[14px] sm:text-[16px] leading-6 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+              >
+                {isActing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+                ) : (
+                  'Accept'
+                )}
+              </button>
+
+              {/* Web Decline Button (Text Pill) */}
+              <button
+                type="button"
+                disabled={isActing}
+                onClick={() => onDecline?.(request.id)}
+                aria-label={`Decline request from ${user.name}`}
+                className="hidden sm:inline-flex w-[89px] items-center justify-center h-9 px-3 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+              >
+                {isActing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+                ) : (
+                  'Decline'
+                )}
+              </button>
+
+              {/* Mobile Decline Button (Circular X) */}
+              <button
+                type="button"
+                disabled={isActing}
+                onClick={() => onDecline?.(request.id)}
+                aria-label={`Decline request from ${user.name}`}
+                className="inline-flex sm:hidden w-9 h-9 items-center justify-center rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+              >
+                {isActing ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                )}
+              </button>
+            </>
+          </FeatureDisabledTooltip>
+        )}
+
+        {mode === 'sent' && (
+          <FeatureDisabledTooltip featureKey="enableConnectionManagement">
+            <button
+              type="button"
+              disabled={isActing}
+              onClick={() => onUndo?.(request.id)}
+              className="w-auto px-4 sm:px-3 sm:w-[89px] inline-flex items-center justify-center h-9 py-1.5 gap-2.5 rounded-full border border-ds-border bg-transparent hover:bg-ds-surface-1 active:scale-95 text-ds-text-primary font-dm-sans font-medium text-[14px] sm:text-[16px] leading-6 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-40 disabled:cursor-default"
+            >
+              {isActing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
+              ) : (
+                'Withdraw'
+              )}
+            </button>
+          </FeatureDisabledTooltip>
+        )}
+      </div>
+    </article>
+  );
+}
+export default RequestCard;

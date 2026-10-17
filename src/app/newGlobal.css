@@ -1,0 +1,2557 @@
+/* stylelint-disable at-rule-no-unknown */
+/* ============================================================
+   newGlobal.css — Cocpit Frontend New Design System
+   ============================================================
+   This is the NEW design system file. It is an exact copy of
+   globals.css with the following additions/updates:
+   
+   CHANGES vs globals.css:
+   ─────────────────────────────────────────────────────────────
+   1. Font: DM Sans added (designer-specified, replaces Inter/Sora
+      for new components). Old fonts kept for legacy components.
+   2. New CSS variables added under @theme:
+      - Typography scale (--text-* and --leading-*)
+      - Motion timing (--motion-quick, normal, slow, exit)
+      - Spacing scale (--space-1 through --space-6)
+      - Border radius tokens (--radius-input, --radius-card etc.)
+      - Layout tokens (--container-max, --container-padding-mobile)
+      - New component colors (--color-focus-ring, --color-success-new)
+   3. New utility classes added (.text-title, .text-body-main, etc.)
+   4. Skeleton animation added for loading states
+
+   DO NOT MODIFY globals.css.
+   All new UI MUST import and use this file instead.
+   ============================================================ */
+
+/* ── Fonts: DM Sans (new design system) + legacy fonts ────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *, :root:not([data-theme=light]), :root:not([data-theme=light]) *));
+
+@layer base {
+
+  :root,
+  body {
+    --font-dm-sans: "Twemoji Country Flags", var(--font-dm-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
+  }
+
+  /* Hide scrollbars globally on root viewport while preserving scroll functionality */
+  html,
+  body {
+    max-width: 100%;
+    position: relative;
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox and modern Chrome/Edge */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    /* Safari and Chrome */
+  }
+}
+
+.font-dmsans,
+.font-dm-sans,
+[class*="font-['DM_Sans']"],
+[class*="font-['DM Sans']"] {
+  font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+}
+
+.font-poppins,
+[class*="font-['Poppins']"] {
+  font-family: var(--font-poppins-base), "Poppins", sans-serif !important;
+}
+
+@theme {
+  /* ── Font Families ──────────────────────────────────────── */
+  /* NEW: DM Sans is the primary font for all new UI components */
+  --font-sans: "Twemoji Country Flags", 'DM Sans', 'Inter', var(--font-geist-sans), sans-serif;
+  /* Legacy: Sora kept for existing heading components */
+  --font-heading: "Twemoji Country Flags", 'DM Sans', 'Sora', var(--font-geist-sans), sans-serif;
+  --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
+  /* Monospace for code snippets */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* ── Color Token Mappings (same as globals.css) ─────────── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Sidebar tokens */
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-indigo-xs: var(--feed-card-shadow);
+  --shadow-indigo-sm: var(--feed-card-shadow-sm);
+
+  --shadow-card-inner: var(--card-shadow-inner);
+  --color-card-border-inner: var(--card-border-inner);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-tint-foreground: var(--primary-tint-foreground);
+
+  --color-chat-bubble-received-bg: var(--chat-bubble-received-bg);
+  --color-chat-shared-card-bg: var(--chat-shared-card-bg);
+  --color-chat-active-item-bg: var(--chat-active-item-bg);
+
+  --radius-card: 24px;
+  --radius-feed-card: 24px;
+
+  --color-profile-hover: var(--profile-hover);
+  --color-profile-active-bg: var(--profile-active-bg);
+  --color-profile-active-border: var(--profile-active-border);
+  --color-profile-text: var(--profile-text);
+  --color-subtle: var(--subtle);
+
+  /* Company Theme Tokens */
+  --color-company-bg: var(--company-bg);
+  --color-company-card: var(--company-card);
+  --color-company-text: var(--company-text);
+  --color-company-secondary: var(--company-secondary);
+  --color-company-border: var(--company-border);
+  --color-company-primary: var(--company-primary);
+  --color-company-primary-dark: var(--company-primary-dark);
+  --color-company-ultra-light: var(--company-ultra-light);
+  --color-company-light-primary: var(--company-light-primary);
+  --color-company-success: var(--company-success);
+  --color-company-warning: var(--company-warning);
+  --color-company-error: var(--company-error);
+  --color-company-light-green: var(--company-light-green);
+  --color-company-light-yellow: var(--company-light-yellow);
+  --color-company-light-red: var(--company-light-red);
+  --color-company-light: var(--company-light);
+
+  /* ═══════════════════════════════════════════════════════════
+     NEW DESIGN SYSTEM TOKENS — Added in newGlobal.css
+     (Not present in globals.css)
+     ═══════════════════════════════════════════════════════════ */
+
+  /* ── Typography Scale (Designer Spec: DM Sans) ──────────── */
+  /* Title: Login/page titles */
+  --text-title-size: 40px;
+  --text-title-line-height: 48px;
+  --text-title-weight: 700;
+
+  /* Heading 1: Article/Section H1 */
+  --text-heading-1-size: 24px;
+  --text-heading-1-line-height: 32px;
+  --text-heading-1-weight: 700;
+
+  /* Heading 2: Article/Section H2 */
+  --text-heading-2-size: 20px;
+  --text-heading-2-line-height: 28px;
+  --text-heading-2-weight: 700;
+
+  /* Main body: Body text */
+  --text-body-main-size: 16px;
+  --text-body-main-line-height: 24px;
+  --text-body-main-weight: 400;
+
+  /* Main body 1: Tabs, emphasized text */
+  --text-body-main-1-size: 16px;
+  --text-body-main-1-line-height: 24px;
+  --text-body-main-1-weight: 500;
+
+  /* Main body 2: Buttons, strong UI */
+  --text-body-main-2-size: 16px;
+  --text-body-main-2-line-height: 24px;
+  --text-body-main-2-weight: 600;
+
+  /* Secondary body: Secondary body text */
+  --text-secondary-size: 14px;
+  --text-secondary-line-height: 20px;
+  --text-secondary-weight: 400;
+
+  /* Secondary body 1: Emphasized secondary text */
+  --text-secondary-1-size: 14px;
+  --text-secondary-1-line-height: 20px;
+  --text-secondary-1-weight: 500;
+
+  /* Secondary body 2: Strong secondary text */
+  --text-secondary-2-size: 14px;
+  --text-secondary-2-line-height: 20px;
+  --text-secondary-2-weight: 600;
+
+  /* Small body: Input/placeholder/helper */
+  --text-small-size: 12px;
+  --text-small-line-height: 16px;
+  --text-small-weight: 400;
+
+  /* Small body 1: Labels */
+  --text-small-1-size: 12px;
+  --text-small-1-line-height: 16px;
+  --text-small-1-weight: 500;
+
+  /* Small body 2: Strong labels */
+  --text-small-2-size: 12px;
+  --text-small-2-line-height: 16px;
+  --text-small-2-weight: 600;
+
+  /* Meta: Timestamps/minor metadata */
+  --text-meta-size: 10px;
+  --text-meta-line-height: 12px;
+  --text-meta-weight: 400;
+
+  /* Meta 1: Emphasized metadata */
+  --text-meta-1-size: 10px;
+  --text-meta-1-line-height: 12px;
+  --text-meta-1-weight: 500;
+
+  /* ── Motion Timing ──────────────────────────────────────── */
+  /* Quick: toggle flip, checkbox tick, hover feedback */
+  --motion-quick: 120ms ease-out;
+  /* Normal: card expand, tab switch, dropdown opening */
+  --motion-normal: 200ms ease-out;
+  /* Slow: modal appearing, sheet sliding up, page transitions */
+  --motion-slow: 320ms ease-out;
+  /* Exit: dismissals, closing animations */
+  --motion-exit: 200ms ease-in;
+
+  /* Duration only (for use with custom easing) */
+  --duration-quick: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+
+  /* ── Spacing Scale ──────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* ── Border Radius (new design spec) ────────────────────── */
+  /* For inputs and buttons */
+  --radius-input: 6px;
+  --radius-button: 6px;
+  /* For cards (slightly more to read as containers) */
+  --radius-card-new: 8px;
+  /* For tooltips */
+  --radius-tooltip: 4px;
+  /* For dropdown menus */
+  --radius-dropdown: 6px;
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  --container-max: 1200px;
+  --container-margin-web: 40px;
+  /* Web grid: 40px margin */
+  --container-margin-mobile: 16px;
+  /* Mobile grid: 16px margin */
+  --container-padding-mobile: 16px;
+  --grid-gutter: 16px;
+
+  /* ── New Design System Color Token Mappings ──────────────── */
+  /* These reference --ds-* variables that are set per theme below */
+  --color-ds-bg: var(--ds-bg);
+  --color-ds-surface-1: var(--ds-surface-1);
+  --color-ds-surface-2: var(--ds-surface-2);
+  --color-ds-text-primary: var(--ds-text-primary);
+  --color-ds-text-secondary: var(--ds-text-secondary);
+  --color-ds-text-muted: var(--ds-text-muted);
+  --color-ds-border: var(--ds-border);
+  --color-ds-accent: var(--ds-accent);
+  --color-ds-error: var(--ds-error);
+  --color-ds-success: var(--ds-success);
+  --color-ds-warning: var(--ds-warning);
+
+  /* ── New Component Colors ────────────────────────────────── */
+  /* Focus ring — orange (#EC6229), used ONLY for keyboard focus */
+  --color-focus-ring: var(--ds-accent);
+
+  /* Success (one-time confirmations: "saved", toasts) — #3FB950 */
+  --color-success-new: var(--ds-success);
+
+  /* Skeleton loading base & shimmer */
+  --color-skeleton-base: var(--ds-surface-1);
+  --color-skeleton-shimmer: var(--ds-surface-2);
+
+  /* Input surface */
+  --color-input-surface: var(--ds-surface-1);
+
+  /* ── Orange / Accent (Designer Palette — #EC6229) ────────── */
+  /* Orange is ONLY allowed in: focus rings, checkbox, radio,      */
+  /* toggle ON state, active tab underline, active pagination,     */
+  /* input focus outline. Never in text or decorative use.         */
+  --ds-orange: #EC6229;
+  --color-orange-focus: var(--ds-orange);
+  --color-orange-active: var(--ds-orange);
+}
+
+@layer base {
+  :root {
+    /* Navy Theme (Default) - Based on hardcoded values */
+    --background: #030303;
+    --foreground: #ffffff;
+
+    --card: #242b3d;
+    --card-foreground: #ffffff;
+
+    --popover: #242b3d;
+    --popover-foreground: #ffffff;
+
+    --primary: #6366F1;
+    --primary-foreground: #ffffff;
+
+    --secondary: #3d4558;
+    --secondary-foreground: #ffffff;
+
+    --muted: #2d3548;
+    --muted-foreground: #9ca3af;
+
+    --accent: #2d3548;
+    --accent-foreground: #ffffff;
+
+    --destructive: #F87171;
+    --destructive-foreground: #ffffff;
+
+    --border: #2d3548;
+    --input: #2d3548;
+    --ring: #6366F1;
+
+    --radius: 0.75rem;
+
+    /* Sidebar - Navy */
+    --sidebar-background: #1a1f2e;
+    --sidebar-foreground: #e5e7eb;
+    --sidebar-primary: #5B7CFF;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #242b3d;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #2d3548;
+    --sidebar-ring: #5B7CFF;
+
+    /* Shadows & Gradients */
+    --gradient-primary: linear-gradient(120deg, #6366F1 0%, #8B5CF6 100%);
+    --gradient-subtle: linear-gradient(180deg, #1f2937 0%, #030303 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-purple: 0 10px 40px -10px rgba(91, 124, 255, 0.3);
+    --shadow-glow: 0 0 60px rgba(255, 255, 255, 0.1);
+
+    /* Feed redesign tokens */
+    --feed-primary: #6366F1;
+    --feed-light: #E0E7FF;
+    --feed-ultra-light: #EEF2FF;
+    --feed-button: #A5B4FC;
+    --feed-secondary-text: #6B7280;
+    --feed-card-border: #EEF2FF;
+    --feed-card-shadow: 0px 0px 4px rgba(99, 102, 241, 0.05);
+    --feed-card-shadow-sm: 0px 2px 4px rgba(99, 102, 241, 0.05);
+    --feed-sidebar-border: rgba(199, 210, 254, 0.2);
+
+    --primary-tint: #EEF2FF;
+    --primary-tint-foreground: #6366F1;
+    --pill-text-refined: #6366F1;
+
+    --chat-bubble-received-bg: #EEF2FF;
+    --chat-shared-card-bg: #F3F5F7;
+    --chat-active-item-bg: #F9FAFF;
+
+    --card-shadow-inner: 0px 0px 4px rgba(99, 102, 241, 0.05);
+    --card-border-inner: transparent;
+
+    --profile-hover: #2A3150;
+    --profile-active-bg: #2A3150;
+    --profile-active-border: #EEF2FF;
+    --profile-text: #000000;
+    --edit-btn-hover: #2A3150;
+    --subtle: #2A3150;
+
+    /* Company Onboarding */
+    --onboarding-accent: #82B8FF;
+
+    /* Company Theme Variables (Default / Dark) */
+    --company-bg: #0F1115;
+    --company-card: #121B2B;
+    --company-text: #FFFFFF;
+    --company-secondary: #A1A8B3;
+    --company-border: #2A2D35;
+    --company-primary: #4D9CFF;
+    --company-primary-dark: #82B8FF;
+    --company-ultra-light: #121B2B;
+    --company-light-primary: rgba(77, 156, 255, 0.15);
+    --company-success: #4ADE80;
+    --company-warning: #FBBF24;
+    --company-error: #F87171;
+    --company-light-green: #123B23;
+    --company-light-yellow: #4A3A10;
+    --company-light-red: #4A1C1C;
+    --company-light: #1A2435;
+
+    /* ── New Design System Colors (Dark Mode — Default) ─────── */
+    --ds-bg: #030303;
+    --ds-surface-1: #1A1A20;
+    --ds-surface-2: #222228;
+    --ds-text-primary: #FFECE6;
+    --ds-text-secondary: #B8ADA8;
+    --ds-text-muted: #726B67;
+    --ds-border: #2C2C33;
+    --ds-media-border: #726B6780;
+    --ds-accent: #EC6229;
+    --ds-error: #E5484D;
+    --ds-success: #3FB950;
+    --ds-warning: #F0A500;
+  }
+
+  [data-theme="navy"] {
+    /* Same as root */
+    --background: #030303;
+    --foreground: #ffffff;
+    --card: #242b3d;
+    --card-foreground: #ffffff;
+    --popover: #242b3d;
+    --popover-foreground: #ffffff;
+    --primary: #6366F1;
+    --primary-foreground: #ffffff;
+    --secondary: #3d4558;
+    --secondary-foreground: #ffffff;
+    --muted: #2d3548;
+    --muted-foreground: #9ca3af;
+    --accent: #2d3548;
+    --accent-foreground: #ffffff;
+    --destructive: #F87171;
+    --destructive-foreground: #ffffff;
+    --border: #2d3548;
+    --input: #2d3548;
+    --ring: #6366F1;
+
+    --sidebar-background: #1a1f2e;
+    --sidebar-foreground: #e5e7eb;
+    --sidebar-primary: #5B7CFF;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #242b3d;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #2d3548;
+    --sidebar-ring: #6366F1;
+
+    --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
+    --card-border-inner: transparent;
+    --edit-btn-hover: #2A3150;
+    --pill-text-refined: #F9FAFB;
+    --pill-border-refined: #F9FAFB;
+
+    --profile-hover: #2A3150;
+    --profile-active-bg: #2A3150;
+    --profile-active-border: #2d3548;
+    --profile-text: #ffffff;
+    --primary-tint: #242b3d;
+    --primary-tint-foreground: #818CF8;
+    --subtle: #2A3150;
+
+    --chat-bubble-received-bg: #242b3d;
+    --chat-shared-card-bg: #1e2530;
+    --chat-active-item-bg: #242b3d;
+
+    /* ── New Design System Colors (Navy Theme) ─────────────── */
+    --ds-bg: #030303;
+    --ds-surface-1: #1A1A20;
+    --ds-surface-2: #222228;
+    --ds-text-primary: #FFECE6;
+    --ds-text-secondary: #B8ADA8;
+    --ds-text-muted: #726B67;
+    --ds-border: #2C2C33;
+    --ds-media-border: #726B6780;
+    --ds-accent: #EC6229;
+    --ds-error: #E5484D;
+    --ds-success: #3FB950;
+    --ds-warning: #F0A500;
+  }
+
+
+  [data-theme="light"] {
+    --background: #ffffff;
+    --foreground: #000000;
+
+    --card: #ffffff;
+    --card-foreground: #000000;
+
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+
+    --primary: #6366F1;
+    --primary-foreground: #ffffff;
+
+    --secondary: #f3f4f6;
+    --secondary-foreground: #1f2937;
+
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+
+    --accent: #f3f4f6;
+    --accent-foreground: #1f2937;
+
+    --destructive: #FF6B6B;
+    --destructive-foreground: #ffffff;
+
+    --border: #e5e7eb;
+    --input: #e5e7eb;
+    --ring: #6366F1;
+
+    --sidebar-background: #ffffff;
+    --sidebar-foreground: #4b5563;
+    --sidebar-primary: #5B7CFF;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f3f4f6;
+    --sidebar-accent-foreground: #1f2937;
+    --sidebar-border: #e5e7eb;
+    --sidebar-ring: #6366F1;
+
+    --primary-tint: #EEF2FF;
+    --primary-tint-foreground: #6366F1;
+    --pill-text-refined: #6366F1;
+
+    --card-shadow-inner: 0px 0px 4px 0px #6366F10D;
+    --card-border-inner: transparent;
+    --edit-btn-hover: #EEF2FF;
+
+    --profile-hover: #EEF2FF;
+    --profile-active-bg: #EEF2FF;
+    --profile-active-border: #EEF2FF;
+    --profile-text: #000000;
+    --subtle: #EEF2FF;
+
+    --chat-bubble-received-bg: #EEF2FF;
+    --chat-shared-card-bg: #F3F5F7;
+    --chat-active-item-bg: #F9FAFF;
+
+    /* Company Theme Variables (Light) */
+    --company-bg: #FFFFFF;
+    --company-card: #FFFFFF;
+    --company-text: #000000;
+    --company-secondary: #6B7280;
+    --company-border: #E0E0E7;
+    --company-primary: #1A73E8;
+    --company-primary-dark: #0D47A1;
+    --company-ultra-light: #F2F7FF;
+    --company-light-primary: #E8F1FF;
+    --company-success: #22C55E;
+    --company-warning: #F59E0B;
+    --company-error: #EF4444;
+    --company-light-green: #DCFCE7;
+    --company-light-yellow: #FEF3C7;
+    --company-light-red: #FEE2E2;
+    --company-light: #EFF4FF;
+
+    /* ── New Design System Colors (Light Mode) ───────────────── */
+    --ds-bg: #FFF9F6;
+    --ds-surface-1: #FFFFFF;
+    --ds-surface-2: #F3EDE9;
+    --ds-text-primary: #121217;
+    --ds-text-secondary: #5C5A57;
+    --ds-text-muted: #8F8B87;
+    --ds-border: #E4DDD8;
+    --ds-media-border: #8F8B8780;
+    --ds-accent: #EC6229;
+    --ds-error: #D6393E;
+    --ds-success: #2E883C;
+    --ds-warning: #B86B00;
+  }
+
+  [data-theme="dark"] {
+    /* ═══════════════════════════════════════════════════
+       Dark Theme — Base: #030303
+       Full color system derived from #030303
+       ═══════════════════════════════════════════════════ */
+
+    /* ── Custom Dark Palette Variables ──────────────── */
+    --bg-base: #030303;
+    --surface-1: #111827;
+    --surface-2: #161D2E;
+    --surface-3: #1A2236;
+    --accent-primary: #818CF8;
+    --accent-secondary: #818CF8;
+    --text-heading: #F9FAFB;
+    --text-body: #9CA3AF;
+    --text-muted: #4B607A;
+    --border-subtle: #1C2840;
+    --border-card: #232F45;
+    --border-skill: #2A3A55;
+    --border-menu: #1E2B42;
+    --tag-bg: rgba(20, 26, 43, 0.8);
+    --tag-border: rgba(20, 26, 43, 0.8);
+    --tag-text: #818CF8;
+    --skill-text: #A5B4FC;
+    --menu-surface: #131C2E;
+    --menu-text: #CBD5E1;
+    --nav-inactive: #3D5066;
+    --company-text: #64748B;
+    --add-btn-bg: #1A2236;
+
+    /* ── Core Design Tokens ─────────────────────────── */
+    --background: #030303;
+    --foreground: #F9FAFB;
+
+    --card: #030303;
+    --card-foreground: #F9FAFB;
+
+    --popover: #161D2E;
+    --popover-foreground: #F9FAFB;
+
+    --primary: #818CF8;
+    --primary-foreground: #ffffff;
+
+    --secondary: #1A2236;
+    --secondary-foreground: #F9FAFB;
+
+    --muted: #1A2236;
+    --muted-foreground: #9CA3AF;
+
+    --accent: #1A2236;
+    --accent-foreground: #F9FAFB;
+
+    --destructive: #F87171;
+    --destructive-foreground: #f8fafc;
+
+    --border: #1C2840;
+    --input: #1A2236;
+    --ring: #818CF8;
+
+    /* ── Sidebar ────────────────────────────────────── */
+    --sidebar-background: #030303;
+    --sidebar-foreground: #F9FAFB;
+    --sidebar-primary: #818CF8;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1A2236;
+    --sidebar-accent-foreground: #F9FAFB;
+    --sidebar-border: #1C2840;
+    --sidebar-ring: #818CF8;
+
+    /* ── Gradients & Shadows ────────────────────────── */
+    --gradient-primary: linear-gradient(120deg, #818CF8 0%, #A5B4FC 100%);
+    --gradient-subtle: linear-gradient(180deg, #111827 0%, #030303 100%);
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-purple: 0 10px 40px -10px rgba(99, 102, 241, 0.25);
+    --shadow-glow: 0 0 60px rgba(99, 102, 241, 0.08);
+
+    --primary-tint: #1A2236;
+    --primary-tint-foreground: #818CF8;
+    --pill-text-refined: #F9FAFB;
+
+    --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
+    --card-border-inner: transparent;
+    --edit-btn-hover: #2A3150;
+
+    --profile-hover: #2A3150;
+    --profile-active-bg: #2A3150;
+    --profile-active-border: #1C2840;
+    --profile-text: #ffffff;
+    --subtle: #2A3150;
+
+    --chat-bubble-received-bg: #1A2236;
+    --chat-shared-card-bg: #171d2b;
+    --chat-active-item-bg: #1A2236;
+
+    /* Company Theme Variables (Dark) */
+    --company-bg: #0F1115;
+    --company-card: #121B2B;
+    --company-text: #FFFFFF;
+    --company-secondary: #A1A8B3;
+    --company-border: #2A2D35;
+    --company-primary: #4D9CFF;
+    --company-primary-dark: #82B8FF;
+    --company-ultra-light: #121B2B;
+    --company-light-primary: rgba(77, 156, 255, 0.15);
+    --company-success: #4ADE80;
+    --company-warning: #FBBF24;
+    --company-error: #F87171;
+    --company-light-green: #123B23;
+    --company-light-yellow: #4A3A10;
+    --company-light-red: #4A1C1C;
+    --company-light: #1A2435;
+
+    /* ── New Design System Colors (Dark Theme) ───────────────── */
+    --ds-bg: #030303;
+    --ds-surface-1: #1A1A20;
+    --ds-surface-2: #222228;
+    --ds-text-primary: #FFECE6;
+    --ds-text-secondary: #B8ADA8;
+    --ds-text-muted: #726B67;
+    --ds-border: #2C2C33;
+    --ds-media-border: #726B6780;
+    --ds-accent: #EC6229;
+    --ds-error: #E5484D;
+    --ds-success: #3FB950;
+    --ds-warning: #F0A500;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* ── Browser Autofill Reset ────────────────────────────── */
+  /* Eliminates native WebKit/Chrome autofill background highlight across Light & Dark themes */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+    box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+    -webkit-text-fill-color: var(--ds-text-primary) !important;
+    /* Forces the cursor to match Figma's accent color (#EC6229) during browser autofill */
+    caret-color: var(--ds-text-accent) !important;
+    transition: background-color 50000s ease-in-out 0s !important;
+  }
+
+  input:autofill {
+    box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+    -webkit-text-fill-color: var(--ds-text-primary) !important;
+    /* Forces the cursor to match Figma's accent color (#EC6229) during browser autofill */
+    caret-color: var(--ds-text-accent) !important;
+    filter: none !important;
+  }
+
+  /* ── Microsoft Edge Password Reveal Reset ────────────────── */
+  /* Eliminates native Edge eye reveal & clear buttons in password inputs */
+  input::-ms-reveal {
+    display: none !important;
+  }
+
+  input::-ms-clear {
+    display: none !important;
+  }
+}
+
+@layer components {
+
+  .feed-card-shell {
+    background-color: #ffffff;
+    border: none;
+    border-radius: var(--radius-feed-card, 24px);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .feed-card-shell,
+  [data-theme="navy"] .feed-card-shell {
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+
+  .feed-card-input {
+    background-color: color-mix(in srgb, var(--feed-ultra-light, #EEF2FF) 50%, transparent);
+    border-color: var(--feed-card-border, #EEF2FF);
+  }
+
+  .feed-card-input:hover {
+    background-color: var(--feed-ultra-light, #EEF2FF);
+  }
+
+  [data-theme="dark"] .feed-card-input,
+  [data-theme="navy"] .feed-card-input {
+    background-color: color-mix(in srgb, var(--muted) 50%, transparent);
+    border-color: var(--border);
+  }
+
+
+
+  [data-theme="dark"] .feed-card-input:hover,
+  [data-theme="navy"] .feed-card-input:hover {
+    background-color: var(--muted);
+  }
+
+  /* ── Achievement Option Buttons ───────────────────────── */
+  .achievement-btn {
+    background-color: transparent;
+  }
+
+  .achievement-btn:hover {
+    background-color: #EEF2FF;
+  }
+
+  .achievement-btn-selected {
+    background-color: #EEF2FF;
+  }
+
+  .achievement-btn-selected:hover {
+    background-color: #E0E7FF;
+  }
+
+  [data-theme="dark"] .achievement-btn:hover,
+  [data-theme="dark"] .achievement-btn-selected,
+  [data-theme="dark"] .achievement-btn-selected:hover {
+    background-color: transparent !important;
+  }
+
+  /* Gradient helpers from old globals */
+  .bg-onboard {
+    background: linear-gradient(180deg, #5A2DD8 0%, #8B63F5 100%);
+  }
+
+  /* Stories UI Enhancements for Mobile */
+  @media (max-width: 768px) {
+    .stories-scroll-container {
+      position: relative;
+    }
+
+    .stories-scroll-container::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 100%;
+      background: linear-gradient(to left, var(--background), transparent);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .stories-scroll-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 40px;
+      height: 100%;
+      background: linear-gradient(to right, var(--background), transparent);
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .text-post-fade {
+      mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+    }
+
+    .soft-post-shadow {
+      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  /* ── Skill/Tag Chip (Figma Assistive Chip) ─────────── */
+  .skill-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    height: 40px;
+    border-radius: 8px;
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.025em;
+    background-color: #EEF2FF;
+    border: 1px solid #EEF2FF;
+    color: #6366F1;
+    transition: all 0.2s ease-in-out;
+    gap: 8px;
+  }
+
+  [data-theme="dark"] .skill-chip {
+    background-color: var(--tag-bg) !important;
+    border: 1px solid var(--tag-border) !important;
+    color: var(--tag-text) !important;
+  }
+
+  /* ── Entity Placeholder (Exp/Edu/Proj Icons) ───────────── */
+  .entity-placeholder {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #EEF2FF;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+  }
+
+  [data-theme="dark"] .entity-placeholder {
+    background-color: var(--tag-bg) !important;
+    border: 1px solid var(--tag-border) !important;
+  }
+
+  .entity-placeholder-icon {
+    width: 24px;
+    height: 24px;
+    color: #6366F1;
+  }
+
+  [data-theme="dark"] .entity-placeholder-icon {
+    color: var(--tag-text) !important;
+  }
+
+  /* ── Add Button Chip (56x40 Squircle) ─────────────── */
+  .add-button-chip {
+    width: 56px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    border: 1px solid #6366F1;
+    background-color: transparent;
+    color: #6366F1;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  [data-theme="dark"] .add-button-chip {
+    border-color: #818CF8 !important;
+    color: #818CF8 !important;
+    background-color: rgba(20, 26, 43, 0.8) !important;
+  }
+
+  .add-button-chip:hover {
+    background-color: #EEF2FF;
+  }
+
+  [data-theme="dark"] .add-button-chip:hover {
+    background-color: rgba(20, 26, 43, 0.9) !important;
+  }
+
+  /* ── Stats Button (Header Metrics) ────────────────── */
+  .stats-button {
+    flex: 1;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: #EEF2FF;
+    box-shadow: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
+  }
+
+  [data-theme="dark"] .stats-button {
+    background-color: var(--surface-3) !important;
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: none !important;
+  }
+
+  .stats-button:hover {
+    opacity: 0.9;
+  }
+
+  /* ── Profile Identity Chip ───────────── */
+  .profile-identity-chip {
+    background-color: var(--primary-tint);
+    border-color: var(--pill-border-refined, transparent);
+    color: var(--pill-text-refined, #6366F1);
+  }
+
+  [data-theme="light"] .profile-identity-chip {
+    background-color: transparent !important;
+    border-color: #818CF8 !important;
+  }
+
+  /* Custom popovers layouts to match 3-dot dropdown */
+  .notification-popover-custom {
+    background-color: #ffffff !important;
+    border-color: #C7D2FE !important;
+    box-shadow: none !important;
+  }
+
+  [data-theme="dark"] .notification-popover-custom,
+  [data-theme="navy"] .notification-popover-custom {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+  }
+
+  .profile-popover-custom {
+    background-color: var(--popover) !important;
+    border-color: var(--profile-active-border) !important;
+    box-shadow: none !important;
+  }
+
+  [data-theme="dark"] .profile-popover-custom,
+  [data-theme="navy"] .profile-popover-custom {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     NEW DESIGN SYSTEM COMPONENTS
+     Typography utility classes (use these in new components)
+     ════════════════════════════════════════════════════════ */
+
+  /* Title — Login/page titles */
+  .ds-text-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-size);
+    /* 40px */
+    line-height: var(--text-title-line-height);
+    /* 48px */
+    font-weight: var(--text-title-weight);
+    /* 700 */
+  }
+
+  /* Main body — Main body text */
+  .ds-text-body {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-main-size);
+    /* 16px */
+    line-height: var(--text-body-main-line-height);
+    /* 24px */
+    font-weight: var(--text-body-main-weight);
+    /* 400 */
+  }
+
+  /* Main body 1 — Tabs, emphasized text */
+  .ds-text-body-1 {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-main-1-size);
+    /* 16px */
+    line-height: var(--text-body-main-1-line-height);
+    /* 24px */
+    font-weight: var(--text-body-main-1-weight);
+    /* 500 */
+  }
+
+  /* Main body 2 — Buttons, strong UI */
+  .ds-text-body-2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-main-2-size);
+    /* 16px */
+    line-height: var(--text-body-main-2-line-height);
+    /* 24px */
+    font-weight: var(--text-body-main-2-weight);
+    /* 600 */
+  }
+
+  /* Secondary body — Secondary body text */
+  .ds-text-secondary {
+    font-family: var(--font-sans);
+    font-size: var(--text-secondary-size);
+    /* 14px */
+    line-height: var(--text-secondary-line-height);
+    /* 20px */
+    font-weight: var(--text-secondary-weight);
+    /* 400 */
+  }
+
+  /* Secondary body 1 — Emphasized secondary text */
+  .ds-text-secondary-1 {
+    font-family: var(--font-sans);
+    font-size: var(--text-secondary-1-size);
+    /* 14px */
+    line-height: var(--text-secondary-1-line-height);
+    /* 20px */
+    font-weight: var(--text-secondary-1-weight);
+    /* 500 */
+  }
+
+  /* Secondary body 2 — Strong secondary text */
+  .ds-text-secondary-2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-secondary-2-size);
+    /* 14px */
+    line-height: var(--text-secondary-2-line-height);
+    /* 20px */
+    font-weight: var(--text-secondary-2-weight);
+    /* 600 */
+  }
+
+  /* Small body — Input/placeholder/helper */
+  .ds-text-small {
+    font-family: var(--font-sans);
+    font-size: var(--text-small-size);
+    /* 12px */
+    line-height: var(--text-small-line-height);
+    /* 16px */
+    font-weight: var(--text-small-weight);
+    /* 400 */
+  }
+
+  /* Small body 1 — Labels */
+  .ds-text-small-1 {
+    font-family: var(--font-sans);
+    font-size: var(--text-small-1-size);
+    /* 12px */
+    line-height: var(--text-small-1-line-height);
+    /* 16px */
+    font-weight: var(--text-small-1-weight);
+    /* 500 */
+  }
+
+  /* Small body 2 — Strong labels */
+  .ds-text-small-2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-small-2-size);
+    /* 12px */
+    line-height: var(--text-small-2-line-height);
+    /* 16px */
+    font-weight: var(--text-small-2-weight);
+    /* 600 */
+  }
+
+  /* Meta — Timestamps/minor metadata */
+  .ds-text-meta {
+    font-family: var(--font-sans);
+    font-size: var(--text-meta-size);
+    /* 10px */
+    line-height: var(--text-meta-line-height);
+    /* 12px */
+    font-weight: var(--text-meta-weight);
+    /* 400 */
+  }
+
+  /* Meta 1 — Emphasized metadata */
+  .ds-text-meta-1 {
+    font-family: var(--font-sans);
+    font-size: var(--text-meta-1-size);
+    /* 10px */
+    line-height: var(--text-meta-1-line-height);
+    /* 12px */
+    font-weight: var(--text-meta-1-weight);
+    /* 500 */
+  }
+
+  /* ── Skeleton loading state ─────────────────────────────── */
+  .ds-skeleton {
+    background-color: var(--color-skeleton-base, #161D2E);
+    border-radius: var(--radius-button);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ds-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--color-skeleton-shimmer, #1A2236) 50%,
+        transparent 100%);
+    animation: ds-skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* ── Focus ring (keyboard navigation — orange) ──────────── */
+  .ds-focus-ring:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* ── Disabled state ─────────────────────────────────────── */
+  .ds-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  /* ── Standard 36px Controls (Content + Padding = 36px) ───── */
+  /* Button: 16px Medium (24px LH), 6px 16px padding, 20px icon, 8px gap */
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: var(--text-body-main-1-size);
+    /* 16px */
+    line-height: var(--text-body-main-1-line-height);
+    /* 24px */
+    font-weight: var(--text-body-main-1-weight);
+    /* 500 */
+    padding: 6px 16px;
+    gap: 8px;
+    min-height: 36px;
+    border-radius: var(--radius-button);
+    transition: background-color var(--motion-quick), border-color var(--motion-quick), opacity var(--motion-quick), transform var(--motion-quick);
+  }
+
+  /* Sidebar Tab: 16px Medium (24px LH), 6px 16px padding, 20px icon, 8px gap */
+  .ds-sidebar-tab {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: var(--text-body-main-1-size);
+    /* 16px */
+    line-height: var(--text-body-main-1-line-height);
+    /* 24px */
+    font-weight: var(--text-body-main-1-weight);
+    /* 500 */
+    padding: 6px 16px;
+    gap: 8px;
+    min-height: 36px;
+    border-radius: var(--radius-button);
+    transition: background-color var(--motion-quick), color var(--motion-quick);
+  }
+
+  /* Input: 12px Regular (16px LH), 10px 12px padding, 16px icon, 8px gap */
+  .ds-input {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: var(--text-small-size);
+    /* 12px */
+    line-height: var(--text-small-line-height);
+    /* 16px */
+    font-weight: var(--text-small-weight);
+    /* 400 */
+    padding: 10px 12px;
+    gap: 8px;
+    min-height: 36px;
+    border-radius: var(--radius-input);
+    background-color: var(--color-input-surface);
+    border: 1px solid var(--ds-border);
+    color: var(--ds-text-primary);
+    transition: border-color var(--motion-quick), outline var(--motion-quick);
+  }
+
+  .ds-input:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+
+  /* Select / Dropdown Trigger: 12px Regular (16px LH), 10px 12px padding, 16px caret, 8px gap */
+  .ds-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: var(--text-small-size);
+    /* 12px */
+    line-height: var(--text-small-line-height);
+    /* 16px */
+    font-weight: var(--text-small-weight);
+    /* 400 */
+    padding: 10px 12px;
+    gap: 8px;
+    min-height: 36px;
+    border-radius: var(--radius-input);
+    background-color: var(--color-input-surface);
+    border: 1px solid var(--ds-border);
+    color: var(--ds-text-primary);
+    cursor: pointer;
+    transition: border-color var(--motion-quick), background-color var(--motion-quick);
+  }
+
+  /* ── Form Layout Stability Utilities ─────────────────────── */
+  .ds-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    /* 4px gap between label, control, and supporting area */
+    width: 100%;
+  }
+
+  /* Reserved supporting area prevents form shifts when errors/helpers appear */
+  .ds-supporting-area {
+    min-height: 16px;
+    font-family: var(--font-sans);
+    font-size: var(--text-small-size);
+    /* 12px */
+    line-height: var(--text-small-line-height);
+    /* 16px */
+    display: flex;
+    align-items: center;
+  }
+
+  /* ── Icon Sizing Scale Helpers ───────────────────────────── */
+  .ds-icon-16 {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .ds-icon-14 {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .ds-icon-12 {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .ds-icon-10 {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Touch Target Helper (Min 40px for Mobile/Thumb) ─────── */
+  .ds-touch-target {
+    position: relative;
+  }
+
+  .ds-touch-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 40px;
+    min-height: 40px;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@layer utilities {
+  .font-poppins {
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
+  }
+
+  /* NEW: DM Sans utility */
+  .font-dm-sans {
+    font-family: 'DM Sans', var(--font-sans), sans-serif;
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .shadow-purple {
+    box-shadow: var(--shadow-purple);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide,
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 10px;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #374151;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ════════════════════════════════════════════════════════════ */
+
+/* Legacy animations (kept from globals.css) */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+
+  33% {
+    transform: translateY(-15px) translateX(10px);
+  }
+
+  66% {
+    transform: translateY(10px) translateX(-5px);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-shake {
+
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  25% {
+    transform: scale(1.05) rotate(-2deg);
+  }
+
+  75% {
+    transform: scale(1.05) rotate(2deg);
+  }
+}
+
+@keyframes twinkle {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes arm-extend {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-10deg);
+  }
+
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── NEW: Design System Animations ───────────────────────── */
+
+/* Skeleton shimmer */
+@keyframes ds-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Modal entrance (slow: 320ms ease-out) */
+@keyframes ds-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal exit (200ms ease-in) */
+@keyframes ds-modal-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* Dropdown entrance (normal: 200ms ease-out) */
+@keyframes ds-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sheet slide up (slow: 320ms ease-out) */
+@keyframes ds-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toast entrance from bottom */
+@keyframes ds-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Checkbox tick (quick: 120ms ease-out) */
+@keyframes ds-tick-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation utility classes */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.8s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.8s ease-out forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.animate-pulse-shake {
+  animation: pulse-shake 1.5s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.animate-twinkle {
+  animation: twinkle 1.2s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.2s ease-in-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease-in-out;
+}
+
+/* NEW: Design system animation utilities */
+.ds-animate-modal-in {
+  animation: ds-modal-in var(--motion-slow) forwards;
+}
+
+.ds-animate-modal-out {
+  animation: ds-modal-out var(--motion-exit) forwards;
+}
+
+.ds-animate-dropdown {
+  animation: ds-dropdown-in var(--motion-normal) forwards;
+}
+
+.ds-animate-sheet-up {
+  animation: ds-sheet-up var(--motion-slow) forwards;
+}
+
+.ds-animate-toast {
+  animation: ds-toast-in var(--motion-normal) forwards;
+}
+
+.ds-animate-tick {
+  animation: ds-tick-in var(--motion-quick) forwards;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
+.animation-delay-600 {
+  animation-delay: 0.6s;
+}
+
+/* ── Responsive media overrides (same as globals.css) ────── */
+@media (max-width: 768px) {
+  [data-theme="light"] {
+    --background: #ffffff;
+  }
+}
+
+@media (max-width: 768px) {
+  [data-theme="dark"] {
+    --background: #030303;
+  }
+}
+
+@media (max-width: 768px) {
+  [data-theme="navy"] {
+    --background: #242b3d;
+  }
+}
+
+@media (max-width: 768px) {
+  .post-image {
+    border-radius: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Dark Theme — Component-Level Color Overrides
+   Override all hardcoded light-mode colors for dark mode.
+   These rules ONLY apply under [data-theme="dark"].
+   NO layout, spacing, font, or structure changes.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Page-level backgrounds ─────────────────────────────── */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-\[\#FFFFFF\],
+[data-theme="dark"] .bg-\[\#FFFFFFFF\],
+[data-theme="dark"] .bg-\[\#ffffff\] {
+  background-color: var(--bg-base) !important;
+}
+
+/* ── Text: black → heading text ─────────────────────────── */
+[data-theme="dark"] .text-black,
+[data-theme="dark"] .text-\[\#000000\] {
+  color: #F9FAFB !important;
+}
+
+/* ── Specific Section Text ──────────────────────────────── */
+[data-theme="dark"] .text-\[\#111827\] {
+  color: #F9FAFB !important;
+}
+
+[data-theme="dark"] button.text-\[\#111827\] {
+  color: #9CA3AF !important;
+}
+
+[data-theme="dark"] .text-muted-foreground {
+  color: var(--text-body) !important;
+}
+
+[data-theme="dark"] .text-\[\#6B7280\] {
+  color: var(--text-body) !important;
+}
+
+[data-theme="dark"] .text-\[\#64748B\] {
+  color: var(--company-text) !important;
+}
+
+/* ── Primary accent → Secondary accent ──────────────────── */
+[data-theme="dark"] .text-primary,
+[data-theme="dark"] a:not(.mention-link):not(.profile-website-link),
+[data-theme="dark"] [icon*="dots-three"],
+[data-theme="dark"] svg[data-icon*="dots-three"],
+[data-theme="dark"] button[data-state] svg {
+  color: #F9FAFB !important;
+}
+
+/* ── Mention Links & Profile Links: Always orange per design system ──────── */
+a.mention-link,
+[data-theme="dark"] a.mention-link,
+[data-theme="navy"] a.mention-link,
+[data-theme="light"] a.mention-link,
+.mention-token,
+[data-theme="dark"] .mention-token,
+[data-theme="navy"] .mention-token,
+[data-theme="light"] .mention-token,
+a.profile-website-link,
+[data-theme="dark"] a.profile-website-link,
+[data-theme="navy"] a.profile-website-link,
+[data-theme="light"] a.profile-website-link {
+  color: var(--ds-accent) !important;
+  -webkit-text-fill-color: var(--ds-accent) !important;
+}
+
+textarea.mention-textarea-input:not(:placeholder-shown) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* ── Indigo primary text → accent secondary ────────────── */
+[data-theme="dark"] .text-\[\#6366F1\] {
+  color: #818CF8 !important;
+}
+
+/* ── Indigo tint backgrounds → dark surfaces ────────────── */
+[data-theme="dark"] .bg-\[\#EEF2FF\] {
+  background-color: var(--surface-3) !important;
+}
+
+[data-theme="dark"] .bg-\[\#E0E7FF\] {
+  background-color: var(--surface-3) !important;
+}
+
+[data-theme="dark"] .bg-\[\#E0E7FF\] span,
+[data-theme="dark"] .bg-\[\#E0E7FF\] .text-primary {
+  color: #818CF8 !important;
+}
+
+/* ── Borders: indigo tints → dark borders ───────────────── */
+[data-theme="dark"] .border-\[\#EEF2FF\] {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme="dark"] .border-\[\#C7D2FE\] {
+  border-color: var(--border-menu) !important;
+}
+
+[data-theme="dark"] .border-\[\#E5E7EB\] {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme="dark"] .border-\[\#DADADA\] {
+  border-color: var(--border-subtle) !important;
+}
+
+/* ── Dot separator ──────────────────────────────────────── */
+[data-theme="dark"] .bg-\[\#DADADA\] {
+  background-color: var(--text-muted) !important;
+}
+
+/* ── Identity Chips (Freelance, Immediate, Hybrid) ──────── */
+[data-theme="dark"] .border-\[\#818CF8\].bg-\[\#FFFFFF\] {
+  background-color: #111827CC !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--tag-text) !important;
+}
+
+[data-theme="dark"] .text-\[\#818CF8\] {
+  color: var(--tag-text) !important;
+}
+
+/* ── Stats buttons (Metric Boxes & Living Resume Metrics) ── */
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border {
+  background: #030303 !important;
+  box-shadow: 0px 2px 4px 0px #818CF899 !important;
+  border-radius: 24px !important;
+  border: 1.5px solid rgba(129, 140, 248, 0.15) !important;
+  padding: 16px !important;
+  gap: 8px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-muted-foreground {
+  color: #9CA3AF !important;
+  font-size: 12px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-foreground {
+  color: #F9FAFB !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-primary {
+  color: #818CF8 !important;
+  font-size: 24px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-black {
+  color: #9CA3AF !important;
+  font-size: 12px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-\[\#6366F1\] {
+  color: #818CF8 !important;
+  font-size: 24px !important;
+}
+
+[data-theme="dark"] [style*="background: rgb(238, 242, 255)"],
+[data-theme="dark"] [style*="background: #EEF2FF"] {
+  background: var(--surface-3) !important;
+  box-shadow: 0px 0px 4px 0px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* ── Post card backgrounds ──────────────────────────────── */
+[data-theme="dark"] .bg-white.border.border-\[\#EEF2FF\] {
+  background-color: var(--surface-1) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* ── Profile action dropdown menu ───────────────────────── */
+[data-theme="dark"] .bg-card.border-\[\#C7D2FE\],
+[data-theme="dark"] .bg-white.border-\[\#C7D2FE\],
+[data-theme="dark"] [role="menu"],
+[data-theme="dark"] [data-radix-popper-content-wrapper] .bg-card {
+  background-color: var(--menu-surface) !important;
+  border-color: #818CF8 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+/* Select dropdown (Radix Select): force dark theme background to match base (#030303) */
+[data-theme="dark"] .cocpit-select-content {
+  background-color: #030303 !important;
+}
+
+/* ── Dropdown hover states ──────────────────────────────── */
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item):hover,
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted],
+[data-theme="dark"] .focus\:bg-\[\#EEF2FF\]:focus,
+[data-theme="dark"] [class*="focus:bg-[#EEF2FF]"]:focus,
+[data-theme="dark"] .hover\:bg-\[\#EEF2FF\]:hover,
+[data-theme="dark"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
+[data-theme="dark"] .data-\[highlighted\]\:bg-white[data-highlighted],
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item):hover,
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted],
+[data-theme="navy"] .focus\:bg-\[\#EEF2FF\]:focus,
+[data-theme="navy"] [class*="focus:bg-[#EEF2FF]"]:focus,
+[data-theme="navy"] .hover\:bg-\[\#EEF2FF\]:hover,
+[data-theme="navy"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
+[data-theme="navy"] .data-\[highlighted\]\:bg-white[data-highlighted] {
+  background-color: #2A3150 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item):hover *,
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] *,
+[data-theme="dark"] [class*="hover:bg-[#EEF2FF]"]:hover *,
+[data-theme="dark"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] *,
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item):hover *,
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] *,
+[data-theme="navy"] [class*="hover:bg-[#EEF2FF]"]:hover *,
+[data-theme="navy"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] * {
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .focus\:bg-\[\#EEF2FF\]:focus,
+[data-theme="light"] [class*="focus:bg-[#EEF2FF]"]:focus,
+[data-theme="light"] .hover\:bg-\[\#EEF2FF\]:hover,
+[data-theme="light"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
+[data-theme="light"] [role="menuitem"]:not(.profile-switcher-item):hover,
+[data-theme="light"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] {
+  background-color: #EEF2FF !important;
+}
+
+/* ── Remove Open State Background Effect ───────────────── */
+[data-theme="dark"] button[data-state="open"] {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ── Hover states ───────────────────────────────────────── */
+[data-theme="dark"] .hover\:bg-slate-50:hover,
+[data-theme="navy"] .hover\:bg-slate-50:hover,
+[data-theme="dark"] .hover\:bg-slate-100:hover,
+[data-theme="navy"] .hover\:bg-slate-100:hover {
+  background-color: #2A3150 !important;
+}
+
+[data-theme="light"] .hover\:bg-slate-50:hover,
+[data-theme="light"] .hover\:bg-slate-100:hover {
+  background-color: #EEF2FF !important;
+}
+
+/* ── Red / Destructive Hover Overrides for Logout/Delete ── */
+[data-theme="light"] .hover\:bg-red-50:hover,
+[data-theme="light"] .focus\:bg-red-50:focus,
+[data-theme="light"] .hover\:bg-\[\#FFF0F0\]:hover,
+[data-theme="light"] .focus\:bg-\[\#FFF0F0\]:focus,
+[data-theme="light"] .hover\:bg-red-500\/10:hover,
+[data-theme="light"] .focus\:bg-red-500\/10:focus,
+[data-theme="light"] .hover\:bg-red-500\/20:hover,
+[data-theme="light"] .focus\:bg-red-500\/20:focus,
+[data-theme="light"] [class*="hover:bg-red-50"]:hover,
+[data-theme="light"] [class*="focus:bg-red-50"]:focus,
+[data-theme="light"] [class*="hover:bg-[#FFF0F0]"]:hover,
+[data-theme="light"] [class*="focus:bg-[#FFF0F0]"]:focus,
+[data-theme="light"] [class*="hover:bg-red-500/"]:hover,
+[data-theme="light"] [class*="focus:bg-red-500/"]:focus,
+[data-theme="light"] [class*="hover:bg-destructive/"]:hover,
+[data-theme="light"] [class*="focus:bg-destructive/"]:focus,
+.hover\:bg-red-50:hover,
+.focus\:bg-red-50:focus,
+.hover\:bg-\[\#FFF0F0\]:hover,
+.focus\:bg-\[\#FFF0F0\]:focus,
+.hover\:bg-red-500\/10:hover,
+.focus\:bg-red-500\/10:focus,
+.hover\:bg-red-500\/20:hover,
+.focus\:bg-red-500\/20:focus,
+[class*="hover:bg-red-50"]:hover,
+[class*="focus:bg-red-50"]:focus,
+[class*="hover:bg-[#FFF0F0]"]:hover,
+[class*="focus:bg-[#FFF0F0]"]:focus,
+[class*="hover:bg-red-500/"]:hover,
+[class*="focus:bg-red-500/"]:focus,
+[class*="hover:bg-destructive/"]:hover,
+[class*="focus:bg-destructive/"]:focus {
+  background-color: #FEE2E2 !important;
+}
+
+[data-theme="dark"] .hover\:bg-red-50:hover,
+[data-theme="dark"] .focus\:bg-red-50:focus,
+[data-theme="dark"] .hover\:bg-\[\#FFF0F0\]:hover,
+[data-theme="dark"] .focus\:bg-\[\#FFF0F0\]:focus,
+[data-theme="dark"] .hover\:bg-red-950\/20:hover,
+[data-theme="dark"] .hover\:bg-red-500\/10:hover,
+[data-theme="dark"] .focus\:bg-red-500\/10:focus,
+[data-theme="dark"] [class*="hover:bg-red-50"]:hover,
+[data-theme="dark"] [class*="focus:bg-red-50"]:focus,
+[data-theme="dark"] [class*="hover:bg-[#FFF0F0]"]:hover,
+[data-theme="dark"] [class*="focus:bg-[#FFF0F0]"]:focus,
+[data-theme="dark"] [class*="hover:bg-red-500/"]:hover,
+[data-theme="dark"] [class*="focus:bg-red-500/"]:focus,
+[data-theme="dark"] [class*="hover:bg-red-950/"]:hover,
+[data-theme="dark"] [class*="focus:bg-red-950/"]:focus,
+[data-theme="dark"] [class*="hover:bg-destructive/"]:hover,
+[data-theme="dark"] [class*="focus:bg-destructive/"]:focus,
+[data-theme="navy"] .hover\:bg-red-50:hover,
+[data-theme="navy"] .focus\:bg-red-50:focus,
+[data-theme="navy"] .hover\:bg-\[\#FFF0F0\]:hover,
+[data-theme="navy"] .focus\:bg-\[\#FFF0F0\]:focus,
+[data-theme="navy"] .hover\:bg-red-950\/20:hover,
+[data-theme="navy"] .hover\:bg-red-500\/10:hover,
+[data-theme="navy"] .focus\:bg-red-500\/10:focus,
+[data-theme="navy"] [class*="hover:bg-red-50"]:hover,
+[data-theme="navy"] [class*="focus:bg-red-50"]:focus,
+[data-theme="navy"] [class*="hover:bg-[#FFF0F0]"]:hover,
+[data-theme="navy"] [class*="focus:bg-[#FFF0F0]"]:focus,
+[data-theme="navy"] [class*="hover:bg-red-500/"]:hover,
+[data-theme="navy"] [class*="focus:bg-red-500/"]:focus,
+[data-theme="navy"] [class*="hover:bg-red-950/"]:hover,
+[data-theme="navy"] [class*="focus:bg-red-950/"]:focus,
+[data-theme="navy"] [class*="hover:bg-destructive/"]:hover,
+[data-theme="navy"] [class*="focus:bg-destructive/"]:focus {
+  background-color: #7F1D1D !important;
+}
+
+
+[data-theme="dark"] .bg-slate-50 {
+  background-color: var(--surface-2) !important;
+}
+
+[data-theme="dark"] .bg-slate-100 {
+  background-color: var(--surface-2) !important;
+}
+
+/* ── Avatar ring: match dark base background ────────────── */
+[data-theme="dark"] .border-white.shadow-sm {
+  border-color: var(--bg-base) !important;
+}
+
+/* ── Cover banner gradient overlay ──────────────────────── */
+[data-theme="dark"] .bg-white\/20 {
+  background-color: rgba(11, 15, 25, 0.3) !important;
+}
+
+[data-theme="dark"] .bg-white\/30 {
+  background-color: rgba(11, 15, 25, 0.4) !important;
+}
+
+/* ── Section shadows → darker for dark mode ─────────────── */
+[data-theme="dark"] .shadow-\[0px_0px_4px_rgba\(99\,102\,241\,0\.05\)\] {
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── Resume chip ────────────────────────────────────────── */
+[data-theme="dark"] .border-\[\#6B7280\].bg-\[\#FFFFFF\] {
+  background-color: var(--surface-3) !important;
+  border-color: var(--border-skill) !important;
+}
+
+/* ── Form inputs in dark mode ───────────────────────────── */
+[data-theme="dark"] .bg-white.border-\[\#E5E7EB\] {
+  background-color: var(--surface-2) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-heading) !important;
+}
+
+[data-theme="dark"] .placeholder-\[\#6B7280\]::placeholder {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus,
+[data-theme="dark"] input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  -webkit-text-fill-color: var(--ds-text-primary) !important;
+  caret-color: var(--ds-text-primary) !important;
+  transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s;
+}
+
+[data-theme="light"] input:-webkit-autofill,
+[data-theme="light"] input:-webkit-autofill:hover,
+[data-theme="light"] input:-webkit-autofill:focus,
+[data-theme="light"] input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--ds-bg) inset !important;
+  -webkit-text-fill-color: var(--ds-text-primary) !important;
+  caret-color: var(--ds-text-primary) !important;
+  transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s;
+}
+
+[data-theme="dark"] .focus-visible\:border-\[\#C7D2FE\]:focus-visible {
+  border-color: var(--accent-primary) !important;
+}
+
+/* ── Border for "+ Add" buttons: keep accent ────────────── */
+[data-theme="dark"] .border-primary.bg-card {
+  background-color: var(--add-btn-bg) !important;
+}
+
+/* ── Spinner ────────────────────────────────────────────── */
+[data-theme="dark"] .border-\[\#EEF2FF\].border-t-\[\#6366F1\] {
+  border-color: var(--border-subtle) !important;
+  border-top-color: var(--accent-primary) !important;
+}
+
+/* ── Pill Border Variable Overrides ─────────────────────── */
+:root,
+[data-theme="light"] {
+  --pill-border-refined: transparent;
+}
+
+[data-theme="dark"],
+[data-theme="navy"] {
+  --pill-border-refined: #F9FAFB;
+}
+
+/* Profile identity chips: remove background only in dark mode */
+[data-theme="dark"] .profile-identity-chip {
+  background-color: transparent;
+}
+
+/* ── Date select item hover color in light mode ── */
+[data-theme="light"] .date-select-item:hover,
+[data-theme="light"] .date-select-item[data-highlighted],
+[data-theme="light"] .date-select-item.highlighted {
+  background-color: #C7D2FE !important;
+  color: #111827 !important;
+}
+
+/* Canonical article typography — updated to new design spec */
+.article-editor,
+.article-title-editor {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.article-content h1,
+.article-editor h1,
+.article-content h2,
+.article-editor h2,
+.article-content h3,
+.article-editor h3 {
+  scroll-margin-top: 2rem;
+  font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+}
+
+.article-content h1,
+.article-editor h1 {
+  font-size: var(--text-heading-1-size, 24px) !important;
+  font-weight: var(--text-heading-1-weight, 700) !important;
+  line-height: var(--text-heading-1-line-height, 32px) !important;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.article-content h2,
+.article-editor h2 {
+  font-size: var(--text-heading-2-size, 20px) !important;
+  font-weight: var(--text-heading-2-weight, 700) !important;
+  line-height: var(--text-heading-2-line-height, 28px) !important;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.article-content h3,
+.article-editor h3 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 26px !important;
+}
+
+.article-content p,
+.article-editor p {
+  font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+  font-size: var(--text-body-main-size, 16px) !important;
+  font-weight: var(--text-body-main-weight, 400) !important;
+  line-height: var(--text-body-main-line-height, 24px) !important;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-content ul,
+.article-editor ul {
+  list-style: disc outside !important;
+  list-style-type: disc !important;
+  padding-left: 2rem !important;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-content ul li,
+.article-editor ul li {
+  display: list-item !important;
+  list-style: disc outside !important;
+  list-style-type: disc !important;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.article-content ol,
+.article-editor ol {
+  list-style: decimal outside !important;
+  list-style-type: decimal !important;
+  padding-left: 2rem !important;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-content ol li,
+.article-editor ol li {
+  display: list-item !important;
+  list-style: decimal outside !important;
+  list-style-type: decimal !important;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.article-content li,
+.article-editor li {
+  display: list-item !important;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.article-content li p,
+.article-editor li p,
+.article-content li div:not([contenteditable="false"]),
+.article-editor li div:not([contenteditable="false"]) {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline !important;
+}
+
+.article-content strong,
+.article-editor strong {
+  font-weight: 700 !important;
+}
+
+.article-content a,
+.article-editor a,
+[data-theme="dark"] .article-content a,
+[data-theme="dark"] .article-editor a {
+  color: var(--ds-accent) !important;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.article-content img,
+.article-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 24px;
+  display: block;
+}
+
+.article-content video,
+.article-editor video {
+  width: 100% !important;
+  border-radius: 8px;
+}
+
+.article-content div[contenteditable="false"] {
+  width: fit-content;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.article-editor div[contenteditable="false"] {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.article-content .edit-link-btn,
+.article-content .delete-link-btn,
+.article-content .link-preview-capsule,
+.article-content .img-tools {
+  display: none !important;
+}
+
+/* Link preview capsule & action buttons: only active and visible when link is hovered */
+.article-editor .link-preview-capsule {
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 150ms ease, visibility 150ms ease;
+}
+
+.article-editor .group:hover .link-preview-capsule {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.article-editor .img-tools {
+  pointer-events: none !important;
+  opacity: 0 !important;
+  z-index: 30 !important;
+  transition: opacity 150ms ease;
+}
+
+.article-editor .group:hover .img-tools {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+.article-editor .img-tools svg {
+  display: block !important;
+  fill: none !important;
+  z-index: 31 !important;
+}
+
+.article-editor .edit-link-btn,
+.article-editor .delete-link-btn {
+  flex-shrink: 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+}
+
+.article-editor .edit-link-btn svg,
+.article-editor .delete-link-btn svg {
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+}
+
+/* Article alignment — applies in editor (write) and reader (display) */
+.article-content .text-left,
+.article-editor .text-left {
+  text-align: left !important;
+}
+
+.article-content .text-center,
+.article-editor .text-center {
+  text-align: center !important;
+}
+
+.article-content .text-right,
+.article-editor .text-right {
+  text-align: right !important;
+}
+
+.article-content .text-justify,
+.article-editor .text-justify {
+  text-align: justify !important;
+}
+
+/* ── Reduced motion support ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DM SANS DESIGN SYSTEM UTILITIES (New Development)
+   ═══════════════════════════════════════════════════════════ */
+@layer utilities {
+  .ds-text-title {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 40px !important;
+    font-weight: 700 !important;
+    line-height: 48px !important;
+  }
+
+  .ds-text-heading-1 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: var(--text-heading-1-size, 24px) !important;
+    font-weight: var(--text-heading-1-weight, 700) !important;
+    line-height: var(--text-heading-1-line-height, 32px) !important;
+  }
+
+  .ds-text-heading-2 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: var(--text-heading-2-size, 20px) !important;
+    font-weight: var(--text-heading-2-weight, 700) !important;
+    line-height: var(--text-heading-2-line-height, 28px) !important;
+  }
+
+  .ds-text-body {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    line-height: 24px !important;
+  }
+
+  .ds-text-body-1 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    line-height: 24px !important;
+  }
+
+  .ds-text-body-2 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    line-height: 24px !important;
+  }
+
+  .ds-text-secondary {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 20px !important;
+  }
+
+  .ds-text-secondary-1 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 20px !important;
+  }
+
+  .ds-text-secondary-2 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+  }
+
+  .ds-text-small {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+  }
+
+  .ds-text-small-1 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 16px !important;
+  }
+
+  .ds-text-small-2 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 16px !important;
+  }
+
+  .ds-text-meta {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+    line-height: 12px !important;
+  }
+
+  .ds-text-meta-1 {
+    font-family: var(--font-dm-sans), 'DM Sans', sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    line-height: 12px !important;
+  }
+}
+
+@keyframes spinSmooth {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-smooth {
+  animation: spinSmooth 1.2s ease-in-out infinite;
+}
+
+/* Responsive Sonner Toast Positioning to avoid bottom-right logo */
+/* Responsive Sonner Toast Positioning to avoid bottom-right logo */
+@media (max-width: 639px) {
+  [data-sonner-toaster][data-x-position="right"] {
+    right: 16px !important;
+  }
+}
+
+@media (min-width: 640px) {
+  [data-sonner-toaster][data-x-position="right"] {
+    right: 125px !important;
+  }
+
+  [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: 40px !important;
+  }
+}

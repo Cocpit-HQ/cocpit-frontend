@@ -1,0 +1,365 @@
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { JobOffer } from '../types/jobs.types';
+import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
+import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { FeatureDisabledTooltip } from '@/components/feature-flags';
+
+interface OfferCardProps {
+  offer: JobOffer;
+  onAccept: (id: string) => void;
+  onDecline: (id: string) => void;
+}
+
+export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline }) => {
+  const router = useRouter();
+  const { isCompany, activeProfile } = useActiveProfile();
+  const isCompanyMode = isCompany && activeProfile;
+  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState(false);
+
+  const rawOffer = offer as Record<string, any>;
+  const expiryText = rawOffer.offer_expiry_text || `Offer ends in ${offer.days_remaining} day${offer.days_remaining === 1 ? '' : 's'}`;
+  
+  const getExpiryColor = (days: number) => {
+    if (days <= 5) return '#FF8D28';
+    if (days <= 20) return '#FBBF24';
+    return '#6B7280';
+  };
+  const expiryColorHex = getExpiryColor(offer.days_remaining);
+
+  return (
+    <div 
+      onClick={() => router.push(`/jobs/${offer.job_id || offer.id}`)}
+      className="relative w-full flex flex-col items-end cursor-pointer group"
+    >
+      {/* Desktop View */}
+      <div className="hidden md:flex flex-col items-end w-full relative">
+      {/* PART 1 — Job Details Frame (Frame 2609038) */}
+      <div 
+        style={{ borderWidth: '1px', borderStyle: 'solid' }}
+        className={`relative w-full h-[90px] rounded-[24px] bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} p-[16px] flex flex-row justify-between items-center box-border gap-[8px] border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} group-hover:border-indigo-200 transition-all duration-300`}
+      >
+        
+        {/* LEFT — Job info container (Frame 2609060) */}
+        <div className="flex flex-col items-start justify-center p-0 gap-[1px] h-[58px]">
+          {/* Role + Deadline Row */}
+          <div className="flex flex-row items-center gap-[16px]">
+            <span className={`font-['Poppins'] font-medium text-[16px] leading-[24px] text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+              {offer.job_role}
+            </span>
+            {expiryText && (
+              <span 
+                style={{ color: expiryColorHex }}
+                className="text-xs font-medium font-['Poppins']"
+              >
+                {expiryText}
+              </span>
+            )}
+          </div>
+          <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} truncate w-full`}>
+            {offer.company_name}
+          </span>
+          <span className={`font-['Poppins'] font-medium text-[12px] leading-[16px] text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} truncate w-full`}>
+            {offer.location}
+          </span>
+        </div>
+
+        <div className="flex-1" />
+
+        {/* RIGHT — Action buttons (Frame 2609059) */}
+        {offer.status === 'pending' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center p-0 gap-[8px] w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <button
+              onClick={() => setShowDeclineConfirm(true)}
+              className={`box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#818CF8] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] font-['Poppins'] font-normal text-[14px] text-[#818CF8] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} hover:bg-[#818CF8]/5 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/5' : 'dark:hover:bg-[#818CF8]/5'} transition-all duration-200 active:scale-95 cursor-pointer`}
+            >
+              Decline
+            </button>
+            <button
+              onClick={() => setShowAcceptConfirm(true)}
+              className={`box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} hover:bg-[#6366F1]/90 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90'} transition-all duration-200 active:scale-95 cursor-pointer`}
+            >
+              Accept
+            </button>
+          </div>
+        ) : offer.status === 'accepted' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px] gap-[8px]"
+          >
+            {offer.is_active === false ? (
+              <span className="font-['Poppins'] text-[12px] font-semibold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md">
+                Job Deleted
+              </span>
+            ) : offer.job_status === 'CLOSED' ? (
+              <span className="font-['Poppins'] text-[12px] font-semibold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md">
+                Job Closed
+              </span>
+            ) : null}
+            <button
+              onClick={async () => {
+                if (offer.recruiter.id) {
+                  // We no longer call sendOfferChatContext here. It's handled by UnifiedMessageInput inside the chat.
+                  const params = new URLSearchParams();
+                  
+                  if (offer.org_id) {
+                    params.set('companyId', offer.org_id);
+                  } else {
+                    params.set('userId', offer.recruiter.id);
+                  }
+                  
+                  if (offer.offer_id) {
+                    params.set('offerContext', offer.offer_id);
+                  }
+                  router.push(`/messaging?${params.toString()}`);
+                } else {
+                  toast.error('Recruiter information is unavailable.');
+                }
+              }}
+              className={`box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} border border-white ${isCompanyMode ? 'dark:border-[#0F1115]' : 'dark:border-[#0B0F19]'} rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} hover:bg-[#6366F1]/90 ${isCompanyMode ? 'dark:hover:bg-[#4D9CFF]/90' : 'dark:hover:bg-[#818CF8]/90'} transition-all duration-200 active:scale-95 cursor-pointer`}
+            >
+              Chat
+            </button>
+          </div>
+        ) : offer.status === 'declined' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-red-500">
+              Declined
+            </span>
+          </div>
+        ) : offer.status === 'withdrawn' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <span className={`font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+              Withdrawn
+            </span>
+          </div>
+        ) : offer.status === 'expired' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <span className={`font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
+              Expired
+            </span>
+          </div>
+        ) : null}
+
+        {/* CONNECTOR LINE (Vector 9) between parts */}
+        {offer.note && (
+          <div
+            style={{
+              position: 'absolute',
+              width: '35px',
+              height: '67px',
+              left: '25.5px',
+              top: '89.5px',
+            }}
+            className={`border-l border-b border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} rounded-bl-[24px] pointer-events-none`}
+          />
+        )}
+      </div>
+
+      {/* PART 2 — Note Frame (Frame 2609030) */}
+      {offer.note && (
+        <div 
+          style={{
+            minHeight: '104px'
+          }}
+          className={`box-border flex flex-col items-start p-[12px] px-[16px] gap-[8px] w-[calc(100%-60px)] bg-[#F9FAFF] ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'} rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] mt-[16px] self-end border-t border-r border-b border-[#EEF2FF] ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} border-l-2 border-l-[#6366F1] ${isCompanyMode ? 'dark:border-l-[#4D9CFF]' : 'dark:border-l-[#818CF8]'}`}
+        >
+          {/* Recruiter info row (Frame 2609033) */}
+          <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-full h-[40px]">
+            {/* Avatar */}
+            {offer.recruiter.avatar ? (
+              <img
+                src={offer.recruiter.avatar}
+                alt={offer.recruiter.name}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className={`w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} bg-indigo-50 ${isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]'} flex items-center justify-center`}>
+                <Icon icon="solar:user-bold" className={`w-5 h-5 text-indigo-400 ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`} />
+              </div>
+            )}
+            
+            {/* Name + Headline container */}
+            <div className="flex flex-col justify-center py-[4px] h-[32px] flex-1 min-w-0">
+              <span className={`font-['Poppins'] font-semibold text-[12px] leading-[16px] text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} uppercase tracking-wider truncate`}>
+                {offer.company_name || offer.recruiter.name}
+              </span>
+              {!offer.company_name && offer.recruiter.headline && offer.recruiter.headline !== offer.recruiter.name && (
+                <span className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} uppercase tracking-wider truncate`}>
+                  {offer.recruiter.headline}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Note text */}
+          <div className="mt-[8px] w-full">
+            <p className={`font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} whitespace-pre-line`}>
+              {offer.note}
+            </p>
+          </div>
+        </div>
+      )}
+      </div>
+
+      {/* Mobile View */}
+      <div className={`flex md:hidden flex-col w-full bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} rounded-[24px] border border-gray-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} p-5 gap-4`}>
+        {/* Header: Title + Expiry */}
+        <div className="flex justify-between items-start w-full gap-2">
+          <span className={`font-['Poppins'] font-semibold text-[15px] leading-tight text-black ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
+            {offer.job_role}
+          </span>
+          {offer.status === 'pending' && expiryText && (
+            <span 
+              style={{ color: expiryColorHex }}
+              className="text-xs font-medium font-['Poppins'] shrink-0 mt-0.5"
+            >
+              {expiryText}
+            </span>
+          )}
+          {offer.status === 'declined' && (
+            <span className={`font-['Poppins'] text-xs font-medium text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} shrink-0 mt-0.5`}>
+              Offer declined
+            </span>
+          )}
+          {offer.status === 'expired' && (
+            <span className="font-['Poppins'] text-xs font-medium text-red-500 shrink-0 mt-0.5">
+              Offer expired
+            </span>
+          )}
+          {offer.status === 'withdrawn' && (
+            <span className={`font-['Poppins'] text-xs font-medium text-gray-500 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} shrink-0 mt-0.5`}>
+              Offer withdrawn
+            </span>
+          )}
+        </div>
+
+        {/* Company Info */}
+        <div className="flex flex-col gap-0.5 w-full -mt-2">
+          <span className={`font-['Poppins'] text-[13px] text-gray-600 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#A1A8B3]'}`}>
+            {offer.company_name}
+          </span>
+          <span className={`font-['Poppins'] text-[13px] text-gray-500 ${isCompanyMode ? 'dark:text-gray-400' : 'dark:text-gray-400'}`}>
+            {offer.location}
+          </span>
+        </div>
+
+        {/* Note Block */}
+        {offer.note && (
+          <div className={`flex flex-col p-4 gap-3 w-full bg-[#F9FAFF] ${isCompanyMode ? 'dark:bg-[#16365F]' : 'dark:bg-[#1C2340]'} rounded-[16px] rounded-tl-sm border-l-2 border-[#6366F1] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'}`}>
+            <div className="flex items-center gap-3 w-full">
+              {offer.recruiter.avatar ? (
+                <img
+                  src={offer.recruiter.avatar}
+                  alt={offer.recruiter.name}
+                  className="w-10 h-10 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className={`w-10 h-10 rounded-full shrink-0 border border-indigo-100 ${isCompanyMode ? 'dark:border-[#2A2D35]' : 'dark:border-[#2E3445]'} bg-indigo-50 ${isCompanyMode ? 'dark:bg-[#2A2D35]' : 'dark:bg-[#2E3445]'} flex items-center justify-center`}>
+                  <Icon icon="solar:user-bold" className={`w-5 h-5 text-indigo-400 ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'}`} />
+                </div>
+              )}
+              <div className="flex flex-col min-w-0">
+                <span className={`font-['Poppins'] font-semibold text-[11px] text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} uppercase tracking-wider truncate`}>
+                  {offer.company_name || offer.recruiter.name}
+                </span>
+                {!offer.company_name && offer.recruiter.headline && offer.recruiter.headline !== offer.recruiter.name && (
+                  <span className={`font-['Poppins'] font-normal text-[10px] text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} uppercase tracking-wider truncate`}>
+                    {offer.recruiter.headline}
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className={`font-['Poppins'] text-[13px] leading-relaxed text-[#6B7280] ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'} whitespace-pre-line mt-1`}>
+              {offer.note}
+            </p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex w-full gap-3 mt-1" onClick={(e) => e.stopPropagation()}>
+          {offer.status === 'pending' && (
+            <FeatureDisabledTooltip featureKey="enableJobOffers" disabledMessage="Responding to job offers is temporarily disabled by admin.">
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={() => setShowDeclineConfirm(true)}
+                  className={`flex-1 h-11 flex justify-center items-center bg-white ${isCompanyMode ? 'dark:bg-[#0F1115]' : 'dark:bg-[#0B0F19]'} border border-[#6366F1] ${isCompanyMode ? 'dark:border-[#4D9CFF]' : 'dark:border-[#818CF8]'} rounded-[24px] font-['Poppins'] font-medium text-sm text-[#6366F1] ${isCompanyMode ? 'dark:text-[#4D9CFF]' : 'dark:text-[#818CF8]'} active:scale-95 transition-transform`}
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={() => setShowAcceptConfirm(true)}
+                  className={`flex-1 h-11 flex justify-center items-center bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} rounded-[24px] font-['Poppins'] font-semibold text-sm text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} active:scale-95 transition-transform`}
+                >
+                  Accept
+                </button>
+              </div>
+            </FeatureDisabledTooltip>
+          )}
+          {offer.status === 'accepted' && (
+              <button
+              onClick={async () => {
+                if (offer.recruiter.id) {
+                  const params = new URLSearchParams();
+                  if (offer.org_id) params.set('companyId', offer.org_id);
+                  else params.set('userId', offer.recruiter.id);
+                  if (offer.offer_id) params.set('offerContext', offer.offer_id);
+                  router.push(`/messaging?${params.toString()}`);
+                } else {
+                  toast.error('Recruiter information is unavailable.');
+                }
+              }}
+              className={`w-1/2 min-w-[140px] h-11 flex justify-center items-center bg-[#6366F1] ${isCompanyMode ? 'dark:bg-[#4D9CFF]' : 'dark:bg-[#818CF8]'} rounded-[24px] font-['Poppins'] font-semibold text-sm text-white ${isCompanyMode ? 'dark:text-[#0F1115]' : 'dark:text-[#F9FAFB]'} active:scale-95 transition-transform`}
+            >
+              Chat
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Confirmation modals */}
+      <CocpitConfirmBox
+        isOpen={showDeclineConfirm}
+        title="Decline Offer?"
+        message="Are you sure you want to decline this offer?"
+        confirmText="Decline"
+        cancelText="Cancel"
+        onConfirm={() => {
+          onDecline(offer.id);
+          setShowDeclineConfirm(false);
+        }}
+        onCancel={() => setShowDeclineConfirm(false)}
+      />
+
+      <CocpitConfirmBox
+        isOpen={showAcceptConfirm}
+        title="Accept Offer?"
+        message="Confirm accepting this job offer?"
+        confirmText="Accept"
+        cancelText="Cancel"
+        onConfirm={() => {
+          onAccept(offer.id);
+          setShowAcceptConfirm(false);
+        }}
+        onCancel={() => setShowAcceptConfirm(false)}
+      />
+    </div>
+  );
+};
+
+export default OfferCard;

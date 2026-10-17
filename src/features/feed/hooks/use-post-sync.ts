@@ -1,0 +1,91 @@
+import { useEffect, useRef } from 'react';
+import { useSocket } from '@/context/SocketContext';
+
+export function usePostSync(
+    postId: string | number | undefined,
+    callbacks: {
+        onLikeUpdated?: (data: { postId: string; liked: boolean; likeCount: number; liker: any }) => void;
+        onCommentAdded?: (data: { postId: string; comment: any }) => void;
+        onCommentUpdated?: (data: { postId: string; commentId?: string; content?: string; updatedAt?: string; updated_at?: string; isEdited?: boolean; is_edited?: boolean; comment?: any }) => void;
+        onCommentLikeUpdated?: (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => void;
+        onShareUpdated?: (data: { postId: string; externalShareCount: number }) => void;
+    },
+    manageRoom: boolean = false,
+    enabled: boolean = true
+) {
+    const { socket } = useSocket();
+
+    // Callers commonly pass an inline callbacks object, which is a new
+    // reference every render. Route through a ref instead of putting
+    // `callbacks` in the effect's dependency array, so room join/leave and
+    // listener (de)registration only happen when the room itself actually
+    // needs to change, not on every parent re-render.
+    const callbacksRef = useRef(callbacks);
+    useEffect(() => {
+        callbacksRef.current = callbacks;
+    });
+
+    useEffect(() => {
+        if (!enabled || !socket || !postId) return;
+
+        const roomId = postId.toString();
+
+        if (manageRoom) {
+            socket.emit('joinPost', { postId: roomId, post_id: roomId });
+        }
+
+        const matchPostId = (data: any) => {
+            if (!data) return false;
+            const incomingId = (data.postId ?? data.post_id ?? data.id)?.toString();
+            return incomingId === roomId;
+        };
+
+        const handleLikeUpdated = (data: any) => {
+            if (matchPostId(data)) {
+                callbacksRef.current.onLikeUpdated?.(data);
+            }
+        };
+
+        const handleCommentAdded = (data: any) => {
+            if (matchPostId(data)) {
+                callbacksRef.current.onCommentAdded?.(data);
+            }
+        };
+
+        const handleCommentUpdated = (data: any) => {
+            if (matchPostId(data)) {
+                callbacksRef.current.onCommentUpdated?.(data);
+            }
+        };
+
+        const handleCommentLikeUpdated = (data: any) => {
+            if (matchPostId(data)) {
+                callbacksRef.current.onCommentLikeUpdated?.(data);
+            }
+        };
+
+        const handleShareUpdated = (data: any) => {
+            if (matchPostId(data)) {
+                callbacksRef.current.onShareUpdated?.(data);
+            }
+        };
+
+        socket.on('post_like_updated', handleLikeUpdated);
+        socket.on('post_comment_added', handleCommentAdded);
+        socket.on('post_comment_updated', handleCommentUpdated);
+        socket.on('post_comment_like_updated', handleCommentLikeUpdated);
+        socket.on('post_share_updated', handleShareUpdated);
+
+        return () => {
+            socket.off('post_like_updated', handleLikeUpdated);
+            socket.off('post_comment_added', handleCommentAdded);
+            socket.off('post_comment_updated', handleCommentUpdated);
+            socket.off('post_comment_like_updated', handleCommentLikeUpdated);
+            socket.off('post_share_updated', handleShareUpdated);
+
+            if (manageRoom) {
+                socket.emit('leavePost', { postId: roomId, post_id: roomId });
+            }
+        };
+    }, [socket, postId, manageRoom, enabled]);
+}

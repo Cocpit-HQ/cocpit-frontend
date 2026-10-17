@@ -1,0 +1,46 @@
+[
+  {
+    "id": "job-1",
+    "role": "UI/UX Designer",
+    "company": "Starlight",
+    "experience": "2 Years",
+    "location": "Hybrid - Kolhapur",
+    "description": "We are looking for a creative and detail-oriented UI/UX Designer to create intuitive, engaging, and user-centered digital experiences.",
+    "skills": ["Figma", "UX Research", "UX Writing"],
+    "aiInsight": "Aligns with your 2 year career goal",
+    "postedAt": "1 day ago"
+  },
+  {
+    "id": "job-2",
+    "role": "UI/UX Designer",
+    "company": "Starlight",
+    "experience": "2 Years",
+    "location": "Hybrid - Kolhapur",
+    "description": "We are looking for a creative and detail-oriented UI/UX Designer to create intuitive, engaging, and user-centered digital experiences.",
+    "skills": ["Figma", "UX Research", "UX Writing"],
+    "aiInsight": "Aligns with your 2 year career goal",
+    "postedAt": "1 day ago"
+  },
+  {
+    "id": "job-3",
+    "role": "UI/UX Designer",
+    "company": "Starlight",
+    "experience": "2 Years",
+    "location": "Hybrid - Kolhapur",
+    "description": "We are looking for a creative and detail-oriented UI/UX Designer to create intuitive, engaging, and user-centered digital experiences.",
+    "skills": ["Figma", "UX Research", "UX Writing"],
+    "aiInsight": "Aligns with your 2 year career goal",
+    "postedAt": "1 day ago"
+  },
+  {
+    "id": "job-4",
+    "role": "UI/UX Designer",
+    "company": "Starlight",
+    "experience": "2 Years",
+    "location": "Hybrid - Kolhapur",
+    "description": "We are looking for a creative and detail-oriented UI/UX Designer to create intuitive, engaging, and user-centered digital experiences.",
+    "skills": ["Figma", "UX Research", "UX Writing"],
+    "aiInsight": "Aligns with your 2 year career goal",
+    "postedAt": "1 day ago"
+  }
+]

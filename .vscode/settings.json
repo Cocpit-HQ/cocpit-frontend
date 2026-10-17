@@ -1,0 +1,10 @@
+{
+    "CodeGPT.apiKey": "OpenAI",
+    "css.lint.unknownAtRules": "ignore",
+    "css.customData": [
+        ".vscode/css-data.json"
+    ],
+    "files.associations": {
+        "*.css": "tailwindcss"
+    }
+}

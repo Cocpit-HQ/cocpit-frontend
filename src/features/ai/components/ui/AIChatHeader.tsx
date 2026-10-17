@@ -1,0 +1,97 @@
+"use client"
+
+import React from "react";
+import { Icon } from "@iconify/react";
+
+interface AIChatHeaderProps {
+  onClear?: () => void;
+  isStreaming?: boolean;
+  hasMessages?: boolean;
+  onNewChat?: () => void;
+}
+
+export default function AIChatHeader({
+  onClear,
+  isStreaming = false,
+  hasMessages = false,
+  onNewChat,
+}: AIChatHeaderProps) {
+  return (
+    <div className="w-full h-[72px] flex items-center justify-between bg-[var(--background)] shrink-0 px-6 py-4 border-b border-[var(--border)]">
+      {/* Left: Expand icon */}
+      <button
+        type="button"
+        className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
+        title="Expand"
+      >
+        <Icon icon="ri:fullscreen-line" width={24} height={24} />
+      </button>
+
+      {/* Right: Action buttons */}
+      <div className="flex items-center gap-2">
+        {isStreaming && (
+          <div className="flex items-center justify-center w-8 h-8 mr-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          </div>
+        )}
+
+        {!hasMessages ? (
+          // Empty state: History & Project with text labels
+          <>
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex items-center justify-center w-[96px] h-10 px-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] gap-2 transition-all"
+              title="History"
+            >
+              <Icon icon="ri:history-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
+              <span className="text-sm font-normal" style={{ fontFamily: "Poppins" }}>History</span>
+            </button>
+            <button
+              type="button"
+              className="flex items-center justify-center w-[97px] h-10 px-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] gap-2 transition-all"
+              title="Project"
+            >
+              <Icon icon="ri:layout-grid-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
+              <span className="text-sm font-normal" style={{ fontFamily: "Poppins" }}>Project</span>
+            </button>
+          </>
+        ) : (
+          // Active state: Share, History, Project, and New Chat icon-only buttons
+          <>
+            <button
+              type="button"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
+              title="Share"
+            >
+              <Icon icon="ri:share-box-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
+            </button>
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
+              title="History"
+            >
+              <Icon icon="ri:history-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
+            </button>
+            <button
+              type="button"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
+              title="Project"
+            >
+              <Icon icon="ri:layout-grid-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
+            </button>
+            <button
+              type="button"
+              onClick={onNewChat || onClear}
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--primary-tint)] text-[var(--primary)] hover:bg-[var(--primary-tint)]/80 transition-all"
+              title="New Chat"
+            >
+              <Icon icon="ri:compass-discover-line" width={24} height={24} />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
