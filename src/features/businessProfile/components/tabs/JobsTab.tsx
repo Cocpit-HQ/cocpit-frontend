@@ -236,12 +236,14 @@ export default function JobsTab({
   );
 
   const hasCreateJobPermission = Boolean(
-    canManageCompany ||
-    viewerPermissions?.includes("*") ||
-    viewerPermissions?.includes("MANAGE_COMPANY") ||
-    viewerPermissions?.includes("POST_JOBS") ||
-    viewerPermissions?.includes("MANAGE_JOBS") ||
-    viewerPermissions?.includes("JOBS")
+    isOwnProfile && (
+      canManageCompany ||
+      viewerPermissions?.includes("*") ||
+      viewerPermissions?.includes("MANAGE_COMPANY") ||
+      viewerPermissions?.includes("POST_JOBS") ||
+      viewerPermissions?.includes("MANAGE_JOBS") ||
+      viewerPermissions?.includes("JOBS")
+    )
   );
 
   const handleCreateJob = () => {
@@ -387,8 +389,8 @@ export default function JobsTab({
           </div>
         </div>
 
-        {/* Create Job Action Button */}
-        {(isOwnProfile || hasCreateJobPermission) && (
+        {/* Create Job Action Button (Only shown on own profile) */}
+        {isOwnProfile && (
           hasCreateJobPermission ? (
             <button
               type="button"

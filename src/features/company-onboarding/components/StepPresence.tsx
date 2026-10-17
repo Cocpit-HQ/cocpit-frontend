@@ -541,8 +541,8 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
   const isFormValid = Boolean(
     isValidEmail(officialEmail) &&
     isEmailVerified &&
-    isValidPhone(phoneNumber, phoneCountryCode) &&
-    isPhoneVerified &&
+    // isValidPhone(phoneNumber, phoneCountryCode) &&
+    // isPhoneVerified &&
     headline.trim().length > 0 &&
     headline.trim().length <= 255 &&
     (description ? description.length <= 500 : true) &&
@@ -790,9 +790,10 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
           </div>
         </div>
 
-        {/* Row 2: Phone Number & Phone Code */}
+        {/* Row 2: Phone Number & Phone Code (Commented out per requirement) */}
+        {/*
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 items-start">
-          {/* Phone Number */}
+          // Phone Number
           <div className="flex items-center gap-3 w-full">
             <div className="flex-1 py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 transition-colors">
               <label
@@ -802,7 +803,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 Phone Number <span className="text-ds-text-secondary">*</span>
               </label>
               <div className="w-full inline-flex justify-start items-center gap-2">
-                {/* Country Flag Selector */}
+                // Country Flag Selector
                 <div ref={countryDropdownRef} className="relative">
                   <button
                     type="button"
@@ -824,7 +825,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                     />
                   </button>
 
-                  {/* Country Dropdown */}
+                  // Country Dropdown
                   {isCountryDropdownOpen && !isPhoneVerified && (
                     <div className="absolute top-full left-0 mt-2 z-50 w-56 p-1.5 bg-ds-bg rounded-xl border border-ds-border flex flex-col justify-start items-start gap-1 shadow-2xl animate-in fade-in duration-150">
                       {COUNTRY_CODES.map((item) => {
@@ -903,7 +904,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
             )}
           </div>
 
-          {/* Verification Code for Phone */}
+          // Verification Code for Phone
           <div className="relative flex flex-col justify-start items-start w-full">
             <div
               className={`w-full py-2 border-b flex flex-col justify-center items-start gap-2.5 transition-colors ${isPhoneVerified
@@ -946,7 +947,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 ) : null}
               </div>
             </div>
-            {/* Supporting Note Row below input positioned absolutely to prevent layout shifts */}
+            // Supporting Note Row below input positioned absolutely to prevent layout shifts
             <div className="absolute top-full left-0 right-0 h-4 flex items-center justify-between pt-1 pointer-events-auto">
               <div className="flex-1">
                 {phoneError ? (
@@ -974,6 +975,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
             </div>
           </div>
         </div>
+        */}
 
         {/* Row 3: Website & Organization Size */}
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 items-start">

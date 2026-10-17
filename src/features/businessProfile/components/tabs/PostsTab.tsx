@@ -48,12 +48,14 @@ export default function PostsTab({
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 
   const hasCreatePostPermission = Boolean(
-    canManageCompany ||
-    canManageOwnPosts ||
-    viewerPermissions?.includes("*") ||
-    viewerPermissions?.includes("MANAGE_COMPANY") ||
-    viewerPermissions?.includes("CREATE_POST") ||
-    viewerPermissions?.includes("CREATE_CONTENT")
+    isOwnProfile && (
+      canManageCompany ||
+      canManageOwnPosts ||
+      viewerPermissions?.includes("*") ||
+      viewerPermissions?.includes("MANAGE_COMPANY") ||
+      viewerPermissions?.includes("CREATE_POST") ||
+      viewerPermissions?.includes("CREATE_CONTENT")
+    )
   );
 
   const {
@@ -230,8 +232,8 @@ export default function PostsTab({
             </div>
           </div>
 
-          {/* Create Post Action Button */}
-          {(isOwnProfile || hasCreatePostPermission) && (
+          {/* Create Post Action Button (Only shown on own profile) */}
+          {isOwnProfile && (
             hasCreatePostPermission ? (
               <button
                 type="button"

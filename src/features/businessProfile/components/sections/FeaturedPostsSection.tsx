@@ -49,12 +49,14 @@ export default function FeaturedPostsSection({
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 
   const hasCreatePostPermission = Boolean(
-    canManageCompany ||
-    canManageOwnPosts ||
-    viewerPermissions?.includes("*") ||
-    viewerPermissions?.includes("MANAGE_COMPANY") ||
-    viewerPermissions?.includes("CREATE_POST") ||
-    viewerPermissions?.includes("CREATE_CONTENT")
+    isOwnProfile && (
+      canManageCompany ||
+      canManageOwnPosts ||
+      viewerPermissions?.includes("*") ||
+      viewerPermissions?.includes("MANAGE_COMPANY") ||
+      viewerPermissions?.includes("CREATE_POST") ||
+      viewerPermissions?.includes("CREATE_CONTENT")
+    )
   );
 
   // Detect mobile viewport (mobile: 1, desktop: 2)
@@ -215,8 +217,8 @@ export default function FeaturedPostsSection({
               </div>
             </div>
 
-            {/* Create Post Action Button */}
-            {(isOwnProfile || hasCreatePostPermission) && (
+            {/* Create Post Action Button (Only shown on own profile) */}
+            {isOwnProfile && (
               hasCreatePostPermission ? (
                 <button
                   type="button"

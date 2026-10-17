@@ -452,7 +452,7 @@ export default function BusinessProfileHeader({
               rel="noreferrer"
               className="profile-website-link text-[var(--ds-accent)] hover:no-underline hover:opacity-85 transition-opacity text-sm font-medium font-['DM_Sans'] leading-5 min-h-[20px] max-w-full truncate"
             >
-              {data.websiteUrl.startsWith("http") ? data.websiteUrl : `https://${data.websiteUrl}`}
+              {formatDisplayUrl(data.websiteUrl)}
             </a>
           )}
 

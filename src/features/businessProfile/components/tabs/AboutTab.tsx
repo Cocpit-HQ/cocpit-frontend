@@ -48,11 +48,13 @@ export default function AboutTab({ data }: AboutTabProps) {
   // ── Part 2: Row 1 (Website & Phone number) ──
   const websiteUrl = (about.website || data.websiteUrl || "").trim();
 
-  const isMobileShow = aboutData
-    ? (about.isMobileShow ?? about.is_mobile_show ?? true)
-    : (data.isMobileShow ?? true);
-  const rawPhone = aboutData ? (about.phone || about.phoneNumber || null) : (data.phoneNumber || null);
-  const phoneNumber = isMobileShow && rawPhone ? String(rawPhone).trim() : "";
+  // Phone number hidden per requirement
+  // const isMobileShow = aboutData
+  //   ? (about.isMobileShow ?? about.is_mobile_show ?? true)
+  //   : (data.isMobileShow ?? true);
+  // const rawPhone = aboutData ? (about.phone || about.phoneNumber || null) : (data.phoneNumber || null);
+  // const phoneNumber = isMobileShow && rawPhone ? String(rawPhone).trim() : "";
+  const phoneNumber = "";
 
   // ── Part 2: Row 2 (Industry & Headquarter) ──
   const formatIndustryType = (ind?: string | null) => {
@@ -106,9 +108,9 @@ export default function AboutTab({ data }: AboutTabProps) {
 
   const hasPart1 = Boolean(description || slogan);
   const hasSpecialties = Boolean(specialtiesText);
-  const hasRow1 = Boolean(websiteUrl || phoneNumber);
-  const hasRow2 = Boolean(industry || location);
-  const hasRow3 = Boolean(employeeCount || founded);
+  const hasRow1 = Boolean(industry || employeeCount);
+  const hasRow2 = Boolean(founded || websiteUrl || location);
+  const hasRow3 = Boolean(websiteUrl && location);
   const hasSocial = socialLinks.length > 0;
   const hasOffices = offices.length > 0;
   const hasPart2 = hasSpecialties || hasRow1 || hasRow2 || hasRow3 || hasSocial || hasOffices;
@@ -197,7 +199,10 @@ export default function AboutTab({ data }: AboutTabProps) {
             </div>
           )}
 
-          {/* Website & Phone number row */}
+          {/* ══════════════════════════════════════════════════════
+              PREVIOUS ROW: Website & Phone number (Commented out per requirement, preserved for future use)
+              ══════════════════════════════════════════════════════ */}
+          {/*
           {hasRow1 && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
               {websiteUrl && (
@@ -211,7 +216,7 @@ export default function AboutTab({ data }: AboutTabProps) {
                     rel="noreferrer"
                     className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full hover:no-underline hover:opacity-85 transition-opacity"
                   >
-                    {websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`}
+                    {formatDisplayUrl(websiteUrl)}
                   </a>
                 </div>
               )}
@@ -231,58 +236,85 @@ export default function AboutTab({ data }: AboutTabProps) {
               )}
             </div>
           )}
+          */}
 
-          {/* Industry & Headquarter row */}
-          {hasRow2 && (
+          {/* Row 1: Industry & Organization size */}
+          {hasRow1 && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
               {industry && (
                 <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Industry
                   </span>
-                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full">
+                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
                     {industry}
                   </span>
                 </div>
               )}
 
-              {location && (
+              {employeeCount && (
                 <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
-                    Headquarter
+                    Organization size
                   </span>
-                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full">
-                    {location}
+                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
+                    {employeeCount}
                   </span>
                 </div>
               )}
             </div>
           )}
 
-          {/* Organization size & Founded row */}
-          {hasRow3 && (
-            <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
-              {employeeCount && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
-                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
-                    Organization size
-                  </span>
-                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full">
-                    {employeeCount}
-                  </span>
-                </div>
-              )}
-
+          {/* Row 2: Founded & Website (or Headquarter if website is not present) */}
+          {hasRow2 && (
+            <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-10">
               {founded && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
+                <div className="w-full sm:w-[300px] shrink-0 flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Founded
                   </span>
-                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full">
+                  <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
                     {founded}
                   </span>
                 </div>
               )}
+
+              {websiteUrl ? (
+                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
+                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
+                    Website
+                  </span>
+                  <a
+                    href={websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 break-all max-w-full hover:no-underline hover:opacity-85 transition-opacity"
+                  >
+                    {formatDisplayUrl(websiteUrl)}
+                  </a>
+                </div>
+              ) : location ? (
+                <div className={`w-full ${founded ? "sm:w-[300px] sm:max-w-[440px] flex-1" : "max-w-[780px]"} flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5`}>
+                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
+                    Headquarter
+                  </span>
+                  <p className="w-full text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] whitespace-normal">
+                    {location}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {/* Row 3: Headquarter (only when websiteUrl is present and location exists) */}
+          {hasRow3 && websiteUrl && location && (
+            <div className="w-full max-w-[780px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
+              <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
+                Headquarter
+              </span>
+              <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] whitespace-normal">
+                {location}
+              </p>
             </div>
           )}
 

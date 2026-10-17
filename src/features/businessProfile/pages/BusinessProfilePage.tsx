@@ -240,9 +240,11 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     )
   );
 
-  const effectiveViewerPermissions = isOrgAdminOrOwner
-    ? Array.from(new Set([...(profileResponse.viewer_permissions || []), '*']))
-    : (profileResponse.viewer_permissions || []);
+  const effectiveViewerPermissions = ownProfile
+    ? (isOrgAdminOrOwner
+        ? Array.from(new Set([...(profileResponse.viewer_permissions || []), '*']))
+        : (profileResponse.viewer_permissions || []))
+    : [];
 
   const data: BusinessProfileData = {
     id: company.company_id || company.org_id || company.id || derivedOrgId,

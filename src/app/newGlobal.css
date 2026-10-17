@@ -1824,6 +1824,14 @@ a.profile-website-link,
 [data-theme="light"] a.profile-website-link {
   color: var(--ds-accent) !important;
   -webkit-text-fill-color: var(--ds-accent) !important;
+  text-decoration: none !important;
+}
+
+a.profile-website-link:hover,
+[data-theme="dark"] a.profile-website-link:hover,
+[data-theme="navy"] a.profile-website-link:hover,
+[data-theme="light"] a.profile-website-link:hover {
+  text-decoration: none !important;
 }
 
 textarea.mention-textarea-input:not(:placeholder-shown) {

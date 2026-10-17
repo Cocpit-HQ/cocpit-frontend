@@ -465,8 +465,8 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                 </div>
                             )}
                             {user?.website && (
-                                <div className="flex items-center gap-2 text-[12px] font-normal text-primary leading-[16px] font-['DM_Sans'] hover:underline max-w-full min-w-0">
-                                    <a href={user.website} target="_blank" rel="noopener noreferrer" className="truncate block max-w-full">
+                                <div className="flex items-center gap-2 text-[12px] font-normal text-primary leading-[16px] font-['DM_Sans'] hover:no-underline max-w-full min-w-0">
+                                    <a href={user.website} target="_blank" rel="noopener noreferrer" className="profile-website-link truncate block max-w-full hover:no-underline hover:opacity-85 transition-opacity">
                                         {user.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                                     </a>
                                 </div>

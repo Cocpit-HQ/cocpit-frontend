@@ -167,7 +167,7 @@ export const ProfileUserBio: React.FC<ProfileUserBioProps> = ({
               href={websiteHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="profile-website-link inline-block truncate max-w-full text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:underline cursor-pointer transition-colors"
+              className="profile-website-link inline-block truncate max-w-full text-[var(--ds-accent)] text-sm font-medium font-['DM_Sans'] leading-5 hover:no-underline hover:opacity-85 cursor-pointer transition-opacity"
             >
               {displayWebsite || website}
             </a>
