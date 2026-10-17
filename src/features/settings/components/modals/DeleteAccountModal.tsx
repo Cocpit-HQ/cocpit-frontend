@@ -127,63 +127,81 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative flex flex-col items-center bg-ds-bg border border-ds-border rounded-2xl w-[304px] p-6 gap-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative flex flex-col items-center bg-ds-bg border border-ds-border rounded-[16px] w-[403px] max-w-[calc(100vw-32px)] p-3 gap-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
 
         {/* Title & Description */}
         <div className="flex flex-col items-center gap-2 w-full text-center">
           <h2 className="ds-text-body-1 text-ds-text-primary">Delete your Cocpit account?</h2>
-          <p className="ds-text-secondary text-ds-text-secondary">
+          <p className="ds-text-secondary text-ds-text-secondary leading-[20px]">
             Your account will be scheduled for deletion. You can recover it within 40 days using the link sent to your email. After 40 days, your account and all associated data will be permanently deleted
           </p>
         </div>
 
         {/* Company Accounts Block */}
         {hasCompanyAccount && (
-          <div className="flex flex-col items-center w-full bg-ds-bg rounded-2xl gap-3">
-            <h3 className="ds-text-body-1 text-ds-text-primary self-center">Company accounts</h3>
+          <div className="flex flex-col items-center w-full bg-ds-bg rounded-[24px] p-4 gap-2">
+            <h3 className="ds-text-body-1 text-ds-text-primary text-center">Company accounts</h3>
 
             {loadingCompanies ? (
               <div className="flex items-center justify-center py-4 ds-text-small text-ds-text-muted">
                 <Loader2 className="w-4 h-4 animate-spin mr-2 text-ds-accent" /> Loading...
               </div>
             ) : (
-              <div className="flex flex-col items-start w-full gap-3 max-h-[160px] overflow-y-auto pr-1">
-                {ownedCompanies.map(company => (
-                  <label key={company.id} className="flex items-center gap-2 cursor-pointer w-full">
-                    <input
-                      type="checkbox"
-                      checked={checkedCompanyIds.includes(company.id)}
-                      onChange={() => toggleCompanyChecked(company.id)}
-                      className="w-6 h-6 rounded bg-ds-surface-1 border border-ds-border text-ds-accent focus:ring-ds-accent cursor-pointer flex-shrink-0"
-                    />
-                    <span className="ds-text-secondary text-ds-text-secondary">
-                      Also delete <span className="text-ds-text-primary">{company.name}</span>
-                    </span>
-                  </label>
-                ))}
+              <div className="flex flex-col items-center w-full gap-3 max-h-[160px] overflow-y-auto pr-1">
+                {ownedCompanies.map(company => {
+                  const isChecked = checkedCompanyIds.includes(company.id);
+                  return (
+                    <div
+                      key={company.id}
+                      onClick={() => toggleCompanyChecked(company.id)}
+                      className="flex flex-row items-start gap-2 cursor-pointer w-full max-w-[272px] select-none"
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-[4px] border shrink-0 flex items-center justify-center transition-colors ${
+                          isChecked
+                            ? 'bg-ds-accent border-ds-accent'
+                            : 'bg-ds-surface-1 border-ds-border hover:border-ds-text-muted'
+                        }`}
+                      >
+                        {isChecked && (
+                          <svg className="w-4 h-4 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="ds-text-secondary text-ds-text-secondary text-left leading-[20px] break-words flex-1">
+                        Also delete <span className="text-ds-text-primary font-medium">{company.name}</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             {!allChecked && ownedCompanies.length > 0 && (
-              <div className="flex flex-col items-center gap-3 w-full text-center mt-2">
-                <span className="ds-text-small text-ds-text-secondary uppercase">Or</span>
-                <p className="ds-text-secondary text-ds-text-secondary px-4">
-                  If you keep this unchecked, you'll need to transfer ownership to another account before deleting your account
+              <div className="flex flex-col items-center gap-3 w-full text-center mt-1">
+                <span className="font-poppins text-[12px] leading-[16px] text-ds-text-secondary text-center">
+                  Or
+                </span>
+                <p className="ds-text-secondary text-ds-text-secondary text-center max-w-[345px] leading-[20px]">
+                  If you keep this unchecked, you&apos;ll need to transfer ownership to another account before deleting your account
                 </p>
                 <button
+                  type="button"
                   onClick={handleOpenTransfer}
-                  className="flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors ds-text-body-1 text-ds-text-primary whitespace-nowrap"
+                  className="flex flex-row justify-center items-center px-3 py-[6px] h-9 w-[172px] rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors ds-text-body-1 text-ds-text-primary cursor-pointer ds-focus-ring whitespace-nowrap"
                 >
-                  Transfer Ownership
+                  Transfer ownership
                 </button>
               </div>
             )}
           </div>
         )}
 
-        <div className="flex flex-col w-full gap-[4px] shrink-0">
+        {/* Enter Password */}
+        <div className="flex flex-col w-full gap-1 shrink-0 px-1">
           <label className="ds-text-small-1 text-ds-text-secondary text-left w-full">Enter Password</label>
-          <div className={`flex flex-col justify-center items-start w-full pb-[6px] px-0 border-b ${errorMsg ? 'border-ds-error' : 'border-ds-border'}`}>
+          <div className={`flex flex-col justify-center items-start w-full pb-1 px-0 border-b ${errorMsg ? 'border-ds-error' : 'border-ds-border'}`}>
             <div className="flex flex-row justify-between items-center w-full gap-2.5 p-0 shrink-0">
               <input
                 type={showPassword ? "text" : "password"}
@@ -200,7 +218,7 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none"
+                    className="text-ds-text-secondary hover:text-ds-text-primary transition-colors focus:outline-none cursor-pointer"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -222,27 +240,30 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-row justify-center items-center gap-3 w-full">
+        <div className="flex flex-row justify-center items-center gap-2 w-full">
           <button
+            type="button"
             onClick={handleDelete}
             disabled={isDeleteDisabled || !password || deleteAccountMutation.isPending}
-            className={`flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full transition-all ${isDeleteDisabled || !password
-                ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
-                : 'bg-ds-accent hover:opacity-90 active:scale-95 shadow-sm text-ds-text-primary'
-              }`}
+            className={`flex flex-row justify-center items-center px-3 py-[6px] h-9 w-[77px] rounded-full transition-all cursor-pointer ${
+              isDeleteDisabled || !password
+                ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed opacity-50'
+                : 'bg-ds-accent hover:opacity-90 active:scale-95 text-ds-text-primary'
+            }`}
           >
             {deleteAccountMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin text-ds-text-primary" />
             ) : (
-              <span className="ds-text-body-1">Delete</span>
+              <span className="ds-text-body-1 text-ds-text-primary">Delete</span>
             )}
           </button>
 
           <button
+            type="button"
             onClick={onClose}
-            className="flex flex-row justify-center items-center px-4 py-[6px] h-9 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors text-ds-text-primary"
+            className="flex flex-row justify-center items-center px-3 py-[6px] h-9 w-[77px] rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors text-ds-text-primary cursor-pointer ds-focus-ring"
           >
-            <span className="ds-text-body-1">Cancel</span>
+            <span className="ds-text-body-1 text-ds-text-primary">Cancel</span>
           </button>
         </div>
 

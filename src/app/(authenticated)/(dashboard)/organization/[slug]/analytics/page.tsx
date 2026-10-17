@@ -51,6 +51,7 @@ import { ActivityHeatmap } from '@/components/organization-analytics/ActivityHea
 import { AnalyticsSkeleton } from '@/components/organization-analytics/AnalyticsSkeleton'
 import { InsightsPanel } from '@/components/organization-analytics/InsightsPanel'
 import { SharesVsViewsChart } from '@/components/organization-analytics/SharesVsViewsChart'
+import { FeatureGuard } from '@/components/feature-flags'
 
 type TabKey = 'overview' | 'profile' | 'content' | 'jobs' | 'followers' | 'events'
 
@@ -173,8 +174,9 @@ export default function AnalyticsPage({ params }: { params: Promise<{ slug: stri
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <FeatureGuard featureKey="enableOrgAnalyticsModule" moduleName="Company Analytics">
+            <div className="min-h-screen bg-background">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* ─── Header ─────────────────────────────────────────────── */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -381,5 +383,6 @@ export default function AnalyticsPage({ params }: { params: Promise<{ slug: stri
                 </AnimatePresence>
             </div>
         </div>
+        </FeatureGuard>
     )
 }

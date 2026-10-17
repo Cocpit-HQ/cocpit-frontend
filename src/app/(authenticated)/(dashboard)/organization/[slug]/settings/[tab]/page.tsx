@@ -17,6 +17,7 @@ import {
   CompanyNotificationSettingsPage,
   CompanyPrivacySettingsPage
 } from '@/features/settings';
+import { FeatureGuard } from '@/components/feature-flags';
 
 export default async function OrganizationSettingsTabPage({ params }: { params: Promise<{ slug: string, tab: string }> }) {
   const resolvedParams = await params;
@@ -28,7 +29,11 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
     case 'appearance':
       return <AppearanceSettingsPage />;
     case 'notifications':
-      return <CompanyNotificationSettingsPage />;
+      return (
+        <FeatureGuard featureKey="enableOrgNotificationsModule" moduleName="Company Notifications">
+          <CompanyNotificationSettingsPage />
+        </FeatureGuard>
+      );
     case 'privacy':
       return <CompanyPrivacySettingsPage />;
     case 'saved':

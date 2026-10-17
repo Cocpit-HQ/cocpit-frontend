@@ -8,6 +8,7 @@ import { Icon as CustomIcon, IconName, UserIcon, BusinessBuildingIcon } from '@/
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store';
+import { useFeatureFlags } from '@/context/FeatureFlagContext';
 
 interface SidebarProps {
   className?: string;
@@ -15,6 +16,7 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const { activeProfile, isCompany, switchableCompanies, switchProfile } = useActiveProfile();
+  const { isFeatureActive } = useFeatureFlags();
   const { user } = useAuth();
   const { data: myProfile } = useMyProfile();
   const [showAllOrgs, setShowAllOrgs] = useState(false);

@@ -62,7 +62,7 @@ export default function BusinessAnalyticsPage() {
   if (!mounted) return null
 
   return (
-    <FeatureGuard featureKey="enableAnalyticsTab" moduleName="Analytics">
+    <FeatureGuard featureKey="enableOrgAnalyticsModule" moduleName="Company Analytics">
       <div className="max-w-[1400px] mx-auto space-y-12 pb-20">
         {/* Header section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">

@@ -17,6 +17,7 @@ import { OrganizationSettings } from "@/components/organizations/OrganizationSet
 import { AuditLogsViewer } from "@/components/organizations/AuditLogsViewer";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FeatureGuard } from "@/components/feature-flags";
 
 import { useCompany, useCompanyPermissions } from "@/hooks/useOrganization";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
@@ -274,7 +275,9 @@ export default function CompanyDashboardPage() {
 
                     {canViewSettings && (
                         <TabsContent value="settings" className="mt-0">
-                            <OrganizationSettings company={company} />
+                            <FeatureGuard featureKey="enableOrgSettingsModule" mode="inline" moduleName="Organization Settings">
+                                <OrganizationSettings company={company} />
+                            </FeatureGuard>
                         </TabsContent>
                     )}
 

@@ -59,12 +59,10 @@ export function MobileTopHeader() {
               <Icon name="chat" className="w-[20px] h-[20px] text-ds-text-primary hover:text-ds-accent transition-colors" />
             </Link>
             <div className="shrink-0">
-              <FeatureGuard featureKey="enableNotificationsModule" mode="silent">
-                <NotificationPopover
-                  className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
-                  icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary transition-colors" />}
-                />
-              </FeatureGuard>
+              <NotificationPopover
+                className="group relative flex flex-row items-center justify-center bg-transparent transition-colors"
+                icon={<Icon name="notification" className="w-[20px] h-[20px] text-ds-text-primary transition-colors" />}
+              />
             </div>
           </>
         )}

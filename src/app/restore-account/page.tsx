@@ -31,7 +31,7 @@ function RestoreAccountContent() {
         const msg: string = err?.response?.data?.message || err?.message || "Something went wrong.";
         if (msg.includes("already been used")) {
           setStatus("used");
-        } else if (msg.includes("expired")) {
+        } else if (msg.includes("expired") || msg.includes("latest restoration link")) {
           setStatus("expired");
         } else {
           setStatus("invalid");
@@ -92,20 +92,30 @@ function RestoreAccountContent() {
 
   // Error States (used, expired, invalid)
   const errorTitle =
-    status === "used"
-      ? "Link Already Used"
-      : status === "expired"
+    status === "used" || status === "expired"
       ? "Link Expired"
       : "Invalid Link";
 
   const errorDescription =
-    status === "used"
-      ? "This restoration link has already been used. Your account is already active."
-      : status === "expired"
-      ? "This restoration link has expired. Please visit the login page to request a new one."
+    status === "used" || status === "expired"
+      ? "This restoration link has expired. Please use the latest restoration link sent to your email to restore your account."
       : message || "This link is not valid. Please request a new one.";
 
-  const buttonText = status === "used" ? "Go to Login" : "Go to Login & Resend Email";
+  const buttonText = status === "invalid" ? "Go to Login & Resend Email" : "Close";
+
+  const handleAction = () => {
+    if (status === "invalid") {
+      router.push("/");
+    } else {
+      window.close();
+      // Fallback in case browser blocks window.close() for direct navigation
+      setTimeout(() => {
+        if (!window.closed) {
+          router.push("/");
+        }
+      }, 300);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none">
@@ -130,7 +140,7 @@ function RestoreAccountContent() {
 
         <button
           type="button"
-          onClick={() => router.push("/")}
+          onClick={handleAction}
           className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
         >
           <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">

@@ -45,7 +45,10 @@ export function ViewMediaModal({
   if (!isOpen || !activeUrl || !mounted) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center w-screen h-screen select-none bg-[#030303]">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center w-screen h-screen select-none bg-[#030303]"
+    >
       {/* Cancel Cross Icon at top right: right: 16px on mobile (right-4), 40px on desktop (md:right-10); top: 40px (top-10) */}
       <button
         type="button"
@@ -60,19 +63,25 @@ export function ViewMediaModal({
       {type === "avatar" ? (
         /* Profile Photo / Logo: 200px on mobile, 240px sm, 300px on desktop */
         <div
+          onClick={(e) => e.stopPropagation()}
           className={`w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-[300px] md:h-[300px] max-w-[calc(100vw-32px)] max-h-[calc(100vw-32px)] ${
             shape === "square" ? "rounded-2xl" : "rounded-full"
           } overflow-hidden flex items-center justify-center shadow-2xl z-10 bg-[var(--ds-surface-2)]`}
         >
           <img
             src={activeUrl}
-            alt={alt || "Profile photo"}
-            className="w-full h-full object-cover rounded-full select-none pointer-events-none"
+            alt={alt || (shape === "square" ? "Organization logo" : "Profile photo")}
+            className={`w-full h-full object-cover ${
+              shape === "square" ? "rounded-2xl" : "rounded-full"
+            } select-none pointer-events-none`}
           />
         </div>
       ) : (
         /* Frame 2609600 - Banner: full width 4:1 aspect ratio on mobile, 800px by 200px on desktop */
-        <div className="w-full md:w-[800px] h-auto md:h-[200px] aspect-[800/200] md:aspect-auto max-h-[80vh] rounded-[16px] overflow-hidden flex items-center justify-center shadow-2xl z-10 border border-[var(--ds-border)]">
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          className="w-full md:w-[800px] h-auto md:h-[200px] aspect-[800/200] md:aspect-auto max-h-[80vh] rounded-[16px] overflow-hidden flex items-center justify-center shadow-2xl z-10 border border-[var(--ds-border)]"
+        >
           <img
             src={activeUrl}
             alt={alt || "Banner"}

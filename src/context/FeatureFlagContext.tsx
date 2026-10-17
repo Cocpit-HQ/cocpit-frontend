@@ -66,6 +66,24 @@ const MODULE_DEPENDENCY_MAP: Record<string, string> = {
   // Organizations Sub-features -> Organizations Parent Module
   enableOrgCreation: "enableOrganizationsModule",
   enableOrganizations: "enableOrganizationsModule",
+  orgSettings: "enableOrganizationsModule",
+  enableOrgSettings: "enableOrganizationsModule",
+  enableOrgSettingsModule: "enableOrganizationsModule",
+  orgAnalytics: "enableOrganizationsModule",
+  enableOrgAnalytics: "enableOrganizationsModule",
+  enableOrgAnalyticsModule: "enableOrganizationsModule",
+  orgNotifications: "enableOrganizationsModule",
+  enableOrgNotifications: "enableOrganizationsModule",
+  enableOrgNotificationsModule: "enableOrganizationsModule",
+
+  // Teams Sub-features -> Teams Parent Module
+  teams: "enableTeamsModule",
+  enableTeams: "enableTeamsModule",
+  enableTeamsModule: "enableTeamsModule",
+  enableTeamManagement: "enableTeamsModule",
+  team_management: "enableTeamsModule",
+  enable_teams: "enableTeamsModule",
+  enable_teams_module: "enableTeamsModule",
 
   // Search Sub-features
   global_search: "enableGlobalSearch",
@@ -99,6 +117,43 @@ const NOTIFICATION_KEYS = new Set([
   "enableNotificationsModule",
   "enable_notifications",
   "enable_notifications_module",
+]);
+
+const TEAMS_KEYS = new Set([
+  "teams",
+  "enableTeams",
+  "enableTeamsModule",
+  "enable_teams",
+  "enable_teams_module",
+  "team_management",
+  "enableTeamManagement",
+]);
+
+const ORG_SETTINGS_KEYS = new Set([
+  "orgSettings",
+  "enableOrgSettings",
+  "enableOrgSettingsModule",
+  "org_settings",
+  "enable_org_settings",
+  "enable_org_settings_module",
+]);
+
+const ORG_ANALYTICS_KEYS = new Set([
+  "orgAnalytics",
+  "enableOrgAnalytics",
+  "enableOrgAnalyticsModule",
+  "org_analytics",
+  "enable_org_analytics",
+  "enable_org_analytics_module",
+]);
+
+const ORG_NOTIFICATIONS_KEYS = new Set([
+  "orgNotifications",
+  "enableOrgNotifications",
+  "enableOrgNotificationsModule",
+  "org_notifications",
+  "enable_org_notifications",
+  "enable_org_notifications_module",
 ]);
 
 interface FeatureFlagContextProps {
@@ -162,6 +217,42 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // Special handling for notifications aliases: if any notification flag is false, disable
     if (NOTIFICATION_KEYS.has(flagKey)) {
       for (const k of NOTIFICATION_KEYS) {
+        if (isValueFalse(flags[k])) {
+          return false;
+        }
+      }
+    }
+
+    // Special handling for teams aliases: if any teams flag is false, disable
+    if (TEAMS_KEYS.has(flagKey)) {
+      for (const k of TEAMS_KEYS) {
+        if (isValueFalse(flags[k])) {
+          return false;
+        }
+      }
+    }
+
+    // Special handling for org settings aliases: if any org settings flag is false, disable
+    if (ORG_SETTINGS_KEYS.has(flagKey)) {
+      for (const k of ORG_SETTINGS_KEYS) {
+        if (isValueFalse(flags[k])) {
+          return false;
+        }
+      }
+    }
+
+    // Special handling for org analytics aliases: if any org analytics flag is false, disable
+    if (ORG_ANALYTICS_KEYS.has(flagKey)) {
+      for (const k of ORG_ANALYTICS_KEYS) {
+        if (isValueFalse(flags[k])) {
+          return false;
+        }
+      }
+    }
+
+    // Special handling for org notifications aliases: if any org notifications flag is false, disable
+    if (ORG_NOTIFICATIONS_KEYS.has(flagKey)) {
+      for (const k of ORG_NOTIFICATIONS_KEYS) {
         if (isValueFalse(flags[k])) {
           return false;
         }

@@ -111,6 +111,7 @@ export const UI_CONFIG = {
 export const FEATURE_FLAGS = {
   ENABLE_NOTIFICATIONS: true,
   ENABLE_MESSAGES: true,
+  ENABLE_TEAMS: true,
   ENABLE_STORIES: false,
   ENABLE_LIVE: false,
   ENABLE_HASHTAG_SUGGESTIONS: true,

@@ -138,13 +138,13 @@ export function TransferOwnershipModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative flex flex-col items-center bg-ds-surface-2 border border-ds-border rounded-2xl p-6 w-[460px] max-w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative flex flex-col items-center bg-ds-bg border border-ds-border rounded-[16px] p-3 gap-3 w-[442px] max-w-[calc(100vw-32px)] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         
         {/* Close Button Area */}
         <button 
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-ds-text-muted hover:text-ds-text-primary hover:bg-ds-surface-1 transition-colors"
+          className="absolute top-3 right-3 p-1.5 rounded-lg text-ds-text-muted hover:text-ds-text-primary hover:bg-ds-surface-1 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -153,18 +153,20 @@ export function TransferOwnershipModal({
         <div className="flex flex-col items-center w-full mt-1">
           
           {/* Header */}
-          <div className="flex flex-col items-center gap-1.5 mb-5 text-center">
-            <h2 className="ds-text-body-2 text-ds-text-primary">Transfer company ownership</h2>
-            <p className="ds-text-small text-ds-text-secondary">
+          <div className="flex flex-col items-center gap-1.5 mb-4 text-center">
+            <h2 className="font-poppins font-medium text-[18px] leading-[26px] text-ds-text-primary text-center">
+              Transfer company ownership
+            </h2>
+            <p className="ds-text-small text-ds-text-secondary text-center">
               Select a new owner for <span className="font-semibold text-ds-text-primary">{companyName}</span>
             </p>
-            <p className="ds-text-meta text-ds-text-muted">
+            <p className="ds-text-meta text-ds-text-muted text-center">
               Note: Only team members can receive ownership
             </p>
           </div>
 
           {/* Search Bar */}
-          <div className="relative w-full mb-4">
+          <div className="relative w-full mb-3">
             <input
               type="text"
               placeholder="Search members..."
@@ -186,14 +188,14 @@ export function TransferOwnershipModal({
           <div 
             ref={listRef}
             onScroll={handleScroll}
-            className="flex flex-col w-full gap-2 mb-4 h-[200px] overflow-y-auto pr-1"
+            className="flex flex-col w-full gap-2 mb-3 max-h-[200px] overflow-y-auto pr-1"
           >
             {loading ? (
               <div className="flex items-center justify-center h-full ds-text-small text-ds-text-muted">
                 <Loader2 className="w-5 h-5 animate-spin mr-2 text-ds-accent" /> Loading members...
               </div>
             ) : members.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-4">
+              <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8">
                 <p className="ds-text-small text-ds-text-secondary">
                   {search 
                     ? "No matching members found."
@@ -254,27 +256,27 @@ export function TransferOwnershipModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end w-full gap-3 pt-3 border-t border-ds-border/40">
+          <div className="flex flex-row justify-center items-center gap-2 w-full pt-1">
             <button 
-              onClick={() => onBack ? onBack() : onClose()} 
-              disabled={submitting}
-              className="ds-btn ds-btn-secondary ds-text-body-1 h-9 px-5 border border-ds-border hover:bg-ds-surface-1 transition-colors text-ds-text-secondary hover:text-ds-text-primary"
-            >
-              Cancel
-            </button>
-            
-            <button 
+              type="button"
               onClick={handleTransfer}
               disabled={!selectedUserId || submitting}
-              className="ds-btn ds-text-body-1 h-9 px-5 rounded-lg bg-ds-accent text-white hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-[94px] h-9 px-3 py-[6px] rounded-full bg-ds-accent text-ds-text-primary ds-text-body-1 font-medium hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             >
               {submitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-white animate-spin" /> Transferring...
-                </span>
+                <Loader2 className="w-4 h-4 text-ds-text-primary animate-spin" />
               ) : (
                 "Transfer"
               )}
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => onBack ? onBack() : onClose()} 
+              disabled={submitting}
+              className="w-[94px] h-9 px-3 py-[6px] rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary ds-text-body-1 font-medium transition-colors flex items-center justify-center cursor-pointer ds-focus-ring"
+            >
+              Cancel
             </button>
           </div>
 

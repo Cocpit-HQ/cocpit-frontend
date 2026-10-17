@@ -99,7 +99,7 @@ export function AppShell({
         isDistractionFree
           ? "min-w-0 flex-1 w-full relative"
           : isSettingsRoute
-            ? `min-w-0 flex-1 w-full h-full overflow-hidden sm:pl-[280px] lg:pl-[320px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative z-0`
+            ? `min-w-0 flex-1 w-full h-full overflow-hidden sm:pl-[280px] lg:pl-[320px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative`
             : `min-w-0 flex-1 w-full sm:pl-[220px] pt-[60px] sm:pt-[120px] ${shouldHideBottomNav ? "" : "pb-16"} sm:pb-0 relative`
       }>
         {children}

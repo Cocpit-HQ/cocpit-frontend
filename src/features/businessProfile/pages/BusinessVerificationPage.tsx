@@ -350,7 +350,7 @@ export function BusinessVerificationPage() {
           /* Account Verification Status List (Matching Figma Design) */
           <div className="self-stretch flex flex-col items-start gap-4 animate-in fade-in-50 duration-150">
             {/* Identity Verified Row */}
-            <div className="self-stretch flex items-center justify-between py-2 sm:py-3 border-b border-ds-border">
+            <div className="self-stretch flex items-center justify-between py-3">
               <div className="flex flex-col items-start gap-0.5">
                 <span className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
                   Account verification
@@ -359,7 +359,7 @@ export function BusinessVerificationPage() {
                   Your identity has been verified
                 </span>
               </div>
-              <span className="text-ds-success text-sm font-normal font-['DM_Sans'] leading-5 shrink-0">
+              <span className="text-ds-success text-sm font-medium font-['DM_Sans'] leading-5 shrink-0">
                 Verified
               </span>
             </div>

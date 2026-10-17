@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,11 @@ export const FeatureMaintenanceView: React.FC<FeatureMaintenanceViewProps> = ({
   onClose,
 }) => {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const displayTitle = title || "We’re building something worth coming back to";
   const displayMessage = message || "We’re still refining the experience behind the scenes. Thanks for being here while we make it better.";
@@ -33,9 +39,15 @@ export const FeatureMaintenanceView: React.FC<FeatureMaintenanceViewProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[999] bg-[#030303] flex flex-col items-center justify-center p-6 text-center select-none font-['DM_Sans'] overflow-hidden">
+  const content = (
+    <div className="fixed inset-0 z-[99999] bg-[#030303] flex flex-col items-center justify-center p-6 text-center select-none font-['DM_Sans'] overflow-hidden">
       <style>{`
+        aside,
+        .ds-sidebar,
+        [data-sidebar],
+        div.fixed.left-0.top-0.h-screen {
+          display: none !important;
+        }
         @media (max-width: 767px) {
           header.fixed.md\\:hidden {
             display: none !important;
@@ -89,4 +101,10 @@ export const FeatureMaintenanceView: React.FC<FeatureMaintenanceViewProps> = ({
       </div>
     </div>
   );
+
+  if (!mounted || typeof document === "undefined") {
+    return content;
+  }
+
+  return createPortal(content, document.body);
 };
