@@ -576,30 +576,38 @@ export default function BusinessProfileHeader({
               </div>
             </div>
           )}
+        </div>
 
-          {/* Desktop Followers & Following Stats (hidden sm:flex - 100% UNTOUCHED DESKTOP) */}
-          <div className="hidden sm:flex flex-row items-center p-0 gap-6 mt-3 shrink-0">
-            {/* Followers */}
+        {/* Desktop Followers & Following Stats (Frame 2609861): Pure CSS alignment with Edit profile start */}
+        <div
+          className={cn(
+            "hidden sm:flex flex-row justify-start items-start shrink-0 order-1",
+            isOwnProfile ? "w-[221px]" : "w-[290px]"
+          )}
+        >
+          {/* Frame 2609861: w-[148px] h-[40px] gap-[24px] */}
+          <div className="w-[148px] h-[40px] flex flex-row items-center p-0 gap-[24px] flex-none shrink-0">
+            {/* Followers (Order 0, w-[62px] h-[40px]) */}
             <button
               type="button"
               onClick={() => {
                 setStatsModalTab("followers");
                 setIsStatsModalOpen(true);
               }}
-              className="min-w-[54px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0"
+              className="w-[62px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0 flex-none order-0"
             >
               <span className="w-full text-center truncate">{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
               <span className="w-full text-center">Followers</span>
             </button>
 
-            {/* Following */}
+            {/* Following (Order 1, w-[62px] h-[40px]) */}
             <button
               type="button"
               onClick={() => {
                 setStatsModalTab("following");
                 setIsStatsModalOpen(true);
               }}
-              className="min-w-[54px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0"
+              className="w-[62px] h-[40px] flex flex-col items-center justify-center p-0 cursor-pointer hover:opacity-80 transition-opacity font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center text-ds-text-primary shrink-0 flex-none order-1"
             >
               <span className="w-full text-center truncate">{formatNumber(data.stats?.following || 0)}</span>
               <span className="w-full text-center">Following</span>

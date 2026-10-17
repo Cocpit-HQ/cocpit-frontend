@@ -18,6 +18,7 @@ interface InteractiveLocationMapProps {
   onLocationChange?: (location: StructuredLocation) => void;
   className?: string;
   readOnly?: boolean;
+  showAddressBadge?: boolean;
 }
 
 // Google Maps script loader singleton
@@ -126,6 +127,7 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
   onLocationChange,
   className = "",
   readOnly = false,
+  showAddressBadge = false,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -396,6 +398,13 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
     <div
       className={`relative w-full h-56 md:h-64 rounded-3xl border border-ds-border overflow-hidden bg-ds-surface-1 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] select-none ${className}`}
     >
+      {/* Hide unstyled Google Maps terms / copyright bar to match clean Figma canvas */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .gm-style-cc { display: none !important; }
+        .gm-style a[href^="https://maps.google.com/maps"] { display: none !important; }
+        .gm-style a[href^="http://maps.google.com/maps"] { display: none !important; }
+        .gmnoprint a, .gmnoprint span { display: none !important; }
+      ` }} />
       {/* Map Canvas */}
       <div
         ref={mapContainerRef}
@@ -484,8 +493,8 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
         </div>
       )}
 
-      {/* Floating Bottom Location Address Badge (only in edit/interactive mode) */}
-      {!readOnly && isMapLoaded && currentAddress && (
+      {/* Floating Bottom Location Address Badge (only in edit/interactive mode when showAddressBadge is enabled) */}
+      {!readOnly && isMapLoaded && showAddressBadge && currentAddress && (
         <div className="absolute bottom-3 left-3 right-16 px-3 py-1.5 bg-ds-surface-1/90 backdrop-blur-md rounded-2xl border border-ds-border flex items-center gap-2 shadow-lg pointer-events-none z-10 max-w-[calc(100%-80px)]">
           <MapPin className="w-3.5 h-3.5 text-ds-accent shrink-0" />
           <span className="font-['DM_Sans'] text-xs text-ds-text-primary truncate">

@@ -55,7 +55,9 @@ export default function KeyOfferingsAndTeamsSection({
       : [];
 
   const hasOfferings = offerings.length > 0;
-  const hasTeams = showTeams && teamMembers.length > 0;
+  // Teams section commented out per requirement
+  // const hasTeams = showTeams && teamMembers.length > 0;
+  const hasTeams = false;
   const hasBoth = hasOfferings && hasTeams;
 
   // If neither key offerings nor teams are present, hide the section completely
@@ -99,10 +101,13 @@ export default function KeyOfferingsAndTeamsSection({
         <div className="hidden md:block w-px self-stretch min-h-[296px] bg-ds-border shrink-0" />
       )}
 
-      {/* Right Column: Teams */}
+      {/* ══════════════════════════════════════════════════════
+          Right Column: Teams & View more (Commented out per requirement)
+          ══════════════════════════════════════════════════════ */}
+      {/*
       {hasTeams && (
         <div className="flex-1 self-stretch flex flex-col justify-start items-start gap-5 min-w-0">
-          {/* Members list block */}
+          // Members list block
           <div className="w-full max-w-[280px] sm:max-w-[320px] flex flex-col justify-start items-start gap-4 min-w-0">
             <h2 className="self-stretch text-ds-text-primary ds-text-body-2">
               {sectionTitle}
@@ -113,7 +118,7 @@ export default function KeyOfferingsAndTeamsSection({
                 key={member.id}
                 className="w-full flex justify-start items-center gap-2.5 min-w-0"
               >
-                {/* Member Avatar */}
+                // Member Avatar
                 {member.avatarUrl ? (
                   <img
                     className="w-8 h-8 rounded-full object-cover shrink-0 border border-ds-border"
@@ -126,7 +131,7 @@ export default function KeyOfferingsAndTeamsSection({
                   </div>
                 )}
 
-                {/* Member Name & Role */}
+                // Member Name & Role
                 <div className="h-9 flex-1 flex flex-col justify-between items-start min-w-0 w-full overflow-hidden">
                   <div className="w-full text-ds-text-primary ds-text-body-2 truncate">
                     {member.name}
@@ -138,7 +143,7 @@ export default function KeyOfferingsAndTeamsSection({
               </div>
             ))}
 
-            {/* View more CTA centered at bottom of the team list */}
+            // View more CTA centered at bottom of the team list
             <div className="w-full flex justify-center pt-1">
               <button
                 type="button"
@@ -152,6 +157,7 @@ export default function KeyOfferingsAndTeamsSection({
           </div>
         </div>
       )}
+      */}
     </div>
   );
 }

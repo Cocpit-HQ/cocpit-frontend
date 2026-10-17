@@ -378,9 +378,9 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
       {/* Main Content Area: Frame 2609639 (800px auto layout, gap 50px) */}
       <div className="w-full max-w-[800px] flex flex-col md:flex-row justify-between items-start p-0 gap-6 md:gap-[50px]">
         {/* Left Column: Frame 2609895 (449px auto layout, padding 24px 0px, gap 16px, order 0) */}
-        <div className="w-full md:w-[449px] max-w-full flex flex-col justify-center items-center py-6 px-0 gap-4 flex-none order-0">
-          {/* Field 1: Country of Operation (input with label and icon - 449x62) */}
-          <div ref={countryDropdownRef} className="relative w-full self-stretch flex-none order-0">
+        <div className="w-full md:w-[449px] max-w-full flex flex-col justify-start items-center pt-6 pb-6 px-0 gap-4 flex-none order-0">
+          {/* Field 1: Frame 2609989 (Country of Operation - 449x88, pb-[26px]) */}
+          <div ref={countryDropdownRef} className="relative w-full self-stretch flex-none order-0 flex flex-col items-start pb-[26px] gap-2.5">
             <div
               onClick={() => setIsCountryDropdownOpen((prev) => !prev)}
               className="w-full h-[62px] py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-col justify-center items-start gap-2.5 self-stretch cursor-pointer transition-colors"
@@ -458,8 +458,8 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
             )}
           </div>
 
-          {/* Field 2: Date of incorporation (input with icon and note) */}
-          <div ref={datePickerContainerRef} className="relative w-full flex flex-col items-start p-0 gap-2 self-stretch flex-none order-1 h-[60px]">
+          {/* Field 2: Frame 2609990 (Date of incorporation - 449x86, pb-[26px]) */}
+          <div ref={datePickerContainerRef} className="relative w-full flex flex-col items-start p-0 pb-[26px] gap-2 self-stretch flex-none order-1">
             <div
               onClick={() => setIsDatePickerOpen((prev) => !prev)}
               className="w-full h-[36px] py-2 border-b border-ds-border focus-within:border-ds-accent flex flex-row justify-between items-center gap-1 cursor-pointer transition-colors"

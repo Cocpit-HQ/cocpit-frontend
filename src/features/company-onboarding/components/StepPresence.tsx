@@ -1069,14 +1069,14 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
         </div>
 
         {/* Row 4: HEADQUARTERS LOCATION */}
-        <div className="w-full flex flex-col justify-start items-start gap-3 mt-1">
-          <label className="text-left text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6 uppercase tracking-wide">
-            HEADQUARTERS LOCATION <span className="text-ds-text-secondary">*</span>
+        <div className="w-full flex flex-col justify-start items-start gap-4 mt-1">
+          <label className="text-left text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4">
+            Headquarters Location<span className="text-ds-text-secondary">*</span>
           </label>
 
           {/* Search Exact Location Input */}
           <div ref={locationDropdownRef} className="relative w-full">
-            <div className="w-full h-10 py-1.5 border-b border-ds-border focus-within:border-ds-accent flex justify-between items-center transition-colors">
+            <div className="w-full h-10 px-3 py-1.5 border-b border-ds-border focus-within:border-ds-accent flex justify-between items-center transition-colors gap-2.5">
               <input
                 type="text"
                 value={locationQuery}
@@ -1087,12 +1087,12 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
                 }}
                 onFocus={() => setIsLocationDropdownOpen(true)}
                 placeholder="Exact Location"
-                className="w-full bg-transparent text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 focus:outline-none placeholder:text-ds-text-muted cursor-text"
+                className="w-full bg-transparent text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-6 focus:outline-none placeholder:text-ds-text-muted cursor-text"
               />
               {isSearchingPlaces ? (
                 <Loader2 className="size-4 animate-spin text-ds-accent shrink-0" />
               ) : (
-                <Search className="size-5 text-ds-text-secondary shrink-0" />
+                <Search className="size-5 text-ds-text-primary shrink-0" />
               )}
             </div>
 
@@ -1155,6 +1155,7 @@ export const StepPresence: React.FC<StepPresenceProps> = ({ onNext }) => {
             latitude={hqLatitude}
             longitude={hqLongitude}
             onLocationChange={handleMapLocationChange}
+            showAddressBadge={false}
             className="w-full"
           />
         </div>
