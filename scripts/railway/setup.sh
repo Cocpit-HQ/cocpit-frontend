@@ -2,18 +2,18 @@
 #
 # Provision the Cocpit frontend (Next.js) on Railway, next to the backend services.
 #
-#   frontend   Next.js (Railpack, railway.toml)   public domain, /api/health
+#   frontend   Next.js (Dockerfile, railway.toml)   public domain, /api/health
+#   backend    cocpit-backend monolith (main API + admin API + Socket.IO + workers)
 #
 # Because NEXT_PUBLIC_* values and INTERNAL_API_URL are baked in at BUILD time, this
-# script first makes sure the public domains exist (frontend + main-api), then sets
+# script first makes sure the public domains exist (frontend + backend), then sets
 # every variable — so the very first build is already correct.
 #
-# It also updates the backend services that must know the frontend's address:
-#   main-api : ALLOWED_ORIGINS (+frontend origin), FRONTEND_URL, CLIENT_URL, API_URL
-#   worker   : FRONTEND_URL, CLIENT_URL (links in nudge emails)
+# It also updates the backend variables that must know the frontend's address:
+#   backend : ALLOWED_ORIGINS (+frontend origin), FRONTEND_URL, CLIENT_URL, API_URL
 #
 # Prerequisites:
-#   - railway login && railway link -p <project>   (project must contain main-api, from cocpit-backend)
+#   - railway login && railway link -p <project>   (project must contain the `backend` service)
 #   - .env.railway in this repo root (copy scripts/railway/env.railway.example)
 #
 # Usage:
@@ -30,8 +30,7 @@ ENVIRONMENT="staging"
 APPLY=false
 
 FRONTEND_SVC="frontend"
-BACKEND_SVC="main-api"
-WORKER_SVC="worker"
+BACKEND_SVC="backend"
 APP_PORT=8080
 
 while [[ $# -gt 0 ]]; do
@@ -75,7 +74,7 @@ service_domains() {
 domain_of() { awk -F'\t' -v s="$1" '$1==s {print $2}' <<<"$(status_json | service_domains)"; }
 has_service() { awk -F'\t' -v s="$1" '$1==s {f=1} END {exit !f}' <<<"$(status_json | service_domains)"; }
 
-has_service "$BACKEND_SVC" || { echo "Service '$BACKEND_SVC' not found — run cocpit-backend/scripts/railway/setup.sh first" >&2; exit 1; }
+has_service "$BACKEND_SVC" || { echo "Service '$BACKEND_SVC' not found — create it from the cocpit-backend repo first" >&2; exit 1; }
 echo "== environment: $ENVIRONMENT | apply: $APPLY"
 
 # ── 1. Service ────────────────────────────────────────────────────────────────
@@ -155,12 +154,6 @@ run railway variable set --service "$BACKEND_SVC" --environment "$ENVIRONMENT" -
   "CLIENT_URL=$FRONTEND_ORIGIN" \
   "API_URL=$BACKEND_ORIGIN"
 
-if has_service "$WORKER_SVC"; then
-  run railway variable set --service "$WORKER_SVC" --environment "$ENVIRONMENT" --skip-deploys \
-    "FRONTEND_URL=$FRONTEND_ORIGIN" \
-    "CLIENT_URL=$FRONTEND_ORIGIN"
-fi
-
 cat <<EOF
 
 == Done ($ENVIRONMENT)
@@ -171,7 +164,7 @@ Remaining one-time steps:
   1. $FRONTEND_SVC → Settings → Source → connect GitHub repo + branch (config: /railway.toml, default).
   2. Google Cloud: add $FRONTEND_ORIGIN to the OAuth client's Authorized JavaScript origins,
      and to the Maps key's HTTP-referrer restrictions.
-  3. Deploy order: main-api → $FRONTEND_SVC (backend must already accept the new origin).
+  3. Deploy order: backend → $FRONTEND_SVC (backend must already accept the new origin).
   4. Switching to a custom domain later? Re-run this script — NEXTAUTH_URL and the socket URL
      are baked into the build, so the frontend must be redeployed after the change.
 EOF

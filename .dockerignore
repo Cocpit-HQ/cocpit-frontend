@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+.git
+.github
+.claude
+.agents
+.vscode
+.env*
+npm-debug.log*
+*.log
+*.tsbuildinfo
+docs
+history_profile_posts.txt
+profile_switcher_temp.tsx

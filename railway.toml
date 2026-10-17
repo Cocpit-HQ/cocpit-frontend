@@ -1,17 +1,15 @@
 # Railway config-as-code for the Next.js frontend service.
-# Railpack detects Next.js, runs `npm ci` + the build command, and `next start`
-# honours the PORT Railway injects.
+# Built from ./Dockerfile (Next.js standalone, listens on PORT=8080).
 #
 # NEXT_PUBLIC_* variables and INTERNAL_API_URL (used by rewrites) are baked in at
 # build time — set them on the service BEFORE the first build; changing them later
 # needs a redeploy.
 [build]
-builder = "RAILPACK"
-buildCommand = "npm run build"
-watchPatterns = ["src/**", "public/**", "middleware.ts", "next.config.ts", "package.json", "package-lock.json", "railway.toml"]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["src/**", "public/**", "middleware.ts", "next.config.ts", "package.json", "package-lock.json", "railway.toml", "Dockerfile"]
 
 [deploy]
-startCommand = "npm start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

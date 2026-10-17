@@ -41,7 +41,7 @@ function resolveBackendUrl(): string {
   if (process.env.RAILWAY_ENVIRONMENT_NAME || process.env.REQUIRE_INTERNAL_API_URL === "true") {
     throw new Error(
       "INTERNAL_API_URL is not set. Set it to the backend URL including /api " +
-      "(Railway: http://main-api.railway.internal:8080/api) before building."
+      "(Railway: http://backend.railway.internal:8080/api) before building."
     );
   }
   return DEFAULT_INTERNAL_API_URL;
@@ -62,6 +62,9 @@ const IMAGE_HOSTS = [
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Docker image (Dockerfile sets NEXT_OUTPUT_STANDALONE=true) ships only .next/standalone.
+  // Left off by default so `next start` on PM2 keeps working unchanged.
+  ...(process.env.NEXT_OUTPUT_STANDALONE === "true" ? { output: "standalone" as const } : {}),
   reactCompiler: true,
   experimental: {
     // Increase Next.js proxy request body limit from 10MB default to 100MB
