@@ -25,7 +25,7 @@ NEXT_PUBLIC_API_KEY=your_api_key_here
 
 # Authentication (if using NextAuth)
 AUTH_SECRET=your_secret_key_here
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://cocpit-frontend-staging.up.railway.app/
 
 # Upload Service (optional)
 NEXT_PUBLIC_UPLOAD_SERVICE_URL=https://upload.example.com
@@ -41,7 +41,7 @@ NODE_ENV=development
 npm run dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000)
+The app will be available at [https://cocpit-frontend-staging.up.railway.app/](https://cocpit-frontend-staging.up.railway.app/)
 
 ## Development Workflow
 

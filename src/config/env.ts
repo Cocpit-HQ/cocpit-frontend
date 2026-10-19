@@ -6,7 +6,7 @@
 const isServer = typeof window === "undefined";
 
 // Local main API (cocpit-backend src/server.js). Keep in sync with next.config.ts.
-export const DEFAULT_INTERNAL_API_URL = "http://localhost:5000/api";
+export const DEFAULT_INTERNAL_API_URL = "https://cocpit-backend-staging.up.railway.app//api";
 
 export const env = {
   // API

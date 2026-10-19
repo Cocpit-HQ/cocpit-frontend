@@ -266,7 +266,7 @@ export default function Page() {
 
 ### Accessing Route
 ```
-Visit: http://localhost:3000/onboarding
+Visit: https://cocpit-frontend-staging.up.railway.app//onboarding
 ```
 
 ### Custom Redirects

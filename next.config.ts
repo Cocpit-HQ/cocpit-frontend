@@ -28,7 +28,7 @@ const EXPRESS_AUTH_ROUTES = [
 // backend address must be known when `next build` runs (Railway: set
 // INTERNAL_API_URL on the service before the first build).
 // Default = local main API (cocpit-backend src/server.js on :5000) — keep in sync with src/config/env.ts.
-const DEFAULT_INTERNAL_API_URL = "http://localhost:5000/api";
+const DEFAULT_INTERNAL_API_URL = "https://cocpit-backend-staging.up.railway.app//api";
 
 function resolveBackendUrl(): string {
   const url =

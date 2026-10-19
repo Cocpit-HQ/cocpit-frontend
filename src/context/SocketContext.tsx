@@ -48,7 +48,7 @@ const SocketContext = createContext<SocketContextType>({
   typingConversations: {}
 });
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://cocpit-backend-staging.up.railway.app/";
 const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "auto";
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {

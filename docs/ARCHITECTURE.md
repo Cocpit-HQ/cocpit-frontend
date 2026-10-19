@@ -90,7 +90,7 @@ npm run dev
 yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser.
+Open [https://cocpit-frontend-staging.up.railway.app/](https://cocpit-frontend-staging.up.railway.app/) with your browser.
 
 ### Build for Production
 

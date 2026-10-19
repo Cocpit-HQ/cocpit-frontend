@@ -54,7 +54,7 @@ No files or packages were deleted. Everything was verified with a production bui
 
 - **What:**
   - Added `resolveBackendUrl()` in `next.config.ts`.
-  - The local fallback is now `http://localhost:5000/api` in both `next.config.ts` and `env.ts`. Before, the rewrites used `:5001` (the admin API) while `env.ts` used `:5000`.
+  - The local fallback is now `https://cocpit-backend-staging.up.railway.app//api` in both `next.config.ts` and `env.ts`. Before, the rewrites used `:5001` (the admin API) while `env.ts` used `:5000`.
   - On Railway (`RAILWAY_ENVIRONMENT_NAME` set), or when `REQUIRE_INTERNAL_API_URL=true`, the build now **fails** if `INTERNAL_API_URL` is missing.
 - **Where:** `next.config.ts`, `src/config/env.ts`
 - **Why:** the `rewrites()` destinations are fixed into the build output. A missing variable on Railway would have built a frontend that sends every API call to localhost.
@@ -114,13 +114,13 @@ No files or packages were deleted. Everything was verified with a production bui
 
 | Variable | Local `.env` | Railway (`frontend`) |
 |---|---|---|
-| `INTERNAL_API_URL` | `http://localhost:5000/api` | `http://main-api.railway.internal:8080/api` |
+| `INTERNAL_API_URL` | `https://cocpit-backend-staging.up.railway.app//api` | `http://main-api.railway.internal:8080/api` |
 | `REQUIRE_INTERNAL_API_URL` | — | `true` |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:5000/api` (unchanged) | `/api` |
-| `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:5000` | `https://<main-api domain>` |
+| `NEXT_PUBLIC_API_URL` | `https://cocpit-backend-staging.up.railway.app//api` (unchanged) | `/api` |
+| `NEXT_PUBLIC_SOCKET_URL` | `https://cocpit-backend-staging.up.railway.app/` | `https://<main-api domain>` |
 | `NEXT_PUBLIC_SOCKET_TRANSPORT_MODE` | `polling` (unchanged) | `websocket` |
-| `NEXT_PUBLIC_BASE_URL` | `http://localhost:5000` | `https://<main-api domain>` |
-| `NEXTAUTH_URL` | `http://localhost:3000` | `https://<frontend domain>` |
+| `NEXT_PUBLIC_BASE_URL` | `https://cocpit-backend-staging.up.railway.app/` | `https://<main-api domain>` |
+| `NEXTAUTH_URL` | `https://cocpit-frontend-staging.up.railway.app/` | `https://<frontend domain>` |
 | `NEXTAUTH_SECRET` | existing | newly generated |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | added (formerly hardcoded) | same key (rotate) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | existing | copied |

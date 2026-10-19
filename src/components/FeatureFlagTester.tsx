@@ -9,7 +9,7 @@ export default function FeatureFlagTester() {
     // Poll the backend config API every 2 seconds
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/config");
+        const res = await fetch("https://cocpit-backend-staging.up.railway.app//api/config");
         const data = await res.json();
         setFlags(data.features || {});
       } catch (err) {
