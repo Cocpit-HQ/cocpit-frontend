@@ -41,7 +41,7 @@ const AvatarFallback = React.forwardRef<
     className={cn("flex h-full w-full items-center justify-center rounded-full bg-ds-surface-1 border border-ds-border text-ds-text-secondary font-semibold font-['Poppins'] select-none", className)}
     {...props}
   >
-    <UserIcon className="w-[60%] h-[60%] text-current" />
+    {children || <UserIcon className="w-[60%] h-[60%] text-current" />}
   </AvatarPrimitive.Fallback>
 ));
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;

@@ -10,6 +10,7 @@ import { BusinessBuildingIcon, CalendarIcon, PdfFileIcon } from "@/components/ic
 import { DarkCalendar } from "@/features/onboarding/components/DarkCalendar";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -21,6 +22,7 @@ export function BusinessVerificationPage() {
   const params = useParams();
   const rawSlug = (params?.slug as string) || "";
   const queryClient = useQueryClient();
+  const { updateActiveProfile, refreshProfile, refreshCompanies } = useActiveProfile();
 
   const [mounted, setMounted] = useState(false);
   const [legalName, setLegalName] = useState("");
@@ -104,7 +106,11 @@ export function BusinessVerificationPage() {
   );
 
   const handleClose = () => {
-    router.push(`/organization/${rawSlug}`);
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(`/organization/${rawSlug}`);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,7 +218,28 @@ export function BusinessVerificationPage() {
       setJustSubmitted(true);
       setIsEditingForm(false);
       queryClient.invalidateQueries({ queryKey: ["orgProfile", rawSlug] });
+      queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
       queryClient.invalidateQueries({ queryKey: ["company", rawSlug] });
+      queryClient.invalidateQueries({ queryKey: ["company"] });
+      queryClient.invalidateQueries({ queryKey: ["companyPrivacySettings"] });
+      queryClient.invalidateQueries({ queryKey: ["activeProfile"] });
+
+      if (updateActiveProfile) {
+        updateActiveProfile({
+          verification_status: "VERIFIED",
+          is_identity_verified: true,
+        });
+      }
+
+      if (refreshProfile) {
+        void refreshProfile();
+      }
+      if (refreshCompanies) {
+        void refreshCompanies();
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cocpit:refresh-actor-context"));
+      }
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||

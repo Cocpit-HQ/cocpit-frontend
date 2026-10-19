@@ -8,10 +8,13 @@ import {
   CommentMediaIcon,
   CommentIcon,
   RepostIcon,
+  BusinessBuildingIcon,
+  UserIcon,
 } from '@/components/icons';
 import { CommentActivityItem } from './activity.types';
 import { resolveCommentPostData } from './activityUtils';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
 
 interface CommentsActivityTabProps {
@@ -106,13 +109,19 @@ export function CommentsActivityTab({ data, removedItemIds }: CommentsActivityTa
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 min-w-0">
             {/* Parent Post Title & Author */}
             <div className="w-full inline-flex justify-start items-center gap-2 min-w-0">
-              <Avatar className="size-6 rounded-full shrink-0">
+              <Avatar className={cn("size-6 shrink-0", item.isPostCompany ? "rounded-[6px]" : "rounded-full")}>
                 <AvatarImage
                   src={(item.authorAvatarUrl && item.authorAvatarUrl !== "null") ? item.authorAvatarUrl : ""}
                   alt={item.postAuthor}
-                  className="object-cover"
+                  className={cn("object-cover", item.isPostCompany ? "rounded-[6px]" : "rounded-full")}
                 />
-                <AvatarFallback />
+                <AvatarFallback className={cn("bg-ds-surface-1 border border-ds-border", item.isPostCompany ? "rounded-[6px]" : "rounded-full")}>
+                  {item.isPostCompany ? (
+                    <BusinessBuildingIcon className="w-full h-full p-0.5 text-ds-text-primary" />
+                  ) : (
+                    <UserIcon className="w-[60%] h-[60%] text-current" />
+                  )}
+                </AvatarFallback>
               </Avatar>
               <div className="truncate">
                 <span className="text-ds-text-primary ds-text-body-2 leading-6 mr-2">
@@ -126,13 +135,19 @@ export function CommentsActivityTab({ data, removedItemIds }: CommentsActivityTa
 
             {/* Indented Comment */}
             <div className="w-full pl-8 inline-flex justify-start items-start gap-2">
-              <Avatar className="size-6 rounded-full shrink-0">
+              <Avatar className={cn("size-6 shrink-0", item.isCommenterCompany ? "rounded-[6px]" : "rounded-full")}>
                 <AvatarImage
                   src={(item.commenterAvatarUrl && item.commenterAvatarUrl !== "null") ? item.commenterAvatarUrl : ""}
                   alt={item.commenter}
-                  className="object-cover"
+                  className={cn("object-cover", item.isCommenterCompany ? "rounded-[6px]" : "rounded-full")}
                 />
-                <AvatarFallback />
+                <AvatarFallback className={cn("bg-ds-surface-1 border border-ds-border", item.isCommenterCompany ? "rounded-[6px]" : "rounded-full")}>
+                  {item.isCommenterCompany ? (
+                    <BusinessBuildingIcon className="w-full h-full p-0.5 text-ds-text-primary" />
+                  ) : (
+                    <UserIcon className="w-[60%] h-[60%] text-current" />
+                  )}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 flex flex-col justify-center items-start gap-2">
                 <div className="w-full">

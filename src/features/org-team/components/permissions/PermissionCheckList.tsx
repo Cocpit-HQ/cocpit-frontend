@@ -11,7 +11,7 @@ interface PermissionCheckListProps {
   disabled?: boolean;
 }
 
-const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT', 'SETTINGS'];
+const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT'];
 
 const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
@@ -23,7 +23,7 @@ const PERMISSION_GROUPS = [
     { id: 'JOBS_CHAT', label: 'Jobs chat', disabled: true }
   ]},
   { id: 'ANALYTICS', label: 'Analytics', icon: 'analytics', disabled: true },
-  { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings', disabled: true }
+  { id: 'SETTINGS', label: 'Settings', icon: 'lucide:settings' }
 ] as const;
 
 export default function PermissionCheckList({

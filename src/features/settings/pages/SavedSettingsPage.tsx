@@ -210,7 +210,7 @@ export function SavedSettingsPage() {
               posts.map((post) => (
                 <div
                   key={post.id}
-                  className="self-stretch pb-[12px] border-b border-[#2C2C33] last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-[12px] w-full"
+                  className="self-stretch pb-[12px] border-b border-ds-border last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-[12px] w-full"
                 >
                   <SavedPostCard
                     post={post}

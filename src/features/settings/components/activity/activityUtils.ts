@@ -390,6 +390,21 @@ export function resolveCommentPostData(item: any, index: number = 0): CommentAct
     metadata.content ||
     '';
 
+  const isPostCompany = Boolean(
+    item.isPostCompany ||
+    item.isCompanyPost ||
+    item.isCompany ||
+    item.author_org_id ||
+    post?.author_org_id ||
+    post?.isCompanyPost
+  );
+
+  const isCommenterCompany = Boolean(
+    item.isCommenterCompany ||
+    item.commenterOrgId ||
+    item.comment?.author_org_id
+  );
+
   return {
     id: uniqueCommentId,
     postId: media.postId,
@@ -406,5 +421,7 @@ export function resolveCommentPostData(item: any, index: number = 0): CommentAct
     mediaType: media.mediaType,
     imageUrl: media.thumbnailUrl,
     videoUrl: media.videoUrl,
+    isPostCompany,
+    isCommenterCompany,
   };
 }

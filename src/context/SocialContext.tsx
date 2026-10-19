@@ -311,15 +311,22 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
   const blockUser = async (id: string) => {
     try {
-      await api.post(`/users/${id}/block`);
+      const res = await api.post(`/users/${id}/block`);
       setBlockedIds((prev) => [...prev, id]);
       setFollowingIds((prev) => prev.filter((uid) => uid !== id));
       notifyBlockEvent(id, true);
-      toast.success("User blocked. You will no longer see their content.");
+      const successMsg =
+        res?.data?.message ||
+        (isCompany
+          ? "Account blocked for company"
+          : "User blocked. You will no longer see their content.");
+      toast.success(successMsg);
       return { success: true };
     } catch (error: any) {
       console.error("Block failed", error);
-      const errorMsg = error?.response?.data?.message || "Failed to block user";
+      const errorMsg =
+        error?.response?.data?.message ||
+        (isCompany ? "Failed to block account" : "Failed to block user");
       toast.error(errorMsg);
       return { success: false, message: errorMsg };
     }
@@ -327,15 +334,19 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
   const unblockUser = async (id: string) => {
     try {
-      await api.delete(`/users/${id}/unblock`);
+      const res = await api.delete(`/users/${id}/unblock`);
       setBlockedIds((prev) => prev.filter((uid) => uid !== id));
       notifyBlockEvent(id, false);
-      toast.success("User unblocked");
+      const successMsg =
+        res?.data?.message ||
+        (isCompany ? "Account unblocked for company" : "User unblocked");
+      toast.success(successMsg);
       return { success: true };
     } catch (error: any) {
       console.error("Unblock failed", error);
       const errorMsg =
-        error?.response?.data?.message || "Failed to unblock user";
+        error?.response?.data?.message ||
+        (isCompany ? "Failed to unblock account" : "Failed to unblock user");
       toast.error(errorMsg);
       return { success: false, message: errorMsg };
     }

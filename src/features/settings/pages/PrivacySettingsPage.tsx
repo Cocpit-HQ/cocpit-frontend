@@ -68,16 +68,22 @@ function formatSessionDate(dateStr?: string) {
 }
 
 import { MobileSettingsHeader } from '../components/MobileSettingsView';
+import { CompanyPrivacySettingsPage } from './CompanyPrivacySettingsPage';
 
 export function PrivacySettingsPage() {
   const router = useRouter();
+  const { activeProfile, isCompany } = useActiveProfile();
+
+  if (isCompany) {
+    return <CompanyPrivacySettingsPage />;
+  }
+
   const pathname = usePathname() || '/settings/privacy';
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';
 
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isLogoutAllModalOpen, setIsLogoutAllModalOpen] = useState(false);
-  const { activeProfile } = useActiveProfile();
   const { data: myProfile } = useMyProfile();
 
   const { settings: privacy, isLoading: isPrivacyLoading, updateSettings } = usePrivacySettings();

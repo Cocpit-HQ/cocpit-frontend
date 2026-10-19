@@ -5,6 +5,8 @@ import { ChevronLeft } from 'lucide-react';
 import { ManagePhoneModal } from '../components/modals/ManagePhoneModal';
 import { useRouter } from 'next/navigation';
 import { useAccountSettings, useDeletePhone } from '../hooks/useAccountSettings';
+import { useCompanyAccountSettings } from '../hooks/useCompanyAccountSettings';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { DeleteConfirmationModal } from '@/components/shared/DeleteConfirmationModal';
 import { toast } from 'sonner';
@@ -15,10 +17,13 @@ export function ManagePhonePage() {
 
   const queryClient = useQueryClient();
   const { data: accountData } = useAccountSettings();
+  const { data: companyAccountData } = useCompanyAccountSettings();
+  const { isCompany } = useActiveProfile();
   const deletePhoneMutation = useDeletePhone();
 
-  const hasPhone = !!accountData?.phone && accountData.phone.trim() !== "";
-  const phoneNumber = accountData?.phone || "";
+  const activePhoneData = isCompany ? companyAccountData : accountData;
+  const hasPhone = !!activePhoneData?.phone && activePhoneData.phone.trim() !== "";
+  const phoneNumber = activePhoneData?.phone || "";
 
   const handleDeletePhone = () => {
     deletePhoneMutation.mutate(undefined, {
@@ -80,7 +85,7 @@ export function ManagePhonePage() {
                 Phone number
               </div>
               <div className="text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 break-all">
-                {`${accountData?.countryCode || ''} ${phoneNumber}`.trim()}
+                {`${activePhoneData?.countryCode || ''} ${phoneNumber}`.trim()}
               </div>
             </div>
             <div className="self-stretch inline-flex justify-end items-center gap-3 pt-1">

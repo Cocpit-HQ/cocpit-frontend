@@ -62,19 +62,9 @@ const NotificationRow = React.memo(function NotificationRow({
   disabled,
   isLast = false,
 }: NotificationRowProps) {
-  const [localChecked, setLocalChecked] = React.useState(checked);
-
-  React.useEffect(() => {
-    setLocalChecked(checked);
-  }, [checked]);
-
   const handleToggle = useCallback(() => {
-    setLocalChecked((prev) => {
-      const next = !prev;
-      onToggle(itemKey, next);
-      return next;
-    });
-  }, [onToggle, itemKey]);
+    onToggle(itemKey, !checked);
+  }, [onToggle, itemKey, checked]);
 
   return (
     <div
@@ -91,7 +81,7 @@ const NotificationRow = React.memo(function NotificationRow({
         </div>
       </div>
       <SettingToggle
-        checked={localChecked}
+        checked={checked}
         onChange={handleToggle}
         disabled={disabled}
         ariaLabel={`Toggle ${label}`}
@@ -145,6 +135,35 @@ export function NotificationSettingsPage() {
     [updateSettings]
   );
 
+  if (isLoading || !settings) {
+    return (
+      <div className="w-full max-w-[712px] md:min-h-[490px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-[12px] rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
+        <MobileSettingsHeader title="Notification" />
+
+        <div className="w-full max-w-[712px] px-4 md:px-4 py-0 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-2">
+          <div className="hidden md:block self-stretch mb-1">
+            <div className="ds-text-body-2 text-ds-text-primary">Notifications</div>
+          </div>
+
+          {NOTIFICATION_ITEMS.map((item, index) => (
+            <div
+              key={item.key}
+              className={`self-stretch py-3 flex flex-row justify-between items-center gap-3 ${
+                index !== NOTIFICATION_ITEMS.length - 1 ? 'border-b border-ds-border' : ''
+              }`}
+            >
+              <div className="flex-1 min-w-0 pr-2 flex flex-col gap-2">
+                <div className="w-40 h-5 rounded bg-ds-surface-2 animate-pulse" />
+                <div className="w-64 h-3.5 rounded bg-ds-surface-1 animate-pulse" />
+              </div>
+              <div className="w-11 h-6 rounded-full bg-ds-surface-2 animate-pulse shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-[712px] md:min-h-[490px] p-0 md:p-[8px_0px] flex flex-col items-start gap-0 md:gap-[12px] rounded-[0px_24px_24px_0px] text-ds-text-primary font-sans">
       {/* Mobile Header: < Notification */}
@@ -162,7 +181,7 @@ export function NotificationSettingsPage() {
             itemKey={item.key}
             label={item.label}
             description={item.description}
-            checked={settings ? settings[item.key] : true}
+            checked={settings[item.key]}
             onToggle={handleToggle}
             disabled={isLoading}
             isLast={index === NOTIFICATION_ITEMS.length - 1}

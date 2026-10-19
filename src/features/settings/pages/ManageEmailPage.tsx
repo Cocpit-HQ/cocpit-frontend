@@ -54,7 +54,7 @@ export function ManageEmailPage() {
           <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
         </button>
         <h1 className="text-ds-text-primary text-[16px] md:text-base font-medium md:font-semibold font-['DM_Sans'] leading-[24px] h-6 flex items-center m-0">
-          Manage mail
+          Manage email
         </h1>
       </div>
 
@@ -72,7 +72,7 @@ export function ManageEmailPage() {
           <button
             type="button"
             onClick={() => setIsChangeEmailModalOpen(true)}
-            className="w-[126px] h-[36px] px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring"
+            className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
           >
             Change Email
           </button>
@@ -81,7 +81,7 @@ export function ManageEmailPage() {
 
       {/* Recovery Email Section - User Accounts Only */}
       {!isOrg && (
-        <div className="self-stretch flex flex-col justify-start items-start gap-2 shrink-0">
+        <div className="self-stretch px-4 md:px-0 flex flex-col justify-start items-start gap-2 shrink-0">
           {!hasRecovery ? (
             <>
               <div className="text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
@@ -94,9 +94,9 @@ export function ManageEmailPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddRecoveryModalOpen(true)}
-                  className="h-[36px] px-4 py-1.5 bg-ds-surface-1 hover:bg-ds-surface-2 text-ds-text-secondary hover:text-ds-text-primary rounded-full inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
+                  className="h-[36px] px-4 py-1.5 border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
                 >
-                  <span className="text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                  <span className="text-[16px] font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
                     Add recovery email
                   </span>
                 </button>
@@ -116,14 +116,14 @@ export function ManageEmailPage() {
                 <button
                   type="button"
                   onClick={() => setIsDeleteRecoveryModalOpen(true)}
-                  className="w-[126px] h-[36px] px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer ds-focus-ring"
+                  className="h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 cursor-pointer ds-focus-ring whitespace-nowrap"
                 >
                   Delete
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAddRecoveryModalOpen(true)}
-                  className="w-[126px] h-[36px] px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring"
+                  className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
                 >
                   Change Email
                 </button>
@@ -133,9 +133,9 @@ export function ManageEmailPage() {
         </div>
       )}
 
-      {/* Footer Note */}
-      <div className="self-stretch flex-1 flex flex-col justify-end items-center pb-[90px]">
-        <p className="text-center text-ds-text-secondary text-xs font-normal font-['DM_Sans'] leading-4 m-0 max-w-[648px] w-full">
+      {/* Footer Note (Positioned vertically between Help & Support and Legal & Privacy tabs) */}
+      <div className="self-stretch flex-1 flex flex-col justify-end items-center px-4 md:px-0 pt-8 pb-8 md:pb-[172px]">
+        <p className="text-center text-ds-text-secondary text-[12px] font-normal font-['DM_Sans'] leading-[16px] m-0 max-w-[648px] w-full">
           Note: Verification ensures that you own the new email address. After updating, all notifications and login requests will be sent to the new address. Your old email will no longer be associated with this Cocpit account.
         </p>
       </div>

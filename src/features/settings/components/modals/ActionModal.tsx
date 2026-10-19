@@ -16,6 +16,7 @@ interface ActionModalProps {
   onSendOtp?: () => Promise<{ email_masked?: string } | void>;
   isLoading?: boolean;
   errorMessage?: string | null;
+  otpTitle?: string;
 }
 
 export function ActionModal({
@@ -31,6 +32,7 @@ export function ActionModal({
   onSendOtp,
   isLoading = false,
   errorMessage = null,
+  otpTitle = "Verify email",
 }: ActionModalProps) {
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
   const [otp, setOtp] = useState('');
@@ -51,9 +53,18 @@ export function ActionModal({
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout;
     if (cooldown > 0) {
-      timer = setTimeout(() => setCooldown(prev => prev - 1), 1000);
+      timer = setTimeout(() => setCooldown((prev) => prev - 1), 1000);
     }
     return () => clearTimeout(timer);
   }, [cooldown]);
@@ -66,7 +77,7 @@ export function ActionModal({
     setLocalError(null);
     try {
       const res = await onSendOtp();
-      if (res?.email_masked) {
+      if (res && typeof res === 'object' && 'email_masked' in res && res.email_masked) {
         setMaskedEmail(res.email_masked);
       }
       setStep('otp');
@@ -98,73 +109,113 @@ export function ActionModal({
   };
 
   const displayedError = errorMessage || localError;
+  const isOtpStep = requiresOtp && step === 'otp';
+  const isOtpComplete = otp.trim().length === 6;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-[380px] bg-ds-surface-2 p-6 rounded-2xl shadow-2xl border border-ds-border mx-4">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="flex flex-col items-center justify-center gap-2 w-full">
-            <h2 className="ds-text-body-2 text-base font-semibold text-ds-text-primary text-center w-full">
-              {title}
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className={`relative ${
+          isOtpStep ? 'w-[316px]' : 'w-[309px]'
+        } bg-[#030303] border border-[#2C2C33] rounded-[16px] p-[12px] shadow-2xl animate-in fade-in zoom-in-95 duration-200 box-border`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center gap-[16px] w-full">
+          {/* Header text */}
+          <div className="flex flex-col items-center gap-[8px] text-center w-full">
+            <h2 className="text-white text-[16px] font-medium leading-[22px] text-center m-0 p-0 w-full">
+              {isOtpStep ? otpTitle : title}
             </h2>
-            <p className="ds-text-small text-ds-text-secondary text-center w-full leading-relaxed">
-              {description}
+            <p className="text-[#8E8E93] text-[13px] font-normal leading-[18px] text-center m-0 p-0 w-full">
+              {isOtpStep ? (
+                <>
+                  A 6-digit verification code has been sent to
+                  <br />
+                  <span className="text-white">{maskedEmail || 'your email'}</span>
+                </>
+              ) : (
+                description
+              )}
             </p>
           </div>
 
-          {requiresOtp && step === 'otp' && (
-            <div className="flex flex-col items-center w-full gap-3 my-4">
-              {maskedEmail && (
-                <p className="ds-text-meta text-ds-accent font-medium">
-                  Verification code sent to {maskedEmail}
-                </p>
-              )}
+          {/* OTP Input Section (Step 2) */}
+          {isOtpStep && (
+            <div className="w-full flex flex-col items-start gap-[6px]">
+              <span className="text-[#8E8E93] text-[12px] font-normal leading-[16px]">
+                Enter code
+              </span>
               <input
                 type="text"
                 maxLength={6}
                 value={otp}
+                autoFocus
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="Enter 6-digit OTP"
-                className="w-full text-center text-lg tracking-[6px] font-bold py-2 border border-ds-border rounded-xl bg-ds-surface-1 text-ds-text-primary focus:outline-none focus:border-ds-accent"
+                placeholder="000000"
+                className="w-full bg-transparent border-0 border-b border-[#2C2C33] focus:border-ds-accent text-white text-[15px] tracking-[4px] py-1 outline-none transition-colors placeholder:text-[#555] placeholder:tracking-normal"
               />
-              <button
-                type="button"
-                disabled={cooldown > 0 || sendingOtp}
-                onClick={handleSendCode}
-                className="ds-text-meta text-ds-accent hover:underline disabled:opacity-50 cursor-pointer"
-              >
-                {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend verification code'}
-              </button>
+              <div className="pt-1">
+                {cooldown > 0 ? (
+                  <span className="text-[#8E8E93] text-[12px] leading-[16px]">
+                    Resend in {cooldown}s
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={sendingOtp}
+                    onClick={handleSendCode}
+                    className="text-ds-accent hover:underline text-[12px] leading-[16px] cursor-pointer bg-transparent border-0 p-0"
+                  >
+                    {sendingOtp ? 'Sending code...' : 'Resend code'}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
+          {/* Error message */}
           {displayedError && (
-            <div className="w-full my-2 p-2 bg-ds-error/10 border border-ds-error/20 rounded-lg text-left">
-              <p className="ds-text-small text-ds-error font-medium">
+            <div className="w-full p-2 bg-ds-error/10 border border-ds-error/20 rounded-lg text-center">
+              <p className="text-ds-error text-[12px] font-medium m-0">
                 {displayedError}
               </p>
             </div>
           )}
 
-          <div className="flex flex-row gap-3 w-full justify-center mt-4">
+          {/* Action Buttons: Primary on Left, Cancel on Right (matching Figma) */}
+          <div className="flex flex-row items-center justify-center gap-[10px] w-full">
+            {/* Primary Action Button */}
             <button
-              onClick={onClose}
-              disabled={isLoading || sendingOtp}
-              className="ds-btn flex-1 h-[36px] px-4 rounded-full border border-ds-border bg-ds-surface-1 text-ds-text-primary ds-text-small font-medium hover:bg-ds-surface-2 transition-colors disabled:opacity-50"
-            >
-              {cancelText}
-            </button>
-            <button
+              type="button"
               onClick={handleConfirmAction}
-              disabled={isLoading || sendingOtp}
-              className={`ds-btn flex-1 h-[36px] px-4 rounded-full text-white ds-text-small font-medium transition-opacity flex items-center justify-center gap-2 hover:opacity-90 ${
-                confirmColor === 'red'
-                  ? 'bg-ds-error'
-                  : 'bg-ds-accent'
+              disabled={isLoading || sendingOtp || (isOtpStep && !isOtpComplete)}
+              className={`flex-1 h-[36px] rounded-[100px] text-[14px] font-medium flex items-center justify-center gap-1.5 transition-all select-none whitespace-nowrap ${
+                isOtpStep && !isOtpComplete
+                  ? 'bg-[#1F1F23] text-[#71717A] border border-[#2C2C33] cursor-not-allowed'
+                  : confirmColor === 'red'
+                  ? 'bg-ds-error text-white hover:opacity-90 active:scale-95 cursor-pointer'
+                  : 'bg-ds-accent text-white hover:opacity-90 active:scale-95 cursor-pointer'
               } disabled:opacity-50`}
             >
-              {(isLoading || sendingOtp) && <Loader2 className="w-4 h-4 animate-spin" />}
-              {requiresOtp && step === 'initial' ? 'Send Code' : confirmText}
+              {(isLoading || sendingOtp) && (
+                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+              )}
+              <span className="whitespace-nowrap">
+                {requiresOtp && step === 'initial' ? 'Send code' : confirmText}
+              </span>
+            </button>
+
+            {/* Cancel Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading || sendingOtp}
+              className="flex-1 h-[36px] rounded-[100px] border border-[#2C2C33] bg-transparent hover:bg-white/5 text-white text-[14px] font-medium flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 select-none whitespace-nowrap"
+            >
+              <span className="whitespace-nowrap">{cancelText}</span>
             </button>
           </div>
         </div>

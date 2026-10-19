@@ -203,7 +203,7 @@ export function VerifyIdentityModal({ isOpen, onClose }: VerifyIdentityModalProp
                           <div className="w-2 h-2 bg-ds-accent rounded-full" />
                         </div>
                       ) : (
-                        <div className="w-6 h-6 rounded-full border-[1.5px] border-[#5C5A57] shrink-0 transition-colors" />
+                        <div className="w-6 h-6 rounded-full border-[1.5px] border-ds-border shrink-0 transition-colors" />
                       )}
                     </div>
                   );

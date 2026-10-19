@@ -33,6 +33,7 @@ interface ActiveProfileContextType {
     switchableCompanies: (Company & { role: string })[];
     refreshCompanies: () => Promise<void>;
     refreshProfile?: () => Promise<void>;
+    updateActiveProfile?: (partial: Partial<ActiveProfile>) => void;
 }
 
 const ActiveProfileContext = createContext<ActiveProfileContextType | undefined>(undefined);
@@ -60,16 +61,29 @@ const createUserProfile = (user: any): ActiveProfile => {
     };
 };
 
-const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null, verification_status?: string }): ActiveProfile => ({
-    type: "COMPANY",
-    entityType: company.entity_type as "COMPANY" | "INSTITUTION",
-    id: company.org_id || company.company_id,
-    name: company.name,
-    slug: company.slug,
-    avatar_url: company.logo_url,
-    viewer_role_data: company.viewer_role_data || null,
-    verification_status: company.verification_status,
-});
+const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null, verification_status?: string }): ActiveProfile => {
+    const rawStatus = (company as any).verification_status || company.verification_status;
+    const isVerified = Boolean(
+        (company as any).is_identity_verified ||
+        (company as any).is_verified ||
+        (company as any).isVerified ||
+        rawStatus === "VERIFIED" ||
+        rawStatus === "DOMAIN_VERIFIED" ||
+        rawStatus === "DOCUMENT_VERIFIED" ||
+        rawStatus === "approved"
+    );
+    return {
+        type: "COMPANY",
+        entityType: company.entity_type as "COMPANY" | "INSTITUTION",
+        id: company.org_id || company.company_id,
+        name: company.name,
+        slug: company.slug,
+        avatar_url: company.logo_url,
+        viewer_role_data: company.viewer_role_data || null,
+        verification_status: company.verification_status,
+        is_identity_verified: isVerified,
+    };
+};
 
 export function ActiveProfileProvider({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -117,7 +131,11 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                     (company) => (company.org_id || company.company_id) === actorContext.actor.id
                 );
                 if (targetCompany && canSwitchToCompany(targetCompany)) {
-                    nextProfile = buildCompanyProfile(targetCompany);
+                    const mergedCompany = {
+                        ...targetCompany,
+                        verification_status: (actorContext.actor as any).verification_status || targetCompany.verification_status,
+                    };
+                    nextProfile = buildCompanyProfile(mergedCompany);
                 }
             } else if (actorContext.actor.type === "USER") {
                 const actorData = actorContext.actor as any;
@@ -196,7 +214,11 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                     );
 
                     if (targetCompany && canSwitchToCompany(targetCompany)) {
-                        nextProfile = buildCompanyProfile(targetCompany);
+                        const mergedCompany = {
+                            ...targetCompany,
+                            verification_status: (actorContext.actor as any).verification_status || targetCompany.verification_status,
+                        };
+                        nextProfile = buildCompanyProfile(mergedCompany);
                     }
                 } else if (actorContext.actor.type === "USER") {
                     const actorData = actorContext.actor as any;
@@ -401,6 +423,17 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         void performSwitch();
     };
 
+    const updateActiveProfile = React.useCallback((partial: Partial<ActiveProfile>) => {
+        setActiveProfile(prev => {
+            if (!prev) return null;
+            const updated = { ...prev, ...partial };
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem("cocpit_active_profile", JSON.stringify(updated));
+            }
+            return updated;
+        });
+    }, []);
+
     const value = {
         activeProfile,
         isLoading: !isInitialized,
@@ -410,6 +443,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         switchableCompanies,
         refreshCompanies,
         refreshProfile,
+        updateActiveProfile,
     };
 
     return (

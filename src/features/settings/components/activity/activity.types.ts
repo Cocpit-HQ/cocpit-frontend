@@ -10,6 +10,7 @@ export interface LikeActivityItem {
   videoUrl?: string;
   pollQuestion?: string;
   pollMeta?: string;
+  isCompany?: boolean;
 }
 
 export interface CommentActivityItem {
@@ -28,6 +29,8 @@ export interface CommentActivityItem {
   mediaType: 'image' | 'video' | 'poll' | 'article' | 'repost' | 'text';
   imageUrl?: string;
   videoUrl?: string;
+  isPostCompany?: boolean;
+  isCommenterCompany?: boolean;
 }
 
 export interface TagActivityItem {
@@ -42,4 +45,5 @@ export interface TagActivityItem {
   videoUrl?: string;
   pollQuestion?: string;
   pollMeta?: string;
+  isCompany?: boolean;
 }

@@ -137,8 +137,8 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, isEditing, initi
                                 disabled={!folderName.trim() || isLoading}
                                 className={`w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all text-base font-medium font-['DM_Sans'] leading-6 ${
                                     folderName.trim()
-                                        ? 'bg-ds-accent text-white hover:opacity-90 active:scale-95 cursor-pointer'
-                                        : 'bg-[#1c1d22] text-ds-text-muted cursor-not-allowed'
+                                        ? 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer'
+                                        : 'bg-ds-surface-1 text-ds-text-muted cursor-not-allowed'
                                 }`}
                             >
                                 {isLoading ? (

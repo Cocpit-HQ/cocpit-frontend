@@ -4,8 +4,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
+import { BusinessBuildingIcon } from '@/components/icons';
 import { companyService } from '@/services/organization.service';
 import { ActionModal } from '../components/modals/ActionModal';
+import { ReactivateCompanyModal } from '../components';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -57,6 +59,41 @@ const PAGE_STATUS_CONFIG: Record<
   },
 };
 
+function OrgAvatar({
+  logoUrl,
+  name,
+  className = 'w-12 h-12 rounded-xl',
+}: {
+  logoUrl?: string | null;
+  name?: string;
+  className?: string;
+}) {
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [logoUrl]);
+
+  return (
+    <div
+      className={`${className} shrink-0 overflow-hidden relative bg-ds-surface-2 border border-ds-border flex items-center justify-center`}
+    >
+      {logoUrl && !imageError ? (
+        <Image
+          src={logoUrl}
+          alt={`${name || 'Organization'} logo`}
+          fill
+          unoptimized
+          className="w-full h-full object-cover rounded-xl"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <BusinessBuildingIcon className="w-6 h-6 text-ds-text-secondary shrink-0" />
+      )}
+    </div>
+  );
+}
+
 const OrgItem = React.memo(({ org, onClick }: { org: Org; onClick: () => void }) => (
   <div
     role="button"
@@ -70,15 +107,7 @@ const OrgItem = React.memo(({ org, onClick }: { org: Org; onClick: () => void })
       }
     }}
   >
-    <div className="w-12 h-12 rounded-xl shrink-0 overflow-hidden">
-      <Image
-        src={org.logoUrl || '/assets/default-company.png'}
-        alt={`${org.name} logo`}
-        width={48}
-        height={48}
-        className="w-full h-full object-cover rounded-xl"
-      />
-    </div>
+    <OrgAvatar logoUrl={org.logoUrl} name={org.name} />
     <div className="flex-1 min-w-0 inline-flex flex-col justify-start items-start gap-2">
       <div className="ds-text-body-1 text-ds-text-primary">{org.name}</div>
       <div className="ds-text-small text-ds-text-secondary">{org.type}</div>
@@ -135,30 +164,6 @@ export function OrganizationsSettingsPage() {
     }
   };
 
-  const handleReactivate = async (otp?: string) => {
-    if (!selectedOrg) return;
-    setActionLoading(true);
-    setActionError(null);
-    try {
-      await companyService.reactivateOrgWithOTP(selectedOrg.id, otp || '');
-      toast.success('Your company account has been reactivated');
-      setModalState(null);
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
-      queryClient.invalidateQueries({ queryKey: ['jobContext'] });
-      queryClient.invalidateQueries({ queryKey: ['profilePreview'] });
-      queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
-      queryClient.refetchQueries({ queryKey: ['conversations'] });
-      queryClient.refetchQueries({ queryKey: ['messages'] });
-      queryClient.refetchQueries({ queryKey: ['jobContext'] });
-      await fetchOrgs();
-      triggerActorContextRefresh();
-    } catch (err: any) {
-      setActionError(err?.response?.data?.message || err?.message || 'Reactivation failed');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleRecover = async (otp?: string) => {
     if (!selectedOrg) return;
@@ -258,15 +263,7 @@ export function OrganizationsSettingsPage() {
           {/* Org Info Row */}
           <div className="self-stretch py-2 rounded-xl flex flex-row justify-between items-center gap-2">
             <div className="flex justify-start items-center gap-2 min-w-0 flex-1">
-              <div className="w-12 h-12 rounded-xl shrink-0 overflow-hidden">
-                <Image
-                  src={selectedOrg.logoUrl || '/assets/default-company.png'}
-                  alt={`${selectedOrg.name} logo`}
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              </div>
+              <OrgAvatar logoUrl={selectedOrg.logoUrl} name={selectedOrg.name} />
               <div className="inline-flex flex-col justify-start items-start gap-1 min-w-0">
                 <div className="ds-text-body-1 text-ds-text-primary truncate">{selectedOrg.name}</div>
                 <div className="ds-text-small text-ds-text-secondary truncate">{selectedOrg.type}</div>
@@ -329,23 +326,19 @@ export function OrganizationsSettingsPage() {
         </div>
 
         {/* Modals */}
-        <ActionModal
+        <ReactivateCompanyModal
           isOpen={modalState === 'reactivate'}
           onClose={() => setModalState(null)}
-          title={<span>Are you sure you want to reactivate your <b>&ldquo;{selectedOrg.name}&rdquo;</b> page?</span>}
-          description="A verification code will be sent to the owner email to confirm reactivation."
-          confirmText="Reactivate"
-          requiresOtp={true}
-          onSendOtp={() => companyService.sendReactivateOrgOTP(selectedOrg.id)}
-          onConfirm={(otp) => handleReactivate(otp)}
-          confirmColor="blue"
-          isLoading={actionLoading}
-          errorMessage={actionError}
+          org={selectedOrg}
+          onSuccess={async () => {
+            await fetchOrgs();
+            triggerActorContextRefresh();
+          }}
         />
         <ActionModal
           isOpen={modalState === 'recover'}
           onClose={() => setModalState(null)}
-          title={<span>Are you sure you want to recover your <b>&ldquo;{selectedOrg.name}&rdquo;</b> page?</span>}
+          title={`Are you sure you want to recover your "${selectedOrg.name}" page?`}
           description="A verification code will be sent to the owner email. The page will be restored immediately upon verification."
           confirmText="Recover"
           requiresOtp={true}

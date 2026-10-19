@@ -459,6 +459,11 @@ export const companyService = {
         return res.data;
     },
 
+    async validateReactivateOrgOTP(orgId: string, otp: string): Promise<{ success: boolean; message?: string }> {
+        const res = await api.post(`/organizations/${orgId}/reactivate/validate-otp`, { otp });
+        return res.data;
+    },
+
     async reactivateOrgWithOTP(orgId: string, otp: string) {
         const res = await api.post(`/organizations/${orgId}/reactivate/verify-otp`, { otp });
         return res.data;
@@ -481,6 +486,11 @@ export const companyService = {
 
     async switchContext(orgId: string) {
         const res = await api.post(`/organizations/${orgId}/switch-context`);
+        return res.data;
+    },
+
+    async restoreCompany(token: string): Promise<{ message: string }> {
+        const res = await api.post('/organizations/restore', { token });
         return res.data;
     },
 };

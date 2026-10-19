@@ -46,10 +46,11 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
       return <BlockedSettingsPage />;
     case 'support':
       return <SupportSettingsPage />;
+    case 'legal':
+      return <LegalSettingsPage />;
     case 'account-password':
-      return <ManagePasswordPage mode="change" />;
     case 'account-add-password':
-      return <ManagePasswordPage mode="add" />;
+      redirect(`/organization/${resolvedParams.slug}/settings/account`);
     case 'account-email':
       return <ManageEmailPage />;
     case 'account-phone':

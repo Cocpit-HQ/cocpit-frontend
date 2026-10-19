@@ -2,10 +2,11 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LikeFilledIcon, LikeIcon, Icon } from '@/components/icons';
+import { LikeFilledIcon, LikeIcon, Icon, BusinessBuildingIcon, UserIcon } from '@/components/icons';
 import { LikeActivityItem } from './activity.types';
 import { extractPostMedia, cleanActivityText } from './activityUtils';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface LikesActivityTabProps {
   data?: any[];
@@ -41,6 +42,15 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
       .filter((item) => !removedItemIds.has(item.id))
       .map((item) => {
         const media = extractPostMedia(item);
+        const isCompany = Boolean(
+          item.isCompany ||
+          item.isCompanyPost ||
+          item.author_org_id ||
+          item.author?.isCompanyPost ||
+          item.author?.isCompany ||
+          item.post?.isCompanyPost ||
+          item.post?.author_org_id
+        );
         return {
           id: item.id,
           postId: media.postId,
@@ -53,6 +63,7 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
           videoUrl: media.videoUrl,
           pollQuestion: cleanActivityText(media.pollQuestion || item.content),
           pollMeta: media.pollMeta,
+          isCompany,
         };
       });
   }, [data, removedItemIds]);
@@ -80,13 +91,19 @@ export function LikesActivityTab({ data, removedItemIds, onRemove }: LikesActivi
           {/* Post Header */}
           <div className="w-full inline-flex justify-between items-center">
             <div className="flex justify-start items-center gap-2 min-w-0">
-              <Avatar className="size-8 rounded-full shrink-0">
+              <Avatar className={cn("size-8 shrink-0", item.isCompany ? "rounded-[8px]" : "rounded-full")}>
                 <AvatarImage
                   src={(item.avatarUrl && item.avatarUrl !== "null") ? item.avatarUrl : ""}
                   alt={item.user}
-                  className="object-cover"
+                  className={cn("object-cover", item.isCompany ? "rounded-[8px]" : "rounded-full")}
                 />
-                <AvatarFallback />
+                <AvatarFallback className={cn("bg-ds-surface-1 border border-ds-border", item.isCompany ? "rounded-[8px]" : "rounded-full")}>
+                  {item.isCompany ? (
+                    <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
+                  ) : (
+                    <UserIcon className="w-[60%] h-[60%] text-current" />
+                  )}
+                </AvatarFallback>
               </Avatar>
               <div className="inline-flex flex-col justify-center items-start min-w-0">
                 <span className="text-ds-text-primary ds-text-body-2 leading-6 group-hover:text-ds-text-primary truncate w-full max-w-[200px] sm:max-w-[300px]">

@@ -120,26 +120,47 @@ export const useNotifications = () => {
       });
     };
 
-    const handleNotificationRead = (payload: { notificationId?: string; id?: string }) => {
+    const handleNotificationRead = (payload: { notificationId?: string; id?: string; companyId?: string }) => {
       const notifId = payload?.notificationId || payload?.id;
       if (!notifId) return;
+      if (payload?.companyId) {
+        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      } else if (isCompany) {
+        return;
+      }
       setNotifications((prev) =>
         prev.map((n) => (n.notification_id === notifId ? { ...n, is_read: true } : n))
       );
     };
 
-    const handleNotificationDeleted = (payload: { notificationId?: string; id?: string }) => {
+    const handleNotificationDeleted = (payload: { notificationId?: string; id?: string; companyId?: string }) => {
       const notifId = payload?.notificationId || payload?.id;
       if (!notifId) return;
+      if (payload?.companyId) {
+        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      } else if (isCompany) {
+        return;
+      }
       setNotifications((prev) => prev.filter((n) => n.notification_id !== notifId));
     };
 
-    const handleAllNotificationsRead = () => {
+    const handleAllNotificationsRead = (payload?: { companyId?: string }) => {
+      if (payload?.companyId) {
+        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      } else if (isCompany) {
+        return;
+      }
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     };
 
-    const handleNotificationsCleared = (payload?: { tab?: string }) => {
+    const handleNotificationsCleared = (payload?: { tab?: string; companyId?: string }) => {
       const tab = payload?.tab;
+      if (payload?.companyId) {
+        if (!isCompany || activeProfile?.id !== payload.companyId) return;
+      } else if (isCompany) {
+        return;
+      }
+
       if (tab === 'jobs') {
         setNotifications((prev) =>
           prev.filter(
@@ -153,9 +174,17 @@ export const useNotifications = () => {
               )
           )
         );
+        setClearedTabs((prev) => new Set(prev).add('jobs'));
       } else {
         setNotifications([]);
+        setClearedTabs(
+          (prev) =>
+            new Set(prev)
+              .add('all')
+              .add('jobs')
+        );
       }
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     };
 
     socket.on('notification', handleNewNotification);
@@ -281,7 +310,7 @@ export const useNotifications = () => {
       window.dispatchEvent(new CustomEvent('notifications-updated'));
 
       if (idsToDelete.length > 0) {
-        await deleteNotifications(idsToDelete, companyId);
+        await deleteNotifications(idsToDelete, companyId, currentTab);
       }
     } catch (error) {
       console.error('Failed to clear all notifications:', error);

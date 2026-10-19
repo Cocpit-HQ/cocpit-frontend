@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBlockedUsers, unblockUser as unblockUserRequest } from "@/features/settings/api/blocked";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict, differenceInHours } from "date-fns";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export interface BlockedUser {
   id: number | string;
@@ -35,6 +36,7 @@ const mapBlockedUser = (u: any): BlockedUser => ({
 
 export function useBlockedUsers() {
   const queryClient = useQueryClient();
+  const { isCompany } = useActiveProfile();
 
   const query = useQuery({
     queryKey: BLOCKED_USERS_QUERY_KEY,
@@ -57,11 +59,11 @@ export function useBlockedUsers() {
       );
       return { previous };
     },
-    onError: (err, id, context) => {
+    onError: (err: any, id, context) => {
       if (context?.previous) queryClient.setQueryData(BLOCKED_USERS_QUERY_KEY, context.previous);
-      toast.error("Failed to unblock user");
+      toast.error(err?.response?.data?.message || (isCompany ? "Failed to unblock account" : "Failed to unblock user"));
     },
-    onSuccess: (_, id) => {
+    onSuccess: (data: any, id) => {
       const targetId = String(id);
       if (typeof window !== "undefined") {
         window.dispatchEvent(
@@ -87,7 +89,8 @@ export function useBlockedUsers() {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
 
-      toast.success("User unblocked successfully");
+      const successMsg = data?.message || (isCompany ? "Account unblocked for company" : "User unblocked successfully");
+      toast.success(successMsg);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: BLOCKED_USERS_QUERY_KEY });

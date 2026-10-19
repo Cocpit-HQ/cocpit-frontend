@@ -15,6 +15,7 @@ export { DeleteAccountModal } from './modals/DeleteAccountModal';
 export { DeactivateAccountModal } from './modals/DeactivateAccountModal';
 export { DeleteCompanyModal } from './modals/DeleteCompanyModal';
 export { DeactivateCompanyModal } from './modals/DeactivateCompanyModal';
+export { ReactivateCompanyModal } from './modals/ReactivateCompanyModal';
 export { ChangeEmailModal } from './modals/ChangeEmailModal';
 export { ManagePhoneModal } from './modals/ManagePhoneModal';
 export { ActionModal } from './modals/ActionModal';

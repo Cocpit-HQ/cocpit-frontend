@@ -5,7 +5,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export function useIdentityVerification() {
   const queryClient = useQueryClient();
-  const { isCompany, activeProfile, refreshProfile } = useActiveProfile();
+  const { isCompany, activeProfile, refreshProfile, updateActiveProfile, refreshCompanies } = useActiveProfile();
 
   return useMutation({
     mutationFn: async (data: { documentType: string; frontImage: File; backImage?: File }) => {
@@ -24,7 +24,16 @@ export function useIdentityVerification() {
       
       if (isCompany) {
         queryClient.invalidateQueries({ queryKey: ["company", activeProfile?.id] });
+        queryClient.invalidateQueries({ queryKey: ["company"] });
+        queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
+        queryClient.invalidateQueries({ queryKey: ["companyPrivacySettings"] });
         queryClient.invalidateQueries({ queryKey: ["activeProfile"] });
+        if (updateActiveProfile) {
+          updateActiveProfile({
+            verification_status: "VERIFIED",
+            is_identity_verified: true,
+          });
+        }
       } else {
         queryClient.setQueryData(["my-profile"], (old: any) => {
           if (!old) return old;
@@ -39,11 +48,24 @@ export function useIdentityVerification() {
         });
         queryClient.invalidateQueries({ queryKey: ["my-profile"] });
         queryClient.invalidateQueries({ queryKey: ["activeProfile"] });
+        if (updateActiveProfile) {
+          updateActiveProfile({
+            verification_status: "VERIFIED",
+            is_identity_verified: true,
+          });
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cocpit:refresh-actor-context"));
       }
 
       try {
         if (refreshProfile) {
           await refreshProfile();
+        }
+        if (refreshCompanies) {
+          await refreshCompanies();
         }
       } catch (err) {
         console.error("Failed to refresh profile:", err);

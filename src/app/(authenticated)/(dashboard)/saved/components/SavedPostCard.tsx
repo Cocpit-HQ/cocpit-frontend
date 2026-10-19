@@ -3,9 +3,10 @@ import { Post } from "@/types/entities";
 import { toggleSavePost } from "@/features/settings/api/savedPost";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { RepostIcon, PlayIcon, Icon } from "@/components/icons";
+import { RepostIcon, PlayIcon, Icon, BusinessBuildingIcon, UserIcon } from "@/components/icons";
 import { saveScrollPosition } from "@/hooks/use-scroll-restoration";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface SavedPostCardProps {
   post: Post;
@@ -102,40 +103,71 @@ export function SavedPostCard({
   }: {
     p: Post;
     isNested?: boolean;
-  }) => (
-    <div
-      onClick={(e) => {
-        if (p.authorId) {
-          e.stopPropagation();
-          router.push(`/profile/${p.authorId}`);
+  }) => {
+    const isCompany = Boolean(p.isCompanyPost || (p as any).author_org_id);
+    const hasValidAvatar = Boolean(p.authorAvatar && p.authorAvatar !== "null");
+
+    const handleAuthorClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isCompany) {
+        const slugOrId = p.authorSlug || (p as any).author_org_id || p.authorId;
+        if (slugOrId) {
+          router.push(`/organization/${slugOrId}`);
         }
-      }}
-      className="flex h-[36px] items-center gap-[8px] cursor-pointer group min-w-0"
-    >
-      <Avatar className="h-[32px] w-[32px] shrink-0 rounded-full">
-        <AvatarImage
-          src={
-            p.authorAvatar && p.authorAvatar !== "null" ? p.authorAvatar : ""
-          }
-          alt={p.author}
-          className="object-cover"
-        />
-        <AvatarFallback />
-      </Avatar>
-      <div className="flex flex-col justify-center items-start min-w-0">
-        <span
-          className={`text-[16px] leading-[24px] font-semibold text-ds-text-primary ${!isNested ? "group-hover:text-white transition-colors" : ""} truncate w-full max-w-[200px] sm:max-w-[300px]`}
+      } else if (p.authorId) {
+        router.push(`/profile/${p.authorId}`);
+      }
+    };
+
+    return (
+      <div
+        onClick={handleAuthorClick}
+        className="flex h-[36px] items-center gap-[8px] cursor-pointer group min-w-0"
+      >
+        <Avatar
+          className={cn(
+            "h-[32px] w-[32px] shrink-0",
+            isCompany ? "rounded-[8px]" : "rounded-full"
+          )}
         >
-          {p.author}
-        </span>
-        {p.authorHeadline && (
-          <span className="text-[10px] leading-[12px] font-normal text-ds-text-muted truncate w-full max-w-[200px] sm:max-w-[300px]">
-            {p.authorHeadline}
+          <AvatarImage
+            src={hasValidAvatar ? p.authorAvatar : ""}
+            alt={p.author}
+            className={cn(
+              "object-cover",
+              isCompany ? "rounded-[8px]" : "rounded-full"
+            )}
+          />
+          <AvatarFallback
+            className={cn(
+              "bg-ds-surface-1 border border-ds-border",
+              isCompany ? "rounded-[8px]" : "rounded-full"
+            )}
+          >
+            {isCompany ? (
+              <BusinessBuildingIcon className="w-full h-full p-1 text-ds-text-primary" />
+            ) : (
+              <UserIcon className="w-[60%] h-[60%] text-current" />
+            )}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col justify-center items-start min-w-0">
+          <span
+            className={`text-[16px] leading-[24px] font-semibold text-ds-text-primary ${
+              !isNested ? "group-hover:text-white transition-colors" : ""
+            } truncate w-full max-w-[200px] sm:max-w-[300px]`}
+          >
+            {p.author}
           </span>
-        )}
+          {p.authorHeadline && (
+            <span className="text-[10px] leading-[12px] font-normal text-ds-text-muted truncate w-full max-w-[200px] sm:max-w-[300px]">
+              {p.authorHeadline}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const BookmarkButton = () => (
     <div className="flex flex-col items-center justify-center shrink-0">

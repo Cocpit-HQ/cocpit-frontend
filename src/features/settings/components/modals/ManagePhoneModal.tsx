@@ -212,8 +212,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent 
-                      className="z-[10000] w-auto min-w-[204px] min-h-[80px] !bg-[#030303] !border !border-[#2C2C33] rounded-[8px] p-3 flex flex-col justify-center gap-3 shadow-2xl !outline-none !ring-0" 
-                      style={{ backgroundColor: '#030303', borderColor: '#2C2C33' }}
+                      className="z-[10000] w-auto min-w-[204px] min-h-[80px] bg-ds-bg border border-ds-border rounded-[8px] p-3 flex flex-col justify-center gap-3 shadow-2xl !outline-none !ring-0" 
                       align="start" 
                       sideOffset={8}
                     >
@@ -314,7 +313,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0 tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   {confirmPhoneMutation.isSuccess && !errorMsg && (
-                    <VerifyIcon className="w-5 h-5 shrink-0 text-ds-success" size={20} fill="#3FB950" />
+                    <VerifyIcon className="w-5 h-5 shrink-0 text-ds-success" size={20} />
                   )}
                 </div>
                 {/* Form layout stability: reserved space prevents shifting */}
