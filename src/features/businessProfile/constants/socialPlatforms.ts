@@ -14,7 +14,7 @@ export const SOCIAL_PLATFORMS: SocialPlatformMeta[] = [
   { value: "facebook", label: "Facebook", icon: "ri:facebook-fill", placeholder: "www.facebook.com" },
   { value: "linkedin", label: "LinkedIn", icon: "mdi:linkedin", placeholder: "www.linkedin.com" },
   { value: "github", label: "GitHub", icon: "mdi:github", placeholder: "www.github.com" },
-  { value: "cocpit", label: "Cocpit", icon: "ri:global-line", placeholder: "www.cocpit.com" },
+  { value: "cocpit", label: "Cocpit", icon: "ri:global-line", placeholder: "www.cocpit.in" },
 ];
 
 export const DEFAULT_SOCIAL_PLATFORM_ICON = "ri:global-line";

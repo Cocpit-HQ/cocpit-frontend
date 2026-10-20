@@ -53,21 +53,26 @@ export function EditableEducationItem({
             {/* Left/Center Content: Icon + Info */}
             <div className="flex gap-4 flex-1 min-w-0">
                 {/* School Icon */}
-                <div className={cn(
-                    "entity-placeholder",
-                    (education.school_logo && !imgError) && "bg-transparent border-none"
-                )}>
-                    {education.school_logo && !imgError ? (
-                        <img
-                            src={education.school_logo}
-                            alt={education.school_name}
-                            className="w-full h-full object-contain p-2"
-                            onError={() => setImgError(true)}
-                        />
-                    ) : (
-                        <Icon icon="qlementine-icons:education-24" className="entity-placeholder-icon" />
-                    )}
-                </div>
+                {(() => {
+                    const logoUrl = education.avatar_url || education.school_logo || (education as any).logo_url || null;
+                    return (
+                        <div className={cn(
+                            "entity-placeholder",
+                            (logoUrl && !imgError) && "bg-transparent border-none"
+                        )}>
+                            {logoUrl && !imgError ? (
+                                <img
+                                    src={logoUrl}
+                                    alt={education.school_name}
+                                    className="w-full h-full object-contain p-2"
+                                    onError={() => setImgError(true)}
+                                />
+                            ) : (
+                                <Icon icon="qlementine-icons:education-24" className="entity-placeholder-icon" />
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* Info block */}
                 <div className="flex-1 min-w-0">

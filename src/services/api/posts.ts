@@ -14,6 +14,12 @@ export interface UpdatePostRequest {
   visibility?: 'public' | 'private';
   media_urls?: string[];
   location?: string | null;
+  companyId?: string;
+  post_type?: string;
+  poll_question?: string;
+  poll_options?: string[];
+  poll_duration?: number;
+  media_metadata?: any[];
 }
 
 export const deletePost = async (postId: string, companyId?: string): Promise<DeletePostResponse> => {

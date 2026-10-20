@@ -42,6 +42,7 @@ export const ProfileEducationTab: React.FC<ProfileEducationTabProps> = ({
   onAddEducation,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [failedLogos, setFailedLogos] = useState<Record<string, boolean>>({});
 
   if (isError) {
     return <ProfileEducationErrorState onRetry={onRetry} />;
@@ -59,12 +60,24 @@ export const ProfileEducationTab: React.FC<ProfileEducationTabProps> = ({
         {displayedEducations.map((edu, idx) => {
           const startDateFormatted = formatDate(edu.start_date);
           const endDateFormatted = edu.end_date ? formatDate(edu.end_date) : "Present";
+          const logoKey = edu.education_id || `edu-${idx}`;
+          const avatarUrl = edu.avatar_url || edu.school_logo || (edu as any).logo_url || "";
+          const hasAvatar = Boolean(avatarUrl && !failedLogos[logoKey]);
 
           return (
             <div key={edu.education_id || idx} className="w-full flex flex-row items-start gap-3">
-              {/* Institution Icon / Placeholder (40x40px, rounded-[8px]) */}
+              {/* Institution Icon / Avatar (40x40px, rounded-[8px]) */}
               <div className="w-10 h-10 rounded-[8px] bg-[var(--ds-surface-1)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <EduGraduationIcon className="w-5 h-5 text-[var(--ds-text-primary)] shrink-0" />
+                {hasAvatar ? (
+                  <img
+                    src={avatarUrl}
+                    alt={edu.school_name || "Institution"}
+                    className="w-full h-full object-cover"
+                    onError={() => setFailedLogos((prev) => ({ ...prev, [logoKey]: true }))}
+                  />
+                ) : (
+                  <EduGraduationIcon className="w-5 h-5 text-[var(--ds-text-primary)] shrink-0" />
+                )}
               </div>
 
               {/* Education Details Column */}

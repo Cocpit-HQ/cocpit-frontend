@@ -27,6 +27,8 @@ export function EditAvatarModal({
       onClose={onClose}
       initialImage={currentAvatarUrl}
       initialFile={initialFile}
+      hideRemoveButton={false}
+      onRemove={onDelete}
       onSave={async (_dataUrl, file) => {
         if (file) {
           await onUpload(file);

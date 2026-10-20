@@ -3,9 +3,9 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Mail, Facebook, Search, User, Briefcase, Link } from "lucide-react";
+import { X, Mail, Facebook, Search, Briefcase, Link } from "lucide-react";
 import { Icon } from "@iconify/react";
-import { BusinessBuildingIcon } from "@/components/icons";
+import { BusinessBuildingIcon, UserIcon } from "@/components/icons";
 import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,6 +39,41 @@ export interface CocpitShareModelProps {
   entityId?: string;
   customUrl?: string;
 }
+
+const ShareUserAvatar: React.FC<{
+  avatar?: string;
+  name: string;
+  isCompany: boolean;
+}> = ({ avatar, name, isCompany }) => {
+  const [imgError, setImgError] = useState(false);
+  const roundedClass = isCompany ? "rounded-[4px]" : "rounded-full";
+  const hasValidAvatar = Boolean(
+    avatar &&
+    avatar !== "/assets/pngegg.png" &&
+    avatar !== "/assets/profilephoto.png" &&
+    avatar !== "null" &&
+    !imgError
+  );
+
+  return (
+    <div
+      className={`relative h-[20px] w-[20px] ${roundedClass} overflow-hidden bg-ds-surface-1 flex items-center justify-center text-ds-text-primary shrink-0`}
+    >
+      {hasValidAvatar ? (
+        <img
+          src={avatar}
+          alt={name}
+          className={`absolute inset-0 w-full h-full object-cover z-10 ${roundedClass}`}
+          onError={() => setImgError(true)}
+        />
+      ) : isCompany ? (
+        <BusinessBuildingIcon size={12} className="w-[12px] h-[12px] text-ds-text-primary" />
+      ) : (
+        <UserIcon size={12} className="w-[12px] h-[12px] text-ds-text-primary" />
+      )}
+    </div>
+  );
+};
 
 export default function CocpitShareModel({
   isOpen,
@@ -464,16 +499,11 @@ export default function CocpitShareModel({
                         onClick={() => toggleSelected(u)}
                       >
                         <div className="flex items-center gap-[8px]">
-                          <div className={`relative h-[20px] w-[20px] ${isCompany ? 'rounded-[4px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 flex items-center justify-center text-[10px] text-ds-text-primary shrink-0`}>
-                            {isCompany ? (
-                              <BusinessBuildingIcon className="w-[12px] h-[12px] text-ds-text-primary" />
-                            ) : (
-                              <span className="absolute inset-0 flex items-center justify-center">{(u.name || 'U').charAt(0).toUpperCase()}</span>
-                            )}
-                            {u.avatar && u.avatar !== '/assets/pngegg.png' && (
-                              <img src={u.avatar} alt={u.name} className={`absolute inset-0 w-full h-full object-cover z-10 ${isCompany ? 'rounded-[4px]' : 'rounded-full'}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                            )}
-                          </div>
+                          <ShareUserAvatar
+                            avatar={u.avatar}
+                            name={u.name}
+                            isCompany={isCompany}
+                          />
                           <span className="text-ds-text-primary ds-text-secondary line-clamp-1">
                             {u.name}
                           </span>

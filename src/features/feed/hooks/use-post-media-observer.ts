@@ -18,7 +18,12 @@ export const usePostMediaObserver = (id: string | number, videoSrc?: string, asp
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            videoRef.current?.play().catch(() => {});
+            videoRef.current?.play().catch(() => {
+              if (videoRef.current) {
+                videoRef.current.muted = true;
+                videoRef.current.play().catch(() => {});
+              }
+            });
           } else {
             videoRef.current?.pause();
           }

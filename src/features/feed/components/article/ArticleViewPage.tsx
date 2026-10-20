@@ -567,6 +567,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
                   viewerUsername={session?.user?.name || undefined}
                   onShowLikes={() => setIsLikesModalOpen(true)}
                   variant="inline"
+                  postType="text"
                 />
                 <PostActions
                   id={id}

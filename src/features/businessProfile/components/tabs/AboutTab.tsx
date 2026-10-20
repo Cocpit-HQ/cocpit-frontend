@@ -2,10 +2,36 @@
 
 import React, { useState } from "react";
 import { BusinessProfileData } from "../../types/business-profile.types";
-import { Icon, SVG_ICONS } from "@/components/icons";
+import { Icon, SVG_ICONS, GoogleIcon } from "@/components/icons";
+import { ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
 import InteractiveLocationMap from "@/features/company-onboarding/components/InteractiveLocationMap";
+
+const getGoogleMapsUrl = (
+  locationQuery?: string,
+  latitude?: number | string | null,
+  longitude?: number | string | null,
+  customUrl?: string
+): string | null => {
+  if (customUrl && (customUrl.startsWith("http://") || customUrl.startsWith("https://"))) {
+    return customUrl;
+  }
+  const hasCoords =
+    latitude != null &&
+    longitude != null &&
+    !isNaN(Number(latitude)) &&
+    !isNaN(Number(longitude)) &&
+    Number(latitude) !== 0 &&
+    Number(longitude) !== 0;
+
+  const query =
+    (locationQuery && locationQuery.trim()) ||
+    (hasCoords ? `${latitude},${longitude}` : "");
+
+  if (!query) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
 
 const formatDisplayUrl = (url: string | undefined): string => {
   if (!url) return "";
@@ -86,7 +112,19 @@ export default function AboutTab({ data }: AboutTabProps) {
   // ── Part 2: Social Links (Only real links) ──
   const rawSocialLinks = aboutData?.links || data.socialLinks || [];
   const socialLinks = Array.isArray(rawSocialLinks)
-    ? rawSocialLinks.filter((l: any) => Boolean(l?.url && l.url.trim() && l.url !== "#"))
+    ? rawSocialLinks
+        .filter((link: any) => Boolean(link?.url && link.url.trim() && link.url !== "#"))
+        .map((link: any) => {
+          const raw = (link.platform || "website").toLowerCase().trim();
+          const platform = raw === "twitter" ? "x" : raw;
+          const iconName = platform in SVG_ICONS ? platform : "website";
+          return {
+            platform,
+            iconName: iconName as any,
+            label: link.display_label || link.label || (platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : "Website"),
+            url: link.url.startsWith("http") ? link.url : `https://${link.url}`,
+          };
+        })
     : [];
 
   // ── Part 2: Offices (Only real offices) ──
@@ -119,7 +157,7 @@ export default function AboutTab({ data }: AboutTabProps) {
     return (
       <div className="w-full max-w-[800px] px-4 sm:pl-5 sm:pr-0 py-16 flex flex-col items-center justify-center gap-3 font-['DM_Sans'] text-center">
         <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
-          <Icon name="info" size={24} className="w-6 h-6 text-ds-text-secondary" />
+          <Icon name="info" size={20} className="w-6 h-6 text-ds-text-secondary" />
         </div>
         <div className="text-ds-text-primary text-base font-semibold leading-6">
           No about information provided yet
@@ -323,28 +361,28 @@ export default function AboutTab({ data }: AboutTabProps) {
               <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                 Social links
               </span>
-              <div className="w-full max-w-[780px] h-5 inline-flex flex-row items-center gap-4">
+              <div className="w-full max-w-[780px] min-h-[20px] flex flex-row items-center gap-4 flex-wrap">
                 {socialLinks.map((link: any, idx: number) => {
-                  const rawPlatform = (link.platform || "website").toLowerCase().trim();
-                  const platform = rawPlatform === "twitter" ? "x" : rawPlatform;
-                  const iconName = platform in SVG_ICONS ? platform : "website";
-                  const label =
-                    link.display_label ||
-                    link.label ||
-                    (platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : "Website");
-                  const url = link.url?.startsWith("http") ? link.url : `https://${link.url}`;
+                  const isCocpit = link.iconName === "cocpit" || link.platform === "cocpit";
+                  const iconSize = isCocpit ? 16 : 20;
+                  const iconClass = isCocpit ? "w-4 h-4" : "w-5 h-5";
 
                   return (
                     <a
                       key={idx}
-                      href={url}
+                      href={link.url}
                       target="_blank"
                       rel="noreferrer"
-                      title={label}
-                      aria-label={label}
-                      className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+                      title={link.label}
+                      aria-label={link.label}
+                      className="w-5 h-5 flex-none shrink-0 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer"
                     >
-                      <Icon name={iconName as any} size={20} className="w-5 h-5" />
+                      <Icon
+                        name={link.iconName}
+                        size={iconSize}
+                        stroke={isCocpit ? "#FFECE6" : undefined}
+                        className={`${iconClass} flex-none shrink-0 ${isCocpit ? "text-[#FFECE6]" : ""}`}
+                      />
                     </a>
                   );
                 })}
@@ -364,6 +402,12 @@ export default function AboutTab({ data }: AboutTabProps) {
                 const isHQ = Boolean(office.is_headquarters);
                 const fullAddress =
                   [office.address, office.city, office.country].filter(Boolean).join(", ");
+                const mapUrl = getGoogleMapsUrl(
+                  fullAddress || cityLabel,
+                  office.latitude,
+                  office.longitude,
+                  office.mapUrl || office.map_url
+                );
 
                 return (
                   <div key={office.id || idx} className="w-full flex flex-col items-start gap-2 sm:gap-3">
@@ -380,13 +424,33 @@ export default function AboutTab({ data }: AboutTabProps) {
                       )}
                     </div>
 
-                    <InteractiveLocationMap
-                      locationAddress={fullAddress || cityLabel}
-                      latitude={office.latitude ? Number(office.latitude) : null}
-                      longitude={office.longitude ? Number(office.longitude) : null}
-                      readOnly={true}
-                      className="w-full max-w-[780px] h-[88px] sm:h-[191px] rounded-2xl"
-                    />
+                    <div className="relative w-full max-w-[780px] h-[88px] sm:h-[191px] rounded-2xl overflow-hidden group">
+                      <InteractiveLocationMap
+                        locationAddress={fullAddress || cityLabel}
+                        latitude={office.latitude ? Number(office.latitude) : null}
+                        longitude={office.longitude ? Number(office.longitude) : null}
+                        readOnly={true}
+                        className="w-full h-full rounded-2xl"
+                      />
+
+                      {mapUrl && (
+                        <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 z-30 pointer-events-auto">
+                          <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open in Google Maps"
+                            aria-label={`Open ${cityLabel || fullAddress || "office location"} in Google Maps`}
+                            className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-ds-surface-1/90 hover:bg-ds-surface-2 active:scale-95 backdrop-blur-md border border-ds-border shadow-md flex items-center gap-1.5 transition-all hover:scale-[1.02] text-xs font-medium font-['DM_Sans'] text-ds-text-primary cursor-pointer no-underline"
+                          >
+                            <GoogleIcon size={14} className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden sm:inline">Open in Google Maps</span>
+                            <span className="sm:hidden">Open Maps</span>
+                            <ExternalLink className="w-3 h-3 text-ds-text-muted shrink-0" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}

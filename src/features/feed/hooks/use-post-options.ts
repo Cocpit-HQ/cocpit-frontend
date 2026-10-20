@@ -33,7 +33,10 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
     if (onToggleVisibility) onToggleVisibility(id.toString());
 
     try {
-      await feedApi.updatePost(id.toString(), { visibility: newVisibility });
+      const companyId = isCompany && isCompanyPost && activeProfile?.id
+        ? activeProfile.id.toString()
+        : undefined;
+      await feedApi.updatePost(id.toString(), { visibility: newVisibility, companyId });
       toast.info(`Post is now ${newVisibility}`);
     } catch (e) {
       console.error("Failed to toggle visibility", e);

@@ -6,7 +6,7 @@
  * - Handles filtering current viewer out of avatars and sanitizes display names to show first names.
  */
 import React from 'react';
-import { UserIcon } from '@/components/icons';
+import { UserIcon, BusinessBuildingIcon } from '@/components/icons';
 
 export interface LikeBarProps {
   likeCount?: number;
@@ -16,6 +16,8 @@ export interface LikeBarProps {
   viewerUsername?: string;
   onShowLikes?: (e: React.MouseEvent) => void;
   variant?: 'overlay' | 'inline';
+  postType?: 'image' | 'video' | 'text' | string;
+  textColor?: 'primary' | 'secondary';
 }
 
 /** Extracts the first name from a user's display name or username */
@@ -26,6 +28,36 @@ export const getFirstName = (name?: string): string => {
   return first || trimmed;
 };
 
+/** Checks if a liker user represents a company/organization account */
+export const isUserCompany = (user: any): boolean =>
+  Boolean(user?.is_organization || user?.is_company || user?.isCompany || user?.isOrganization);
+
+const LikerAvatar: React.FC<{ user: any }> = ({ user }) => {
+  const [hasError, setHasError] = React.useState(false);
+  const isCompany = isUserCompany(user);
+  const shapeClass = isCompany ? "rounded-[4px]" : "rounded-full";
+  const hasAvatar = Boolean(user?.avatar_url && user.avatar_url !== '/assets/pngegg.png' && !hasError);
+
+  return hasAvatar ? (
+    <img
+      src={user.avatar_url}
+      alt={user.username || "user"}
+      className={`inline-block h-[16px] w-[16px] ${shapeClass} border border-[var(--ds-bg)] object-cover flex-shrink-0`}
+      onError={() => setHasError(true)}
+    />
+  ) : (
+    <div
+      className={`inline-flex h-[16px] w-[16px] ${shapeClass} border border-[var(--ds-bg)] bg-ds-surface-1 text-ds-text-primary items-center justify-center flex-shrink-0 select-none`}
+    >
+      {isCompany ? (
+        <BusinessBuildingIcon className="w-[60%] h-[60%] text-current" />
+      ) : (
+        <UserIcon className="w-[60%] h-[60%] text-current" />
+      )}
+    </div>
+  );
+};
+
 export const LikeBar: React.FC<LikeBarProps> = ({
   likeCount = 0,
   isLiked = false,
@@ -34,6 +66,8 @@ export const LikeBar: React.FC<LikeBarProps> = ({
   viewerUsername,
   onShowLikes,
   variant = 'inline',
+  postType,
+  textColor,
 }) => {
   if (likeCount <= 0 || (likeCount === 1 && isLiked) || !sampleLikerUsername) {
     return null;
@@ -48,6 +82,19 @@ export const LikeBar: React.FC<LikeBarProps> = ({
         : likedUsers)
     : [];
 
+  // Determine text color based on specification:
+  // - Primary text color for image and video posts
+  // - Secondary text color for text posts
+  const normalizedType = postType?.toLowerCase();
+  const isMedia = normalizedType === 'image' || normalizedType === 'video' || textColor === 'primary';
+  const isText = normalizedType === 'text' || textColor === 'secondary';
+
+  const textColorClass = isMedia
+    ? 'text-ds-text-primary'
+    : isText
+      ? 'text-ds-text-secondary'
+      : (variant === 'overlay' ? 'text-ds-text-primary' : 'text-ds-text-secondary');
+
   const baseClasses = variant === 'overlay'
     ? "absolute bottom-[12px] left-[12px] flex flex-row items-center gap-[6px] px-[10px] py-[4px] bg-ds-bg/60 backdrop-blur-md border border-white/10 rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2/90 transition-colors shadow-sm z-10 select-none"
     : "flex flex-row items-center justify-start gap-[6px] pointer-events-auto px-0 py-1 mt-[2px] cursor-pointer w-fit bg-transparent hover:opacity-80 transition-opacity select-none";
@@ -60,10 +107,10 @@ export const LikeBar: React.FC<LikeBarProps> = ({
         onShowLikes?.(e);
       }}
     >
-      <span className="text-[12px] font-normal leading-[16px] text-ds-text-primary flex items-center gap-[3px] truncate">
+      <span className={`text-[12px] font-normal leading-[16px] ${textColorClass} flex items-center gap-[3px] truncate`}>
         <span>Liked by</span>{' '}
-        {/* Bug fix: Removed underline styling from liker display name in feed */}
-        <span className="font-semibold text-ds-text-primary max-w-[100px] truncate inline-block align-bottom">
+        {/* Liker display name */}
+        <span className={`font-semibold ${textColorClass} max-w-[100px] truncate inline-block align-bottom`}>
           {firstName}
         </span>
         {otherCount > 0 && (
@@ -72,28 +119,10 @@ export const LikeBar: React.FC<LikeBarProps> = ({
       </span>
 
       {filteredLikedUsers.length > 0 && (
-        <div className="flex -space-x-1.5 items-center flex-shrink-0">
-          {filteredLikedUsers.slice(0, 3).map((user: any, idx: number) => {
-            const hasAvatar = user.avatar_url && user.avatar_url !== '/assets/pngegg.png';
-            return hasAvatar ? (
-              <img
-                key={idx}
-                src={user.avatar_url || undefined}
-                alt={user.username || "user"}
-                className="inline-block h-[16px] w-[16px] rounded-full border border-ds-surface-2 object-cover flex-shrink-0"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            ) : (
-              <div
-                key={idx}
-                className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-ds-surface-1 text-ds-text-primary font-medium text-[8px] items-center justify-center flex-shrink-0 select-none"
-              >
-                <UserIcon className="w-[60%] h-[60%] text-current" />
-              </div>
-            );
-          })}
+        <div className="flex -space-x-1 items-center flex-shrink-0 h-[16px]">
+          {filteredLikedUsers.slice(0, 3).map((user: any, idx: number) => (
+            <LikerAvatar key={idx} user={user} />
+          ))}
         </div>
       )}
     </div>

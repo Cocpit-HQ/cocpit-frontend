@@ -25,6 +25,7 @@ export interface CocpitUserProfileImageEditorProps {
   initialFile?: File | null;
   onSave: (dataUrl: string | null, file: File | null) => void;
   onRemove?: () => void;
+  hideRemoveButton?: boolean;
   theme?: "dark" | "light";
   shape?: "circle" | "square";
   title?: string;
@@ -39,6 +40,7 @@ export const CocpitUserProfileImageEditor: React.FC<
   initialFile = null,
   onSave,
   onRemove,
+  hideRemoveButton = false,
   theme,
   shape = "circle",
   title = "Add profile photo",
@@ -328,6 +330,11 @@ export const CocpitUserProfileImageEditor: React.FC<
       return;
     }
 
+    if (!isDirty && initialImage && !initialFile) {
+      onClose();
+      return;
+    }
+
     try {
       setIsSaving(true);
 
@@ -398,6 +405,16 @@ export const CocpitUserProfileImageEditor: React.FC<
       setIsSaving(false);
     }
   };
+
+  const isDirty =
+    Boolean(selectedFile) ||
+    isPhotoRemoved ||
+    zoom !== 0 ||
+    rotation !== 0 ||
+    flipH ||
+    flipV ||
+    positionX !== 0 ||
+    positionY !== 0;
 
   const hasImage = !!previewUrl;
 
@@ -554,14 +571,24 @@ export const CocpitUserProfileImageEditor: React.FC<
                 )}
               </div>
 
-              {/* Remove Photo Text Button */}
-              <button
-                type="button"
-                onClick={handleRemovePhoto}
-                className="w-auto px-2 h-6 text-center text-[var(--ds-error)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity flex-none order-1 grow-0 mt-2"
-              >
-                {shape === "square" ? "Remove logo" : "Remove photo"}
-              </button>
+              {/* Change / Remove Photo Text Button */}
+              {hideRemoveButton ? (
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  className="w-auto px-2 h-6 text-center text-[var(--ds-accent)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity flex-none order-1 grow-0 mt-2"
+                >
+                  {shape === "square" ? "Change logo" : "Change photo"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="w-auto px-2 h-6 text-center text-[var(--ds-error)] hover:opacity-80 text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer transition-opacity flex-none order-1 grow-0 mt-2"
+                >
+                  {shape === "square" ? "Remove logo" : "Remove photo"}
+                </button>
+              )}
             </div>
           )}
 
@@ -629,7 +656,11 @@ export const CocpitUserProfileImageEditor: React.FC<
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving || (!hasImage && !isPhotoRemoved && !initialImage && !initialFile)}
+              disabled={
+                isSaving ||
+                (!hasImage && !isPhotoRemoved && !initialImage && !initialFile) ||
+                (!isDirty && Boolean(initialImage) && !initialFile)
+              }
               className="w-16 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 rounded-[100px] flex justify-center items-center transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-default"
             >
               <span className="text-white text-base font-medium font-['DM_Sans'] leading-6">

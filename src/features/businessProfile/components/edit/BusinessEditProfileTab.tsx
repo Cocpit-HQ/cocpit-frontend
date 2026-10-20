@@ -18,7 +18,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
 import { useToast } from "@/hooks/use-toast";
 import { useBusinessEditStore } from "../../store/useBusinessEditStore";
-import { INDUSTRY_OPTIONS, INSTITUTION_INDUSTRY_OPTIONS } from "@/constants/organizationOptions";
+import { INDUSTRY_OPTIONS, INSTITUTION_INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from "@/constants/organizationOptions";
 import { getOnboardingOptions } from "@/services/api/onboarding";
 import { CocpitUserProfileImageEditor } from "@/shared/commonComponents/CocpitUserProfileImageEditor";
 import { CocpitUserCoverImageEditor } from "@/shared/commonComponents/CocpitUserCoverImageEditor";
@@ -36,70 +36,41 @@ interface BusinessEditProfileTabProps {
 
 const normalizeIndustry = (
   val: string | undefined,
-  isInst: boolean,
-  availableOptions?: { id: string; label: string }[]
+  isInst: boolean
 ): string => {
   if (!val) {
-    if (isInst) return INSTITUTION_INDUSTRY_OPTIONS[0].value;
-    if (availableOptions && availableOptions.length > 0) return availableOptions[0].label;
-    return INDUSTRY_OPTIONS[0].label;
+    return isInst ? INSTITUTION_INDUSTRY_OPTIONS[0].label : "";
   }
-  const lower = val.toLowerCase().trim();
+  const trimmed = val.trim();
+  const lower = trimmed.toLowerCase();
 
+  // 1. For Institutions: match against institution options (School, College, University, Coaching, Tuition)
   if (isInst) {
     const matchedInst = INSTITUTION_INDUSTRY_OPTIONS.find(
       (opt) => opt.value.toLowerCase() === lower || opt.label.toLowerCase() === lower
     );
-    if (matchedInst) return matchedInst.value;
-    return val;
+    return matchedInst ? matchedInst.label : trimmed;
   }
 
-  if (availableOptions && availableOptions.length > 0) {
-    const matchedFromApi = availableOptions.find(
-      (opt) => opt.label.toLowerCase() === lower || opt.id.toLowerCase() === lower
-    );
-    if (matchedFromApi) return matchedFromApi.label;
-  }
+  // 2. For Companies: if it is a legacy snake_case slug (e.g. "software_saas"), map to label
+  const legacyMatch = INDUSTRY_OPTIONS.find((opt) => opt.value.toLowerCase() === lower);
+  if (legacyMatch) return legacyMatch.label;
 
-  if (lower === "manufacturing") return "Manufacturing";
-  if (lower === "information technology" || lower === "information_technology" || lower === "it" || lower === "technology") return "Information Technology";
-  if (lower === "software & saas" || lower === "software_saas" || lower.includes("software")) return "Software & SaaS";
-  if (lower.includes("finance") || lower === "finance_banking") return "Finance & Banking";
-  if (lower.includes("health")) return "Healthcare";
-  if (lower.includes("education")) return "Education";
-  if (lower.includes("retail")) return "Retail & E-commerce";
-  if (lower.includes("media")) return "Media & Entertainment";
-
-  const matched = INDUSTRY_OPTIONS.find((opt) => opt.label.toLowerCase() === lower);
-  return matched?.label || val;
+  // 3. Otherwise: show the industry directly as it came from the backend
+  return trimmed;
 };
 
-const SIZE_OPTIONS = [
-  "1–10 members",
-  "11–50 members",
-  "51–200 members",
-  "201–500 members",
-  "501–1,000 members",
-  "1,001–5,000 members",
-  "5,001–10,000 members",
-  "10,000+ members",
-];
-
-const normalizeCompanySize = (val?: string): string => {
+const getCompanySizeLabel = (val?: string): string => {
   if (!val) return "";
-  const s = val.toLowerCase().replace(/–/g, "-").replace(/\s+/g, "");
-
-  if (s.includes("1-10") || s.includes("1to10")) return "1–10 members";
-  if (s.includes("11-50") || s.includes("11to50")) return "11–50 members";
-  if (s.includes("51-200") || s.includes("51to200")) return "51–200 members";
-  if (s.includes("201-500") || s.includes("201to500")) return "201–500 members";
-  if (s.includes("501-1000") || s.includes("501to1000")) return "501–1,000 members";
-  if (s.includes("1001-5000") || s.includes("1001to5000")) return "1,001–5,000 members";
-  if (s.includes("5001-10000") || s.includes("5001to10000")) return "5,001–10,000 members";
-  if (s.includes("10000+") || s.includes("10,000+")) return "10,000+ members";
-
-  const matched = SIZE_OPTIONS.find((opt) => opt.toLowerCase() === val.toLowerCase());
-  return matched || val;
+  const trimmed = val.trim();
+  const lower = trimmed.toLowerCase();
+  const matched = COMPANY_SIZE_OPTIONS.find(
+    (opt) =>
+      opt.label.toLowerCase() === lower ||
+      opt.value.toLowerCase() === lower ||
+      opt.label.replace(/–/g, "-").toLowerCase() === lower.replace(/–/g, "-")
+  );
+  return matched ? matched.label : trimmed;
 };
 
 export default function BusinessEditProfileTab({
@@ -387,7 +358,7 @@ export default function BusinessEditProfileTab({
         name: org.name || "",
         industry: normalizeIndustry(isInst ? org.institution_type : org.industry, isInst),
         foundedYear: org.established_year?.toString() || org.founded?.toString() || "",
-        size: normalizeCompanySize(org.size || org.employeeCount),
+        size: getCompanySizeLabel(org.size || org.employeeCount),
         website: org.website || org.websiteUrl || "",
         country: org.country || "India",
         city: fullAddress,
@@ -490,10 +461,9 @@ export default function BusinessEditProfileTab({
   const isFieldsDirty = Boolean(
     initialData && (
       (profileDraft.name || "").trim() !== (initialData.name || "").trim() ||
-      normalizeIndustry(profileDraft.industry, isInstitution, activeIndustryOptions) !==
-        normalizeIndustry(initialData.industry, isInstitution, activeIndustryOptions) ||
+      (profileDraft.industry || "").trim() !== (initialData.industry || "").trim() ||
       (profileDraft.foundedYear || "").trim() !== (initialData.foundedYear || "").trim() ||
-      normalizeCompanySize(profileDraft.size) !== normalizeCompanySize(initialData.size) ||
+      (profileDraft.size || "").trim() !== (initialData.size || "").trim() ||
       (profileDraft.website || "").trim() !== (initialData.website || "").trim() ||
       profileDraft.country !== initialData.country ||
       isLocationChanged ||
@@ -942,7 +912,7 @@ export default function BusinessEditProfileTab({
                     formData.size ? "text-ds-text-primary" : "text-ds-text-muted"
                   )}
                 >
-                  {normalizeCompanySize(formData.size) || "Select size"}
+                  {getCompanySizeLabel(formData.size) || "Select size"}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -960,13 +930,13 @@ export default function BusinessEditProfileTab({
                   className="self-stretch flex flex-col justify-start items-start gap-1 max-h-56 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
-                  {SIZE_OPTIONS.map((size) => {
-                    const isSelected = normalizeCompanySize(formData.size) === size;
+                  {COMPANY_SIZE_OPTIONS.map((opt) => {
+                    const isSelected = getCompanySizeLabel(formData.size) === opt.label;
                     return (
                       <div
-                        key={size}
+                        key={opt.value}
                         onClick={() => {
-                          setProfileDraft({ size });
+                          setProfileDraft({ size: opt.label });
                           setIsSizeDropdownOpen(false);
                         }}
                         className="self-stretch h-9 px-3 rounded-lg inline-flex justify-between items-center cursor-pointer group select-none"
@@ -979,7 +949,7 @@ export default function BusinessEditProfileTab({
                               : "text-ds-text-secondary group-hover:text-ds-text-primary font-normal"
                           )}
                         >
-                          {size}
+                          {opt.label}
                         </span>
                       </div>
                     );
@@ -1176,6 +1146,7 @@ export default function BusinessEditProfileTab({
         initialFile={modalFile}
         shape="square"
         title="Add organization logo"
+        hideRemoveButton={true}
         onSave={(dataUrl, file) => {
           if (file) {
             setStagedLogoFile(file);

@@ -53,32 +53,34 @@ export const PostOptionsMenu = ({
     // Dispatch event to close any other open menus
     document.dispatchEvent(new CustomEvent('closeAllPostMenus'));
 
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as Node;
-      if (
-        menuRef.current && !menuRef.current.contains(target) &&
-        (!triggerRef?.current || !triggerRef.current.contains(target))
-      ) {
-        onClose();
-      }
-    };
-
     const updatePositionAndCheckVisibility = () => {
       if (!menuRef.current) return;
 
+      // Top boundary matches the fixed top header area (approx 90px)
+      const topBoundary = 90;
       let top = position?.top ?? 0;
       let right = position?.right ?? 0;
 
       if (triggerRef?.current) {
+        if (!document.body.contains(triggerRef.current)) {
+          onClose();
+          return;
+        }
+
         const rect = triggerRef.current.getBoundingClientRect();
+
+        // Close if the trigger has scrolled behind the top header/boundary or past the bottom of the screen
+        if (rect.bottom <= topBoundary || rect.top >= window.innerHeight) {
+          onClose();
+          return;
+        }
+
         top = rect.bottom + 6;
         right = window.innerWidth - rect.right;
       }
 
-      const menuHeight = menuRef.current.offsetHeight || 150;
-
-      // Close only when scrolled completely outside the viewport
-      if (top + menuHeight <= 0 || top >= window.innerHeight) {
+      // Close if the menu itself would scroll into the top boundary or beyond the bottom
+      if (top <= topBoundary || top >= window.innerHeight) {
         onClose();
         return;
       }
@@ -89,29 +91,34 @@ export const PostOptionsMenu = ({
       }
     };
 
-    const handleScrollOrResize = (e: Event) => {
-      const target = e.target as Node;
-      if (menuRef.current && menuRef.current.contains(target)) {
+    const handleScroll = (e: Event) => {
+      const target = e.target;
+      if (target instanceof Node && menuRef.current && menuRef.current.contains(target)) {
         return;
       }
       updatePositionAndCheckVisibility();
+    };
+
+    const handleResize = () => {
+      // Automatically close menu when screen is resized to prevent orphaned/misaligned menus across responsive breakpoints
+      onClose();
     };
 
     const handleCloseMenus = () => {
       onClose();
     };
 
-    // Delay attaching to prevent immediate close if the click to open also triggers this
+    // Delay attaching to prevent immediate close if opening triggers a micro-scroll
     const timer = setTimeout(() => {
-      window.addEventListener('scroll', handleScrollOrResize, true);
-      window.addEventListener('resize', handleScrollOrResize);
+      window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+      window.addEventListener('resize', handleResize);
       document.addEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
     }, 0);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('scroll', handleScrollOrResize, true);
-      window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+      window.removeEventListener('resize', handleResize);
       document.removeEventListener('closeAllPostMenus', handleCloseMenus as EventListener);
     };
   }, [isOpen, onClose, position, triggerRef, isMobile]);
@@ -145,8 +152,8 @@ export const PostOptionsMenu = ({
   const menuContent = (
     <>
       {/* Invisible backdrop to capture outside clicks and prevent them from triggering elements underneath */}
-      <MobileSafeBackdrop 
-        onClose={onClose} 
+      <MobileSafeBackdrop
+        onClose={onClose}
         className="fixed inset-0"
         style={{ zIndex: effectiveZIndex - 1 }}
       />
@@ -156,22 +163,22 @@ export const PostOptionsMenu = ({
         className={`bg-ds-bg flex flex-col items-start shadow-xl border border-ds-border transition-transform ${isMobile ? 'w-full rounded-t-[20px] rounded-b-none p-[20px] gap-[20px] animate-in slide-in-from-bottom-full pb-[max(env(safe-area-inset-bottom),20px)]' : `${isMe ? 'w-[99px]' : 'w-[135px]'} h-auto rounded-[8px] p-[12px] gap-[16px]`}`}
         onClick={(e) => e.stopPropagation()}
       >
-      {isMobile && (
-        <div className="w-full flex justify-center mb-2">
-          <div className="w-[40px] h-[4px] bg-ds-border rounded-full" />
-        </div>
-      )}
-      {isMe ? (
-        <>
-          {onEdit && !isPollPost && (
-            <button
-              onClick={(e) => { e.stopPropagation(); handleAction(onEdit); }}
-              className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
-            >
-              Edit post
-            </button>
-          )}
-          {/*
+        {isMobile && (
+          <div className="w-full flex justify-center mb-2">
+            <div className="w-[40px] h-[4px] bg-ds-border rounded-full" />
+          </div>
+        )}
+        {isMe ? (
+          <>
+            {onEdit && !isPollPost && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleAction(onEdit); }}
+                className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
+              >
+                Edit post
+              </button>
+            )}
+            {/*
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(onMakePrivate); }}
             className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left"
@@ -179,54 +186,54 @@ export const PostOptionsMenu = ({
             {visibility === 'private' ? 'Make public' : 'Make private'}
           </button>
           */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleAction(onDelete); }}
-            className="ds-text-secondary text-[var(--ds-error)] hover:opacity-80 transition-opacity outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
-          >
-            Delete post
-          </button>
-        </>
-      ) : (
-        <>
-          {/* Show the disabled 'Reported' text if the post was already reported this session */}
-          {isReported ? (
             <button
-              disabled
-              className="ds-text-secondary text-ds-text-muted outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px] cursor-default"
+              onClick={(e) => { e.stopPropagation(); handleAction(onDelete); }}
+              className="ds-text-secondary text-[var(--ds-error)] hover:opacity-80 transition-opacity outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
             >
-              Reported
+              Delete post
             </button>
-          ) : (
+          </>
+        ) : (
+          <>
+            {/* Show the disabled 'Reported' text if the post was already reported this session */}
+            {isReported ? (
+              <button
+                disabled
+                className="ds-text-secondary text-ds-text-muted outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px] cursor-default"
+              >
+                Reported
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleAction(onReport); }}
+                className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
+              >
+                Report post
+              </button>
+            )}
             <button
-              onClick={(e) => { e.stopPropagation(); handleAction(onReport); }}
+              onClick={(e) => { e.stopPropagation(); handleAction(onInterested); }}
               className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
             >
-              Report post
+              Interested
             </button>
-          )}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleAction(onInterested); }}
-            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
-          >
-            Interested
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); handleAction(onNotInterested); }}
-            className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
-          >
-            Not interested
-          </button>
-          {isMentioned && (
             <button
-              onClick={(e) => { e.stopPropagation(); handleAction(onRemoveMention); }}
+              onClick={(e) => { e.stopPropagation(); handleAction(onNotInterested); }}
               className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
             >
-              Remove mention
+              Not interested
             </button>
-          )}
-        </>
-      )}
-    </div>
+            {isMentioned && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleAction(onRemoveMention); }}
+                className="ds-text-secondary text-ds-text-secondary hover:text-ds-text-primary transition-colors outline-none w-full text-left whitespace-nowrap p-0 m-0 border-none leading-[20px] h-[20px]"
+              >
+                Remove mention
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </>
   );
 

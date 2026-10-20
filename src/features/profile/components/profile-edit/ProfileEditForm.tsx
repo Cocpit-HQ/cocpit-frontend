@@ -134,8 +134,8 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
       />
 
       {/* 2. Full Name & Username */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between sm:justify-start gap-[40px] sm:gap-[40px]">
-        {/* Full Name (300px width) */}
+      <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-[24px] sm:gap-[40px]">
+        {/* Full Name */}
         <ProfileEditField
           id="full_name"
           label="Full name"
@@ -144,12 +144,11 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           maxLength={40}
           maxLengthMessage="Full name cannot exceed 40 characters"
           placeholder="Enter full name"
-          className="w-full sm:w-[300px] max-w-full flex-none grow-0"
-          labelClassName="w-[54px] text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
           error={errors.name}
         />
 
-        {/* Username (300px width) */}
+        {/* Username */}
         <ProfileEditField
           id="account_name"
           label="Username"
@@ -166,8 +165,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           maxLength={25}
           maxLengthMessage="Username cannot exceed 25 characters"
           placeholder="Username"
-          className="w-full sm:w-[300px] max-w-full flex-none grow-0"
-          labelClassName="w-[58px] text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
           error={isUsernameAvailable === false ? "Username is taken" : errors.account_name}
           statusBadge={
             isCheckingUsername ? (
@@ -210,36 +208,34 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
       />
 
       {/* 5. Location & Status */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between sm:justify-start gap-[40px]">
-        {/* Location Autocomplete Input (380px width) */}
+      <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-[24px] sm:gap-[40px]">
+        {/* Location Autocomplete Input */}
         <ProfileEditLocationInput
           value={formData.location}
           onChange={(val) => onChange("location", val)}
-          className="w-full sm:w-[380px] max-w-full flex-none sm:grow-1"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
 
-        {/* Status Dropdown (380px width) */}
+        {/* Status Dropdown */}
         <ProfileEditDropdown
           label="Status"
           value={formData.status}
           displayValue={selectedStatusLabel}
           options={currentStatusOptions}
           onSelect={(val) => onChange("status", val)}
-          className="w-full sm:w-[380px] max-w-full flex-none sm:grow-1"
-          labelClassName="w-[37px] h-4 text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
       </div>
 
       {/* 6. Looking for & Availability */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between sm:justify-start gap-[40px]">
+      <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-[24px] sm:gap-[40px]">
         <ProfileEditDropdown
           label="Looking for"
           value={formData.open_to}
           options={dropdownOptions?.looking_for?.map(o => o.label) ?? FALLBACK_LOOKING_FOR_OPTIONS}
           onSelect={(val) => onChange("open_to", val)}
           placeholder="Select"
-          className="w-full sm:w-[380px] max-w-full flex-none sm:grow-1"
-          labelClassName="w-[63px] h-4 text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
 
         <ProfileEditDropdown
@@ -248,21 +244,19 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           options={dropdownOptions?.availability?.map(o => o.label) ?? FALLBACK_AVAILABILITY_OPTIONS}
           onSelect={(val) => onChange("availability", val)}
           placeholder="Select"
-          className="w-full sm:w-[380px] max-w-full flex-none sm:grow-1"
-          labelClassName="w-[62px] h-4 text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
       </div>
 
       {/* 7. Work setup & Industry */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between sm:justify-start gap-[40px]">
+      <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-[24px] sm:gap-[40px]">
         <ProfileEditDropdown
           label="Work setup"
           value={formData.work_preference}
           options={dropdownOptions?.work_setup?.map(o => o.label) ?? FALLBACK_WORK_SETUP_OPTIONS}
           onSelect={(val) => onChange("work_preference", val)}
           placeholder="Select"
-          className="w-full sm:w-[380px] max-w-full flex-none sm:grow-1"
-          labelClassName="w-[65px] h-4 text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
 
         <ProfileEditDropdown
@@ -272,8 +266,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
           onSelect={(val) => onChange("industry", val)}
           placeholder="Select"
           emptyText="No industries available"
-          className="w-full sm:w-[380px] max-w-full flex-none sm:grow-1"
-          labelClassName="w-[47px] h-4 text-center"
+          className="w-full sm:w-[380px] max-w-full sm:flex-1"
         />
       </div>
 

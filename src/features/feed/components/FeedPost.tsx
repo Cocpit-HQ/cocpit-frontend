@@ -107,22 +107,8 @@ export const FeedPost = (props: FeedPostProps) => {
     : (interactionTargetProps.authorId || (interactionTargetProps as any).author_id);
   const targetCreatedByUserId = (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id;
 
-  const isActorOrg = activeProfile?.type === 'COMPANY';
-  const effectivePostOwnerId = targetIsCompanyPost
-    ? targetCreatedByUserId
-    : (targetCreatedByUserId || targetAuthorId);
-  const currentActorId = isActorOrg
-    ? (currentUserId || activeProfile?.id)
-    : (currentUserId || activeProfile?.id);
-
-  const isActorOwner = Boolean(
-    currentActorId &&
-    effectivePostOwnerId &&
-    String(currentActorId).toLowerCase() === String(effectivePostOwnerId).toLowerCase()
-  );
-
   const resolvedMenuAccess: PostMenuAccess = useMemo(() => {
-    if (props.isOwnPost || isActorOwner) return 'owner';
+    if (props.isOwnPost && !targetIsCompanyPost && activeProfile?.type !== 'COMPANY') return 'owner';
     if (props.menuAccess && !isRepostWithoutThoughts) return props.menuAccess;
     return getPostMenuAccess({
       isCompanyPost: targetIsCompanyPost,
@@ -132,10 +118,20 @@ export const FeedPost = (props: FeedPostProps) => {
       userCompanies,
       activeProfile,
     });
-  }, [props.isOwnPost, isActorOwner, props.menuAccess, isRepostWithoutThoughts, targetIsCompanyPost, targetCompanyId, targetAuthorId, targetCreatedByUserId, currentUserId, userCompanies, activeProfile]);
+  }, [
+    props.isOwnPost,
+    props.menuAccess,
+    isRepostWithoutThoughts,
+    targetIsCompanyPost,
+    targetCompanyId,
+    targetAuthorId,
+    targetCreatedByUserId,
+    currentUserId,
+    userCompanies,
+    activeProfile,
+  ]);
 
   const isTargetAuthorMe = useMemo(() => {
-    if (props.isOwnPost || isActorOwner) return true;
     if (resolvedMenuAccess === 'owner') return true;
 
     if (targetIsCompanyPost) {
@@ -145,22 +141,11 @@ export const FeedPost = (props: FeedPostProps) => {
       ) {
         return true;
       }
-      if (
-        userCompanies?.some(
-          (c) =>
-            String(c.org_id || c.company_id) === String(targetCompanyId) ||
-            String(c.org_id || c.company_id) === String(targetAuthorId)
-        )
-      ) {
-        return true;
-      }
-      if (currentUserId && targetCreatedByUserId && String(currentUserId) === String(targetCreatedByUserId)) {
-        return true;
-      }
       return false;
     }
 
     return Boolean(
+      activeProfile?.type !== 'COMPANY' &&
       currentUserId &&
       (String(currentUserId) === String(targetAuthorId) ||
        (targetCreatedByUserId && String(currentUserId) === String(targetCreatedByUserId)))
@@ -171,11 +156,8 @@ export const FeedPost = (props: FeedPostProps) => {
     activeProfile,
     targetCompanyId,
     targetAuthorId,
-    userCompanies,
     currentUserId,
     targetCreatedByUserId,
-    props.isOwnPost,
-    isActorOwner,
   ]);
 
   // Purpose of Bug Fix: Keep comment section collapsed by default on single post detail view unless comments query parameter or initialShowComments is true
@@ -570,6 +552,23 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   const isVideoFeedCard = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
+
+  const isVideoPost = Boolean(
+    targetPost_type === 'video' ||
+    hasVideo ||
+    isVideoFeedCard
+  );
+  const isImagePost = Boolean(
+    !isVideoPost && (
+      targetPost_type === 'image' ||
+      hasImages
+    )
+  );
+  const resolvedPostType: 'image' | 'video' | 'text' = isVideoPost
+    ? 'video'
+    : isImagePost
+      ? 'image'
+      : 'text';
 
   /* ===== LEGACY POST CLICK (Commented out — replaced by handleCardClick) =====
   const handlePostClick = (e: React.MouseEvent) => {
@@ -976,7 +975,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 likedUsers={targetLikedUsers}
                 viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
                 onShowLikes={() => handleOpenLikesModal()}
-                hideOverlayLikeBar={isVideoFeedCard}
+                hideOverlayLikeBar={true}
                 isFullContent={props.isFullContent}
                 isProfileView={props.isProfileView}
               />
@@ -996,18 +995,17 @@ export const FeedPost = (props: FeedPostProps) => {
           />
         )}
 
-        {/* Liked By - Shown in full view, when no media (text-only), or for video feed cards */}
-        {(props.isFullContent || isVideoFeedCard || !((targetImages && targetImages.length > 0) || !!targetImageSrc || !!targetVideoSrc)) && (
-          <LikeBar
-            likeCount={likeCount}
-            isLiked={isLiked}
-            sampleLikerUsername={targetSampleLikerUsername ?? undefined}
-            likedUsers={targetLikedUsers}
-            viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
-            onShowLikes={() => handleOpenLikesModal()}
-            variant="inline"
-          />
-        )}
+        {/* Liked By - Positioned below the post for image, video, and text posts */}
+        <LikeBar
+          likeCount={likeCount}
+          isLiked={isLiked}
+          sampleLikerUsername={targetSampleLikerUsername ?? undefined}
+          likedUsers={targetLikedUsers}
+          viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+          onShowLikes={() => handleOpenLikesModal()}
+          variant="inline"
+          postType={resolvedPostType}
+        />
 
         {/* Actions */}
         <PostActions

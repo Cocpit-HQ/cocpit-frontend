@@ -47,10 +47,10 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
 
   const derivedOrgId = profileResponse?.org?.company_id || profileResponse?.org?.org_id || null;
 
-  // Always ensure Company Profile opens scrolled to the top (0, 0)
+  // Ensure Company Profile scrolls to top (0, 0) for all tabs
   React.useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  }, [rawSlug]);
+  }, [rawSlug, searchParams]);
 
   React.useEffect(() => {
     if (!socket) return;

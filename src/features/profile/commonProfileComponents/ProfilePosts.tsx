@@ -169,6 +169,10 @@ const ProfilePostCard = ({
   const _rawImage = mainPost?.imageSrc || (mainPost?.images && mainPost.images.length > 0 ? mainPost.images[0] : null);
   const image = _rawImage && _rawImage.trim() !== '' ? _rawImage : null;
   const videoSrc = (mainPost?.videoSrc && mainPost.videoSrc.trim() !== '') ? mainPost.videoSrc : null;
+  const isVideoPost = Boolean(videoSrc || mainPost?.post_type === 'video');
+  const isImagePost = Boolean(!isVideoPost && (image || mainPost?.post_type === 'image'));
+  const isMediaPost = isImagePost || isVideoPost;
+  const likerTextColorClass = isMediaPost ? 'text-ds-text-primary' : 'text-ds-text-secondary';
   const isArticlePost = mainPost?.category === 'Article' || mainPost?.post_type === 'article';
   const isPollPost = Boolean(mainPost?.poll);
   const articleExcerpt = mainPost?.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
@@ -791,27 +795,31 @@ const ProfilePostCard = ({
             const filteredLikedUsers = mainPost.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
             if (filteredLikedUsers.length === 0) return null;
             return (
-              <div className="flex -space-x-1.5 overflow-hidden flex-shrink-0">
-                {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                  <div key={idx} className="inline-flex h-[16px] w-[16px] rounded-full border border-ds-surface-2 bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[8px] flex-shrink-0 overflow-hidden select-none">
-                    {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
-                      <img
-                        src={user.avatar_url}
-                        alt={user.username || "user"}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
-                    )}
-                  </div>
-                ))}
+              <div className="flex -space-x-1 overflow-hidden flex-shrink-0 h-[16px] items-center">
+                {filteredLikedUsers.slice(0, 3).map((user, idx) => {
+                  const isUserCompany = Boolean(user.is_company || user.is_organization || user.isCompany || user.isOrganization || (user as any).type === 'COMPANY');
+                  const shapeClass = isUserCompany ? "rounded-[4px]" : "rounded-full";
+                  return (
+                    <div key={idx} className={`inline-flex h-[16px] w-[16px] ${shapeClass} border border-[var(--ds-bg)] bg-[#EEF2FF] text-[#6366F1] items-center justify-center font-bold text-[8px] flex-shrink-0 overflow-hidden select-none`}>
+                      {user.avatar_url && user.avatar_url !== '/assets/pngegg.png' ? (
+                        <img
+                          src={user.avatar_url}
+                          alt={user.username || "user"}
+                          className={`w-full h-full object-cover ${shapeClass}`}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <UserIcon className="w-full h-full text-ds-text-primary p-0.5" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
-          <p className="text-[12px] leading-[16px] text-foreground truncate">
+          <p className={`text-[12px] leading-[16px] ${likerTextColorClass} truncate`}>
             {likesCount === 1 && isLiked ? (
               `${likesCount} like`
             ) : (

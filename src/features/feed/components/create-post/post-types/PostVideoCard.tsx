@@ -16,6 +16,7 @@ import { PostMenuAccess } from '../../../utils/postMenuAccess';
 import { useSocial } from '@/context/SocialContext';
 import { VideoScrubber } from '../../parts/VideoScrubber';
 import { BusinessBuildingIcon } from '@/components/icons';
+import { useFeedUIStore } from '@/store/feed.store';
 
 export interface FloatingBadge {
   avatar?: string;
@@ -139,11 +140,11 @@ export const PostVideoCard = ({
   const videoRef = externalVideoRef || internalVideoRef;
   const dummyBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Play/pause controls are kept ONLY on post details view (!showHeader) or composer preview (isPreview)
-  const canPlayPause = allowPlayPause !== undefined ? allowPlayPause : (!showHeader || isPreview);
+  // Play/pause controls enabled by default unless explicitly disabled
+  const canPlayPause = allowPlayPause !== undefined ? allowPlayPause : true;
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const { isMuted, setIsMuted } = useFeedUIStore();
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -199,6 +200,12 @@ export const PostVideoCard = ({
       setIsPlaying(false);
     });
   }, [videoSrc]);
+
+  useEffect(() => {
+    if (videoRef?.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted, videoRef, videoSrc]);
 
   const handleTogglePlay = (e?: React.MouseEvent) => {
     if (!canPlayPause) {
@@ -340,9 +347,12 @@ export const PostVideoCard = ({
     '/assets/pngegg.png'
   ];
 
-  const likerAvatarsToDisplay = likedUsers && likedUsers.length > 0 
-    ? likedUsers.slice(0, 3).map((u) => u.avatar_url || demoLikerAvatars[0])
-    : (isPreview ? demoLikerAvatars : []);
+  const likerUsersToDisplay = likedUsers && likedUsers.length > 0 
+    ? likedUsers.slice(0, 3).map((u) => ({
+        avatar: u.avatar_url || demoLikerAvatars[0],
+        isCompany: Boolean(u.is_company || u.is_organization || u.isCompany || u.isOrganization || (u as any).type === 'COMPANY'),
+      }))
+    : (isPreview ? demoLikerAvatars.map((avatar) => ({ avatar, isCompany: false })) : []);
 
   return (
     <div className={`w-full ${showHeader ? 'max-w-[442px]' : 'max-w-full'} mx-auto flex flex-col select-none`}>
@@ -531,7 +541,7 @@ export const PostVideoCard = ({
               title={isMuted ? "Unmute" : "Mute"}
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {!isMuted ? (
+              {isMuted ? (
                 <VolumeX className="w-4 h-4 text-white" />
               ) : (
                 <Volume2 className="w-4 h-4 text-white" />
@@ -565,14 +575,14 @@ export const PostVideoCard = ({
             <span>
               Liked by <span className="font-semibold text-white">{effectiveLikerName}</span> and {effectiveOtherCount} others
             </span>
-            {likerAvatarsToDisplay.length > 0 && (
-              <div className="flex -space-x-1.5 items-center ml-1">
-                {likerAvatarsToDisplay.map((avatar, idx) => (
+            {likerUsersToDisplay.length > 0 && (
+              <div className="flex -space-x-1 items-center ml-1 h-[16px]">
+                {likerUsersToDisplay.map((item, idx) => (
                   <img 
                     key={idx} 
-                    src={avatar} 
+                    src={item.avatar} 
                     alt="liker" 
-                    className="w-[16px] h-[16px] rounded-full border border-black object-cover flex-shrink-0"
+                    className={`w-[16px] h-[16px] ${item.isCompany ? 'rounded-[4px]' : 'rounded-full'} border border-[var(--ds-bg)] object-cover flex-shrink-0`}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                   />
                 ))}

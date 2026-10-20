@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { UserIcon } from "@/components/icons";
+import { UserIcon, BusinessBuildingIcon } from "@/components/icons";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -16,6 +16,11 @@ export interface MentionUser {
     account_name: string;
     avatar_url?: string;
     headline?: string;
+    account_type?: string;
+    type?: string;
+    slug?: string;
+    org_id?: string;
+    is_company?: boolean;
 }
 
 export interface CocpitMentionListCardProps {
@@ -123,6 +128,14 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
             {users.map((user, index) => {
                 const isActive = index === activeIndex;
                 const displayName = user.full_name || user.account_name || "User";
+                const isCompany =
+                    user.type === "company" ||
+                    user.type === "COMPANY" ||
+                    user.account_type === "company" ||
+                    user.account_type === "COMPANY" ||
+                    Boolean(user.org_id) ||
+                    Boolean(user.is_company);
+                const roundedClass = isCompany ? "rounded-[4px]" : "rounded-[100px]";
 
                 return (
                     <div
@@ -138,10 +151,17 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                     >
                         {/* User Information Container */}
                         <div className="flex flex-row items-center p-0 gap-2 h-5 min-w-0 flex-1">
-                            {/* Avatar: 20px × 20px, rounded-[100px] */}
-                            <div className="relative w-5 h-5 rounded-[100px] shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[10px] font-medium">
+                            {/* Avatar: 20px × 20px, rounded-[4px] for companies, rounded-[100px] for users */}
+                            <div className={cn(
+                                "relative w-5 h-5 shrink-0 overflow-hidden flex items-center justify-center bg-ds-surface-1 text-ds-text-secondary border border-ds-border text-[10px] font-medium",
+                                roundedClass
+                            )}>
                                 {/* Fallback Icon */}
-                                <UserIcon className="w-[60%] h-[60%] text-current" />
+                                {isCompany ? (
+                                    <BusinessBuildingIcon className="w-[60%] h-[60%] text-current" />
+                                ) : (
+                                    <UserIcon className="w-[60%] h-[60%] text-current" />
+                                )}
                                 
                                 {/* Image overlay */}
                                 {user.avatar_url && (
@@ -151,7 +171,7 @@ export const CocpitMentionListCard: React.FC<CocpitMentionListCardProps> = ({
                                         onError={(e) => {
                                             (e.currentTarget as HTMLImageElement).style.display = "none";
                                         }}
-                                        className="absolute inset-0 w-full h-full object-cover rounded-[100px]"
+                                        className={cn("absolute inset-0 w-full h-full object-cover", roundedClass)}
                                     />
                                 )}
                             </div>

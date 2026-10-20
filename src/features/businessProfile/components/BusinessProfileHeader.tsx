@@ -456,137 +456,8 @@ export default function BusinessProfileHeader({
             </a>
           )}
 
-          {/* Mobile Buttons and Stats: Own Profile vs Public Profile */}
-          {isOwnProfile ? (
-            <div className="flex sm:hidden flex-col justify-start items-start gap-3 mt-3 w-full">
-              {/* Row 1: Action Buttons */}
-              <div className="self-stretch inline-flex justify-start items-center gap-3">
-                {canEditProfile ? (
-                  <Link
-                    href={`/organization/${rawSlug}/edit`}
-                    className="px-4 py-1.5 bg-ds-accent text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity text-center"
-                  >
-                    Edit profile
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="px-4 py-1.5 bg-ds-accent opacity-50 text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
-                  >
-                    Edit profile
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={onShareClick}
-                  className="px-4 py-1.5 rounded-[100px] border border-ds-border text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors cursor-pointer"
-                >
-                  Share page
-                </button>
-              </div>
-
-              {/* Row 2: Stats */}
-              <div className="self-stretch inline-flex justify-start items-center gap-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatsModalTab("followers");
-                    setIsStatsModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
-                >
-                  <span>{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
-                  <span>Followers</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatsModalTab("following");
-                    setIsStatsModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
-                >
-                  <span>{formatNumber(data.stats?.following || 0)}</span>
-                  <span>Following</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex sm:hidden flex-col justify-start items-start gap-3 mt-3 w-full">
-              {/* Row 1: Stats */}
-              <div className="self-stretch inline-flex justify-start items-center gap-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatsModalTab("followers");
-                    setIsStatsModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
-                >
-                  <span>{formatNumber(data.stats?.followers || data.stats?.subscribers || 0)}</span>
-                  <span>Followers</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatsModalTab("following");
-                    setIsStatsModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 cursor-pointer font-['DM_Sans'] text-sm font-medium leading-5 text-ds-text-primary hover:opacity-80 transition-opacity"
-                >
-                  <span>{formatNumber(data.stats?.following || 0)}</span>
-                  <span>Following</span>
-                </button>
-              </div>
-
-              {/* Row 2: Action Buttons */}
-              <div className="self-stretch inline-flex justify-start items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (data.isFollowing) {
-                      setShowUnfollowModal(true);
-                    } else {
-                      followMutation.mutate();
-                    }
-                  }}
-                  disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
-                  className={cn(
-                    "w-24 px-3 py-1.5 rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center transition-all cursor-pointer",
-                    data.isFollowing
-                      ? "border border-ds-border text-ds-text-secondary"
-                      : "bg-ds-accent text-white hover:opacity-90",
-                    !actingCompanyCanFollow && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
-                </button>
-
-                {data.showMessage !== false && (
-                  <Link
-                    href={`/messaging?companyId=${orgId}`}
-                    className="w-24 px-3 py-1.5 rounded-[100px] border border-ds-border text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center hover:bg-ds-surface-2 transition-colors cursor-pointer"
-                  >
-                    Message
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Followers & Following Stats (Frame 2609861): Pure CSS alignment with Edit profile start */}
-        <div
-          className={cn(
-            "hidden sm:flex flex-row justify-start items-start shrink-0 order-1",
-            isOwnProfile ? "w-[221px]" : "w-[290px]"
-          )}
-        >
-          {/* Frame 2609861: w-[148px] h-[40px] gap-[24px] */}
-          <div className="w-[148px] h-[40px] flex flex-row items-center p-0 gap-[24px] flex-none shrink-0">
+          {/* StatsRow (Frame 2609861: w-[148px] h-[40px] gap-[24px] mt-4) */}
+          <div className="w-[148px] h-[40px] flex flex-row items-center p-0 gap-[24px] mt-4 flex-none shrink-0">
             {/* Followers (Order 0, w-[62px] h-[40px]) */}
             <button
               type="button"
@@ -613,6 +484,67 @@ export default function BusinessProfileHeader({
               <span className="w-full text-center">Following</span>
             </button>
           </div>
+
+          {/* Mobile Action Buttons: Own Profile vs Public Profile */}
+          {isOwnProfile ? (
+            <div className="flex sm:hidden flex-row justify-start items-center gap-3 mt-3 w-full">
+              {canEditProfile ? (
+                <Link
+                  href={`/organization/${rawSlug}/edit`}
+                  className="px-4 py-1.5 bg-ds-accent text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity text-center"
+                >
+                  Edit profile
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="px-4 py-1.5 bg-ds-accent opacity-50 text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
+                >
+                  Edit profile
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onShareClick}
+                className="px-4 py-1.5 rounded-[100px] border border-ds-border text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors cursor-pointer"
+              >
+                Share page
+              </button>
+            </div>
+          ) : (
+            <div className="flex sm:hidden flex-row justify-start items-center gap-3 mt-3 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  if (data.isFollowing) {
+                    setShowUnfollowModal(true);
+                  } else {
+                    followMutation.mutate();
+                  }
+                }}
+                disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
+                className={cn(
+                  "w-24 px-3 py-1.5 rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center transition-all cursor-pointer",
+                  data.isFollowing
+                    ? "border border-ds-border text-ds-text-secondary"
+                    : "bg-ds-accent text-white hover:opacity-90",
+                  !actingCompanyCanFollow && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
+              </button>
+
+              {data.showMessage !== false && (
+                <Link
+                  href={`/messaging?companyId=${orgId}`}
+                  className="w-24 px-3 py-1.5 rounded-[100px] border border-ds-border text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center hover:bg-ds-surface-2 transition-colors cursor-pointer"
+                >
+                  Message
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

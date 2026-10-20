@@ -10,7 +10,7 @@ interface AboutSectionProps {
 }
 
 export default function AboutSection({ data }: AboutSectionProps) {
-  const description = data.description || data.tagline || "";
+  const description = (data.description || "").trim();
 
   // Only render social links that actually exist for this profile with valid URL
   const socialLinks =
@@ -53,20 +53,31 @@ export default function AboutSection({ data }: AboutSectionProps) {
 
         {/* Container: social icons row (gap: 16px, height: 20px) - ONLY shown for available links */}
         {socialLinks.length > 0 && (
-          <div className="w-full max-w-[780px] h-5 inline-flex flex-row items-center gap-4">
-            {socialLinks.map((link, idx) => (
-              <a
-                key={idx}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                title={link.label}
-                aria-label={link.label}
-                className="w-5 h-5 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer shrink-0"
-              >
-                <Icon name={link.iconName} size={20} className="w-5 h-5" />
-              </a>
-            ))}
+          <div className="w-full max-w-[780px] min-h-[20px] flex flex-row items-center gap-4 flex-wrap">
+            {socialLinks.map((link, idx) => {
+              const isCocpit = link.iconName === "cocpit" || link.platform === "cocpit";
+              const iconSize = isCocpit ? 16 : 20;
+              const iconClass = isCocpit ? "w-4 h-4" : "w-5 h-5";
+
+              return (
+                <a
+                  key={idx}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={link.label}
+                  aria-label={link.label}
+                  className="w-5 h-5 flex-none shrink-0 flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                  <Icon
+                    name={link.iconName}
+                    size={iconSize}
+                    stroke={isCocpit ? "#FFECE6" : undefined}
+                    className={`${iconClass} flex-none shrink-0 ${isCocpit ? "text-[#FFECE6]" : ""}`}
+                  />
+                </a>
+              );
+            })}
           </div>
         )}
       </div>

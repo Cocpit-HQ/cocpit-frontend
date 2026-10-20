@@ -5,11 +5,13 @@ interface FeedUIState {
   expandedComments: Record<string, boolean>;
   activeTab: string;
   imageAspectRatios: Record<string, number>;
+  isMuted: boolean;
 
   setExpandedPost: (id: string, expanded: boolean) => void;
   setExpandedComment: (id: string, expanded: boolean) => void;
   setActiveTab: (tab: string) => void;
   setImageAspectRatio: (id: string, ratio: number) => void;
+  setIsMuted: (isMuted: boolean) => void;
 }
 
 export const useFeedUIStore = create<FeedUIState>((set) => ({
@@ -17,6 +19,7 @@ export const useFeedUIStore = create<FeedUIState>((set) => ({
   expandedComments: {},
   activeTab: 'recent',
   imageAspectRatios: {},
+  isMuted: true,
 
   setExpandedPost: (id, expanded) => set((state) => ({
     expandedPosts: { ...state.expandedPosts, [id]: expanded }
@@ -28,4 +31,5 @@ export const useFeedUIStore = create<FeedUIState>((set) => ({
   setImageAspectRatio: (id, ratio) => set((state) => ({
     imageAspectRatios: { ...state.imageAspectRatios, [id]: ratio }
   })),
+  setIsMuted: (isMuted) => set({ isMuted }),
 }));

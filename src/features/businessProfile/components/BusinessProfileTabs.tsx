@@ -52,29 +52,27 @@ export function BusinessProfileTabs({
 
   const [activeTab, setActiveTab] = React.useState(() => normalizeTab(tabParam, isEdu));
 
+  const scrollToTab = React.useCallback(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    });
+  }, []);
+
   React.useEffect(() => {
     if (tabParam) {
-      setActiveTab(normalizeTab(tabParam, isEdu));
+      const normalized = normalizeTab(tabParam, isEdu);
+      setActiveTab(normalized);
+      scrollToTab();
     }
-  }, [tabParam, isEdu]);
+  }, [tabParam, isEdu, scrollToTab]);
 
-  const handleTabChange = (value: string, shouldScrollToStart = false) => {
+  const handleTabChange = (value: string) => {
     const normalized = normalizeTab(value, isEdu);
     setActiveTab(normalized);
     const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
     params.set("tab", normalized);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-
-    if (shouldScrollToStart || ["posts", "people", "alumni", "about", "jobs"].includes(normalized)) {
-      requestAnimationFrame(() => {
-        const tabsEl = document.getElementById("business-profile-tabs");
-        if (tabsEl) {
-          tabsEl.scrollIntoView({ behavior: "instant", block: "start" });
-        } else {
-          window.scrollTo({ top: 0, behavior: "instant" });
-        }
-      });
-    }
+    scrollToTab();
   };
 
   const tabs = [

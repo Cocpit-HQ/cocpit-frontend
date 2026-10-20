@@ -7,6 +7,10 @@ export interface UserMention {
     avatar_url: string;
     headline?: string;
     account_type?: string;
+    type?: string;
+    slug?: string;
+    org_id?: string;
+    is_company?: boolean;
 }
 
 export const searchUsers = async (query: string, forTagging?: boolean): Promise<UserMention[]> => {
@@ -43,6 +47,8 @@ export const getUserByUsername = async (username: string): Promise<UserMention |
             avatar_url: u.avatar || u.avatar_url || '',
             headline: u.headline || '',
             account_type: u.account_type || '',
+            type: u.type || '',
+            slug: u.slug || '',
         };
     } catch {
         return null;

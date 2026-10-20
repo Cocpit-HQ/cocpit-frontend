@@ -408,6 +408,7 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
           viewerUsername={viewerUsername}
           onShowLikes={() => setIsLikesModalOpen(true)}
           variant="overlay"
+          postType={image ? 'image' : videoSrc ? 'video' : 'text'}
         />
       </div>
 

@@ -49,6 +49,8 @@ export interface Education {
   location?: string;
   description: string | null;
   school_logo?: string | null;
+  avatar_url?: string | null;
+  logo_url?: string | null;
   school_org_id?: string | null;
 }
 
@@ -168,7 +170,7 @@ export interface Post {
   isReported?: boolean;
   votes?: number;
   isPollActive?: boolean;
-  likedUsers?: { username: string; avatar_url: string | null }[];
+  likedUsers?: { username: string; avatar_url: string | null; is_company?: boolean; is_organization?: boolean; isCompany?: boolean; isOrganization?: boolean }[];
   comments: string;
   shares: string;
   externalShares?: string | number;

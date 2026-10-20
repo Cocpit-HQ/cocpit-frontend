@@ -59,9 +59,9 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
     return (effectiveAuthorId && String(effectiveAuthorId).toLowerCase() === String(currentUserId).toLowerCase()) ? 'owner' : 'outsider';
   }
 
-  // If activeProfile is provided, enforce that the user must be acting as this exact company.
-  // If they are acting as a USER, or as a DIFFERENT company, treat them as a normal user (outsider).
-  if (activeProfile && (activeProfile.type !== 'COMPANY' || String(activeProfile.id).toLowerCase() !== String(companyId).toLowerCase())) {
+  // Enforce that the user must be acting as this exact company.
+  // If no profile is active, or they are acting as a USER, or as a DIFFERENT company, treat them as an outsider.
+  if (!activeProfile || activeProfile.type !== 'COMPANY' || String(activeProfile.id).toLowerCase() !== String(companyId).toLowerCase()) {
     return 'outsider';
   }
 

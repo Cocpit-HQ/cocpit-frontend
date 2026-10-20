@@ -21,6 +21,7 @@ import {
 } from "../../store/useBusinessEditStore";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icons";
+import { validateSocialLinkUrl } from "../../utils/socialValidation";
 
 const POPULAR_OFFICE_LOCATIONS = [
   "Mumbai, Maharashtra, India",
@@ -33,7 +34,7 @@ const POPULAR_OFFICE_LOCATIONS = [
 ];
 
 const MEDIA_OPTIONS = [
-  { value: "cocpit", label: "Cocpit", shortLabel: "Cocpit", placeholder: "www.cocpit.com" },
+  { value: "cocpit", label: "Cocpit", shortLabel: "Cocpit", placeholder: "www.cocpit.in" },
   { value: "x", label: "X (Twitter)", shortLabel: "X (Twitter)", placeholder: "www.x.com" },
   { value: "instagram", label: "Instagram", shortLabel: "Instagram", placeholder: "www.instagram.com" },
   { value: "facebook", label: "Facebook", shortLabel: "Facebook", placeholder: "www.facebook.com" },
@@ -45,7 +46,7 @@ function getMediaPlaceholder(platform?: string): string {
   const p = (platform || "").toLowerCase().trim();
   if (p === "twitter") return "www.x.com";
   const matched = MEDIA_OPTIONS.find((m) => m.value === p);
-  return matched?.placeholder || "www.cocpit.com";
+  return matched?.placeholder || "www.cocpit.in";
 }
 
 interface BusinessEditAboutTabProps {
@@ -225,6 +226,7 @@ export default function BusinessEditAboutTab({
   const links = aboutDraft.links;
   const specialties = aboutDraft.specialties;
   const [keyOfferings, setKeyOfferings] = useState<string[]>(["", "", "", ""]);
+  const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
 
   const sessionToken = useRef(uuidv4());
@@ -398,6 +400,7 @@ export default function BusinessEditAboutTab({
       const parsed = parseAboutPayload(aboutData, effectiveProfile);
       setKeyOfferings(parsed.keyOfferings);
       hydrateAboutDraft(parsed, slug);
+      setLinkErrors({});
       setIsDirty(false);
     }
   }, [aboutData, effectiveProfile, slug, hydrateAboutDraft]);
@@ -455,6 +458,11 @@ export default function BusinessEditAboutTab({
   const handleRemoveLink = (id: string) => {
     setIsDirty(true);
     setAboutDraft({ links: links.filter((l) => l.id !== id) });
+    setLinkErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
 
   const handleLinkChange = (
@@ -463,15 +471,34 @@ export default function BusinessEditAboutTab({
     value: string,
   ) => {
     setIsDirty(true);
-    setAboutDraft({
-      links: links.map((l) => {
-        if (l.id !== id) return l;
-        if (field === "platform") {
-          const matched = MEDIA_OPTIONS.find((m) => m.value === value);
-          return { ...l, platform: value, label: matched?.label || value };
-        }
-        return { ...l, [field]: value };
-      }),
+    let nextPlatform = "";
+    let nextUrl = "";
+
+    const updatedLinks = links.map((l) => {
+      if (l.id !== id) return l;
+      if (field === "platform") {
+        const matched = MEDIA_OPTIONS.find((m) => m.value === value);
+        nextPlatform = value;
+        nextUrl = l.url;
+        return { ...l, platform: value, label: matched?.label || value };
+      }
+      nextPlatform = l.platform;
+      nextUrl = value;
+      return { ...l, [field]: value };
+    });
+
+    setAboutDraft({ links: updatedLinks });
+
+    // Validate link URL against platform immediately
+    const validation = validateSocialLinkUrl(nextPlatform, nextUrl);
+    setLinkErrors((prev) => {
+      const next = { ...prev };
+      if (!validation.isValid && validation.error) {
+        next[id] = validation.error;
+      } else {
+        delete next[id];
+      }
+      return next;
     });
   };
 
@@ -585,9 +612,32 @@ export default function BusinessEditAboutTab({
     },
   });
 
+  const hasLinkErrors = Object.values(linkErrors).some(Boolean);
+  const canSave = isDirty && !hasLinkErrors && !updateMutation.isPending;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isDirty || updateMutation.isPending) return;
+    if (!canSave) return;
+
+    // Validate all non-empty links before mutating
+    const newErrors: Record<string, string> = {};
+    for (const link of links) {
+      if (link.url && link.url.trim()) {
+        const val = validateSocialLinkUrl(link.platform, link.url);
+        if (!val.isValid && val.error) {
+          newErrors[link.id] = val.error;
+        }
+      }
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setLinkErrors(newErrors);
+      toast({
+        title: "Validation Error",
+        description: "Please fix invalid social media links before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const formattedOfferings = keyOfferings
       .map((text, idx) => {
@@ -612,11 +662,13 @@ export default function BusinessEditAboutTab({
           city: o.city?.trim() || "",
           address: o.address?.trim() || "",
         })),
-      links: links.map((l) => ({
-        platform: l.platform,
-        url: l.url,
-        display_label: l.label,
-      })),
+      links: links
+        .filter((l) => Boolean(l.url && l.url.trim()))
+        .map((l) => ({
+          platform: l.platform,
+          url: l.url.trim(),
+          display_label: l.label,
+        })),
       specialties: Array.from(
         new Set(
           specialties
@@ -1020,20 +1072,34 @@ export default function BusinessEditAboutTab({
                 </div>
 
                 {/* Link URL */}
-                <div className="flex-1 min-w-0 py-2 border-b border-ds-border inline-flex flex-col justify-center items-start gap-2.5">
-                  <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
-                    Link
-                  </label>
-                  <input
-                    type="text"
-                    value={link.url}
-                    onChange={(e) =>
-                      handleLinkChange(link.id, "url", e.target.value)
-                    }
-                    placeholder={getMediaPlaceholder(link.platform)}
-                    maxLength={255}
-                    className="self-stretch w-full text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none p-0 m-0 placeholder:text-ds-text-muted"
-                  />
+                <div className="flex-1 min-w-0 flex flex-col justify-start items-start">
+                  <div
+                    className={cn(
+                      "w-full py-2 border-b inline-flex flex-col justify-center items-start gap-2.5 transition-colors",
+                      linkErrors[link.id]
+                        ? "border-[var(--ds-error)]"
+                        : "border-ds-border",
+                    )}
+                  >
+                    <label className="text-center justify-start text-ds-text-secondary text-xs font-medium font-['DM_Sans'] leading-4">
+                      Link
+                    </label>
+                    <input
+                      type="text"
+                      value={link.url}
+                      onChange={(e) =>
+                        handleLinkChange(link.id, "url", e.target.value)
+                      }
+                      placeholder={getMediaPlaceholder(link.platform)}
+                      maxLength={255}
+                      className="self-stretch w-full text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 bg-transparent focus:outline-none p-0 m-0 placeholder:text-ds-text-muted"
+                    />
+                  </div>
+                  {linkErrors[link.id] && (
+                    <span className="text-xs text-[var(--ds-error)] font-normal font-['DM_Sans'] leading-4 mt-1">
+                      {linkErrors[link.id]}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1053,10 +1119,10 @@ export default function BusinessEditAboutTab({
       <div className="inline-flex justify-center items-start gap-2">
         <button
           type="submit"
-          disabled={!isDirty || updateMutation.isPending}
+          disabled={!canSave}
           className={cn(
             "w-20 px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors",
-            !isDirty || updateMutation.isPending
+            !canSave
               ? "bg-[var(--ds-surface-1)] text-[var(--ds-text-muted)] cursor-not-allowed pointer-events-none"
               : "bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer",
           )}

@@ -8,6 +8,7 @@ import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { VideoScrubber } from './VideoScrubber';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { useFeedUIStore } from '@/store/feed.store';
 
 interface PostMediaProps {
   imageSrc?: string;
@@ -39,7 +40,7 @@ interface PostMediaProps {
 export const PostMedia = ({
   imageSrc, images = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
-  hideOverlayLikeBar = false, isFullContent = false, isProfileView = false,
+  hideOverlayLikeBar = true, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
@@ -57,12 +58,18 @@ export const PostMedia = ({
   
   const activeDims = imgDims || fastDims;
 
-  // Video overlay state
-  const [isMuted, setIsMuted] = useState(false);
+  // Video overlay & audio state synced across feed
+  const { isMuted, setIsMuted } = useFeedUIStore();
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const isDraggingRef = useRef(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (videoRef?.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted, videoRef, videoSrc]);
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -101,6 +108,9 @@ export const PostMedia = ({
 
   const handleVideoLoad = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget;
+    if (video) {
+      video.muted = isMuted;
+    }
     if (video.videoWidth && video.videoHeight) {
       const dims = calculateDisplayDimensions(video.videoWidth, video.videoHeight, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT);
       setImgDims(dims);
@@ -110,10 +120,12 @@ export const PostMedia = ({
 
   const handleToggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const video = videoRef.current;
     const newMuted = !isMuted;
-    if (video) {
-      video.muted = newMuted;
+    if (videoRef?.current) {
+      videoRef.current.muted = newMuted;
+      if (!newMuted && videoRef.current.paused) {
+        videoRef.current.play().catch(() => {});
+      }
     }
     setIsMuted(newMuted);
   };
@@ -197,6 +209,7 @@ export const PostMedia = ({
                   className="w-full h-full object-cover max-h-[589px] rounded-[8px]"
                 />
 
+
                 {/* ── Top Header Overlay ── */}
                 {overlayHeader && (
                   <div 
@@ -231,9 +244,9 @@ export const PostMedia = ({
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
                       {isMuted ? (
-                        <Icon name="volume-off" className="w-5 h-5" />
+                        <Icon name="volume-off" className="w-[16px] h-[16px]" />
                       ) : (
-                        <Icon name="volume-on" className="w-5 h-5" />
+                        <Icon name="volume-on" className="w-[16px] h-[16px]" />
                       )}
                     </button>
                   </div>
@@ -318,10 +331,10 @@ export const PostMedia = ({
                       title={isMuted ? "Unmute" : "Mute"}
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
-                      {!isMuted ? (
-                        <Icon name="volume-off" className="w-5 h-5" />
+                      {isMuted ? (
+                        <Icon name="volume-off" className="w-[16px] h-[16px]" />
                       ) : (
-                        <Icon name="volume-on" className="w-5 h-5" />
+                        <Icon name="volume-on" className="w-[16px] h-[16px]" />
                       )}
                     </button>
                   </div>
@@ -357,6 +370,7 @@ export const PostMedia = ({
               viewerUsername={viewerUsername}
               onShowLikes={onShowLikes}
               variant="overlay"
+              postType={videoSrc ? 'video' : 'image'}
             />
           )}
 

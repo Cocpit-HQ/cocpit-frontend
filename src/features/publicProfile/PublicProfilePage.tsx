@@ -22,6 +22,7 @@ import {
 } from "@/services/api/social";
 import { useConnectionActions } from "@/features/connection/hooks/useConnectionActions";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { companyService } from "@/services/organization.service";
 
 // Layout & Header Components
 import { ProfileCoverSection } from "@/features/profile/components/ProfileCoverSection";
@@ -100,6 +101,24 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     if (!publicPosts) return [];
     return publicPosts.filter((post) => post.visibility !== "private") as Post[];
   }, [publicPosts]);
+
+  // Fallback: if user not found, check if it's an organization and redirect
+  useEffect(() => {
+    if (userError && userId) {
+      const errorData = (userError as any)?.response?.data;
+      if (errorData?.is_company && (errorData?.slug || errorData?.org_id)) {
+        router.replace(`/organization/${errorData.slug || errorData.org_id}`);
+        return;
+      }
+      companyService.getCompany(userId)
+        .then((comp) => {
+          if (comp && (comp.slug || comp.org_id)) {
+            router.replace(`/organization/${comp.slug || comp.org_id}`);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [userError, userId, router]);
 
   // Always ensure public profile opens scrolled to top (0, 0)
   useEffect(() => {
