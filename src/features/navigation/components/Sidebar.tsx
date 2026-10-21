@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { Icon as CustomIcon, IconName, UserIcon, BusinessBuildingIcon } from '@/components/icons';
+import { Icon as CustomIcon, IconName, UserIcon, BusinessBuildingIcon, PlusIcon } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store';
@@ -203,20 +203,36 @@ export function Sidebar({ className }: SidebarProps) {
             <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-secondary">
               Organization
             </span>
-            <Link
-              href="/company-onboarding"
-              aria-label="Create Organization"
-              title="Create Organization"
-              onClick={() => useCompanyOnboardingStore.getState().resetStore()}
-              className="w-[24px] h-[24px] -mr-[4px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ds-accent)] rounded"
-            >
-              <CustomIcon name="plus" className="w-[16px] h-[16px]" />
-            </Link>
+            {sortedCompanies.length > 0 && (
+              <Link
+                href="/company-onboarding"
+                aria-label="Create Organization"
+                title="Create Organization"
+                onClick={() => useCompanyOnboardingStore.getState().resetStore()}
+                className="w-[24px] h-[24px] -mr-[4px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ds-accent)] rounded"
+              >
+                {/* Use design system PlusIcon with primary color */}
+                <PlusIcon size={16} className="w-[16px] h-[16px] text-ds-text-primary" />
+              </Link>
+            )}
           </div>
 
           {/* Organization Items */}
           <div className="flex flex-col gap-[8px]">
-            {(showAllOrgs ? sortedCompanies : sortedCompanies.slice(0, 2))?.map((company, index) => {
+            {sortedCompanies.length === 0 ? (
+              <Link
+                href="/company-onboarding"
+                onClick={() => useCompanyOnboardingStore.getState().resetStore()}
+                className="flex flex-row items-center px-[12px] py-[6px] gap-[8px] w-full h-[32px] rounded-full transition-[var(--motion-quick)] group cursor-pointer hover:bg-ds-surface-1/60"
+              >
+                {/* Use design system PlusIcon with primary color */}
+                <PlusIcon size={20} className="w-[20px] h-[20px] shrink-0 text-ds-text-primary" />
+                <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                  Create organization
+                </span>
+              </Link>
+            ) : (
+              (showAllOrgs ? sortedCompanies : sortedCompanies.slice(0, 2))?.map((company, index) => {
               const companyId = company.org_id || company.company_id;
               const isCurrentActor = isCompany && (
                 (companyId && activeProfile?.id === companyId) ||
@@ -273,7 +289,7 @@ export function Sidebar({ className }: SidebarProps) {
                   </span>
                 </Link>
               );
-            })}
+            }))}
 
             {/* See more link */}
             {sortedCompanies && sortedCompanies.length > 2 && (

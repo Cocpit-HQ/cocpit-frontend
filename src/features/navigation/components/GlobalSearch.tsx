@@ -95,9 +95,13 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   }, [pathname]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      setIsFocused(false);
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Outdated search page navigation commented out:
+      // if (searchQuery.trim()) {
+      //   setIsFocused(false);
+      //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // }
     }
   };
   
@@ -201,8 +205,10 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
         }
         onClick={() => {
           if (searchQuery.trim()) {
-            setIsFocused(false);
-            router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+            setIsFocused(true);
+            // Outdated search page navigation commented out:
+            // setIsFocused(false);
+            // router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
           }
         }}
       />
@@ -276,15 +282,20 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
                     onClick={() => {
                       setSearchQuery(item.value);
                       saveSearch(item.value);
-                      setIsFocused(false);
-                      router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                      setIsFocused(true);
+                      // Outdated search page navigation commented out:
+                      // setIsFocused(false);
+                      // router.push(`/search?q=${encodeURIComponent(item.value)}`);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        e.preventDefault();
                         setSearchQuery(item.value);
                         saveSearch(item.value);
-                        setIsFocused(false);
-                        router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                        setIsFocused(true);
+                        // Outdated search page navigation commented out:
+                        // setIsFocused(false);
+                        // router.push(`/search?q=${encodeURIComponent(item.value)}`);
                       }
                     }}
                   >

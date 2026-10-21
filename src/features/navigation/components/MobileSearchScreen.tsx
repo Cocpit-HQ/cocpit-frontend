@@ -116,9 +116,13 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
   }, [debouncedSearch]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      onClose();
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Outdated search page navigation commented out:
+      // if (searchQuery.trim()) {
+      //   onClose();
+      //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // }
     }
   };
   
@@ -224,10 +228,11 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
             name="search"
             className="w-[18px] h-[18px] text-[#A1A1AA] shrink-0 cursor-pointer hover:text-white transition-colors"
             onClick={() => {
-              if (searchQuery.trim()) {
-                onClose();
-                router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-              }
+              // Outdated search page navigation commented out:
+              // if (searchQuery.trim()) {
+              //   onClose();
+              //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              // }
             }}
           />
         </div>
@@ -298,8 +303,9 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
                         onClick={() => {
                           setSearchQuery(item.value);
                           saveSearch(item.value);
-                          onClose();
-                          router.push(`/search?q=${encodeURIComponent(item.value)}`);
+                          // Outdated search page navigation commented out:
+                          // onClose();
+                          // router.push(`/search?q=${encodeURIComponent(item.value)}`);
                         }}
                       >
                         <div className="w-10 h-10 rounded-full bg-ds-surface-1 flex items-center justify-center overflow-hidden shrink-0 border border-[#3F3F46]">

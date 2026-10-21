@@ -2,11 +2,11 @@
 
 import React from "react";
 import { Drawer } from "vaul";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
-import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { BusinessBuildingIcon } from "@/components/icons";
+import { useCompanyOnboardingStore } from "@/features/company-onboarding/store/company-onboarding.store";
+import { BusinessBuildingIcon, UserIcon, PlusIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface SwitchableOrg {
@@ -15,6 +15,7 @@ interface SwitchableOrg {
   name?: string;
   logo_url?: string;
   entity_type?: string;
+  slug?: string;
 }
 
 interface ProfileSwitcherProps {
@@ -29,10 +30,10 @@ export function MobileProfileSwitcher({
   isOpen,
   onOpenChange,
 }: ProfileSwitcherProps) {
+  const router = useRouter();
   const { activeProfile, switchProfile, switchableCompanies, isCompany } =
     useActiveProfile();
   const { user } = useAuth();
-  const [showAllOrgs, setShowAllOrgs] = React.useState(false);
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
 
   const isControlled = typeof isOpen === "boolean";
@@ -56,13 +57,15 @@ export function MobileProfileSwitcher({
     const list = [...institutions, ...companies];
     if (!isCompany || !activeProfile?.id) return list;
     const activeIdx = list.findIndex(
-      (org) => (org.org_id || org.company_id) === activeProfile.id
+      (org) =>
+        (org.org_id || org.company_id) === activeProfile.id ||
+        (org.slug && activeProfile.slug === org.slug),
     );
     if (activeIdx <= 0) return list;
     const activeOrg = list[activeIdx];
     const rest = list.filter((_, idx) => idx !== activeIdx);
     return [activeOrg, ...rest];
-  }, [institutions, companies, isCompany, activeProfile?.id]);
+  }, [institutions, companies, isCompany, activeProfile?.id, activeProfile?.slug]);
 
   if (!activeProfile || !user) return null;
 
@@ -71,6 +74,14 @@ export function MobileProfileSwitcher({
     switchProfile(type, id);
   };
 
+  const handleCreateOrganization = () => {
+    setOpen(false);
+    useCompanyOnboardingStore.getState().resetStore();
+    router.push("/company-onboarding");
+  };
+
+  const hasOrganizations = allOrgs.length > 0;
+
   return (
     <Drawer.Root open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
       {customTrigger && (
@@ -78,11 +89,14 @@ export function MobileProfileSwitcher({
       )}
 
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-[99]" onClick={() => setOpen(false)} />
+        <Drawer.Overlay
+          className="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-[99]"
+          onClick={() => setOpen(false)}
+        />
         <Drawer.Content
-          className="bg-[var(--ds-bg)] flex flex-col rounded-t-[20px] fixed bottom-0 left-0 right-0 z-[100] outline-none font-['DM_Sans',sans-serif] border-t border-[var(--ds-border)] px-4 pt-3 max-h-[85vh] shadow-2xl"
+          className="bg-[var(--ds-bg,#030303)] flex flex-col rounded-t-[8px] fixed bottom-0 left-0 right-0 z-[100] outline-none font-['DM_Sans',sans-serif] border-t border-[var(--ds-border,#2C2C33)] px-[12px] pt-[8px] pb-[24px] gap-[16px] shadow-2xl"
           style={{
-            paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 20px))',
+            paddingBottom: "max(24px, calc(env(safe-area-inset-bottom, 0px) + 20px))",
           }}
         >
           <Drawer.Title className="sr-only">Switch Profile</Drawer.Title>
@@ -90,110 +104,154 @@ export function MobileProfileSwitcher({
             Select a personal or organization account to switch active profile
           </Drawer.Description>
 
-          {/* Drag Handle */}
-          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--ds-border,#3F3F46)] mb-4 cursor-grab" />
+          {/* Drag Handle Frame (pepicons-pop:line-x) */}
+          <div className="w-full h-[20px] flex items-center justify-center shrink-0">
+            <div className="w-[50px] h-[2px] rounded-full bg-[#726B67]" />
+          </div>
 
-          <div className="space-y-4">
-            {/* Personal Section */}
-            <div className="space-y-1">
-              <div className="text-[12px] font-medium text-ds-text-secondary px-2 mb-1.5">
+          {/* Personal Section */}
+          <div className="flex flex-col gap-[12px] w-full shrink-0">
+            {/* Section Header */}
+            <div className="flex flex-row justify-between items-center px-[12px] h-[16px] w-full">
+              <span className="font-['DM_Sans'] text-[12px] leading-[16px] font-normal text-ds-text-secondary">
                 Personal
-              </div>
+              </span>
+            </div>
+
+            {/* Personal Row */}
+            <div className="flex flex-col gap-[8px] w-full">
               <button
                 type="button"
                 onClick={() => handleSwitch("USER", user.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 h-[48px] cursor-pointer rounded-full transition-colors text-left",
-                  !isCompany ? "bg-ds-surface-1" : "hover:bg-ds-surface-1/60 active:bg-ds-surface-1",
-                  "focus:outline-none focus-visible:ring-1 focus-visible:ring-ds-accent border border-transparent",
+                  "w-full h-[32px] px-[12px] py-[6px] rounded-full flex flex-row items-center justify-between cursor-pointer transition-colors text-left outline-none border border-transparent",
+                  "hover:bg-ds-surface-1/60 active:bg-ds-surface-1 focus-visible:ring-1 focus-visible:ring-ds-accent",
                 )}
               >
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage
-                    src={user.image || undefined}
-                    alt={user.name || ""}
-                    className="object-cover"
-                  />
-                  <AvatarFallback>
-                    {user.name?.slice(0, 1).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-[14px] leading-[20px] font-medium text-ds-text-primary font-sans truncate flex-1">
-                  {user.name || "My Profile"}
-                </span>
+                <div className="flex flex-row items-center gap-[8px] min-w-0 flex-1">
+                  <div className="w-[20px] h-[20px] rounded-full shrink-0 overflow-hidden bg-ds-surface-1 border border-ds-border flex items-center justify-center">
+                    {user.image ? (
+                      <img
+                        src={user.image}
+                        alt={user.name || "Personal"}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <UserIcon className="w-[12px] h-[12px] text-ds-text-secondary" />
+                    )}
+                  </div>
+                  <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-ds-text-primary truncate">
+                    {user.name || "My Profile"}
+                  </span>
+                </div>
                 {!isCompany && (
-                  <div className="ml-auto flex items-center justify-center w-[20px] h-[20px] rounded-full border-2 border-ds-accent box-border shrink-0">
+                  <div className="ml-auto flex items-center justify-center w-[20px] h-[20px] rounded-full border-[1.5px] border-ds-accent box-border shrink-0">
                     <div className="w-[8px] h-[8px] bg-ds-accent rounded-full shrink-0" />
                   </div>
                 )}
               </button>
             </div>
+          </div>
 
-            {/* Organizations Section */}
-            {(institutions.length > 0 || companies.length > 0) && (
-              <div className="space-y-1">
-                <div className="text-[12px] font-medium text-ds-text-secondary px-2 mb-1.5">
-                  Organizations
-                </div>
-                <div className="space-y-1 max-h-[240px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {(showAllOrgs
-                    ? allOrgs
-                    : allOrgs.slice(0, 3)
-                  ).map((org: SwitchableOrg) => {
-                    const orgId = org.org_id || org.company_id;
-                    const isActive = activeProfile.id === orgId;
+          {/* Organization Section */}
+          <div className="flex flex-col gap-[12px] w-full shrink-0">
+            {/* Section Header */}
+            <div className="flex flex-row justify-between items-center px-[12px] h-[16px] w-full">
+              <span className="font-['DM_Sans'] text-[12px] leading-[16px] font-normal text-ds-text-secondary">
+                Organization
+              </span>
+              {hasOrganizations && (
+                <button
+                  type="button"
+                  onClick={handleCreateOrganization}
+                  aria-label="Create organization"
+                  className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-primary hover:opacity-80 active:opacity-60 transition-opacity outline-none focus-visible:ring-1 focus-visible:ring-ds-accent rounded cursor-pointer"
+                >
+                  {/* Use design system PlusIcon with primary color */}
+                  <PlusIcon size={16} className="w-[16px] h-[16px] text-ds-text-primary" />
+                </button>
+              )}
+            </div>
 
-                    return (
-                      <button
-                        key={orgId}
-                        type="button"
-                        onClick={() => orgId && handleSwitch("COMPANY", orgId)}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 h-[48px] cursor-pointer rounded-full transition-colors text-left",
-                          isActive
-                            ? "bg-ds-surface-1"
-                            : "hover:bg-ds-surface-1/60 active:bg-ds-surface-1",
-                          "focus:outline-none focus-visible:ring-1 focus-visible:ring-ds-accent border border-transparent",
-                        )}
-                      >
-                        <Avatar className="h-9 w-9 shrink-0 rounded-[8px]">
-                          <AvatarImage
-                            src={org.logo_url}
-                            className="object-cover rounded-[8px]"
-                          />
-                          <AvatarFallback className="rounded-[8px] bg-ds-surface-1">
-                            <BusinessBuildingIcon className="w-5 h-5 text-ds-text-primary" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-[14px] leading-[20px] font-normal text-ds-text-primary font-sans truncate flex-1">
+            {/* Organizations Content */}
+            {!hasOrganizations ? (
+              /* Case 1: No companies on user account -> "+ Create organization" button */
+              <div className="flex flex-col gap-[8px] w-full">
+                <button
+                  type="button"
+                  onClick={handleCreateOrganization}
+                  className={cn(
+                    "w-full h-[32px] px-[12px] py-[6px] rounded-full flex flex-row items-center gap-[8px] cursor-pointer transition-colors text-left outline-none border border-transparent group",
+                    "hover:bg-ds-surface-1/60 active:bg-ds-surface-1 focus-visible:ring-1 focus-visible:ring-ds-accent",
+                  )}
+                >
+                  {/* Use design system PlusIcon with primary color */}
+                  <PlusIcon size={20} className="w-[20px] h-[20px] shrink-0 text-ds-text-primary" />
+                  <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-ds-text-secondary group-hover:text-ds-text-primary transition-colors">
+                    Create organization
+                  </span>
+                </button>
+              </div>
+            ) : (
+              /* Case 2: User has companies -> List of organizations */
+              <div className="flex flex-col gap-[8px] w-full max-h-[240px] overflow-y-auto pr-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {allOrgs.map((org: SwitchableOrg) => {
+                  const orgId = org.org_id || org.company_id;
+                  const isOrgActive =
+                    isCompany &&
+                    (activeProfile.id === orgId ||
+                      (org.slug && activeProfile.slug === org.slug));
+                  const hasLogo = Boolean(
+                    org.logo_url && org.logo_url !== "/assets/pngegg.png",
+                  );
+
+                  return (
+                    <button
+                      key={orgId || org.name}
+                      type="button"
+                      onClick={() => orgId && handleSwitch("COMPANY", orgId)}
+                      className={cn(
+                        "w-full h-[32px] px-[12px] py-[6px] rounded-full flex flex-row items-center justify-between cursor-pointer transition-colors text-left outline-none border border-transparent",
+                        "hover:bg-ds-surface-1/60 active:bg-ds-surface-1 focus-visible:ring-1 focus-visible:ring-ds-accent",
+                      )}
+                    >
+                      <div className="flex flex-row items-center gap-[8px] min-w-0 flex-1">
+                        <div className="w-[20px] h-[20px] rounded-[4px] shrink-0 bg-ds-surface-1 border border-ds-border flex items-center justify-center overflow-hidden">
+                          {hasLogo ? (
+                            <img
+                              src={org.logo_url}
+                              alt={org.name || "Organization"}
+                              className="w-full h-full object-cover rounded-[4px]"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                                const fallback = (e.target as HTMLImageElement)
+                                  .nextElementSibling;
+                                if (fallback)
+                                  (fallback as HTMLElement).style.display =
+                                    "flex";
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className="w-full h-full items-center justify-center text-ds-text-primary"
+                            style={{ display: hasLogo ? "none" : "flex" }}
+                          >
+                            <BusinessBuildingIcon className="w-[12px] h-[12px] text-ds-text-primary" />
+                          </div>
+                        </div>
+                        <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-ds-text-primary truncate">
                           {org.name}
                         </span>
-                        {isActive && (
-                          <div className="ml-auto flex items-center justify-center w-[20px] h-[20px] rounded-full border-2 border-ds-accent box-border shrink-0">
-                            <div className="w-[8px] h-[8px] bg-ds-accent rounded-full shrink-0" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-
-                  {!showAllOrgs &&
-                    institutions.length + companies.length > 3 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setShowAllOrgs(true);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 h-[44px] cursor-pointer rounded-full transition-colors hover:bg-ds-surface-1 active:bg-ds-surface-1 outline-none text-ds-text-secondary hover:text-ds-text-primary font-medium text-[14px]"
-                      >
-                        <span>
-                          Show {institutions.length + companies.length - 3} more
-                        </span>
-                        <ChevronDown className="w-4 h-4" />
-                      </button>
-                    )}
-                </div>
+                      </div>
+                      {isOrgActive && (
+                        <div className="ml-auto flex items-center justify-center w-[20px] h-[20px] rounded-full border-[1.5px] border-ds-accent box-border shrink-0">
+                          <div className="w-[8px] h-[8px] bg-ds-accent rounded-full shrink-0" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
