@@ -38,36 +38,25 @@ export const postApi = {
       };
     }
 
-    // 2. We have files, build a unified FormData object for single multipart request
-    console.log("[postApi.create] Submitting unified single-API multipart upload for", files.length, "files...");
-    const formData = new FormData();
-    files.forEach(file => {
-      formData.append("media", file, file.name);
-    });
+    // 2. We have files, upload directly to Cloudflare R2 via presigned PUT and get 12-bit AVIF URLs
+    console.log("[postApi.create] Uploading", files.length, "files directly to R2...");
+    const uploadRes = await uploadMedia(files);
+    const mediaUrls: string[] = (uploadRes || []).map((item: any) =>
+      typeof item === 'object' && item !== null ? item.url : item
+    );
+    const mediaMetadata = (uploadRes || []).map((item: any) => ({
+      width: item.width || undefined,
+      height: item.height || undefined,
+    })).filter((m: any) => m.width && m.height);
 
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else if (typeof value === 'object') {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, String(value));
-        }
-      }
-    });
+    const finalPayload = {
+      ...payload,
+      media_urls: mediaUrls,
+      ...(mediaMetadata.length > 0 ? { media_metadata: mediaMetadata } : {})
+    };
 
-    const response = await api.post<{ postId: string }>("/post", formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
-      signal: uploadConfig?.signal,
-      onUploadProgress: uploadConfig?.onUploadProgress ? (progressEvent) => {
-        if (progressEvent.total) {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          uploadConfig.onUploadProgress!(percentCompleted);
-        }
-      } : undefined
+    const response = await api.post<{ postId: string }>("/post", finalPayload, {
+      signal: uploadConfig?.signal
     });
 
     if (tagUserIds && tagUserIds.length > 0) {

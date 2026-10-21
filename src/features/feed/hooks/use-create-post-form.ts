@@ -531,11 +531,11 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           const newVideoFiles = media.uploadedVideos.filter(v => v.file).map(v => v.file as File);
 
           // 2. Upload any new files
-          let uploadedImageUrls: string[] = [];
+          let uploadedImageUrls: any[] = [];
           if (newImageFiles.length > 0) {
             uploadedImageUrls = await uploadMedia(newImageFiles);
           }
-          let uploadedVideoUrls: string[] = [];
+          let uploadedVideoUrls: any[] = [];
           if (newVideoFiles.length > 0) {
             uploadedVideoUrls = await uploadMedia(newVideoFiles);
           }

@@ -52,11 +52,15 @@ function resolveBackendUrl(): string {
 // the optimiser into an open proxy billed to us. Add hosts without a code change via
 // IMAGE_REMOTE_HOSTS="cdn.example.com,img.other.com" (build-time).
 const IMAGE_HOSTS = [
-  "res.cloudinary.com",        // uploaded media
+  "res.cloudinary.com",        // Legacy assets (kept until migration complete)
   "lh3.googleusercontent.com", // Google avatars
   "images.unsplash.com",       // event card placeholders
   "api.dicebear.com",          // generated avatars
   "ui-avatars.com",            // generated avatars
+  // ── Cloudflare R2 / CDN (Dual-Asset Architecture) ──────────────────────
+  "pub-432e428714cf45fa81543429322f3026.r2.dev", // R2 public dev URL for cocpit-media
+  "pub-9ab7b27b805e4ef3954360339e67917a.r2.dev", // R2 public dev URL (fallback)
+  "cdn.cocpit.com",            // Future custom CDN domain (connect in Cloudflare dashboard)
   ...(process.env.IMAGE_REMOTE_HOSTS || "").split(",").map((h) => h.trim()).filter(Boolean),
 ];
 
@@ -64,9 +68,10 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   experimental: {
-    // Increase Next.js proxy request body limit from 10MB default to 100MB
-    // to allow multi-image post uploads (up to 100MB total) to pass through rewrites to Express backend.
-    proxyClientMaxBodySize: '100mb',
+    // Reduced from 100mb → 10mb since file uploads no longer proxy through Next.js.
+    // Direct R2 presigned PUT bypasses this server entirely.
+    // Only auth API calls and small JSON payloads pass through now.
+    proxyClientMaxBodySize: '10mb',
   },
   images: {
     remotePatterns: IMAGE_HOSTS.map((hostname) => ({

@@ -249,7 +249,8 @@ export async function updateArticle(id: string, orgId: string, input: Partial<Ar
       const file = await urlToFile(input.coverImage, 'cover.jpg');
       const uploadedUrls = await uploadMedia([file]);
       if (uploadedUrls && uploadedUrls.length > 0) {
-         coverImageUrl = uploadedUrls[0];
+         const item = uploadedUrls[0];
+         coverImageUrl = typeof item === 'object' && item !== null ? item.url : item;
       }
     } catch (e) {
       console.warn("Failed to upload coverImage", e);
