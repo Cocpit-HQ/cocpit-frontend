@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
@@ -262,8 +262,22 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             isCancelled = true;
         };
     }, [session, status]);
+    const prevActorRef = useRef<string | null>(null);
+
     useEffect(() => {
         if (activeProfile) {
+            const currentActorKey = `${activeProfile.type}:${activeProfile.id}`;
+            if (prevActorRef.current && prevActorRef.current !== currentActorKey) {
+                // Actor context changed - reset feed scroll memory so feed opens from top
+                sessionStorage.setItem("scroll-/feed", "0");
+                sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                sessionStorage.removeItem("cocpit_scroll_source");
+                sessionStorage.removeItem("cocpit_scroll_path");
+                sessionStorage.removeItem("cocpit_scroll_y");
+            }
+            prevActorRef.current = currentActorKey;
+
             sessionStorage.setItem("cocpit_active_profile", JSON.stringify(activeProfile));
             if (activeProfile.type === "USER" && activeProfile.id) {
                 setPreservedUserActorInStorage(activeProfile.id);
@@ -385,9 +399,18 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 queryClient.invalidateQueries({ queryKey: ["conversations"] });
                 queryClient.invalidateQueries({ queryKey: ["messages"] });
                 queryClient.invalidateQueries({ queryKey: ["notifications"] });
-                queryClient.invalidateQueries({ queryKey: ["connection-requests"] });
-
                 trackActorMetric("switch_start", { type, id });
+
+                // Reset all saved scroll memory on profile/account switch
+                if (typeof window !== "undefined") {
+                    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+                        const key = sessionStorage.key(i);
+                        if (key && (key.startsWith("scroll-") || key.startsWith("cocpit_"))) {
+                            sessionStorage.removeItem(key);
+                        }
+                    }
+                    sessionStorage.setItem("scroll-/feed", "0");
+                }
 
                 if (type === "USER" && session?.user) {
                     const userProfile = createUserProfile(session.user as any);

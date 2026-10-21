@@ -49,14 +49,11 @@ export const useNotifications = () => {
         (n: { type?: string }) => n.type !== 'message' && n.type !== 'new_message'
       );
 
-      // Sort: unread first, then by date descending
+      // Sort by date descending (newest first) to maintain stable chronological position
       const sortedData = [...filteredData].sort((a, b) => {
-        if (a.is_read === b.is_read) {
-          const dateA = new Date(a.created_at || 0).getTime();
-          const dateB = new Date(b.created_at || 0).getTime();
-          return dateB - dateA;
-        }
-        return a.is_read ? 1 : -1;
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
       });
 
       setNotifications(sortedData);
@@ -110,12 +107,9 @@ export const useNotifications = () => {
 
         const updated = [normalized, ...prev];
         return updated.sort((a, b) => {
-          if (a.is_read === b.is_read) {
-            const dateA = new Date(a.created_at || 0).getTime();
-            const dateB = new Date(b.created_at || 0).getTime();
-            return dateB - dateA;
-          }
-          return a.is_read ? 1 : -1;
+          const dateA = new Date(a.created_at || 0).getTime();
+          const dateB = new Date(b.created_at || 0).getTime();
+          return dateB - dateA;
         });
       });
     };

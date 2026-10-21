@@ -48,7 +48,7 @@ interface AboutTabProps {
   isOwnProfile?: boolean;
 }
 
-export default function AboutTab({ data }: AboutTabProps) {
+export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const orgSlug = data.slug || data.id;
   const { data: aboutData, isLoading } = useQuery({
@@ -69,6 +69,9 @@ export default function AboutTab({ data }: AboutTabProps) {
     ? specialtiesRaw.map((s: any) => (typeof s === "string" ? s : s?.name)).filter(Boolean)
     : [];
   const specialtiesText = specialtiesList.join(", ");
+
+  // ── Email ──
+  const email = (about.email || (aboutData as any)?.email || data.email || "").trim();
 
   // ── Part 2: Row 1 (Website & Phone number) ──
   const websiteUrl = (about.website || data.websiteUrl || "").trim();
@@ -145,12 +148,13 @@ export default function AboutTab({ data }: AboutTabProps) {
 
   const hasPart1 = Boolean(description || slogan);
   const hasSpecialties = Boolean(specialtiesText);
+  const hasEmail = Boolean(email);
   const hasRow1 = Boolean(industry || employeeCount);
   const hasRow2 = Boolean(founded || websiteUrl || location);
   const hasRow3 = Boolean(websiteUrl && location);
   const hasSocial = socialLinks.length > 0;
   const hasOffices = offices.length > 0;
-  const hasPart2 = hasSpecialties || hasRow1 || hasRow2 || hasRow3 || hasSocial || hasOffices;
+  const hasPart2 = hasSpecialties || hasEmail || hasRow1 || hasRow2 || hasRow3 || hasSocial || hasOffices;
 
   // If nothing is present in About at all, show clean empty state
   if (!hasPart1 && !hasPart2) {
@@ -236,44 +240,22 @@ export default function AboutTab({ data }: AboutTabProps) {
             </div>
           )}
 
-          {/* ══════════════════════════════════════════════════════
-              PREVIOUS ROW: Website & Phone number (Commented out per requirement, preserved for future use)
-              ══════════════════════════════════════════════════════ */}
-          {/*
-          {hasRow1 && (
+          {/* Email */}
+          {email && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-10">
-              {websiteUrl && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
-                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
-                    Website
-                  </span>
-                  <a
-                    href={websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full hover:no-underline hover:opacity-85 transition-opacity"
-                  >
-                    {formatDisplayUrl(websiteUrl)}
-                  </a>
-                </div>
-              )}
-
-              {phoneNumber && (
-                <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
-                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
-                    Phone number
-                  </span>
-                  <a
-                    href={`tel:${phoneNumber}`}
-                    className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 truncate max-w-full hover:no-underline hover:opacity-85 transition-opacity"
-                  >
-                    {phoneNumber}
-                  </a>
-                </div>
-              )}
+              <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
+                <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
+                  Email
+                </span>
+                <a
+                  href={`mailto:${email}`}
+                  className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 break-all max-w-full hover:no-underline hover:opacity-85 transition-opacity"
+                >
+                  {email}
+                </a>
+              </div>
             </div>
           )}
-          */}
 
           {/* Row 1: Industry & Organization size */}
           {hasRow1 && (

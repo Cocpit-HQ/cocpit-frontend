@@ -40,11 +40,11 @@ export default function SinglePostPage({ params }: PageProps) {
           router.replace(`/channels/${mappedPost.communityId}/article/${mappedPost.id}`);
           return;
         }
-                const isArticle = mappedPost.post_type === 'article' || mappedPost.category === 'Article'
-                if (isArticle) {
-                    router.replace(`/article/${mappedPost.id}`)
-                    return
-                }
+        const isArticle = mappedPost.post_type === 'article' || mappedPost.category === 'Article'
+        if (isArticle) {
+          router.replace(`/article/${mappedPost.id}`)
+          return
+        }
         setPost(mappedPost);
       } catch (err: any) {
         if (err?.response?.status !== 404) {

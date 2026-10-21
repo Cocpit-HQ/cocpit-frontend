@@ -41,10 +41,10 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   const itemUrl = getNotificationRoute(notification, activeProfile, isCompany);
 
   const handleItemClick = () => {
+    if (!notification.is_read && onRead) {
+      onRead(notification.notification_id);
+    }
     if (itemUrl) {
-      if (!notification.is_read && onRead) {
-        onRead(notification.notification_id);
-      }
       router.push(itemUrl);
     }
   };
@@ -206,13 +206,12 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
   return (
     <div
-      onClick={itemUrl ? handleItemClick : undefined}
+      onClick={handleItemClick}
       className={cn(
-        "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2",
+        "group flex flex-row items-center w-full font-['DM_Sans'] transition-colors duration-[120ms] h-[48px] p-3 gap-2 cursor-pointer",
         isInsideGroup
           ? 'bg-transparent rounded-none'
-          : 'bg-transparent rounded-[8px]',
-        itemUrl && 'cursor-pointer'
+          : 'bg-transparent rounded-[8px]'
       )}
     >
       {/* ── Ellipse 15: Unread dot (4×4px, gap: 8px to inner frame) ── */}
