@@ -394,7 +394,7 @@ export const MobileCreatePostModal = ({ isOpen, onClose, initialSharedPost, edit
         className="fixed inset-0 z-[101] bg-ds-bg max-w-none rounded-none flex flex-col pt-0 pb-0 !top-0 !bottom-0 !left-0 !right-0 !translate-x-0 !translate-y-0 ds-animate-sheet-up data-[state=closed]:slide-out-to-bottom-[100%] data-[state=open]:slide-in-from-bottom-[100%] duration-300 h-full w-full overscroll-contain select-text"
       >
         {isSettingLocation && (
-          <div className="absolute inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <LocationSelector
               selectedLocation={state.selectedLocation}
               onLocationChange={state.setSelectedLocation}

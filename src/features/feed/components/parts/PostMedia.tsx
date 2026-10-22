@@ -321,13 +321,14 @@ export const PostMedia = ({
                     "absolute bottom-0 inset-x-0 pt-4 pb-2 px-3 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none flex flex-col gap-1.5 select-none transition-opacity duration-200",
                     isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                   )}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-end justify-end gap-3 w-full mb-1 transition-opacity duration-200 opacity-100">
                     {/* Mute Button */}
                     <button
                       type="button"
                       onClick={handleToggleMute}
-                      className="w-[28px] h-[28px] rounded-full bg-black/80 hover:bg-black/90 active:scale-95 backdrop-blur-md flex items-center justify-center text-[#FFECE6] transition-all cursor-pointer shrink-0 shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)] mb-0.5 pointer-events-auto"
+                      className="w-[28px] h-[28px] rounded-full bg-black/80 hover:bg-black/90 active:scale-95 backdrop-blur-md flex items-center justify-center text-[#FFECE6] transition-all cursor-pointer shrink-0 shadow-[-1px_-1px_1px_rgba(255,255,255,0.6),1px_1px_1px_rgba(255,255,255,0.6)] mb-0.5 pointer-events-auto prevent-card-click"
                       title={isMuted ? "Unmute" : "Mute"}
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
@@ -340,7 +341,10 @@ export const PostMedia = ({
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full opacity-100 pointer-events-auto">
+                  <div 
+                    className="w-full opacity-100 pointer-events-auto prevent-card-click"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <VideoScrubber
                       videoRef={videoRef}
                       progress={progress}

@@ -430,7 +430,7 @@ export function LocationSelector({
       ===== END OLD UI ===== */}
 
       {/* New UI aligned with Figma & AGENTS.md */}
-      <div className="relative w-[400px] max-w-[calc(100vw-32px)] bg-[var(--ds-bg)] text-ds-text-primary rounded-[16px] p-3 flex flex-col items-center gap-3 font-sans overflow-hidden border border-ds-border">
+      <div className="relative w-[400px] max-w-[calc(100vw-32px)] bg-[var(--ds-bg)] text-ds-text-primary rounded-[16px] p-3 flex flex-col items-center gap-3 font-sans overflow-hidden border border-ds-border shadow-2xl">
         <DialogHeader className="sr-only">
           <DialogTitle>Add Location</DialogTitle>
           <DialogDescription>Search and select a location for your post.</DialogDescription>

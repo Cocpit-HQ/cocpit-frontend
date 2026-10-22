@@ -245,6 +245,7 @@ export const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
       target.closest('input') ||
       target.closest('textarea') ||
       target.closest('[role="button"]') ||
+      target.closest('[role="slider"]') ||
       target.closest('[role="menu"]') ||
       target.closest('[role="menuitem"]') ||
       target.closest('[role="dialog"]') ||

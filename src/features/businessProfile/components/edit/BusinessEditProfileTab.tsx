@@ -142,14 +142,15 @@ export default function BusinessEditProfileTab({
     const fetchIndustries = async () => {
       setIsLoadingIndustries(true);
       try {
-        const data = await getOnboardingOptions("industries");
+        const slug = isInstitution ? "institution-types" : "industries";
+        const data = await getOnboardingOptions(slug);
         if (!isCancelled && Array.isArray(data) && data.length > 0) {
           setBackendIndustries(
-            data.map((item) => ({ id: item.id || item.label, label: item.label }))
+            data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }))
           );
         }
       } catch (err) {
-        console.error("Failed to load industries from backend API:", err);
+        console.error("Failed to load options from backend API:", err);
       } finally {
         if (!isCancelled) setIsLoadingIndustries(false);
       }
@@ -169,11 +170,11 @@ export default function BusinessEditProfileTab({
   }, [formData.industry, isIndustryDropdownOpen]);
 
   const activeIndustryOptions = useMemo(() => {
-    if (isInstitution) {
-      return INSTITUTION_INDUSTRY_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label }));
-    }
     if (backendIndustries.length > 0) {
       return backendIndustries;
+    }
+    if (isInstitution) {
+      return INSTITUTION_INDUSTRY_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label }));
     }
     return INDUSTRY_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label }));
   }, [isInstitution, backendIndustries]);

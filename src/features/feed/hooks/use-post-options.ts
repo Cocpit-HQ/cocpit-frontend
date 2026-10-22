@@ -18,6 +18,9 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
   const setShowOptions = (open: boolean | ((prev: boolean) => boolean)) => {
     const currentOpen = useUIStore.getState().activeOpenMenuId === menuKey;
     const nextOpen = typeof open === 'function' ? open(currentOpen) : open;
+    if (nextOpen) {
+      document.dispatchEvent(new CustomEvent('closeAllPostMenus'));
+    }
     useUIStore.getState().setActiveOpenMenuId(nextOpen ? menuKey : null);
   };
   const [optionsPos, setOptionsPos] = useState<{ top: number; right: number } | null>(null);

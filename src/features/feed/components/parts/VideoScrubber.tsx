@@ -22,6 +22,8 @@ export const VideoScrubber: React.FC<VideoScrubberProps> = ({
   const [isDraggingState, setIsDraggingState] = useState(false);
   const wasPlayingRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
+  const runLoopRef = useRef<(() => void) | null>(null);
+  const pendingSeekRatioRef = useRef<number | null>(null);
 
   // Sync initial / prop progress to DOM fill width (only when paused to prevent fighting 60fps rAF loop)
   useEffect(() => {
@@ -41,30 +43,58 @@ export const VideoScrubber: React.FC<VideoScrubberProps> = ({
       const video = videoRef.current;
       if (!video) return false;
 
-      const updateProgress = () => {
-        if (!activeDraggingRef.current && video.duration && !video.paused) {
-          const pct = Math.max(0, Math.min(100, (video.currentTime / video.duration) * 100));
-          if (progressFillRef.current) {
-            progressFillRef.current.style.width = `${pct}%`;
+      const runLoop = () => {
+        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+
+        const step = () => {
+          const v = videoRef.current;
+          if (v && !v.paused && !v.ended && v.duration) {
+            if (!activeDraggingRef.current && progressFillRef.current) {
+              const pct = Math.max(0, Math.min(100, (v.currentTime / v.duration) * 100));
+              progressFillRef.current.style.width = `${pct}%`;
+            }
+            animFrameRef.current = requestAnimationFrame(step);
+          } else {
+            animFrameRef.current = null;
           }
-          animFrameRef.current = requestAnimationFrame(updateProgress);
-        }
+        };
+
+        animFrameRef.current = requestAnimationFrame(step);
       };
 
+      runLoopRef.current = runLoop;
+
       const handlePlay = () => {
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = requestAnimationFrame(updateProgress);
+        runLoop();
       };
 
       const handlePause = () => {
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+        if (animFrameRef.current) {
+          cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = null;
+        }
       };
 
       const handleTimeUpdate = () => {
-        if (!activeDraggingRef.current && video.duration) {
+        if (!activeDraggingRef.current && video.duration && progressFillRef.current) {
           const pct = Math.max(0, Math.min(100, (video.currentTime / video.duration) * 100));
-          if (progressFillRef.current) {
-            progressFillRef.current.style.width = `${pct}%`;
+          progressFillRef.current.style.width = `${pct}%`;
+        }
+      };
+
+      const handleSeeked = () => {
+        handleTimeUpdate();
+        if (activeDraggingRef.current && pendingSeekRatioRef.current !== null && video.duration) {
+          const nextRatio = pendingSeekRatioRef.current;
+          pendingSeekRatioRef.current = null;
+          try {
+            if ('fastSeek' in video && typeof (video as any).fastSeek === 'function') {
+              (video as any).fastSeek(nextRatio * video.duration);
+            } else {
+              video.currentTime = nextRatio * video.duration;
+            }
+          } catch {
+            video.currentTime = nextRatio * video.duration;
           }
         }
       };
@@ -74,22 +104,26 @@ export const VideoScrubber: React.FC<VideoScrubberProps> = ({
       video.addEventListener('pause', handlePause);
       video.addEventListener('timeupdate', handleTimeUpdate);
       video.addEventListener('seeking', handleTimeUpdate);
-      video.addEventListener('seeked', handleTimeUpdate);
+      video.addEventListener('seeked', handleSeeked);
 
       if (!video.paused) {
-        handlePlay();
+        runLoop();
       } else {
         handleTimeUpdate();
       }
 
       cleanup = () => {
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+        if (animFrameRef.current) {
+          cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = null;
+        }
+        runLoopRef.current = null;
         video.removeEventListener('play', handlePlay);
         video.removeEventListener('playing', handlePlay);
         video.removeEventListener('pause', handlePause);
         video.removeEventListener('timeupdate', handleTimeUpdate);
         video.removeEventListener('seeking', handleTimeUpdate);
-        video.removeEventListener('seeked', handleTimeUpdate);
+        video.removeEventListener('seeked', handleSeeked);
       };
 
       return true;
@@ -119,20 +153,6 @@ export const VideoScrubber: React.FC<VideoScrubberProps> = ({
     return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
   };
 
-  const updateSeek = (ratio: number) => {
-    const nextPct = ratio * 100;
-    if (progressFillRef.current) {
-      progressFillRef.current.style.width = `${nextPct}%`;
-    }
-    if (setProgress) {
-      setProgress(nextPct);
-    }
-    const video = videoRef.current;
-    if (video && video.duration) {
-      video.currentTime = ratio * video.duration;
-    }
-  };
-
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
     const target = e.currentTarget;
@@ -141,38 +161,95 @@ export const VideoScrubber: React.FC<VideoScrubberProps> = ({
     } catch {}
 
     const video = videoRef.current;
-    wasPlayingRef.current = video ? !video.paused : false;
+    const isPlaying = video ? !video.paused : false;
+    wasPlayingRef.current = isPlaying;
 
     activeDraggingRef.current = true;
     setIsDraggingState(true);
 
+    if (video && isPlaying) {
+      video.pause();
+    }
+
     const ratio = calculateRatio(e.clientX);
-    updateSeek(ratio);
+    pendingSeekRatioRef.current = null;
+
+    const nextPct = ratio * 100;
+    if (progressFillRef.current) {
+      progressFillRef.current.style.width = `${nextPct}%`;
+    }
+
+    if (video && video.duration) {
+      video.currentTime = ratio * video.duration;
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!activeDraggingRef.current && !isDraggingState) return;
     e.stopPropagation();
+
     const ratio = calculateRatio(e.clientX);
-    updateSeek(ratio);
+    const nextPct = ratio * 100;
+    if (progressFillRef.current) {
+      progressFillRef.current.style.width = `${nextPct}%`;
+    }
+
+    const video = videoRef.current;
+    if (!video || !video.duration) return;
+
+    const targetTime = ratio * video.duration;
+    if (video.seeking) {
+      pendingSeekRatioRef.current = ratio;
+    } else {
+      pendingSeekRatioRef.current = null;
+      try {
+        if ('fastSeek' in video && typeof (video as any).fastSeek === 'function') {
+          (video as any).fastSeek(targetTime);
+        } else {
+          video.currentTime = targetTime;
+        }
+      } catch {
+        video.currentTime = targetTime;
+      }
+    }
   };
 
   const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!activeDraggingRef.current && !isDraggingState) return;
     e.stopPropagation();
+
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {}
 
     const ratio = calculateRatio(e.clientX);
-    updateSeek(ratio);
+    const finalPct = ratio * 100;
 
+    if (progressFillRef.current) {
+      progressFillRef.current.style.width = `${finalPct}%`;
+    }
+    if (setProgress) {
+      setProgress(finalPct);
+    }
+
+    pendingSeekRatioRef.current = null;
     activeDraggingRef.current = false;
     setIsDraggingState(false);
 
     const video = videoRef.current;
-    if (video && wasPlayingRef.current) {
-      video.play().catch(() => {});
+    if (video && video.duration) {
+      video.currentTime = ratio * video.duration;
+
+      if (wasPlayingRef.current) {
+        video.play().then(() => {
+          runLoopRef.current?.();
+        }).catch(() => {
+          if (!video.paused) {
+            runLoopRef.current?.();
+          }
+        });
+        runLoopRef.current?.();
+      }
     }
   };
 
@@ -185,33 +262,44 @@ export const VideoScrubber: React.FC<VideoScrubberProps> = ({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(progress)}
-      className={`w-full cursor-pointer select-none py-2 min-h-[40px] flex items-center touch-none relative outline-none focus:outline-none ${className}`}
+      className={`w-full cursor-pointer select-none py-2 min-h-[40px] flex items-center touch-none relative outline-none focus:outline-none prevent-card-click ${className}`}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         const video = videoRef.current;
         if (!video || !video.duration) return;
         if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
           e.preventDefault();
+          e.stopPropagation();
           const nextTime = Math.min(video.duration, video.currentTime + 5);
           video.currentTime = nextTime;
-          updateSeek(nextTime / video.duration);
+          const nextPct = (nextTime / video.duration) * 100;
+          if (progressFillRef.current) progressFillRef.current.style.width = `${nextPct}%`;
+          if (setProgress) setProgress(nextPct);
         } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
           e.preventDefault();
+          e.stopPropagation();
           const nextTime = Math.max(0, video.currentTime - 5);
           video.currentTime = nextTime;
-          updateSeek(nextTime / video.duration);
+          const nextPct = (nextTime / video.duration) * 100;
+          if (progressFillRef.current) progressFillRef.current.style.width = `${nextPct}%`;
+          if (setProgress) setProgress(nextPct);
         }
       }}
     >
       {/* Outer Groove Track */}
-      <div className="w-full h-[6px] bg-black/40 rounded-full overflow-hidden relative">
+      <div className="w-full h-[6px] bg-black/40 rounded-full overflow-hidden relative pointer-events-none">
         {/* Progress Fill */}
         <div
           ref={progressFillRef}
-          className="h-full bg-[#F4D9D2] rounded-full transition-none"
+          className="h-full bg-[#F4D9D2] rounded-full transition-none pointer-events-none"
           style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
         />
       </div>

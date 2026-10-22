@@ -14,7 +14,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { EmptyPostsIcon } from "@/components/icons";
+import { UserIcon } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 
 interface PeopleTabProps {
@@ -445,13 +445,13 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
       <div className="w-full max-w-[800px] px-4 sm:px-0 sm:pl-5 py-10 flex flex-col items-center justify-center gap-4 text-center font-['DM_Sans']">
         {/* Icon Circle */}
         <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
-          <EmptyPostsIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
+          <UserIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
         </div>
 
         {/* Title & Description */}
         <div className="w-full max-w-[400px] flex flex-col items-center gap-1.5 text-center">
           <div className="text-center text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
-            {isEdu ? "No alumni yet" : "No people yet"}
+            {isEdu ? "No alumni yet" : "No people"}
           </div>
           <div className="w-80 max-w-full text-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
             {isEdu ? (

@@ -1242,8 +1242,8 @@ export function EditPostModal({
         }}
       >
         <BareDialogContent
-          hideOverlay={true}
-          className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden z-[301]"
+          overlayClassName="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm"
+          className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden z-[9999]"
         >
           <DialogTitle className="sr-only">Select Location</DialogTitle>
           <LocationSelector

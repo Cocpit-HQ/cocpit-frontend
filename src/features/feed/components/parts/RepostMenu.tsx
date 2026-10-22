@@ -3,16 +3,38 @@ import { Icon } from "@/components/icons";
 import { Drawer } from "vaul";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted, isRepostedWithThoughts, isSharedPost, hideRepostWithThoughts }: { onRepost?: () => void, onRepostWithThoughts?: () => void, shares?: string | number, isReposted?: boolean, isRepostedWithThoughts?: boolean, isSharedPost?: boolean, hideRepostWithThoughts?: boolean }) => {
+export const RepostMenu = ({
+  onRepost,
+  onRepostWithThoughts,
+  shares,
+  isReposted,
+  isRepostedWithThoughts,
+  isSharedPost,
+  hideRepostWithThoughts
+}: {
+  onRepost?: () => void;
+  onRepostWithThoughts?: () => void;
+  shares?: string | number;
+  isReposted?: boolean;
+  isRepostedWithThoughts?: boolean;
+  isSharedPost?: boolean;
+  hideRepostWithThoughts?: boolean;
+}) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+
+  // Close when any other menu in the app opens
+  useEffect(() => {
+    const handleClose = () => setOpen(false);
+    document.addEventListener('closeAllPostMenus', handleClose);
+    return () => document.removeEventListener('closeAllPostMenus', handleClose);
+  }, []);
 
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    // Only add outside click listener on desktop since Drawer handles its own overlay
     if (!isMobile) {
       document.addEventListener('mousedown', handleOutside);
       return () => document.removeEventListener('mousedown', handleOutside);
@@ -21,7 +43,14 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted,
 
   useEffect(() => {
     if (!open || isMobile) return;
-    const handleScroll = () => setOpen(false);
+    const handleScroll = () => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      const topBoundary = 100; // Top header occlusion boundary
+      if (rect.bottom <= topBoundary || rect.top >= window.innerHeight) {
+        setOpen(false);
+      }
+    };
     window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     return () => window.removeEventListener('scroll', handleScroll, { capture: true });
   }, [open, isMobile]);
@@ -36,7 +65,12 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted,
           if (isReposted) {
             onRepost?.(); // Immediately undo
           } else {
-            setOpen(prev => !prev);
+            if (open) {
+              setOpen(false);
+            } else {
+              document.dispatchEvent(new CustomEvent('closeAllPostMenus'));
+              setOpen(true);
+            }
           }
         }}
         className={`flex h-[24px] flex-row items-center gap-[8px] group ${isRepostedWithThoughts ? "opacity-50 cursor-default" : "cursor-pointer"}`}
@@ -51,20 +85,35 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted,
 
       {/* Desktop Dropdown */}
       {!isMobile && open && !isReposted && (
-        <div className="absolute bottom-[calc(100%+6px)] left-0 w-[163px] bg-ds-surface-2 border border-ds-border rounded-[8px] z-50 animate-in fade-in slide-in-from-bottom-1 duration-100 shadow-lg flex flex-col overflow-hidden">
+        <div
+          style={{
+            backgroundColor: 'var(--ds-bg)',
+            borderColor: 'var(--ds-border)',
+            width: '165px',
+            minWidth: '165px',
+            zIndex: 30,
+          }}
+          className="box-border absolute bottom-[calc(100%+6px)] left-0 w-[165px] min-w-[165px] p-[12px] gap-[16px] !bg-[var(--ds-bg)] border border-ds-border rounded-[8px] z-30 animate-in fade-in slide-in-from-bottom-1 duration-100 shadow-xl flex flex-col items-start font-dmsans"
+        >
           {!hideRepostWithThoughts && (
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); setOpen(false); onRepostWithThoughts?.(); }}
-              className="w-full pt-[12px] pb-[8px] px-[12px] hover:bg-ds-surface-1 group transition-colors text-left flex items-center cursor-pointer"
+              className="w-full h-[20px] p-0 m-0 border-none bg-transparent hover:bg-transparent text-left flex items-center cursor-pointer outline-none group"
             >
-              <span className="ds-text-secondary text-ds-text-secondary group-hover:text-ds-text-primary whitespace-nowrap">Repost with thoughts</span>
+              <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-ds-text-secondary group-hover:text-ds-text-primary whitespace-nowrap transition-colors">
+                Repost with thoughts
+              </span>
             </button>
           )}
           <button
+            type="button"
             onClick={(e) => { e.stopPropagation(); setOpen(false); onRepost?.(); }}
-            className="w-full pt-[8px] pb-[12px] px-[12px] hover:bg-ds-surface-1 group transition-colors text-left flex items-center cursor-pointer"
+            className="w-full h-[20px] p-0 m-0 border-none bg-transparent hover:bg-transparent text-left flex items-center cursor-pointer outline-none group"
           >
-            <span className="ds-text-secondary text-ds-text-secondary group-hover:text-ds-text-primary whitespace-nowrap">Repost</span>
+            <span className="font-['DM_Sans'] text-[14px] leading-[20px] font-normal text-ds-text-secondary group-hover:text-ds-text-primary whitespace-nowrap transition-colors">
+              Repost
+            </span>
           </button>
         </div>
       )}

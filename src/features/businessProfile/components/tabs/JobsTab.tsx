@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
-import { EmptyPostsIcon } from "@/components/icons";
+import { JobsIcon } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { BusinessProfileData } from "../../types/business-profile.types";
 import { useQuery } from "@tanstack/react-query";
@@ -376,7 +376,7 @@ export default function JobsTab({
       <div className="w-full max-w-[800px] px-4 sm:pl-5 sm:pr-0 py-10 flex flex-col justify-center items-center gap-4 font-sans">
         {/* Icon Circle */}
         <div className="p-3 bg-ds-surface-1 rounded-full flex items-center justify-center">
-          <EmptyPostsIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
+          <JobsIcon className="w-8 h-8 text-ds-text-secondary shrink-0" size={32} />
         </div>
 
         {/* Title & Description */}

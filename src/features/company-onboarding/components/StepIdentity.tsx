@@ -42,37 +42,43 @@ export const StepIdentity: React.FC<StepIdentityProps> = ({ onNext }) => {
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [institutionOptions, setInstitutionOptions] = useState<{ id: string; label: string }[]>(INSTITUTION_OPTIONS);
   const [companyOptions, setCompanyOptions] = useState<{ id: string; label: string }[]>([]);
   const [loadingIndustries, setLoadingIndustries] = useState(false);
 
   const isInstitution = organizationType === "INSTITUTION";
 
-  // Fetch industries from onboarding API for companies
+  // Fetch options from onboarding API based on organizationType
   useEffect(() => {
-    if (isInstitution) return;
     let isCancelled = false;
 
-    const fetchIndustries = async () => {
+    const fetchOptions = async () => {
       setLoadingIndustries(true);
       try {
-        const data = await getOnboardingOptions("industries");
+        const slug = isInstitution ? "institution-types" : "industries";
+        const data = await getOnboardingOptions(slug);
         if (!isCancelled && Array.isArray(data) && data.length > 0) {
-          setCompanyOptions(data.map((item) => ({ id: item.id || item.label, label: item.label })));
+          const mapped = data.map((item) => ({ id: item.slug || item.id || item.label, label: item.label }));
+          if (isInstitution) {
+            setInstitutionOptions(mapped);
+          } else {
+            setCompanyOptions(mapped);
+          }
         }
       } catch (err) {
-        // Handle API error
+        // Fallback options remain in place
       } finally {
         if (!isCancelled) setLoadingIndustries(false);
       }
     };
 
-    fetchIndustries();
+    fetchOptions();
     return () => {
       isCancelled = true;
     };
   }, [isInstitution]);
 
-  const activeOptions = isInstitution ? INSTITUTION_OPTIONS : companyOptions;
+  const activeOptions = isInstitution ? institutionOptions : companyOptions;
 
   // Sync searchQuery when industry or activeOptions change externally
   useEffect(() => {

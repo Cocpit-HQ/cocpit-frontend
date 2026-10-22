@@ -210,7 +210,6 @@ export default function PostsTab({
           </div>
           <div className="w-full">
             <FeedPostCardSkeleton className="!mx-0 !ml-0" />
-            <div className="w-full max-w-[442px] h-0 border-b border-[var(--ds-border)] mt-5" />
           </div>
         </div>
       ) : postsToRender.length === 0 ? (
@@ -285,6 +284,7 @@ export default function PostsTab({
         <div className="w-full max-w-[442px] flex flex-col justify-start items-center gap-5">
           {postsToRender.map((post, index) => {
             const shouldShowComments = searchParams.get('commentPostId') === String(post.id);
+            const isLast = index === postsToRender.length - 1;
             return (
               <React.Fragment key={post.id || index}>
                 <FeedPost 
@@ -313,7 +313,9 @@ export default function PostsTab({
                     }
                   }}
                 />
-                <div className="w-full max-w-[442px] h-0 border-b border-[var(--ds-border)]" />
+                {!isLast && (
+                  <div className="w-full max-w-[442px] h-0 border-b border-[var(--ds-border)]" />
+                )}
               </React.Fragment>
             );
           })}

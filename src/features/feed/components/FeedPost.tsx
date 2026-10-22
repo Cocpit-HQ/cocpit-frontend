@@ -762,6 +762,7 @@ export const FeedPost = (props: FeedPostProps) => {
       target.closest('input') ||
       target.closest('textarea') ||
       target.closest('[role="button"]') ||
+      target.closest('[role="slider"]') ||
       target.closest('.prevent-card-click')
     ) {
       return;

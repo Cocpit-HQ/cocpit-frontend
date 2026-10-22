@@ -272,7 +272,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (!effectiveClickable) return;
-    if ((e.target as HTMLElement).closest('button, a')) {
+    if ((e.target as HTMLElement).closest('button, a, [role="button"], [role="slider"], .prevent-card-click')) {
       return;
     }
     if (targetPostId) {

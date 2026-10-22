@@ -265,6 +265,7 @@ export const getOnboardingSkills = async (
 export interface OnboardingOptionItem {
   id: string;
   label: string;
+  slug?: string;
 }
 
 export const getOnboardingOptions = async (

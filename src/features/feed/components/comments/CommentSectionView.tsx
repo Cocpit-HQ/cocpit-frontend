@@ -69,7 +69,7 @@ export default function CommentSectionView({
       className={`flex flex-col min-h-0 relative font-dmsans comment-section bg-ds-bg ${isSidebar ? 'flex-1 w-full' : 'md:max-h-[450px]'}`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="py-2 z-10 sticky top-0 bg-ds-bg border-b border-ds-border/40">
+      <div className="py-2 z-10 sticky top-0 bg-ds-bg">
         <CommentInput
           isDrawer={isDrawer}
           onAddComment={(text) => {

@@ -20,6 +20,7 @@ import { Icon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { CommentActionSnackbar } from './CommentActionSnackbar';
 import { useUIStore } from '@/store/ui.store';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CommentProps {
   comment: CommentType;
@@ -275,6 +276,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
     }
     useUIStore.getState().setActiveOpenMenuId(nextOpen ? menuKey : null);
   };
+  const isMobile = useIsMobile();
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
 
   // Purpose of Bug Fix: Listen to the global event so the Comment menu automatically closes if a Post menu is opened
@@ -296,9 +298,9 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
     const handleScrollOrResize = () => {
       if (!optionsBtnRef.current) return;
       const rect = optionsBtnRef.current.getBoundingClientRect();
-      const menuHeight = 90; // dropdown height (~80-90px)
-      // Close only when the entire comment button and menu have scrolled completely out of the viewport
-      if (rect.bottom + menuHeight <= 0 || rect.top >= window.innerHeight) {
+      const isDrawer = Boolean(optionsBtnRef.current.closest('[data-vaul-drawer]'));
+      const topBoundary = isDrawer ? 0 : 90; // Fixed top header boundary on desktop
+      if (rect.bottom <= topBoundary || rect.top >= window.innerHeight) {
         if (document.activeElement === optionsBtnRef.current) {
           optionsBtnRef.current.blur();
         }
@@ -477,22 +479,29 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                     ref={optionsBtnRef}
                     aria-label="More options"
                     onClick={(e) => e.stopPropagation()}
-                    className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent transition-colors"
+                    className="min-w-[28px] min-h-[28px] -mr-1 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent transition-colors cursor-pointer"
                   >
-                    <Icon name="menu" className="w-[20px] h-[20px]" />
+                    <Icon name="menu" className="w-[20px] h-[20px] pointer-events-none" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   sideOffset={4}
-                  avoidCollisions={false}
-                  hideWhenDetached={true}
                   onCloseAutoFocus={(e) => {
                     e.preventDefault();
                   }}
-                  style={{ zIndex: 150 }}
+                  style={{
+                    backgroundColor: 'var(--ds-bg)',
+                    borderColor: 'var(--ds-border)',
+                    width: '135px',
+                    minWidth: '135px',
+                    zIndex: (isMobile || Boolean(optionsBtnRef.current?.closest('[data-vaul-drawer]'))) ? 150 : 30,
+                  }}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-[135px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-2 rounded-[8px] !border-none !outline-none !ring-0 shadow-none font-dmsans !z-[150] data-[state=closed]:!animate-none data-[state=closed]:!duration-0"
+                  className={cn(
+                    "w-[135px] min-w-[135px] flex flex-col items-start p-[12px] gap-[16px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[8px] shadow-xl !outline-none !ring-0 font-dmsans data-[state=closed]:!animate-none data-[state=closed]:!duration-0 box-border",
+                    (isMobile || Boolean(optionsBtnRef.current?.closest('[data-vaul-drawer]'))) ? "!z-[150]" : "!z-[30]"
+                  )}
                 >
                   <style>{`
                     [data-theme] [role="menuitem"].comment-menu-item:hover,
@@ -518,7 +527,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                           onEdit?.(id, text);
                         }, 50);
                       }}
-                      className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
+                      className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full font-['DM_Sans'] text-[14px] leading-[20px] font-normal whitespace-nowrap text-ds-text-secondary hover:!text-ds-text-primary focus:!bg-transparent focus:!text-ds-text-primary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-primary h-[20px] flex items-center"
                     >
                       Edit comment
                     </DropdownMenuItem>
@@ -531,7 +540,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                         e.stopPropagation();
                         onDelete?.(id);
                       }}
-                      className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-error hover:!text-ds-error focus:!bg-transparent focus:!text-ds-error p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-error"
+                      className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full font-['DM_Sans'] text-[14px] leading-[20px] font-normal whitespace-nowrap text-ds-error hover:!text-ds-error focus:!bg-transparent focus:!text-ds-error p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-error h-[20px] flex items-center"
                     >
                       Delete comment
                     </DropdownMenuItem>
@@ -551,7 +560,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                             onReport?.(id);
                           }, 50);
                         }}
-                        className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
+                        className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full font-['DM_Sans'] text-[14px] leading-[20px] font-normal whitespace-nowrap text-ds-text-secondary hover:!text-ds-text-primary focus:!bg-transparent focus:!text-ds-text-primary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-primary h-[20px] flex items-center"
                       >
                         Report
                       </DropdownMenuItem>
@@ -559,7 +568,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                       <DropdownMenuItem
                         onSelect={() => onHide?.(id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full ds-text-secondary text-ds-text-secondary hover:!text-ds-text-secondary focus:!bg-transparent focus:!text-ds-text-secondary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-secondary"
+                        className="profile-switcher-item comment-menu-item cursor-pointer outline-none w-full font-['DM_Sans'] text-[14px] leading-[20px] font-normal whitespace-nowrap text-ds-text-secondary hover:!text-ds-text-primary focus:!bg-transparent focus:!text-ds-text-primary p-0 !bg-transparent hover:!bg-transparent data-[highlighted]:!bg-transparent data-[highlighted]:!text-ds-text-primary h-[20px] flex items-center"
                       >
                         Hide comment
                       </DropdownMenuItem>

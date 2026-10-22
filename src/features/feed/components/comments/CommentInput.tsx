@@ -415,8 +415,8 @@ export default function CommentInput({
                     </div>
                 </div>
             ) : (
-                <div className={`flex w-full mt-2 relative border border-ds-border rounded-[24px] bg-ds-surface-1 transition-colors overflow-hidden focus-within:border-ds-text-secondary min-h-[40px] ${commentText.trim().length > 0 ? 'flex-col p-3' : 'flex-row items-center pl-4 pr-1 py-1'}`}>
-                    <div className={`w-full relative flex-1 ${commentText.trim().length > 0 ? 'min-h-[20px]' : 'flex items-center min-h-[20px]'}`}>
+                <div className={`box-border flex w-full max-w-[442px] mx-auto mt-2 relative border border-ds-border rounded-[16px] bg-transparent transition-colors overflow-hidden focus-within:border-ds-text-secondary ${commentText.trim().length > 0 ? 'flex-col p-3 min-h-[42px]' : 'flex-row items-center justify-between h-[42px] p-[10px] gap-[10px]'}`}>
+                    <div className={`w-full relative flex-1 ${commentText.trim().length > 0 ? 'min-h-[20px]' : 'flex items-center min-h-[16px]'}`}>
                         <MentionTextarea
                             ref={textareaRef as any}
                             value={commentText}
@@ -425,22 +425,22 @@ export default function CommentInput({
                             searchUsersFn={searchUsers}
                             onKeyDown={handleKeyDown}
                             placeholder="Write your thoughts"
-                            className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none ds-text-small text-ds-text-primary placeholder-ds-text-muted md:scrollbar-hide focus:outline-none leading-normal ${isDrawer ? 'max-h-[35vh] md:max-h-none overflow-y-auto' : ''} ${commentText.trim().length > 0 ? '' : 'flex items-center m-0'}`}
+                            className={`w-full bg-transparent border-none focus:ring-0 p-0 resize-none font-['DM_Sans'] text-[12px] leading-[16px] font-normal text-ds-text-primary placeholder:text-ds-text-muted md:scrollbar-hide focus:outline-none ${isDrawer ? 'max-h-[35vh] md:max-h-none overflow-y-auto' : ''} ${commentText.trim().length > 0 ? '' : 'flex items-center m-0'}`}
                             rows={1}
                             maxLength={1000}
                         />
                     </div>
 
-                    <div className={`flex flex-row items-center ${commentText.trim().length > 0 ? 'justify-between w-full mt-1' : 'gap-1 shrink-0 ml-2'}`}>
+                    <div className={`flex flex-row items-center ${commentText.trim().length > 0 ? 'justify-between w-full mt-1' : 'shrink-0'}`}>
                         <div className="relative flex items-center">
                             <button
                                 ref={buttonRef}
                                 type="button"
                                 aria-label="Insert emoji"
                                 onClick={handleToggleEmojiPicker}
-                                className="w-8 h-8 flex items-center justify-center text-ds-text-secondary hover:text-ds-text-primary hover:bg-ds-surface-1 rounded-full transition-colors"
+                                className="w-[20px] h-[20px] flex items-center justify-center text-ds-text-primary hover:opacity-80 transition-opacity p-0 border-none bg-transparent outline-none cursor-pointer"
                             >
-                                <Smile className="w-[18px] h-[18px]" />
+                                <Smile className="w-[20px] h-[20px] text-ds-text-primary" />
                             </button>
                         </div>
 
