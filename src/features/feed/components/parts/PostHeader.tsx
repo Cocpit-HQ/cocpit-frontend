@@ -6,6 +6,15 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyProfileService, businessProfileService } from '@/features/businessProfile';
 import { PostMenuAccess } from '../../utils/postMenuAccess';
+import { useCompanyFollowPermission } from '@/hooks/useCompanyFollowPermission';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface PostHeaderProps {
   id: string | number;
@@ -40,6 +49,7 @@ export const PostHeader = ({
   const initial = author ? author.charAt(0).toUpperCase() : '?';
 
   const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus, isFollowingInitialized } = useSocial();
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
@@ -141,6 +151,10 @@ export const PostHeader = ({
   }, [id, authorUserId]);
 
   const handleToggleFollow = () => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     if (!authorUserId || isFollowActionLoading) return;
     setHasInteracted(true);
     if (isCompanyPost) {
@@ -239,18 +253,43 @@ export const PostHeader = ({
       {/* Follow and Menu Actions */}
       <div className="flex flex-row items-center gap-2 shrink-0 h-[24px]">
         {!isOwnerOrInternal && isFollowingInitialized && (!isAuthorFollowing || hasInteracted) && (
-          <button
-            onClick={handleToggleFollow}
-            disabled={isFollowActionLoading}
-            className={
-              isAuthorFollowing
-                ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-80 ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
-                }`
-                : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[14px] leading-[20px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-90`
-            }
-          >
-            {isAuthorFollowing ? 'Unfollow' : 'Follow'}
-          </button>
+          isCompanyActor && !canFollow ? (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <button
+                      type="button"
+                      disabled
+                      className={cn(
+                        isAuthorFollowing
+                          ? `w-[65px] h-[24px] flex items-center justify-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center shrink-0 flex-none opacity-50 pointer-events-none rounded ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'}`
+                          : `h-[24px] px-1 flex items-center justify-center font-['DM_Sans'] font-semibold text-[14px] leading-[20px] text-[var(--ds-accent)] shrink-0 opacity-50 pointer-events-none rounded`
+                      )}
+                    >
+                      {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                  {noFollowMessage}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <button
+              onClick={handleToggleFollow}
+              disabled={isFollowActionLoading}
+              className={
+                isAuthorFollowing
+                  ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[14px] leading-[20px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-80 ${variant === 'overlay' ? 'text-white' : 'text-ds-text-primary'
+                  }`
+                  : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[14px] leading-[20px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded transition-opacity hover:opacity-90`
+              }
+            >
+              {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+            </button>
+          )
         )}
 
         {!hideMenuEntirely && (

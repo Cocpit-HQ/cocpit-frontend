@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Icon, BusinessBuildingIcon } from '@/components/icons';
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers, getUserById } from '@/services/api/user';
+import { companyService } from '@/services/organization.service';
 import { SearchedUser } from '@/types/user';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useToast } from '@/hooks/use-toast';
@@ -141,16 +142,27 @@ export function MobileSearchScreen({ isOpen, onClose }: MobileSearchScreenProps)
     }
 
     if (user.type === 'COMPANY' || user.account_type === 'COMPANY') {
-      onClose();
-      saveSearch(user);
-      router.push(getUrlForUser(user));
+      setIsNavigating(true);
+      try {
+        const companySlug = user.slug || user.id;
+        // Pass skipAuditLog: true so this pre-validation check does not trigger a duplicate audit log
+        const liveCompany = await companyService.getCompany(companySlug, undefined, { skipAuditLog: true });
+        const targetSlug = liveCompany?.slug || companySlug;
+        onClose();
+        saveSearch({ ...user, slug: targetSlug });
+        router.push(`/organization/${targetSlug}`);
+      } catch (err) {
+        toast({ title: "Error", description: "Unable to load company profile. The company may have been deleted or deactivated.", variant: "destructive" });
+      } finally {
+        setIsNavigating(false);
+      }
       return;
     }
 
     setIsNavigating(true);
     try {
-      // Pass skipAudit: true so this pre-validation check does not trigger a duplicate VIEW_USER_PROFILE audit log
-      const liveProfile = await getUserById(user.id, undefined, { skipAudit: true });
+      // Pass skipAudit: true & skipAuditLog: true so this pre-validation check does not trigger a duplicate VIEW_USER_PROFILE audit log
+      const liveProfile = await getUserById(user.id, undefined, { skipAudit: true, skipAuditLog: true });
       const newUsername = liveProfile.user?.account_name;
       
       if (!newUsername) {

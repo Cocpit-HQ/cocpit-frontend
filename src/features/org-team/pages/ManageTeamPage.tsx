@@ -84,18 +84,28 @@ export default function ManageTeamPage() {
     <div className="w-full h-full min-h-[calc(100vh-120px)] bg-ds-bg text-ds-text-primary flex flex-col items-center sm:-mt-[40px] pt-[20px] pb-16 px-0 md:px-4 md:pr-[253px] select-text">
       <div className="w-full max-w-[780px] flex flex-col gap-4 lg:gap-5 items-start px-4 lg:px-0">
 
-        {/* Tabs and Actions */}
-        <div className="flex flex-row justify-between items-center w-full gap-3 lg:gap-0 pl-0 lg:pl-[20px]">
-          <TeamTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Manage team Banner Card */}
+        <div className="w-full max-w-[780px] min-h-[80px] bg-ds-surface-1 rounded-[16px] p-[16px] flex flex-row justify-between items-center gap-4 box-border">
+          <div className="flex flex-col gap-1 min-w-0">
+            <h1 className="text-ds-text-primary text-[16px] font-semibold font-['DM_Sans'] leading-[24px]">
+              Manage team
+            </h1>
+            <p className="text-ds-text-secondary text-[14px] font-normal font-['DM_Sans'] leading-[20px]">
+              Add, remove, and manage your organization&apos;s team members.
+            </p>
+          </div>
 
-          {activeTab === 'team' && (
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="h-[36px] px-[12px] py-[6px] rounded-full border border-ds-border text-ds-text-primary ds-text-body-1 flex justify-center items-center gap-[10px] whitespace-nowrap"
-            >
-              Create role
-            </button>
-          )}
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="w-[108px] h-[36px] pt-[6px] pr-[12px] pb-[6px] pl-[12px] gap-[10px] bg-ds-accent hover:bg-ds-accent-hover rounded-[100px] text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center whitespace-nowrap cursor-pointer transition-colors shadow-sm flex-shrink-0"
+          >
+            Create role
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex flex-row items-center w-full pl-0 lg:pl-[4px]">
+          <TeamTabs activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
         {/* Tab Content */}

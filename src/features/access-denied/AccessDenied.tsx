@@ -6,6 +6,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import { EyeOff } from 'lucide-react';
+import { useTeamRoles } from '@/features/org-team/hooks/useTeamRoles';
 
 function formatRoleName(role: string): string {
   if (!role) return 'Member';
@@ -89,6 +90,9 @@ export default function AccessDenied({
 
   const profileAny = activeProfile as any;
 
+  // Fetch company roles as fallback to ensure the assigned role color is available
+  const { roles } = useTeamRoles();
+
   // Determine current role name
   const rawRole =
     roleName ||
@@ -98,10 +102,19 @@ export default function AccessDenied({
     'Member';
   const displayRoleName = formatRoleName(rawRole);
 
+  const matchedRole = React.useMemo(() => {
+    if (!roles || !Array.isArray(roles)) return null;
+    return roles.find(
+      (r: any) =>
+        r.name?.toLowerCase() === rawRole?.toLowerCase()
+    );
+  }, [roles, rawRole]);
+
   // Determine role description
   const currentRoleDesc =
     roleDescription ||
     profileAny?.viewer_role_data?.description ||
+    matchedRole?.description ||
     `Assigned to the ${displayRoleName} role within your organization.`;
 
   // Determine role indicator color
@@ -109,6 +122,7 @@ export default function AccessDenied({
     roleColor ||
     profileAny?.viewer_role_data?.color ||
     profileAny?.role_color ||
+    matchedRole?.color ||
     'var(--ds-accent)';
 
   // Determine accessible pages pills

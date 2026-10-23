@@ -86,6 +86,8 @@ export function BusinessProfileEditPage() {
       <AccessDenied
         title="You don't have access to this screen"
         roleName={actingCompanyRole?.name || profileData?.viewer_role || 'Member'}
+        roleColor={actingCompanyRole?.color || (profileData as any)?.viewer_role_data?.color || (profileData as any)?.viewer_role_color}
+        roleDescription={actingCompanyRole?.description || (profileData as any)?.viewer_role_data?.description}
       />
     );
   }

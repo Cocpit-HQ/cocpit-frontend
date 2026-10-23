@@ -8,6 +8,15 @@ import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer'
 import { PostBody } from '../parts/PostBody';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 import { UserIcon, BusinessBuildingIcon } from '@/components/icons';
+import { useCompanyFollowPermission } from '@/hooks/useCompanyFollowPermission';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 interface SharedPreviewProps {
   sharedPost: any;
   sharedPostId?: string;
@@ -217,6 +226,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
     || sharedPost?.orgId?.toString();
 
   const isMe = currentUser?.id?.toString() === authorUserId;
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
   const isCompanyPost = sharedPost?.isCompanyPost || false;
@@ -249,6 +259,10 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
   const handleToggleFollow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     if (!authorUserId || isFollowActionLoading) return;
     setHasInteracted(true);
     if (isCompanyPost) {
@@ -336,17 +350,42 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
           {/* Follow Action */}
           {canShowFollow && !isMe && (!isAuthorFollowing || hasInteracted) && (
             <div className="flex flex-row items-center shrink-0 h-[24px] ml-auto">
-              <button
-                onClick={handleToggleFollow}
-                disabled={isFollowActionLoading}
-                className={
-                  isAuthorFollowing
-                    ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-ds-text-primary`
-                    : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
-                }
-              >
-                {isAuthorFollowing ? 'Unfollow' : 'Follow'}
-              </button>
+              {isCompanyActor && !canFollow ? (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          className={cn(
+                            isAuthorFollowing
+                              ? `w-[65px] h-[24px] flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none opacity-50 pointer-events-none rounded text-ds-text-primary`
+                              : `h-[24px] px-1 flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 opacity-50 pointer-events-none rounded`
+                          )}
+                        >
+                          {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                      {noFollowMessage}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <button
+                  onClick={handleToggleFollow}
+                  disabled={isFollowActionLoading}
+                  className={
+                    isAuthorFollowing
+                      ? `w-[65px] h-[24px] cursor-pointer flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-80 text-ds-text-primary`
+                      : `h-[24px] px-1 cursor-pointer flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 disabled:opacity-50 disabled:cursor-default outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded transition-opacity hover:opacity-90`
+                  }
+                >
+                  {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+                </button>
+              )}
             </div>
           )}
         </div>

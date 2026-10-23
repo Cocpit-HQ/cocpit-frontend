@@ -17,6 +17,15 @@ import { useSocial } from '@/context/SocialContext';
 import { VideoScrubber } from '../../parts/VideoScrubber';
 import { BusinessBuildingIcon } from '@/components/icons';
 import { useFeedUIStore } from '@/store/feed.store';
+import { useCompanyFollowPermission } from '@/hooks/useCompanyFollowPermission';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface FloatingBadge {
   avatar?: string;
@@ -290,6 +299,7 @@ export const PostVideoCard = ({
   }, [id, authorId]);
 
   const authorUserId = authorId?.toString();
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
   const isAuthorFollowing = authorUserId && social?.isFollowing ? social.isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId && social?.isFollowLoading ? social.isFollowLoading(authorUserId) : false;
 
@@ -304,6 +314,10 @@ export const PostVideoCard = ({
 
   const handleFollowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     if (onFollowToggle) {
       onFollowToggle();
       return;
@@ -435,14 +449,35 @@ export const PostVideoCard = ({
             {/* Right: Clean Follow Action + Options */}
             <div className="flex items-center gap-3 shrink-0">
               {canShowFollow && (
-                <button
-                  type="button"
-                  onClick={handleFollowClick}
-                  disabled={isAuthorFollowLoading}
-                  className="text-white hover:text-white/80 font-medium text-[14px] transition-opacity cursor-pointer bg-transparent border-none p-0 outline-none disabled:opacity-50"
-                >
-                  {isAuthorFollowing ? 'Unfollow' : 'Follow'}
-                </button>
+                isCompanyActor && !canFollow ? (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-not-allowed">
+                          <button
+                            type="button"
+                            disabled
+                            className="text-white font-medium text-[14px] bg-transparent border-none p-0 outline-none opacity-50 pointer-events-none"
+                          >
+                            {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+                          </button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                        {noFollowMessage}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleFollowClick}
+                    disabled={isAuthorFollowLoading}
+                    className="text-white hover:text-white/80 font-medium text-[14px] transition-opacity cursor-pointer bg-transparent border-none p-0 outline-none disabled:opacity-50"
+                  >
+                    {isAuthorFollowing ? 'Unfollow' : 'Follow'}
+                  </button>
+                )
               )}
               {hasPostInteractions && (
                 <button

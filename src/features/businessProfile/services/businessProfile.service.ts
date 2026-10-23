@@ -1,9 +1,16 @@
 import api from "@/lib/axios";
 
 export const businessProfileService = {
-  async getOrgProfile(slug: string): Promise<any> {
+  async getOrgProfile(slug: string, options?: { skipAudit?: boolean; skipAuditLog?: boolean }): Promise<any> {
+    const params: Record<string, string> = {};
+    if (options?.skipAudit || options?.skipAuditLog) {
+      params.skipAudit = 'true';
+      params.skipAuditLog = 'true';
+    }
+    const queryStr = Object.keys(params).length > 0 ? `?${new URLSearchParams(params).toString()}` : '';
+
     try {
-      const res = await api.get(`/organizations/${encodeURIComponent(slug)}/profile`);
+      const res = await api.get(`/organizations/${encodeURIComponent(slug)}/profile${queryStr}`);
       if (res.data) {
         const org = res.data.org || res.data.organization;
         if (org) {
@@ -18,7 +25,7 @@ export const businessProfileService = {
       // Fallback to /organizations/:slug if /profile returns an error
     }
 
-    const res = await api.get(`/organizations/${slug}`);
+    const res = await api.get(`/organizations/${slug}${queryStr}`);
     const orgData = res.data;
     let links = orgData.links || orgData.social_links || [];
     if (!links || links.length === 0) {

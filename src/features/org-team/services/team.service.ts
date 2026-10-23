@@ -206,11 +206,17 @@ function formatAction(action: string, metadata?: any): string {
     case 'TRANSFER_OWNERSHIP':
       return 'transferred ownership';
     case 'ORGANIZATION_BLOCK_ADDED':
+    case 'ORGANIZATION_BLOCK_ADD':
     case 'BLOCK_USER':
+    case 'BLOCK_ORGANIZATION':
+    case 'ORGANIZATION_BLOCK':
     case 'BLOCK':
       return 'blocked';
     case 'ORGANIZATION_BLOCK_REMOVED':
+    case 'ORGANIZATION_BLOCK_REMOVE':
     case 'UNBLOCK_USER':
+    case 'UNBLOCK_ORGANIZATION':
+    case 'ORGANIZATION_UNBLOCK':
     case 'UNBLOCK':
       return 'unblocked';
     case 'DOCUMENTS_SUBMITTED':
@@ -220,6 +226,12 @@ function formatAction(action: string, metadata?: any): string {
     case 'DOMAIN_VERIFIED':
       return 'verified company domain';
     default:
+      if (upper.includes('UNBLOCK') || upper.includes('BLOCK_REMOVED') || upper.includes('BLOCK_REMOVE')) {
+        return 'unblocked';
+      }
+      if (upper.includes('BLOCK_ADDED') || upper.includes('BLOCK_ADD')) {
+        return 'blocked';
+      }
       return action.replace(/_/g, ' ').toLowerCase();
   }
 }
@@ -419,11 +431,23 @@ function mapActivityLog(row: any): ActivityLogEntry {
   } else if (
     actionUpper === 'ORGANIZATION_BLOCK_ADDED' ||
     actionUpper === 'ORGANIZATION_BLOCK_REMOVED' ||
+    actionUpper === 'ORGANIZATION_BLOCK_ADD' ||
+    actionUpper === 'ORGANIZATION_BLOCK_REMOVE' ||
     actionUpper === 'BLOCK_USER' ||
-    actionUpper === 'UNBLOCK_USER'
+    actionUpper === 'UNBLOCK_USER' ||
+    actionUpper === 'BLOCK_ORGANIZATION' ||
+    actionUpper === 'UNBLOCK_ORGANIZATION' ||
+    actionUpper === 'ORGANIZATION_BLOCK' ||
+    actionUpper === 'ORGANIZATION_UNBLOCK' ||
+    actionUpper === 'BLOCK' ||
+    actionUpper === 'UNBLOCK' ||
+    actionUpper.includes('BLOCK')
   ) {
     if (!targetName) {
-      targetName = metadata.targetName || metadata.blockedName || '';
+      targetName = metadata.targetName || metadata.blockedName || metadata.targetUserName || metadata.name || '';
+    }
+    if (!targetName) {
+      targetName = metadata.targetType === 'company' || metadata.type === 'company' ? 'organization' : 'user';
     }
     highlightedText = '';
     const blockTargetId = metadata.targetId || metadata.blockedId || targetId;

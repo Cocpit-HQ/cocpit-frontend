@@ -26,7 +26,7 @@ export interface Company {
     verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED' | 'VERIFIED';
     is_deleted: boolean;
     created_at: string;
-    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null; // Populated by backend if authenticated
+    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean; color?: string; description?: string } | null; // Populated by backend if authenticated
     member_count?: number;
     parent_org?: { org_id: string; name: string; slug: string; logo_url?: string; entity_type: string } | null;
     children_count?: number;
@@ -90,9 +90,20 @@ export const companyService = {
         return res.data.organization;
     },
 
-    async getCompany(slug: string, sourcePostId?: string): Promise<Company> {
+    async getCompany(
+        slug: string, 
+        sourcePostId?: string,
+        options?: { skipAudit?: boolean; skipAuditLog?: boolean }
+    ): Promise<Company> {
+        const params: Record<string, string> = {};
+        if (sourcePostId) params.sourcePostId = sourcePostId;
+        if (options?.skipAudit || options?.skipAuditLog) {
+            params.skipAudit = 'true';
+            params.skipAuditLog = 'true';
+        }
+
         const res = await api.get(`/organizations/${slug}`, {
-            params: sourcePostId ? { sourcePostId } : undefined,
+            params: Object.keys(params).length > 0 ? params : undefined,
         });
         if (res.data && res.data.org_id && !res.data.company_id) {
             res.data.company_id = res.data.org_id;

@@ -54,6 +54,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -75,6 +82,16 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const { startChat, blockUser, unblockUser, isBlocked, followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const { activeProfile, isCompany } = useActiveProfile();
   const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
+
+  const NO_FOLLOW_ACCESS_MESSAGE = "You don't have access to follow/unfollow on the behalf of company";
+
+  const actingCompanyRole = activeProfile?.viewer_role_data;
+  const actingCompanyCanFollow =
+    !isCompanyActor ||
+    actingCompanyRole?.is_owner ||
+    actingCompanyRole?.permissions?.includes("*") ||
+    actingCompanyRole?.permissions?.includes("MANAGE_COMMUNITY") ||
+    actingCompanyRole?.permissions?.includes("MANAGE_COMPANY_DETAILS");
 
   const queryClient = useQueryClient();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
@@ -126,6 +143,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   }, [userId]);
 
   const targetUserId = user?.id || userId;
+  const { canBlockTarget, message: noBlockMessage, canReportTarget, noReportMessage } = useOrgBlockPermissions(targetUserId);
 
   const experiences = useMemo(() => user?.experiences || [], [user?.experiences]);
   const educations = useMemo(() => user?.educations || [], [user?.educations]);
@@ -196,6 +214,10 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   };
 
   const handleFollowToggle = async () => {
+    if (isCompanyActor && !actingCompanyCanFollow) {
+      toast.error(NO_FOLLOW_ACCESS_MESSAGE);
+      return;
+    }
     const targetIdToUse = user?.id || targetUserId;
     if (!targetIdToUse) return;
     if (following) {
@@ -510,24 +532,52 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
       {/* ── SCENARIO 3b: no relationship, target >= 500 connections → FOLLOW ── */}
       {showFollow && (
-        <button
-          type="button"
-          onClick={handleFollowToggle}
-          disabled={followLoading}
-          className={cn(
-            "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
-            following
-              ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
-              : "bg-[var(--ds-accent)] hover:opacity-90"
-          )}
-        >
-          <span className={cn(
-            "text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap",
-            following ? "text-[var(--ds-text-primary)]" : "text-white"
-          )}>
-            {following ? "Unfollow" : "Follow"}
-          </span>
-        </button>
+        isCompanyActor && !actingCompanyCanFollow ? (
+          <TooltipProvider>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-not-allowed">
+                  <button
+                    type="button"
+                    disabled
+                    className={cn(
+                      "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 opacity-50 pointer-events-none",
+                      following
+                        ? "border border-[var(--ds-border)] text-[var(--ds-text-primary)]"
+                        : "bg-[var(--ds-accent)] text-white"
+                    )}
+                  >
+                    <span className="text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+                      {following ? "Unfollow" : "Follow"}
+                    </span>
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
+                {NO_FOLLOW_ACCESS_MESSAGE}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <button
+            type="button"
+            onClick={handleFollowToggle}
+            disabled={followLoading}
+            className={cn(
+              "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer active:scale-[0.98]",
+              following
+                ? "border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)]"
+                : "bg-[var(--ds-accent)] hover:opacity-90"
+            )}
+          >
+            <span className={cn(
+              "text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap",
+              following ? "text-[var(--ds-text-primary)]" : "text-white"
+            )}>
+              {following ? "Unfollow" : "Follow"}
+            </span>
+          </button>
+        )
       )}
 
       {/* ── MESSAGE (Always Shown except for incoming requests) ── */}
@@ -573,12 +623,32 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           >
             {/* Show Follow in More menu whenever Follow is not the primary header button and not connected */}
             {!showFollow && !isConnected && (
-              <DropdownMenuItem
-                onClick={handleFollowToggle}
-                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-              >
-                {following ? "Unfollow" : "Follow"}
-              </DropdownMenuItem>
+              isCompanyActor && !actingCompanyCanFollow ? (
+                <TooltipProvider>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <span className="w-full inline-flex cursor-not-allowed">
+                        <DropdownMenuItem
+                          disabled
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] opacity-50 text-sm font-normal font-['DM_Sans'] leading-5 pointer-events-none"
+                        >
+                          {following ? "Unfollow" : "Follow"}
+                        </DropdownMenuItem>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                      {NO_FOLLOW_ACCESS_MESSAGE}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleFollowToggle}
+                  className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+                >
+                  {following ? "Unfollow" : "Follow"}
+                </DropdownMenuItem>
+              )
             )}
 
             {/* ── SCENARIO 2: pending_received — show Message in menu ── */}
@@ -650,19 +720,59 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
               Share profile
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={() => setShowBlockDialog(true)}
-              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-            >
-              Block profile
-            </DropdownMenuItem>
+            {!canBlockTarget ? (
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <DropdownMenuItem
+                        disabled
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 outline-none border-none opacity-50 cursor-not-allowed select-none"
+                      >
+                        {blocked ? "Unblock profile" : "Block profile"}
+                      </DropdownMenuItem>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[60]">
+                    {noBlockMessage}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <DropdownMenuItem
+                onClick={() => setShowBlockDialog(true)}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                {blocked ? "Unblock profile" : "Block profile"}
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuItem
-              onClick={() => setIsReportModalOpen(true)}
-              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
-            >
-              Report profile
-            </DropdownMenuItem>
+            {!canReportTarget ? (
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <DropdownMenuItem
+                        disabled
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 outline-none border-none opacity-50 cursor-not-allowed select-none"
+                      >
+                        Report profile
+                      </DropdownMenuItem>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[60]">
+                    {noReportMessage}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <DropdownMenuItem
+                onClick={() => setIsReportModalOpen(true)}
+                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-pointer outline-none transition-colors border-none"
+              >
+                Report profile
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -975,6 +1085,11 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         onDownloadProfile={handleDownloadProfile}
         onShareProfile={() => setIsShareModalOpen(true)}
         onBlockProfile={() => setShowBlockDialog(true)}
+        canBlockTarget={canBlockTarget}
+        noBlockMessage={noBlockMessage}
+        isBlocked={blocked}
+        canReportTarget={canReportTarget}
+        noReportMessage={noReportMessage}
         onReportProfile={() => setIsReportModalOpen(true)}
         profileScore={user?.profile_score?.score}
       />

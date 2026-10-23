@@ -15,7 +15,7 @@ const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT'
 
 const PERMISSION_GROUPS = [
   { id: 'CREATE_POST', label: 'Post interactions', icon: 'lucide:plus' },
-  { id: 'MANAGE_COMPANY_DETAILS', label: 'Edit company profile', icon: 'business-building' },
+  { id: 'MANAGE_COMPANY_DETAILS', label: 'Profile Management', icon: 'business-building' },
   { id: 'CHAT', label: 'Chat', icon: 'chat', disabled: true },
   { id: 'TEAMS', label: 'Teams', icon: 'teams', children: [
     { id: 'ACTIVITY_LOGS', label: 'Activity logs' }

@@ -8,6 +8,14 @@ import { followCompany } from "@/services/api/social";
 import Link from "next/link";
 import { X, Loader2 } from "lucide-react";
 import { UserIcon, BusinessBuildingIcon } from "@/components/icons";
+import { useCompanyFollowPermission } from "@/hooks/useCompanyFollowPermission";
+import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface LikesModalProps {
   isOpen: boolean;
@@ -19,6 +27,7 @@ interface LikesModalProps {
 export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
   const [likers, setLikers] = useState<PostLikerInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
 
   useEffect(() => {
     if (isOpen && postId) {
@@ -38,6 +47,10 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
 
   // Handles following a user or organization with optimistic state update
   const handleFollow = async (liker: PostLikerInfo) => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     // Optimistic update
     setLikers((prev) => 
       prev.map((l) => l.userId === liker.userId ? { ...l, isFollowing: true } : l)
@@ -126,13 +139,35 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
 
                   {/* Follow Button */}
                   {!liker.isSelf && !liker.isFollowing && (
-                    <button 
-                      onClick={() => handleFollow(liker)}
-                      aria-label={`Follow ${liker.fullName || liker.username || 'user'}`}
-                      className="h-6 px-1 flex items-center justify-center font-['DM_Sans'] font-medium text-base leading-6 text-ds-accent hover:opacity-80 transition-opacity text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded ds-focus-ring"
-                    >
-                      Follow
-                    </button>
+                    isCompanyActor && !canFollow ? (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex cursor-not-allowed">
+                              <button 
+                                type="button"
+                                disabled
+                                aria-label={`Follow ${liker.fullName || liker.username || 'user'}`}
+                                className="h-6 px-1 flex items-center justify-center font-['DM_Sans'] font-medium text-base leading-6 text-ds-accent opacity-50 pointer-events-none text-center rounded"
+                              >
+                                Follow
+                              </button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                            {noFollowMessage}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <button 
+                        onClick={() => handleFollow(liker)}
+                        aria-label={`Follow ${liker.fullName || liker.username || 'user'}`}
+                        className="h-6 px-1 flex items-center justify-center font-['DM_Sans'] font-medium text-base leading-6 text-ds-accent hover:opacity-80 transition-opacity text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-accent rounded ds-focus-ring"
+                      >
+                        Follow
+                      </button>
+                    )
                   )}
                 </div>
               );

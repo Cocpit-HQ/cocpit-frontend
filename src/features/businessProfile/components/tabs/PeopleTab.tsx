@@ -16,6 +16,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { UserIcon } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
+import { useCompanyFollowPermission } from "@/hooks/useCompanyFollowPermission";
+import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PeopleTabProps {
   data: BusinessProfileData;
@@ -32,7 +40,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
     ["school", "college", "university", "coaching", "tuition", "higher education"].includes(((data as any)?.industry || "").toLowerCase().trim());
   const { activeProfile, isCompany } = useActiveProfile();
   const { syncFollowStatus, notifyFollowEvent } = useSocial();
-  const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -100,6 +108,10 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
   ).toLowerCase();
 
   const handleFollow = async (emp: any) => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     const actingOrgId = activeProfile?.id;
     if (!actingOrgId) return;
     const empId = emp.id;
@@ -126,6 +138,10 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
   };
 
   const handleUnfollow = async (emp: any) => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     const actingOrgId = activeProfile?.id;
     if (!actingOrgId) return;
     const empId = emp.id;
@@ -351,27 +367,71 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
       {/* Action Button */}
       <div className="shrink-0 ml-2 sm:ml-3">
         {emp.action === "follow" && (
-          <button
-            type="button"
-            onClick={() => handleFollow(emp)}
-            disabled={followLoadingId === emp.id}
-            aria-label={`Follow ${emp.name}`}
-            className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-white text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
-          >
-            {followLoadingId === emp.id ? "..." : "Follow"}
-          </button>
+          isCompanyActor && !canFollow ? (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <button
+                      type="button"
+                      disabled
+                      aria-label={`Follow ${emp.name}`}
+                      className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] rounded-[100px] flex justify-center items-center gap-2.5 text-white text-base font-medium font-['DM_Sans'] leading-6 opacity-50 pointer-events-none"
+                    >
+                      Follow
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                  {noFollowMessage}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleFollow(emp)}
+              disabled={followLoadingId === emp.id}
+              aria-label={`Follow ${emp.name}`}
+              className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-white text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+            >
+              {followLoadingId === emp.id ? "..." : "Follow"}
+            </button>
+          )
         )}
 
         {emp.action === "unfollow" && (
-          <button
-            type="button"
-            onClick={() => setUnfollowConfirmEmp(emp)}
-            disabled={followLoadingId === emp.id}
-            aria-label={`Unfollow ${emp.name}`}
-            className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
-          >
-            {followLoadingId === emp.id ? "..." : "Unfollow"}
-          </button>
+          isCompanyActor && !canFollow ? (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <button
+                      type="button"
+                      disabled
+                      aria-label={`Unfollow ${emp.name}`}
+                      className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 opacity-50 pointer-events-none"
+                    >
+                      Unfollow
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                  {noFollowMessage}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setUnfollowConfirmEmp(emp)}
+              disabled={followLoadingId === emp.id}
+              aria-label={`Unfollow ${emp.name}`}
+              className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] hover:bg-[var(--ds-surface-1)] active:scale-[0.98] flex justify-center items-center gap-2.5 transition-all cursor-pointer text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
+            >
+              {followLoadingId === emp.id ? "..." : "Unfollow"}
+            </button>
+          )
         )}
 
         {emp.action === "connect" && (

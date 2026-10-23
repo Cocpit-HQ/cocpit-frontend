@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '@/components/icons';
+import { MoreHorizontal } from 'lucide-react';
 import { TeamRole, TeamMember, TeamPermission, PERMISSION_LABELS, getPermissionLabel } from '../../types/team.types';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useCompanyPermissions } from '@/features/businessProfile';
@@ -165,16 +166,16 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="p-1 text-ds-text-secondary hover:text-ds-text-primary transition-colors"
+              className="p-1 text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
             >
-              <Icon name="menu" className="w-5 h-5" />
+              <MoreHorizontal className="w-5 h-5" />
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-[40px] w-[111px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-bg border border-ds-border rounded-[16px] z-30 box-border">
+              <div className="absolute right-0 top-[40px] w-[111px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-1 border border-ds-border-subtle rounded-[16px] shadow-xl z-30 box-border">
                 {canInviteToRole && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onInvite(); }}
-                    className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap"
+                    className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap cursor-pointer"
                   >
                     Add member
                   </button>
@@ -183,14 +184,14 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(); }}
-                      className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap"
+                      className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap cursor-pointer"
                     >
                       Edit role
                     </button>
                     {!role.isSystemRole && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(); }}
-                        className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap"
+                        className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap cursor-pointer"
                       >
                         Delete role
                       </button>
@@ -221,7 +222,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
           ))}
           {hasOverflow && remainingCount > 0 && (
             <div
-              className="w-6 h-6 rounded-full bg-[#1A73E8] flex items-center justify-center flex-shrink-0 relative box-border"
+              className="w-6 h-6 rounded-full bg-ds-accent flex items-center justify-center flex-shrink-0 relative box-border"
               style={{ zIndex: visibleMembers.length }}
             >
               <span className="font-['Poppins'] text-[12px] leading-[16px] font-normal text-white text-center select-none whitespace-nowrap">
@@ -247,17 +248,17 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 text-ds-text-secondary hover:text-ds-text-primary transition-colors"
+            className="p-1 text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
           >
-            <Icon name="menu" className="w-5 h-5" />
+            <MoreHorizontal className="w-5 h-5" />
           </button>
 
           {showMenu && (
-            <div className="absolute right-0 top-[40px] w-[111px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-bg border border-ds-border rounded-[16px] z-30 box-border">
+            <div className="absolute right-0 top-[40px] w-[111px] flex flex-col items-start p-[12px] gap-[16px] bg-ds-surface-1 border border-ds-border-subtle rounded-[16px] shadow-xl z-30 box-border">
               {canInviteToRole && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowMenu(false); onInvite(); }}
-                  className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap"
+                  className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap cursor-pointer"
                 >
                   Add member
                 </button>
@@ -266,14 +267,14 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(); }}
-                    className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap"
+                    className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap cursor-pointer"
                   >
                     Edit role
                   </button>
                   {!role.isSystemRole && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(); }}
-                      className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap"
+                      className="w-full text-left font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-text-secondary hover:text-ds-text-primary transition-colors whitespace-nowrap cursor-pointer"
                     >
                       Delete role
                     </button>

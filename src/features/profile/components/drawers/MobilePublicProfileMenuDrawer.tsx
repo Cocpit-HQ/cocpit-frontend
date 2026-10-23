@@ -1,7 +1,11 @@
-"use client";
-
 import React from "react";
 import { Drawer } from "vaul";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MobilePublicProfileMenuDrawerProps {
   isOpen: boolean;
@@ -26,6 +30,11 @@ interface MobilePublicProfileMenuDrawerProps {
   onDownloadProfile: () => void;
   onShareProfile: () => void;
   onBlockProfile: () => void;
+  canBlockTarget?: boolean;
+  noBlockMessage?: string;
+  isBlocked?: boolean;
+  canReportTarget?: boolean;
+  noReportMessage?: string;
   onReportProfile: () => void;
   profileScore?: number;
 }
@@ -50,6 +59,11 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
   onDownloadProfile,
   onShareProfile,
   onBlockProfile,
+  canBlockTarget = true,
+  noBlockMessage,
+  isBlocked = false,
+  canReportTarget = true,
+  noReportMessage,
   onReportProfile,
   profileScore,
 }) => {
@@ -182,21 +196,63 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
               Share profile
             </button>
 
-            <button
-              type="button"
-              onClick={closeAnd(onBlockProfile)}
-              className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-            >
-              Block profile
-            </button>
+            {!canBlockTarget ? (
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <span className="w-full inline-block cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                      >
+                        {isBlocked ? "Unblock profile" : "Block profile"}
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[105]">
+                    {noBlockMessage || "You don't have access to block/unblock on the behalf of company"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <button
+                type="button"
+                onClick={closeAnd(onBlockProfile)}
+                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+              >
+                {isBlocked ? "Unblock profile" : "Block profile"}
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={closeAnd(onReportProfile)}
-              className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-            >
-              Report profile
-            </button>
+            {!canReportTarget ? (
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <span className="w-full inline-block cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                      >
+                        Report profile
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[105]">
+                    {noReportMessage || "You don't have access to report on the behalf of company"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <button
+                type="button"
+                onClick={closeAnd(onReportProfile)}
+                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+              >
+                Report profile
+              </button>
+            )}
           </div>
         </Drawer.Content>
       </Drawer.Portal>

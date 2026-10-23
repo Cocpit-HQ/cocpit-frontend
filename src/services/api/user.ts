@@ -10,11 +10,14 @@ export const searchUsers = async (query: string): Promise<SearchedUser[]> => {
 export const getUserById = async (
   id: string,
   sourcePostId?: string,
-  options?: { skipAudit?: boolean }
+  options?: { skipAudit?: boolean; skipAuditLog?: boolean }
 ): Promise<PublicUserProfileResponse> => {
   const params: Record<string, any> = {};
   if (sourcePostId) params.sourcePostId = sourcePostId;
-  if (options?.skipAudit) params.skipAudit = 'true';
+  if (options?.skipAudit || options?.skipAuditLog) {
+    params.skipAudit = 'true';
+    params.skipAuditLog = 'true';
+  }
   const response = await api.get(`/users/${id}`, {
     params: Object.keys(params).length > 0 ? params : undefined,
   });

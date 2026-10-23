@@ -46,10 +46,13 @@ const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then
 
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess, isOwnPost } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess, isOwnPost, hasPostInteractions: propsHasPostInteractions } = props;
   const { activeProfile, isCompany, userCompanies } = useActiveProfile();
   const { checkPermission } = useCompanyPermissions(activeProfile);
-  const hasPostInteractions = !isCompany || checkPermission('CREATE_POST');
+  const hasPostInteractions = useMemo(() => {
+    if (propsHasPostInteractions !== undefined) return propsHasPostInteractions;
+    return !isCompany || checkPermission('CREATE_POST');
+  }, [propsHasPostInteractions, isCompany, checkPermission]);
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.id;
   const router = useRouter();
@@ -997,7 +1000,14 @@ export const FeedPost = (props: FeedPostProps) => {
             title={props.title || targetTitle || targetContent || (pollData as any)?.question || (pollData as any)?.poll_question}
             isOwner={isTargetAuthorMe || Boolean(props.isOwnPost)}
             isVoting={isVoting}
-            handleVote={(optionId) => handleVote(optionId, isCompany, activeProfile?.id)}
+            disabled={!hasPostInteractions}
+            handleVote={(optionId) => {
+              if (!hasPostInteractions) {
+                toast.error("You don't have permission to interact with posts");
+                return;
+              }
+              handleVote(optionId, isCompany, activeProfile?.id);
+            }}
           />
         )}
 

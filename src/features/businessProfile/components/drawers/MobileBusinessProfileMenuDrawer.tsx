@@ -2,6 +2,12 @@
 
 import React from "react";
 import { Drawer } from "vaul";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MobileBusinessProfileMenuDrawerProps {
   isOpen: boolean;
@@ -10,6 +16,10 @@ interface MobileBusinessProfileMenuDrawerProps {
   onBlockToggle?: () => void;
   isBlocked?: boolean;
   isBlocking?: boolean;
+  canBlock?: boolean;
+  noBlockMessage?: string;
+  canReport?: boolean;
+  noReportMessage?: string;
   onReportCompany?: () => void;
   onEditProfile?: () => void;
   canEditProfile?: boolean;
@@ -23,6 +33,10 @@ export const MobileBusinessProfileMenuDrawer: React.FC<MobileBusinessProfileMenu
   onBlockToggle,
   isBlocked,
   isBlocking,
+  canBlock = true,
+  noBlockMessage,
+  canReport = true,
+  noReportMessage,
   onReportCompany,
   onEditProfile,
   canEditProfile,
@@ -68,30 +82,72 @@ export const MobileBusinessProfileMenuDrawer: React.FC<MobileBusinessProfileMenu
             )}
 
             {!isOwnProfile && onBlockToggle && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onBlockToggle();
-                }}
-                disabled={isBlocking}
-                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {isBlocking ? "Updating..." : isBlocked ? "Unblock page" : "Block page"}
-              </button>
+              canBlock === false ? (
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <span className="w-full inline-block cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                        >
+                          {isBlocking ? "Updating..." : isBlocked ? "Unblock page" : "Block page"}
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[105]">
+                      {noBlockMessage || "You don't have access to block/unblock on the behalf of company"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onBlockToggle();
+                  }}
+                  disabled={isBlocking}
+                  className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isBlocking ? "Updating..." : isBlocked ? "Unblock page" : "Block page"}
+                </button>
+              )
             )}
 
             {!isOwnProfile && onReportCompany && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onReportCompany();
-                }}
-                className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
-              >
-                Report page
-              </button>
+              canReport === false ? (
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <span className="w-full inline-block cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                        >
+                          Report page
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[105]">
+                      {noReportMessage || "You don't have access to report on the behalf of company"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onReportCompany();
+                  }}
+                  className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] hover:bg-[var(--ds-surface-2)] active:bg-[var(--ds-surface-2)] transition-colors cursor-pointer"
+                >
+                  Report page
+                </button>
+              )
             )}
           </div>
         </Drawer.Content>

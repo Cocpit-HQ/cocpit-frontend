@@ -27,7 +27,7 @@ export default function CompanyPage() {
 
     const { data: company, isLoading, error } = useQuery({
         queryKey: ["company", slug, sourcePostId],
-        queryFn: () => companyService.getCompany(slug, sourcePostId),
+        queryFn: () => companyService.getCompany(slug, sourcePostId, { skipAuditLog: true }),
         retry: false,
     });
 

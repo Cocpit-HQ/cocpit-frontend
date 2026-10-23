@@ -2,6 +2,7 @@
 export type TeamPermission =
   | 'CREATE_POST'
   | 'MANAGE_COMPANY_DETAILS'
+  | 'REPORT_BLOCK'
   | 'CHANNEL'
   | 'CHAT'
   | 'TEAMS'
@@ -14,7 +15,8 @@ export type TeamPermission =
 // Human-readable labels for permissions (used in UI)
 export const PERMISSION_LABELS: Record<string, string> = {
   CREATE_POST: 'Post interactions',
-  MANAGE_COMPANY_DETAILS: 'Edit company profile',
+  MANAGE_COMPANY_DETAILS: 'Profile Management',
+  REPORT_BLOCK: 'Report/Block',
   CHANNEL: 'Channel',
   CHAT: 'Chat',
   TEAMS: 'Teams',

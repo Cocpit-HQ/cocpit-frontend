@@ -177,9 +177,11 @@ export const usePostInteractions = (props: FeedPostProps, manageRoom: boolean = 
       } else {
         await feedApi.voteInPoll(id, optionId, companyId);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Vote failed", error);
-      toast.error("Failed to record vote");
+      const err = error as { response?: { data?: { message?: string } } };
+      const msg = err?.response?.data?.message || "Failed to record vote";
+      toast.error(msg);
       setPollData(previousPollData);
     } finally {
       setIsVoting(false);

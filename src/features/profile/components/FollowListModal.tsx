@@ -32,6 +32,13 @@ import {
 } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { cn } from "@/lib/utils";
+import { useCompanyFollowPermission } from "@/hooks/useCompanyFollowPermission";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FollowListModalProps {
   isOpen: boolean;
@@ -67,6 +74,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   const { user: currentUser } = useAuth();
   const { isFollowing, syncFollowStatus, startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
 
   const loggedInUserId = currentUser?.id?.toString();
   const isOwnProfile = isOwnProfileProp !== undefined
@@ -418,15 +426,24 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   });
 
   const handleConnect = (id: string) => {
+    if (isCompanyActor) return;
     setPendingConnectUserIds((prev) => new Set(prev).add(id));
     connectMutation.mutate(id);
   };
 
   const handleFollow = (id: string, name?: string) => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     followMutation.mutate({ id, name });
   };
 
   const handleUnfollow = (id: string, name: string, type?: string) => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     setConfirmAction({
       type: "unfollow",
       userId: id,
@@ -517,6 +534,29 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         const isUserFollowed = isFollowing(id) || Boolean(user.is_following);
 
         if (isUserFollowed) {
+          if (isCompanyActor && !canFollow) {
+            return (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                      >
+                        Unfollow
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                    {noFollowMessage}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
+          }
+
           return (
             <button
               type="button"
@@ -525,6 +565,29 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             >
               Unfollow
             </button>
+          );
+        }
+
+        if (isCompanyActor && !canFollow) {
+          return (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <button
+                      type="button"
+                      disabled
+                      className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                    >
+                      Follow
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                  {noFollowMessage}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           );
         }
 
@@ -540,6 +603,29 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       }
 
       // Own profile: everyone in following tab is followed by you
+      if (isCompanyActor && !canFollow) {
+        return (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-not-allowed">
+                  <button
+                    type="button"
+                    disabled
+                    className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                  >
+                    Unfollow
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                {noFollowMessage}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+
       return (
         <button
           type="button"
@@ -572,6 +658,29 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       }
 
       if (!isUserFollowed) {
+        if (isCompanyActor && !canFollow) {
+          return (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <button
+                      type="button"
+                      disabled
+                      className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                    >
+                      Follow
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                  {noFollowMessage}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        }
+
         return (
           <button
             type="button"
@@ -609,6 +718,10 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
       if (id === loggedInUserId) {
         return null; // Cannot connect with yourself
+      }
+
+      if (isCompanyActor) {
+        return null; // Business accounts do not have connections and cannot connect with users
       }
 
       const isConnected = !!(user.is_connected || user.connection_status === "connected" || user.is_connection);

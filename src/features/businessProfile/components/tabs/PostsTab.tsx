@@ -58,6 +58,8 @@ export default function PostsTab({
     )
   );
 
+  const hasInteractionPermission = !isOwnProfile || hasCreatePostPermission;
+
   const {
     data: queryData,
     fetchNextPage,
@@ -293,6 +295,7 @@ export default function PostsTab({
                   sessionId="org-posts-tab"
                   className="w-full max-w-[442px] !mx-0 !ml-0"
                   initialShowComments={shouldShowComments} 
+                  hasPostInteractions={hasInteractionPermission}
                   menuAccess={getPostMenuAccess({
                     isCompanyPost: true,
                     companyId: data.id,

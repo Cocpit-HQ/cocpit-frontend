@@ -19,7 +19,7 @@ interface ActiveProfile {
     name: string;
     slug?: string;
     avatar_url?: string;
-    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null;
+    viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean; color?: string; description?: string } | null;
     verification_status?: string;
     is_identity_verified?: boolean;
 }
@@ -61,7 +61,7 @@ const createUserProfile = (user: any): ActiveProfile => {
     };
 };
 
-const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean } | null, verification_status?: string }): ActiveProfile => {
+const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: string; permissions: string[]; priority: number; is_owner?: boolean; color?: string; description?: string } | null, verification_status?: string }): ActiveProfile => {
     const rawStatus = (company as any).verification_status || company.verification_status;
     const isVerified = Boolean(
         (company as any).is_identity_verified ||

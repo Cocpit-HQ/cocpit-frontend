@@ -59,6 +59,8 @@ export default function FeaturedPostsSection({
     )
   );
 
+  const hasInteractionPermission = !isOwnProfile || hasCreatePostPermission;
+
   // Detect mobile viewport (mobile: 1, desktop: 2)
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < 768 : false
@@ -277,6 +279,7 @@ export default function FeaturedPostsSection({
                     isProfileView={true}
                     sessionId="featured-posts"
                     initialComments={post.commentData}
+                    hasPostInteractions={hasInteractionPermission}
                     menuAccess={getPostMenuAccess({
                       isCompanyPost: true,
                       companyId: data.id,

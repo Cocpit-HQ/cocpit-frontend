@@ -39,7 +39,7 @@ export const companyRolesService = {
 
 export const PERMISSIONS_LIST = [
     { id: 'SWITCH_TO_COMPANY', label: 'Switch to Company Profile' },
-    { id: 'MANAGE_COMPANY_DETAILS', label: 'Edit Company Details (Name, Logo, Info)' },
+    { id: 'MANAGE_COMPANY_DETAILS', label: 'Profile Management (Name, Logo, Info)' },
     { id: 'MANAGE_SETTINGS', label: 'Manage Settings (Billing, Domain)' },
     { id: 'VIEW_MEMBERS', label: 'View Team Members' },
     { id: 'INVITE_MEMBERS', label: 'Invite New Members' },

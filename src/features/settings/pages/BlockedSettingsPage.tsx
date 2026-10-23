@@ -7,13 +7,22 @@ import { BlockIcon, UserIcon } from '@/components/icons';
 import { useBlockedUsers, BlockedUser } from '../hooks/useBlockedUsers';
 import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
 import { MobileSettingsHeader } from '../components/MobileSettingsView';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useOrgBlockPermissions } from '@/hooks/useOrgBlockPermissions';
 
 interface BlockedUserRowProps {
   user: BlockedUser;
   onUnblock: (user: BlockedUser) => void;
+  canManageBlock?: boolean;
+  noBlockMessage?: string;
 }
 
-const BlockedUserRow = memo(({ user, onUnblock }: BlockedUserRowProps) => {
+const BlockedUserRow = memo(({ user, onUnblock, canManageBlock = true, noBlockMessage }: BlockedUserRowProps) => {
   const [imageError, setImageError] = useState(false);
 
   // Removed hover classes from the row since it is not interactive
@@ -42,14 +51,35 @@ const BlockedUserRow = memo(({ user, onUnblock }: BlockedUserRowProps) => {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onUnblock(user)}
-        aria-label={`Unblock ${user.name}`}
-        className="h-[36px] px-3 py-1.5 bg-ds-surface-1 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-accent inline-flex justify-center items-center cursor-pointer hover:bg-ds-surface-2 transition-colors ds-focus-ring shrink-0"
-      >
-        <span className="ds-text-body-1 text-ds-text-primary">Unblock</span>
-      </button>
+      {!canManageBlock ? (
+        <TooltipProvider>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <span className="inline-block cursor-not-allowed">
+                <button
+                  type="button"
+                  disabled
+                  className="h-[36px] px-3 py-1.5 bg-ds-surface-1 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-accent inline-flex justify-center items-center opacity-50 pointer-events-none shrink-0"
+                >
+                  <span className="ds-text-body-1 text-ds-text-primary">Unblock</span>
+                </button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+              {noBlockMessage || "You don't have access to block/unblock on the behalf of company"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onUnblock(user)}
+          aria-label={`Unblock ${user.name}`}
+          className="h-[36px] px-3 py-1.5 bg-ds-surface-1 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-accent inline-flex justify-center items-center cursor-pointer hover:bg-ds-surface-2 transition-colors ds-focus-ring shrink-0"
+        >
+          <span className="ds-text-body-1 text-ds-text-primary">Unblock</span>
+        </button>
+      )}
     </div>
   );
 });
@@ -63,6 +93,7 @@ export function BlockedSettingsPage() {
   const basePath = match ? match[1] : '/settings';
 
   const { blockedUsers, isLoading, unblockUser, isUnblocking } = useBlockedUsers();
+  const { canManageBlock, message: noBlockMessage } = useOrgBlockPermissions();
   const [selectedUser, setSelectedUser] = useState<BlockedUser | null>(null);
 
   const handleSelectUser = useCallback((user: BlockedUser) => {
@@ -122,6 +153,8 @@ export function BlockedSettingsPage() {
                 key={user.id}
                 user={user}
                 onUnblock={handleSelectUser}
+                canManageBlock={canManageBlock}
+                noBlockMessage={noBlockMessage}
               />
             ))}
           </div>

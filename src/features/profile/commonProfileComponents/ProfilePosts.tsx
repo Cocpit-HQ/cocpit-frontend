@@ -26,6 +26,13 @@ import { toast } from "sonner";
 
 import { PostCarousel } from "@/components/shared/PostCarousel";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useCompanyFollowPermission } from "@/hooks/useCompanyFollowPermission";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { CommentModal } from "../components/CommentModal";
@@ -87,6 +94,7 @@ const ProfilePostCard = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { setEditMode } = useUIStore();
   const { activeProfile, isCompany } = useActiveProfile();
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
   const { data: session } = useSession();
 
   const [isReposted, setIsReposted] = useState(getInitialMainPost(post).isReposted || false);
@@ -125,6 +133,10 @@ const ProfilePostCard = ({
   });
 
   const handleToggleFollowAuthor = () => {
+    if (isCompanyActor && !canFollow) {
+      toast.error(noFollowMessage);
+      return;
+    }
     if (!authorUserId || isAuthorFollowLoading) return;
 
     if (localPost.isCompanyPost) {
@@ -565,22 +577,51 @@ const ProfilePostCard = ({
 
                 {!isOwnPost && (
                   <>
-                    <DropdownMenuItem
-                      onClick={handleToggleFollowAuthor}
-                      disabled={!authorUserId || isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending}
-                      className="flex items-start justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
-                    >
-                      <span className="text-[14px] font-['DM_Sans'] break-words text-left pr-2">
-                        {localPost.isCompanyPost
-                          ? (isAuthorFollowing ? "Unfollow company" : "Follow company")
-                          : (isAuthorFollowing ? "Unfollow user" : "Follow user")}
-                      </span>
-                      <img
-                        src={localPost.authorAvatar || "/assets/pngegg.png"}
-                        alt={localPost.author || "User"}
-                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                      />
-                    </DropdownMenuItem>
+                    {isCompanyActor && !canFollow ? (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="w-full inline-flex cursor-not-allowed">
+                              <DropdownMenuItem
+                                disabled
+                                className="flex items-start justify-between w-full px-3 py-2 opacity-50 pointer-events-none rounded-xl outline-none"
+                              >
+                                <span className="text-[14px] font-['DM_Sans'] break-words text-left pr-2">
+                                  {localPost.isCompanyPost
+                                    ? (isAuthorFollowing ? "Unfollow company" : "Follow company")
+                                    : (isAuthorFollowing ? "Unfollow user" : "Follow user")}
+                                </span>
+                                <img
+                                  src={localPost.authorAvatar || "/assets/pngegg.png"}
+                                  alt={localPost.author || "User"}
+                                  className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                                />
+                              </DropdownMenuItem>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-50">
+                            {noFollowMessage}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={handleToggleFollowAuthor}
+                        disabled={!authorUserId || isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending}
+                        className="flex items-start justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
+                      >
+                        <span className="text-[14px] font-['DM_Sans'] break-words text-left pr-2">
+                          {localPost.isCompanyPost
+                            ? (isAuthorFollowing ? "Unfollow company" : "Follow company")
+                            : (isAuthorFollowing ? "Unfollow user" : "Follow user")}
+                        </span>
+                        <img
+                          src={localPost.authorAvatar || "/assets/pngegg.png"}
+                          alt={localPost.author || "User"}
+                          className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                        />
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={() => setIsReportModalOpen(true)}
                       className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"

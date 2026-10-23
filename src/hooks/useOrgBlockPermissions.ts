@@ -4,14 +4,24 @@ import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 
+export const NO_BLOCK_ACCESS_MESSAGE = "You don't have access to block/unblock on the behalf of company";
+export const NO_REPORT_ACCESS_MESSAGE = "You don't have access to report on the behalf of company";
+
 export function useOrgBlockPermissions(targetUserId?: string | null) {
     const { activeProfile, isCompany } = useActiveProfile();
 
     const roleData = activeProfile?.viewer_role_data;
     const roleName = (roleData?.name || '').toUpperCase();
-    const isOwner = Boolean(roleData?.is_owner || roleData?.permissions?.includes('*'));
-    const isAdmin = roleName === 'ADMIN' || roleName === 'OWNER' || isOwner;
-    const canManageBlock = isCompany ? (isOwner || isAdmin) : true;
+    const isOwner = Boolean(roleData?.is_owner || roleName === 'OWNER' || roleData?.permissions?.includes('*'));
+    const isAdmin = roleName === 'ADMIN' || isOwner;
+    const hasProfileManagement = Boolean(
+        roleData?.permissions?.includes('*') ||
+        roleData?.permissions?.includes('MANAGE_COMPANY_DETAILS') ||
+        roleData?.permissions?.includes('EDIT_COMPANY_PROFILE') ||
+        roleData?.permissions?.includes('REPORT_BLOCK')
+    );
+    const canManageBlock = isCompany ? (isOwner || isAdmin || hasProfileManagement) : true;
+    const canManageReport = isCompany ? (isOwner || isAdmin || hasProfileManagement) : true;
 
     // Direct check if targetUserId is the Organization's Owner or Organization ID itself
     const isTargetOwner = Boolean(
@@ -47,13 +57,20 @@ export function useOrgBlockPermissions(targetUserId?: string | null) {
 
     const targetProtected = isTargetOwner || isTargetAdminOrOwner;
     const canBlockTarget = canManageBlock && !targetProtected;
+    const canReportTarget = canManageReport;
 
     return {
         isCompany,
         isOwner,
         isAdmin,
+        hasProfileManagement,
         canManageBlock,
+        canManageReport,
         isTargetAdminOrOwner: targetProtected,
         canBlockTarget,
+        canReportTarget,
+        message: NO_BLOCK_ACCESS_MESSAGE,
+        noBlockMessage: NO_BLOCK_ACCESS_MESSAGE,
+        noReportMessage: NO_REPORT_ACCESS_MESSAGE,
     };
 }

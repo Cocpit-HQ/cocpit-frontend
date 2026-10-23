@@ -25,6 +25,7 @@ interface PostPollProps {
   title?: string | null;
   postId?: string | number;
   isOwner?: boolean;
+  disabled?: boolean;
 }
 
 export const PostPoll: React.FC<PostPollProps> = ({
@@ -34,6 +35,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
   title,
   postId,
   isOwner = false,
+  disabled = false,
 }) => {
   const [showResult, setShowResult] = useState(false);
   const [isVotersModalOpen, setIsVotersModalOpen] = useState(false);
@@ -73,11 +75,11 @@ export const PostPoll: React.FC<PostPollProps> = ({
               : 0;
 
           const isSelected = pollData.user_vote === option.option_id;
-          const isDisabled = isVoting || isEnded;
+          const isDisabled = isVoting || isEnded || disabled;
 
           // ── Option with Results / Voted / Ended State (bars & %) ───────────
           if (displayResults) {
-            const canVoteFromResults = !isVoted && !isEnded && !isVoting;
+            const canVoteFromResults = !isVoted && !isEnded && !isVoting && !disabled;
 
             return (
               <div
@@ -137,7 +139,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
               className={`self-stretch px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent flex justify-start items-center gap-2.5 transition-colors outline-none text-left select-none ${
                 !isDisabled
                   ? 'cursor-pointer hover:bg-ds-surface-2 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ds-accent'
-                  : 'cursor-default opacity-60'
+                  : 'cursor-not-allowed opacity-60'
               }`}
             >
               <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
@@ -196,9 +198,11 @@ export const PostPoll: React.FC<PostPollProps> = ({
             <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
             <button
               type="button"
-              onClick={() => !isVoting && pollData.user_vote && handleVote(pollData.user_vote)}
-              disabled={isVoting}
-              className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2 disabled:opacity-50"
+              onClick={() => !isVoting && !disabled && pollData.user_vote && handleVote(pollData.user_vote)}
+              disabled={isVoting || disabled}
+              className={`justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none transition-opacity line-clamp-2 ${
+                isVoting || disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80 cursor-pointer'
+              }`}
               aria-label="Undo vote"
             >
               Undo
@@ -210,9 +214,11 @@ export const PostPoll: React.FC<PostPollProps> = ({
             <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
             <button
               type="button"
-              onClick={() => setShowResult((prev) => !prev)}
-              disabled={isVoting}
-              className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] hover:opacity-80 cursor-pointer outline-none transition-opacity line-clamp-2 disabled:opacity-50"
+              onClick={() => !disabled && setShowResult((prev) => !prev)}
+              disabled={isVoting || disabled}
+              className={`justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none transition-opacity line-clamp-2 ${
+                isVoting || disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80 cursor-pointer'
+              }`}
               aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
             >
               {showResult ? 'Hide result' : 'Show result'}

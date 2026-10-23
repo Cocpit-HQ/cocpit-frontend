@@ -19,6 +19,13 @@ import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal
 import { cn } from "@/lib/utils";
 import { businessProfileService } from "../services/businessProfile.service";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyFollowPermission } from "@/hooks/useCompanyFollowPermission";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface OrganizationStatsModalProps {
   isOpen: boolean;
@@ -54,7 +61,7 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
   const { user: currentUser } = useAuth();
   const { isFollowing, startChat, syncFollowStatus, notifyFollowEvent, followUser, unfollowUser } = useSocial();
   const { activeProfile, isCompany } = useActiveProfile();
-  const isCompanyActor = Boolean(isCompany || activeProfile?.type === "COMPANY");
+  const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
   const actingOrgId = (isCompanyActor && activeProfile?.id) ? activeProfile.id : orgId;
   const loggedInUserId = currentUser?.id?.toString();
 
@@ -160,6 +167,10 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
     if (!confirmAction) return;
     try {
       if (confirmAction.type === "unfollow") {
+        if (isCompanyActor && !canFollow) {
+          toast.error(noFollowMessage);
+          return;
+        }
         await unfollowMutation.mutateAsync({
           type: confirmAction.entityType || "user",
           targetId: confirmAction.id,
@@ -215,6 +226,29 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
           );
 
     if (isTargetFollowed) {
+      if (isCompanyActor && !canFollow) {
+        return (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-not-allowed">
+                  <button
+                    type="button"
+                    disabled
+                    className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                  >
+                    Unfollow
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                {noFollowMessage}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+
       return (
         <button
           type="button"
@@ -230,6 +264,29 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
         >
           Unfollow
         </button>
+      );
+    }
+
+    if (isCompanyActor && !canFollow) {
+      return (
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex cursor-not-allowed">
+                <button
+                  type="button"
+                  disabled
+                  className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                >
+                  Follow
+                </button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+              {noFollowMessage}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
 

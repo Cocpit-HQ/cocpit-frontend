@@ -33,13 +33,30 @@ export interface GetPostMenuAccessParams {
   activeProfile?: { type: string, id: string } | null;
 }
 
-function hasFullAccess(perms: string[]): boolean {
+// ===========================================================================
+// [SCRUM-1367] Replaced legacy hasFullAccess:
+// Previously, post edit/delete permissions were coupled with Profile Management
+// (MANAGE_COMPANY_DETAILS, MANAGE_COMPANY).
+// Per SCRUM-1367, edit and delete permissions are now controlled exclusively
+// by Post Interactions (CREATE_POST / CREATE_CONTENT / MANAGE_CONTENT / *).
+//
+// Legacy code kept for reference:
+// function hasFullAccess(perms: string[]): boolean {
+//   return (
+//     perms.includes('*') ||
+//     perms.includes('MANAGE_COMPANY_DETAILS') ||
+//     perms.includes('MANAGE_ORGANIZATION_DETAILS') ||
+//     perms.includes('MANAGE_COMPANY') ||
+//     perms.includes('MANAGE_ORGANIZATION') ||
+//     perms.includes('MANAGE_CONTENT')
+//   );
+// }
+// ===========================================================================
+function hasPostInteractionsAccess(perms: string[]): boolean {
   return (
     perms.includes('*') ||
-    perms.includes('MANAGE_COMPANY_DETAILS') ||
-    perms.includes('MANAGE_ORGANIZATION_DETAILS') ||
-    perms.includes('MANAGE_COMPANY') ||
-    perms.includes('MANAGE_ORGANIZATION') ||
+    perms.includes('CREATE_POST') ||
+    perms.includes('CREATE_CONTENT') ||
     perms.includes('MANAGE_CONTENT')
   );
 }
@@ -95,20 +112,25 @@ export function getPostMenuAccess(params: GetPostMenuAccessParams): PostMenuAcce
 
   const perms = rawPerms.map((p: any) => String(p).toUpperCase().trim());
 
-  if (hasFullAccess(perms)) return 'owner';
-
-  if (!currentUserId) return 'internal';
-
-  // Only the original post author (who created this post) gets owner rights (edit/delete)
-  // Ensure createdByUserId is a human user ID (not matching companyId)
-  const isAuthor = Boolean(
-    createdByUserId &&
-    String(companyId).toLowerCase() !== String(createdByUserId).toLowerCase() &&
-    String(createdByUserId).toLowerCase() === String(currentUserId).toLowerCase()
-  );
-  if (isAuthor) {
-    return 'owner';
-  }
+  // ===========================================================================
+  // [SCRUM-1367]
+  // Previously:
+  // 1. if (hasFullAccess(perms)) return 'owner';
+  // 2. if (!currentUserId) return 'internal';
+  // 3. const isAuthor = Boolean(
+  //      createdByUserId &&
+  //      String(companyId).toLowerCase() !== String(createdByUserId).toLowerCase() &&
+  //      String(createdByUserId).toLowerCase() === String(currentUserId).toLowerCase()
+  //    );
+  //    if (isAuthor) return 'owner';
+  //
+  // Reason for update:
+  // Previously, an author could edit/delete company posts even if their role
+  // had Post Interactions disabled, and Profile Management erroneously granted edit/delete.
+  // Now: Ability to edit or delete company posts is controlled strictly by Post Interactions.
+  // When enabled, members can edit/delete company posts. When disabled, they cannot.
+  // ===========================================================================
+  if (hasPostInteractionsAccess(perms)) return 'owner';
 
   return 'internal';
 }
