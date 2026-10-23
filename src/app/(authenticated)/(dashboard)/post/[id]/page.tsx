@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { useEffect, useState, use, useRef } from "react";
 import { getPostById } from "@/services/api/posts";
 import { FeedPost } from "@/features/feed/components/FeedPost";
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper";
@@ -30,35 +30,75 @@ export default function SinglePostPage({ params }: PageProps) {
   const [error, setError] = useState("");
   const { userCompanies, activeProfile } = useActiveProfile();
 
+  const isNavigatingRef = useRef(false);
+
+  // Manage post navigation stack in sessionStorage so Back and Close buttons navigate deterministically across nested post layers
+  useEffect(() => {
+    if (!id || typeof window === "undefined") return;
+
+    try {
+      const currentId = id.toString();
+      const rawStack = sessionStorage.getItem("cocpit_post_stack");
+      let stack: string[] = rawStack ? JSON.parse(rawStack) : [];
+      if (!Array.isArray(stack)) stack = [];
+
+      const existingIndex = stack.indexOf(currentId);
+      if (existingIndex !== -1) {
+        // Navigated back to an earlier layer in the stack: truncate forward layers
+        stack = stack.slice(0, existingIndex + 1);
+      } else {
+        // Navigated deeper into a new layer: append to stack
+        stack.push(currentId);
+      }
+      sessionStorage.setItem("cocpit_post_stack", JSON.stringify(stack));
+    } catch {
+      // Ignore JSON parse errors
+    }
+
+    isNavigatingRef.current = false;
+  }, [id]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
+    setLoading(true);
+    setError("");
+    let isCancelled = false;
+
     const fetchPost = async () => {
       try {
         const backendPost = await getPostById(id);
+        if (isCancelled) return;
         const mappedPost = mapBackendPostToFrontend(backendPost);
         if (mappedPost.is_community_article && mappedPost.communityId) {
           router.replace(`/channels/${mappedPost.communityId}/article/${mappedPost.id}`);
           return;
         }
-        const isArticle = mappedPost.post_type === 'article' || mappedPost.category === 'Article'
+        const isArticle = mappedPost.post_type === 'article' || mappedPost.category === 'Article';
         if (isArticle) {
-          router.replace(`/article/${mappedPost.id}`)
-          return
+          router.replace(`/article/${mappedPost.id}`);
+          return;
         }
         setPost(mappedPost);
       } catch (err: any) {
+        if (isCancelled) return;
         if (err?.response?.status !== 404) {
           console.error("Failed to load post:", err);
         }
         setError("Failed to load post. It may have been deleted.");
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
     if (id) {
       fetchPost();
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [id, router]);
 
   // Fire impression when the post finishes loading on the detail page.
@@ -101,12 +141,7 @@ export default function SinglePostPage({ params }: PageProps) {
       const customEvent = event as CustomEvent;
       const detail = customEvent.detail;
       if (detail && detail.id?.toString() === id?.toString()) {
-        if (typeof window !== "undefined" && window.history.length > 1) {
-          router.back();
-        } else {
-          const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
-          router.push(savedPath || "/feed");
-        }
+        handleBack();
       }
     };
 
@@ -120,20 +155,75 @@ export default function SinglePostPage({ params }: PageProps) {
   }, [id, router]);
 
   const handleBack = () => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+
+    try {
+      const currentId = id?.toString();
+      const rawStack = sessionStorage.getItem("cocpit_post_stack");
+      let stack: string[] = rawStack ? JSON.parse(rawStack) : [];
+      if (!Array.isArray(stack)) stack = [];
+
+      const currentIndex = stack.lastIndexOf(currentId);
+      if (currentIndex > 0) {
+        // There is a previous post layer in the stack (e.g. Layer 1 repost): return to it
+        const prevPostId = stack[currentIndex - 1];
+        const newStack = stack.slice(0, currentIndex);
+        sessionStorage.setItem("cocpit_post_stack", JSON.stringify(newStack));
+
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+        } else {
+          router.push(`/post/${prevPostId}`);
+        }
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
+    // No deeper layers in the stack (we are on Layer 1): return to Feed or previous origin page
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("cocpit_post_stack");
+    }
+
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {
-      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+      let savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+      if (savedPath && savedPath.startsWith("/post/")) {
+        savedPath = "/feed";
+      }
       router.push(savedPath || "/feed");
     }
   };
 
   const handleClose = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
+    // Dismiss the entire modal/page stack and return to the origin page at the saved scroll position
+    let depth = 1;
+    try {
+      const rawStack = sessionStorage.getItem("cocpit_post_stack");
+      const stack: string[] = rawStack ? JSON.parse(rawStack) : [];
+      if (Array.isArray(stack) && stack.length > 0) {
+        depth = stack.length;
+      }
+    } catch {
+      // Ignore
+    }
+
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("cocpit_post_stack");
+    }
+
+    let savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
+    if (savedPath && savedPath.startsWith("/post/")) {
+      savedPath = "/feed";
+    }
+
+    if (typeof window !== "undefined" && window.history.length > depth) {
+      window.history.go(-depth);
     } else {
-      const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
-      router.push(savedPath || "/feed");
+      router.replace(savedPath || "/feed");
     }
   };
 
@@ -223,6 +313,7 @@ export default function SinglePostPage({ params }: PageProps) {
           </div>
         ) : post ? (
           <FeedPost
+            key={post.id}
             {...post}
             isOwnPost={isOwnPost}
             menuAccess={menuAccess}

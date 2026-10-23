@@ -652,7 +652,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                     ref={popupRef}
                     onWheel={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
-                    className="fixed pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-surface-2 border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
+                    className="fixed pointer-events-auto shadow-2xl rounded-2xl w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3 bg-ds-bg border border-ds-border overflow-hidden animate-in fade-in-0 zoom-in-95"
                     style={{
                         zIndex: computedZIndex,
                         top: typeof suggestionPosition.top === 'number'
@@ -690,7 +690,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
                             }
                         }
                     }}
-                    className="fixed pointer-events-auto animate-in fade-in-0 zoom-in-95 shadow-2xl bg-ds-surface-2 border border-ds-border rounded-xl flex flex-col items-start p-4 gap-2 w-[280px] max-h-[232px] overflow-x-hidden overflow-y-auto custom-scrollbar mb-2 box-border"
+                    className="fixed pointer-events-auto animate-in fade-in-0 zoom-in-95 shadow-2xl bg-ds-bg border border-ds-border rounded-xl flex flex-col items-start p-4 gap-2 w-[280px] max-h-[232px] overflow-x-hidden overflow-y-auto custom-scrollbar mb-2 box-border"
                     style={{
                         zIndex: computedZIndex,
                         top: typeof suggestionPosition.top === 'number'

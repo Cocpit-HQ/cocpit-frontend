@@ -279,7 +279,7 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
       e.stopPropagation();
       // Purpose of Bug Fix: Save current scroll position before navigating to original post from repost
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/post/') && !window.location.pathname.startsWith('/article/')) {
-        saveScrollPosition("post");
+        saveScrollPosition("post", targetPostId.toString());
       }
       router.push(`/post/${targetPostId}`);
     }

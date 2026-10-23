@@ -7,6 +7,7 @@ import { TagActivityItem } from './activity.types';
 import { extractPostMedia, cleanActivityText } from './activityUtils';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 
 interface TagsActivityTabProps {
   data?: any[];
@@ -74,20 +75,35 @@ export function TagsActivityTab({ data, removedItemIds, onRemove }: TagsActivity
 
   return (
     <div className="w-full flex flex-col justify-start items-start gap-4">
-      {tagsList.map((item, index) => (
-        <div
-          key={`tag-${item.id}-${index}`}
-          onClick={() => {
-            const targetId = item.postId || item.id;
-            if (targetId && (typeof targetId === 'number' || !String(targetId).startsWith('tag-'))) {
-              if (typeof window !== 'undefined') {
-                sessionStorage.setItem('cocpit_scroll_path', window.location.pathname);
+      {tagsList.map((item, index) => {
+        const targetId = item.postId || item.id;
+        return (
+          <div
+            key={`tag-${item.id}-${index}`}
+            id={targetId ? `post-${targetId}` : undefined}
+            data-post-id={targetId}
+            onClick={(e) => {
+              if (targetId && (typeof targetId === 'number' || !String(targetId).startsWith('tag-'))) {
+                if (typeof window !== 'undefined') {
+                  const mainEl = e.currentTarget.closest('main') || document.getElementById('settings-main-scroll-container');
+                  const scrollY = mainEl ? mainEl.scrollTop : window.scrollY;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const containerTop = mainEl ? mainEl.getBoundingClientRect().top : 0;
+
+                  sessionStorage.setItem('cocpit_scroll_path', window.location.pathname);
+                  sessionStorage.setItem(`scroll-${window.location.pathname}`, scrollY.toString());
+                  sessionStorage.setItem('cocpit_scroll_y', scrollY.toString());
+                  sessionStorage.setItem('cocpit_activity_scroll_y', scrollY.toString());
+                  sessionStorage.setItem('cocpit_last_interacted_post_id', targetId.toString());
+                  sessionStorage.setItem('cocpit_last_interacted_post_viewport_top', (rect.top - containerTop).toString());
+
+                  saveScrollPosition('settings', targetId.toString());
+                }
+                router.push(`/post/${targetId}`);
               }
-              router.push(`/post/${targetId}`);
-            }
-          }}
-          className="w-full pb-4 border-b border-ds-border last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-3 cursor-pointer group"
-        >
+            }}
+            className="w-full pb-4 border-b border-ds-border last:border-b-0 last:pb-0 flex flex-col justify-start items-start gap-3 cursor-pointer group"
+          >
           {/* Post Header */}
           <div className="w-full inline-flex justify-between items-center">
             <div className="flex justify-start items-center gap-2 min-w-0">
@@ -180,7 +196,8 @@ export function TagsActivityTab({ data, removedItemIds, onRemove }: TagsActivity
             </p>
           )}
         </div>
-      ))}
+      );
+    })}
     </div>
   );
 }

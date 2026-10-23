@@ -16,6 +16,7 @@ import { resolveCommentPostData } from './activityUtils';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import RichTextRenderer from '@/features/feed/components/parts/RichTextRenderer';
+import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 
 interface CommentsActivityTabProps {
   data?: any[];
@@ -60,9 +61,26 @@ export function CommentsActivityTab({ data, removedItemIds }: CommentsActivityTa
       {commentsList.map((item, index) => (
         <div
           key={item.uniqueKey || `comment-${item.id}-${index}`}
-          onClick={() => {
+          id={item.postId ? `post-${item.postId}` : undefined}
+          data-post-id={item.postId}
+          onClick={(e) => {
             const targetId = item.postId;
             if (targetId) {
+              if (typeof window !== 'undefined') {
+                const mainEl = e.currentTarget.closest('main') || document.getElementById('settings-main-scroll-container');
+                const scrollY = mainEl ? mainEl.scrollTop : window.scrollY;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const containerTop = mainEl ? mainEl.getBoundingClientRect().top : 0;
+
+                sessionStorage.setItem('cocpit_scroll_path', window.location.pathname);
+                sessionStorage.setItem(`scroll-${window.location.pathname}`, scrollY.toString());
+                sessionStorage.setItem('cocpit_scroll_y', scrollY.toString());
+                sessionStorage.setItem('cocpit_activity_scroll_y', scrollY.toString());
+                sessionStorage.setItem('cocpit_last_interacted_post_id', targetId.toString());
+                sessionStorage.setItem('cocpit_last_interacted_post_viewport_top', (rect.top - containerTop).toString());
+
+                saveScrollPosition('settings', targetId.toString());
+              }
               router.push(`/post/${targetId}`);
             }
           }}

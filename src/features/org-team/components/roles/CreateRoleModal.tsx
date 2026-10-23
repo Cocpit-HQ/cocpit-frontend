@@ -14,7 +14,7 @@ import {
   handleDescriptionPaste,
 } from '../../utils/role-description.util';
 
-const DISABLED_ROLE_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT'];
+const DISABLED_ROLE_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT', 'SETTINGS'];
 
 const AVAILABLE_ROLE_COLORS = ROLE_COLORS.filter(c => c !== '#06B6D4');
 

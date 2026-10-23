@@ -387,6 +387,10 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
     const switchProfile = (type: ProfileType, id: string) => {
         if (activeProfile?.type === type && activeProfile?.id === id) {
+            const dest = type === "USER" ? "/profile" : `/organization/${activeProfile.slug || id}`;
+            if (typeof window !== "undefined" && window.location.pathname !== dest) {
+                window.location.href = dest;
+            }
             return;
         }
 
@@ -419,7 +423,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
                     setActiveProfile(userProfile);
                     trackActorMetric("switch_complete", { type: "USER", id: session.user.id });
-                    window.location.href = "/feed";
+                    window.location.href = "/profile";
                     return;
                 }
 

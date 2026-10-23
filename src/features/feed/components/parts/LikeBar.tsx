@@ -18,6 +18,7 @@ export interface LikeBarProps {
   variant?: 'overlay' | 'inline';
   postType?: 'image' | 'video' | 'text' | string;
   textColor?: 'primary' | 'secondary';
+  className?: string;
 }
 
 /** Extracts the first name from a user's display name or username */
@@ -68,6 +69,7 @@ export const LikeBar: React.FC<LikeBarProps> = ({
   variant = 'inline',
   postType,
   textColor,
+  className,
 }) => {
   if (likeCount <= 0 || (likeCount === 1 && isLiked) || !sampleLikerUsername) {
     return null;
@@ -97,7 +99,7 @@ export const LikeBar: React.FC<LikeBarProps> = ({
 
   const baseClasses = variant === 'overlay'
     ? "absolute bottom-[12px] left-[12px] flex flex-row items-center gap-[6px] px-[10px] py-[4px] bg-ds-bg/60 backdrop-blur-md border border-white/10 rounded-[16px] pointer-events-auto cursor-pointer hover:bg-ds-surface-2/90 transition-colors shadow-sm z-10 select-none"
-    : "flex flex-row items-center justify-start gap-[6px] pointer-events-auto px-0 py-1 mt-[2px] cursor-pointer w-fit bg-transparent hover:opacity-80 transition-opacity select-none";
+    : `flex flex-row items-center justify-start gap-[6px] pointer-events-auto p-0 mb-[4px] cursor-pointer w-fit bg-transparent hover:opacity-80 transition-opacity select-none h-[16px] ${className || ''}`;
 
   return (
     <div

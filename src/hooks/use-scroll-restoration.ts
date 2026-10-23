@@ -20,11 +20,14 @@ export const saveScrollPosition = (source = "post", postId?: string) => {
     targetEl = (document.getElementById(`post-${postId}`) || document.querySelector(`[data-post-id="${postId}"]`)) as HTMLElement | null;
   }
 
-  // If window.scrollY is 0, check for active scroll container (e.g. ProfileAllPostsScreen or ancestor of targetEl)
+  // If window.scrollY is 0, check for active scroll container (e.g. ProfileAllPostsScreen, Settings main, or ancestor of targetEl)
   if (currentScroll === 0) {
     const allPostsContainer = document.getElementById("profile-all-posts-scroll-container");
+    const settingsContainer = document.getElementById("settings-main-scroll-container");
     if (allPostsContainer && allPostsContainer.scrollTop > 0) {
       currentScroll = allPostsContainer.scrollTop;
+    } else if (settingsContainer && settingsContainer.scrollTop > 0) {
+      currentScroll = settingsContainer.scrollTop;
     } else if (targetEl) {
       let parent = targetEl.parentElement;
       while (parent && parent !== document.body) {
@@ -39,7 +42,10 @@ export const saveScrollPosition = (source = "post", postId?: string) => {
 
   if (targetEl) {
     const rect = targetEl.getBoundingClientRect();
-    const container = document.getElementById("profile-all-posts-scroll-container");
+    const container =
+      document.getElementById("profile-all-posts-scroll-container") ||
+      document.getElementById("settings-main-scroll-container") ||
+      targetEl.closest("main");
     const containerTop = container ? container.getBoundingClientRect().top : 0;
     sessionStorage.setItem("cocpit_last_interacted_post_viewport_top", (rect.top - containerTop).toString());
   }
@@ -51,6 +57,7 @@ export const saveScrollPosition = (source = "post", postId?: string) => {
   sessionStorage.setItem("cocpit_profile_scroll_y", currentScroll.toString());
   sessionStorage.setItem("cocpit_profile_scroll_source", source);
   sessionStorage.setItem("cocpit_profile_scroll_path", currentPath);
+  sessionStorage.setItem("cocpit_activity_scroll_y", currentScroll.toString());
 
   try {
     const currentState = { ...window.history.state };
@@ -151,7 +158,8 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       const lastPostId = sessionStorage.getItem("cocpit_last_interacted_post_id");
       const profileScrollSource = sessionStorage.getItem("cocpit_profile_scroll_source");
 
-      let saved = sessionStorage.getItem(`scroll-${pathname}`);
+      let saved = sessionStorage.getItem(`scroll-${pathname}`) || 
+        (sessionStorage.getItem('cocpit_scroll_path') === pathname ? sessionStorage.getItem('cocpit_scroll_y') : null);
 
       // For profile: only restore scroll if returning from an explicit post interaction (e.g. Back button)
       if (isMainProfilePage) {
@@ -163,10 +171,10 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         }
       }
 
-      const consumeProfileTokens = () => {
+      const consumeTokens = () => {
+        sessionStorage.removeItem("cocpit_last_interacted_post_id");
+        sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
         if (isProfile) {
-          sessionStorage.removeItem("cocpit_last_interacted_post_id");
-          sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
           sessionStorage.removeItem("cocpit_profile_scroll_source");
           sessionStorage.removeItem(`scroll-${pathname}`);
           sessionStorage.removeItem("cocpit_profile_scroll_y");
@@ -184,6 +192,15 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
         const attemptScroll = () => {
           const el = getScrollElement();
+          const scrollHeight = el ? el.scrollHeight : document.documentElement.scrollHeight;
+          const clientHeight = el ? el.clientHeight : window.innerHeight;
+
+          // If content hasn't expanded to allow scrolling, wait for next frame
+          if (initialTargetScroll > 0 && scrollHeight <= clientHeight && retries < maxRetries) {
+            retries++;
+            requestAnimationFrame(attemptScroll);
+            return;
+          }
 
           const targetEl = lastPostId ? (document.getElementById(`post-${lastPostId}`) || document.querySelector(`[data-post-id="${lastPostId}"]`)) : null;
 
@@ -192,7 +209,11 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
             const containerTop = el ? el.getBoundingClientRect().top : 0;
             const currentElTop = targetEl.getBoundingClientRect().top - containerTop;
             const currentWinScroll = el ? el.scrollTop : window.scrollY;
-            targetScroll = Math.max(0, currentWinScroll + currentElTop - lastViewportTop);
+            const computedOffset = currentWinScroll + currentElTop - lastViewportTop;
+            // Prevent collapsed DOM from pulling targetScroll down to 0 when initialTargetScroll was significant
+            if (computedOffset > 0 && (initialTargetScroll <= 100 || computedOffset >= initialTargetScroll * 0.4)) {
+              targetScroll = computedOffset;
+            }
           }
 
           // 1. Attempt scroll
@@ -204,17 +225,19 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
 
           // 2. Measure actual scroll location
           const currentScroll = el ? el.scrollTop : window.scrollY;
+          const maxScroll = Math.max(0, scrollHeight - clientHeight);
+          const expectedScroll = Math.min(targetScroll, maxScroll);
 
           // 3. Evaluate success (within small fractional margin)
-          if (Math.abs(currentScroll - targetScroll) < 5) {
-            consumeProfileTokens();
+          if (Math.abs(currentScroll - expectedScroll) < 10 || (maxScroll >= targetScroll && Math.abs(currentScroll - targetScroll) < 10)) {
+            consumeTokens();
             setTimeout(() => setHasRestored(true), 150);
             return;
           }
 
           // 4. Retry conditions
           if (retries >= maxRetries) {
-            consumeProfileTokens();
+            consumeTokens();
             setTimeout(() => setHasRestored(true), 150);
             return;
           }
@@ -233,7 +256,7 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
         } else {
           window.scrollTo({ top: 0, behavior: 'instant' });
         }
-        consumeProfileTokens();
+        consumeTokens();
         setTimeout(() => setHasRestored(true), 150);
       }
 
@@ -254,14 +277,15 @@ export function useScrollRestoration(isReady: boolean, containerId?: string) {
       const { useUIStore } = require('@/store/ui.store');
       if (useUIStore.getState().editingPostId) return;
 
+      clearTimeout(timeoutId);
+
       const el = getScrollElement();
       const currentScroll = el ? el.scrollTop : window.scrollY;
 
       // Discard coordinates if they abruptly crash to zero when navigating away
-      if (currentScroll === 0 && sessionStorage.getItem(`scroll-${pathname}`) !== '0') {
+      if (currentScroll === 0 && sessionStorage.getItem(`scroll-${pathname}`) && sessionStorage.getItem(`scroll-${pathname}`) !== '0') {
         return;
       }
-      clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         // Only continuously save general scroll position for non-profile routes (e.g. feed).
         // Profile scroll position is deliberately only captured via saveScrollPosition when interacting with posts.

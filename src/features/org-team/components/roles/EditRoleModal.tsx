@@ -15,7 +15,7 @@ import {
   handleDescriptionPaste,
 } from '../../utils/role-description.util';
 
-const DISABLED_ROLE_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT'];
+const DISABLED_ROLE_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT', 'SETTINGS'];
 
 interface EditRoleModalProps {
   isOpen: boolean;

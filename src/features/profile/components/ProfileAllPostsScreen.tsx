@@ -249,20 +249,32 @@ export function ProfileAllPostsScreen({
     togglePostVisibility(id);
   };
 
+  // Preserve the source path that led to the "See all posts" screen so closing it never navigates into a post
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const current = window.location.pathname;
+      const saved = sessionStorage.getItem("cocpit_scroll_path");
+      if (saved && saved !== current && !saved.includes("/posts") && !saved.startsWith("/post/")) {
+        sessionStorage.setItem("cocpit_profile_posts_parent_path", saved);
+      }
+    }
+  }, []);
+
   const handleClose = () => {
     if (onClose) {
       onClose();
       return;
     }
+    const parentPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_profile_posts_parent_path") : null;
     const savedPath = typeof window !== "undefined" ? sessionStorage.getItem("cocpit_scroll_path") : null;
     
-    // If savedPath exists, we know for sure the user navigated here from within the app,
-    // so it is completely safe to use the native back button.
-    if (savedPath) {
-      router.back();
-    } else {
-      router.replace(userId && !isOwner ? `/profile/${userId}` : "/profile");
-    }
+    const targetPath = (parentPath && !parentPath.includes("/posts") && !parentPath.startsWith("/post/"))
+      ? parentPath
+      : (savedPath && !savedPath.includes("/posts") && !savedPath.startsWith("/post/"))
+        ? savedPath
+        : (userId && !isOwner ? `/profile/${userId}` : "/feed");
+
+    router.push(targetPath);
   };
 
   // Client-side filtering per active sub-tab

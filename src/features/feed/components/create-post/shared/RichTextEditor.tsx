@@ -194,7 +194,7 @@ const RichTextEditor = ({
         <div 
           ref={popupRef}
           className={cn(
-            "absolute z-[100] bg-ds-surface-2 border border-ds-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95",
+            "absolute z-[100] bg-ds-bg border border-ds-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95",
             mode === 'mention' ? "w-[300px] h-[282px] p-3 box-border flex flex-col items-center gap-3" : "w-72"
           )}
           style={{ 

@@ -21,7 +21,7 @@ function MemberAvatar({ member, zIndex }: MemberAvatarProps) {
         src={avatarUrl}
         alt={member.name || 'Member'}
         onError={() => setImgError(true)}
-        className="w-6 h-6 rounded-full border border-white object-cover flex-shrink-0 relative box-border"
+        className="w-6 h-6 rounded-full object-cover flex-shrink-0 relative box-border"
         style={{ zIndex }}
       />
     );
@@ -29,7 +29,7 @@ function MemberAvatar({ member, zIndex }: MemberAvatarProps) {
 
   return (
     <div
-      className="w-6 h-6 rounded-full border border-white bg-ds-surface-1 flex items-center justify-center overflow-hidden flex-shrink-0 relative box-border"
+      className="w-6 h-6 rounded-full bg-ds-surface-1 flex items-center justify-center overflow-hidden flex-shrink-0 relative box-border"
       style={{ zIndex }}
     >
       <Icon name="user" className="w-3.5 h-3.5 text-ds-text-primary" />
@@ -221,7 +221,7 @@ export default function RoleCard({ role, onClick, onEdit, onDelete, onInvite }: 
           ))}
           {hasOverflow && remainingCount > 0 && (
             <div
-              className="w-6 h-6 rounded-full bg-[#1A73E8] border border-white flex items-center justify-center flex-shrink-0 relative box-border"
+              className="w-6 h-6 rounded-full bg-[#1A73E8] flex items-center justify-center flex-shrink-0 relative box-border"
               style={{ zIndex: visibleMembers.length }}
             >
               <span className="font-['Poppins'] text-[12px] leading-[16px] font-normal text-white text-center select-none whitespace-nowrap">

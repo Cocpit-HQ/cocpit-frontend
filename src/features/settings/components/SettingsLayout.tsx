@@ -43,7 +43,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
             </aside>
             
             {/* Main Content Pane - Only this tab component scrolls, extending all the way to the bottom */}
-            <main className={`flex-1 min-w-0 w-full max-w-[712px] h-full max-h-full overflow-y-auto scrollbar-hide overscroll-contain ${isRoot ? 'hidden md:flex' : 'flex'} flex-col pb-4 md:pb-24`}>
+            <main id="settings-main-scroll-container" className={`flex-1 min-w-0 w-full max-w-[712px] h-full max-h-full overflow-y-auto scrollbar-hide overscroll-contain ${isRoot ? 'hidden md:flex' : 'flex'} flex-col pb-4 md:pb-24`}>
               {children}
             </main>
           </div>

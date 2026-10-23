@@ -222,7 +222,7 @@ export default function JobsTab({
   viewerPermissions,
 }: JobsTabProps) {
   const router = useRouter();
-  const { activeProfile, switchProfile } = useActiveProfile();
+  const { activeProfile } = useActiveProfile();
 
   const isOwner = Boolean(
     isOwnProfile ||
@@ -247,9 +247,6 @@ export default function JobsTab({
   );
 
   const handleCreateJob = () => {
-    if (activeProfile?.id !== data.id && typeof switchProfile === "function") {
-      switchProfile("COMPANY", data.id);
-    }
     router.push(`/jobs?view=create-job&companyId=${data.id}`);
   };
 

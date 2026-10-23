@@ -169,7 +169,7 @@ export function Sidebar({ className }: SidebarProps) {
             {/* Personal Item */}
             <div className="flex flex-col gap-[8px]">
               <Link
-                href="/feed"
+                href="/profile"
                 onClick={(e) => {
                   e.preventDefault();
                   switchProfile('USER', user.id);

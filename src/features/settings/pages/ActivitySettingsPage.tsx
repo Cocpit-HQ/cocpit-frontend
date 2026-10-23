@@ -54,17 +54,129 @@ export function ActivitySettingsPage() {
   );
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const prevTabRef = React.useRef(activeTab);
 
-  // Always reset scroll position to top (scrollTop = 0) whenever activeTab changes
-  React.useLayoutEffect(() => {
-    const mainEl = scrollContainerRef.current?.closest('main');
-    if (mainEl) {
-      mainEl.scrollTop = 0;
-    }
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
+  // Reset scroll to top ONLY when activeTab actually changes, never on initial mount
+  React.useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      prevTabRef.current = activeTab;
+      const mainEl =
+        scrollContainerRef.current?.closest('main') ||
+        document.getElementById('settings-main-scroll-container');
+      if (mainEl) {
+        mainEl.scrollTop = 0;
+      }
     }
   }, [activeTab]);
+
+  // Continuously record scroll position on the main settings scroll container (debounced)
+  React.useEffect(() => {
+    const mainEl =
+      scrollContainerRef.current?.closest('main') ||
+      document.getElementById('settings-main-scroll-container');
+    if (!mainEl) return;
+
+    let timeoutId: NodeJS.Timeout;
+    const handleScroll = () => {
+      const currentScroll = mainEl.scrollTop;
+      if (currentScroll === 0 && sessionStorage.getItem(`scroll-${pathname}`) !== '0') {
+        return;
+      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        sessionStorage.setItem(`scroll-${pathname}`, currentScroll.toString());
+        sessionStorage.setItem('cocpit_activity_scroll_y', currentScroll.toString());
+      }, 100);
+    };
+
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      mainEl.removeEventListener('scroll', handleScroll);
+      clearTimeout(timeoutId);
+    };
+  }, [pathname]);
+
+  // Restore previous scroll position when returning from Single Post View (Back or Close)
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const savedScroll =
+      sessionStorage.getItem(`scroll-${pathname}`) ||
+      sessionStorage.getItem('cocpit_activity_scroll_y') ||
+      sessionStorage.getItem('cocpit_scroll_y');
+
+    if (!savedScroll || savedScroll === '0') return;
+
+    const targetScroll = parseInt(savedScroll, 10);
+    if (isNaN(targetScroll) || targetScroll <= 0) return;
+
+    const lastPostId = sessionStorage.getItem('cocpit_last_interacted_post_id');
+    const lastViewportTopStr = sessionStorage.getItem('cocpit_last_interacted_post_viewport_top');
+    const lastViewportTop = lastViewportTopStr ? parseFloat(lastViewportTopStr) : null;
+
+    let retries = 0;
+    const maxRetries = 60; // 60 frames = ~1000ms
+    let animationFrameId: number;
+
+    const attemptScroll = () => {
+      const mainEl =
+        scrollContainerRef.current?.closest('main') ||
+        document.getElementById('settings-main-scroll-container') ||
+        (document.querySelector('.settings-page-wrapper main') as HTMLElement | null);
+
+      if (!mainEl) {
+        if (retries < maxRetries) {
+          retries++;
+          animationFrameId = requestAnimationFrame(attemptScroll);
+        }
+        return;
+      }
+
+      // If data is still loading or container hasn't expanded with content, keep waiting
+      if (isLoading || mainEl.scrollHeight <= mainEl.clientHeight) {
+        if (retries < maxRetries) {
+          retries++;
+          animationFrameId = requestAnimationFrame(attemptScroll);
+        }
+        return;
+      }
+
+      const targetEl = lastPostId
+        ? (document.getElementById(`post-${lastPostId}`) ||
+           document.querySelector(`[data-post-id="${lastPostId}"]`))
+        : null;
+
+      let scrollPos = targetScroll;
+      if (targetEl && lastViewportTop !== null) {
+        const containerTop = mainEl.getBoundingClientRect().top;
+        const currentElTop = targetEl.getBoundingClientRect().top - containerTop;
+        scrollPos = Math.max(0, mainEl.scrollTop + currentElTop - lastViewportTop);
+      }
+
+      mainEl.scrollTo({ top: scrollPos, behavior: 'instant' });
+
+      const maxScrollTop = mainEl.scrollHeight - mainEl.clientHeight;
+      const expectedScroll = Math.min(scrollPos, maxScrollTop);
+      if (Math.abs(mainEl.scrollTop - expectedScroll) < 10 || retries >= maxRetries) {
+        setTimeout(() => {
+          sessionStorage.removeItem('cocpit_activity_scroll_y');
+          sessionStorage.removeItem('cocpit_last_interacted_post_id');
+          sessionStorage.removeItem('cocpit_last_interacted_post_viewport_top');
+          sessionStorage.removeItem(`scroll-${pathname}`);
+        }, 300);
+        return;
+      }
+
+      retries++;
+      animationFrameId = requestAnimationFrame(attemptScroll);
+    };
+
+    animationFrameId = requestAnimationFrame(attemptScroll);
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [pathname, isLoading, data]);
 
   return (
     <div className="w-full max-w-[712px] flex flex-col justify-start items-start select-none">
@@ -89,7 +201,12 @@ export function ActivitySettingsPage() {
                 aria-selected={isSelected}
                 onClick={() => {
                   setActiveTab(tab.key);
-                  const mainEl = scrollContainerRef.current?.closest('main');
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem(`scroll-${pathname}`, '0');
+                    sessionStorage.removeItem('cocpit_activity_scroll_y');
+                    sessionStorage.removeItem('cocpit_last_interacted_post_id');
+                  }
+                  const mainEl = scrollContainerRef.current?.closest('main') || document.getElementById('settings-main-scroll-container');
                   if (mainEl) {
                     mainEl.scrollTo({ top: 0, behavior: 'instant' });
                   }
