@@ -10,7 +10,7 @@ export const RepostMenu = ({
   isReposted,
   isRepostedWithThoughts,
   isSharedPost,
-  hideRepostWithThoughts
+  hideRepostWithThoughts, disabled
 }: {
   onRepost?: () => void;
   onRepostWithThoughts?: () => void;
@@ -18,7 +18,7 @@ export const RepostMenu = ({
   isReposted?: boolean;
   isRepostedWithThoughts?: boolean;
   isSharedPost?: boolean;
-  hideRepostWithThoughts?: boolean;
+  hideRepostWithThoughts?: boolean, disabled?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -59,8 +59,9 @@ export const RepostMenu = ({
     <div className="relative inline-block" ref={ref}>
       {/* Trigger button */}
       <button
-        disabled={isRepostedWithThoughts}
+        disabled={isRepostedWithThoughts || disabled}
         onClick={(e) => {
+          if (disabled) return;
           e.stopPropagation();
           if (isReposted) {
             onRepost?.(); // Immediately undo
@@ -73,9 +74,9 @@ export const RepostMenu = ({
             }
           }
         }}
-        className={`flex h-[24px] flex-row items-center gap-[8px] group ${isRepostedWithThoughts ? "opacity-50 cursor-default" : "cursor-pointer"}`}
+        className={`flex h-[24px] flex-row items-center gap-[8px] group ${disabled ? "opacity-30 cursor-default" : isRepostedWithThoughts ? "opacity-50 cursor-default" : "cursor-pointer"}`}
         aria-label="Repost"
-        title={isRepostedWithThoughts ? "You've reposted with thoughts — delete that post to undo" : "Repost"}
+        title={disabled ? undefined : isRepostedWithThoughts ? "You've reposted with thoughts — delete that post to undo" : "Repost"}
       >
         <Icon name="repost" className={`w-[20px] h-[20px] transition-colors ${isReposted && !isRepostedWithThoughts ? "text-ds-accent" : "text-ds-text-primary"}`} />
         <span className={`ds-text-small ${isReposted && !isRepostedWithThoughts ? "text-ds-accent" : "text-ds-text-primary"}`}>
@@ -126,7 +127,7 @@ export const RepostMenu = ({
             <Drawer.Content className="bg-[var(--ds-bg)] flex flex-col rounded-t-[20px] fixed bottom-0 left-0 right-0 z-[100] outline-none font-['DM_Sans'] border-t border-[var(--ds-border)] px-4 pb-8 pt-3">
               <Drawer.Title className="sr-only">Repost Options</Drawer.Title>
               <Drawer.Description className="sr-only">Choose how you want to repost</Drawer.Description>
-              
+
               {/* Drag Handle */}
               <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--ds-border)] mb-4" />
 

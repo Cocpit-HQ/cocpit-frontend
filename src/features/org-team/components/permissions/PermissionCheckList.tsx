@@ -14,7 +14,8 @@ interface PermissionCheckListProps {
 const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT'];
 
 const PERMISSION_GROUPS = [
-  { id: 'CREATE_POST', label: 'Create post', icon: 'lucide:plus' },
+  { id: 'CREATE_POST', label: 'Post interactions', icon: 'lucide:plus' },
+  { id: 'MANAGE_COMPANY_DETAILS', label: 'Edit company profile', icon: 'business-building' },
   { id: 'CHAT', label: 'Chat', icon: 'chat', disabled: true },
   { id: 'TEAMS', label: 'Teams', icon: 'teams', children: [
     { id: 'ACTIVITY_LOGS', label: 'Activity logs' }
@@ -98,7 +99,7 @@ export default function PermissionCheckList({
                   disabled={isGroupDisabled}
                   className={`relative w-[44px] h-[24px] rounded-full transition-colors ${
                     isChecked ? 'bg-ds-accent' : 'bg-ds-surface-2'
-                  } ${isGroupDisabled ? 'opacity-50 !cursor-not-allowed' : ''}`}
+                  } ${isGroupDisabled ? 'opacity-50 !cursor-default' : ''}`}
                 >
                   <div
                     className={`absolute top-[3px] w-[18px] h-[18px] rounded-full transition-all ${
@@ -127,7 +128,7 @@ export default function PermissionCheckList({
                           disabled={isChildDisabled}
                           className={`flex items-center justify-center w-[24px] h-[24px] rounded-[4px] transition-colors border ${
                             isChildChecked ? 'bg-ds-accent border-ds-accent' : 'bg-ds-surface-1 border-ds-border'
-                          } ${isChildDisabled ? '!cursor-not-allowed' : ''}`}
+                          } ${isChildDisabled ? '!cursor-default' : ''}`}
                         >
                           {isChildChecked && (
                             <Icon name="check" className="w-[14px] h-[14px] text-white" />

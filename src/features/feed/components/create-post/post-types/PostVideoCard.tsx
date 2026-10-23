@@ -2,15 +2,15 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Heart, 
-  MessageCircle, 
-  Repeat, 
-  Share2, 
-  Bookmark, 
+import {
+  Heart,
+  MessageCircle,
+  Repeat,
+  Share2,
+  Bookmark,
   Volume2,
   VolumeX,
-  MoreHorizontal 
+  MoreHorizontal
 } from 'lucide-react';
 import { PostMenuAccess } from '../../../utils/postMenuAccess';
 import { useSocial } from '@/context/SocialContext';
@@ -59,6 +59,7 @@ export interface PostVideoCardProps {
   shareCount?: number;
   isSaved?: boolean;
   sampleLikerUsername?: string;
+  hasPostInteractions?: boolean;
   likedUsers?: any[];
   viewerUsername?: string;
   onShowLikes?: () => void;
@@ -133,7 +134,8 @@ export const PostVideoCard = ({
   floatingBadge,
   onFollowToggle,
   isFollowing = false,
-  allowPlayPause
+  allowPlayPause,
+  hasPostInteractions = true
 }: PostVideoCardProps) => {
   const router = useRouter();
   const internalVideoRef = useRef<HTMLVideoElement>(null);
@@ -220,7 +222,7 @@ export const PostVideoCard = ({
       video.play().then(() => setIsPlaying(true)).catch(() => {
         video.muted = true;
         setIsMuted(true);
-        video.play().then(() => setIsPlaying(true)).catch(() => {});
+        video.play().then(() => setIsPlaying(true)).catch(() => { });
       });
     } else {
       video.pause();
@@ -279,7 +281,7 @@ export const PostVideoCard = ({
   let social: any = null;
   try {
     social = useSocial();
-  } catch (e) {}
+  } catch (e) { }
 
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -357,7 +359,7 @@ export const PostVideoCard = ({
   return (
     <div className={`w-full ${showHeader ? 'max-w-[442px]' : 'max-w-full'} mx-auto flex flex-col select-none`}>
       {/* ── Main Video Card ── */}
-      <div 
+      <div
         className="relative w-full overflow-hidden rounded-[24px] bg-black select-none cursor-pointer group shadow-lg flex items-center justify-center transition-all duration-200 border border-white/10"
         style={{
           aspectRatio: finalAspectRatio || '4/5',
@@ -382,12 +384,12 @@ export const PostVideoCard = ({
 
         {/* ── Top Header Overlay (In-Video) ── */}
         {showHeader && displayAuthor && (
-          <div 
+          <div
             className="absolute top-0 inset-x-0 pt-2.5 pb-6 px-4 bg-gradient-to-b from-black/70 to-transparent z-20 pointer-events-auto flex items-center justify-between select-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left: Avatar + Name + Role */}
-            <div 
+            <div
               className="flex items-center gap-2.5 min-w-0 pr-2 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
@@ -402,10 +404,10 @@ export const PostVideoCard = ({
             >
               <div className={`w-[36px] h-[36px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden border border-white/20 flex-shrink-0 bg-black/40 shadow-md`}>
                 {displayAvatar && displayAvatar !== '/images/companyonboarding/companyprofileDefault.jpg' && !displayAvatar.includes('pngegg') ? (
-                  <img 
-                    src={displayAvatar} 
-                    alt={displayAuthor} 
-                    className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`} 
+                  <img
+                    src={displayAvatar}
+                    alt={displayAuthor}
+                    className={`w-full h-full object-cover ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'}`}
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = 'none';
                     }}
@@ -442,30 +444,31 @@ export const PostVideoCard = ({
                   {isAuthorFollowing ? 'Unfollow' : 'Follow'}
                 </button>
               )}
-              <button
-                ref={optionsBtnRef || dummyBtnRef}
-                type="button"
-                onClick={handleOptionsClick}
-                className="text-white hover:text-white/80 p-0.5 transition-opacity cursor-pointer bg-transparent border-none outline-none"
-                aria-label="More options"
-              >
-                <MoreHorizontal className="w-5 h-5 text-white" />
-              </button>
+              {hasPostInteractions && (
+                <button
+                  ref={optionsBtnRef || dummyBtnRef}
+                  type="button"
+                  onClick={handleOptionsClick}
+                  className="text-white hover:text-white/80 p-0.5 transition-opacity cursor-pointer bg-transparent border-none outline-none"
+                  aria-label="More options"
+                >
+                  <MoreHorizontal className="w-5 h-5 text-white" />
+                </button>
+              )}
             </div>
           </div>
         )}
 
         {/* ── Center Play/Pause Button (Kept ONLY on post details page / preview as requested) ── */}
         {canPlayPause && (
-          <div 
+          <div
             onClick={handleTogglePlay}
-            className={`absolute inset-0 flex items-center justify-center z-10 cursor-pointer transition-opacity duration-200 ${
-              !isPlaying 
-                ? 'opacity-100 pointer-events-auto' 
+            className={`absolute inset-0 flex items-center justify-center z-10 cursor-pointer transition-opacity duration-200 ${!isPlaying
+                ? 'opacity-100 pointer-events-auto'
                 : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
-            }`}
+              }`}
           >
-            <div 
+            <div
               className="w-[72px] h-[72px] rounded-full bg-black/45 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl transition-transform duration-150 group-hover:scale-105 active:scale-95 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
@@ -474,18 +477,18 @@ export const PostVideoCard = ({
             >
               {!isPlaying ? (
                 /* When Paused / Stopped: Play Triangle (Figma 40x40 scale) */
-                <svg 
-                  className="w-[40px] h-[40px] fill-white translate-x-[2px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" 
+                <svg
+                  className="w-[40px] h-[40px] fill-white translate-x-[2px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
                   viewBox="0 0 40 40"
                 >
                   <path d="M8 3.5C6 2.3 4 3.7 4 6.2V33.8C4 36.3 6 37.7 8 36.5L34.5 22.7C36.5 21.5 36.5 18.5 34.5 17.3L8 3.5Z" />
                 </svg>
               ) : (
                 /* When Playing: Hollow Pause Bars on hover (Figma 40x40 scale) */
-                <svg 
-                  className="w-[40px] h-[40px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" 
-                  viewBox="0 0 40 40" 
-                  fill="none" 
+                <svg
+                  className="w-[40px] h-[40px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
+                  viewBox="0 0 40 40"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <rect x="5.5" y="3.5" width="10" height="33" rx="3.5" stroke="white" strokeWidth="2.5" />
@@ -498,7 +501,7 @@ export const PostVideoCard = ({
 
         {/* ── Optional Floating Avatar Speech Bubble (Pin/Tag) ── */}
         {floatingBadge && (
-          <div 
+          <div
             className="absolute z-15 pointer-events-none select-none transition-transform"
             style={{
               top: floatingBadge.y || '42%',
@@ -507,9 +510,9 @@ export const PostVideoCard = ({
           >
             <div className="relative bg-white rounded-full p-0.5 shadow-xl flex items-center justify-center">
               <div className="w-[24px] h-[24px] rounded-full overflow-hidden">
-                <img 
-                  src={floatingBadge.avatar || '/assets/pngegg.png'} 
-                  alt="pin" 
+                <img
+                  src={floatingBadge.avatar || '/assets/pngegg.png'}
+                  alt="pin"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -520,7 +523,7 @@ export const PostVideoCard = ({
         )}
 
         {/* ── Bottom In-Video Overlays ── */}
-        <div 
+        <div
           className="absolute bottom-0 inset-x-0 pt-4 pb-2 px-4 bg-gradient-to-t from-black/80 to-transparent z-20 pointer-events-none flex flex-col gap-1.5 select-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         >
           {/* Caption & Mute Row (Figma layout) */}
@@ -563,12 +566,12 @@ export const PostVideoCard = ({
 
       {/* ── Below-Video Social Section (Liked By & Action Bar) ── */}
       {(showFooter || isPreview) && (
-        <div 
-          className="w-full flex flex-col gap-2 pt-2.5 px-1 select-none" 
+        <div
+          className="w-full flex flex-col gap-2 pt-2.5 px-1 select-none"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Liked by row */}
-          <div 
+          <div
             className="flex items-center gap-1.5 cursor-pointer text-white/90 hover:text-white text-[13px] font-normal"
             onClick={onShowLikes}
           >
@@ -594,17 +597,17 @@ export const PostVideoCard = ({
           <div className="flex items-center justify-between w-full pt-1">
             <div className="flex items-center gap-5">
               {/* Like */}
-              <button 
-                type="button" 
-                onClick={handleLikeClick}
-                className="flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer group"
+              <button
+                type="button"
+                disabled={!hasPostInteractions}
+                onClick={hasPostInteractions ? handleLikeClick : undefined}
+                className={`flex items-center gap-1.5 bg-transparent border-none p-0 group ${hasPostInteractions ? 'cursor-pointer' : 'cursor-default opacity-30'}`}
               >
-                <Heart 
-                  className={`w-[19px] h-[19px] transition-colors ${
-                    likedState 
-                      ? 'fill-[#FF4B4B] text-[#FF4B4B]' 
+                <Heart
+                  className={`w-[19px] h-[19px] transition-colors ${likedState
+                      ? 'fill-[#FF4B4B] text-[#FF4B4B]'
                       : 'text-white group-hover:text-white/80'
-                  }`} 
+                    }`}
                 />
                 <span className="text-white text-[12px] font-normal">
                   {formatCount(currentLikeCount)}
@@ -612,30 +615,33 @@ export const PostVideoCard = ({
               </button>
 
               {/* Comment */}
-              <button 
-                type="button" 
-                onClick={onCommentClick}
-                className="flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer group"
+              <button
+                type="button"
+                disabled={!hasPostInteractions}
+                onClick={hasPostInteractions ? onCommentClick : undefined}
+                className={`flex items-center gap-1.5 bg-transparent border-none p-0 group ${hasPostInteractions ? 'cursor-pointer' : 'cursor-default opacity-30'}`}
               >
                 <MessageCircle className="w-[19px] h-[19px] text-white group-hover:text-white/80 transition-colors" />
                 <span className="text-white text-[12px] font-normal">{effectiveCommentCount}</span>
               </button>
 
               {/* Repost */}
-              <button 
-                type="button" 
-                onClick={onRepostClick}
-                className="flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer group"
+              <button
+                type="button"
+                disabled={!hasPostInteractions}
+                onClick={hasPostInteractions ? onRepostClick : undefined}
+                className={`flex items-center gap-1.5 bg-transparent border-none p-0 group ${hasPostInteractions ? 'cursor-pointer' : 'cursor-default opacity-30'}`}
               >
                 <Repeat className="w-[19px] h-[19px] text-white group-hover:text-white/80 transition-colors" />
                 <span className="text-white text-[12px] font-normal">{effectiveRepostCount}</span>
               </button>
 
               {/* Share */}
-              <button 
-                type="button" 
-                onClick={onShareClick}
-                className="flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer group"
+              <button
+                type="button"
+                disabled={!hasPostInteractions}
+                onClick={hasPostInteractions ? onShareClick : undefined}
+                className={`flex items-center gap-1.5 bg-transparent border-none p-0 group ${hasPostInteractions ? 'cursor-pointer' : 'cursor-default opacity-30'}`}
               >
                 <Share2 className="w-[19px] h-[19px] text-white group-hover:text-white/80 transition-colors" />
                 <span className="text-white text-[12px] font-normal">{effectiveShareCount}</span>
@@ -643,17 +649,17 @@ export const PostVideoCard = ({
             </div>
 
             {/* Bookmark / Save */}
-            <button 
-              type="button" 
-              onClick={handleSaveClick}
-              className="bg-transparent border-none p-0 cursor-pointer group"
+            <button
+              type="button"
+              disabled={!hasPostInteractions}
+              onClick={hasPostInteractions ? handleSaveClick : undefined}
+              className={`bg-transparent border-none p-0 group ${hasPostInteractions ? 'cursor-pointer' : 'cursor-default opacity-30'}`}
             >
-              <Bookmark 
-                className={`w-[19px] h-[19px] transition-colors ${
-                  savedState 
-                    ? 'fill-white text-white' 
+              <Bookmark
+                className={`w-[19px] h-[19px] transition-colors ${savedState
+                    ? 'fill-white text-white'
                     : 'text-white group-hover:text-white/80'
-                }`} 
+                  }`}
               />
             </button>
           </div>

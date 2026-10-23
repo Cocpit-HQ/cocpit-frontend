@@ -4,6 +4,7 @@ import { Smile, X, Send } from 'lucide-react';
 import { UserIcon, BusinessBuildingIcon } from '@/components/icons';
 import { searchUsers, UserMention } from '@/services/api/users';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import { formatMentionsForBackend } from '@/lib/mentions';
 import { MentionTextarea } from '@/shared/commonComponents/MentionTextarea';
 import { EmojiPickerPortal, EmojiPickerPosition } from '@/shared/commonComponents/EmojiPickerPortal';
@@ -44,6 +45,12 @@ export default function CommentInput({
     hideCancelButton = false,
 }: CommentInputProps) {
     const { activeProfile, isCompany } = useActiveProfile();
+    const { checkPermission } = useCompanyPermissions(activeProfile);
+    const hasPostInteractions = !isCompany || checkPermission('CREATE_POST');
+
+    if (!hasPostInteractions) {
+        return null;
+    }
     const isCompanyActor = Boolean(isCompany || activeProfile?.type === 'COMPANY');
     const [commentText, setCommentText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);

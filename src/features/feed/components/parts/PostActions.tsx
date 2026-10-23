@@ -26,6 +26,7 @@ interface PostActionsProps {
   onShowLikes?: () => void;
   isSharedPost?: boolean;
   hideRepostWithThoughts?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -39,82 +40,101 @@ export const PostActions = ({
   id, isLiked, likeCount, handleLike,
   isCommentSectionOpen, isCommented, commentsCount, handleToggleCommentSection,
   shares, externalShares, handleShare, handleRepostWithThoughts, handleDirectRepost, isReposted, isRepostedWithThoughts, isSaved, setIsSaved, handleSaveToggle,
-  onShowLikes, isSharedPost, hideRepostWithThoughts
+  onShowLikes, isSharedPost, hideRepostWithThoughts, disabled
 }: PostActionsProps) => {
   return (
-    <div 
-      onClick={(e) => e.stopPropagation()} 
+    <div
+      onClick={(e) => e.stopPropagation()}
       className="flex flex-row justify-between items-center w-full pb-[8px] prevent-card-click"
     >
       {/* Left Aligned Action Group */}
       <div className="flex flex-row items-center gap-[16px]">
         {/* Like */}
         <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
-        <div className="flex flex-row items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleLike(); }}
-            className={`flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${isLiked ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-ds-text-secondary'}`}
-          >
-            <Icon name={isLiked ? "like-filled" : "like"} className="w-[20px] h-[20px]" />
-          </button>
-          <span 
-            onClick={(e) => {
-              e.stopPropagation();
-              if (likeCount > 0 && onShowLikes) onShowLikes();
-            }}
-            className={`font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-ds-text-primary ${likeCount > 0 && onShowLikes ? 'cursor-pointer hover:underline' : ''}`}
-          >
-            {likeCount}
-          </span>
-        </div>
+          <div className="flex flex-row items-center gap-2">
+            <button
+              disabled={disabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!disabled) handleLike();
+              }}
+              className={`flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${disabled ? 'opacity-30 cursor-default' : 'cursor-pointer'} ${isLiked ? 'text-[var(--ds-accent)]' : 'text-ds-text-primary hover:text-ds-text-secondary'}`}
+            >
+              <Icon name={isLiked ? "like-filled" : "like"} className="w-[20px] h-[20px]" />
+            </button>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                if (likeCount > 0 && onShowLikes) onShowLikes();
+              }}
+              className={`font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-ds-text-primary ${likeCount > 0 && onShowLikes ? 'cursor-pointer hover:underline' : ''}`}
+            >
+              {likeCount}
+            </span>
+          </div>
         </FeatureDisabledTooltip>
 
         {/* Comment */}
         <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
-        <div className="flex flex-row items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleToggleCommentSection(); }}
-            className="flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded text-ds-text-primary hover:text-ds-text-secondary"
-            aria-label="Toggle comments"
-          >
-            <Icon name="comment" className="w-[20px] h-[20px]" />
-          </button>
-          <span 
-            onClick={(e) => { e.stopPropagation(); handleToggleCommentSection(); }}
-            className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-ds-text-primary cursor-pointer"
-          >
-            {commentsCount}
-          </span>
-        </div>
+          <div className="flex flex-row items-center gap-2">
+            <button
+              disabled={disabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!disabled) handleToggleCommentSection();
+              }}
+              className={`flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${disabled ? 'opacity-30 cursor-default' : 'cursor-pointer hover:text-ds-text-secondary'} text-ds-text-primary`}
+              aria-label="Toggle comments"
+            >
+              <Icon name="comment" className="w-[20px] h-[20px]" />
+            </button>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!disabled) handleToggleCommentSection();
+              }}
+              className={`font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-ds-text-primary ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
+            >
+              {commentsCount}
+            </span>
+          </div>
         </FeatureDisabledTooltip>
 
         {/* Repost */}
         <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
-        <div className="flex flex-row items-center">
-          <RepostMenu
-            onRepost={handleDirectRepost}
-            onRepostWithThoughts={handleRepostWithThoughts}
-            shares={shares}
-            isReposted={isReposted}
-            isRepostedWithThoughts={isRepostedWithThoughts}
-            isSharedPost={isSharedPost}
-            hideRepostWithThoughts={hideRepostWithThoughts}
-          />
-        </div>
+          <div className="flex flex-row items-center">
+            <RepostMenu
+              onRepost={handleDirectRepost}
+              onRepostWithThoughts={handleRepostWithThoughts}
+              shares={shares}
+              isReposted={isReposted}
+              isRepostedWithThoughts={isRepostedWithThoughts}
+              isSharedPost={isSharedPost}
+              hideRepostWithThoughts={hideRepostWithThoughts}
+              disabled={disabled}
+            />
+          </div>
         </FeatureDisabledTooltip>
 
         {/* Share */}
         <div className="flex flex-row items-center gap-2">
           <button
-            onClick={(e) => { e.stopPropagation(); handleShare(); }}
-            className="flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded text-ds-text-primary hover:text-ds-text-secondary"
+            disabled={disabled}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!disabled) handleShare();
+            }}
+            className={`flex items-center justify-center w-[20px] h-[20px] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded ${disabled ? 'opacity-30 cursor-default' : 'cursor-pointer hover:text-ds-text-secondary'} text-ds-text-primary`}
             aria-label="Share post"
           >
             <Icon name="share" className="w-[20px] h-[20px]" />
           </button>
-          <span 
-            onClick={(e) => { e.stopPropagation(); handleShare(); }}
-            className="font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-center text-ds-text-primary cursor-pointer"
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!disabled) handleShare();
+            }}
+            className={`font-['DM_Sans'] text-[12px] font-normal leading-[16px] text-center text-ds-text-primary ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
           >
             {externalShares}
           </span>
@@ -128,6 +148,7 @@ export const PostActions = ({
           initialIsSaved={isSaved}
           onSaveChange={setIsSaved}
           onToggle={handleSaveToggle}
+          disabled={disabled}
         />
       </div>
     </div>

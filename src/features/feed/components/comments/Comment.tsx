@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useSocial } from '@/context/SocialContext';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCompanyPermissions } from '@/features/businessProfile';
 import { Icon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { CommentActionSnackbar } from './CommentActionSnackbar';
@@ -39,19 +40,19 @@ interface CommentProps {
 }
 
 const formatCommentText = (
-  text: string | null | undefined, 
-  postId?: string | number, 
+  text: string | null | undefined,
+  postId?: string | number,
   currentCommentId?: string | number,
   mentionedUsers?: { user_id: string; full_name: string; account_name: string }[]
 ) => {
   if (!text) return null;
   // Only match structured mentions @[Name](account) for registered platform users
   const parts = text.split(/(@\[[^\]]+\]\([^)]+\))/g);
-  
+
   return parts.map((part, index) => {
     let accountName = '';
     let displayName = '';
-    
+
     const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
     if (structuredMatch) {
       displayName = structuredMatch[1];
@@ -60,9 +61,9 @@ const formatCommentText = (
 
     if (accountName) {
       return (
-        <DynamicMention 
-          key={index} 
-          displayName={displayName} 
+        <DynamicMention
+          key={index}
+          displayName={displayName}
           handle={accountName}
           mentionedUsers={mentionedUsers}
           className="hover:underline cursor-pointer transition-opacity hover:opacity-80 text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold"
@@ -258,6 +259,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending, is_edited } = comment;
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
+  const { checkPermission } = useCompanyPermissions(activeProfile);
+  const hasPostInteractions = !isCompany || checkPermission('CREATE_POST');
   const { blockUser } = useSocial();
 
   const [isLiked, setIsLiked] = useState(is_liked);
@@ -268,7 +271,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const setIsMenuOpen = (open: boolean | ((prev: boolean) => boolean)) => {
     const currentOpen = useUIStore.getState().activeOpenMenuId === menuKey;
     const nextOpen = typeof open === 'function' ? open(currentOpen) : open;
-    
+
     // Purpose of Bug Fix: When opening the comment options menu, dispatch global event to close any open Post option menus
     // This prevents overlaps when Post menus use local state (e.g., in ArticleViewPage) and Comment menus use global state.
     if (nextOpen) {
@@ -321,7 +324,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const currentActorName = activeProfile?.name || session?.user?.name;
 
   const isOwner = Boolean(
-    (currentActorId && authorId && String(authorId) === String(currentActorId)) || 
+    (currentActorId && authorId && String(authorId) === String(currentActorId)) ||
     (currentActorName && author?.name && author.name.trim().toLowerCase() === currentActorName.trim().toLowerCase())
   );
 
@@ -380,19 +383,19 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const baseCommentAuthorLink = isMe
     ? '/profile'
     : author?.isCompanyPost
-    ? `/organization/${author?.authorSlug}`
-    : `/profile/${author?.authorSlug || authorId}`;
+      ? `/organization/${author?.authorSlug}`
+      : `/profile/${author?.authorSlug || authorId}`;
   const authorLink = postId ? `${baseCommentAuthorLink}?sourcePostId=${postId}&commentId=${id}` : baseCommentAuthorLink;
 
   if (comment.actionState) {
-    const message = comment.actionState.type === 'reported' 
-      ? "Comment reported — Thanks for helping keep the community safe" 
+    const message = comment.actionState.type === 'reported'
+      ? "Comment reported — Thanks for helping keep the community safe"
       : `Comment ${comment.actionState.type} successfully`;
-    
+
     return (
       <div id={`comment-${id}`} className="w-full">
-        <CommentActionSnackbar 
-          message={message} 
+        <CommentActionSnackbar
+          message={message}
           onUndo={comment.actionState.type !== 'reported' ? () => {
             if (onUndo) {
               onUndo(id);
@@ -409,8 +412,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   const hasCustomAvatar = Boolean(author?.avatar && author.avatar.trim() !== '');
 
   return (
-    <div 
-      id={`comment-${id}`} 
+    <div
+      id={`comment-${id}`}
       className={`flex gap-[8px] relative group transition-all duration-300 font-dmsans ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {/* Avatar Column */}
@@ -418,10 +421,10 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         <Link href={authorLink} className="block shrink-0 flex-none">
           <div className={`w-[24px] h-[24px] ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'} bg-ds-surface-1 text-ds-text-secondary overflow-hidden flex items-center justify-center font-semibold text-[10px] font-dmsans select-none shrink-0 flex-none border border-ds-border`}>
             {hasCustomAvatar ? (
-              <img 
-                src={author.avatar} 
-                alt={author?.name || 'User'} 
-                className={`w-full h-full object-cover ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'}`} 
+              <img
+                src={author.avatar}
+                alt={author?.name || 'User'}
+                className={`w-full h-full object-cover ${author?.isCompanyPost ? 'rounded-[4px]' : 'rounded-full'}`}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                   const parent = (e.target as HTMLImageElement).parentElement;
@@ -429,7 +432,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                     const fallback = parent.querySelector('[data-fallback]');
                     if (fallback) (fallback as HTMLElement).style.display = 'flex';
                   }
-                }} 
+                }}
               />
             ) : null}
             <span data-fallback className="p-0.5 w-full h-full flex items-center justify-center text-ds-text-primary" style={{ display: hasCustomAvatar ? 'none' : 'flex' }}>
@@ -459,7 +462,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
               </span>
             )}
           </div>
-          
+
           {/* ORIGINAL: <div className="flex items-center gap-4 pt-1"> */}
           <div className="flex items-center gap-2 pt-1 shrink-0">
             {is_edited && (
@@ -472,7 +475,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
             )}
             {/* ORIGINAL: <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span> */}
             <span className="ds-text-meta text-ds-text-secondary whitespace-nowrap">{timeAgo}</span>
-            {!isPending && (
+            {!isPending && hasPostInteractions && (
               <DropdownMenu modal={false} open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -593,12 +596,13 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         {/* ORIGINAL: <div className="flex items-center gap-1.5 text-[12px] font-semibold text-black"> */}
         <div className="flex items-center gap-[8px] ds-text-small text-ds-text-primary">
           <button
-            onClick={handleLike}
-            className={`transition-colors flex items-center justify-center ${isLiked ? 'text-[var(--ds-like-active)]' : 'text-ds-text-secondary hover:text-ds-text-primary'}`}
+            disabled={!hasPostInteractions}
+            onClick={hasPostInteractions ? handleLike : undefined}
+            className={`transition-colors flex items-center justify-center ${!hasPostInteractions ? 'opacity-30 cursor-default' : ''} ${isLiked ? 'text-[var(--ds-like-active)]' : 'text-ds-text-secondary hover:text-ds-text-primary'}`}
             aria-label={isLiked ? "Unlike comment" : "Like comment"}
           >
-            <Icon 
-              name={isLiked ? "like-filled" : "like"} 
+            <Icon
+              name={isLiked ? "like-filled" : "like"}
               className={`w-[14px] h-[14px] ${isLiked ? 'text-ds-accent' : ''}`}
             />
           </button>
@@ -606,13 +610,14 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           <span className="font-normal text-ds-text-secondary">-</span>
           {/* ORIGINAL: <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span> */}
           <span className="font-normal text-ds-text-secondary">{likes} {likes === 1 ? 'like' : 'likes'}</span>
-          
+
           {/* Divider between likes and reply styled with theme border from newGlobal.css */}
           <div className="h-[14px] border-l border-ds-border mx-[4px] self-center" style={{ borderColor: 'var(--ds-border)' }} />
 
           <button
-            onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
-            className="transition-colors"
+            disabled={!hasPostInteractions}
+            onClick={hasPostInteractions ? () => onReply?.(author?.name || 'User', id, author?.account_name) : undefined}
+            className={`transition-colors ${!hasPostInteractions ? 'opacity-30 cursor-default' : 'cursor-pointer'}`}
           >
             Reply
           </button>

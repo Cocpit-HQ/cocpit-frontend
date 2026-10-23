@@ -1,6 +1,7 @@
 // Permission keys matching the design screens
 export type TeamPermission =
   | 'CREATE_POST'
+  | 'MANAGE_COMPANY_DETAILS'
   | 'CHANNEL'
   | 'CHAT'
   | 'TEAMS'
@@ -12,7 +13,8 @@ export type TeamPermission =
 
 // Human-readable labels for permissions (used in UI)
 export const PERMISSION_LABELS: Record<string, string> = {
-  CREATE_POST: 'Create post',
+  CREATE_POST: 'Post interactions',
+  MANAGE_COMPANY_DETAILS: 'Edit company profile',
   CHANNEL: 'Channel',
   CHAT: 'Chat',
   TEAMS: 'Teams',
@@ -24,7 +26,6 @@ export const PERMISSION_LABELS: Record<string, string> = {
   // System / RBAC permission key mappings
   SWITCH_TO_COMPANY: 'Switch to company',
   MANAGE_COMPANY: 'Manage company',
-  MANAGE_COMPANY_DETAILS: 'Manage company details',
   MANAGE_SETTINGS: 'Manage settings',
   MANAGE_ROLES: 'Manage roles',
   MANAGE_MEMBERS: 'Manage members',
@@ -59,6 +60,7 @@ export function getPermissionLabel(perm: string): string {
 // All available permissions in display order (Channels removed per SCRUM-1132)
 export const ALL_PERMISSIONS: TeamPermission[] = [
   'CREATE_POST',
+  'MANAGE_COMPANY_DETAILS',
   'CHAT',
   'TEAMS',
   'ACTIVITY_LOGS',

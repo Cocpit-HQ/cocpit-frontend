@@ -15,6 +15,7 @@ export interface ArticleUIProps {
   session: Session | null;
   activeProfileId?: string | number;
   menuAccess?: import('../../utils/postMenuAccess').PostMenuAccess;
+  hasPostInteractions?: boolean;
 
   likeCount: number;
   isLiked: boolean;

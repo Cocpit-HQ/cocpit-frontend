@@ -19,7 +19,7 @@ import { constrainImageToBox } from '@/features/feed/utils/constrainArticleImage
 import { getPostMenuAccess } from '../../utils/postMenuAccess';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useSocial } from '@/context/SocialContext';
-import { companyProfileService } from '@/features/businessProfile';
+import { companyProfileService, useCompanyPermissions } from '@/features/businessProfile';
 import { usePostInteractions } from '../../hooks/use-post-interactions';
 import { PostActions } from '../parts/PostActions';
 import { LikeBar } from '../parts/LikeBar';
@@ -66,6 +66,8 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { userCompanies, activeProfile, isCompany } = useActiveProfile();
+  const { checkPermission } = useCompanyPermissions(activeProfile);
+  const hasPostInteractions = !isCompany || checkPermission('CREATE_POST');
   const currentUserId = (session?.user as any)?.id;
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -389,6 +391,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
     session,
     activeProfileId: activeProfile?.id,
     menuAccess,
+    hasPostInteractions,
     likeCount,
     isLiked,
     commentCount,
@@ -531,7 +534,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
                   </button>
                 )}
 
-                {menuAccess !== 'internal' && (
+                {menuAccess !== 'internal' && hasPostInteractions && (
                   <div className="flex items-center shrink-0">
                     <button
                       ref={menuBtnRef}
@@ -599,6 +602,7 @@ function ArticleViewContent({ post, id }: ArticleContentProps) {
                   onShowLikes={() => setIsLikesModalOpen(true)}
                   isSharedPost={false}
                   hideRepostWithThoughts={false}
+                  disabled={!hasPostInteractions}
                 />
               </div>
             </aside>

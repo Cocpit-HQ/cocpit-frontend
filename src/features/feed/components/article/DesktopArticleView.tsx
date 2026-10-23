@@ -45,6 +45,7 @@ export function DesktopArticleView(props: ArticleUIProps) {
     handleRepostWithThoughts,
     contentRef,
     menuAccess,
+    hasPostInteractions = true,
   } = props;
 
   return (
@@ -153,7 +154,7 @@ export function DesktopArticleView(props: ArticleUIProps) {
               </button>
             )}
 
-            {menuAccess !== 'internal' && (
+            {menuAccess !== 'internal' && hasPostInteractions && (
               <div className="flex items-center shrink-0">
                 <button
                   type="button"
@@ -212,6 +213,7 @@ export function DesktopArticleView(props: ArticleUIProps) {
               onShowLikes={() => setIsLikesModalOpen(true)}
               isSharedPost={false}
               hideRepostWithThoughts={false}
+              disabled={!hasPostInteractions}
             />
           </div>
         </aside>

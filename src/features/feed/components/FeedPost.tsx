@@ -35,6 +35,7 @@ import { RepostIcon, NotInterestedIcon, InterestedIcon } from '@/components/icon
 import { toast } from 'sonner';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCompanyPermissions } from '@/features/businessProfile';
 const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr: false });
 const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/shared/commonComponents/SavePostModal').then(m => m.SavePostModal), { ssr: false });
@@ -47,6 +48,8 @@ const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess, isOwnPost } = props;
   const { activeProfile, isCompany, userCompanies } = useActiveProfile();
+  const { checkPermission } = useCompanyPermissions(activeProfile);
+  const hasPostInteractions = !isCompany || checkPermission('CREATE_POST');
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.id;
   const router = useRouter();
@@ -830,6 +833,7 @@ export const FeedPost = (props: FeedPostProps) => {
               showOptions={showOptions}
               setShowOptions={setShowOptions}
               setOptionsPos={setOptionsPos}
+              hideMenu={!hasPostInteractions}
             />
 
             {/* Full Post Description Text */}
@@ -925,6 +929,7 @@ export const FeedPost = (props: FeedPostProps) => {
               showOptions={showOptions}
               setShowOptions={setShowOptions}
               setOptionsPos={setOptionsPos}
+              hideMenu={!hasPostInteractions}
             />
 
             {/* Body (for non-video and non-poll posts, context sits above media) */}
@@ -1031,6 +1036,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onShowLikes={() => handleOpenLikesModal()}
           isSharedPost={isRepostWithoutThoughts}
           hideRepostWithThoughts={isTargetPostRepostWithThoughts}
+          disabled={!hasPostInteractions}
         />
 
         {/* Expandable Sections */}

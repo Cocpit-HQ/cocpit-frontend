@@ -50,6 +50,7 @@ export function MobileArticleView(props: ArticleUIProps) {
     handleRepostWithThoughts,
     contentRef,
     menuAccess,
+    hasPostInteractions = true,
   } = props;
 
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = React.useState(false);
@@ -136,7 +137,7 @@ export function MobileArticleView(props: ArticleUIProps) {
               </button>
             )}
 
-            {menuAccess !== 'internal' && (
+            {menuAccess !== 'internal' && hasPostInteractions && (
               <button
                 type="button"
                 onClick={handleMenuClick}
@@ -210,6 +211,7 @@ export function MobileArticleView(props: ArticleUIProps) {
           onShowLikes={() => setIsLikesModalOpen(true)}
           isSharedPost={false}
           hideRepostWithThoughts={false}
+          disabled={!hasPostInteractions}
         />
       </div>
 

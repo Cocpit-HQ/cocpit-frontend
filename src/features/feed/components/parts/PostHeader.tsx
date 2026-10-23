@@ -25,15 +25,17 @@ interface PostHeaderProps {
   setShowOptions: (val: boolean) => void;
   setOptionsPos: (pos: { top: number; right: number } | null) => void;
   variant?: 'default' | 'overlay';
+  hideMenu?: boolean;
 }
 
 export const PostHeader = ({
   id, author, authorId, authorAvatar, authorSlug, authorRole, location, timeAgo,
   isMe, menuAccess, isCompanyPost, optionsBtnRef, showOptions, setShowOptions, setOptionsPos,
-  variant = 'default'
+  variant = 'default',
+  hideMenu
 }: PostHeaderProps) => {
   const [imgError, setImgError] = useState(false);
-  const hideMenuEntirely = menuAccess === 'internal';
+  const hideMenuEntirely = menuAccess === 'internal' || !!hideMenu;
   const queryClient = useQueryClient();
   const initial = author ? author.charAt(0).toUpperCase() : '?';
 

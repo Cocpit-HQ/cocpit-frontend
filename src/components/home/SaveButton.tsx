@@ -14,9 +14,10 @@ interface SaveButtonProps {
     className?: string
     onSaveChange?: (isSaved: boolean) => void
     onToggle?: () => void
+    disabled?: boolean
 }
 
-export function SaveButton({ postId, initialIsSaved = false, className, onSaveChange, onToggle }: SaveButtonProps) {
+export function SaveButton({ postId, initialIsSaved = false, className, onSaveChange, onToggle, disabled }: SaveButtonProps) {
     const [isSaved, setIsSaved] = useState(initialIsSaved)
     const [isLoading, setIsLoading] = useState(false)
     const isSavingRef = React.useRef(false)
@@ -33,7 +34,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
         e.preventDefault()
         e.stopPropagation()
 
-        if (isLoading || isSavingRef.current) return
+        if (disabled || isLoading || isSavingRef.current) return
 
         if (onToggle && !isSaved) {
             onToggle()
@@ -60,7 +61,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             } else {
                 toast.info("Post removed from saved")
             }
-            
+
             // Invalidate the saved folders query to update the post_count in the UI
             queryClient.invalidateQueries({ queryKey: SAVED_FOLDERS_QUERY_KEY })
             queryClient.invalidateQueries({ queryKey: ['orgPosts'] })
@@ -80,17 +81,18 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
     return (
         <button
             onClick={handleToggleSave}
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             aria-label={isSaved ? "Remove from saved" : "Save post"}
             className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group cursor-pointer outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group outline-none ring-0 focus-visible:ring-2 focus-visible:ring-ds-accent rounded",
+                disabled ? "opacity-30 cursor-default" : "cursor-pointer",
                 isSaved ? "text-[var(--ds-accent)]" : "text-ds-text-primary hover:text-ds-text-secondary",
                 className
             )}
         >
             <div className="flex items-center justify-center w-[20px] h-[20px] m-auto shrink-0 flex-none">
                 <div className="relative w-[20px] h-[20px] flex items-center justify-center shrink-0 flex-none">
-                    <Icon 
+                    <Icon
                         name={isSaved ? "save-filled" : "save"}
                         size={20}
                         className="w-[20px] h-[20px] shrink-0 flex-none"
