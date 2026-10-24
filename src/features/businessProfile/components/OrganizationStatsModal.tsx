@@ -14,6 +14,7 @@ import {
   EmptyFollowIcon,
   UserIcon,
   BusinessBuildingIcon,
+  LockPrivateIcon,
 } from "@/components/icons";
 import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { cn } from "@/lib/utils";
@@ -357,12 +358,23 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
 
           {/* Content Area */}
           {isRestricted ? (
-            <div className="w-full flex-1 px-4 flex flex-col items-center justify-center text-center gap-2">
-              <p className="text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 text-center">
-                {activeTab === "followers"
-                  ? "The business page owner has restricted access to their followers."
-                  : "The business page owner has restricted access to their following."}
-              </p>
+            <div className="w-full flex-1 flex flex-col justify-center items-center p-0 gap-3 self-stretch">
+              {/* IconFrame: 56x56 Circle */}
+              <div className="w-14 h-14 rounded-full bg-[var(--ds-surface-1)] p-3 flex items-center justify-center flex-none">
+                <LockPrivateIcon className="w-8 h-8 text-[var(--ds-text-muted)] shrink-0" fill="currentColor" />
+              </div>
+
+              {/* Text Box (48px height) */}
+              <div className="flex flex-col items-center p-0 gap-2 w-full max-w-[307px] flex-none">
+                <h4 className="font-['DM_Sans'] text-base font-normal leading-6 text-[var(--ds-text-primary)] text-center whitespace-nowrap">
+                  {activeTab === "following" ? "Following is private" : "Followers are private"}
+                </h4>
+                <p className="font-['DM_Sans'] text-xs font-normal leading-4 text-[var(--ds-text-primary)] text-center whitespace-nowrap">
+                  {activeTab === "following"
+                    ? "This page has chosen to keep their following list private"
+                    : "This page has chosen to keep their followers private"}
+                </p>
+              </div>
             </div>
           ) : isLoadingCurrentTab && !search ? (
             <div className="w-full flex-1 flex justify-center items-center">

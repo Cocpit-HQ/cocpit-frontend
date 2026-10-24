@@ -83,7 +83,7 @@ export function HelpCentre({ onBack }: HelpCentreProps) {
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
         </button>
-        <h1 className="text-ds-text-primary text-[16px] md:ds-text-body-2 font-medium leading-[24px] h-6 flex items-center m-0">
+        <h1 className="text-ds-text-primary text-[16px] md:text-base font-medium md:font-semibold font-['DM_Sans'] leading-[24px] h-6 flex items-center m-0">
           Help centre
         </h1>
       </div>

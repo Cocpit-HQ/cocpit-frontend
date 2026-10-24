@@ -212,9 +212,9 @@ export function PrivacySettingsPage() {
             <button
               type="button"
               onClick={() => setIsVerifyModalOpen(true)}
-              className="px-3 py-1.5 rounded-[100px] border border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent flex justify-center items-center gap-2.5 transition-colors cursor-pointer"
+              className="w-[68px] h-[36px] rounded-[100px] border border-ds-border hover:border-ds-accent text-ds-text-primary hover:text-ds-accent flex justify-center items-center transition-colors cursor-pointer shrink-0"
             >
-              <span className="justify-start text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
+              <span className="justify-start text-base font-medium font-['DM_Sans'] leading-6">
                 Verify
               </span>
             </button>

@@ -196,10 +196,15 @@ export const StepVerification: React.FC<StepVerificationProps> = ({
     try {
       const formData = new FormData();
       formData.append("name", organizationName || "Cocpit");
+      formData.append("org_type", organizationType || "COMPANY");
       formData.append("entity_type", organizationType || "COMPANY");
       formData.append("type", organizationType || "COMPANY");
       if (foundedYear) formData.append("established_year", foundedYear);
-      if (industry) formData.append("industry", industry);
+      if (organizationType === "INSTITUTION") {
+        if (industry) formData.append("institution_type", industry);
+      } else {
+        if (industry) formData.append("industry", industry);
+      }
       if (officialEmail) formData.append("email", officialEmail);
       if (phoneNumber) formData.append("phone", `${phoneCountryCode}${phoneNumber}`);
       if (website) formData.append("website", website);

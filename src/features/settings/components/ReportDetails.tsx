@@ -20,7 +20,7 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
       : [defaultNote];
 
   return (
-    <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 inline-flex flex-col justify-start items-start gap-3 select-none">
+    <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 inline-flex flex-col justify-start items-start gap-3 select-none font-['DM_Sans']">
       {/* Header */}
       <div className="self-stretch inline-flex justify-start items-center gap-2.5">
         <button
@@ -31,7 +31,7 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
         >
           <ChevronLeft className="size-5 text-ds-text-primary shrink-0" />
         </button>
-        <div className="justify-center text-ds-text-primary text-base font-semibold font-sans leading-6">
+        <div className="justify-center text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
           Report details
         </div>
       </div>
@@ -39,10 +39,10 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
       {/* Row 1: Content type & Date submitted */}
       <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-4">
         <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-          <div className="justify-center text-ds-text-secondary text-sm font-normal font-sans leading-5">
+          <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
             Content type
           </div>
-          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
+          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
             {(() => {
               const pType = (report.postType || '').toLowerCase();
               const tType = (report.targetType || '').toUpperCase();
@@ -68,10 +68,10 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
           </div>
         </div>
         <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-          <div className="justify-center text-ds-text-secondary text-sm font-normal font-sans leading-5">
+          <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
             Date submitted
           </div>
-          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
+          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
             {report.date}
           </div>
         </div>
@@ -80,18 +80,18 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
       {/* Row 2: Report status & Reason */}
       <div className="self-stretch flex flex-col sm:flex-row justify-start items-start gap-4">
         <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-          <div className="justify-center text-ds-text-secondary text-sm font-normal font-sans leading-5">
+          <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
             Report status
           </div>
-          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
+          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
             {report.statusLabel || report.status || 'Submitted'}
           </div>
         </div>
         <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-          <div className="justify-center text-ds-text-secondary text-sm font-normal font-sans leading-5">
+          <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
             Reason
           </div>
-          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
+          <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
             {report.reason || 'Report'}
           </div>
         </div>
@@ -107,11 +107,11 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
               </div>
             )}
             <div className="self-stretch pt-1.5 flex flex-col justify-start items-start gap-2">
-              <div className="justify-center text-ds-text-secondary text-sm font-normal font-sans leading-5">
+              <div className="justify-center text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
                 Review update
               </div>
               <div className="self-stretch p-4 bg-ds-surface-1 rounded-3xl flex flex-col justify-start items-start">
-                <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
+                <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5">
                   {message}
                 </div>
               </div>

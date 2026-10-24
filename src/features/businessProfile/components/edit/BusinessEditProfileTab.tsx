@@ -512,7 +512,9 @@ export default function BusinessEditProfileTab({
         const response = await businessProfileService.updateOrgProfile(orgId, {
           name: formData.name,
           headline: formData.headline,
-          industry: formData.industry,
+          org_type: isInstitution ? "INSTITUTION" : "COMPANY",
+          industry: isInstitution ? null : formData.industry,
+          institution_type: isInstitution ? formData.industry : null,
           size: formData.size,
           website: formData.website,
           country: formData.country,
@@ -534,6 +536,8 @@ export default function BusinessEditProfileTab({
           const nextOrg = {
             ...prevOrg,
             ...serverOrg,
+            industry: isInstitution ? null : (serverOrg?.industry || formData.industry),
+            institution_type: isInstitution ? (serverOrg?.institution_type || formData.industry) : null,
             city: displayLoc,
             location: displayLoc,
             headquarter: displayLoc,
@@ -553,6 +557,8 @@ export default function BusinessEditProfileTab({
           const nextOrg = {
             ...prevOrg,
             ...serverOrg,
+            industry: isInstitution ? null : (serverOrg?.industry || formData.industry),
+            institution_type: isInstitution ? (serverOrg?.institution_type || formData.industry) : null,
             city: displayLoc,
             location: displayLoc,
             headquarter: displayLoc,

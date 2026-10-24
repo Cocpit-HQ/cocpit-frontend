@@ -149,10 +149,10 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
             <>
               <div className="flex flex-col items-center gap-2 text-center w-full">
                 <h2 className="text-ds-text-primary ds-text-body-1 text-center m-0 p-0 w-full">
-                  Delete your Cocpit account?
+                  Delete your {entityLabel} page?
                 </h2>
                 <p className="text-ds-text-secondary ds-text-secondary text-center m-0 p-0 w-full">
-                  Your account will be scheduled for deletion. You can reactivate it within 40 days from the &ldquo;Organization&rdquo; tab under your account Settings. After 40 days, your account and all associated data will be permanently deleted
+                  Your {entityLabel} page will be scheduled for deletion. You can restore it within 40 days from the Organization tab in your settings. After 40 days, your {entityLabel} page and all associated data will be permanently deleted.
                 </p>
               </div>
 
@@ -162,13 +162,13 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
                 </div>
               )}
 
-              {/* Action Buttons: Delete (106px) + Gap (8px) + Cancel (106px) */}
+              {/* Action Buttons Frame 2609476: Delete (77px) + Gap (8px) + Cancel (77px) */}
               <div className="flex flex-row items-center justify-center gap-[8px] w-full">
                 <button
                   type="button"
                   onClick={handleSendOTP}
                   disabled={isLoading}
-                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] bg-ds-accent text-ds-text-primary ds-text-body-1 hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
+                  className="w-[77px] h-[36px] px-3 py-1.5 rounded-[100px] bg-ds-accent text-ds-text-primary ds-text-body-1 hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
                 >
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Delete
@@ -178,7 +178,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
                   type="button"
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary ds-text-body-1 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
+                  className="w-[77px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary ds-text-body-1 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
                 >
                   Cancel
                 </button>
@@ -283,7 +283,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
                   type="button"
                   onClick={() => handleVerifyAndDelete()}
                   disabled={isLoading || otpCode.length !== 6}
-                  className={`w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] text-[14px] font-medium font-['DM_Sans'] leading-[20px] flex items-center justify-center gap-2 transition-all select-none ${
+                  className={`w-[77px] h-[36px] px-3 py-1.5 rounded-[100px] ds-text-body-1 flex items-center justify-center gap-2 transition-all select-none ${
                     otpCode.length !== 6 || isLoading
                       ? 'bg-ds-surface-1 text-ds-text-muted border-none cursor-not-allowed'
                       : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer ds-focus-ring'
@@ -297,7 +297,7 @@ export function DeleteCompanyModal({ isOpen, onClose }: DeleteCompanyModalProps)
                   type="button"
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary text-[14px] font-medium font-['DM_Sans'] leading-[20px] flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
+                  className="w-[77px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary ds-text-body-1 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
                 >
                   Cancel
                 </button>

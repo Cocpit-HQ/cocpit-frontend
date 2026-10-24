@@ -19,6 +19,7 @@ export interface MobileCompanyAccountViewProps {
   onOpenDeactivate?: () => void;
   onOpenTransfer?: () => void;
   onOpenDelete?: () => void;
+  entityLabel?: string;
 }
 
 export function MobileCompanyAccountView({
@@ -33,6 +34,7 @@ export function MobileCompanyAccountView({
   onOpenDeactivate,
   onOpenTransfer,
   onOpenDelete,
+  entityLabel = 'business',
 }: MobileCompanyAccountViewProps) {
   const router = useRouter();
   const [currentView, setCurrentView] = useState<'main' | 'deactivate' | 'delete'>('main');
@@ -138,12 +140,12 @@ export function MobileCompanyAccountView({
             >
               <div className="flex flex-col min-w-0 pr-3">
                 <span className="text-ds-text-primary text-[15px] font-medium font-['DM_Sans'] leading-[22px]">
-                  {isDeactivated ? 'Reactivate business page' : 'Deactivate business page'}
+                  {isDeactivated ? `Reactivate ${entityLabel} page` : `Deactivate ${entityLabel} page`}
                 </span>
                 <span className="text-ds-text-secondary text-[13px] font-normal font-['DM_Sans'] leading-[18px]">
                   {isDeactivated
-                    ? 'Your business page is currently inactive. Click to reactivate it at any time'
-                    : 'Temporarily hide your business page. You can reactivate it at any time'}
+                    ? `Your ${entityLabel} page is currently inactive. Click to reactivate it at any time`
+                    : `Temporarily hide your ${entityLabel} page. You can reactivate it at any time`}
                 </span>
               </div>
               <button
@@ -178,7 +180,7 @@ export function MobileCompanyAccountView({
                   Transfer ownership
                 </span>
                 <span className="text-ds-text-secondary text-[13px] font-normal font-['DM_Sans'] leading-[18px]">
-                  Transfer ownership of this business page to another administrator
+                  Transfer ownership of this {entityLabel} page to another administrator
                 </span>
               </div>
               <button
@@ -199,7 +201,7 @@ export function MobileCompanyAccountView({
               </button>
             </div>
 
-            {/* Row 3: Delete account (Navigates to full page) */}
+            {/* Row 3: Delete page (Navigates to full page) */}
             <div
               onClick={isOwner ? () => setCurrentView('delete') : undefined}
               role={isOwner ? 'button' : undefined}
@@ -210,10 +212,10 @@ export function MobileCompanyAccountView({
             >
               <div className="flex flex-col min-w-0 pr-3">
                 <span className="text-ds-text-primary text-[15px] font-medium font-['DM_Sans'] leading-[22px]">
-                  Delete account
+                  Delete {entityLabel} page
                 </span>
                 <span className="text-ds-text-secondary text-[13px] font-normal font-['DM_Sans'] leading-[18px]">
-                  Permanently delete your business page and all associated data
+                  Permanently delete your {entityLabel} page and all associated data
                 </span>
               </div>
               <button

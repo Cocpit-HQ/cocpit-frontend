@@ -251,9 +251,11 @@ export const getNotificationRoute = (
   if (
     type === 'new_device_login' ||
     type === 'password_changed' ||
-    type === 'email_changed'
+    type === 'email_changed' ||
+    notification.text?.toLowerCase().includes('login') ||
+    notification.text?.toLowerCase().includes('password')
   ) {
-    return '/settings/security';
+    return '/settings/privacy';
   }
   if (
     type === 'profile_incomplete_nudge' ||

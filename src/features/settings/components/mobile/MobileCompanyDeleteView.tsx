@@ -137,11 +137,11 @@ export function MobileCompanyDeleteView({ onBack }: MobileCompanyDeleteViewProps
         {step === 1 && (
           <>
             <h2 className="text-ds-text-primary text-[18px] font-medium font-['DM_Sans'] leading-[24px] m-0">
-              Delete your Cocpit account?
+              Delete your {entityLabel} page?
             </h2>
 
             <p className="text-ds-text-secondary text-[14px] font-normal font-['DM_Sans'] leading-[20px] m-0">
-              Your account will be scheduled for deletion. You can reactivate it within 40 days from the &ldquo;Organization&rdquo; tab under your account Settings. After 40 days, your account and all associated data will be permanently deleted
+              Your {entityLabel} page will be scheduled for deletion. You can restore it within 40 days from the Organization tab in your settings. After 40 days, your {entityLabel} page and all associated data will be permanently deleted.
             </p>
 
             {errorMsg && (

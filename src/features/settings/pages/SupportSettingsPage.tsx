@@ -78,17 +78,17 @@ export function SupportSettingsPage() {
 
   return (
     <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
-      {/* Title & Mobile Back */}
-      <div className="self-stretch flex flex-row items-center gap-3">
+      {/* Title & Mobile Back (visible on mobile only) */}
+      <div className="self-stretch flex md:hidden flex-row items-center gap-3">
         <button
           type="button"
           onClick={() => router.replace(basePath)}
           aria-label="Back to settings menu"
-          className="-ml-1.5 flex md:hidden items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
+          className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
         </button>
-        <div className="ds-text-body-2 text-ds-text-primary">Support</div>
+        <div className="ds-text-body-2 text-ds-text-primary">Help & Support</div>
       </div>
 
       {/* Menu Rows & Feedback Card */}

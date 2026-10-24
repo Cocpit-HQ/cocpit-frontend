@@ -467,7 +467,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
             type="button"
             onClick={handleNext}
             disabled={getIsDisabled()}
-            className={`h-[36px] min-w-[100px] px-4 py-1.5 rounded-full flex justify-center items-center gap-2.5 transition-all text-base font-medium font-['DM_Sans'] leading-6 ${
+            className={`w-[94px] h-[36px] rounded-full flex justify-center items-center transition-all text-base font-medium font-['DM_Sans'] leading-6 ${
               getIsDisabled()
                 ? 'bg-ds-surface-2 text-ds-text-muted cursor-not-allowed'
                 : isDelete
@@ -480,7 +480,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
           <button
             type="button"
             onClick={handleClose}
-            className="h-[36px] w-24 px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer ds-focus-ring"
+            className="w-[94px] h-[36px] rounded-full border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center transition-colors text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer ds-focus-ring"
           >
             Cancel
           </button>

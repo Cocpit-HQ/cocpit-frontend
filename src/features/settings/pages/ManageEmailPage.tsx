@@ -72,7 +72,7 @@ export function ManageEmailPage() {
           <button
             type="button"
             onClick={() => setIsChangeEmailModalOpen(true)}
-            className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
+            className="w-[126px] h-[36px] bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
           >
             Change Email
           </button>
@@ -123,7 +123,7 @@ export function ManageEmailPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddRecoveryModalOpen(true)}
-                  className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
+                  className="w-[126px] h-[36px] bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
                 >
                   Change Email
                 </button>

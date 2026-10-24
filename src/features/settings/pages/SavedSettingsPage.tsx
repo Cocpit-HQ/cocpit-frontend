@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Folder, ChevronLeft, Loader2 } from 'lucide-react';
-import { Icon } from '@/components/icons';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { Icon, FolderIcon } from '@/components/icons';
 import { saveScrollPosition } from '@/hooks/use-scroll-restoration';
 import { useSavedFolders, SAVED_FOLDERS_QUERY_KEY } from '../hooks/useSavedFolders';
 import { CreateFolderModal } from '../components/CreateFolderModal';
@@ -179,7 +179,7 @@ export function SavedSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(true)}
-                  className="text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer"
+                  className="p-1 text-ds-text-secondary hover:text-ds-text-primary transition-colors cursor-pointer flex items-center justify-center"
                   title="Edit collection"
                 >
                   <Icon name="profile-edit" className="size-5" />
@@ -187,7 +187,7 @@ export function SavedSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setIsDeleteModalOpen(true)}
-                  className="text-ds-error hover:opacity-80 transition-opacity cursor-pointer"
+                  className="p-1 text-ds-error hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                   title="Delete collection"
                 >
                   <Icon name="trash" className="size-5" />
@@ -197,7 +197,7 @@ export function SavedSettingsPage() {
           </div>
 
           {/* Saved Posts List (Frame 2609256) */}
-          <div className="self-stretch p-2 rounded-[24px] flex flex-col justify-start items-start gap-[12px] w-full max-w-[648px]">
+          <div className="self-stretch p-2 rounded-[24px] flex flex-col justify-start items-start gap-[12px] w-full">
             {isLoadingPosts ? (
               <div className="self-stretch flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-ds-accent" />
@@ -280,7 +280,7 @@ export function SavedSettingsPage() {
             className="flex justify-start items-center gap-4 cursor-pointer group"
           >
             <div className="size-10 flex justify-center items-center shrink-0">
-              <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
+              <FolderIcon className="size-6 text-ds-text-primary" />
             </div>
             <div className="justify-center text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 group-hover:text-white transition-colors">
               General
@@ -321,7 +321,7 @@ export function SavedSettingsPage() {
                   className="py-2 flex justify-start items-center gap-4 cursor-pointer group hover:bg-ds-surface-1/40 rounded-xl px-2 transition-colors"
                 >
                   <div className="size-10 flex justify-center items-center shrink-0">
-                    <Folder className="size-6 text-ds-text-primary stroke-[1.5]" />
+                    <FolderIcon className="size-6 text-ds-text-primary" />
                   </div>
                   <div className="flex flex-col justify-center items-start gap-1 min-w-0">
                     <span className="text-ds-text-primary text-base font-normal font-['DM_Sans'] leading-6 group-hover:text-white transition-colors truncate">
@@ -349,7 +349,7 @@ export function SavedSettingsPage() {
           tabIndex={0}
           className="flex items-center gap-3.5 cursor-pointer py-1.5 active:opacity-75 transition-opacity"
         >
-          <Folder className="w-5 h-5 text-ds-text-primary stroke-[1.5] shrink-0" />
+          <FolderIcon className="w-5 h-5 text-ds-text-primary shrink-0" />
           <span className="text-ds-text-primary text-[15px] font-normal font-['DM_Sans'] leading-[22px]">
             General
           </span>
@@ -392,7 +392,7 @@ export function SavedSettingsPage() {
                 tabIndex={0}
                 className="flex items-start gap-2.5 cursor-pointer py-1 active:opacity-75 transition-opacity"
               >
-                <Folder className="w-5 h-5 text-ds-text-primary stroke-[1.5] shrink-0 mt-0.5" />
+                <FolderIcon className="w-5 h-5 text-ds-text-primary shrink-0 mt-0.5" />
                 <div className="flex flex-col min-w-0">
                   <span className="text-ds-text-primary text-[14px] font-normal font-['DM_Sans'] leading-[20px] truncate">
                     {folder.name}

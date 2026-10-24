@@ -185,7 +185,7 @@ export function SavedPostCard({
   if (isArticle) {
     return (
       <article
-        className="flex w-full max-w-[632px] flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2608569: Author Header */}
@@ -216,7 +216,7 @@ export function SavedPostCard({
     const mediaUrl = sharedPostMedia;
     return (
       <article
-        className="flex w-full max-w-[632px] flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609527: Reposter header */}
@@ -234,7 +234,7 @@ export function SavedPostCard({
 
         {/* Frame 2609288: Nested original post container (24px inset on sides) */}
         <div className="flex w-full justify-center">
-          <div className="box-border flex w-[calc(100%-48px)] max-w-[584px] flex-col items-start gap-[12px] rounded-[12px] border border-[#2C2C33] p-[12px]">
+          <div className="box-border flex w-[calc(100%-48px)] flex-col items-start gap-[12px] rounded-[12px] border border-[#2C2C33] p-[12px]">
             {/* Frame 2609298: Original author */}
             <div className="flex h-[36px] w-full items-center gap-[6px]">
               <AuthorHeader p={post.shared_post as Post} isNested />
@@ -285,7 +285,7 @@ export function SavedPostCard({
   if (isRepostWithThoughts && !sharedPostMedia) {
     return (
       <article
-        className="flex w-full max-w-[632px] flex-col items-start gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609527: Reposter header */}
@@ -301,7 +301,7 @@ export function SavedPostCard({
 
         {/* Frame 2609288: Nested original text post (24px inset on sides) */}
         <div className="flex w-full justify-center">
-          <div className="box-border flex w-[calc(100%-48px)] max-w-[584px] flex-col items-start gap-[12px] rounded-[12px] border border-[#2C2C33] p-[12px]">
+          <div className="box-border flex w-[calc(100%-48px)] flex-col items-start gap-[12px] rounded-[12px] border border-[#2C2C33] p-[12px]">
             {/* Original author */}
             <div className="flex h-[36px] w-full items-center gap-[6px]">
               <AuthorHeader p={post.shared_post as Post} isNested />
@@ -321,7 +321,7 @@ export function SavedPostCard({
   if (isRepost) {
     return (
       <article
-        className="flex w-full max-w-[632px] flex-col items-center gap-[12px] cursor-pointer"
+        className="flex w-full flex-col items-center gap-[12px] cursor-pointer"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609526: Repost indicator */}
@@ -348,7 +348,7 @@ export function SavedPostCard({
 
   // Fallback layout: Poll (Frame 2609260), Media (Frame 2609258), or Text (Frame 2609255)
   return (
-    <div className="flex flex-col items-start p-0 gap-[12px] w-full max-w-[632px] cursor-pointer rounded-lg transition-colors group">
+    <div className="flex flex-col items-start p-0 gap-[12px] w-full cursor-pointer rounded-lg transition-colors group">
       {/* Header section (632x36px) */}
       <div className="flex flex-row justify-between items-center w-full h-[36px]">
         <AuthorHeader p={post} />

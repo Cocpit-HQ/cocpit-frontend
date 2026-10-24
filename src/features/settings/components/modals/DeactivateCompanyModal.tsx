@@ -164,38 +164,40 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
       aria-modal="true"
     >
       <div
-        className={`relative ${
+        className={`relative isolate ${
           step === 2
             ? 'w-[316px] min-h-[270px] h-auto'
             : 'w-[304px] min-h-[230px] h-auto'
-        } max-w-[calc(100vw-32px)] bg-ds-bg border border-ds-border rounded-[16px] p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-200 box-border`}
+        } max-w-[calc(100vw-32px)] bg-ds-bg border border-ds-border rounded-[16px] p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-200 box-border flex flex-col items-center`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`flex flex-col items-center w-full ${step === 1 ? 'justify-between min-h-[206px]' : ''}`}>
+        <div className={`flex flex-col items-center w-full ${step === 1 ? 'gap-4' : ''}`}>
           {/* STEP 1: Confirmation Popup (Figma Spec 304 x 230 Hug) */}
           {step === 1 && (
             <>
-              <div className="flex flex-col items-center gap-2 text-center w-full">
-                <h2 className="text-ds-text-primary ds-text-body-1 text-center m-0 p-0 w-full">
-                  Deactivate your account?
+              {/* Frame 2609475: 278px width, 152px height, gap 8px */}
+              <div className="w-[278px] min-h-[152px] flex flex-col items-center gap-2 text-center p-0 self-stretch">
+                <h2 className="w-[278px] h-[24px] text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[24px] text-center m-0 p-0">
+                  Deactivate your {entityLabel} page?
                 </h2>
-                <p className="text-ds-text-secondary ds-text-secondary text-center m-0 p-0 w-full">
-                  Your account will be deactivated. You can reactivate it anytime from the &ldquo;Organization&rdquo; tab under your account Settings. Your profile, followers, posts, and data will be retained and restored when you reactivate your account.
+                <p className="w-[278px] h-[120px] text-ds-text-secondary text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-center m-0 p-0">
+                  Your {entityLabel} page will be temporarily deactivated. You can reactivate it anytime from the Organization tab in your settings. Your profile, followers, posts, and data will be retained and restored when you reactivate your page.
                 </p>
               </div>
 
               {errorMsg && (
-                <div className="w-full p-2 rounded-lg bg-ds-error/10 border border-ds-error/20 text-center" role="alert">
+                <div className="w-[278px] p-2 rounded-lg bg-ds-error/10 border border-ds-error/20 text-center" role="alert">
                   <p className="text-ds-error ds-text-small font-medium m-0">{errorMsg}</p>
                 </div>
               )}
 
-              <div className="flex flex-row items-center justify-center gap-[8px] w-full">
+              {/* Frame 2609476: 220px width, 36px height, gap 8px */}
+              <div className="w-[220px] h-[36px] flex flex-row items-center justify-center gap-2 p-0">
                 <button
                   type="button"
                   onClick={handleSendOTP}
                   disabled={isLoading}
-                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] bg-ds-accent text-ds-text-primary ds-text-body-1 hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
+                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] bg-ds-accent text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[24px] hover:opacity-90 active:scale-95 flex items-center justify-center gap-[10px] transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
                 >
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Deactivate
@@ -205,7 +207,7 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
                   type="button"
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary ds-text-body-1 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
+                  className="w-[106px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[24px] flex items-center justify-center gap-[10px] transition-all cursor-pointer disabled:opacity-50 ds-focus-ring"
                 >
                   Cancel
                 </button>

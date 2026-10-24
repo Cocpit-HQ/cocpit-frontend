@@ -31,6 +31,8 @@ export default async function SettingsTabPage({ params }: { params: Promise<{ ta
       return <NotificationSettingsPage />;
     case 'privacy':
       return <PrivacySettingsPage />;
+    case 'security':
+      redirect('/settings/privacy');
     case 'saved':
       return <SavedSettingsPage />;
     case 'activity':

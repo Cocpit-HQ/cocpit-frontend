@@ -29,6 +29,9 @@ export function CompanyAccountSettingsPage() {
   const phoneNumber = accountData?.phone;
   const isDeactivated = accountData?.isDeactivated ?? false;
 
+  const isInstitution = activeProfile?.entityType === 'INSTITUTION';
+  const entityLabel = isInstitution ? 'institution' : 'business';
+
   // Only organization Owner has authority to deactivate, transfer, or delete
   const isOwner = Boolean(
     activeProfile?.viewer_role_data?.is_owner ||
@@ -121,23 +124,23 @@ export function CompanyAccountSettingsPage() {
       {/* 2. Business Lifecycle Section (Matches User Session 1:1)     */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="self-stretch px-4 flex flex-col justify-start items-start gap-2">
-        {/* Row 3: Deactivate business page */}
-        <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+        {/* Row 3: Deactivate page */}
+        <div className="self-stretch py-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
             <span className="text-ds-text-primary ds-text-body-1">
-              {isDeactivated ? 'Reactivate business page' : 'Deactivate business page'}
+              {isDeactivated ? `Reactivate ${entityLabel} page` : `Deactivate ${entityLabel} page`}
             </span>
             <p className="text-ds-text-secondary ds-text-secondary m-0">
               {isDeactivated
-                ? 'Your business page is currently inactive. Click to reactivate it at any time'
-                : 'Temporarily hide your business page. You can reactivate it at any time'}
+                ? `Your ${entityLabel} page is currently inactive. Click to reactivate it at any time`
+                : `Temporarily hide your ${entityLabel} page. You can reactivate it at any time`}
             </p>
           </div>
           <button
             type="button"
             onClick={handleOpenDeactivate}
             disabled={!isOwner}
-            title={!isOwner ? 'Only the organization owner can deactivate this page' : undefined}
+            title={!isOwner ? `Only the organization owner can deactivate this page` : undefined}
             className={`w-full sm:w-[107px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border flex justify-center items-center gap-2.5 transition-colors shrink-0 ds-focus-ring ${
               !isOwner ? 'opacity-40 cursor-not-allowed' : 'hover:bg-ds-surface-1 cursor-pointer'
             }`}
@@ -155,7 +158,7 @@ export function CompanyAccountSettingsPage() {
               Transfer ownership
             </span>
             <p className="text-ds-text-secondary ds-text-secondary m-0">
-              Transfer ownership of this business page to another administrator
+              Transfer ownership of this {entityLabel} page to another administrator
             </p>
           </div>
           <button
@@ -173,14 +176,14 @@ export function CompanyAccountSettingsPage() {
           </button>
         </div>
 
-        {/* Row 5: Delete account */}
+        {/* Row 5: Delete page */}
         <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
             <span className="text-ds-text-primary ds-text-body-1">
-              Delete account
+              Delete {entityLabel} page
             </span>
             <p className="text-ds-text-secondary ds-text-secondary m-0">
-              Permanently delete your business page and all associated data
+              Permanently delete your {entityLabel} page and all associated data
             </p>
           </div>
           <button
@@ -218,6 +221,7 @@ export function CompanyAccountSettingsPage() {
           onOpenDeactivate={handleOpenDeactivate}
           onOpenTransfer={handleOpenTransfer}
           onOpenDelete={handleOpenDelete}
+          entityLabel={entityLabel}
         />
       </div>
 

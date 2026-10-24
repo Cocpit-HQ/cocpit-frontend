@@ -36,6 +36,8 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
       );
     case 'privacy':
       return <CompanyPrivacySettingsPage />;
+    case 'security':
+      redirect(`/organization/${resolvedParams.slug}/settings/privacy`);
     case 'saved':
       return <SavedSettingsPage />;
     case 'activity':

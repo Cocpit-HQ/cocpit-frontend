@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Upload, Loader2, X } from 'lucide-react';
+import { ChevronLeft, Loader2, X } from 'lucide-react';
+import { UploadIcon } from '@/components/icons';
 import { createTicket } from '@/features/settings/api/support';
 import { useAccountSettings } from '../hooks/useAccountSettings';
 import { toast } from 'sonner';
@@ -99,7 +100,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
   const isFormValid = issue.trim().length > 0 && !isSubmitting && !fileError;
 
   return (
-    <div className="w-full max-w-[712px] p-0 md:px-4 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-0 md:gap-3">
+    <div className="w-full max-w-[712px] p-0 md:px-4 md:py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-0 md:gap-3 font-['DM_Sans']">
       {/* Header */}
       <div className="self-stretch flex items-center gap-2 shrink-0 px-4 h-6 mb-4 md:px-0 md:h-auto md:mb-1">
         <button
@@ -110,7 +111,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary stroke-[1.5]" />
         </button>
-        <h1 className="text-ds-text-primary text-[16px] md:ds-text-body-2 font-medium leading-[24px] h-6 flex items-center m-0">
+        <h1 className="text-ds-text-primary text-[16px] md:text-base font-medium md:font-semibold font-['DM_Sans'] leading-[24px] h-6 flex items-center m-0">
           Contact support
         </h1>
       </div>
@@ -137,7 +138,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
               if (issueError) setIssueError('');
             }}
             placeholder="Tell us what we can improve..."
-            className="w-full bg-transparent border-none outline-none ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted p-0"
+            className="w-full bg-transparent border-none outline-none ds-text-secondary text-ds-text-primary placeholder:text-ds-text-muted p-0 font-['DM_Sans']"
           />
         </div>
         <div className="ds-supporting-area min-h-[16px] w-full pt-1">
@@ -168,7 +169,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
       >
         {(fileError || rejectedFile) ? (
           <div className="flex flex-col items-center justify-center gap-1 w-full px-4 text-center">
-            <Upload className="w-6 h-6 text-ds-text-primary mb-1" strokeWidth={1.5} />
+            <UploadIcon className="w-10 h-10 text-ds-text-primary mb-1" size={40} />
             <div className="ds-text-body-1 font-medium text-ds-text-primary truncate max-w-full">
               {rejectedFile?.name}
             </div>
@@ -190,7 +191,7 @@ export function ContactSupport({ onBack }: ContactSupportProps) {
         ) : (
           <>
             <div className="w-10 h-10 flex items-center justify-center shrink-0">
-              <Upload className="w-7 h-7 text-ds-text-primary" strokeWidth={1.5} />
+              <UploadIcon className="w-10 h-10 text-ds-text-primary" size={40} />
             </div>
             {file ? (
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-ds-surface-2 rounded-full max-w-[90%] truncate">
