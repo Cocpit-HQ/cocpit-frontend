@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { MapPin, Plus, Minus, Navigation, Loader2 } from "lucide-react";
 import { reverseGeocode, StructuredLocation } from "@/services/api/location";
 import { env } from "@/config/env";
+import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
@@ -394,9 +395,15 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
     );
   }, []);
 
+  const hasCustomHeight = Boolean(className && /(^|\s)(h-|!h-|min-h-|max-h-)/.test(className));
+
   return (
     <div
-      className={`relative w-full h-56 md:h-64 rounded-3xl border border-ds-border overflow-hidden bg-ds-surface-1 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] select-none ${className}`}
+      className={cn(
+        "relative w-full rounded-3xl border border-ds-border overflow-hidden bg-ds-surface-1 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] select-none",
+        !hasCustomHeight && "h-56 md:h-64",
+        className
+      )}
     >
       {/* Hide unstyled Google Maps terms / copyright bar to match clean Figma canvas */}
       <style dangerouslySetInnerHTML={{ __html: `

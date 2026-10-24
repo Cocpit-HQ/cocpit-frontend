@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BusinessProfileData } from "../../types/business-profile.types";
 import { Icon, SVG_ICONS, GoogleIcon } from "@/components/icons";
 import { ExternalLink } from "lucide-react";
@@ -101,7 +101,11 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const rawIndustry = (isEdu ? (about.institution_type || about.industry) : about.industry) || data.industry;
   const industry = formatIndustryType(rawIndustry);
 
-  const location = (about.location || about.headquarter || data.location || about.city || "").trim();
+  const location = (about.location_formatted || about.location || about.headquarter || data.location || about.city || "").trim();
+  const anyData = data as any;
+  const hqLat = about.latitude != null ? Number(about.latitude) : (anyData.latitude != null ? Number(anyData.latitude) : null);
+  const hqLng = about.longitude != null ? Number(about.longitude) : (anyData.longitude != null ? Number(anyData.longitude) : null);
+  const hqMapUrl = getGoogleMapsUrl(location, hqLat, hqLng, about.mapUrl || about.map_url || anyData.mapUrl);
 
   // ── Part 2: Row 3 (Organization size & Founded) ──
   const rawSize = about.size || about.employeeCount || data.employeeCount;
@@ -128,13 +132,21 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
             url: link.url.startsWith("http") ? link.url : `https://${link.url}`,
           };
         })
-    : [];
+  : [];
 
   // ── Part 2: Offices (Only real offices) ──
   const rawOffices = aboutData?.offices || data.offices || [];
   const offices = Array.isArray(rawOffices)
     ? rawOffices.filter((o: any) => Boolean(o && (o.city || o.address || o.name || o.country)))
     : [];
+
+  const officeRows = useMemo(() => {
+    const rows: any[][] = [];
+    for (let i = 0; i < offices.length; i += 2) {
+      rows.push(offices.slice(i, i + 2));
+    }
+    return rows;
+  }, [offices]);
 
   if (isLoading) {
     return (
@@ -150,11 +162,11 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const hasSpecialties = Boolean(specialtiesText);
   const hasEmail = Boolean(email);
   const hasRow1 = Boolean(industry || employeeCount);
-  const hasRow2 = Boolean(founded || websiteUrl || location);
-  const hasRow3 = Boolean(websiteUrl && location);
+  const hasRow2 = Boolean(founded || websiteUrl);
+  const hasHeadquarter = Boolean(location);
   const hasSocial = socialLinks.length > 0;
   const hasOffices = offices.length > 0;
-  const hasPart2 = hasSpecialties || hasEmail || hasRow1 || hasRow2 || hasRow3 || hasSocial || hasOffices;
+  const hasPart2 = hasSpecialties || hasEmail || hasRow1 || hasRow2 || hasHeadquarter || hasSocial || hasOffices;
 
   // If nothing is present in About at all, show clean empty state
   if (!hasPart1 && !hasPart2) {
@@ -174,7 +186,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const isLongDescription = description.length > 180;
 
   return (
-    <div className="w-full max-w-[800px] px-4 sm:px-5 flex flex-col items-start gap-4 sm:gap-5 pb-16 font-['DM_Sans']">
+    <div className="w-full max-w-[800px] px-4 sm:px-0 flex flex-col items-start gap-4 sm:gap-5 pb-16 font-['DM_Sans']">
       {/* ══════════════════════════════════════════════════════
           PART 1: Description & Slogan
           ══════════════════════════════════════════════════════ */}
@@ -284,7 +296,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
             </div>
           )}
 
-          {/* Row 2: Founded & Website (or Headquarter if website is not present) */}
+          {/* Row 2: Founded & Website */}
           {hasRow2 && (
             <div className="w-full max-w-[780px] flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-10">
               {founded && (
@@ -298,7 +310,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
                 </div>
               )}
 
-              {websiteUrl ? (
+              {websiteUrl && (
                 <div className="w-full sm:w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
                   <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                     Website
@@ -312,28 +324,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
                     {formatDisplayUrl(websiteUrl)}
                   </a>
                 </div>
-              ) : location ? (
-                <div className={`w-full ${founded ? "sm:w-[300px] sm:max-w-[440px] flex-1" : "max-w-[780px]"} flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5`}>
-                  <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
-                    Headquarter
-                  </span>
-                  <p className="w-full text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] whitespace-normal">
-                    {location}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {/* Row 3: Headquarter (only when websiteUrl is present and location exists) */}
-          {hasRow3 && websiteUrl && location && (
-            <div className="w-full max-w-[780px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2.5">
-              <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
-                Headquarter
-              </span>
-              <p className="w-full max-w-[780px] text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] whitespace-normal">
-                {location}
-              </p>
+              )}
             </div>
           )}
 
@@ -372,70 +363,132 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
             </div>
           )}
 
-          {/* Offices */}
-          {hasOffices && (
-            <div className="w-full max-w-[780px] flex flex-col items-start py-1 sm:py-2 gap-2">
+          {/* Headquarter */}
+          {hasHeadquarter && (
+            <div className="w-full max-w-[780px] flex flex-col items-start py-1 sm:py-2 gap-2 sm:gap-2.5">
               <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
-                Offices
+                Headquarter
               </h2>
 
-              {offices.map((office: any, idx: number) => {
-                const cityLabel = office.city || office.name || "";
-                const isHQ = Boolean(office.is_headquarters);
-                const fullAddress =
-                  [office.address, office.city, office.country].filter(Boolean).join(", ");
-                const mapUrl = getGoogleMapsUrl(
-                  fullAddress || cityLabel,
-                  office.latitude,
-                  office.longitude,
-                  office.mapUrl || office.map_url
-                );
+              <div className="w-full flex flex-col justify-center items-start gap-1">
+                <span className="text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
+                  Location
+                </span>
+                <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere]">
+                  {location}
+                </span>
+              </div>
 
-                return (
-                  <div key={office.id || idx} className="w-full flex flex-col items-start gap-2 sm:gap-3">
-                    <div className="w-full max-w-[300px] flex flex-col justify-center items-start py-1 sm:py-2 gap-1.5 sm:gap-2">
-                      {cityLabel && (
-                        <span className="text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
-                          {cityLabel}{isHQ ? " HQ" : ""}
-                        </span>
-                      )}
-                      {fullAddress && (
-                        <span className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
-                          {fullAddress}
-                        </span>
-                      )}
-                    </div>
+              <div className="relative w-full sm:w-[780px] max-w-[780px] h-[191px] rounded-2xl overflow-hidden group">
+                <InteractiveLocationMap
+                  locationAddress={location}
+                  latitude={hqLat}
+                  longitude={hqLng}
+                  readOnly={true}
+                  className="!w-full !h-full !rounded-2xl !border-0"
+                />
 
-                    <div className="relative w-full max-w-[780px] h-[88px] sm:h-[191px] rounded-2xl overflow-hidden group">
-                      <InteractiveLocationMap
-                        locationAddress={fullAddress || cityLabel}
-                        latitude={office.latitude ? Number(office.latitude) : null}
-                        longitude={office.longitude ? Number(office.longitude) : null}
-                        readOnly={true}
-                        className="w-full h-full rounded-2xl"
-                      />
-
-                      {mapUrl && (
-                        <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 z-30 pointer-events-auto">
-                          <a
-                            href={mapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Open in Google Maps"
-                            aria-label={`Open ${cityLabel || fullAddress || "office location"} in Google Maps`}
-                            className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-ds-surface-1/90 hover:bg-ds-surface-2 active:scale-95 backdrop-blur-md border border-ds-border shadow-md flex items-center gap-1.5 transition-all hover:scale-[1.02] text-xs font-medium font-['DM_Sans'] text-ds-text-primary cursor-pointer no-underline"
-                          >
-                            <GoogleIcon size={14} className="w-3.5 h-3.5 shrink-0" />
-                            <span className="hidden sm:inline">Open in Google Maps</span>
-                            <span className="sm:hidden">Open Maps</span>
-                            <ExternalLink className="w-3 h-3 text-ds-text-muted shrink-0" />
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                {hqMapUrl && (
+                  <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 z-30 pointer-events-auto">
+                    <a
+                      href={hqMapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Open in Google Maps"
+                      aria-label={`Open ${location} in Google Maps`}
+                      className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-ds-surface-1/90 hover:bg-ds-surface-2 active:scale-95 backdrop-blur-md border border-ds-border shadow-md flex items-center gap-1.5 transition-all hover:scale-[1.02] text-xs font-medium font-['DM_Sans'] text-ds-text-primary cursor-pointer no-underline"
+                    >
+                      <GoogleIcon size={14} className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Open in Google Maps</span>
+                      <span className="sm:hidden">Open Maps</span>
+                      <ExternalLink className="w-3 h-3 text-ds-text-muted shrink-0" />
+                    </a>
                   </div>
-                );
-              })}
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Offices */}
+          {hasOffices && (
+            <div className="w-full sm:w-[780px] max-w-[780px] flex flex-col items-start py-1 sm:py-2 gap-3 sm:gap-4">
+              <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
+                Offices ({offices.length})
+              </h2>
+
+              <div className="w-full sm:w-[780px] max-w-[780px] flex flex-col gap-4 sm:gap-5">
+                {officeRows.map((row, rowIndex) => (
+                  <div
+                    key={`office-row-${rowIndex}`}
+                    className="w-full sm:w-[780px] max-w-[780px] grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-4 sm:gap-y-5"
+                  >
+                    {row.map((office: any, idx: number) => {
+                      const rawCity = office.city || office.name || "";
+                      const isHQ = Boolean(office.is_headquarters);
+                      const fullAddress =
+                        [office.address, office.city, office.country].filter(Boolean).join(", ");
+                      const mapUrl = getGoogleMapsUrl(
+                        fullAddress || rawCity,
+                        office.latitude,
+                        office.longitude,
+                        office.mapUrl || office.map_url
+                      );
+                      const displayTitle = rawCity
+                        ? (rawCity.toLowerCase().includes("office") ? rawCity : `${rawCity} Office`)
+                        : "Office";
+
+                      return (
+                        <div
+                          key={office.id || office.office_id || `${rowIndex}-${idx}`}
+                          className="w-full md:w-[384px] md:max-w-[384px] flex flex-col justify-between gap-2"
+                        >
+                          <div className="w-full flex flex-col justify-start items-start gap-1">
+                            <span className="text-ds-text-primary text-sm font-medium font-['DM_Sans'] leading-5">
+                              {displayTitle}{isHQ ? " (HQ)" : ""}
+                            </span>
+                            {fullAddress && (
+                              <span
+                                title={fullAddress}
+                                className="text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5 break-words [overflow-wrap:anywhere] line-clamp-2"
+                              >
+                                {fullAddress}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="relative w-full md:w-[384px] h-[94px] rounded-2xl overflow-hidden group mt-auto">
+                            <InteractiveLocationMap
+                              locationAddress={fullAddress || rawCity}
+                              latitude={office.latitude ? Number(office.latitude) : null}
+                              longitude={office.longitude ? Number(office.longitude) : null}
+                              readOnly={true}
+                              className="!w-full !h-full !rounded-2xl !border-0"
+                            />
+
+                            {mapUrl && (
+                              <div className="absolute bottom-2 right-2 sm:bottom-2.5 sm:right-2.5 z-30 pointer-events-auto">
+                                <a
+                                  href={mapUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Open in Google Maps"
+                                  aria-label={`Open ${rawCity || fullAddress || "office location"} in Google Maps`}
+                                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-ds-surface-1/90 hover:bg-ds-surface-2 active:scale-95 backdrop-blur-md border border-ds-border shadow-md flex items-center gap-1 transition-all hover:scale-[1.02] text-[11px] sm:text-xs font-medium font-['DM_Sans'] text-ds-text-primary cursor-pointer no-underline"
+                                >
+                                  <GoogleIcon size={12} className="w-3 h-3 shrink-0" />
+                                  <span className="hidden sm:inline">Open in Maps</span>
+                                  <span className="sm:hidden">Maps</span>
+                                  <ExternalLink className="w-2.5 h-2.5 text-ds-text-muted shrink-0" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
