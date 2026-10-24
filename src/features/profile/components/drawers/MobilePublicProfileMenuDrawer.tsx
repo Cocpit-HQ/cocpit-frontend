@@ -204,7 +204,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
                       <button
                         type="button"
                         disabled
-                        className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                        className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] pointer-events-none select-none"
                       >
                         {isBlocked ? "Unblock profile" : "Block profile"}
                       </button>
@@ -233,7 +233,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
                       <button
                         type="button"
                         disabled
-                        className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                        className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] pointer-events-none select-none"
                       >
                         Report profile
                       </button>

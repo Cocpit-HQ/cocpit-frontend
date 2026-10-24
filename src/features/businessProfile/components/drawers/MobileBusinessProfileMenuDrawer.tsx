@@ -90,7 +90,7 @@ export const MobileBusinessProfileMenuDrawer: React.FC<MobileBusinessProfileMenu
                         <button
                           type="button"
                           disabled
-                          className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                          className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] pointer-events-none select-none"
                         >
                           {isBlocking ? "Updating..." : isBlocked ? "Unblock page" : "Block page"}
                         </button>
@@ -125,7 +125,7 @@ export const MobileBusinessProfileMenuDrawer: React.FC<MobileBusinessProfileMenu
                         <button
                           type="button"
                           disabled
-                          className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] opacity-50 pointer-events-none select-none"
+                          className="w-full text-left py-3 px-3 rounded-xl text-base font-normal text-[var(--ds-text-primary)] pointer-events-none select-none"
                         >
                           Report page
                         </button>

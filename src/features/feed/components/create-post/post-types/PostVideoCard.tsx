@@ -457,7 +457,7 @@ export const PostVideoCard = ({
                           <button
                             type="button"
                             disabled
-                            className="text-white font-medium text-[14px] bg-transparent border-none p-0 outline-none opacity-50 pointer-events-none"
+                            className="text-white font-medium text-[14px] bg-transparent border-none p-0 outline-none pointer-events-none"
                           >
                             {isAuthorFollowing ? 'Unfollow' : 'Follow'}
                           </button>

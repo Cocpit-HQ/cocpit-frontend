@@ -2,6 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from "@/components/icons";
 import { Drawer } from "vaul";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export const RepostMenu = ({
   onRepost,
@@ -54,6 +60,36 @@ export const RepostMenu = ({
     window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     return () => window.removeEventListener('scroll', handleScroll, { capture: true });
   }, [open, isMobile]);
+
+  if (disabled) {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex cursor-not-allowed">
+              <button
+                type="button"
+                disabled
+                className="flex h-[24px] flex-row items-center gap-[8px] group pointer-events-none outline-none"
+                aria-label="Repost"
+              >
+                <Icon
+                  name="repost"
+                  className={`w-[20px] h-[20px] ${isReposted && !isRepostedWithThoughts ? "text-ds-accent" : "text-ds-text-primary"}`}
+                />
+                <span className={`ds-text-small ${isReposted && !isRepostedWithThoughts ? "text-ds-accent" : "text-ds-text-primary"}`}>
+                  {shares}
+                </span>
+              </button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+            You don't have access
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <div className="relative inline-block" ref={ref}>

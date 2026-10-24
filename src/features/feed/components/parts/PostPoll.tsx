@@ -2,6 +2,12 @@
 
 import React, { useState } from 'react';
 import { VotersListModal } from '../modals/VotersListModal';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface PollOptionItem {
   option_id: string;
@@ -80,41 +86,62 @@ export const PostPoll: React.FC<PostPollProps> = ({
           // ── Option with Results / Voted / Ended State (bars & %) ───────────
           if (displayResults) {
             const canVoteFromResults = !isVoted && !isEnded && !isVoting && !disabled;
+            const isVoteRestricted = !isVoted && !isEnded && disabled;
+
+            const pillContent = (
+              <div
+                onClick={() => canVoteFromResults && handleVote(option.option_id)}
+                className={`relative flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border overflow-hidden flex justify-start items-center gap-2.5 min-w-0 transition-colors ${
+                  isSelected
+                    ? 'border-ds-border bg-ds-surface-1/40'
+                    : canVoteFromResults
+                    ? 'cursor-pointer hover:border-ds-border/80'
+                    : isVoteRestricted
+                    ? 'cursor-not-allowed'
+                    : 'cursor-default'
+                }`}
+              >
+                {/* Background Progress Fill Bar */}
+                <div
+                  className={`absolute inset-y-0 left-0 transition-all duration-300 ease-out rounded-[100px] ${
+                    isSelected ? 'bg-ds-surface-2' : 'bg-ds-surface-1'
+                  }`}
+                  style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+                />
+
+                {/* Option Label */}
+                <div className="relative z-10 justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate flex items-center gap-1.5">
+                  <span className="truncate">{option.option_text}</span>
+                  {isSelected && (
+                    <span className="text-[10px] text-ds-text-secondary font-medium shrink-0">
+                      (You)
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
 
             return (
               <div
                 key={option.option_id}
                 className="self-stretch inline-flex justify-start items-center gap-2 w-full"
               >
-                {/* Option Pill with Progress Fill Bar */}
-                <div
-                  onClick={() => canVoteFromResults && handleVote(option.option_id)}
-                  className={`relative flex-1 px-3 py-1.5 rounded-[100px] border border-ds-border overflow-hidden flex justify-start items-center gap-2.5 min-w-0 transition-colors ${
-                    isSelected
-                      ? 'border-ds-border bg-ds-surface-1/40'
-                      : canVoteFromResults
-                      ? 'cursor-pointer hover:border-ds-border/80'
-                      : 'cursor-default'
-                  }`}
-                >
-                  {/* Background Progress Fill Bar */}
-                  <div
-                    className={`absolute inset-y-0 left-0 transition-all duration-300 ease-out rounded-[100px] ${
-                      isSelected ? 'bg-ds-surface-2' : 'bg-ds-surface-1'
-                    }`}
-                    style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
-                  />
-
-                  {/* Option Label */}
-                  <div className="relative z-10 justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate flex items-center gap-1.5">
-                    <span className="truncate">{option.option_text}</span>
-                    {isSelected && (
-                      <span className="text-[10px] text-ds-text-secondary font-medium shrink-0">
-                        (You)
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {isVoteRestricted ? (
+                  <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex-1 flex min-w-0 cursor-not-allowed">
+                          {pillContent}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs font-['DM_Sans']">
+                        You don't have access
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  pillContent
+                )}
 
                 {/* Percentage Area */}
                 <div className="w-10 flex justify-end items-center gap-0.5 shrink-0 select-none">
@@ -130,6 +157,31 @@ export const PostPoll: React.FC<PostPollProps> = ({
           }
 
           // ── Unvoted State (Capsule Buttons) ──────────────────────────────────
+          if (disabled && !isEnded) {
+            return (
+              <TooltipProvider key={option.option_id} delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="self-stretch w-full block cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent flex justify-start items-center gap-2.5 outline-none text-left select-none pointer-events-none"
+                      >
+                        <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
+                          {option.option_text}
+                        </div>
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-['DM_Sans']">
+                    You don't have access
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
+          }
+
           return (
             <button
               key={option.option_id}
@@ -139,7 +191,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
               className={`self-stretch px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent flex justify-start items-center gap-2.5 transition-colors outline-none text-left select-none ${
                 !isDisabled
                   ? 'cursor-pointer hover:bg-ds-surface-2 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ds-accent'
-                  : 'cursor-not-allowed opacity-60'
+                  : 'cursor-not-allowed'
               }`}
             >
               <div className="justify-start text-[12px] font-normal font-dmsans leading-[16px] text-ds-text-primary truncate">
@@ -196,33 +248,73 @@ export const PostPoll: React.FC<PostPollProps> = ({
           // Active & Voted: Can tap "Undo" to cancel/change vote
           <>
             <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
-            <button
-              type="button"
-              onClick={() => !isVoting && !disabled && pollData.user_vote && handleVote(pollData.user_vote)}
-              disabled={isVoting || disabled}
-              className={`justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none transition-opacity line-clamp-2 ${
-                isVoting || disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80 cursor-pointer'
-              }`}
-              aria-label="Undo vote"
-            >
-              Undo
-            </button>
+            {disabled ? (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none line-clamp-2 pointer-events-none select-none"
+                        aria-label="Undo vote"
+                      >
+                        Undo
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-['DM_Sans']">
+                    You don't have access
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <button
+                type="button"
+                onClick={() => !isVoting && pollData.user_vote && handleVote(pollData.user_vote)}
+                disabled={isVoting}
+                className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none transition-opacity line-clamp-2 hover:opacity-80 cursor-pointer disabled:opacity-50"
+                aria-label="Undo vote"
+              >
+                Undo
+              </button>
+            )}
           </>
         ) : (
           // Active & Unvoted: Can toggle "Show result" / "Hide result"
           <>
             <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
-            <button
-              type="button"
-              onClick={() => !disabled && setShowResult((prev) => !prev)}
-              disabled={isVoting || disabled}
-              className={`justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none transition-opacity line-clamp-2 ${
-                isVoting || disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80 cursor-pointer'
-              }`}
-              aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
-            >
-              {showResult ? 'Hide result' : 'Show result'}
-            </button>
+            {disabled ? (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none line-clamp-2 pointer-events-none select-none"
+                        aria-label="Show poll results"
+                      >
+                        {showResult ? 'Hide result' : 'Show result'}
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-['DM_Sans']">
+                    You don't have access
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <button
+                type="button"
+                onClick={() => !isVoting && setShowResult((prev) => !prev)}
+                disabled={isVoting}
+                className="justify-start text-[var(--ds-accent)] text-[12px] font-medium font-dmsans leading-[16px] outline-none transition-opacity line-clamp-2 hover:opacity-80 cursor-pointer disabled:opacity-50"
+                aria-label={showResult ? 'Hide poll results' : 'Show poll results'}
+              >
+                {showResult ? 'Hide result' : 'Show result'}
+              </button>
+            )}
           </>
         )}
 

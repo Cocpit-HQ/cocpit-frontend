@@ -8,6 +8,13 @@ import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { Icon } from '@/components/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolders'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
+
 interface SaveButtonProps {
     postId: string
     initialIsSaved?: boolean
@@ -76,6 +83,43 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             isSavingRef.current = false
             setIsLoading(false)
         }
+    }
+
+    if (disabled) {
+        return (
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span className="inline-flex items-center justify-center cursor-not-allowed">
+                            <button
+                                type="button"
+                                disabled
+                                aria-label={isSaved ? "Remove from saved" : "Save post"}
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group outline-none rounded pointer-events-none",
+                                    isSaved ? "text-[var(--ds-accent)]" : "text-ds-text-primary",
+                                    className
+                                )}
+                            >
+                                <div className="flex items-center justify-center w-[20px] h-[20px] m-auto shrink-0 flex-none">
+                                    <div className="relative w-[20px] h-[20px] flex items-center justify-center shrink-0 flex-none">
+                                        <Icon
+                                            name={isSaved ? "save-filled" : "save"}
+                                            size={20}
+                                            className="w-[20px] h-[20px] shrink-0 flex-none"
+                                            aria-hidden="true"
+                                        />
+                                    </div>
+                                </div>
+                            </button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                        You don't have access
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )
     }
 
     return (

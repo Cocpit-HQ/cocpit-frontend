@@ -220,7 +220,7 @@ export default function RoleDetailsPage({ roleId }: RoleDetailsPageProps) {
             style={{ borderColor: role.color || 'var(--ds-accent)' }}
           >
             <p className="font-['DM_Sans',sans-serif] text-[14px] leading-5 text-ds-text-secondary">
-              {role.description || (isAdminRole ? 'Administrator Has full access to all modules and features of the application. Administrators can view, manage, create, edit, and delete any data, as well as configure settings and oversee all system activities' : 'No description provided.')}
+              {role.description || 'No description provided.'}
             </p>
           </div>
         </section>

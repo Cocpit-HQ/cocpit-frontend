@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { SettingsSidebar } from './SettingsSidebar';
+import { useSettingsStore } from '@/store/settings.store';
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,13 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
   
   // Check if we are at the root of settings to handle mobile menu visibility
   const isRoot = pathname === '/settings' || pathname?.match(/^\/organization\/[^\/]+\/settings\/?$/);
+
+  // When leaving the settings layout entirely (unmount), reset all settings UI state
+  useEffect(() => {
+    return () => {
+      useSettingsStore.getState().resetSettingsUI();
+    };
+  }, []);
 
   return (
     <>

@@ -24,6 +24,13 @@ export function SupportSettingsPage() {
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Clean up support view on unmount so returning to Help & Support opens the main view
+  React.useEffect(() => {
+    return () => {
+      setCurrentView('main');
+    };
+  }, [setCurrentView]);
+
   const handleSubmitFeedback = useCallback(async () => {
     if (feedbackRating === 0) {
       toast.error('Please select a star rating');

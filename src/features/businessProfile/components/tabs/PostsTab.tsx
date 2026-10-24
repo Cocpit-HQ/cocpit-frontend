@@ -12,6 +12,7 @@ import { useInView } from "@/hooks/use-in-view";
 import { useUIStore } from "@/store/ui.store";
 import { getPostMenuAccess } from "@/features/feed/utils/postMenuAccess";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useCompanyPermissions } from "../../hooks/useBusinessPermissions";
 import { Plus } from "lucide-react";
 import { EmptyPostsIcon } from "@/components/icons";
 import { FeedPostCardSkeleton } from "@/features/feed/components/skeletons/FeedPostCardSkeleton";
@@ -44,7 +45,8 @@ export default function PostsTab({
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const { activeProfile, userCompanies } = useActiveProfile();
+  const { activeProfile, userCompanies, isCompany } = useActiveProfile();
+  const { checkPermission } = useCompanyPermissions(activeProfile);
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 
   const hasCreatePostPermission = Boolean(
@@ -58,7 +60,8 @@ export default function PostsTab({
     )
   );
 
-  const hasInteractionPermission = !isOwnProfile || hasCreatePostPermission;
+  const canInteractAsCompany = !isCompany || checkPermission('CREATE_POST');
+  const hasInteractionPermission = canInteractAsCompany && (!isOwnProfile || hasCreatePostPermission);
 
   const {
     data: queryData,
@@ -263,7 +266,7 @@ export default function PostsTab({
                         type="button"
                         disabled
                         aria-disabled="true"
-                        className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 opacity-50 cursor-not-allowed pointer-events-none"
+                        className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
                       >
                         <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
                         <span>Create post</span>
@@ -275,7 +278,7 @@ export default function PostsTab({
                     sideOffset={6}
                     className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded shadow-lg z-[100]"
                   >
-                    You don't have access to this screen
+                    You don't have access
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

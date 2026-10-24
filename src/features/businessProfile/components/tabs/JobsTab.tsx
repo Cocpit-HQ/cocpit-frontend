@@ -406,7 +406,7 @@ export default function JobsTab({
                       type="button"
                       disabled
                       aria-disabled="true"
-                      className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 opacity-50 cursor-not-allowed pointer-events-none"
+                      className="px-3 py-1.5 rounded-[100px] border border-ds-border inline-flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
                     >
                       <Plus className="w-4 h-4 text-ds-text-primary shrink-0" />
                       <span>Create job</span>
@@ -418,7 +418,7 @@ export default function JobsTab({
                   sideOffset={6}
                   className="bg-ds-surface-2 text-ds-text-primary border border-ds-border text-xs px-2.5 py-1.5 rounded shadow-lg z-[100]"
                 >
-                  You don't have access to this screen
+                  You don't have access
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

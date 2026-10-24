@@ -27,6 +27,12 @@ import {
 import PostVideoCard from '@/features/feed/components/create-post/post-types/PostVideoCard';
 import SharedPreview from './create-post/SharedPreview';
 import { PostUploadProgressStrip } from '@/features/feed/components/PostUploadProgressStrip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -723,9 +729,7 @@ const FeedComposerInline = ({
   return (
     <>
       <div
-        className={`hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] max-h-[calc(100vh-140px)] mx-auto gap-[16px] relative ${
-          disabled ? 'opacity-50 pointer-events-none select-none cursor-not-allowed' : ''
-        }`}
+        className="hidden md:flex w-full flex-col pt-[16px] px-[16px] pb-[16px] bg-ds-bg border-b border-ds-border max-w-[442px] max-h-[calc(100vh-140px)] mx-auto gap-[16px] relative"
         onDrop={disabled ? undefined : handleDrop}
         onDragOver={disabled ? undefined : handleDragOver}
       >
@@ -911,8 +915,8 @@ const FeedComposerInline = ({
               <div className="flex flex-row items-start gap-[12px] w-full">
                 {/* Avatar */}
                 <div
-                  className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none cursor-pointer select-none`}
-                  onClick={() => textareaRef.current?.focus()}
+                  className={`w-[32px] h-[32px] ${isCompanyPost ? 'rounded-[8px]' : 'rounded-full'} overflow-hidden bg-ds-surface-1 flex items-center justify-center shrink-0 flex-none ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} select-none`}
+                  onClick={() => !disabled && textareaRef.current?.focus()}
                 >
                   {avatarUrl ? (
                     <img
@@ -930,21 +934,49 @@ const FeedComposerInline = ({
                 </div>
 
                 {/* MentionTextarea — active, editable inline */}
-                <div className="flex-grow mt-[4px]">
-                  <MentionTextarea
-                    ref={textareaRef}
-                    value={text}
-                    disabled={disabled}
-                    onChange={handleTextChange}
-                    onFocus={disabled ? undefined : handleFocus}
-                    onMentionsChange={handleMentionsChange}
-                    onPaste={disabled ? undefined : handlePaste}
-                    onDrop={disabled ? undefined : handleDrop}
-                    onDragOver={disabled ? undefined : handleDragOver}
-                    initialMentions={inlineMentions}
-                    placeholder={disabled ? disabledPlaceholder : "What would you like to share today?"}
-                    className="ds-text-body text-ds-text-primary placeholder:text-ds-text-muted bg-transparent"
-                  />
+                <div className={`flex-grow mt-[4px] ${disabled ? 'cursor-not-allowed' : ''}`}>
+                  {disabled ? (
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-not-allowed w-full">
+                            <MentionTextarea
+                              ref={textareaRef}
+                              value={text}
+                              disabled={disabled}
+                              onChange={handleTextChange}
+                              onFocus={undefined}
+                              onMentionsChange={handleMentionsChange}
+                              onPaste={undefined}
+                              onDrop={undefined}
+                              onDragOver={undefined}
+                              initialMentions={inlineMentions}
+                              placeholder={disabledPlaceholder}
+                              className="ds-text-body text-ds-text-primary placeholder:text-ds-text-muted bg-transparent pointer-events-none"
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                          You don't have access
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <MentionTextarea
+                      ref={textareaRef}
+                      value={text}
+                      disabled={disabled}
+                      onChange={handleTextChange}
+                      onFocus={handleFocus}
+                      onMentionsChange={handleMentionsChange}
+                      onPaste={handlePaste}
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      initialMentions={inlineMentions}
+                      placeholder="What would you like to share today?"
+                      className="ds-text-body text-ds-text-primary placeholder:text-ds-text-muted bg-transparent"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -1086,60 +1118,86 @@ const FeedComposerInline = ({
             ) : !hasContent ? (
               <div className="flex flex-row items-center gap-[12px]">
                 {/* Image / Photo */}
-                <button
-                  type="button"
-                  onClick={handleImageClick}
-                  disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
-                  className={`flex justify-center items-center gap-[8px] w-[92px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
-                      ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
-                      : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
-                    }`}
-                  aria-label="Upload image"
-                  title={
-                    selectedImages.length >= MAX_COMPOSER_IMAGES
-                      ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
-                      : 'Add photos'
-                  }
-                >
-                  <Icon name="image" className="w-[20px] h-[20px]" />
-                  <span className="text-[14px] leading-[20px] font-normal font-dmsans">Media</span>
-                </button>
+                {disabled ? (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-not-allowed">
+                          <button
+                            type="button"
+                            disabled
+                            className="flex justify-center items-center gap-[8px] w-[92px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border text-ds-text-primary outline-none pointer-events-none"
+                            aria-label="Upload image"
+                          >
+                            <Icon name="image" className="w-[20px] h-[20px]" />
+                            <span className="text-[14px] leading-[20px] font-normal font-dmsans">Media</span>
+                          </button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                        You don't have access
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleImageClick}
+                    disabled={selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null}
+                    className={`flex justify-center items-center gap-[8px] w-[92px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${selectedImages.length >= MAX_COMPOSER_IMAGES || selectedVideo !== null
+                        ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
+                        : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
+                      }`}
+                    aria-label="Upload image"
+                    title={
+                      selectedImages.length >= MAX_COMPOSER_IMAGES
+                        ? `Media limit reached (${MAX_COMPOSER_IMAGES}/${MAX_COMPOSER_IMAGES})`
+                        : 'Add photos'
+                    }
+                  >
+                    <Icon name="image" className="w-[20px] h-[20px]" />
+                    <span className="text-[14px] leading-[20px] font-normal font-dmsans">Media</span>
+                  </button>
+                )}
 
                 {/* Poll */}
-                <button
-                  type="button"
-                  onClick={handlePollClick}
-                  disabled={hasMedia}
-                  className={`flex justify-center items-center gap-[8px] w-[77px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${hasMedia
-                      ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
-                      : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
-                    }`}
-                  aria-label="Create poll"
-                  title={hasMedia ? 'Cannot create a poll while media is attached' : 'Create poll'}
-                >
-                  <Icon name="poll" className="w-[20px] h-[20px]" />
-                  <span className="text-[14px] leading-[20px] font-normal font-dmsans">Poll</span>
-                </button>
-
-                {/* Article */}
-                {/* <button
-                  type="button"
-                  onClick={handleArticleClick}
-                  disabled={hasMedia}
-                  className={`flex justify-center items-center gap-[8px] w-[97px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${hasMedia
-                      ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
-                      : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
-                    }`}
-                  aria-label="Write article"
-                  title={
-                    hasMedia
-                      ? 'Cannot write article while media is active'
-                      : 'Write article'
-                  }
-                >
-                  <Icon name="articles" className="w-[20px] h-[20px]" />
-                  <span className="text-[14px] leading-[20px] font-normal font-dmsans">Article</span>
-                </button> */}
+                {disabled ? (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-not-allowed">
+                          <button
+                            type="button"
+                            disabled
+                            className="flex justify-center items-center gap-[8px] w-[77px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border text-ds-text-primary outline-none pointer-events-none"
+                            aria-label="Create poll"
+                          >
+                            <Icon name="poll" className="w-[20px] h-[20px]" />
+                            <span className="text-[14px] leading-[20px] font-normal font-dmsans">Poll</span>
+                          </button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                        You don't have access
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePollClick}
+                    disabled={hasMedia}
+                    className={`flex justify-center items-center gap-[8px] w-[77px] h-[36px] px-[12px] py-[8px] rounded-full border border-ds-border transition-all duration-[120ms] outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] ${hasMedia
+                        ? 'opacity-40 cursor-default pointer-events-none text-ds-text-muted'
+                        : 'text-ds-text-primary hover:bg-ds-surface-2 active:scale-[0.98] cursor-pointer'
+                      }`}
+                    aria-label="Create poll"
+                    title={hasMedia ? 'Cannot create a poll while media is attached' : 'Create poll'}
+                  >
+                    <Icon name="poll" className="w-[20px] h-[20px]" />
+                    <span className="text-[14px] leading-[20px] font-normal font-dmsans">Poll</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="flex flex-row items-center gap-[12px]">
@@ -1167,24 +1225,45 @@ const FeedComposerInline = ({
 
           {/* Action Buttons: Post + Cancel */}
           <div className="flex items-center gap-[12px] ml-auto">
-            {/* Bug Fix: Post button upload loading state matches Figma design (w-77px, h-36px, ds-surface-1, 24x24 ds-text-secondary loader) */}
-            <button
-              onClick={handlePost}
-              disabled={!canPost || isSubmitting}
-              className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${isSubmitting
-                  ? 'bg-ds-surface-1 border-none cursor-default'
-                  : canPost
-                    ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
-                    : 'bg-ds-surface-1 text-ds-text-muted pointer-events-none cursor-default'
-                }`}
-              aria-label="Publish post"
-            >
-              {isSubmitting ? (
-                <Loader className="w-[24px] h-[24px] text-ds-text-secondary animate-spin" />
-              ) : (
-                'Post'
-              )}
-            </button>
+            {disabled ? (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-not-allowed">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans bg-[var(--ds-accent)] text-white outline-none pointer-events-none"
+                        aria-label="Publish post"
+                      >
+                        Post
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                    You don't have access
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <button
+                onClick={handlePost}
+                disabled={!canPost || isSubmitting}
+                className={`w-[77px] h-[36px] flex items-center justify-center gap-[10px] px-[12px] py-[6px] rounded-full text-[16px] leading-[24px] font-medium font-dmsans outline-none ring-0 focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] transition-colors duration-[200ms] ${isSubmitting
+                    ? 'bg-ds-surface-1 border-none cursor-default'
+                    : canPost
+                      ? 'bg-[var(--ds-accent)] text-white hover:opacity-90 cursor-pointer'
+                      : 'bg-ds-surface-1 text-ds-text-muted pointer-events-none cursor-default'
+                  }`}
+                aria-label="Publish post"
+              >
+                {isSubmitting ? (
+                  <Loader className="w-[24px] h-[24px] text-ds-text-secondary animate-spin" />
+                ) : (
+                  'Post'
+                )}
+              </button>
+            )}
 
             {canCancel && (
               <button

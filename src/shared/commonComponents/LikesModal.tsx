@@ -148,13 +148,13 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
                                 type="button"
                                 disabled
                                 aria-label={`Follow ${liker.fullName || liker.username || 'user'}`}
-                                className="h-6 px-1 flex items-center justify-center font-['DM_Sans'] font-medium text-base leading-6 text-ds-accent opacity-50 pointer-events-none text-center rounded"
+                                className="h-6 px-1 flex items-center justify-center font-['DM_Sans'] font-medium text-base leading-6 text-ds-accent pointer-events-none text-center rounded"
                               >
                                 Follow
                               </button>
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                          <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                             {noFollowMessage}
                           </TooltipContent>
                         </Tooltip>

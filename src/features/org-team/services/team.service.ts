@@ -205,7 +205,8 @@ function formatAction(action: string, metadata?: any): string {
       return 'removed company cover banner';
     case 'VIEW':
     case 'VIEWED':
-      return 'viewed public profile';
+    case 'VIEW_ORGANIZATION':
+      return 'viewed organization page';
     case 'TRANSFER_OWNERSHIP':
       return 'transferred ownership to';
     case 'ORGANIZATION_BLOCK_ADDED':

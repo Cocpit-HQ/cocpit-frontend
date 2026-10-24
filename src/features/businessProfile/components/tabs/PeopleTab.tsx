@@ -376,13 +376,13 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
                       type="button"
                       disabled
                       aria-label={`Follow ${emp.name}`}
-                      className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] rounded-[100px] flex justify-center items-center gap-2.5 text-white text-base font-medium font-['DM_Sans'] leading-6 opacity-50 pointer-events-none"
+                      className="w-24 h-9 px-3 py-1.5 bg-[var(--ds-accent)] rounded-[100px] flex justify-center items-center gap-2.5 text-white text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
                     >
                       Follow
                     </button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                   {noFollowMessage}
                 </TooltipContent>
               </Tooltip>
@@ -410,13 +410,13 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
                       type="button"
                       disabled
                       aria-label={`Unfollow ${emp.name}`}
-                      className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 opacity-50 pointer-events-none"
+                      className="w-24 h-9 px-3 py-1.5 rounded-[100px] border border-[var(--ds-border)] flex justify-center items-center gap-2.5 text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
                     >
                       Unfollow
                     </button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                   {noFollowMessage}
                 </TooltipContent>
               </Tooltip>

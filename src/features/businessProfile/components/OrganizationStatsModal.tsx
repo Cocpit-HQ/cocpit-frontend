@@ -210,7 +210,8 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
       (activeTab === "following" && (showFollowingList === false || (following as any)?.is_restricted)));
 
   const renderAction = (item: any, id: string, name: string) => {
-    if (id === loggedInUserId || (isCompanyActor && id === activeProfile?.id)) {
+    const currentActorId = (isCompanyActor && activeProfile?.id ? activeProfile.id : loggedInUserId)?.toString();
+    if (id?.toString() === currentActorId) {
       return null;
     }
 
@@ -235,13 +236,13 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
                   <button
                     type="button"
                     disabled
-                    className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                    className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none pointer-events-none whitespace-nowrap"
                   >
                     Unfollow
                   </button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+              <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                 {noFollowMessage}
               </TooltipContent>
             </Tooltip>
@@ -276,13 +277,13 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
                 <button
                   type="button"
                   disabled
-                  className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                  className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none pointer-events-none whitespace-nowrap"
                 >
                   Follow
                 </button>
               </span>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+            <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
               {noFollowMessage}
             </TooltipContent>
           </Tooltip>

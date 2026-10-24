@@ -362,14 +362,14 @@ export default function BusinessProfileHeader({
                           type="button"
                           disabled
                           aria-label="Edit profile disabled"
-                          className="px-3 py-1.5 bg-ds-accent opacity-50 rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none shadow-sm cursor-not-allowed"
+                          className="px-3 py-1.5 bg-ds-accent rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none shadow-sm cursor-not-allowed"
                         >
                           Edit profile
                         </button>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
-                      You don't have access to this screen
+                      You don't have access
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -386,26 +386,50 @@ export default function BusinessProfileHeader({
           ) : (
             <>
               {/* Follow Button */}
-              <button
-                onClick={() => {
-                  if (data.isFollowing) {
-                    setShowUnfollowModal(true);
-                  } else {
-                    followMutation.mutate();
-                  }
-                }}
-                disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
-                title={!actingCompanyCanFollow ? "Only company admins/owners can follow on behalf of the company" : ""}
-                className={cn(
-                  "px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors shadow-sm cursor-pointer",
-                  data.isFollowing
-                    ? "outline outline-1 outline-ds-border text-ds-text-secondary hover:bg-ds-surface-2"
-                    : "bg-ds-accent text-white hover:opacity-90",
-                  !actingCompanyCanFollow && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
-              </button>
+              {!actingCompanyCanFollow ? (
+                <TooltipProvider>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          className={cn(
+                            "px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 shadow-sm pointer-events-none",
+                            data.isFollowing
+                              ? "outline outline-1 outline-ds-border text-ds-text-secondary"
+                              : "bg-ds-accent text-white"
+                          )}
+                        >
+                          {data.isFollowing ? "Unfollow" : "Follow"}
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
+                      {NO_FOLLOW_ACCESS_MESSAGE}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (data.isFollowing) {
+                      setShowUnfollowModal(true);
+                    } else {
+                      followMutation.mutate();
+                    }
+                  }}
+                  disabled={followMutation.isPending || !orgId}
+                  className={cn(
+                    "px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors shadow-sm cursor-pointer",
+                    data.isFollowing
+                      ? "outline outline-1 outline-ds-border text-ds-text-secondary hover:bg-ds-surface-2"
+                      : "bg-ds-accent text-white hover:opacity-90"
+                  )}
+                >
+                  {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
+                </button>
+              )}
 
               {/* Message Button */}
               {data.showMessage !== false && (
@@ -438,19 +462,59 @@ export default function BusinessProfileHeader({
                   >
                     Share page
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleBlockToggle}
-                    disabled={blockMutation.isPending}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0 disabled:opacity-50"
-                  >
-                    {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setIsReportModalOpen(true)}
-                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0"
-                  >
-                    Report page
-                  </DropdownMenuItem>
+                  {!canBlock ? (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <div className="w-full">
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] outline-none border-none h-[20px] flex-none order-1 grow-0 cursor-not-allowed select-none !opacity-100"
+                            >
+                              {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
+                            </DropdownMenuItem>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-[9999]">
+                          {noBlockMessage}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={handleBlockToggle}
+                      disabled={blockMutation.isPending}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0 disabled:opacity-50"
+                    >
+                      {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
+                    </DropdownMenuItem>
+                  )}
+                  {!canReport ? (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <div className="w-full">
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                              className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] outline-none border-none h-[20px] flex-none order-2 grow-0 cursor-not-allowed select-none !opacity-100"
+                            >
+                              Report page
+                            </DropdownMenuItem>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-[9999]">
+                          {noReportMessage}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => setIsReportModalOpen(true)}
+                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0"
+                    >
+                      Report page
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
@@ -561,13 +625,24 @@ export default function BusinessProfileHeader({
                   Edit profile
                 </Link>
               ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="px-4 py-1.5 bg-ds-accent opacity-50 text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
-                >
-                  Edit profile
-                </button>
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          className="px-4 py-1.5 bg-ds-accent text-white rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none"
+                        >
+                          Edit profile
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
+                      You don't have access
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               <button
                 type="button"
@@ -588,7 +663,7 @@ export default function BusinessProfileHeader({
                           type="button"
                           disabled
                           className={cn(
-                            "w-24 px-3 py-1.5 rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center opacity-50 pointer-events-none",
+                            "w-24 px-3 py-1.5 rounded-[100px] text-base font-medium font-['DM_Sans'] leading-6 flex justify-center items-center pointer-events-none",
                             data.isFollowing
                               ? "border border-ds-border text-ds-text-secondary"
                               : "bg-ds-accent text-white"

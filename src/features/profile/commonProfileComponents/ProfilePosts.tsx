@@ -584,7 +584,7 @@ const ProfilePostCard = ({
                             <span className="w-full inline-flex cursor-not-allowed">
                               <DropdownMenuItem
                                 disabled
-                                className="flex items-start justify-between w-full px-3 py-2 opacity-50 pointer-events-none rounded-xl outline-none"
+                                className="flex items-start justify-between w-full px-3 py-2 pointer-events-none rounded-xl outline-none"
                               >
                                 <span className="text-[14px] font-['DM_Sans'] break-words text-left pr-2">
                                   {localPost.isCompanyPost

@@ -77,6 +77,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
   const { isCompanyActor, canFollow, message: noFollowMessage } = useCompanyFollowPermission();
 
   const loggedInUserId = currentUser?.id?.toString();
+  const currentActorId = (isCompanyActor && activeProfile?.id ? activeProfile.id : loggedInUserId)?.toString();
   const isOwnProfile = isOwnProfileProp !== undefined
     ? isOwnProfileProp
     : (activeProfile?.type === "USER" && (loggedInUserId === userId?.toString() || (currentUser as any)?.username === userId));
@@ -501,14 +502,14 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       case "following":
         return {
           title: "Following is private",
-          description: userName 
+          description: userName
             ? `${userName}${userName.endsWith('s') || userName.endsWith('S') ? "'" : "'s"} following list is private`
             : "This person has chosen to keep their following list private",
         };
       case "followers":
         return {
           title: "Followers are private",
-          description: userName 
+          description: userName
             ? `${userName}${userName.endsWith('s') || userName.endsWith('S') ? "'" : "'s"} followers are private`
             : "This person has chosen to keep their followers private",
         };
@@ -516,7 +517,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       default:
         return {
           title: "Connections are private",
-          description: userName 
+          description: userName
             ? `${userName}${userName.endsWith('s') || userName.endsWith('S') ? "'" : "'s"} connections are private`
             : "This person has chosen to keep their connections private",
         };
@@ -527,8 +528,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     if (activeTab === "following") {
       if (!isOwnProfile) {
         // Public profile view: action reflects the logged-in user's relationship to this user
-        if (id === loggedInUserId) {
-          return null; // Cannot follow yourself
+        if (id?.toString() === currentActorId) {
+          return null; // Cannot follow yourself / current actor
         }
 
         const isUserFollowed = isFollowing(id) || Boolean(user.is_following);
@@ -543,13 +544,13 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                       <button
                         type="button"
                         disabled
-                        className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                        className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none pointer-events-none whitespace-nowrap"
                       >
                         Unfollow
                       </button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                  <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                     {noFollowMessage}
                   </TooltipContent>
                 </Tooltip>
@@ -577,13 +578,13 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     <button
                       type="button"
                       disabled
-                      className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                      className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none pointer-events-none whitespace-nowrap"
                     >
                       Follow
                     </button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                   {noFollowMessage}
                 </TooltipContent>
               </Tooltip>
@@ -612,13 +613,13 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                   <button
                     type="button"
                     disabled
-                    className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                    className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none pointer-events-none whitespace-nowrap"
                   >
                     Unfollow
                   </button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+              <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                 {noFollowMessage}
               </TooltipContent>
             </Tooltip>
@@ -638,8 +639,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     }
 
     if (activeTab === "followers") {
-      if (id === loggedInUserId) {
-        return null; // Cannot follow yourself
+      if (id?.toString() === currentActorId) {
+        return null; // Cannot follow yourself / current actor
       }
 
       const isConnected = !!(user.is_connected || user.connection_status === "connected" || user.is_connection);
@@ -667,13 +668,13 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     <button
                       type="button"
                       disabled
-                      className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none opacity-50 pointer-events-none whitespace-nowrap"
+                      className="h-5 font-['DM_Sans'] text-[14px] leading-[20px] font-medium text-center text-[var(--ds-accent)] flex-none pointer-events-none whitespace-nowrap"
                     >
                       Follow
                     </button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                <TooltipContent side="top" align="end" className="text-xs font-['DM_Sans']">
                   {noFollowMessage}
                 </TooltipContent>
               </Tooltip>
@@ -716,7 +717,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         );
       }
 
-      if (id === loggedInUserId) {
+      if (id?.toString() === currentActorId) {
         return null; // Cannot connect with yourself
       }
 
@@ -830,8 +831,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 tabKey === "following"
                   ? "Following"
                   : tabKey === "followers"
-                  ? "Followers"
-                  : "Connection";
+                    ? "Followers"
+                    : "Connection";
 
               return (
                 <button
@@ -977,8 +978,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             confirmAction.type === "unfollow"
               ? "unfollow"
               : confirmAction.type === "remove_connection"
-              ? "remove_connection"
-              : "custom"
+                ? "remove_connection"
+                : "custom"
           }
           targetName={confirmAction.userName}
           title={

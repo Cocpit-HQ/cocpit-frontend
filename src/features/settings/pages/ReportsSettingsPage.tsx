@@ -50,6 +50,14 @@ export function ReportsSettingsPage() {
     }
   }, [activeTab]);
 
+  // Clean up selected report/action on unmount so returning to Account Status opens the main view
+  React.useEffect(() => {
+    return () => {
+      selectReport(null);
+      selectAction(null);
+    };
+  }, [selectReport, selectAction]);
+
   if ((selectedReportId !== null && isLoadingReport) || (selectedActionId !== null && isLoadingAction)) {
     return (
       <div className="flex justify-center items-center py-24 w-full">

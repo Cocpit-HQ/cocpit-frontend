@@ -11,6 +11,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useSettingsStore } from '@/store/settings.store';
 
 const userSidebarItems = [
   { id: 'account', label: 'Account', icon: (props: any) => <Icon icon="iconoir:profile-circle" width={20} height={20} {...props} /> },
@@ -104,7 +105,17 @@ export function SettingsSidebar() {
     };
   });
 
+  const handleTabClick = (itemId: string) => {
+    if (itemId === 'reports') {
+      useSettingsStore.getState().selectReport(null);
+      useSettingsStore.getState().selectAction(null);
+    } else if (itemId === 'support') {
+      useSettingsStore.getState().setSupportView('main');
+    }
+  };
+
   const handleExitSettings = () => {
+    useSettingsStore.getState().resetSettingsUI();
     router.push(isCompany && activeProfile?.slug ? `/organization/${activeProfile.slug}` : '/profile');
   };
 
@@ -125,6 +136,7 @@ export function SettingsSidebar() {
               <Link
                 key={item.id}
                 href={`${basePath}/${item.id}`}
+                onClick={() => handleTabClick(item.id)}
                 style={{
                   borderLeft: isActive ? '2px solid var(--ds-accent)' : '2px solid transparent',
                   borderRadius: '0px 0px 0px 16px',
@@ -181,6 +193,7 @@ export function SettingsSidebar() {
                       <Link
                         key={`${item.id}-${itemIdx}`}
                         href={`${basePath}/${item.id}`}
+                        onClick={() => handleTabClick(item.id)}
                         className="flex flex-row items-center justify-between py-3 w-full active:bg-ds-surface-1 transition-colors"
                       >
                         <div className="flex flex-row items-center gap-3">

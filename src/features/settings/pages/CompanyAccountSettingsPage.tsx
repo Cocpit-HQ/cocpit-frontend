@@ -40,6 +40,12 @@ export function CompanyAccountSettingsPage() {
   const handleOpenTransfer = useCallback(() => setActiveModal('transfer'), [setActiveModal]);
   const handleOpenDelete = useCallback(() => setActiveModal('delete'), [setActiveModal]);
 
+  React.useEffect(() => {
+    return () => {
+      setActiveModal(null);
+    };
+  }, [setActiveModal]);
+
   return (
     <>
       {/* ───────────────────────────────────────────────────────────── */}

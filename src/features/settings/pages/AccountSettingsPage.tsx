@@ -33,6 +33,12 @@ export function AccountSettingsPage() {
   const handleOpenDeactivate = useCallback(() => setActiveModal('deactivate'), [setActiveModal]);
   const handleOpenDelete = useCallback(() => setActiveModal('delete'), [setActiveModal]);
 
+  React.useEffect(() => {
+    return () => {
+      setActiveModal(null);
+    };
+  }, [setActiveModal]);
+
   return (
     <>
       {/* ───────────────────────────────────────────────────────────── */}

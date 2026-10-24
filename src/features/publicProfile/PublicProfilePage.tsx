@@ -541,7 +541,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                     type="button"
                     disabled
                     className={cn(
-                      "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 opacity-50 pointer-events-none",
+                      "px-3 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 pointer-events-none",
                       following
                         ? "border border-[var(--ds-border)] text-[var(--ds-text-primary)]"
                         : "bg-[var(--ds-accent)] text-white"
@@ -629,8 +629,8 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                     <TooltipTrigger asChild>
                       <span className="w-full inline-flex cursor-not-allowed">
                         <DropdownMenuItem
-                          disabled
-                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] opacity-50 text-sm font-normal font-['DM_Sans'] leading-5 pointer-events-none"
+                          onSelect={(e) => e.preventDefault()}
+                          className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-not-allowed outline-none transition-colors border-none !opacity-100"
                         >
                           {following ? "Unfollow" : "Follow"}
                         </DropdownMenuItem>
@@ -726,14 +726,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   <TooltipTrigger asChild>
                     <div className="w-full">
                       <DropdownMenuItem
-                        disabled
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 outline-none border-none opacity-50 cursor-not-allowed select-none"
+                        onSelect={(e) => e.preventDefault()}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-not-allowed outline-none transition-colors border-none select-none !opacity-100"
                       >
                         {blocked ? "Unblock profile" : "Block profile"}
                       </DropdownMenuItem>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[60]">
+                  <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-[9999]">
                     {noBlockMessage}
                   </TooltipContent>
                 </Tooltip>
@@ -753,14 +753,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
                   <TooltipTrigger asChild>
                     <div className="w-full">
                       <DropdownMenuItem
-                        disabled
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 outline-none border-none opacity-50 cursor-not-allowed select-none"
+                        onSelect={(e) => e.preventDefault()}
+                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-sm font-normal font-['DM_Sans'] leading-5 cursor-not-allowed outline-none transition-colors border-none select-none !opacity-100"
                       >
                         Report profile
                       </DropdownMenuItem>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[60]">
+                  <TooltipContent side="left" className="text-xs font-['DM_Sans'] z-[9999]">
                     {noReportMessage}
                   </TooltipContent>
                 </Tooltip>

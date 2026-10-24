@@ -360,8 +360,8 @@ const SharedPreview = ({ sharedPost, sharedPostId, sharedJobId, isMobile, clicka
                           disabled
                           className={cn(
                             isAuthorFollowing
-                              ? `w-[65px] h-[24px] flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none opacity-50 pointer-events-none rounded text-ds-text-primary`
-                              : `h-[24px] px-1 flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 opacity-50 pointer-events-none rounded`
+                              ? `w-[65px] h-[24px] flex items-center justify-center font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-center shrink-0 flex-none pointer-events-none rounded text-ds-text-primary`
+                              : `h-[24px] px-1 flex items-center justify-center font-['DM_Sans'] font-semibold text-[16px] leading-[24px] text-[var(--ds-accent)] shrink-0 pointer-events-none rounded`
                           )}
                         >
                           {isAuthorFollowing ? 'Unfollow' : 'Follow'}
