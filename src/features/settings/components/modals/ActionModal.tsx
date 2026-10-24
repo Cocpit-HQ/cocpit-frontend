@@ -104,7 +104,11 @@ export function ActionModal({
     try {
       await onConfirm(otp.trim());
     } catch (err: any) {
-      setLocalError(err?.response?.data?.message || err?.message || 'Action failed');
+      const raw = err?.response?.data?.message || err?.message;
+      const msg = (raw === 'Incorrect code' || raw === 'Invalid verification code')
+        ? 'Invalid verification code'
+        : (raw || 'Action failed');
+      setLocalError(msg);
     }
   };
 
@@ -143,23 +147,31 @@ export function ActionModal({
           </div>
 
           {/* OTP Input Section (Step 2) */}
+          {/* OTP Input Section (Step 2: Frame 2608851 spec) */}
           {isOtpStep && (
-            <div className="w-full flex flex-col items-start gap-[6px]">
-              <span className="text-[#8E8E93] text-[12px] font-normal leading-[16px]">
+            <div className="w-full max-w-[290px] pt-2 pb-2 flex flex-col justify-start items-start gap-2">
+              <span className="text-ds-text-secondary text-[12px] font-normal font-['DM_Sans'] leading-[16px]">
                 Enter code
               </span>
-              <input
-                type="text"
-                maxLength={6}
-                value={otp}
-                autoFocus
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="000000"
-                className="w-full bg-transparent border-0 border-b border-[#2C2C33] focus:border-ds-accent text-white text-[15px] tracking-[4px] py-1 outline-none transition-colors placeholder:text-[#555] placeholder:tracking-normal"
-              />
-              <div className="pt-1">
+              <div className="w-full pb-1 border-b border-ds-border flex justify-between items-center gap-2">
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otp}
+                  autoFocus
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                  className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-[14px] font-normal font-['DM_Sans'] leading-[20px] p-0 tracking-wider"
+                />
+              </div>
+              {displayedError && (
+                <span className="text-ds-error text-[12px] font-normal font-['DM_Sans'] leading-[16px]">
+                  {displayedError}
+                </span>
+              )}
+              <div className="w-full flex justify-start items-center">
                 {cooldown > 0 ? (
-                  <span className="text-[#8E8E93] text-[12px] leading-[16px]">
+                  <span className="text-ds-text-muted text-[12px] font-normal font-['DM_Sans'] leading-[16px]">
                     Resend in {cooldown}s
                   </span>
                 ) : (
@@ -167,7 +179,7 @@ export function ActionModal({
                     type="button"
                     disabled={sendingOtp}
                     onClick={handleSendCode}
-                    className="text-ds-accent hover:underline text-[12px] leading-[16px] cursor-pointer bg-transparent border-0 p-0"
+                    className="text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline text-[12px] font-normal font-['DM_Sans'] leading-[16px] cursor-pointer bg-transparent border-0 p-0"
                   >
                     {sendingOtp ? 'Sending code...' : 'Resend code'}
                   </button>
@@ -176,12 +188,12 @@ export function ActionModal({
             </div>
           )}
 
-          {/* Error message */}
-          {displayedError && (
-            <div className="w-full p-2 bg-ds-error/10 border border-ds-error/20 rounded-lg text-center">
-              <p className="text-ds-error text-[12px] font-medium m-0">
+          {/* Error message for step 1 (non-otp) */}
+          {!isOtpStep && displayedError && (
+            <div className="min-h-[16px] self-stretch flex items-center justify-center">
+              <span className="text-ds-error text-xs font-normal font-['DM_Sans'] leading-4">
                 {displayedError}
-              </p>
+              </span>
             </div>
           )}
 

@@ -11,6 +11,7 @@ export type ConfirmPresetType =
   | "remove_follower"
   | "delete_post"
   | "logout"
+  | "remove_tag"
   | "custom";
 
 export interface ActionConfirmModalProps {
@@ -40,6 +41,7 @@ const PRESETS: Record<
     confirmText: string;
     buttonWidthClass?: string;
     titleClassName?: string;
+    modalClassName?: string;
   }
 > = {
   unfollow: {
@@ -83,6 +85,13 @@ const PRESETS: Record<
     confirmText: "Log out",
     buttonWidthClass: "w-[84px]",
   },
+  remove_tag: {
+    getTitle: () => "Remove this tag?",
+    description: "This tag will be removed from the post.",
+    confirmText: "Remove",
+    buttonWidthClass: "w-[84px]",
+    modalClassName: "w-[202px]",
+  },
 };
 
 export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
@@ -119,6 +128,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         overlayClassName={overlayClassName}
         className={cn(
           "box-border w-fit min-w-[202px] max-w-[280px] min-h-[150px] p-3 gap-4 bg-ds-bg border border-ds-border rounded-2xl flex flex-col items-center justify-between shadow-2xl outline-none select-none z-[101]",
+          preset?.modalClassName,
           modalClassName
         )}
       >

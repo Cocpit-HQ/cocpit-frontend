@@ -80,6 +80,7 @@ export default function BusinessProfileHeader({
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
     type: "avatar" | "banner";
@@ -179,7 +180,66 @@ export default function BusinessProfileHeader({
   const blockMutation = useMutation({
     mutationFn: () => (data.isBlocked ? businessProfileService.unblockTarget(orgId!) : businessProfileService.blockTarget(orgId!)),
     onSuccess: () => {
+      const willBeBlocked = !data.isBlocked;
+
+      // 1. Invalidate profile queries
       queryClient.invalidateQueries({ queryKey: ["companyProfile", rawSlug] });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", orgId] });
+
+      // 2. Optimistically purge blocked company's posts from feed queries
+      if (willBeBlocked && orgId) {
+        queryClient.setQueriesData<any>({ queryKey: ['feed'] }, (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              posts: (page.posts || []).filter((p: any) => {
+                const matches =
+                  String(p.authorId) === String(orgId) ||
+                  String(p.author_org_id) === String(orgId) ||
+                  String(p.companyId) === String(orgId) ||
+                  String(p.company_id) === String(orgId) ||
+                  String(p.shared_post?.authorId) === String(orgId) ||
+                  String(p.shared_post?.author_org_id) === String(orgId);
+                return !matches;
+              }),
+            })),
+          };
+        });
+
+        // Also purge from profile post previews
+        queryClient.setQueriesData<any[]>({ queryKey: ["profile-posts"] }, (oldData: any) => {
+          if (!Array.isArray(oldData)) return oldData;
+          return oldData.filter((p: any) =>
+            String(p.authorId) !== String(orgId) &&
+            String(p.author_org_id) !== String(orgId) &&
+            String(p.companyId) !== String(orgId) &&
+            String(p.shared_post?.authorId) !== String(orgId) &&
+            String(p.shared_post?.author_org_id) !== String(orgId)
+          );
+        });
+      }
+
+      // 3. Invalidate feed and social queries
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+
+      // 4. Notify app via custom event and cross-tab localStorage
+      if (typeof window !== "undefined" && orgId) {
+        window.dispatchEvent(
+          new CustomEvent("cocpit:block_status_changed", {
+            detail: { targetId: orgId, isBlocked: willBeBlocked },
+          })
+        );
+        try {
+          localStorage.setItem(
+            "cocpit_block_event",
+            JSON.stringify({ targetId: orgId, isBlocked: willBeBlocked, timestamp: Date.now() })
+          );
+        } catch (e) {}
+      }
+
       toast({
         title: "Success",
         description: data.isBlocked ? "Profile unblocked successfully" : "Profile blocked successfully",
@@ -197,7 +257,7 @@ export default function BusinessProfileHeader({
 
   const handleBlockToggle = () => {
     if (!orgId) return;
-    blockMutation.mutate();
+    setShowBlockModal(true);
   };
 
   const displayCover = coverUrl || data.coverUrl || null;
@@ -283,182 +343,118 @@ export default function BusinessProfileHeader({
 
         {/* Right Section: Desktop Action Buttons (hidden on mobile, inline-flex on sm:) */}
         <div className="right-0 top-[216px] absolute hidden sm:inline-flex justify-end items-center gap-3 z-10">
-            {isOwnProfile ? (
-              <>
-                {/* Edit profile (accent pill) */}
-                {canEditProfile ? (
-                  <Link
-                    href={`/organization/${rawSlug}/edit`}
-                    className="px-3 py-1.5 bg-ds-accent rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity shadow-sm cursor-pointer"
-                  >
-                    Edit profile
-                  </Link>
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip delayDuration={100}>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex cursor-not-allowed" tabIndex={0}>
-                          <button
-                            type="button"
-                            disabled
-                            aria-label="Edit profile disabled"
-                            className="px-3 py-1.5 bg-ds-accent opacity-50 rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none shadow-sm cursor-not-allowed"
-                          >
-                            Edit profile
-                          </button>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
-                        You don't have access to this screen
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {/* Share page (outline pill) */}
-                <button
-                  type="button"
-                  onClick={onShareClick}
-                  className="px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors shadow-sm cursor-pointer"
+          {isOwnProfile ? (
+            <>
+              {/* Edit profile (accent pill) */}
+              {canEditProfile ? (
+                <Link
+                  href={`/organization/${rawSlug}/edit`}
+                  className="px-3 py-1.5 bg-ds-accent rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:opacity-90 transition-opacity shadow-sm cursor-pointer"
                 >
-                  Share page
-                </button>
-              </>
-            ) : (
-              <>
-                {/* Follow Button */}
-                {!actingCompanyCanFollow ? (
-                  <TooltipProvider>
-                    <Tooltip delayDuration={200}>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex cursor-not-allowed">
-                          <button
-                            type="button"
-                            disabled
-                            className={cn(
-                              "px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 shadow-sm opacity-50 pointer-events-none",
-                              data.isFollowing
-                                ? "outline outline-1 outline-ds-border text-ds-text-secondary"
-                                : "bg-ds-accent text-white"
-                            )}
-                          >
-                            {data.isFollowing ? "Unfollow" : "Follow"}
-                          </button>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
-                        {NO_FOLLOW_ACCESS_MESSAGE}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (data.isFollowing) {
-                        setShowUnfollowModal(true);
-                      } else {
-                        followMutation.mutate();
-                      }
-                    }}
-                    disabled={followMutation.isPending || !orgId}
-                    className={cn(
-                      "px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors shadow-sm cursor-pointer",
-                      data.isFollowing
-                        ? "outline outline-1 outline-ds-border text-ds-text-secondary hover:bg-ds-surface-2"
-                        : "bg-ds-accent text-white hover:opacity-90"
-                    )}
-                  >
-                    {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
-                  </button>
+                  Edit profile
+                </Link>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-not-allowed" tabIndex={0}>
+                        <button
+                          type="button"
+                          disabled
+                          aria-label="Edit profile disabled"
+                          className="px-3 py-1.5 bg-ds-accent opacity-50 rounded-[100px] flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 pointer-events-none shadow-sm cursor-not-allowed"
+                        >
+                          Edit profile
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-50">
+                      You don't have access to this screen
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {/* Share page (outline pill) */}
+              <button
+                type="button"
+                onClick={onShareClick}
+                className="px-3 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors shadow-sm cursor-pointer"
+              >
+                Share page
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Follow Button */}
+              <button
+                onClick={() => {
+                  if (data.isFollowing) {
+                    setShowUnfollowModal(true);
+                  } else {
+                    followMutation.mutate();
+                  }
+                }}
+                disabled={followMutation.isPending || !orgId || !actingCompanyCanFollow}
+                title={!actingCompanyCanFollow ? "Only company admins/owners can follow on behalf of the company" : ""}
+                className={cn(
+                  "px-4 py-1.5 rounded-[100px] flex justify-center items-center gap-2.5 text-base font-medium font-['DM_Sans'] leading-6 transition-colors shadow-sm cursor-pointer",
+                  data.isFollowing
+                    ? "outline outline-1 outline-ds-border text-ds-text-secondary hover:bg-ds-surface-2"
+                    : "bg-ds-accent text-white hover:opacity-90",
+                  !actingCompanyCanFollow && "opacity-50 cursor-not-allowed"
                 )}
+              >
+                {followMutation.isPending ? "..." : data.isFollowing ? "Unfollow" : "Follow"}
+              </button>
 
-                {/* Message Button */}
-                {data.showMessage !== false && (
-                  <Link
-                    href={`/messaging?companyId=${orgId}`}
+              {/* Message Button */}
+              {data.showMessage !== false && (
+                <Link
+                  href={`/messaging?companyId=${orgId}`}
+                  className="px-4 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors shadow-sm cursor-pointer"
+                >
+                  Message
+                </Link>
+              )}
+
+              {/* More options button */}
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    aria-label="More options"
                     className="px-4 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors shadow-sm cursor-pointer"
                   >
-                    Message
-                  </Link>
-                )}
-
-                {/* More options button */}
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      aria-label="More options"
-                      className="px-4 py-1.5 rounded-[100px] outline outline-1 outline-offset-[-0.50px] outline-ds-border flex justify-center items-center gap-2.5 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 hover:bg-ds-surface-2 transition-colors shadow-sm cursor-pointer"
-                    >
-                      More
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    sideOffset={8}
-                    className="p-[12px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[16px] flex flex-col justify-start items-start gap-[16px] overflow-hidden shadow-2xl z-50 outline-none w-[135px] box-border"
+                    More
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="p-[12px] !bg-[var(--ds-bg)] !border !border-[var(--ds-border)] rounded-[16px] flex flex-col justify-start items-start gap-[16px] overflow-hidden shadow-2xl z-50 outline-none w-[135px] box-border"
+                >
+                  <DropdownMenuItem
+                    onClick={onShareClick}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-0 grow-0"
                   >
-                    <DropdownMenuItem
-                      onClick={onShareClick}
-                      className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-0 grow-0"
-                    >
-                      Share page
-                    </DropdownMenuItem>
-                    {!canBlock ? (
-                      <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <div className="w-full">
-                              <DropdownMenuItem
-                                disabled
-                                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] text-[14px] font-normal font-['DM_Sans'] leading-[20px] outline-none border-none h-[20px] flex-none order-1 grow-0 opacity-50 cursor-not-allowed select-none"
-                              >
-                                {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
-                              </DropdownMenuItem>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[60]">
-                            {noBlockMessage}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <DropdownMenuItem
-                        onClick={handleBlockToggle}
-                        disabled={blockMutation.isPending}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0 disabled:opacity-50"
-                      >
-                        {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
-                      </DropdownMenuItem>
-                    )}
-                    {!canReport ? (
-                      <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <div className="w-full">
-                              <DropdownMenuItem
-                                disabled
-                                className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] text-[14px] font-normal font-['DM_Sans'] leading-[20px] outline-none border-none h-[20px] flex-none order-2 grow-0 opacity-50 cursor-not-allowed select-none"
-                              >
-                                Report page
-                              </DropdownMenuItem>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="text-xs font-['DM_Sans'] z-[60]">
-                            {noReportMessage}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <DropdownMenuItem
-                        onClick={() => setIsReportModalOpen(true)}
-                        className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0"
-                      >
-                        Report page
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
+                    Share page
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleBlockToggle}
+                    disabled={blockMutation.isPending}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-1 grow-0 disabled:opacity-50"
+                  >
+                    {blockMutation.isPending ? "Updating..." : data.isBlocked ? "Unblock page" : "Block page"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="!p-0 !m-0 w-full justify-start text-[var(--ds-text-secondary)] hover:!text-[var(--ds-text-primary)] focus:!text-[var(--ds-text-primary)] data-[highlighted]:!text-[var(--ds-text-primary)] hover:!bg-transparent focus:!bg-transparent data-[highlighted]:!bg-transparent text-[14px] font-normal font-['DM_Sans'] leading-[20px] cursor-pointer outline-none transition-colors border-none h-[20px] flex-none order-2 grow-0"
+                  >
+                    Report page
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
         </div>
       </div>
 
@@ -710,6 +706,33 @@ export default function BusinessProfileHeader({
         type="unfollow"
         targetName={data.name}
         isLoading={followMutation.isPending}
+      />
+
+      {/* Block / Unblock Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        onConfirm={() => {
+          setShowBlockModal(false);
+          blockMutation.mutate();
+        }}
+        isLoading={blockMutation.isPending}
+        type={data.isBlocked ? "custom" : "block_profile"}
+        targetName={data.name || "this page"}
+        title={
+          data.isBlocked ? (
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px]">
+              Unblock <span className="font-['DM_Sans'] font-semibold text-[14px] leading-[20px]">{data.name || "this page"}</span>?
+            </span>
+          ) : undefined
+        }
+        titleClassName={data.isBlocked ? "font-['Poppins'] font-normal text-[14px] leading-[20px]" : undefined}
+        description={
+          data.isBlocked
+            ? "They will be able to see your profile and posts again"
+            : undefined
+        }
+        confirmText={data.isBlocked ? "Unblock" : undefined}
       />
     </div>
   );

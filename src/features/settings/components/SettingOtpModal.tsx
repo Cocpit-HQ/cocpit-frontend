@@ -103,7 +103,7 @@ export function SettingOtpModal({
             className={`ds-text-small ${
               countdown > 0 || isPending
                 ? 'text-ds-text-muted cursor-default'
-                : 'text-ds-accent hover:underline'
+                : 'text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline cursor-pointer'
             }`}
           >
             {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}

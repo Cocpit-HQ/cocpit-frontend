@@ -6,16 +6,17 @@ import { useRouter, usePathname } from 'next/navigation';
 import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { BusinessBuildingIcon } from '@/components/icons';
 import { companyService } from '@/services/organization.service';
-import { ActionModal } from '../components/modals/ActionModal';
-import { ReactivateCompanyModal } from '../components';
-import { ActionConfirmModal } from '@/shared/commonComponents/ActionConfirmModal';
+import { ReactivateCompanyModal, RecoverCompanyModal, LeaveOrganizationModal } from '../components';
+import { MobileCompanyRecoverView } from '../components/mobile';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 type PageStatus = 'active' | 'deactivated' | 'scheduled_for_deletion' | 'associated';
 
 type Org = {
   id: string;
+  slug?: string;
   name: string;
   type: string;
   logoUrl: string | null;
@@ -41,19 +42,19 @@ const PAGE_STATUS_CONFIG: Record<
   },
   deactivated: {
     description:
-      'This page is currently deactivated and is not visible to visitors. Its content and features are temporarily unavailable until the page is reactivated.',
+      'This page is currently deactivated and is not visible to visitors. Its content and features are temporarily unavailable until the page is reactivated',
     actionText: 'Reactivate page',
     modalTarget: 'reactivate',
   },
   scheduled_for_deletion: {
     description:
-      'This page has been scheduled for deletion and will be permanently removed after 40 days. You can recover and reactivate the page at any time within this period. Once the 40-day period ends, the page and its associated data cannot be restored.',
+      'This page has been scheduled for deletion and will be permanently removed after 40 days. You can recover and reactivate the page at any time within this period. Once the 40-day period ends, the page and its associated data cannot be restored',
     actionText: 'Recover page',
     modalTarget: 'recover',
   },
   associated: {
     description:
-      'You are currently associated with this page and have access to its content and features. You can choose to leave the page at any time, after which your access and permissions will be removed.',
+      'You are currently associated with this page and have access to its content and features. You can choose to leave the page at any time, after which your access and permissions will be removed',
     actionText: 'Leave page',
     modalTarget: 'leave',
   },
@@ -132,6 +133,14 @@ export function OrganizationsSettingsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const fetchOrgs = async () => {
     setLoading(true);
     setError(null);
@@ -165,21 +174,7 @@ export function OrganizationsSettingsPage() {
   };
 
 
-  const handleRecover = async (otp?: string) => {
-    if (!selectedOrg) return;
-    setActionLoading(true);
-    setActionError(null);
-    try {
-      await companyService.recoverOrgWithOTP(selectedOrg.id, otp || '');
-      setModalState(null);
-      await fetchOrgs();
-      triggerActorContextRefresh();
-    } catch (err: any) {
-      setActionError(err?.response?.data?.message || err?.message || 'Recovery failed');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+
 
   const handleLeave = async () => {
     if (!selectedOrg) return;
@@ -187,6 +182,7 @@ export function OrganizationsSettingsPage() {
     setActionError(null);
     try {
       await companyService.leaveOrg(selectedOrg.id);
+      toast.success("You have left the organization");
       setModalState(null);
       setSelectedOrgId(null);
       await fetchOrgs();
@@ -198,14 +194,10 @@ export function OrganizationsSettingsPage() {
     }
   };
 
-  const handleViewPage = async () => {
+  const handleViewPage = () => {
     if (!selectedOrg) return;
-    try {
-      await companyService.switchContext(selectedOrg.id);
-      window.location.href = `/organization/${selectedOrg.id}`;
-    } catch (err: any) {
-      console.error('Switch context error:', err);
-    }
+    const target = selectedOrg.slug ? encodeURIComponent(selectedOrg.slug) : selectedOrg.id;
+    router.push(`/organization/${target}`);
   };
 
   /* ── Loading ── */
@@ -239,6 +231,20 @@ export function OrganizationsSettingsPage() {
 
   /* ── Detail View ── */
   if (selectedOrg) {
+    if (isMobile && (modalState === 'recover' || modalState === 'reactivate')) {
+      return (
+        <MobileCompanyRecoverView
+          org={selectedOrg}
+          mode={modalState === 'reactivate' ? 'reactivate' : 'recover'}
+          onBack={() => setModalState(null)}
+          onSuccess={async () => {
+            await fetchOrgs();
+            triggerActorContextRefresh();
+          }}
+        />
+      );
+    }
+
     const statusConfig = PAGE_STATUS_CONFIG[selectedOrg.pageStatus];
 
     return (
@@ -273,9 +279,11 @@ export function OrganizationsSettingsPage() {
               <button
                 type="button"
                 onClick={handleViewPage}
-                className="h-10 px-4 py-2 bg-ds-surface-1 rounded-3xl flex justify-center items-center cursor-pointer border-none ds-focus-ring shrink-0 ml-2"
+                className="w-[106px] h-[40px] px-4 py-2 bg-ds-surface-1 hover:bg-ds-surface-1/80 rounded-[24px] flex justify-center items-center gap-[10px] cursor-pointer transition-colors ds-focus-ring shrink-0 ml-2"
               >
-                <span className="text-center text-ds-accent ds-text-secondary whitespace-nowrap">View page</span>
+                <span className="font-['DM_Sans'] font-normal text-[14px] leading-[20px] text-ds-accent whitespace-nowrap text-center">
+                  View page
+                </span>
               </button>
             )}
           </div>
@@ -316,7 +324,12 @@ export function OrganizationsSettingsPage() {
                     setActionError(null);
                     setModalState(statusConfig.modalTarget!);
                   }}
-                  className="h-[36px] px-3 py-1.5 border border-ds-border rounded-[100px] inline-flex justify-center items-center cursor-pointer bg-transparent ds-text-body-1 text-ds-text-primary hover:bg-ds-surface-1 active:bg-ds-surface-2 transition-colors ds-focus-ring"
+                  className={cn(
+                    "h-[36px] px-[12px] py-[6px] rounded-[100px] inline-flex justify-center items-center gap-[10px] cursor-pointer font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-ds-text-primary whitespace-nowrap text-center transition-colors ds-focus-ring shrink-0",
+                    statusConfig.modalTarget === 'leave' && "w-[109px] bg-transparent border border-ds-border hover:bg-white/5 active:bg-white/10",
+                    statusConfig.modalTarget === 'reactivate' && "w-[145px] bg-ds-surface-1 border border-ds-accent hover:bg-ds-surface-1/80 active:bg-ds-surface-1/90",
+                    statusConfig.modalTarget === 'recover' && "w-[126px] bg-ds-surface-1 border border-ds-accent hover:bg-ds-surface-1/80 active:bg-ds-surface-1/90"
+                  )}
                 >
                   {statusConfig.actionText}
                 </button>
@@ -335,32 +348,25 @@ export function OrganizationsSettingsPage() {
             triggerActorContextRefresh();
           }}
         />
-        <ActionModal
+        <RecoverCompanyModal
           isOpen={modalState === 'recover'}
           onClose={() => setModalState(null)}
-          title={`Are you sure you want to recover your "${selectedOrg.name}" page?`}
-          description="A verification code will be sent to the owner email. The page will be restored immediately upon verification."
-          confirmText="Recover"
-          requiresOtp={true}
-          onSendOtp={() => companyService.sendRecoverOrgOTP(selectedOrg.id)}
-          onConfirm={(otp) => handleRecover(otp)}
-          confirmColor="blue"
-          isLoading={actionLoading}
-          errorMessage={actionError}
+          org={selectedOrg}
+          onSuccess={async () => {
+            await fetchOrgs();
+            triggerActorContextRefresh();
+          }}
         />
-        <ActionConfirmModal
+        <LeaveOrganizationModal
           isOpen={modalState === 'leave'}
-          onClose={() => setModalState(null)}
-          title={<span>Are you sure you want to leave &ldquo;{selectedOrg.name}&rdquo;?</span>}
-          description="You will lose access to the page and its associated features"
-          confirmText="Leave"
-          cancelText="Cancel"
+          onClose={() => {
+            setActionError(null);
+            setModalState(null);
+          }}
+          orgName={selectedOrg.name}
           onConfirm={() => handleLeave()}
-          confirmColor="red"
-          cancelTextColor="secondary"
           isLoading={actionLoading}
-          modalClassName="w-80 p-3"
-          buttonWidthClass="w-20"
+          error={actionError}
         />
       </div>
     );
@@ -369,13 +375,19 @@ export function OrganizationsSettingsPage() {
   /* ── List View ── */
   return (
     <div className="w-full max-w-[712px] px-2 sm:px-4 py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3">
-      {/* Header / Mobile Back - Visible on mobile only */}
-      <div className="self-stretch inline-flex md:hidden justify-start items-center gap-3 shrink-0 pb-1 px-0 sm:px-4">
+      {/* Header / Back */}
+      <div className="self-stretch inline-flex justify-start items-center gap-2 shrink-0 pb-1 px-0 sm:px-4">
         <button
           type="button"
-          onClick={() => router.replace(basePath)}
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+              router.back();
+            } else {
+              router.replace(basePath);
+            }
+          }}
           aria-label="Back to settings menu"
-          className="-ml-1.5 flex items-center justify-center w-8 h-8 rounded-full border border-ds-border hover:bg-ds-surface-1 transition-colors shrink-0 ds-focus-ring"
+          className="w-8 h-8 flex items-center justify-center cursor-pointer bg-transparent border border-ds-border hover:bg-ds-surface-1 p-0 ds-focus-ring rounded-full shrink-0"
         >
           <ChevronLeft className="w-5 h-5 text-ds-text-primary" strokeWidth={1.5} />
         </button>

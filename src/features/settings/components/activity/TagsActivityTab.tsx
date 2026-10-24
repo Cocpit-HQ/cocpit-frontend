@@ -40,7 +40,14 @@ export function TagsActivityTab({ data, removedItemIds, onRemove }: TagsActivity
   const tagsList = useMemo<TagActivityItem[]>(() => {
     if (!data || data.length === 0) return [];
     return data
-      .filter((item) => !removedItemIds.has(item.id))
+      .filter((item) => {
+        if (removedItemIds.has(item.id)) return false;
+        if (item.isDeleted || item.is_deleted) return false;
+        if (item.isDeactivated || item.is_deactivated) return false;
+        const targetId = item.postId || item.id;
+        if (!targetId || targetId === 'null' || targetId === 'undefined') return false;
+        return true;
+      })
       .map((item) => {
         const media = extractPostMedia(item);
         const isCompany = Boolean(
@@ -56,7 +63,7 @@ export function TagsActivityTab({ data, removedItemIds, onRemove }: TagsActivity
           id: item.id,
           postId: media.postId,
           user: item.user || item.author?.name || item.author?.fullName || 'User',
-          role: (item.role === 'Member' ? '' : item.role) || (item.author?.headline === 'Member' ? '' : item.author?.headline) || '',
+          role: (item.role && item.role !== 'Member') ? item.role : '',
           avatarUrl: item.avatarUrl || item.author?.avatarUrl || item.author?.avatar || '',
           content: cleanActivityText(item.content || item.text || item.post?.content || item.post?.text || ''),
           type: (media.hasPoll ? 'poll' : (media.thumbnailUrl || media.videoUrl) ? 'media' : 'text') as 'media' | 'text' | 'poll',

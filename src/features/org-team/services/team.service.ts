@@ -116,6 +116,9 @@ function formatAction(action: string, metadata?: any): string {
       return 'declined invitation';
     case 'REMOVE_MEMBER':
       return 'removed';
+    case 'LEAVE_ORGANIZATION':
+    case 'LEAVE_TEAM':
+      return 'left the organization';
     case 'ASSIGN_ROLE':
       return 'updated role for';
     case 'CREATE_ROLE':
@@ -204,7 +207,7 @@ function formatAction(action: string, metadata?: any): string {
     case 'VIEWED':
       return 'viewed public profile';
     case 'TRANSFER_OWNERSHIP':
-      return 'transferred ownership';
+      return 'transferred ownership to';
     case 'ORGANIZATION_BLOCK_ADDED':
     case 'ORGANIZATION_BLOCK_ADD':
     case 'BLOCK_USER':
@@ -225,6 +228,28 @@ function formatAction(action: string, metadata?: any): string {
       return 'submitted verification documents';
     case 'DOMAIN_VERIFIED':
       return 'verified company domain';
+    case 'ORGANIZATION_DEACTIVATED':
+    case 'DEACTIVATE_ORGANIZATION':
+    case 'DEACTIVATE_COMPANY':
+      return 'deactivated the company page';
+    case 'ORGANIZATION_REACTIVATED':
+    case 'REACTIVATE_ORGANIZATION':
+    case 'REACTIVATE_COMPANY':
+      return 'reactivated the company page';
+    case 'ORGANIZATION_SCHEDULED_FOR_DELETION':
+    case 'DELETE_ORGANIZATION':
+    case 'DELETE_COMPANY':
+    case 'DELETE':
+      return 'scheduled company page for deletion';
+    case 'ORGANIZATION_RECOVERED':
+    case 'RECOVER_ORGANIZATION':
+    case 'RESTORE_ORGANIZATION':
+    case 'RESTORE_COMPANY':
+      return 'recovered the company page';
+    case 'ORGANIZATION_NOTIFICATIONS_UPDATED': {
+      const state = metadata?.state || (metadata?.newValue === false ? 'off' : 'on');
+      return `turned ${state}`;
+    }
     default:
       if (upper.includes('UNBLOCK') || upper.includes('BLOCK_REMOVED') || upper.includes('BLOCK_REMOVE')) {
         return 'unblocked';
@@ -268,7 +293,21 @@ function mapActivityLog(row: any): ActivityLogEntry {
     actionUpper === 'DOCUMENTS_SUBMITTED' ||
     actionUpper === 'SUBMIT_DOCUMENTS' ||
     actionUpper === 'DOCUMENT_SUBMITTED' ||
-    actionUpper === 'DOMAIN_VERIFIED'
+    actionUpper === 'DOMAIN_VERIFIED' ||
+    actionUpper === 'ORGANIZATION_DEACTIVATED' ||
+    actionUpper === 'DEACTIVATE_ORGANIZATION' ||
+    actionUpper === 'DEACTIVATE_COMPANY' ||
+    actionUpper === 'ORGANIZATION_REACTIVATED' ||
+    actionUpper === 'REACTIVATE_ORGANIZATION' ||
+    actionUpper === 'REACTIVATE_COMPANY' ||
+    actionUpper === 'ORGANIZATION_SCHEDULED_FOR_DELETION' ||
+    actionUpper === 'DELETE_ORGANIZATION' ||
+    actionUpper === 'DELETE_COMPANY' ||
+    actionUpper === 'DELETE' ||
+    actionUpper === 'ORGANIZATION_RECOVERED' ||
+    actionUpper === 'RECOVER_ORGANIZATION' ||
+    actionUpper === 'RESTORE_ORGANIZATION' ||
+    actionUpper === 'RESTORE_COMPANY'
   ) {
     targetName = '';
     highlightedText = '';
@@ -320,6 +359,15 @@ function mapActivityLog(row: any): ActivityLogEntry {
       targetLinkUrl = `/profile/${metadata.targetUserId || metadata.removedUserId || row.target_user_id}`;
       linkUrl = targetLinkUrl;
     }
+  } else if (actionUpper === 'TRANSFER_OWNERSHIP') {
+    if (!targetName) {
+      targetName = 'team member';
+    }
+    const targetUserId = metadata.targetUserId || metadata.to || row.target_user_id;
+    if (targetUserId) {
+      targetLinkUrl = `/profile/${targetUserId}`;
+      linkUrl = targetLinkUrl;
+    }
   } else if (actionUpper === 'ACCEPT_INVITE' || actionUpper === 'JOIN_ORGANIZATION') {
     targetName = '';
     if (metadata.roleName || metadata.role) {
@@ -329,6 +377,14 @@ function mapActivityLog(row: any): ActivityLogEntry {
       }
     }
   } else if (actionUpper === 'DECLINE_INVITE' || actionUpper === 'DECLINE_INVITATION') {
+    targetName = '';
+    if (metadata.roleName || metadata.role) {
+      highlightedText = `as ${metadata.roleName || metadata.role}`;
+      if (roleId) {
+        highlightedLinkUrl = `/team/role/${roleId}`;
+      }
+    }
+  } else if (actionUpper === 'LEAVE_ORGANIZATION' || actionUpper === 'LEAVE_TEAM') {
     targetName = '';
     if (metadata.roleName || metadata.role) {
       highlightedText = `as ${metadata.roleName || metadata.role}`;
@@ -455,6 +511,11 @@ function mapActivityLog(row: any): ActivityLogEntry {
       linkUrl = `/profile/${blockTargetId}`;
     }
     targetLinkUrl = linkUrl;
+  } else if (actionUpper === 'ORGANIZATION_NOTIFICATIONS_UPDATED') {
+    const state = metadata?.state || (metadata?.newValue === false ? 'off' : 'on');
+    actionFormatted = `turned ${state}`;
+    targetName = '';
+    highlightedText = metadata?.settingLabel || metadata?.label || 'notifications';
   } else {
     if (!targetName) {
       targetName = metadata.roleName || metadata.title || '';

@@ -6,6 +6,7 @@ import {
   CommentArticleIcon,
   CommentMediaIcon,
   ReportProfileIcon,
+  BusinessBuildingIcon,
   InfoIcon,
 } from '@/components/icons';
 import { ReportListItem } from '@/features/settings/api/reports';
@@ -35,17 +36,38 @@ export function YourReportsEmptyState() {
 
 function renderReportThumbnail(item: ReportListItem) {
   const postType = (item.postType || item.mediaType || '').toLowerCase();
-  const targetType = (item.targetType || item.type || '').toUpperCase();
+  const targetType = (item.targetType || '').toUpperCase();
+  const rawType = (item.type || '').toLowerCase();
   const combined = `${item.targetType || ''} ${item.type || ''} ${item.title || ''} ${item.reason || ''} ${item.postType || ''}`.toLowerCase();
 
-  // 1. Profile / User / Company
+  // 1. Company -> Building icon
+  if (
+    targetType === 'COMPANY' ||
+    (targetType !== 'POST' && targetType !== 'COMMENT' && targetType !== 'THOUGHT' && (
+      rawType.includes('company') ||
+      combined.includes('company profile') ||
+      combined.includes('reported company')
+    ))
+  ) {
+    return (
+      <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
+        <BusinessBuildingIcon className="w-8 h-8 text-ds-accent" size={32} fill="currentColor" />
+      </div>
+    );
+  }
+
+  // 2. User Profile -> Profile icon
   if (
     targetType === 'USER' ||
     targetType === 'PROFILE' ||
-    targetType === 'COMPANY' ||
-    combined.includes('profile') ||
-    combined.includes('fake account') ||
-    combined.includes('impersonat')
+    (targetType !== 'POST' && targetType !== 'COMMENT' && targetType !== 'THOUGHT' && (
+      rawType.includes('user') ||
+      rawType.includes('profile') ||
+      combined.includes('user profile') ||
+      combined.includes('reported profile') ||
+      combined.includes('fake account') ||
+      combined.includes('impersonat')
+    ))
   ) {
     return (
       <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
@@ -54,7 +76,7 @@ function renderReportThumbnail(item: ReportListItem) {
     );
   }
 
-  // 2. Poll
+  // 3. Poll
   if (postType === 'poll' || combined.includes('poll')) {
     return (
       <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
@@ -63,7 +85,7 @@ function renderReportThumbnail(item: ReportListItem) {
     );
   }
 
-  // 3. Article
+  // 4. Article
   if (postType === 'article' || combined.includes('article')) {
     return (
       <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
@@ -72,7 +94,7 @@ function renderReportThumbnail(item: ReportListItem) {
     );
   }
 
-  // 4. Video, image, and all other reported content -> show image icon (no thumbnail)
+  // 5. Video, image, and all other reported content -> show image icon (no thumbnail)
   return (
     <div className="w-[76px] h-[76px] bg-ds-surface-1 rounded-xl flex items-center justify-center shrink-0">
       <CommentMediaIcon className="w-8 h-8 text-ds-accent" fill="currentColor" />

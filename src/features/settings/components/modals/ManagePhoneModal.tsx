@@ -2,15 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown } from 'lucide-react';
 import { VerifyIcon } from '@/components/icons';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+import { CountryCodeDropdown } from './CountryCodeDropdown';
 import { useAccountSettings, useSetPhone, useConfirmPhone } from '@/features/settings/hooks/useAccountSettings';
+import { useCompanyAccountSettings } from '@/features/settings/hooks/useCompanyAccountSettings';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -24,13 +20,20 @@ interface ManagePhoneModalProps {
 export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: ManagePhoneModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const { data: accountData } = useAccountSettings();
-  const [countryCode, setCountryCode] = useState('+91');
+  const { data: companyAccountData } = useCompanyAccountSettings();
+  const { isCompany } = useActiveProfile();
+  const activeAccountData = isCompany ? companyAccountData : accountData;
+  const [countryCode, setCountryCode] = useState(isCompany ? '+971' : '+91');
 
   useEffect(() => {
-    if (accountData?.countryCode) {
-      setCountryCode(accountData.countryCode);
+    if (activeAccountData?.countryCode) {
+      setCountryCode(activeAccountData.countryCode);
+    } else if (currentPhone) {
+      setCountryCode(currentPhone.length === 9 ? '+971' : '+91');
+    } else {
+      setCountryCode(isCompany ? '+971' : '+91');
     }
-  }, [accountData?.countryCode]);
+  }, [activeAccountData?.countryCode, currentPhone, isCompany]);
 
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -81,8 +84,8 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
   const isCodeValid = code.length === 6;
 
   const checkIsSameNumber = useCallback((inputPhone: string, code: string) => {
-    const existingPhone = (currentPhone || accountData?.phone || '').trim();
-    const existingCountryCode = accountData?.countryCode || '+91';
+    const existingPhone = (currentPhone || activeAccountData?.phone || '').trim();
+    const existingCountryCode = activeAccountData?.countryCode || '+91';
     const reqLen = code === '+971' ? 9 : 10;
     return Boolean(
       existingPhone &&
@@ -90,7 +93,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
       code === existingCountryCode &&
       inputPhone.length === reqLen
     );
-  }, [currentPhone, accountData?.phone, accountData?.countryCode]);
+  }, [currentPhone, activeAccountData?.phone, activeAccountData?.countryCode]);
 
   const getIsDisabled = () => {
     if (step === 1) return !isPhoneValid || checkIsSameNumber(phone, countryCode) || setPhoneMutation.isPending;
@@ -204,46 +207,17 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
               </label>
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch pb-1 border-b border-ds-border flex justify-between items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button type="button" className="flex items-center gap-1 bg-transparent border-none outline-none text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 p-0 cursor-pointer">
-                        <ChevronDown className="w-4 h-4 text-ds-text-primary" />
-                        {countryCode}
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent 
-                      className="z-[10000] w-auto min-w-[204px] min-h-[80px] bg-ds-bg border border-ds-border rounded-[8px] p-3 flex flex-col justify-center gap-3 shadow-2xl !outline-none !ring-0" 
-                      align="start" 
-                      sideOffset={8}
-                    >
-                      <DropdownMenuItem 
-                        className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
-                        onClick={() => {
-                          setCountryCode('+91');
-                          if (checkIsSameNumber(phone, '+91')) {
-                            setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
-                          } else {
-                            setErrorMsg('');
-                          }
-                        }}
-                      >
-                        India (+91)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="cursor-pointer text-ds-text-secondary hover:text-ds-text-primary hover:!bg-transparent p-0 text-sm font-normal font-['DM_Sans'] whitespace-nowrap !outline-none !border-none focus:!bg-transparent focus:text-ds-text-primary !ring-0"
-                        onClick={() => {
-                          setCountryCode('+971');
-                          if (checkIsSameNumber(phone, '+971')) {
-                            setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
-                          } else {
-                            setErrorMsg('');
-                          }
-                        }}
-                      >
-                        United Arab Emirates (+971)
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <CountryCodeDropdown
+                    value={countryCode}
+                    onChange={(newCode) => {
+                      setCountryCode(newCode);
+                      if (checkIsSameNumber(phone, newCode)) {
+                        setErrorMsg('This phone number is already linked to your account. Please try adding a different number.');
+                      } else {
+                        setErrorMsg('');
+                      }
+                    }}
+                  />
                   <input
                     id="phone-input"
                     type="tel"
@@ -262,7 +236,7 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !getIsDisabled()) handleNext();
                     }}
-                    placeholder={countryCode === '+971' ? '123456789' : '1234567890'}
+                    placeholder={countryCode === '+971' ? '1234567' : '1234567890'}
                     className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0"
                   />
                 </div>
@@ -324,23 +298,21 @@ export function ManagePhoneModal({ isOpen, onClose, mode, currentPhone }: Manage
                     </span>
                   )}
                 </div>
-                {/* Hide resend code option after successful phone verification */}
-                {!confirmPhoneMutation.isSuccess && (
-                  <div className="self-stretch flex justify-start items-center">
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      disabled={countdown > 0}
-                      className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
-                        countdown > 0
-                          ? 'text-ds-text-muted cursor-default'
-                          : 'text-ds-accent hover:underline cursor-pointer'
-                      }`}
-                    >
-                      {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
-                    </button>
-                  </div>
-                )}
+                {/* Resend — use invisible instead of unmounting to prevent layout shift */}
+                <div className={`self-stretch flex justify-start items-center ${confirmPhoneMutation.isSuccess ? 'invisible' : ''}`}>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={countdown > 0 || confirmPhoneMutation.isSuccess}
+                    className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
+                      countdown > 0 || confirmPhoneMutation.isSuccess
+                        ? 'text-ds-text-muted cursor-default'
+                        : 'text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline cursor-pointer'
+                    }`}
+                  >
+                    {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
+                  </button>
+                </div>
               </div>
             </div>
           )}

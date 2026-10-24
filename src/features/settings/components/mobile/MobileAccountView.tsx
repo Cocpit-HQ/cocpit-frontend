@@ -50,7 +50,7 @@ export function MobileAccountView({
   const phoneDisplay = isLoading
     ? 'Loading...'
     : hasPhone
-    ? `${accountData?.countryCode || ''} ${phoneNumber}`.trim()
+    ? `${accountData?.countryCode || (phoneNumber?.length === 9 ? '+971' : '+91')} ${phoneNumber || ''}`.trim()
     : 'No phone number';
 
   return (

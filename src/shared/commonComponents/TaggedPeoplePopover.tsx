@@ -8,6 +8,7 @@ import { PeopleListModal } from "@/shared/commonComponents/PeopleListModal";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { removeActivity } from "@/features/settings/api/activity";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 
@@ -21,6 +22,7 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
   const { user: currentUser } = useAuth();
   const [localTags, setLocalTags] = useState(initialTags);
   const [isOpen, setIsOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   useEffect(() => {
@@ -29,8 +31,12 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
 
   if (!localTags || localTags.length === 0) return null;
 
-  const handleRemoveTag = async (e: React.MouseEvent) => {
+  const handleOpenConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmRemoveTag = async () => {
     const activeActorId = api.defaults.headers.common["x-actor-id"] || currentUser?.id;
     if (!postId || !activeActorId) return;
 
@@ -40,6 +46,7 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
       toast.success("You have removed yourself from this post's tags");
       const updatedTags = localTags.filter((t) => (t.id || t.user_id) !== activeActorId);
       setLocalTags(updatedTags);
+      setIsConfirmOpen(false);
       if (updatedTags.length === 0) {
         setIsOpen(false);
       }
@@ -125,7 +132,7 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
 
               {isCurrentActor && (
                 <button
-                  onClick={handleRemoveTag}
+                  onClick={handleOpenConfirm}
                   disabled={isRemoving}
                   className="flex items-center gap-2 p-1.5 font-normal text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-full transition-colors disabled:opacity-50 flex-shrink-0"
                 >
@@ -137,6 +144,14 @@ export function TaggedPeoplePopover({ tags: initialTags, postId }: TaggedPeopleP
           );
         })}
       </PeopleListModal>
+
+      <ActionConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmRemoveTag}
+        type="remove_tag"
+        isLoading={isRemoving}
+      />
     </>
   );
 }

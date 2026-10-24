@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, BadgeCheck, XCircle } from 'lucide-react';
+import { Loader2, BadgeCheck } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { companyService } from '@/services/organization.service';
@@ -106,6 +106,8 @@ export function ReactivateCompanyModal({
       const res = await companyService.sendReactivateOrgOTP(targetId);
       setMaskedEmail(res.email_masked || maskedEmail);
       setCountdown(res.cooldown_seconds || 30);
+      setOtpCode('');
+      setIsSuccess(false);
       toast.success("New verification code sent to email");
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message || err?.message || 'Failed to resend verification code');
@@ -136,13 +138,8 @@ export function ReactivateCompanyModal({
       queryClient.invalidateQueries({ queryKey: ['entityPreview'] });
       queryClient.invalidateQueries({ queryKey: ['orgProfile'] });
       queryClient.invalidateQueries({ queryKey: ['company'] });
-
-      // Update activeProfile context if the reactivated org is current
-      if (activeProfile?.id === targetId && updateActiveProfile) {
-        updateActiveProfile({
-          is_identity_verified: true,
-        });
-      }
+      queryClient.invalidateQueries({ queryKey: ['userOrganizations'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
 
       if (refreshProfile) {
         void refreshProfile();
@@ -161,7 +158,11 @@ export function ReactivateCompanyModal({
 
       handleClose();
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || err?.message || 'Reactivation failed');
+      const rawMsg = err?.response?.data?.message || err?.message;
+      const message = (rawMsg === 'Incorrect code' || rawMsg === 'Invalid verification code')
+        ? 'Invalid verification code'
+        : (rawMsg || 'Reactivation failed');
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
@@ -180,11 +181,11 @@ export function ReactivateCompanyModal({
     >
       <div
         className={`relative ${
-          step === 2 ? 'w-[316px] min-h-[270px]' : 'w-[309px] min-h-[174px]'
+          step === 2 ? 'w-[316px] min-h-[270px] h-auto' : 'w-[309px] min-h-[174px]'
         } max-w-[calc(100vw-32px)] bg-ds-bg border border-ds-border rounded-[16px] p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-200 box-border`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col items-center gap-4 w-full">
+        <div className={`flex flex-col items-center w-full ${step === 1 ? 'gap-4' : ''}`}>
           {/* ── STEP 1: Confirmation Popup (Figma Spec 309px) ── */}
           {step === 1 && (
             <>
@@ -238,41 +239,50 @@ export function ReactivateCompanyModal({
             </>
           )}
 
-          {/* ── STEP 2: Verify email Popup (Figma Spec 316px) ── */}
+          {/* ── STEP 2: Verify email Popup (Figma Spec: 8px gap to input, 8px input gap, 18px to buttons) ── */}
           {step === 2 && (
-            <>
+            <div className="flex flex-col items-center w-full">
+              {/* Title & Subtitle */}
               <div className="flex flex-col items-center gap-2 text-center w-full">
                 <h2
                   id="reactivate-org-modal-title"
-                  className="text-ds-text-primary ds-text-body-1 text-center m-0 p-0 w-full"
+                  className="text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-[24px] text-center m-0 p-0 w-full"
                 >
-                  Verify email
+                  Verify your identity
                 </h2>
-                <p
+                <div
                   id="reactivate-org-modal-desc"
-                  className="text-ds-text-secondary ds-text-secondary text-center m-0 p-0 w-full"
+                  className="text-ds-text-secondary text-[14px] font-normal font-['DM_Sans'] leading-[20px] text-center m-0 p-0 w-full flex flex-col items-center"
                 >
-                  A 6-digit verification code has been sent to
-                  <br />
-                  {maskedEmail || 'your email'}
-                </p>
+                  <span>A 6-digit verification code has been sent to</span>
+                  {maskedEmail ? (
+                    maskedEmail.split(',').map((email, idx) => (
+                      <span key={idx} className="block text-center">
+                        {email.trim()}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="block text-center">your registered email</span>
+                  )}
+                </div>
               </div>
 
-              {/* Code input field */}
-              <div className="w-full flex flex-col items-start gap-1">
+              {/* Frame 2608851: 290px width, top/bottom padding 8px, gap 8px */}
+              <div className="mt-2 w-full max-w-[290px] pt-2 pb-2 flex flex-col justify-start items-start gap-2">
                 <label
                   htmlFor="reactivate-otp-input"
-                  className="text-ds-text-secondary ds-text-small"
+                  className="text-ds-text-secondary text-[12px] font-normal font-['DM_Sans'] leading-[16px]"
                 >
                   Enter code
                 </label>
-                <div className="relative w-full border-b border-ds-border focus-within:border-ds-accent transition-colors">
+                <div className="w-full pb-1 border-b border-ds-border flex justify-between items-center gap-2">
                   <input
                     id="reactivate-otp-input"
                     type="text"
                     maxLength={6}
                     value={otpCode}
                     autoFocus
+                    disabled={isLoading || isValidating}
                     onChange={async (e) => {
                       const val = e.target.value.replace(/\D/g, '');
                       setOtpCode(val);
@@ -284,82 +294,70 @@ export function ReactivateCompanyModal({
                           await companyService.validateReactivateOrgOTP(targetId, val);
                           setIsSuccess(true);
                         } catch (err: any) {
-                          setErrorMsg(err?.response?.data?.message || err?.message || 'Invalid verification code');
+                          const rawMsg = err?.response?.data?.message || err?.message;
+                          const message = (!rawMsg || rawMsg === 'Incorrect code' || rawMsg === 'Invalid verification code')
+                            ? 'Invalid verification code'
+                            : rawMsg;
+                          setErrorMsg(message);
                         } finally {
                           setIsValidating(false);
                         }
                       }
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && isOtpComplete && !isLoading && !isValidating) {
+                      if (e.key === 'Enter' && isOtpComplete && !isLoading && !isValidating && isSuccess) {
                         handleVerifyAndReactivate();
                       }
                     }}
                     placeholder="000000"
                     aria-label="6-digit verification code"
-                    className="w-full py-1 bg-transparent border-none text-ds-text-primary focus:outline-none tracking-[4px] text-left ds-text-secondary placeholder:text-ds-text-muted placeholder:tracking-normal ds-focus-ring"
+                    className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-[14px] font-normal font-['DM_Sans'] leading-[20px] p-0 tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   {isValidating && (
-                    <div className="absolute right-1 top-1/2 -translate-y-1/2 text-ds-text-muted">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    </div>
+                    <Loader2 className="w-4 h-4 shrink-0 text-ds-text-muted animate-spin" />
                   )}
                   {isSuccess && !errorMsg && !isValidating && (
-                    <div className="absolute right-1 top-1/2 -translate-y-1/2 text-ds-success">
-                      <BadgeCheck className="w-4 h-4" />
-                    </div>
-                  )}
-                  {errorMsg && !isValidating && (
-                    <div className="absolute right-1 top-1/2 -translate-y-1/2 text-ds-error">
-                      <XCircle className="w-4 h-4" />
-                    </div>
+                    <BadgeCheck className="w-4 h-4 shrink-0 text-ds-success" />
                   )}
                 </div>
 
-                {/* Resend Link & Status */}
-                <div className="flex items-center justify-between w-full pt-1">
-                  {countdown > 0 ? (
-                    <span className="text-ds-text-muted ds-text-small">
-                      Resend in {countdown}s
+                {/* Error message slot: stable 16px height to prevent button position shifting */}
+                <div className="w-full min-h-[16px] flex items-center">
+                  {errorMsg && !isValidating && (
+                    <span className="text-ds-error text-[12px] font-normal font-['DM_Sans'] leading-[16px]">
+                      {errorMsg}
                     </span>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={isLoading || isValidating}
-                      onClick={handleResendOTP}
-                      className="text-ds-accent hover:underline ds-text-small cursor-pointer bg-transparent border-0 p-0 ds-focus-ring whitespace-nowrap"
-                    >
-                      {isLoading ? 'Sending code...' : 'Resend code'}
-                    </button>
                   )}
-                  {isSuccess && !errorMsg && !isValidating && (
-                    <span className="ds-text-small text-ds-success">Verified</span>
-                  )}
+                </div>
+
+                {/* Resend Link & Status — use invisible instead of unmounting to prevent layout shift */}
+                <div className={`w-full flex justify-start items-center ${isSuccess ? 'invisible' : ''}`}>
+                  <button
+                    type="button"
+                    disabled={isLoading || isValidating || countdown > 0 || isSuccess}
+                    onClick={handleResendOTP}
+                    className={`text-[12px] font-normal font-['DM_Sans'] leading-[16px] p-0 bg-transparent border-none ${
+                      countdown > 0 || isLoading || isValidating || isSuccess
+                        ? 'text-ds-text-muted cursor-default'
+                        : 'text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline cursor-pointer'
+                    }`}
+                  >
+                    {countdown > 0 ? `Resend in ${countdown}s` : (isLoading ? 'Sending code...' : 'Resend code')}
+                  </button>
                 </div>
               </div>
 
-              {errorMsg && (
-                <div
-                  className="w-full p-2 bg-ds-error/10 border border-ds-error/20 rounded-lg text-center"
-                  role="alert"
-                >
-                  <p className="text-ds-error ds-text-small font-medium m-0">
-                    {errorMsg}
-                  </p>
-                </div>
-              )}
-
-              {/* Action Buttons: Reactivate on Left, Cancel on Right (Figma Spec: 110px x 36px, gap-[10px]) */}
-              <div className="flex flex-row items-center justify-center gap-[10px] w-full">
+              {/* Action Buttons Frame 2609476: 18px gap above, 8px gap between buttons */}
+              <div className="mt-[18px] flex flex-row items-center justify-center gap-[8px] w-full pb-1">
                 <button
                   type="button"
                   onClick={handleVerifyAndReactivate}
-                  disabled={isLoading || !isOtpComplete || isValidating}
-                  className={`w-[110px] h-[36px] px-3 py-1.5 rounded-[100px] ds-text-body-1 flex items-center justify-center gap-1.5 transition-all select-none whitespace-nowrap ${
-                    !isOtpComplete || isValidating
-                      ? 'bg-ds-surface-1 text-ds-text-muted border border-ds-border cursor-not-allowed'
+                  disabled={isLoading || !isOtpComplete || isValidating || !isSuccess}
+                  className={`w-[99px] h-[36px] px-3 py-1.5 rounded-[100px] text-[14px] font-medium font-['DM_Sans'] leading-[20px] flex items-center justify-center gap-1.5 transition-all select-none whitespace-nowrap ${
+                    !isOtpComplete || isValidating || !isSuccess
+                      ? 'bg-ds-surface-1 text-ds-text-muted border-none cursor-not-allowed'
                       : 'bg-ds-accent text-ds-text-primary hover:opacity-90 active:scale-95 cursor-pointer ds-focus-ring'
-                  } disabled:opacity-50`}
+                  }`}
                 >
                   {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />}
                   <span className="whitespace-nowrap">Reactivate</span>
@@ -369,12 +367,12 @@ export function ReactivateCompanyModal({
                   type="button"
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="w-[110px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary ds-text-body-1 flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring whitespace-nowrap"
+                  className="w-[99px] h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border bg-transparent hover:bg-ds-surface-1 text-ds-text-primary text-[14px] font-medium font-['DM_Sans'] leading-[20px] flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 ds-focus-ring whitespace-nowrap"
                 >
                   <span className="whitespace-nowrap">Cancel</span>
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

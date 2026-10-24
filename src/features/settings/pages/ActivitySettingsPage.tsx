@@ -12,6 +12,7 @@ import {
   CommentsActivityTab,
   TagsActivityTab,
 } from '../components/activity';
+import { RemoveTagModal } from '../components/modals/RemoveTagModal';
 
 const TABS: { key: ActivityTab; label: string }[] = [
   { key: 'Likes', label: 'Like' },
@@ -25,8 +26,20 @@ export function ActivitySettingsPage() {
   const match = pathname.match(/^(.*\/settings)/);
   const basePath = match ? match[1] : '/settings';
 
-  const { isCompany, activeProfile } = useActiveProfile();
-  const companyId = isCompany ? activeProfile?.id : undefined;
+  const { isCompany, activeProfile, userCompanies } = useActiveProfile();
+
+  // Robust organization resolution:
+  // 1. If pathname is /organization/[slug]/settings/..., extract the slug
+  const orgMatch = pathname.match(/\/organization\/([^/]+)/);
+  const orgSlug = orgMatch ? orgMatch[1] : null;
+
+  // 2. Resolve company ID from userCompanies if slug matches, or fallback to activeProfile/orgSlug
+  const currentOrg = orgSlug
+    ? userCompanies?.find((c) => c.slug === orgSlug || c.company_id === orgSlug || (c as any).org_id === orgSlug)
+    : null;
+  const companyId = currentOrg
+    ? (currentOrg.company_id || (currentOrg as any).org_id)
+    : (orgSlug || (isCompany ? activeProfile?.id : undefined));
   const queryClient = useQueryClient();
   const activeTab = useSettingsStore((state) => state.activity.activeTab);
   const setActiveTab = useSettingsStore((state) => state.setActivityTab);
@@ -35,6 +48,9 @@ export function ActivitySettingsPage() {
 
   // Local state for removed items in current session
   const [removedItemIds, setRemovedItemIds] = useState<Set<string | number>>(new Set());
+
+  // State for tag removal confirmation popup
+  const [tagToRemove, setTagToRemove] = useState<{ id: number | string; postId?: string } | null>(null);
 
   React.useEffect(() => {
     const handleRefresh = () => {
@@ -47,11 +63,22 @@ export function ActivitySettingsPage() {
   const handleRemove = useCallback(
     (e: React.MouseEvent, id: number | string, postId?: string) => {
       e.stopPropagation();
-      setRemovedItemIds((prev) => new Set(prev).add(id));
-      removeActivity({ id, postId });
+      if (activeTab === 'Tags') {
+        setTagToRemove({ id, postId });
+      } else {
+        setRemovedItemIds((prev) => new Set(prev).add(id));
+        removeActivity({ id, postId });
+      }
     },
-    [removeActivity]
+    [activeTab, removeActivity]
   );
+
+  const handleConfirmRemoveTag = useCallback(() => {
+    if (!tagToRemove) return;
+    setRemovedItemIds((prev) => new Set(prev).add(tagToRemove.id));
+    removeActivity({ id: tagToRemove.id, postId: tagToRemove.postId });
+    setTagToRemove(null);
+  }, [tagToRemove, removeActivity]);
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const prevTabRef = React.useRef(activeTab);
@@ -275,6 +302,12 @@ export function ActivitySettingsPage() {
           </>
         )}
       </div>
+
+      <RemoveTagModal
+        isOpen={!!tagToRemove}
+        onClose={() => setTagToRemove(null)}
+        onConfirm={handleConfirmRemoveTag}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { BusinessProfileData } from "../types/business-profile.types";
 import BusinessProfileHeader from "../components/BusinessProfileHeader";
 import BusinessProfileTabs from "../components/BusinessProfileTabs";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { ActionConfirmModal } from "@/shared/commonComponents/ActionConfirmModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSocket } from "@/context/SocketContext";
 import { Icon } from "@iconify/react";
@@ -44,6 +45,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   const { setOrgPublicView } = useUIStore();
 
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+  const [showUnblockModal, setShowUnblockModal] = React.useState(false);
 
   const derivedOrgId = profileResponse?.org?.company_id || profileResponse?.org?.org_id || null;
 
@@ -94,6 +96,23 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
       queryClient.invalidateQueries({ queryKey: ["companyProfile", rawSlug] });
       queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
       queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+
+      if (typeof window !== "undefined" && orgId) {
+        window.dispatchEvent(
+          new CustomEvent("cocpit:block_status_changed", {
+            detail: { targetId: orgId, isBlocked: false },
+          })
+        );
+        try {
+          localStorage.setItem(
+            "cocpit_block_event",
+            JSON.stringify({ targetId: orgId, isBlocked: false, timestamp: Date.now() })
+          );
+        } catch (e) {}
+      }
+
       toast.success("Profile unblocked successfully");
     },
     onError: (error: any) => {
@@ -461,7 +480,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
               </div>
               <button
                 type="button"
-                onClick={() => unblockMutation.mutate()}
+                onClick={() => setShowUnblockModal(true)}
                 disabled={unblockMutation.isPending}
                 className="px-4 py-1.5 min-h-[36px] bg-ds-accent hover:opacity-90 active:scale-95 rounded-[100px] inline-flex justify-center items-center gap-2 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-50 disabled:pointer-events-none"
               >
@@ -509,6 +528,27 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
         onShare={() => {
           setIsShareModalOpen(false);
         }}
+      />
+
+      {/* Unblock Confirmation Modal */}
+      <ActionConfirmModal
+        isOpen={showUnblockModal}
+        onClose={() => setShowUnblockModal(false)}
+        onConfirm={() => {
+          setShowUnblockModal(false);
+          unblockMutation.mutate();
+        }}
+        isLoading={unblockMutation.isPending}
+        type="custom"
+        targetName={company.name || "this page"}
+        title={
+          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px]">
+            Unblock <span className="font-['DM_Sans'] font-semibold text-[14px] leading-[20px]">{company.name || "this page"}</span>?
+          </span>
+        }
+        titleClassName="font-['Poppins'] font-normal text-[14px] leading-[20px]"
+        description="They will be able to see your profile and posts again"
+        confirmText="Unblock"
       />
     </div>
   );

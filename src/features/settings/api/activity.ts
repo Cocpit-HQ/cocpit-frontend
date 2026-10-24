@@ -11,21 +11,25 @@ const getActorHeaders = (companyId?: string) => {
 };
 
 export const getActivityLogs = async (type: 'likes' | 'comments' | 'tags', companyId?: string): Promise<any[]> => {
-    const res = await api.get(`/user/activity?type=${type}`, {
+    const queryParam = companyId ? `&companyId=${encodeURIComponent(companyId)}` : '';
+    const res = await api.get(`/user/activity?type=${type}${queryParam}`, {
       headers: companyId ? getActorHeaders(companyId) : undefined
     });
     return res.data;
 };
 
 export const removeActivity = async (type: 'like' | 'comment' | 'tag', id: number | string, companyId?: string, postId?: string) => {
+    const queryParam = companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
     if (type === 'tag' && postId) {
-      const res = await api.delete(`/post/${postId}/mentions`, {
-        headers: companyId ? getActorHeaders(companyId) : undefined
+      const res = await api.delete(`/post/${postId}/mentions${queryParam}`, {
+        headers: companyId ? getActorHeaders(companyId) : undefined,
+        data: companyId ? { companyId } : undefined
       });
       return res.data;
     }
-    const res = await api.delete(`/user/activity/${type}/${id}`, {
-      headers: companyId ? getActorHeaders(companyId) : undefined
+    const res = await api.delete(`/user/activity/${type}/${id}${queryParam}`, {
+      headers: companyId ? getActorHeaders(companyId) : undefined,
+      data: companyId ? { companyId } : undefined
     });
     return res.data;
 };

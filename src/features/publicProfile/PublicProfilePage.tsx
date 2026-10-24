@@ -832,7 +832,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         )}
 
         {blocked ? (
-          <ProfileBlockedState onUnblock={handleBlockToggle} isLoading={isBlockLoading} />
+          <ProfileBlockedState onUnblock={() => setShowBlockDialog(true)} isLoading={isBlockLoading} />
         ) : (
           <>
             {/* Divider */}

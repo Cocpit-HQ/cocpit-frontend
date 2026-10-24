@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { companyService } from '@/services/organization.service';
 import { toast } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
+import { UserIcon } from '@/components/icons';
 
 interface MemberInfo {
   user_id: string;
@@ -26,6 +27,27 @@ interface TransferOwnershipModalProps {
 }
 
 const PAGE_LIMIT = 10;
+
+function MemberAvatar({ avatar, name }: { avatar?: string; name: string }) {
+  const [imageError, setImageError] = useState(false);
+  const hasAvatar = Boolean(avatar && avatar !== 'null' && !imageError);
+
+  return (
+    <div className="w-[32px] h-[32px] rounded-full bg-ds-surface-1 border border-ds-border overflow-hidden relative shrink-0 flex items-center justify-center">
+      {hasAvatar ? (
+        <Image
+          src={avatar!}
+          alt={name}
+          fill
+          className="object-cover"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <UserIcon className="w-[60%] h-[60%] text-ds-text-primary" />
+      )}
+    </div>
+  );
+}
 
 export function TransferOwnershipModal({
   isOpen,
@@ -201,15 +223,7 @@ export function TransferOwnershipModal({
                     className="flex items-center justify-between w-full h-[36px] transition-all cursor-pointer hover:bg-ds-surface-1/30 rounded-lg px-0.5"
                   >
                     <div className="flex items-center gap-[10px] overflow-hidden">
-                      <div className="w-[32px] h-[32px] rounded-[100px] bg-ds-surface-1 overflow-hidden relative shrink-0 flex items-center justify-center">
-                        {user.avatar ? (
-                          <Image src={user.avatar} alt={user.full_name} fill className="object-cover" />
-                        ) : (
-                          <span className="ds-text-small text-ds-text-primary font-medium">
-                            {user.full_name?.charAt(0) || 'U'}
-                          </span>
-                        )}
-                      </div>
+                      <MemberAvatar avatar={user.avatar} name={user.full_name} />
                       <span className="ds-text-secondary text-ds-text-primary truncate font-normal">
                         {user.full_name}
                       </span>

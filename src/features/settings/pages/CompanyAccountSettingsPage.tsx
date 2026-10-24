@@ -10,6 +10,7 @@ import { TransferOwnershipModal } from '../components/modals/TransferOwnershipMo
 import { useCompanyAccountSettings } from '../hooks/useCompanyAccountSettings';
 import { useSettingsStore } from '@/store/settings.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { MobileCompanyAccountView } from '../components/mobile';
 
 export function CompanyAccountSettingsPage() {
   const router = useRouter();
@@ -40,7 +41,11 @@ export function CompanyAccountSettingsPage() {
   const handleOpenDelete = useCallback(() => setActiveModal('delete'), [setActiveModal]);
 
   return (
-    <div className="w-full max-w-[712px] py-2 rounded-tr-3xl rounded-br-3xl flex flex-col justify-start items-start gap-3 select-none text-ds-text-primary">
+    <>
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 1. DESKTOP VIEW: 100% Intact & Untouched for >= md (768px+)   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="hidden md:flex w-full max-w-[712px] py-2 rounded-tr-3xl rounded-br-3xl flex-col justify-start items-start gap-3 select-none text-ds-text-primary">
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. Credentials Section (Matches User Account dimensions 1:1)  */}
       {/* ───────────────────────────────────────────────────────────── */}
@@ -86,16 +91,16 @@ export function CompanyAccountSettingsPage() {
           <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
               <span className="text-ds-text-primary ds-text-body-1">
-                {hasPhone ? 'Manage phone number' : 'Add phone number'}
+                Manage phone number
               </span>
               <p className="text-ds-text-secondary ds-text-secondary m-0 truncate max-w-full">
-                {isLoading ? 'Loading...' : hasPhone ? `${accountData?.countryCode || ''} ${phoneNumber}`.trim() : 'No phone number'}
+                {isLoading ? 'Loading...' : hasPhone ? `${accountData?.countryCode || (phoneNumber?.length === 9 ? '+971' : '+91')} ${phoneNumber || ''}`.trim() : 'No phone number'}
               </p>
             </div>
             <Link href={`${basePath}/account-phone`} className="shrink-0 w-full sm:w-auto">
               <button
                 type="button"
-                className="w-full sm:w-auto min-w-[169px] h-[36px] px-4 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring"
+                className={`${hasPhone ? 'w-full sm:w-[200px]' : 'w-full sm:w-[170px]'} h-[36px] px-3 py-1.5 rounded-[100px] border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors cursor-pointer ds-focus-ring`}
               >
                 <span className="text-ds-text-primary ds-text-body-1 whitespace-nowrap">
                   {hasPhone ? 'Change phone number' : 'Add phone number'}
@@ -189,8 +194,30 @@ export function CompanyAccountSettingsPage() {
           </button>
         </div>
       </div>
+    </div>
 
-      {/* Modals */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 2. MOBILE VIEW: Strictly rendered on < md (< 768px)          */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="flex md:hidden flex-col w-full">
+        <MobileCompanyAccountView
+          accountData={accountData}
+          isLoading={isLoading}
+          isOwner={isOwner}
+          primaryEmail={primaryEmail}
+          hasPhone={hasPhone}
+          phoneNumber={phoneNumber}
+          isDeactivated={isDeactivated}
+          basePath={basePath}
+          onOpenDeactivate={handleOpenDeactivate}
+          onOpenTransfer={handleOpenTransfer}
+          onOpenDelete={handleOpenDelete}
+        />
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 3. MODALS: Shared across both Desktop & Mobile                */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <DeactivateCompanyModal
         isOpen={activeModal === 'deactivate'}
         onClose={handleCloseModal}
@@ -208,6 +235,6 @@ export function CompanyAccountSettingsPage() {
         isOpen={activeModal === 'delete'}
         onClose={handleCloseModal}
       />
-    </div>
+    </>
   );
 }

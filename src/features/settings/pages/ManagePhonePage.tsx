@@ -24,6 +24,7 @@ export function ManagePhonePage() {
   const activePhoneData = isCompany ? companyAccountData : accountData;
   const hasPhone = !!activePhoneData?.phone && activePhoneData.phone.trim() !== "";
   const phoneNumber = activePhoneData?.phone || "";
+  const countryCode = activePhoneData?.countryCode || (phoneNumber.length === 9 ? '+971' : '+91');
 
   const handleDeletePhone = () => {
     deletePhoneMutation.mutate(undefined, {
@@ -66,11 +67,11 @@ export function ManagePhonePage() {
             <div className="self-stretch text-ds-text-secondary text-sm font-normal font-['DM_Sans'] leading-5">
               Add your phone number to make it easier for people to contact you when needed. You can control whether it&apos;s visible to others in your Privacy settings
             </div>
-            <div className="self-stretch inline-flex justify-end items-center gap-2 pt-1">
+            <div className="self-stretch flex justify-end items-center pt-1">
               <button
                 type="button"
                 onClick={() => setModalMode('add')}
-                className="h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring"
+                className="w-[170px] h-[36px] px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring"
               >
                 <span className="text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
                   Add phone number
@@ -85,23 +86,23 @@ export function ManagePhonePage() {
                 Phone number
               </div>
               <div className="text-ds-text-primary text-sm font-normal font-['DM_Sans'] leading-5 break-all">
-                {`${activePhoneData?.countryCode || ''} ${phoneNumber}`.trim()}
+                {`${countryCode} ${phoneNumber}`.trim()}
               </div>
             </div>
-            <div className="self-stretch inline-flex justify-end items-center gap-3 pt-1">
+            <div className="self-stretch flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setModalMode('delete')}
-                className="w-[126px] h-[36px] px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer ds-focus-ring"
+                className="w-full sm:w-[126px] h-[36px] px-3 py-1.5 rounded-full border border-ds-border hover:bg-ds-surface-1 flex justify-center items-center gap-2.5 transition-colors text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 cursor-pointer ds-focus-ring"
               >
                 Delete
               </button>
               <button
                 type="button"
                 onClick={() => setModalMode('change')}
-                className="w-[197px] h-[36px] px-3 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
+                className="w-full sm:w-[200px] h-[36px] px-4 py-1.5 bg-ds-accent hover:opacity-90 text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6 rounded-full inline-flex justify-center items-center gap-2.5 transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
               >
-                Change number
+                Change phone number
               </button>
             </div>
           </>

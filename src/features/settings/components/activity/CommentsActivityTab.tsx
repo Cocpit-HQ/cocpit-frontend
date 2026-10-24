@@ -48,7 +48,14 @@ export function CommentsActivityTab({ data, removedItemIds }: CommentsActivityTa
   const commentsList = useMemo<CommentActivityItem[]>(() => {
     if (!data || data.length === 0) return [];
     return data
-      .filter((item) => !removedItemIds.has(item.id))
+      .filter((item) => {
+        if (removedItemIds.has(item.id)) return false;
+        if (item.isDeleted || item.is_deleted) return false;
+        if (item.isDeactivated || item.is_deactivated) return false;
+        const targetId = item.postId || item.id;
+        if (!targetId || targetId === 'null' || targetId === 'undefined') return false;
+        return true;
+      })
       .map((item, index) => resolveCommentPostData(item, index));
   }, [data, removedItemIds]);
 

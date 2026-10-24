@@ -217,6 +217,9 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
       setNewEmail('');
       hasInitPrimaryRef.current = false;
       setErrorMsg('');
+      verifyCurrentEmailConfirm.reset();
+      verifyEmailMutation.reset();
+      verifyRecoveryEmailMutation.reset();
     }, 300);
   };
 
@@ -284,6 +287,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                 type="text"
                 maxLength={6}
                 autoFocus
+                disabled={verifyCurrentEmailConfirm.isPending || (verifyCurrentEmailConfirm.isSuccess && !errorMsg)}
                 value={currentEmailCode}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '');
@@ -302,7 +306,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                   }
                 }}
                 placeholder="000000"
-                className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0"
+                className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0 tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
               />
               {verifyCurrentEmailConfirm.isSuccess && !errorMsg && (
                 <CheckCircle2 className="w-4 h-4 text-ds-success shrink-0" />
@@ -313,15 +317,16 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                 {errorMsg}
               </div>
             )}
-            <div className="self-stretch flex justify-start items-center">
+            {/* Resend — use invisible instead of unmounting to prevent layout shift */}
+            <div className={`self-stretch flex justify-start items-center ${verifyCurrentEmailConfirm.isSuccess ? 'invisible' : ''}`}>
               <button
                 type="button"
                 onClick={handleResend}
-                disabled={countdown > 0}
+                disabled={countdown > 0 || verifyCurrentEmailConfirm.isSuccess}
                 className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
-                  countdown > 0
+                  countdown > 0 || verifyCurrentEmailConfirm.isSuccess
                     ? 'text-ds-text-muted cursor-default'
-                    : 'text-ds-accent hover:underline cursor-pointer'
+                    : 'text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline cursor-pointer'
                 }`}
               >
                 {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
@@ -379,6 +384,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                 type="text"
                 maxLength={6}
                 autoFocus
+                disabled={verifyEmailMutation.isPending || verifyRecoveryEmailMutation.isPending || (isNewEmailSuccess && !errorMsg)}
                 value={newEmailCode}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '');
@@ -409,7 +415,7 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                   }
                 }}
                 placeholder="000000"
-                className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0"
+                className="w-full bg-transparent border-none outline-none text-ds-text-primary placeholder:text-ds-text-muted text-sm font-normal font-['DM_Sans'] leading-5 p-0 tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
               />
               {isNewEmailSuccess && !errorMsg && (
                 <CheckCircle2 className="w-4 h-4 text-ds-success shrink-0" />
@@ -420,15 +426,16 @@ export function ChangeEmailModal({ isOpen, onClose, onConfirmDelete, currentEmai
                 {errorMsg}
               </div>
             )}
-            <div className="self-stretch flex justify-start items-center">
+            {/* Resend — use invisible instead of unmounting to prevent layout shift */}
+            <div className={`self-stretch flex justify-start items-center ${isNewEmailSuccess ? 'invisible' : ''}`}>
               <button
                 type="button"
                 onClick={handleResend}
-                disabled={countdown > 0}
+                disabled={countdown > 0 || isNewEmailSuccess}
                 className={`text-xs font-normal font-['DM_Sans'] leading-4 p-0 bg-transparent border-none ${
-                  countdown > 0
+                  countdown > 0 || isNewEmailSuccess
                     ? 'text-ds-text-muted cursor-default'
-                    : 'text-ds-accent hover:underline cursor-pointer'
+                    : 'text-ds-accent hover:opacity-80 transition-opacity no-underline hover:no-underline cursor-pointer'
                 }`}
               >
                 {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}

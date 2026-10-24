@@ -43,7 +43,28 @@ export function ReportDetails({ report, onBack }: ReportDetailsProps) {
             Content type
           </div>
           <div className="self-stretch justify-center text-ds-text-primary text-sm font-normal font-sans leading-5">
-            {report.postType ? (report.postType.charAt(0).toUpperCase() + report.postType.slice(1).toLowerCase()) : (report.type || report.targetType || 'Profile')}
+            {(() => {
+              const pType = (report.postType || '').toLowerCase();
+              const tType = (report.targetType || '').toUpperCase();
+              const repType = (report.type || '').toLowerCase();
+
+              if (tType === 'COMPANY' || repType === 'company' || repType === 'company profile') {
+                return 'Company profile';
+              }
+              if (tType === 'USER' || repType === 'profile' || repType === 'user profile' || repType === 'user') {
+                return 'User profile';
+              }
+              if (pType === 'image' || pType === 'video' || pType === 'text') {
+                return 'Post';
+              }
+              if (tType === 'POST' && (pType !== 'article' && pType !== 'poll')) {
+                return 'Post';
+              }
+              if (report.postType) {
+                return report.postType.charAt(0).toUpperCase() + report.postType.slice(1).toLowerCase();
+              }
+              return report.type || (report.targetType ? report.targetType.charAt(0).toUpperCase() + report.targetType.slice(1).toLowerCase() : 'User profile');
+            })()}
           </div>
         </div>
         <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">

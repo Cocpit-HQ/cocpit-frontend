@@ -485,6 +485,11 @@ export const companyService = {
         return res.data;
     },
 
+    async validateRecoverOrgOTP(orgId: string, otp: string) {
+        const res = await api.post(`/organizations/${orgId}/recover/validate-otp`, { otp });
+        return res.data;
+    },
+
     async recoverOrgWithOTP(orgId: string, otp: string) {
         const res = await api.post(`/organizations/${orgId}/recover/verify-otp`, { otp });
         return res.data;

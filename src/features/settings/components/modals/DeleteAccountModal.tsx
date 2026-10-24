@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Loader2, BadgeCheck, Eye, EyeOff } from 'lucide-react';
+import { CheckboxCheckIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { TransferOwnershipModal } from './TransferOwnershipModal';
 import { SelectCompanyTransferModal, CompanyInfo } from './SelectCompanyTransferModal';
@@ -159,14 +160,12 @@ export function DeleteAccountModal({ isOpen, onClose, hasCompanyAccount = false 
                       <div
                         className={`w-6 h-6 rounded-[4px] border shrink-0 flex items-center justify-center transition-colors ${
                           isChecked
-                            ? 'bg-ds-accent border-ds-accent'
+                            ? 'bg-[#EC6229] border-[#EC6229]'
                             : 'bg-ds-surface-1 border-ds-border hover:border-ds-text-muted'
                         }`}
                       >
                         {isChecked && (
-                          <svg className="w-4 h-4 text-white stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          <CheckboxCheckIcon className="w-[16px] h-[13px] text-[#030303] shrink-0" fill="#030303" />
                         )}
                       </div>
                       <span className="ds-text-secondary text-ds-text-secondary text-left leading-[20px] break-words flex-1">

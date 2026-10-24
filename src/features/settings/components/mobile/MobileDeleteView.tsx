@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { CheckboxCheckIcon } from '@/components/icons';
 import { useDeleteAccount } from '../../hooks/useAccountSettings';
 import { companyService } from '@/services/organization.service';
 import { hardLogout } from '@/lib/logout';
@@ -169,34 +170,51 @@ export function MobileDeleteView({
                 {ownedCompanies.map((company) => {
                   const isChecked = checkedCompanyIds.includes(company.id);
                   return (
-                    <label 
+                    <div 
                       key={company.id}
+                      onClick={() => toggleCompanyChecked(company.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === ' ' || e.key === 'Enter') {
+                          e.preventDefault();
+                          toggleCompanyChecked(company.id);
+                        }
+                      }}
                       className="flex items-center justify-between py-1.5 cursor-pointer select-none"
                     >
                       <span className="text-ds-text-primary text-[14px] font-medium font-['DM_Sans']">
                         {company.name}
                       </span>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleCompanyChecked(company.id)}
-                        className="w-5 h-5 rounded border border-ds-border bg-ds-surface-1 text-ds-accent focus:ring-0 cursor-pointer"
-                      />
-                    </label>
+                      <div
+                        role="checkbox"
+                        aria-checked={isChecked}
+                        aria-label={`Toggle delete for ${company.name}`}
+                        className={`w-[24px] h-[24px] rounded-[4px] flex items-center justify-center transition-colors shrink-0 ${
+                          isChecked
+                            ? 'bg-[#EC6229]'
+                            : 'border-2 border-ds-border bg-transparent hover:border-ds-border-active'
+                        }`}
+                      >
+                        {isChecked && (
+                          <CheckboxCheckIcon className="w-[16px] h-[13px] text-[#030303] shrink-0" fill="#030303" />
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
 
                 {/* Unchecked explanation note */}
                 {!allChecked && (
-                  <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex flex-col gap-3 pt-2 w-full">
                     <p className="text-ds-text-secondary text-[13px] font-normal font-['DM_Sans'] leading-[18px] m-0">
                       If you keep this unchecked, you&apos;ll need to transfer ownership to another account before deleting your account
                     </p>
-                    <div>
+                    <div className="flex justify-center w-full pt-1">
                       <button
                         type="button"
                         onClick={handleOpenTransfer}
-                        className="h-9 px-5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-sm font-medium font-['DM_Sans'] transition-colors"
+                        className="h-9 px-5 rounded-full border border-ds-border hover:bg-ds-surface-1 text-ds-text-primary text-sm font-medium font-['DM_Sans'] transition-colors cursor-pointer ds-focus-ring"
                       >
                         Transfer Ownership
                       </button>

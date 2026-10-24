@@ -301,6 +301,41 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     queryClient.removeQueries({ queryKey: ["profileStats", targetId] });
     queryClient.invalidateQueries({ queryKey: ["profile"] });
     queryClient.invalidateQueries({ queryKey: ["companyProfile"] });
+
+    // Optimistically purge blocked entity's posts from feed queries
+    if (isBlocked && targetId) {
+      queryClient.setQueriesData<any>({ queryKey: ['feed'] }, (oldData: any) => {
+        if (!oldData?.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => ({
+            ...page,
+            posts: (page.posts || []).filter((p: any) => {
+              const matches =
+                String(p.authorId) === String(targetId) ||
+                String(p.author_org_id) === String(targetId) ||
+                String(p.companyId) === String(targetId) ||
+                String(p.company_id) === String(targetId) ||
+                String(p.shared_post?.authorId) === String(targetId) ||
+                String(p.shared_post?.author_org_id) === String(targetId);
+              return !matches;
+            }),
+          })),
+        };
+      });
+
+      queryClient.setQueriesData<any[]>({ queryKey: ["profile-posts"] }, (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return oldData.filter((p: any) =>
+          String(p.authorId) !== String(targetId) &&
+          String(p.author_org_id) !== String(targetId) &&
+          String(p.companyId) !== String(targetId) &&
+          String(p.shared_post?.authorId) !== String(targetId) &&
+          String(p.shared_post?.author_org_id) !== String(targetId)
+        );
+      });
+    }
+
     queryClient.invalidateQueries({ queryKey: ["feed"] });
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
     queryClient.invalidateQueries({ queryKey: ["profilePreview"] });

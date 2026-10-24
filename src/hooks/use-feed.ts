@@ -231,11 +231,39 @@ export const useFeed = (enableInitialFetch = true) => {
       });
     };
 
+    const handleBlockStatusChanged = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { targetId, isBlocked } = customEvent.detail || {};
+      if (isBlocked && targetId) {
+        queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              posts: (page.posts || []).filter((p: Post) => {
+                const matches =
+                  String(p.authorId) === String(targetId) ||
+                  String(p.author_org_id) === String(targetId) ||
+                  String((p as any).companyId) === String(targetId) ||
+                  String((p as any).company_id) === String(targetId) ||
+                  String(p.shared_post?.authorId) === String(targetId) ||
+                  String(p.shared_post?.author_org_id) === String(targetId);
+                return !matches;
+              }),
+            })),
+          };
+        });
+      }
+    };
+
     window.addEventListener('postCreated', handlePostCreated);
     window.addEventListener('repostDeleted', handleRepostDeleted);
+    window.addEventListener('cocpit:block_status_changed', handleBlockStatusChanged);
     return () => {
       window.removeEventListener('postCreated', handlePostCreated);
       window.removeEventListener('repostDeleted', handleRepostDeleted);
+      window.removeEventListener('cocpit:block_status_changed', handleBlockStatusChanged);
     };
   }, [addPost, enableInitialFetch, queryClient, feedQueryKey, activeProfile?.id]);
 
