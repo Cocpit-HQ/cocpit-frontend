@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { CreatePostRequest } from '@/services/api/feed';
+import { CreatePostRequest, CreatePostResponse } from '@/services/api/feed';
 import { updatePost, UpdatePostRequest, getPostById } from '@/services/api/posts';
 import { uploadMedia } from '@/services/api/upload';
 import { companyService } from '@/services/organization.service';
@@ -53,7 +53,7 @@ export const postApi = {
       ...(mediaMetadata.length > 0 ? { media_metadata: mediaMetadata } : {})
     };
 
-    const response = await api.post<{ postId: string }>("/post", finalPayload, {
+    const response = await api.post<CreatePostResponse>("/post", finalPayload, {
       signal: uploadConfig?.signal
     });
 
@@ -69,10 +69,17 @@ export const postApi = {
       }
     }
 
-    const createdPost = await getPostById(response.data.postId);
+    const canUseCreateResponse = response.data.post
+      && !payload.shared_post_id
+      && !payload.shared_job_id
+      && payload.post_type !== 'article'
+      && !payload.achievement_image_id;
+    const createdPost = canUseCreateResponse
+      ? response.data.post!
+      : await getPostById(response.data.postId);
     const mappedPost = mapBackendPostToFrontend(createdPost);
     const localImagePreviews = files.flatMap((file, index) => {
-      if (uploadRes[index]?.media_type !== "image" || uploadRes[index]?.processing_status !== "processing") return [];
+      if (uploadRes[index]?.media_type !== "image" || mappedPost.imageProcessingStatuses?.[index] !== "processing") return [];
       const previewUrl = URL.createObjectURL(file);
       window.setTimeout(() => URL.revokeObjectURL(previewUrl), 5 * 60 * 1000);
       return [previewUrl];

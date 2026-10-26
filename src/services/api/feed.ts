@@ -226,6 +226,7 @@ export interface CreatePostResponse {
   category: string;
   visibility: string;
   post_type: string;
+  post?: BackendPost;
   media_urls?: PostMediaInput[];
   media_type?: string;
   poll: {

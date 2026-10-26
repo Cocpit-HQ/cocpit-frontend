@@ -186,6 +186,7 @@ export interface Post {
   authorHeadline?: string | null;
   unavailableReason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
   articleBody?: string;
+  _feedCreatedOptimistically?: boolean;
 
   // Job sharing fields
   isJob?: boolean;

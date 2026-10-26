@@ -377,6 +377,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     avifImages,
     imageProcessingStatuses,
     imageDimensions: imageDimensions.length > 0 ? imageDimensions : undefined,
+    media: mediaList,
     mediaWidth: mediaWidth,
     mediaHeight: mediaHeight,
     videoSrc: videoSrc,

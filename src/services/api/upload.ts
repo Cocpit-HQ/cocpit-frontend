@@ -96,14 +96,41 @@ export async function uploadMedia(files: File[], options: { syncProcessing?: boo
     if (!response.ok) throw new Error(`Upload failed for ${file.name} (HTTP ${response.status}).`);
   }));
 
-  return Promise.all(tickets.map(async (ticket, index) => {
-    const { data } = await api.post<UploadedAsset>("/upload/process", {
-      rawKey: ticket.rawKey,
-      rawMasterUrl: ticket.rawMasterUrl,
-      mediaType: types[index].mediaType,
-      size: files[index].size,
-      sync: Boolean(options.syncProcessing),
-    });
+  const processRequests = tickets.map((ticket, index) => ({
+    filename: files[index].name,
+    contentType: ticket.contentType,
+    size: files[index].size,
+    rawKey: ticket.rawKey,
+    rawMasterUrl: ticket.rawMasterUrl,
+    mediaType: types[index].mediaType,
+  }));
+
+  if (!options.syncProcessing) {
+    try {
+      const { data } = await api.post<{ uploads: UploadedAsset[] }>("/upload/process-batch", {
+        uploads: processRequests,
+      });
+      if (!data.uploads || data.uploads.length !== files.length) {
+        throw new Error("The server did not queue every uploaded file for processing.");
+      }
+      return data.uploads;
+    } catch (error) {
+      const responseStatus =
+        typeof error === "object" && error !== null && "response" in error
+          ? (error as { response?: { status?: number } }).response?.status
+          : undefined;
+      if (responseStatus !== 404 && responseStatus !== 405) throw error;
+    }
+
+    // Older backend deployments can still queue files through the single-file route.
+    return Promise.all(processRequests.map(async (upload) => {
+      const { data } = await api.post<UploadedAsset>("/upload/process", upload);
+      return data;
+    }));
+  }
+
+  return Promise.all(processRequests.map(async (upload) => {
+    const { data } = await api.post<UploadedAsset>("/upload/process", { ...upload, sync: true });
     return data;
   }));
 }

@@ -1,13 +1,17 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { getFeed, resetFeedSession } from '@/services/api/feed';
+import type { FeedResponse } from '@/services/api/feed';
 import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { Post } from '@/types/entities';
 import React, { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+
+type FeedPage = Omit<FeedResponse, 'posts'> & { posts: Post[] };
 
 export const useFeed = (enableInitialFetch = true) => {
   const { data: session } = useSession();
@@ -44,9 +48,23 @@ export const useFeed = (enableInitialFetch = true) => {
       if (response.session_id) {
         setSessionId(response.session_id);
       }
+      const serverPosts = response.posts.map(mapBackendPostToFrontend);
+      // Keep locally-created posts visible if a cached/ranked feed refresh does
+      // not contain them yet. Once the backend returns the post, its canonical
+      // version replaces the optimistic copy naturally.
+      if (!pageParam) {
+        const cachedData = queryClient.getQueryData<InfiniteData<FeedPage>>(feedQueryKey);
+        const serverIds = new Set(serverPosts.map((post) => post.id));
+        const retainedPosts = (cachedData?.pages || []).flatMap((page) => page.posts)
+          .filter((post) => post._feedCreatedOptimistically && !serverIds.has(post.id));
+        return {
+          ...response,
+          posts: [...retainedPosts, ...serverPosts],
+        };
+      }
       return {
         ...response,
-        posts: response.posts.map(mapBackendPostToFrontend)
+        posts: serverPosts
       };
     },
     initialPageParam: null as string | null,
@@ -117,6 +135,7 @@ export const useFeed = (enableInitialFetch = true) => {
   }, [feedQueryKey, queryClient]);
 
   const addPost = useCallback((post: Post) => {
+    const optimisticPost = { ...post, _feedCreatedOptimistically: true };
     queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
       // Prevent duplicates
@@ -129,7 +148,7 @@ export const useFeed = (enableInitialFetch = true) => {
       if (newPages.length > 0) {
         newPages[0] = {
           ...newPages[0],
-          posts: [post, ...newPages[0].posts]
+          posts: [optimisticPost, ...newPages[0].posts]
         };
       }
       return { ...oldData, pages: newPages };

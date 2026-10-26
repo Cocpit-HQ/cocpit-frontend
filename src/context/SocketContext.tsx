@@ -920,8 +920,66 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    const handleMediaProcessingUpdated = () => {
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
+    const handleMediaProcessingUpdated = (payload: {
+      postId?: string;
+      mediaId?: string;
+      processing_status?: 'processing' | 'ready' | 'failed';
+      media?: {
+        url?: string;
+        fallback_url?: string | null;
+        avif_url?: string | null;
+        width?: number | null;
+        height?: number | null;
+        media_type?: 'image' | 'video';
+      } | null;
+    }) => {
+      // A media status change should update the existing card, not replace the
+      // whole feed with a possibly stale cached ranking slice. The server's feed
+      // slice cache can omit a just-created post for up to five minutes.
+      if (payload?.postId && payload.mediaId && payload.media) {
+        queryClient.setQueriesData<any>({ queryKey: ['feed'] }, (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              posts: page.posts.map((post: any) => {
+                if (String(post.id) !== String(payload.postId)) return post;
+                const media = Array.isArray(post.media) ? post.media : [];
+                const mediaIndex = media.findIndex((item: any) => String(item.media_id) === String(payload.mediaId));
+                if (mediaIndex < 0) return post;
+                const updatedMedia = media.map((item: any, index: number) => index === mediaIndex
+                  ? { ...item, ...payload.media, processing_status: payload.processing_status }
+                  : item);
+                const updated = { ...post, media: updatedMedia };
+                if (payload.media?.media_type === 'video') {
+                  updated.videoSrc = payload.media.url || post.videoSrc;
+                  return updated;
+                }
+                const imageIndex = media.slice(0, mediaIndex).filter((item: any) => item.media_type === 'image').length;
+                const images = [...(post.images || [])];
+                images[imageIndex] = payload.media?.url || images[imageIndex];
+                const statuses = [...(post.imageProcessingStatuses || [])];
+                statuses[imageIndex] = payload.processing_status;
+                const avifImages = [...(post.avifImages || [])];
+                avifImages[imageIndex] = payload.media?.avif_url || null;
+                return {
+                  ...updated,
+                  images,
+                  imageSrc: images[0],
+                  imageProcessingStatuses: statuses,
+                  avifImages,
+                  imageDimensions: (post.imageDimensions || []).map((dimension: any, index: number) =>
+                    index === imageIndex && payload.media?.width && payload.media?.height
+                      ? { width: payload.media.width, height: payload.media.height }
+                      : dimension
+                  ),
+                };
+              })
+            }))
+          };
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
