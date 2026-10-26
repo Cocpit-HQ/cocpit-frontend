@@ -271,14 +271,20 @@ const FeedComposerInline = ({
 
     // Media upload size constraints:
     // - Per image limit: 10MB maximum (reject individual file > 10MB)
-    // - Total image upload limit: 120MB maximum (reject cumulative size > 120MB for up to 12 images)
+    // - Total image upload limit: 100MB per post
     // - Video limit: 100MB maximum
     const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
-    const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit
+    const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024;
     const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB video limit
 
-    const videoFiles = fileArray.filter(f => f.type.startsWith('video/'));
-    const imageFiles = fileArray.filter(f => f.type.startsWith('image/'));
+    const videoFiles = fileArray.filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(f.name));
+    const imageFiles = fileArray.filter(f => f.type.startsWith('image/') || /\.(jpe?g|jpe|png|webp|avif|heic|heif)$/i.test(f.name));
+
+    if (selectedImages.length + imageFiles.length > 12 || selectedVideo && videoFiles.length) {
+      toast.error("A post can contain up to 12 media files, and images and videos cannot be mixed.");
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     // Validate video file size limit (100MB)
     if (videoFiles.length > 0) {
@@ -290,7 +296,7 @@ const FeedComposerInline = ({
       }
     }
 
-    // Validate image file size limits (10MB per image, 120MB total post images)
+    // Validate image file size limits (10MB per image, 100MB total post images)
     if (imageFiles.length > 0) {
       const oversizedImage = imageFiles.find(f => f.size > MAX_SINGLE_IMAGE_SIZE);
       if (oversizedImage) {
@@ -302,7 +308,7 @@ const FeedComposerInline = ({
       const currentTotalSize = selectedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
       const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
       if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
-        toast.error("Total image upload size cannot exceed 120MB.");
+        toast.error("Total image upload size cannot exceed 100MB.");
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -377,7 +383,15 @@ const FeedComposerInline = ({
             aspectRatio: dims.aspectRatio,
           });
         } catch (e) {
-          console.error('Failed to load image dimensions:', e);
+          console.info('Image dimensions are unavailable in this browser; keeping the original preview.', e);
+          newImages.push({
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            file,
+            previewUrl: URL.createObjectURL(file),
+            naturalWidth: 800,
+            naturalHeight: 600,
+            aspectRatio: 4 / 3,
+          });
         }
       }
 
@@ -736,8 +750,8 @@ const FeedComposerInline = ({
           type="file"
           accept={
             selectedImages.length > 0
-              ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
-              : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
+                ? "image/jpeg, image/png, image/webp, image/avif, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .avif, .heic, .heif"
+                : "image/jpeg, image/png, image/webp, image/avif, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .avif, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
           }
           multiple
           className="hidden"

@@ -151,6 +151,8 @@ export interface Post {
   mentioned_users?: { user_id: string; full_name: string; account_name: string }[];
   imageSrc?: string;
   images?: string[];
+  avifImages?: Array<string | null>;
+  imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
   mediaWidth?: number;
   mediaHeight?: number;

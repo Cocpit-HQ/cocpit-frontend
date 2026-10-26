@@ -1,170 +1,103 @@
 import api from "@/lib/axios";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Cocpit Scalable Upload Service
-// Dual-Asset Architecture: Direct-to-R2 presigned PUT + 12-bit AVIF processing
-// ─────────────────────────────────────────────────────────────────────────────
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_POST_IMAGE_BYTES = 100 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_MEDIA_COUNT = 12;
+
+const imageMimeByExtension: Record<string, string> = {
+  jpg: "image/jpeg", jpeg: "image/jpeg", jpe: "image/jpeg", png: "image/png",
+  webp: "image/webp", avif: "image/avif", heic: "image/heic", heif: "image/heif",
+};
+const videoMimeByExtension: Record<string, string> = { mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm" };
 
 export interface UploadedAsset {
-  url: string;         // Active display URL (12-bit AVIF for images, raw for video)
-  master_url: string;  // 100% untouched original master
+  url: string;
+  master_url: string;
   media_type: "image" | "video";
+  processing_status?: "processing" | "ready" | "failed";
+  fallback_url?: string | null;
+  avif_url?: string | null;
+  jobId?: string;
   width?: number | null;
   height?: number | null;
   format?: string;
   bit_depth?: number | null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// R2 Direct Upload (New Flow)
-// 1. Request presigned PUT URL from backend (<10ms, zero file bytes sent to server)
-// 2. PUT file directly to Cloudflare R2 (raw master preserved 100% untouched)
-// 3. Notify backend to run 12-bit AVIF transcoding → returns display URL
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Upload a single file via presigned PUT directly to Cloudflare R2.
- * The backend never receives the raw file bytes.
- *
- * @param file     - Raw File object from the user's input
- * @param folder   - R2 folder prefix (default: "posts")
- * @param onProgress - Optional progress callback (0–100)
- * @returns Processed asset with display URL + master URL
- */
-async function uploadFileToR2(
-  file: File,
-  folder = "posts",
-  onProgress?: (pct: number) => void
-): Promise<UploadedAsset> {
-  // Step 1: Request presigned upload ticket from backend
-  const { data: ticket } = await api.post("/upload/presign", {
-    filename: file.name,
-    contentType: file.type,
-    folder,
-  });
-
-  onProgress?.(10);
-
-  // Step 2: PUT file DIRECTLY to R2 (100% raw, untouched bytes)
-  // This never goes through Express – goes straight to Cloudflare's servers
-  const uploadRes = await fetch(ticket.uploadUrl, {
-    method: "PUT",
-    body: file,
-    headers: {
-      "Content-Type": file.type,
-    },
-  });
-
-  if (!uploadRes.ok) {
-    throw new Error(
-      `[uploadMedia] Direct R2 PUT failed: HTTP ${uploadRes.status} — ${await uploadRes.text()}`
-    );
-  }
-
-  onProgress?.(70);
-
-  // Step 3: Notify backend → triggers 12-bit AVIF transcode → returns display URL
-  const mediaType = file.type.startsWith("video") ? "video" : "image";
-  const { data: processed } = await api.post("/upload/process", {
-    rawKey: ticket.rawKey,
-    rawMasterUrl: ticket.rawMasterUrl,
-    mediaType,
-  });
-
-  onProgress?.(100);
-
-  console.log(`[uploadMedia] ✅ Dual-asset complete → display: ${processed.url} | master: ${processed.master_url}`);
-
-  return {
-    url: processed.url,             // 12-bit AVIF display variant (or raw video)
-    master_url: processed.master_url, // 100% original master
-    media_type: processed.media_type,
-    width: processed.width,
-    height: processed.height,
-    format: processed.format,
-    bit_depth: processed.bit_depth,
-  };
+interface UploadTicket {
+  uploadUrl: string;
+  rawKey: string;
+  rawMasterUrl: string;
+  filename: string;
+  contentType: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Legacy Cloudinary Upload (Fallback when R2 is not configured)
-// Used only in local dev without R2 env vars set.
-// ─────────────────────────────────────────────────────────────────────────────
+interface MultipartUploadResponse { urls?: UploadedAsset[] }
 
-async function uploadBatchLegacy(batch: File[], maxRetries = 2, delayMs = 1000): Promise<any[]> {
-  let attempt = 0;
-  while (true) {
-    try {
-      const formData = new FormData();
-      batch.forEach(file => formData.append("files", file));
-      const { data } = await api.post("/upload", formData);
-      return data?.urls || [];
-    } catch (error: any) {
-      attempt++;
-      if (attempt > maxRetries) {
-        console.error(`[uploadMedia:legacy] Batch of ${batch.length} files failed after ${attempt} attempts:`, error);
-        throw error;
-      }
-      console.warn(`[uploadMedia:legacy] Attempt ${attempt}/${maxRetries + 1} failed. Retrying in ${delayMs}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+function getUploadType(file: File): { contentType: string; mediaType: "image" | "video" } {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  const imageMime = imageMimeByExtension[extension];
+  const videoMime = videoMimeByExtension[extension];
+  if (imageMime) return { contentType: imageMime, mediaType: "image" };
+  if (videoMime) return { contentType: videoMime, mediaType: "video" };
+  throw new Error(`${file.name} is not a supported image or video. Supported images: JPEG, PNG, WebP, AVIF, HEIC, HEIF.`);
+}
+
+function validateBatch(files: File[]): Array<{ contentType: string; mediaType: "image" | "video" }> {
+  if (!files.length || files.length > MAX_MEDIA_COUNT) throw new Error(`Choose between 1 and ${MAX_MEDIA_COUNT} media files.`);
+  let imageBytes = 0;
+  const types = files.map(getUploadType);
+  files.forEach((file, index) => {
+    if (types[index].mediaType === "image") {
+      if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name} exceeds the 10 MB image limit.`);
+      imageBytes += file.size;
+    } else if (file.size > MAX_VIDEO_BYTES) {
+      throw new Error(`${file.name} exceeds the 100 MB video limit.`);
     }
-  }
+  });
+  if (imageBytes > MAX_POST_IMAGE_BYTES) throw new Error("Images in a post may not exceed 100 MB total.");
+  return types;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Export: uploadMedia
-// Automatically selects R2 flow (presigned) or legacy (multipart Cloudinary)
-// based on backend availability.
-// ─────────────────────────────────────────────────────────────────────────────
+async function uploadBatchMultipart(files: File[], syncProcessing: boolean): Promise<UploadedAsset[]> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("files", file));
+  const { data } = await api.post<MultipartUploadResponse>("/upload", formData, { params: syncProcessing ? { sync: "true" } : undefined });
+  return data?.urls || [];
+}
 
-/**
- * Upload media files using the Dual-Asset R2 architecture.
- * Falls back to legacy Cloudinary upload if R2 presign endpoint returns 503.
- *
- * @param files - Array of File objects to upload
- * @returns Array of uploaded asset descriptors with display + master URLs
- */
-export async function uploadMedia(files: File[]): Promise<UploadedAsset[]> {
-  if (!files || files.length === 0) return [];
+/** Upload originals directly to R2, then return immediately while the worker builds display variants. */
+export async function uploadMedia(files: File[], options: { syncProcessing?: boolean } = {}): Promise<UploadedAsset[]> {
+  if (!files?.length) return [];
+  const types = validateBatch(files);
+  let tickets: UploadTicket[];
 
-  console.log(
-    "[uploadMedia] Starting upload for",
-    files.length,
-    "files:",
-    files.map(f => ({ name: f.name, type: f.type, size: `${(f.size / 1024 / 1024).toFixed(2)}MB` }))
-  );
-
-  // Try R2 presigned flow first
   try {
-    const results: UploadedAsset[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      console.log(`[uploadMedia] Processing file ${i + 1}/${files.length}: ${file.name}`);
-      const asset = await uploadFileToR2(file, "posts");
-      results.push(asset);
-    }
-    console.log("[uploadMedia] ✅ All files uploaded via R2:", results.length, "assets");
-    return results;
-  } catch (error: any) {
-    // If backend returns 503 (R2 not configured), fall back to legacy Cloudinary upload
-    if (error?.response?.status === 503 || error?.response?.data?.error === "R2 not configured") {
-      console.warn("[uploadMedia] R2 not configured on server – falling back to legacy Cloudinary upload.");
-      const allUrls: any[] = [];
-      for (let i = 0; i < files.length; i += 12) {
-        const batch = files.slice(i, i + 12);
-        const batchUrls = await uploadBatchLegacy(batch);
-        allUrls.push(...batchUrls);
-      }
-      console.log("[uploadMedia] ✅ Legacy Cloudinary upload complete:", allUrls.length, "urls");
-      return allUrls;
-    }
-
-    // Re-throw any other error
-    console.error("[uploadMedia] Upload failed:", {
-      message: error.message,
-      status: error.response?.status,
-      responseData: error.response?.data,
+    const { data } = await api.post<{ uploads: UploadTicket[] }>("/upload/presign-batch", {
+      files: files.map((file, index) => ({ filename: file.name, size: file.size, contentType: types[index].contentType })),
     });
-    throw error;
+    tickets = data.uploads;
+  } catch {
+    // Older/local deployments may not expose batch presigning yet. Multipart uses the same worker queue.
+    return uploadBatchMultipart(files, Boolean(options.syncProcessing));
   }
+
+  if (!tickets || tickets.length !== files.length) throw new Error("The server returned an incomplete upload batch.");
+  await Promise.all(tickets.map(async (ticket, index) => {
+    const file = files[index];
+    const response = await fetch(ticket.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": ticket.contentType } });
+    if (!response.ok) throw new Error(`Upload failed for ${file.name} (HTTP ${response.status}).`);
+  }));
+
+  return Promise.all(tickets.map(async (ticket, index) => {
+    const { data } = await api.post<UploadedAsset>("/upload/process", {
+      rawKey: ticket.rawKey,
+      rawMasterUrl: ticket.rawMasterUrl,
+      mediaType: types[index].mediaType,
+      size: files[index].size,
+      sync: Boolean(options.syncProcessing),
+    });
+    return data;
+  }));
 }

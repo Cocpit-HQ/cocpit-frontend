@@ -36,7 +36,7 @@ export function ImageUpload({ value, onChange, className, aspectRatio = "square"
 
         setIsUploading(true);
         try {
-            const urls = await uploadMedia([file]);
+            const urls = await uploadMedia([file], { syncProcessing: true });
             if (urls && urls.length > 0) {
                 onChange(urls[0].url);
                 toast.success("Image uploaded successfully");

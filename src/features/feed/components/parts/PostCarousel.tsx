@@ -10,6 +10,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface PostCarouselProps {
   images: string[];
+  avifImages?: Array<string | null>;
+  imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
   priority?: boolean;
   aspectRatio?: string | number;
@@ -79,6 +81,8 @@ function computeSlideWidth(
 
 export function PostCarousel({
   images,
+  avifImages = [],
+  imageProcessingStatuses = [],
   imageDimensions,
   priority = false,
   onImageLoad,
@@ -91,6 +95,7 @@ export function PostCarousel({
   slideWidth = 'peek',
   dotsClassName,
 }: PostCarouselProps) {
+  const [failedImageUrls, setFailedImageUrls] = useState<string[]>([]);
   const isMobile = useIsMobile();
   const plugins = typeof WheelGesturesPlugin === 'function' && !isMobile ? [WheelGesturesPlugin()] : [];
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -312,6 +317,13 @@ export function PostCarousel({
                   className={slideCls}
                   style={slideStyle}
                 >
+                  {imageProcessingStatuses[index] === "processing" || failedImageUrls.includes(src) ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">
+                      {imageProcessingStatuses[index] === "processing" ? "Image processing…" : "Image unavailable"}
+                    </div>
+                  ) : (
+                  <picture>
+                  {avifImages[index] && <source srcSet={avifImages[index] || undefined} type="image/avif" />}
                   <Image
                     src={src}
                     alt={`Post image ${index + 1}`}
@@ -340,7 +352,10 @@ export function PostCarousel({
                       }
                       if (index === 0 && onImageLoad) onImageLoad(e);
                     }}
+                    onError={() => setFailedImageUrls((current) => current.includes(src) ? current : [...current, src])}
                   />
+                  </picture>
+                  )}
                 </div>
               );
             })}

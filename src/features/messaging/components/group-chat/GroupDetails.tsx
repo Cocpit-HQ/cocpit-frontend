@@ -141,7 +141,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
     const handleAvatarUpload = async (file: File) => {
         try {
-            const urls = await uploadMedia([file]);
+            const urls = await uploadMedia([file], { syncProcessing: true });
             if (urls && urls.length > 0) {
                 const avatarUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
                 await updateGroupAvatar(activeGroup.conversation_id, avatarUrl);
@@ -171,7 +171,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 const blob = await base64Response.blob();
                 const file = new File([blob], "group_avatar.jpg", { type: "image/jpeg" });
 
-                const urls = await uploadMedia([file]);
+                const urls = await uploadMedia([file], { syncProcessing: true });
                 if (urls && urls.length > 0) {
                     avatarUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
                 }

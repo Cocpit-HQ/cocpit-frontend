@@ -27,8 +27,7 @@ const EXPRESS_AUTH_ROUTES = [
 // rewrites() are evaluated at BUILD time and baked into the output, so the
 // backend address must be known when `next build` runs (Railway: set
 // INTERNAL_API_URL on the service before the first build).
-// Default = local main API (cocpit-backend src/server.js on :5000) — keep in sync with src/config/env.ts.
-const DEFAULT_INTERNAL_API_URL = "https://cocpit-backend-staging.up.railway.app//api";
+const DEFAULT_INTERNAL_API_URL = process.env.INTERNAL_API_URL || (process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/api` : "http://localhost:5000/api");
 
 function resolveBackendUrl(): string {
   const url =

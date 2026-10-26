@@ -12,7 +12,7 @@ export interface LikeBarProps {
   likeCount?: number;
   isLiked?: boolean;
   sampleLikerUsername?: string;
-  likedUsers?: any[];
+  likedUsers?: Array<{ username?: string; avatar_url?: string | null }>;
   viewerUsername?: string;
   onShowLikes?: (e: React.MouseEvent) => void;
   variant?: 'overlay' | 'inline';
@@ -44,7 +44,7 @@ export const LikeBar: React.FC<LikeBarProps> = ({
 
   const filteredLikedUsers = likedUsers && likedUsers.length > 0
     ? (viewerUsername
-        ? likedUsers.filter((u: any) => u.username?.toLowerCase() !== viewerUsername.toLowerCase())
+        ? likedUsers.filter((user) => user.username?.toLowerCase() !== viewerUsername.toLowerCase())
         : likedUsers)
     : [];
 
@@ -73,7 +73,7 @@ export const LikeBar: React.FC<LikeBarProps> = ({
 
       {filteredLikedUsers.length > 0 && (
         <div className="flex -space-x-1.5 items-center flex-shrink-0">
-          {filteredLikedUsers.slice(0, 3).map((user: any, idx: number) => {
+          {filteredLikedUsers.slice(0, 3).map((user, idx) => {
             const hasAvatar = user.avatar_url && user.avatar_url !== '/assets/pngegg.png';
             return hasAvatar ? (
               <img

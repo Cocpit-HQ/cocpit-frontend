@@ -1,6 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+/* Socket events are server-defined, dynamically shaped payloads; handlers validate fields as needed. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -48,13 +51,13 @@ const SocketContext = createContext<SocketContextType>({
   typingConversations: {}
 });
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://cocpit-backend-staging.up.railway.app/";
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
 const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "auto";
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, update } = useSession();
   const { activeProfile, refreshProfile, switchProfile } = useActiveProfile();
-  const toast = (props: any) => {
+  const toast = useCallback((props: any) => {
     const message = props.title || props.description;
     const description = props.title && props.description ? props.description : undefined;
 
@@ -63,7 +66,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       sonnerToast(message, { description, duration: props.duration });
     }
-  };
+  }, []);
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -412,7 +415,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else if (isPost || ['like', 'comment', 'reply', 'repost', 'post_tag', 'mention', 'company_post', 'message_reaction'].includes(payload.type)) {
         const senderName = payload.senderName || (payload as any).actor_name || 'Someone';
-        const senderAvatar = payload.senderAvatar || (payload as any).actor_avatar;
         let notifText = payload.text || `${senderName} interacted with your post`;
         
         // Ensure notifText includes the sender's name if stripped or missing
@@ -454,7 +456,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         // Company or User Job notification
         const companyPayload = payload as CompanyUpdateNotification;
         const companyName = companyPayload.actor_name || payload.senderName || 'Someone';
-        const companyAvatar = companyPayload.actor_avatar || payload.senderAvatar;
         const notifText = companyPayload.text || 'New job alert';
         const referenceId = companyPayload.reference_id || payload.referenceId;
         let navigateTo = '/notifications';
@@ -575,7 +576,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
 
-      const myId = session?.user?.id || activeProfileRef.current?.id;
       const isMeBlocker =
         String(payload.blocked_by_user_id) === String(session?.user?.id) ||
         String(payload.blocked_by_user_id) === String(activeProfileRef.current?.id) ||
@@ -598,7 +598,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             "cocpit_block_event",
             JSON.stringify({ targetId: otherPartyId, isBlocked: true, timestamp: Date.now() }),
           );
-        } catch (_) { }
+        } catch { /* local storage may be unavailable */ }
       }
 
       const queryKey = [
@@ -653,7 +653,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (!payload) return;
       const conversationId = payload.conversation_id || payload.conversationId;
 
-      const myId = session?.user?.id || activeProfileRef.current?.id;
       const isMeUnblocker =
         String(payload.unblocked_by_user_id) === String(session?.user?.id) ||
         String(payload.unblocked_by_user_id) === String(activeProfileRef.current?.id) ||
@@ -676,7 +675,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             "cocpit_block_event",
             JSON.stringify({ targetId: otherPartyId, isBlocked: false, timestamp: Date.now() }),
           );
-        } catch (_) { }
+        } catch { /* local storage may be unavailable */ }
       }
 
       const queryKey = [
@@ -921,6 +920,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    const handleMediaProcessingUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-posts-preview'] });
+      queryClient.invalidateQueries({ queryKey: ['orgPosts'] });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -973,6 +980,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('post_updated', handlePostUpdated);
     newSocket.on('post_deleted', handlePostUpdated);
     newSocket.on('feed_updated', handlePostCreated);
+    newSocket.on('media_processing_updated', handleMediaProcessingUpdated);
     socketRef.current = newSocket;
 
 
@@ -1038,10 +1046,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('post_updated', handlePostUpdated);
       newSocket.off('post_deleted', handlePostUpdated);
       newSocket.off('feed_updated', handlePostCreated);
+      newSocket.off('media_processing_updated', handleMediaProcessingUpdated);
       newSocket.disconnect();
       setTypingConversations({});
     };
-  }, [session?.user?.accessToken, session?.user?.error, session?.user?.id, toast, router, queryClient, refreshProfile, handleRealtimeUpdate, switchProfile]);
+  }, [session?.user, update, activeProfile?.id, activeProfile?.type, pathname, toast, router, queryClient, refreshProfile, handleRealtimeUpdate, switchProfile]);
 
   useEffect(() => {
     if (!socketRef.current) return;

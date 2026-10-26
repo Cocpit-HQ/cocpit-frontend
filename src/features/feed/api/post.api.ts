@@ -38,16 +38,14 @@ export const postApi = {
       };
     }
 
-    // 2. We have files, upload directly to Cloudflare R2 via presigned PUT and get 12-bit AVIF URLs
+    // Upload originals to R2 and create the post while derivatives process asynchronously.
     console.log("[postApi.create] Uploading", files.length, "files directly to R2...");
     const uploadRes = await uploadMedia(files);
-    const mediaUrls: string[] = (uploadRes || []).map((item: any) =>
-      typeof item === 'object' && item !== null ? item.url : item
-    );
-    const mediaMetadata = (uploadRes || []).map((item: any) => ({
+    const mediaUrls = uploadRes;
+    const mediaMetadata = uploadRes.map((item) => ({
       width: item.width || undefined,
       height: item.height || undefined,
-    })).filter((m: any) => m.width && m.height);
+    })).filter((item) => item.width && item.height);
 
     const finalPayload = {
       ...payload,
@@ -72,35 +70,43 @@ export const postApi = {
     }
 
     const createdPost = await getPostById(response.data.postId);
+    const mappedPost = mapBackendPostToFrontend(createdPost);
+    const localImagePreviews = files.flatMap((file, index) => {
+      if (uploadRes[index]?.media_type !== "image" || uploadRes[index]?.processing_status !== "processing") return [];
+      const previewUrl = URL.createObjectURL(file);
+      window.setTimeout(() => URL.revokeObjectURL(previewUrl), 5 * 60 * 1000);
+      return [previewUrl];
+    });
+    if (localImagePreviews.length) {
+      mappedPost.images = localImagePreviews;
+      mappedPost.imageSrc = localImagePreviews[0];
+      mappedPost.imageProcessingStatuses = localImagePreviews.map(() => "ready");
+    }
     return {
       postId: response.data.postId,
-      mappedPost: mapBackendPostToFrontend(createdPost)
+      mappedPost
     };
   },
 
   update: async (postId: string, payload: UpdatePostRequest, files: File[] = []) => {
-    let finalPayload: UpdatePostRequest = { ...payload };
+    const finalPayload: UpdatePostRequest = { ...payload };
 
     if (files && files.length > 0) {
       console.log("[postApi.update] Uploading", files.length, "files before updating post...");
       const uploadRes = await uploadMedia(files);
-      const newUrls: string[] = (uploadRes || []).map((item: any) =>
-        typeof item === 'object' && item !== null ? item.url : item
-      );
-
       let uploadedIdx = 0;
       if (Array.isArray(finalPayload.media_urls) && finalPayload.media_urls.length > 0) {
-        finalPayload.media_urls = finalPayload.media_urls.map((url) => {
-          if (typeof url === 'string' && url.startsWith('blob:')) {
-            return newUrls[uploadedIdx++] || url;
+        finalPayload.media_urls = finalPayload.media_urls.map((media) => {
+          if (typeof media === 'string' && media.startsWith('blob:')) {
+            return uploadRes[uploadedIdx++] || media;
           }
-          return url;
+          return media;
         });
-        while (uploadedIdx < newUrls.length) {
-          finalPayload.media_urls.push(newUrls[uploadedIdx++]);
+        while (uploadedIdx < uploadRes.length) {
+          finalPayload.media_urls.push(uploadRes[uploadedIdx++]);
         }
       } else {
-        finalPayload.media_urls = newUrls;
+        finalPayload.media_urls = uploadRes;
       }
     }
 

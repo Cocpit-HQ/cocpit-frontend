@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
 import { PostCarousel } from './PostCarousel';
 import { Icon } from '@/components/icons';
 import { calculateDisplayDimensions, ImageDimensions, MAX_MEDIA_WIDTH, MAX_MEDIA_HEIGHT } from '@/features/feed/utils/imageBounds';
-import { LikeBar } from './LikeBar';
-import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { LikeBar, type LikeBarProps } from './LikeBar';
+import { Play, Pause } from 'lucide-react';
 import { VideoScrubber } from './VideoScrubber';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -12,6 +11,8 @@ import { cn } from '@/lib/utils';
 interface PostMediaProps {
   imageSrc?: string;
   images?: string[];
+  avifImages?: Array<string | null>;
+  imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
   mediaWidth?: number;
   mediaHeight?: number;
@@ -20,11 +21,11 @@ interface PostMediaProps {
   onLoad: (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => void;
   priority?: boolean;
   onClick?: (e: React.MouseEvent) => void;
-  tags?: any[];
+  tags?: unknown[];
   likeCount?: number;
   isLiked?: boolean;
   sampleLikerUsername?: string;
-  likedUsers?: any[];
+  likedUsers?: LikeBarProps["likedUsers"];
   viewerUsername?: string;
   onShowLikes?: (e: React.MouseEvent) => void;
   hideOverlayLikeBar?: boolean;
@@ -37,7 +38,7 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
+  imageSrc, images = [], avifImages = [], imageProcessingStatuses = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
   hideOverlayLikeBar = false, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
@@ -54,6 +55,7 @@ export const PostMedia = ({
   }, [mediaWidth, mediaHeight]);
 
   const [imgDims, setImgDims] = useState<ImageDimensions | null>(null);
+  const [failedImageSrc, setFailedImageSrc] = useState<string | null>(null);
   
   const activeDims = imgDims || fastDims;
 
@@ -74,13 +76,14 @@ export const PostMedia = ({
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
 
-    if (!video.paused) {
-      setIsPlaying(true);
-    }
+    const playbackFrame = window.requestAnimationFrame(() => {
+      if (!video.paused) setIsPlaying(true);
+    });
 
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
+      window.cancelAnimationFrame(playbackFrame);
     };
   }, [videoRef, videoSrc]);
 
@@ -155,6 +158,8 @@ export const PostMedia = ({
         >
           <PostCarousel
             images={validImages}
+            avifImages={avifImages}
+            imageProcessingStatuses={imageProcessingStatuses}
             imageDimensions={imageDimensions}
             priority={priority}
             onImageLoad={onLoad}
@@ -340,13 +345,21 @@ export const PostMedia = ({
                 </div>
               </div>
             )
+          ) : imageProcessingStatuses[0] === "processing" || failedImageSrc === contentImgSrc ? (
+            <div className="flex w-full min-h-[240px] items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">
+              {imageProcessingStatuses[0] === "processing" ? "Image processing…" : "Image unavailable"}
+            </div>
           ) : contentImgSrc ? (
+            <picture className="contents">
+            {avifImages[0] && <source srcSet={avifImages[0]} type="image/avif" />}
             <img
               src={contentImgSrc}
               alt="Post content"
               className={`w-full h-full object-contain object-left rounded-[8px] ${isFullContent ? 'max-w-full' : 'max-w-[442px]'} max-h-[589px]`}
               onLoad={handleImageLoad}
+              onError={() => setFailedImageSrc(contentImgSrc)}
             />
+            </picture>
           ) : null}
 
           {/* Liked By Overlay — hidden in video overlay mode (handled separately) */}

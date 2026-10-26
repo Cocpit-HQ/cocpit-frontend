@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, User, Sparkles } from "lucide-react";
+import { Send, User } from "lucide-react";
 import Image from "next/image";
 
-const CYPHEX_LOGO = "https://res.cloudinary.com/dst2rqu4h/image/upload/v1772687225/posts/1772687223267-Selected photo.jpg.jpg";
+const CYPHEX_LOGO = "/assets/AI 2.svg";
 
 
 interface Message {
@@ -15,44 +15,15 @@ interface Message {
 }
 
 export function AIChatInterface() {
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<Message[]>(() => [
+        { id: "1", type: "ai", content: "Hi there! I'm Cyphex, your AI Assistant. I've been analyzing your profile and the latest market trends.", timestamp: new Date(Date.now() - 60000 * 5) },
+        { id: "2", type: "ai", content: <div className="space-y-2"><p>Based on your recent activity, I&apos;ve curated some tailored opportunities for you today.</p><ul className="list-disc pl-4 text-sm space-y-1 text-muted-foreground mt-2"><li>Found 3 high-match roles in Frontend Development</li><li>Identified 1 upcoming networking event in your area</li><li>Noticed a new skill trend: React Server Components</li></ul></div>, timestamp: new Date(Date.now() - 60000 * 4) },
+        { id: "3", type: "user", content: "That sounds great! Can you show me the job matches?", timestamp: new Date(Date.now() - 60000 * 2) },
+    ]);
     const [isTyping, setIsTyping] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Simulate initial conversation loading
-        const initialMessages: Message[] = [
-            {
-                id: "1",
-                type: "ai",
-                content: "Hi there! I'm Cyphex, your AI Assistant. I've been analyzing your profile and the latest market trends.",
-                timestamp: new Date(Date.now() - 60000 * 5), // 5 mins ago
-            },
-            {
-                id: "2",
-                type: "ai",
-                content: (
-                    <div className="space-y-2">
-                        <p>Based on your recent activity, I've curated some tailored opportunities for you today.</p>
-                        <ul className="list-disc pl-4 text-sm space-y-1 text-muted-foreground mt-2">
-                            <li>Found 3 high-match roles in Frontend Development</li>
-                            <li>Identified 1 upcoming networking event in your area</li>
-                            <li>Noticed a new skill trend: React Server Components</li>
-                        </ul>
-                    </div>
-                ),
-                timestamp: new Date(Date.now() - 60000 * 4),
-            },
-            {
-                id: "3",
-                type: "user",
-                content: "That sounds great! Can you show me the job matches?",
-                timestamp: new Date(Date.now() - 60000 * 2),
-            },
-        ];
-
-        setMessages(initialMessages);
-
         // Simulate AI typing a response
         const timer = setTimeout(() => {
             setMessages((prev) => [

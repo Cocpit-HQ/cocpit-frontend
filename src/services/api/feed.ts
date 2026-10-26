@@ -169,7 +169,22 @@ export interface BackendMedia {
   width?: number;
   height?: number;
   aspect_ratio: string | null;
+  master_url?: string;
+  fallback_url?: string | null;
+  avif_url?: string | null;
+  processing_status?: "processing" | "ready" | "failed";
 }
+
+export type PostMediaInput = string | {
+  url: string;
+  master_url?: string;
+  media_type?: "image" | "video";
+  processing_status?: "processing" | "ready" | "failed";
+  fallback_url?: string | null;
+  avif_url?: string | null;
+  width?: number | null;
+  height?: number | null;
+};
 
 export interface BackendPoll {
   poll_id: string;
@@ -193,7 +208,7 @@ export interface CreatePostRequest {
   visibility: "public" | "private";
   post_type: "text" | "image" | "video" | "poll" | "article";
   location?: string | null;
-  media_urls?: string[];
+  media_urls?: PostMediaInput[];
   poll_options?: string[];
   poll_duration?: string;
   shared_post_id?: string;
@@ -211,7 +226,7 @@ export interface CreatePostResponse {
   category: string;
   visibility: string;
   post_type: string;
-  media_urls?: string[];
+  media_urls?: PostMediaInput[];
   media_type?: string;
   poll: {
     poll_id?: string;

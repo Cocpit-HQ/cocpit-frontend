@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { BackendPost } from "./feed";
+import { BackendPost, PostMediaInput } from "./feed";
 import { BackendComment } from "@/lib/mappers/feed.mapper";
 
 export interface DeletePostResponse {
@@ -12,7 +12,7 @@ export interface UpdatePostRequest {
   content?: string;
   category?: string;
   visibility?: 'public' | 'private';
-  media_urls?: string[];
+  media_urls?: PostMediaInput[];
   location?: string | null;
 }
 

@@ -32,6 +32,8 @@ dayjs.extend(relativeTime);
 export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   // Extract images and video
   const images: string[] = [];
+  const avifImages: Array<string | null> = [];
+  const imageProcessingStatuses: Array<"processing" | "ready" | "failed" | undefined> = [];
   const imageDimensions: Array<{ width: number; height: number } | null> = [];
   let videoSrc: string | undefined = undefined;
   //const primaryMediaAspectRatio = backendPost.media?.[0]?.aspect_ratio || undefined;
@@ -49,6 +51,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
     if (mediaType === "image") {
       images.push(item.url);
+      avifImages.push(item.avif_url || null);
+      imageProcessingStatuses.push(item.processing_status);
       imageDimensions.push(
         (item.width && item.height) ? { width: item.width, height: item.height } : null
       );
@@ -173,6 +177,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       } as Post & { isAvailable?: boolean; isJob?: boolean };
     } else if (sp.author && sp.post_id) { // Ensure required fields exist
       const spImages: string[] = [];
+      const spAvifImages: Array<string | null> = [];
+      const spImageProcessingStatuses: Array<"processing" | "ready" | "failed" | undefined> = [];
       let spVideoSrc: string | undefined = undefined;
 
       // Process shared post media
@@ -187,6 +193,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
           if (mediaType === "image") {
             spImages.push(item.url);
+            spAvifImages.push(item.avif_url || null);
+            spImageProcessingStatuses.push(item.processing_status);
             spImageDimensions.push(
               (item.width && item.height) ? { width: item.width, height: item.height } : null
             );
@@ -264,6 +272,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         articleBody: spArticleBody,
         imageSrc: spImages.length > 0 ? spImages[0] : undefined,
         images: spImages.length > 0 ? spImages : undefined,
+        avifImages: spAvifImages,
+        imageProcessingStatuses: spImageProcessingStatuses,
         imageDimensions: spImageDimensions.length > 0 ? spImageDimensions : undefined,
         mediaWidth: spMediaWidth,
         mediaHeight: spMediaHeight,
@@ -364,6 +374,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     articleBody: articleBody,
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
+    avifImages,
+    imageProcessingStatuses,
     imageDimensions: imageDimensions.length > 0 ? imageDimensions : undefined,
     mediaWidth: mediaWidth,
     mediaHeight: mediaHeight,

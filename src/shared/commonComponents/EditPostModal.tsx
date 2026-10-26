@@ -33,7 +33,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useBodyScrollLock } from '@/hooks';
 
 const MAX_SINGLE_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB per image limit
-const MAX_TOTAL_IMAGE_SIZE = 120 * 1024 * 1024; // 120MB total images limit (up to 12 images x 10MB)
+const MAX_TOTAL_IMAGE_SIZE = 100 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024;       // 100MB video limit
 const ACCEPTED_MEDIA_TYPES = 'image/png,image/jpeg,image/webp,image/gif,video/mp4,video/quicktime,video/webm';
 
@@ -356,8 +356,8 @@ export function EditPostModal({
     if (!files || files.length === 0) return;
     const fileArray = Array.from(files);
 
-    const videoFiles = fileArray.filter((f) => f.type.startsWith('video/'));
-    const imageFiles = fileArray.filter((f) => f.type.startsWith('image/'));
+    const videoFiles = fileArray.filter((f) => f.type.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(f.name));
+    const imageFiles = fileArray.filter((f) => f.type.startsWith('image/') || /\.(jpe?g|jpe|png|webp|avif|heic|heif)$/i.test(f.name));
 
     // Validate video file size limit (100MB)
     if (videoFiles.length > 0) {
@@ -369,7 +369,7 @@ export function EditPostModal({
       }
     }
 
-    // Validate image file size limits (10MB per image, 120MB total post images)
+    // Validate image file size limits (10MB per image, 100MB total post images)
     if (imageFiles.length > 0) {
       const oversizedImage = imageFiles.find((f) => f.size > MAX_SINGLE_IMAGE_SIZE);
       if (oversizedImage) {
@@ -381,7 +381,7 @@ export function EditPostModal({
       const currentTotalSize = selectedImages.reduce((sum, img) => sum + (img.file?.size || 0), 0);
       const newImagesSize = imageFiles.reduce((sum, f) => sum + f.size, 0);
       if (currentTotalSize + newImagesSize > MAX_TOTAL_IMAGE_SIZE) {
-        toast.error('Total image upload size cannot exceed 120MB.');
+        toast.error('Total image upload size cannot exceed 100MB.');
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -1154,8 +1154,8 @@ export function EditPostModal({
                 type="file"
                 accept={
                   selectedImages.length > 0
-                    ? "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif"
-                    : "image/jpeg, image/png, image/webp, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
+                    ? "image/jpeg, image/png, image/webp, image/avif, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .avif, .heic, .heif"
+                    : "image/jpeg, image/png, image/webp, image/avif, image/heic, image/heif, .jpg, .jpeg, .png, .webp, .avif, .heic, .heif, video/mp4, video/quicktime, .mp4, .mov"
                 }
                 multiple
                 onChange={handleFilesChosen}

@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 
 export default function FeatureFlagTester() {
-  const [flags, setFlags] = useState<any>(null);
+  const [flags, setFlags] = useState<Record<string, boolean> | null>(null);
 
   useEffect(() => {
     // Poll the backend config API every 2 seconds
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("https://cocpit-backend-staging.up.railway.app//api/config");
-        const data = await res.json();
+        const res = await fetch("/api/config");
+        const data = await res.json() as { features?: Record<string, boolean> };
         setFlags(data.features || {});
       } catch (err) {
         console.error("Failed to fetch flags", err);

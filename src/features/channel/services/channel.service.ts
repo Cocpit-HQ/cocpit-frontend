@@ -247,7 +247,7 @@ export async function updateArticle(id: string, orgId: string, input: Partial<Ar
   if (input.coverImage && (input.coverImage.startsWith('data:') || input.coverImage.startsWith('blob:'))) {
     try {
       const file = await urlToFile(input.coverImage, 'cover.jpg');
-      const uploadedUrls = await uploadMedia([file]);
+      const uploadedUrls = await uploadMedia([file], { syncProcessing: true });
       if (uploadedUrls && uploadedUrls.length > 0) {
          const item = uploadedUrls[0];
          coverImageUrl = typeof item === 'object' && item !== null ? item.url : item;

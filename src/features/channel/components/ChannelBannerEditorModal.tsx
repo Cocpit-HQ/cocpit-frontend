@@ -257,7 +257,7 @@ export default function ChannelBannerEditorModal({
 
       const file = new File([blob], "channel_banner.jpg", { type: "image/jpeg" });
       try {
-        const urls = await uploadMedia([file]);
+        const urls = await uploadMedia([file], { syncProcessing: true });
         const raw = urls[0];
         const resolvedUrl = typeof raw === 'object' && raw !== null ? (raw as any).url : raw;
         onSaveBanner(resolvedUrl);

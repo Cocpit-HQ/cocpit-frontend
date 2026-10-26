@@ -265,7 +265,7 @@ export default function ArticleCoverEditor({
         type: "image/jpeg",
       });
 
-      const urls = await uploadMedia([processedFile]);
+      const urls = await uploadMedia([processedFile], { syncProcessing: true });
       const raw = urls[0];
       const url = typeof raw === 'object' && raw !== null ? (raw as any).url : raw;
 

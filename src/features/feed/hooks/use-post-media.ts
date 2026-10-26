@@ -42,7 +42,7 @@ export const usePostMedia = (
     id: `${Date.now()}-${Math.random()}`,
     url: URL.createObjectURL(file),
     file,
-    type: file.type.startsWith('image/') ? 'image' : 'video',
+    type: file.type.startsWith('video/') || /\.(mp4|mov|webm)$/i.test(file.name) ? 'video' : 'image',
     crop: { x: 0, y: 0 },
     zoom: 1,
     naturalWidth: dims?.width,
