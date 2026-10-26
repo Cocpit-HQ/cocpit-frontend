@@ -16,6 +16,8 @@ import { VirtualLayerCanvas } from "./ViewerLayerItem";
 import { v4 as uuidv4 } from "uuid";
 import { getJobById } from "@/services/api/jobs";
 import { JobStoryCard } from "../jobs/JobStoryCard";
+import type { Job } from "@/types/jobs";
+import type { BackendPost } from "@/services/api/feed";
 
 type Props = {
   onCancel?: () => void
@@ -24,15 +26,16 @@ type Props = {
   sharedJobId?: string | null
 }
 
+type SharedStoryPost = React.ComponentProps<typeof SharedPostCard>["sharedPost"];
+type StoryMetadataWithFiles = StoryMetadata & { _compositeFile?: File; _baseFile?: File };
+
 export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId }: Props) {
   const [description, setDescription] = useState("")
   const [selectedImage, setSelectedImage] = useState<string | null>(null) // Used for background in share mode
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [postData, setPostData] = useState<any>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [jobData, setJobData] = useState<any>(null)
+  const [postData, setPostData] = useState<SharedStoryPost | null>(null)
+  const [jobData, setJobData] = useState<Job | null>(null)
 
   // Background selection & Scaling for text/shared post stories
   const [backgroundStyle, setBackgroundStyle] = useState("bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500")
@@ -57,20 +60,20 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
   React.useEffect(() => {
     if (sharedPostId) {
       import("@/services/api/feed").then(({ getPostById }) => {
-        getPostById(sharedPostId).then((data: any) => {
+        getPostById(sharedPostId).then((data: BackendPost) => {
           // Map backend post to SharedPostCard format
           setPostData({
             is_accessible: true, // Assuming if you can share it, you can see it
-            post_id: data.post_id || data.id || data.postId,
+            post_id: data.post_id,
             content: data.content,
             author: {
-              user_id: data.author?.user_id || data.user_id || data.user?.id || "",
-              full_name: data.author?.full_name || data.author_name || data.user?.fullName || "Unknown",
-              avatar_url: data.author?.avatar_url || data.author_avatar || data.user?.profilePicture || ""
+              user_id: data.author_id,
+              full_name: data.author_name || "Unknown",
+              avatar_url: data.author_avatar || ""
             },
-            media: (data.media_urls || data.media || []).map((url: any) => ({
-              url: typeof url === 'string' ? url : url.url,
-              media_type: data.media_type || (typeof url === 'string' && url.includes('.mp4') ? 'video' : 'image')
+            media: data.media.map((item) => ({
+              url: item.url,
+              media_type: item.media_type
             })) || []
           });
         }).catch(err => console.error("Failed to load shared post", err));
@@ -121,15 +124,17 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
     setIsSubmitting(true)
     try {
       // 1. Determine the file to upload (baked snapshot for images, raw video for videos)
-      const snapshotFile = (editorMetadata as any)?._compositeFile;
-      const baseFile = (editorMetadata as any)?._baseFile || editingFile;
+      const metadataWithFiles = editorMetadata as StoryMetadataWithFiles | null;
+      const snapshotFile = metadataWithFiles?._compositeFile;
+      const baseFile = metadataWithFiles?._baseFile || editingFile;
 
       // For images: upload the composite snapshot (baked by html2canvas)
       // For videos: upload the video file directly
       const mainFileToUpload: File | Blob | null =
         fileRef.current ||
+        snapshotFile ||
         (editingFile instanceof File ? editingFile : null) ||
-        (baseFile instanceof File || baseFile instanceof Blob ? baseFile : null);
+        (baseFile instanceof File ? baseFile : null);
 
       let fileToUpload = mainFileToUpload;
 
@@ -175,10 +180,8 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
       }
 
       // 2. Prepare clean metadata (remove internal editor props)
-      const finalMetadataObj = { ...editorMetadata };
-      // @ts-ignore
+      const finalMetadataObj = { ...editorMetadata } as StoryMetadataWithFiles;
       delete finalMetadataObj._baseFile;
-      // @ts-ignore
       delete finalMetadataObj._compositeFile;
 
       // Final guard: ensure we have a real URL before calling the API
@@ -186,11 +189,11 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
         throw new Error("Upload failed: media URL is invalid or not yet uploaded");
       }
 
-      // For video stories: patch the main video layer's src to the Cloudinary URL
+      // For video stories: patch the main video layer's src to the uploaded media URL
       // (it currently holds a blob URL from the editor)
       if (finalMetadataObj?.layers && mediaData.url) {
-        finalMetadataObj.layers = finalMetadataObj.layers.map((layer: any) => {
-          if ((layer.id === 'main-image' || layer.id === 'main-video') && layer.src) {
+        finalMetadataObj.layers = finalMetadataObj.layers.map((layer) => {
+          if ((layer.id === 'main-image' || layer.id === 'main-video') && 'src' in layer && layer.src) {
             return { ...layer, src: mediaData.url };
           }
           return layer;
@@ -496,10 +499,10 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
               <div>
                 <label className="block text-sm mb-4 text-muted-foreground">Start with Template</label>
                 <div className="flex gap-2">
-                  {['blank', 'quote', 'announcement'].map((t) => (
+                  {(['blank', 'quote', 'announcement'] as const).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setTemplate(t as any)}
+                      onClick={() => setTemplate(t)}
                       className={`px-4 py-2 rounded-lg text-sm border transition-all ${template === t ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted'}`}
                     >
                       {t.charAt(0).toUpperCase() + t.slice(1)}

@@ -79,14 +79,6 @@ export function getStoryThumbnailUrl(story: StoryLikeWithMedia): string | undefi
     return story.image!;
   }
 
-  // Cloudinary video: story.image or media_url is a video URL → derive .jpg thumbnail
-  const cloudinaryVideoUrl = [story.image, story.media_url].find(
-    (url) => url && url.includes("cloudinary") && isVideoAssetUrl(url)
-  );
-  if (cloudinaryVideoUrl) {
-    return cloudinaryVideoUrl.replace(/\.[^/.?]+(\?.*)?$/, ".jpg$1");
-  }
-
   return undefined;
 }
 

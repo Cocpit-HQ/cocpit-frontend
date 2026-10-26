@@ -6,6 +6,8 @@ import { Dialog, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Post, PostVisibility } from '@/types/entities';
 import { postApi } from '@/features/feed/api/post.api';
 import { getPostById, deletePost as apiDeletePost } from '@/services/api/posts';
+import type { UpdatePostRequest } from '@/services/api/posts';
+import type { UploadedAsset } from '@/services/api/upload';
 import { uploadMedia } from '@/services/api/upload';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useFeed } from '@/hooks/use-feed';
@@ -45,10 +47,31 @@ export interface EditPostModalProps {
   isOpen: boolean;
   onClose: () => void;
   editPostId: string;
-  postData?: any;
-  onUpdate?: (updatedPost: any) => void;
+  postData?: Post;
+  onUpdate?: (updatedPost: Partial<Post>) => void;
   onDelete?: (postId: string) => void;
 }
+
+type EditablePost = Omit<Partial<Post>, 'location'> & {
+  location?: string | StructuredLocation | LocationSuggestion | null;
+  shared_post_id?: string | null;
+  companyId?: string | null;
+  avatar?: string | null;
+  authorName?: string | null;
+  poll_question?: string;
+  poll_options?: string[];
+  poll_duration?: string;
+  video?: string;
+  sharedPost?: Post | null;
+};
+type ExtendedUpdatePostRequest = UpdatePostRequest & {
+  post_type?: string;
+  companyId?: string;
+  media_metadata?: Array<{ width?: number; height?: number }>;
+  poll_question?: string;
+  poll_options?: string[];
+  poll_duration?: string;
+};
 
 interface PostEditSnapshot {
   description: string;
@@ -96,8 +119,8 @@ export function EditPostModal({
   const [postType, setPostType] = useState<string>('text');
   const [selectedImages, setSelectedImages] = useState<ComposerImage[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<{ file: File; previewUrl: string; naturalWidth?: number; naturalHeight?: number } | null>(null);
-  const [sharedPost, setSharedPost] = useState<any | null>(null);
-  const [originalPost, setOriginalPost] = useState<any | null>(null);
+  const [sharedPost, setSharedPost] = useState<Post | null>(null);
+  const [originalPost, setOriginalPost] = useState<EditablePost | null>(null);
 
   // Poll state
   const poll = usePostPoll();
@@ -123,7 +146,7 @@ export function EditPostModal({
   }, [isSubmitting, selectedImages, selectedVideo, onClose]);
 
   // Populate data helper
-  const populateData = useCallback((post: any) => {
+  const populateData = useCallback((post: EditablePost) => {
     setOriginalPost(post);
 
     const rawContent = post.content || '';
@@ -145,7 +168,7 @@ export function EditPostModal({
     // Shared post / Repost
     const existingShared = post.shared_post || post.sharedPost;
     if (existingShared) {
-      setSharedPost(existingShared);
+      setSharedPost(existingShared as Post);
     } else if (post.shared_post_id) {
       getPostById(post.shared_post_id)
         .then((backendPost) => {
@@ -194,9 +217,9 @@ export function EditPostModal({
             id: `existing-${idx}-${encodeURIComponent(url.slice(-20))}`,
             file: new File([''], `existing-image-${idx}.jpg`, { type: 'image/jpeg' }),
             previewUrl: url,
-            naturalWidth: w,
-            naturalHeight: h,
-            aspectRatio: (w && h) ? w / h : undefined,
+          naturalWidth: w || 0,
+          naturalHeight: h || 0,
+          aspectRatio: (w && h) ? w / h : 1,
           };
         });
         setSelectedImages(initialImages);
@@ -232,12 +255,12 @@ export function EditPostModal({
         snapImages = postImages;
       } else if (post.videoSrc || post.video) {
         setPostType('video');
-        const vUrl = post.videoSrc || post.video;
+        const vUrl = post.videoSrc || post.video || '';
         setSelectedVideo({
           file: new File([''], 'existing-video.mp4', { type: 'video/mp4' }),
           previewUrl: vUrl,
-          naturalWidth: post.mediaWidth,
-          naturalHeight: post.mediaHeight,
+          naturalWidth: post.mediaWidth || 0,
+          naturalHeight: post.mediaHeight || 0,
         });
         setSelectedImages([]);
         snapVideo = vUrl;
@@ -248,9 +271,9 @@ export function EditPostModal({
       }
     }
 
-    const rawLoc = post.location as any;
+    const rawLoc = post.location;
     const snapLocation = typeof rawLoc === 'object' && rawLoc !== null
-      ? (rawLoc.formattedAddress || rawLoc.name || null)
+      ? ('formattedAddress' in rawLoc ? rawLoc.formattedAddress : rawLoc.name)
       : (rawLoc || null);
 
     const snap: PostEditSnapshot = {
@@ -285,14 +308,12 @@ export function EditPostModal({
           .getById(editPostId)
           .then((freshPost) => {
             if (freshPost?.location) {
-              const locAny = freshPost.location as any;
+              const locAny = freshPost.location;
               const freshLoc = typeof locAny === 'object' && locAny !== null
                 ? locAny
                 : ({ id: 0, name: String(locAny), latitude: '', longitude: '' } as unknown as StructuredLocation);
               setSelectedLocation(freshLoc);
-              const freshLocStr = typeof locAny === 'object' && locAny !== null
-                ? (locAny.formattedAddress || locAny.name || null)
-                : (locAny || null);
+              const freshLocStr = locAny || null;
               if (initialSnapshotRef.current) {
                 initialSnapshotRef.current.location = freshLocStr;
               }
@@ -563,7 +584,7 @@ export function EditPostModal({
           : selectedLocation.name
         : null;
 
-      // 1. Identify and upload any newly chosen image files to Cloudinary/storage
+      // 1. Identify and upload any newly chosen image files to R2 storage
       const newImageFiles: File[] = selectedImages
         .filter((img) => img.file && img.file.size > 0 && (img.previewUrl.startsWith('blob:') || img.id.startsWith('new-')))
         .map((img) => img.file as File);
@@ -571,9 +592,7 @@ export function EditPostModal({
       let uploadedImageUrls: string[] = [];
       if (newImageFiles.length > 0) {
         const uploadRes = await uploadMedia(newImageFiles);
-        uploadedImageUrls = (uploadRes || []).map((item: any) =>
-          typeof item === 'object' && item !== null ? item.url : item
-        );
+        uploadedImageUrls = (uploadRes || []).map((item: UploadedAsset) => item.url);
       }
 
       // 2. Identify and upload newly chosen video file if any
@@ -582,7 +601,7 @@ export function EditPostModal({
         const uploadRes = await uploadMedia([selectedVideo.file]);
         if (uploadRes && uploadRes.length > 0) {
           const item = uploadRes[0];
-          uploadedVideoUrl = typeof item === 'object' && item !== null ? item.url : item;
+          uploadedVideoUrl = item.url;
         }
       }
 
@@ -621,7 +640,7 @@ export function EditPostModal({
                 ? 'image'
                 : 'text';
 
-      const updatePayload: any = {
+      const updatePayload: ExtendedUpdatePostRequest = {
         title: originalPost?.title || '',
         content: finalContent,
         post_type: effectivePostType,
@@ -646,7 +665,7 @@ export function EditPostModal({
       await postApi.update(editPostId, updatePayload);
 
       // Fetch fresh backend post so we get persisted media URLs and complete updated entity
-      let freshMappedPost: any = null;
+      let freshMappedPost: Post | null = null;
       try {
         const freshBackendPost = await getPostById(editPostId);
         freshMappedPost = mapBackendPostToFrontend(freshBackendPost);
@@ -654,22 +673,22 @@ export function EditPostModal({
         console.warn('Could not fetch fresh post after update:', fetchErr);
       }
 
-      const updatedPostObj = freshMappedPost || {
+      const updatedPostObj: EditablePost = freshMappedPost || {
         ...originalPost,
         ...updatePayload,
         images: finalVideoUrl ? [] : finalMediaUrls,
-        imageSrc: finalVideoUrl ? null : (finalMediaUrls[0] || null),
-        videoSrc: finalVideoUrl || null,
+        imageSrc: finalVideoUrl ? undefined : (finalMediaUrls[0] || undefined),
+        videoSrc: finalVideoUrl || undefined,
         post_type: effectivePostType,
         type: effectivePostType,
-      };
+      } as EditablePost;
 
       // Update feed store optimistically
       updatePostInFeed(editPostId, {
         content: finalContent,
         images: updatedPostObj.images,
-        imageSrc: updatedPostObj.imageSrc,
-        videoSrc: updatedPostObj.videoSrc,
+        imageSrc: updatedPostObj.imageSrc || undefined,
+        videoSrc: updatedPostObj.videoSrc || undefined,
         type: updatedPostObj.type || effectivePostType,
         post_type: effectivePostType,
         location: locationString || undefined,
@@ -692,13 +711,24 @@ export function EditPostModal({
       // Update snapshot with newly saved post state so hasUnsavedChanges() becomes false,
       // keeping the user on the page with state preserved and Save button inactive!
       populateData(updatedPostObj);
-      onUpdate?.(updatedPostObj);
-    } catch (err: any) {
+      onUpdate?.({
+        ...updatedPostObj,
+        location: typeof updatedPostObj.location === 'string' ? updatedPostObj.location : undefined,
+      });
+    } catch (err: unknown) {
       console.error("Failed to update post:", err);
-      if (err?.response?.data?.message) {
-        toast.error(err.response.data.message);
-      } else {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const response = err.response;
+        if (typeof response === 'object' && response !== null && 'data' in response) {
+          const data = response.data;
+          if (typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string') {
+            toast.error(data.message);
+            return;
+          }
+        }
         toast.error("Failed to update post");
+      } else {
+        toast.error(err instanceof Error ? err.message : "Failed to update post");
       }
     } finally {
       setIsSubmitting(false);
@@ -711,7 +741,7 @@ export function EditPostModal({
     setIsDeleting(true);
 
     try {
-      const companyId = originalPost?.author_org_id || originalPost?.companyId;
+      const companyId = originalPost?.author_org_id || originalPost?.companyId || undefined;
       await deletePost(editPostId, companyId);
 
       if (onDelete) {
@@ -739,7 +769,7 @@ export function EditPostModal({
     const currentLocation = selectedLocation
       ? 'formattedAddress' in selectedLocation
         ? selectedLocation.formattedAddress
-        : (selectedLocation as any).name || null
+        : ('name' in selectedLocation ? selectedLocation.name : null)
       : null;
     if (currentLocation !== snap.location) return true;
 
@@ -798,11 +828,14 @@ export function EditPostModal({
 
   const isCompanyPost = activeProfile?.type === 'COMPANY' || Boolean(originalPost?.isCompanyPost || originalPost?.author_org_id || originalPost?.companyId);
 
+  const currentUserAvatar = currentUser && 'avatar' in currentUser && typeof currentUser.avatar === 'string'
+    ? currentUser.avatar
+    : undefined;
   const displayAvatar =
     originalPost?.authorAvatar ||
     originalPost?.avatar ||
     currentUser?.image ||
-    (currentUser as any)?.avatar;
+    currentUserAvatar;
 
   const displayName =
     originalPost?.author ||
@@ -903,7 +936,7 @@ export function EditPostModal({
                       <MentionTextarea
                         ref={textareaRef}
                         value={description}
-                        onChange={(e: any) => setDescription(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                         onMentionsChange={setInlineMentions}
                         initialMentions={inlineMentions}
                         placeholder="What's on your mind?"
@@ -1025,7 +1058,7 @@ export function EditPostModal({
                   <div className="relative w-[371px] max-w-full">
                     <SharedPreview
                       sharedPost={sharedPost}
-                      sharedPostId={sharedPost.id?.toString() || (sharedPost as any).post_id?.toString() || originalPost?.shared_post_id?.toString()}
+                      sharedPostId={sharedPost.id?.toString() || originalPost?.shared_post_id?.toString()}
                       isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false}
                       disableNavigation
                     />

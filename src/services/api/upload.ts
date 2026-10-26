@@ -78,8 +78,14 @@ export async function uploadMedia(files: File[], options: { syncProcessing?: boo
       files: files.map((file, index) => ({ filename: file.name, size: file.size, contentType: types[index].contentType })),
     });
     tickets = data.uploads;
-  } catch {
-    // Older/local deployments may not expose batch presigning yet. Multipart uses the same worker queue.
+  } catch (error) {
+    const responseStatus =
+      typeof error === "object" && error !== null && "response" in error
+        ? (error as { response?: { status?: number } }).response?.status
+        : undefined;
+    // Fall back only when the batch route is absent on an older deployment.
+    // Auth, validation, and server errors must not trigger a duplicate upload.
+    if (responseStatus !== 404 && responseStatus !== 405) throw error;
     return uploadBatchMultipart(files, Boolean(options.syncProcessing));
   }
 

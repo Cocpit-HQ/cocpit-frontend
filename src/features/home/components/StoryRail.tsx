@@ -35,19 +35,6 @@ function getStoryImage(story: StoryDetail): string | null {
     return story.image;
   }
 
-  // 3. Fallback: derive .jpg thumbnail from any Cloudinary video URL
-  const cloudinaryVideoUrl = [
-    story.thumbnail_url,
-    story.media_url,
-    story.image,
-  ].find(
-    (url) =>
-      url && url.includes("cloudinary") && url.match(/\.(mp4|mov|webm)(\?|$)/i),
-  );
-  if (cloudinaryVideoUrl) {
-    return cloudinaryVideoUrl.replace(/\.[^/.?]+(\?.*)?$/, ".jpg$1");
-  }
-
   return null;
 }
 

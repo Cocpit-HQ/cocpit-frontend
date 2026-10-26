@@ -58,12 +58,11 @@ export const UserStorySlide = ({
     // Stories are already sorted by backend (Oldest -> Newest)
     // Deduplicate stories to prevent "same key" errors
     const sortedStories = useMemo(() => {
-        if (!group?.stories) return [];
-        const stories = group.stories || [];
+        const stories = group.stories;
         const unique = new Map();
         stories.forEach(s => unique.set(s.id, s));
         return Array.from(unique.values());
-    }, [group?.stories]);
+    }, [group.stories]);
 
     // Ensure storyIndex is within bounds
     const safeStoryIndex = Math.min(storyIndex, sortedStories.length - 1);
@@ -79,29 +78,24 @@ export const UserStorySlide = ({
 
     const storyHasVideoLayer = useCallback((story?: StoryLike) => {
         if (!story) return false;
-        let meta = story.story_metadata as any;
+        let meta: unknown = story.story_metadata;
         if (typeof meta === "string") {
             try {
-                meta = JSON.parse(meta);
+                meta = JSON.parse(meta) as unknown;
             } catch {
                 meta = null;
             }
         }
-        const layers = meta?.layers;
-        return Array.isArray(layers) && layers.some((l: any) => l?.type === "video");
+        if (!meta || typeof meta !== "object") return false;
+        const layers = (meta as Record<string, unknown>).layers;
+        return Array.isArray(layers) && layers.some((layer: unknown) =>
+            !!layer && typeof layer === "object" && (layer as Record<string, unknown>).type === "video"
+        );
     }, []);
 
     const getLegacyVideoSrc = useCallback((story?: StoryLike): string => {
         if (!story || story.media_type !== "video") return "";
-
-        let url = story.media_url || story.image || "";
-        if (url && url.includes("cloudinary")) {
-            // Normalize extension to .mp4, handling query strings
-            if (!url.match(/\.mp4(\?|$)/i)) {
-                url = url.replace(/\.[^/.?]+(\?.*)?$/, '.mp4$1');
-            }
-        }
-        return url;
+        return story.media_url || story.image || "";
     }, []);
 
     const isValidMediaUrl = useCallback((url?: string | null): boolean => {
@@ -185,40 +179,45 @@ export const UserStorySlide = ({
             // Just became active
             wasActiveRef.current = true
             if (sortedStories.length > 0) {
-                setStoryIndex(0)
-                setProgress(0)
                 const firstStory = sortedStories[0];
-                setIsLiked(!!firstStory?.isLiked)
-                setIsDescriptionExpanded(false)
+                const frame = requestAnimationFrame(() => {
+                    setStoryIndex(0)
+                    setProgress(0)
+                    setIsLiked(!!firstStory?.isLiked)
+                    setIsDescriptionExpanded(false)
+                });
+                return () => cancelAnimationFrame(frame);
             }
         } else if (!isActiveUser) {
             // Became inactive
             wasActiveRef.current = false
         }
-    }, [isActiveUser]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isActiveUser, sortedStories])
 
     // Reset like/description when story changes
     useEffect(() => {
-        setIsLiked(!!currentStory?.isLiked) // Update with current story state
-        setIsDescriptionExpanded(false)
-        setMediaLoadFailed(false)
-        setIsVirtualLayerReady(false)
+        const frame = requestAnimationFrame(() => {
+            setIsLiked(!!currentStory?.isLiked) // Update with current story state
+            setIsDescriptionExpanded(false)
+            setMediaLoadFailed(false)
+            setIsVirtualLayerReady(false)
 
-        // For job stories: we handle readiness in the second useEffect
-        // but let's ensure we don't accidentally set it to false here for too long
-        if (currentStory?.story_metadata?.type === 'job') {
-            setIsImageReady(true);
-        } else if (currentStory?.media_type !== 'video' && currentStory?.media_url) {
-            const probe = new Image();
-            probe.src = currentStory.media_url;
-            if (probe.complete && probe.naturalWidth > 0) {
-                setIsImageReady(true); // Already cached — no flash
+            // For job stories: readiness is handled below; preserve cached-image readiness.
+            if (currentStory?.story_metadata?.type === 'job') {
+                setIsImageReady(true);
+            } else if (currentStory?.media_type !== 'video' && currentStory?.media_url) {
+                const probe = new Image();
+                probe.src = currentStory.media_url;
+                if (probe.complete && probe.naturalWidth > 0) {
+                    setIsImageReady(true); // Already cached — no flash
+                } else {
+                    setIsImageReady(false);
+                }
             } else {
                 setIsImageReady(false);
             }
-        } else {
-            setIsImageReady(false);
-        }
+        });
+        return () => cancelAnimationFrame(frame);
     }, [currentStory?.id]) // ONLY reset when the actual story changes
 
 
@@ -261,6 +260,7 @@ export const UserStorySlide = ({
     useEffect(() => {
         if (!currentStory || isLayeredStory) return;
 
+        const frame = requestAnimationFrame(() => {
         if (currentStory.media_type === "video") {
             if (!hasValidCurrentLegacySrc) {
                 setMediaLoadFailed(true);
@@ -280,6 +280,8 @@ export const UserStorySlide = ({
             setMediaLoadFailed(true);
             setIsImageReady(true);
         }
+        });
+        return () => cancelAnimationFrame(frame);
     }, [
         currentStory,
         isLayeredStory,
@@ -524,10 +526,12 @@ export const UserStorySlide = ({
         const visibleSlot = activeVideoSlot;
         const preloadSlot: 0 | 1 = visibleSlot === 0 ? 1 : 0;
 
-        if (
+        const needsVisibleSlotUpdate = (
             videoSlotStories[visibleSlot] !== currentStory.id ||
             videoSlotSrcs[visibleSlot] !== currentLegacySrc
-        ) {
+        );
+        if (needsVisibleSlotUpdate) {
+            const frame = requestAnimationFrame(() => {
             setVideoSlotStories((prev) => {
                 const next: [number | null, number | null] = [...prev];
                 next[visibleSlot] = currentStory.id;
@@ -543,6 +547,8 @@ export const UserStorySlide = ({
                 next[visibleSlot] = false;
                 return next;
             });
+            });
+            return () => cancelAnimationFrame(frame);
         }
 
         if (nextIsLegacyVideo && nextStory && nextLegacySrc) {
@@ -550,6 +556,7 @@ export const UserStorySlide = ({
                 videoSlotStories[preloadSlot] !== nextStory.id ||
                 videoSlotSrcs[preloadSlot] !== nextLegacySrc
             ) {
+                const frame = requestAnimationFrame(() => {
                 setVideoSlotStories((prev) => {
                     const next: [number | null, number | null] = [...prev];
                     next[preloadSlot] = nextStory.id;
@@ -565,6 +572,8 @@ export const UserStorySlide = ({
                     next[preloadSlot] = false;
                     return next;
                 });
+                });
+                return () => cancelAnimationFrame(frame);
             }
         }
     }, [
@@ -674,7 +683,8 @@ export const UserStorySlide = ({
     // Trigger next story when progress reaches 100
     useEffect(() => {
         if (progress >= 100) {
-            handleAutoNext();
+            const timer = window.setTimeout(handleAutoNext, 0);
+            return () => window.clearTimeout(timer);
         }
     }, [progress, handleAutoNext]);
 
@@ -1070,7 +1080,7 @@ export const UserStorySlide = ({
                                 return (
                                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-auto p-8">
                                         <div style={scaleStyle} className={metadata?.is_baked ? "opacity-0" : ""}>
-                                            <JobStoryCard metadata={metadata as any} onAction={onClose} />
+                                            <JobStoryCard metadata={metadata as unknown as React.ComponentProps<typeof JobStoryCard>["metadata"]} onAction={onClose} />
                                         </div>
                                     </div>
                                 );

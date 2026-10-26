@@ -16,10 +16,40 @@ import { useUIStore } from '@/store/ui.store';
 
 import { formatMentionsForBackend, parseMentionsForFrontend } from "@/lib/mentions";
 import { uploadMedia } from '@/services/api/upload';
+import type { UploadedAsset } from '@/services/api/upload';
+import type { UserMention } from '@/services/api/users';
+import type { CreatePostRequest } from '@/services/api/feed';
+import type { UpdatePostRequest } from '@/services/api/posts';
 import { useQueryClient } from '@tanstack/react-query';
 const USER_CATEGORIES: CategoryType[] = ['Professional', 'Achievement'];
 const COMPANY_CATEGORIES: CategoryType[] = ['Professional', 'Update', 'Hiring', 'Milestone', 'Insight'];
 const INSTITUTION_CATEGORIES: CategoryType[] = ['Professional', 'Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
+type SharedPostAuthor = {
+  name?: string; full_name?: string; firstName?: string; lastName?: string;
+  image?: string; avatar?: string; avatar_url?: string; profile_picture?: string; photo?: string;
+  title?: string; role?: string; designation?: string; headline?: string;
+};
+type SharedPostDraft = Partial<Post> & {
+  post_id?: string; user?: SharedPostAuthor; author?: string | SharedPostAuthor;
+  created_by?: SharedPostAuthor; posted_by?: SharedPostAuthor; userName?: string;
+  authorName?: string; name?: string; authorAvatar?: string; authorImg?: string;
+  image?: string; authorHeadline?: string | null; description?: string; text?: string;
+};
+type ArticleDraft = { id?: string; title: string; content?: string; coverImage?: { url: string; file: null } | null; subtitle?: string };
+type ExtendedCreatePostRequest = CreatePostRequest & {
+  media_metadata?: Array<{ width?: number; height?: number }>;
+  article_cover_image?: string;
+  article_title?: string;
+  article_subtitle?: string;
+  poll_question?: string;
+};
+type ExtendedUpdatePostRequest = UpdatePostRequest & {
+  post_type?: string;
+  media_metadata?: Array<{ width?: number; height?: number }>;
+  poll_question?: string;
+  poll_options?: string[];
+  poll_duration?: string;
+};
 
 export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: boolean }) => {
   const router = useRouter();
@@ -48,7 +78,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [postCategory, setPostCategory] = useState<CategoryType>('Professional');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
-  const [articleData, setArticleData] = useState<any>(null);
+  const [articleData, setArticleData] = useState<ArticleDraft | null>(null);
   const [achievementImageId, setAchievementImageId] = useState<number | undefined>(undefined);
   const [achievementTitle, setAchievementTitle] = useState<string | undefined>(undefined);
 
@@ -62,14 +92,14 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [isBroadcast, setIsBroadcast] = useState(false);
   const [postAsCompanyId, setPostAsCompanyId] = useState<string | null>(propCompanyId || (activeProfile?.type === 'COMPANY' ? activeProfile.id : null));
   const [inlineFiles, setInlineFiles] = useState<{ id: string; file: File }[]>([]);
-  const [inlineMentions, setInlineMentions] = useState<any[]>([]);
+  const [inlineMentions, setInlineMentions] = useState<UserMention[]>([]);
 
   // Edit Mode state
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditingMedia, setIsEditingMedia] = useState(false);
   const [originalPost, setOriginalPost] = useState<Post | null>(null);
-  const [sharedPost, setSharedPost] = useState<any>(initialSharedPost || null);
+  const [sharedPost, setSharedPost] = useState<SharedPostDraft | null>(initialSharedPost || null);
 
   // Context Switch Warning state
   const [showContextWarning, setShowContextWarning] = useState(false);
@@ -77,7 +107,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
   const isCompanyPost = !!postAsCompanyId;
   const currentPoster = isCompanyPost
-    ? (userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId || (c as any).id === postAsCompanyId) || (props.companyName ? {
+    ? (userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId || ('id' in c && c.id === postAsCompanyId)) || (props.companyName ? {
         company_id: postAsCompanyId,
         org_id: postAsCompanyId,
         id: postAsCompanyId,
@@ -88,7 +118,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
   const getAllowedCategories = useCallback((): CategoryType[] => {
     if (!isCompanyPost) return USER_CATEGORIES;
-    if ((currentPoster as any)?.entity_type === 'INSTITUTION') return INSTITUTION_CATEGORIES;
+    if (currentPoster && 'entity_type' in currentPoster && currentPoster.entity_type === 'INSTITUTION') return INSTITUTION_CATEGORIES;
     return COMPANY_CATEGORIES;
   }, [isCompanyPost, currentPoster]);
 
@@ -256,7 +286,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             setPostType('text');
           }
 
-          setPostCategory(post.category as any || 'Professional');
+          setPostCategory((post.category as CategoryType) || 'Professional');
           setVisibility(post.visibility || 'public');
 
           if (!isArticlePost && (type === 'text' || type === 'photo' || type === 'video')) {
@@ -269,7 +299,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             post.location
               ? typeof post.location === 'object' && post.location !== null
                 ? post.location
-                : ({ id: 0, name: post.location, latitude: '', longitude: '' } as any)
+                : ({ id: 0, name: post.location, latitude: '', longitude: '' } satisfies LocationSuggestion)
               : null
           );
 
@@ -335,7 +365,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               text: o.option_text
             })));
           }
-          if (post.shared_post) setSharedPost(post.shared_post);
+          if (post.shared_post) setSharedPost(post.shared_post as SharedPostDraft);
         })
         .catch((error) => {
           console.error("Failed to load post for editing:", error);
@@ -345,7 +375,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     } else if (isOpen && sharedPostId && !initialSharedPost) {
       postApi.getById(sharedPostId).then(post => {
         setSharedPost(post);
-        setPostCategory(post.category as any || 'Professional');
+        setPostCategory((post.category as CategoryType) || 'Professional');
         setVisibility(post.visibility || 'public');
       }).catch((error) => {
         console.error("Failed to load shared post:", error);
@@ -357,7 +387,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const handlePost = async (
     inlineFilesOrTagUserIds?: File[] | string[],
     tagUserIdsOrOverrideContent?: string[] | string,
-    inlineMentionsParam?: any[],
+    inlineMentionsParam?: UserMention[],
     explicitOverrideContent?: string
   ) => {
     if (isSubmitting) return;
@@ -450,46 +480,43 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       const activeMentions = (inlineMentionsParam && inlineMentionsParam.length > 0) ? inlineMentionsParam : inlineMentions;
       finalContent = formatMentionsForBackend(finalContent, activeMentions);
 
-      let actualInlineFiles: File[] = [];
-      if (postType === 'article' || articleData) {
-        const blobUrls = Array.from(finalContent.matchAll(/src="(blob:[^"]+)"/g)).map(m => m[1]);
-        blobUrls.forEach(url => {
-          const match = inlineFiles.find(f => f.id === url);
-          if (match) actualInlineFiles.push(match.file);
-        });
-      }
+      const actualInlineFiles: File[] = (postType === 'article' || articleData)
+        ? Array.from(finalContent.matchAll(/src="(blob:[^"]+)"/g))
+          .map(([, url]) => inlineFiles.find((file) => file.id === url)?.file)
+          .filter((file): file is File => file instanceof File)
+        : [];
 
       const allowedCategories = getAllowedCategories();
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
 
-      const payload: any = {
+      const payload: ExtendedCreatePostRequest = {
         title: postType === 'poll' ? poll.pollQuestion : (postType === 'article' ? articleTitle.trim() : (articleData ? articleData.title : (safeCategory === 'Achievement' && achievementTitle ? achievementTitle : ''))),
         content: finalContent,
         category: safeCategory,
         visibility: visibility,
-        post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
+        post_type: (postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)) as CreatePostRequest['post_type'],
         companyId: isCompanyPost ? postAsCompanyId || undefined : undefined,
         ...(isCompanyPost && isBroadcast ? { is_broadcast: true } : {}),
-        shared_post_id: sharedPost ? (sharedPost.id || sharedPost._id || (sharedPost as any).post_id) : (sharedPostId || initialSharedPost?.id || initialSharedPost?._id || (initialSharedPost as any)?.post_id),
+        shared_post_id: sharedPost?.id || sharedPost?.post_id || sharedPostId || initialSharedPost?.id || initialSharedPost?._id,
         shared_job_id: sharedJobId,
         location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
         achievement_image_id: achievementImageId
       };
 
       if (media.uploadedImages && media.uploadedImages.length > 0) {
-        payload.media_metadata = media.uploadedImages.map((img: any) => ({
-          width: img.naturalWidth || img.width || undefined,
-          height: img.naturalHeight || img.height || undefined
+        payload.media_metadata = media.uploadedImages.map((img) => ({
+          width: img.naturalWidth || undefined,
+          height: img.naturalHeight || undefined
         }));
       } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
-        payload.media_metadata = media.uploadedVideos.map((vid: any) => ({
-          width: vid.naturalWidth || vid.width || undefined,
-          height: vid.naturalHeight || vid.height || undefined
-        })).filter((meta: any) => meta.width && meta.height);
+        payload.media_metadata = media.uploadedVideos.map((vid) => ({
+          width: vid.naturalWidth || undefined,
+          height: vid.naturalHeight || undefined
+        })).filter((meta) => meta.width && meta.height);
       }
 
       if (articleData) {
-        payload.article_cover_image = articleData.coverImage;
+        payload.article_cover_image = articleData.coverImage?.url;
         payload.article_title = articleData.title;
         payload.article_subtitle = articleData.subtitle;
       }
@@ -526,16 +553,16 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       if (editPostId) {
         try {
-          // 1. Identify new files that need to be uploaded to Cloudinary
+          // 1. Identify new files that need to be uploaded to R2 storage
           const newImageFiles = media.uploadedImages.filter(img => img.file).map(img => img.file as File);
           const newVideoFiles = media.uploadedVideos.filter(v => v.file).map(v => v.file as File);
 
           // 2. Upload any new files
-          let uploadedImageUrls: any[] = [];
+          let uploadedImageUrls: UploadedAsset[] = [];
           if (newImageFiles.length > 0) {
             uploadedImageUrls = await uploadMedia(newImageFiles);
           }
-          let uploadedVideoUrls: any[] = [];
+          let uploadedVideoUrls: UploadedAsset[] = [];
           if (newVideoFiles.length > 0) {
             uploadedVideoUrls = await uploadMedia(newVideoFiles);
           }
@@ -547,7 +574,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             media_urls = media.uploadedImages.map(img => {
               if (img.file) {
                 const item = uploadedImageUrls[uploadedIdx++];
-                return typeof item === 'object' && item !== null ? (item as any).url : item;
+                return item.url;
               }
               return img.url;
             });
@@ -555,7 +582,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             media_urls = media.uploadedVideos.map(v => {
               if (v.file) {
                 const item = uploadedVideoUrls[0];
-                return typeof item === 'object' && item !== null ? (item as any).url : item;
+                return item.url;
               }
               return v.url;
             });
@@ -564,7 +591,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               const coverImg = media.uploadedImages[0];
               if (coverImg.file) {
                 const item = uploadedImageUrls[0];
-                const resolvedUrl = typeof item === 'object' && item !== null ? (item as any).url : item;
+                const resolvedUrl = item.url;
                 if (resolvedUrl) media_urls = [resolvedUrl];
               } else if (coverImg.url) {
                 media_urls = [coverImg.url];
@@ -575,34 +602,34 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           }
 
 
-          const updatePayload: any = {
+          const updatePayload: ExtendedUpdatePostRequest = {
             content: finalContent,
             category: postCategory,
             visibility,
             location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
-            post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)
+              post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)
           };
           if (postType === 'article') updatePayload.title = articleTitle.trim();
           if (postType === 'poll') updatePayload.title = poll.pollQuestion;
           if (media_urls !== undefined) {
             updatePayload.media_urls = media_urls;
             if (media.uploadedImages && media.uploadedImages.length > 0) {
-              updatePayload.media_metadata = media.uploadedImages.map((img: any) => ({
-                width: img.naturalWidth || img.width || undefined,
-                height: img.naturalHeight || img.height || undefined
+              updatePayload.media_metadata = media.uploadedImages.map((img) => ({
+                width: img.naturalWidth || undefined,
+                height: img.naturalHeight || undefined
               }));
             } else if (media.uploadedVideos && media.uploadedVideos.length > 0) {
-              updatePayload.media_metadata = media.uploadedVideos.map((vid: any) => ({
-                width: vid.naturalWidth || vid.width || undefined,
-                height: vid.naturalHeight || vid.height || undefined
-              })).filter((meta: any) => meta.width && meta.height);
+              updatePayload.media_metadata = media.uploadedVideos.map((vid) => ({
+                width: vid.naturalWidth || undefined,
+                height: vid.naturalHeight || undefined
+              })).filter((meta) => meta.width && meta.height);
             }
           }
 
           await postApi.update(editPostId, updatePayload, combinedInlineFiles);
 
           // Fetch fresh backend post so we get persisted media URLs and complete updated entity
-          let freshMappedPost: any = null;
+          let freshMappedPost: Post | null = null;
           try {
             freshMappedPost = await postApi.getById(editPostId);
           } catch (fetchErr) {
@@ -612,10 +639,13 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           const updatedPostObj = freshMappedPost || {
             ...originalPost,
             ...updatePayload,
-            category: postCategory,
+            category: postCategory as Post['category'],
             type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
             post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
-            imageDimensions: updatePayload.media_metadata || undefined
+            imageDimensions: updatePayload.media_metadata
+              ?.filter((item): item is { width: number; height: number } =>
+                typeof item.width === 'number' && typeof item.height === 'number'
+              )
           };
 
           // Guarantee immediate optimistic update of images order using local state
@@ -632,7 +662,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           }
 
           if (onUpdate) {
-            onUpdate(updatedPostObj);
+            onUpdate(updatedPostObj as Partial<Post>);
           }
 
           // Emit global event for active pages (e.g. single post detail, profile)
@@ -688,9 +718,9 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       resetForm();
       onClose();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Failed to process post";
-      console.error("Post creation failed:", errorMessage, err.response?.data);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to process post";
+      console.error("Post creation failed:", errorMessage, err);
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
