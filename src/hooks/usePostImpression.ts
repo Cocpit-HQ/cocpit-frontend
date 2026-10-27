@@ -6,9 +6,9 @@ import api from '@/lib/axios';
  * @param postId The ID of the post to track
  * @param threshold Visibility threshold (default 0.6 for 60%)
  */
-export const usePostImpression = (postId: string, threshold = 0.6) => {
+export const usePostImpression = <T extends HTMLElement = HTMLElement>(postId: string, threshold = 0.6) => {
     const observerRef = useRef<IntersectionObserver | null>(null);
-    const elementRef = useRef<HTMLElement | null>(null);
+    const elementRef = useRef<T | null>(null);
     const hasTracked = useRef(false);
 
     useEffect(() => {
@@ -23,7 +23,7 @@ export const usePostImpression = (postId: string, threshold = 0.6) => {
                 hasTracked.current = true;
 
                 await api.post(`/dashboard/post/${postId}/impression`);
-            } catch (err) {
+            } catch {
                 // Silent fail for impressions
             }
         };
@@ -42,15 +42,16 @@ export const usePostImpression = (postId: string, threshold = 0.6) => {
             { threshold: [0, threshold] }
         );
 
-        if (elementRef.current) {
-            observer.observe(elementRef.current);
+        const currentElement = elementRef.current;
+        if (currentElement) {
+            observer.observe(currentElement);
         }
 
         observerRef.current = observer;
 
         return () => {
-            if (observerRef.current && elementRef.current) {
-                observerRef.current.unobserve(elementRef.current);
+            if (observerRef.current && currentElement) {
+                observerRef.current.unobserve(currentElement);
             }
         };
     }, [postId, threshold]);

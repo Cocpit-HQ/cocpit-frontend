@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Post, Comment } from "@/types/entities";
@@ -36,6 +36,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   const imageProcessingStatuses: Array<"processing" | "ready" | "failed" | undefined> = [];
   const imageDimensions: Array<{ width: number; height: number } | null> = [];
   let videoSrc: string | undefined = undefined;
+  let videoHlsSrc: string | undefined = undefined;
+  let videoHdrSrc: string | undefined = undefined;
+  let videoPosterSrc: string | undefined = undefined;
+  let videoProcessingStatus: "processing" | "ready" | "failed" | undefined;
+  let videoHdrProcessingStatus: "processing" | "ready" | "failed" | "not_applicable" | undefined;
   //const primaryMediaAspectRatio = backendPost.media?.[0]?.aspect_ratio || undefined;
 
   // Ensure media is an array before iterating
@@ -59,7 +64,12 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       if (!mediaWidth && item.width) mediaWidth = item.width;
       if (!mediaHeight && item.height) mediaHeight = item.height;
     } else if (mediaType === "video") {
-      videoSrc = item.url;
+      videoSrc = item.master_url || item.url;
+      videoHlsSrc = item.stream_hls_url || undefined;
+      videoHdrSrc = item.hdr_manifest_url || undefined;
+      videoPosterSrc = item.stream_thumbnail_url || undefined;
+      videoProcessingStatus = item.processing_status;
+      videoHdrProcessingStatus = item.hdr_processing_status || undefined;
       if (!mediaWidth && item.width) mediaWidth = item.width;
       if (!mediaHeight && item.height) mediaHeight = item.height;
     }
@@ -71,12 +81,6 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   }
 
   // Calculate timeAgo
-  const timeAgo = dayjs(backendPost.created_at).fromNow(true); // "true" removes "ago" suffix if desired, but UI usually has "ago" appended or not.
-  // FeedPost says "{timeAgo} ago", so we need just "2h" or "5m".
-  // dayjs .fromNow(true) gives "2 hours", "a few seconds".
-  // Let's create a custom formatter or just use .fromNow() and strip suffix?
-  // Existing mock has "2h", "5h", "1d".
-  // Let's approximate.
 
   const now = dayjs();
   const created = dayjs(backendPost.created_at);
@@ -381,6 +385,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     mediaWidth: mediaWidth,
     mediaHeight: mediaHeight,
     videoSrc: videoSrc,
+    videoHlsSrc,
+    videoHdrSrc,
+    videoPosterSrc,
+    videoProcessingStatus,
+    videoHdrProcessingStatus,
     //aspectRatio: primaryMediaAspectRatio,
     // Backend doesn't return likes/comments/shares counts in the list view provided
     likes: backendPost.like_count,

@@ -17,6 +17,36 @@ interface OrganizationPostsProps {
     company?: Company;
 }
 
+interface OrganizationMediaRecord {
+    media_type?: string;
+    url: string;
+    master_url?: string | null;
+    stream_hls_url?: string | null;
+    hdr_manifest_url?: string | null;
+    stream_thumbnail_url?: string | null;
+    processing_status?: Post['videoProcessingStatus'];
+    hdr_processing_status?: Post['videoHdrProcessingStatus'];
+}
+
+interface OrganizationPostRecord {
+    post_id: string;
+    author_id?: string | null;
+    author_name?: string | null;
+    author_avatar?: string | null;
+    author_slug?: string;
+    is_company_post?: boolean;
+    created_at?: string | null;
+    content?: string | null;
+    media?: OrganizationMediaRecord[];
+    like_count?: number;
+    is_liked?: boolean;
+    comment_count?: number;
+    category_name?: string | null;
+    visibility?: Post['visibility'];
+    poll?: Post['poll'];
+    shared_post?: OrganizationPostRecord | null;
+}
+
 export function OrganizationPosts({ companyId, company }: OrganizationPostsProps) {
     const { canDelete, canEdit } = useCompanyPermissions(company);
     const queryClient = useQueryClient();
@@ -27,7 +57,7 @@ export function OrganizationPosts({ companyId, company }: OrganizationPostsProps
             await api.delete(`/post/${postId}`);
             toast.success("Post deleted");
             queryClient.invalidateQueries({ queryKey: ['company-posts', companyId] });
-        } catch (error) {
+        } catch {
             toast.error("Failed to delete post");
         }
     };
@@ -69,7 +99,7 @@ export function OrganizationPosts({ companyId, company }: OrganizationPostsProps
                 window.scrollTo(0, parseInt(savedPosition, 10));
             }, 50); // 50ms is usually enough for React to commit the list
         }
-    }, [companyId, posts.length]); // Re-run if posts load from cache
+    }, [companyId, posts.length, scrollKey]); // Re-run if posts load from cache
 
     // Save scroll on unmount (or navigate away)
     useEffect(() => {
@@ -150,25 +180,33 @@ export function OrganizationPosts({ companyId, company }: OrganizationPostsProps
 }
 
 // Helper to map backend post to frontend Post entity
-function mapBackendPostToPost(p: any): Post {
+function mapBackendPostToPost(p: OrganizationPostRecord): Post {
+    const mediaItems = p.media || [];
+    const videoMedia = mediaItems.find((item) => item.media_type === 'video');
+    const imageMedia = mediaItems.filter((item) => item.media_type === 'image');
     return {
-        id: p.post_id,
-        authorId: p.author_id,
-        author: p.author_name,
-        authorAvatar: p.author_avatar,
+        id: p.post_id || '',
+        authorId: p.author_id || '',
+        author: p.author_name || 'Unknown',
+        authorAvatar: p.author_avatar || undefined,
         authorSlug: p.author_slug,
         isCompanyPost: p.is_company_post,
-        timeAgo: formatTimeAgo(p.created_at),
-        content: p.content,
-        imageSrc: p.media && p.media.length > 0 ? p.media[0].url : undefined,
-        images: p.media ? p.media.map((m: any) => m.url) : [],
-        videoSrc: p.media && p.media.some((m: any) => m.media_type === 'video') ? p.media.find((m: any) => m.media_type === 'video').url : undefined,
+        timeAgo: formatTimeAgo(p.created_at || new Date().toISOString()),
+        content: p.content || '',
+        imageSrc: imageMedia[0]?.url,
+        images: imageMedia.map((item) => item.url),
+        videoSrc: videoMedia?.master_url || videoMedia?.url,
+        videoHlsSrc: videoMedia?.stream_hls_url || undefined,
+        videoHdrSrc: videoMedia?.hdr_manifest_url || undefined,
+        videoPosterSrc: videoMedia?.stream_thumbnail_url || undefined,
+        videoProcessingStatus: videoMedia?.processing_status,
+        videoHdrProcessingStatus: videoMedia?.hdr_processing_status || undefined,
         likes: p.like_count || 0,
         isLiked: p.is_liked,
         comments: (p.comment_count || 0).toString(),
         shares: '0', // Not in backend response yet
         commentData: [],
-        category: p.category_name,
+        category: isPostCategory(p.category_name) ? p.category_name : undefined,
         visibility: p.visibility,
         poll: p.poll ? {
             poll_id: p.poll.poll_id,
@@ -181,4 +219,8 @@ function mapBackendPostToPost(p: any): Post {
         shared_post: p.shared_post ? mapBackendPostToPost(p.shared_post) : null // Recursive for shared post? 
         // Note: Shared post structure from backend might differ slightly, but assuming similar enough or flat
     };
+}
+
+function isPostCategory(value: string | null | undefined): value is NonNullable<Post['category']> {
+    return ['Personal', 'Professional', 'Achievement', 'Update', 'Hiring', 'Milestone', 'Insight', 'Article'].includes(value || '');
 }

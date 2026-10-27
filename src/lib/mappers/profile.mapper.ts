@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Post } from "@/types/entities";
@@ -34,6 +35,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
   const images: string[] = [];
   const imageDimensions: Array<{ width: number; height: number } | null> = [];
   let videoSrc: string | undefined = undefined;
+  let videoHlsSrc: string | undefined;
+  let videoHdrSrc: string | undefined;
+  let videoPosterSrc: string | undefined;
+  let videoProcessingStatus: Post['videoProcessingStatus'];
+  let videoHdrProcessingStatus: Post['videoHdrProcessingStatus'];
   let mediaWidth: number | undefined;
   let mediaHeight: number | undefined;
 
@@ -47,7 +53,12 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
       item.url?.toLowerCase()?.match(/\.(mp4|webm|mov|m4v)(\?|#|$)/);
 
     if (isActuallyVideo) {
-      videoSrc = item.url;
+      videoSrc = item.master_url || item.url;
+      videoHlsSrc = item.stream_hls_url || undefined;
+      videoHdrSrc = item.hdr_manifest_url || undefined;
+      videoPosterSrc = item.stream_thumbnail_url || undefined;
+      videoProcessingStatus = item.processing_status;
+      videoHdrProcessingStatus = item.hdr_processing_status || undefined;
       if (!mediaWidth && item.width) mediaWidth = item.width;
       if (!mediaHeight && item.height) mediaHeight = item.height;
     } else if (
@@ -158,6 +169,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     mediaWidth,
     mediaHeight,
     videoSrc: videoSrc,
+    videoHlsSrc,
+    videoHdrSrc,
+    videoPosterSrc,
+    videoProcessingStatus,
+    videoHdrProcessingStatus,
     likes: backendPost.like_count || 0,
     isLiked: backendPost.is_liked,
     isReposted: backendPost.is_reposted,

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from 'react';
 import { PostCarousel } from './PostCarousel';
 import { Icon } from '@/components/icons';
@@ -17,6 +19,11 @@ interface PostMediaProps {
   mediaWidth?: number;
   mediaHeight?: number;
   videoSrc?: string;
+  videoHlsSrc?: string;
+  videoHdrSrc?: string;
+  videoPosterSrc?: string;
+  videoProcessingStatus?: 'processing' | 'ready' | 'failed';
+  videoHdrProcessingStatus?: 'processing' | 'ready' | 'failed' | 'not_applicable';
   videoRef: React.RefObject<HTMLVideoElement | null>;
   onLoad: (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => void;
   priority?: boolean;
@@ -38,7 +45,7 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], avifImages = [], imageProcessingStatuses = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoRef, onLoad, priority, onClick, tags = [],
+  imageSrc, images = [], avifImages = [], imageProcessingStatuses = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoHlsSrc, videoHdrSrc, videoPosterSrc, videoProcessingStatus, videoHdrProcessingStatus, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
   hideOverlayLikeBar = false, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
@@ -63,8 +70,32 @@ export const PostMedia = ({
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoFallback, setVideoFallback] = useState<{ from: string; to: string } | null>(null);
+  const [failedVideoSrc, setFailedVideoSrc] = useState<string | null>(null);
   const isDraggingRef = useRef(false);
   const isMobile = useIsMobile();
+
+  const preferredVideoSrc = React.useMemo(() => {
+    if (videoSrc?.startsWith('blob:')) return videoSrc;
+    if (videoProcessingStatus !== 'ready') return videoSrc || '';
+    if (typeof window === 'undefined' || !videoHdrSrc || videoHdrProcessingStatus !== 'ready') {
+      return videoHlsSrc || videoSrc || '';
+    }
+    const video = document.createElement('video');
+    const supportsHdr = window.matchMedia('(dynamic-range: high)').matches && Boolean(
+      video.canPlayType('application/vnd.apple.mpegurl; codecs="hvc1.2.4.L153.B0"') ||
+      video.canPlayType('video/mp4; codecs="hvc1.2.4.L153.B0"')
+    );
+    return (supportsHdr ? videoHdrSrc : videoHlsSrc) || videoSrc || '';
+  }, [videoHdrSrc, videoHdrProcessingStatus, videoHlsSrc, videoProcessingStatus, videoSrc]);
+  const activeVideoSrc = videoFallback?.from === preferredVideoSrc ? videoFallback.to : preferredVideoSrc;
+  const handleVideoError = () => {
+    const nextSrc = activeVideoSrc === videoHdrSrc && videoHlsSrc
+      ? videoHlsSrc
+      : activeVideoSrc !== videoSrc ? videoSrc : undefined;
+    if (nextSrc) setVideoFallback({ from: preferredVideoSrc, to: nextSrc });
+    else setFailedVideoSrc(activeVideoSrc);
+  };
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -88,6 +119,7 @@ export const PostMedia = ({
   }, [videoRef, videoSrc]);
 
   const isVideoOverlayMode = videoOverlay && !!videoSrc;
+  const isVideoProcessingPlaceholder = videoProcessingStatus === 'processing' && !videoSrc?.startsWith('blob:');
 
   if (validImages.length === 0 && !videoSrc) return null;
 
@@ -188,19 +220,28 @@ export const PostMedia = ({
           }}
         >
           {videoSrc ? (
+            isVideoProcessingPlaceholder ? (
+              <div className="relative flex min-h-[240px] w-full items-center justify-center bg-black text-sm text-white" role="status">
+                {videoPosterSrc && <div aria-hidden="true" className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url(${JSON.stringify(videoPosterSrc)})` }} />}
+                <span className="relative rounded bg-black/70 px-3 py-2">Video processing…</span>
+              </div>
+            ) : (
             isVideoOverlayMode ? (
               /* Video overlay mode: no native controls, custom overlays */
               <>
                 <video
                   ref={videoRef}
-                  src={videoSrc}
+                  src={activeVideoSrc || videoSrc}
                   muted={isMuted}
                   loop
                   playsInline
+                  poster={videoPosterSrc}
                   onLoadedMetadata={handleVideoLoad}
                   onTimeUpdate={handleTimeUpdate}
+                  onError={handleVideoError}
                   className="w-full h-full object-cover max-h-[589px] rounded-[8px]"
                 />
+                {failedVideoSrc === activeVideoSrc && <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white" role="status">Video format is not supported on this device.</div>}
 
                 {/* ── Top Header Overlay ── */}
                 {overlayHeader && (
@@ -266,18 +307,21 @@ export const PostMedia = ({
               >
                 <video
                   ref={videoRef}
-                  src={videoSrc}
+                  src={activeVideoSrc || videoSrc}
                   muted={isMuted}
                   loop
                   playsInline
-                  onClick={(e) => {
+                  poster={videoPosterSrc}
+                  onClick={(e: React.MouseEvent) => {
                     if (!isFullContent) return;
                     handleTogglePlay(e);
                   }}
                   onLoadedMetadata={handleVideoLoad}
                   onTimeUpdate={handleTimeUpdate}
+                  onError={handleVideoError}
                   className="w-full h-full object-contain object-left max-h-[589px] rounded-[8px] cursor-pointer"
                 />
+                {failedVideoSrc === activeVideoSrc && <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white" role="status">Video format is not supported on this device.</div>}
                 
                 {/* Center Play/Pause Button on Hover (Only on post details page) */}
                 {isFullContent && (
@@ -344,6 +388,7 @@ export const PostMedia = ({
                   </div>
                 </div>
               </div>
+            )
             )
           ) : imageProcessingStatuses[0] === "processing" || failedImageSrc === contentImgSrc ? (
             <div className="flex w-full min-h-[240px] items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">

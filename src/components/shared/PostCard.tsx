@@ -8,10 +8,11 @@ import DOMPurify from 'dompurify';
 import { usePostImpression } from '@/hooks/usePostImpression';
 import { Briefcase, AlertTriangle } from 'lucide-react';
 import { AppealModal } from './AppealModal';
+import { PostVisibility } from '@/types/entities';
 
 
 interface PostCardProps {
-    post: any; // Using any to handle both Entity Post and Backend Saved Post
+    post: PostCardData;
     href?: string;
     onDelete?: (id: string) => void;
     isOwnPost?: boolean;
@@ -19,8 +20,44 @@ interface PostCardProps {
     companyId?: string;
 }
 
+interface PostCardMedia {
+    media_type?: string;
+    url?: string;
+    master_url?: string;
+    stream_hls_url?: string;
+    stream_thumbnail_url?: string;
+    processing_status?: 'processing' | 'ready' | 'failed';
+}
+
+interface PostCardData {
+    post_id?: string;
+    id?: string;
+    title?: string;
+    content?: string;
+    poll?: unknown;
+    image_url?: string;
+    imageSrc?: string;
+    media?: PostCardMedia[];
+    images?: Array<string | { url?: string }>;
+    video_url?: string;
+    videoSrc?: string;
+    videoHlsSrc?: string;
+    videoPosterSrc?: string;
+    videoProcessingStatus?: 'processing' | 'ready' | 'failed';
+    shared_post?: PostCardData;
+    shared_entity_type?: string;
+    job_id?: string;
+    isJob?: boolean;
+    company_name?: string;
+    jobTitle?: string;
+    jobCompany?: string;
+    is_unlisted?: boolean;
+    author_name?: string;
+    visibility?: PostVisibility;
+}
+
 export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, companyId }: PostCardProps) {
-    const impressionRef = usePostImpression(post.post_id || post.id);
+    const impressionRef = usePostImpression<HTMLDivElement>(post.post_id || post.id || '');
     const [isAppealModalOpen, setIsAppealModalOpen] = useState(false);
     // Support both backend (post_id, image_url, media[]) and frontend (id, imageSrc, images[])
     const id = post.post_id || post.id;
@@ -32,10 +69,15 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
         post.imageSrc ||
         (post.media && post.media.find((item: { media_type?: string; url?: string }) => item.media_type === 'image')?.url) ||
         (post.images && post.images.length > 0 ? (typeof post.images[0] === 'string' ? post.images[0] : post.images[0].url) : null);
+    const videoMedia = post.media?.find((item: { media_type?: string }) => item.media_type === 'video');
     const video = post.video_url ||
         post.videoSrc ||
-        (post.media && post.media.find((item: { media_type?: string; url?: string }) => item.media_type === 'video')?.url) ||
+        videoMedia?.master_url || videoMedia?.url ||
         null;
+    const videoHls = post.videoHlsSrc || videoMedia?.stream_hls_url;
+    const videoPoster = post.videoPosterSrc || videoMedia?.stream_thumbnail_url;
+    const videoStatus = post.videoProcessingStatus || videoMedia?.processing_status;
+    const postId = id || '';
 
     // Also check shared_post
     const sharedImage = post.shared_post?.imageSrc ||
@@ -51,7 +93,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
     const sanitizedContent = typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content;
 
     return (
-        <div ref={impressionRef as any} className="relative group h-full">
+        <div ref={impressionRef} className="relative group h-full">
             {post.is_unlisted && isOwnPost && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 rounded-xl p-4 text-center">
                     <AlertTriangle className="w-10 h-10 text-red-500 mb-3" />
@@ -69,7 +111,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
                 </div>
             )}
             
-            <Link href={href || `/post/${id}`} className="block w-full h-full" onClick={(e) => post.is_unlisted && e.preventDefault()}>
+                <Link href={href || `/post/${postId}`} className="block w-full h-full" onClick={(e) => post.is_unlisted && e.preventDefault()}>
                 <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative shadow-sm group-hover:shadow-md transition-shadow">
                     {displayImage ? (
                         <img
@@ -78,13 +120,21 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                     ) : displayVideo ? (
-                        <video
-                            src={displayVideo}
-                            className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                        />
+                        videoStatus === 'processing' && !displayVideo.startsWith('blob:') ? (
+                            <div className="relative flex h-full w-full items-center justify-center bg-black text-sm text-white" role="status">
+                                {videoPoster && <div aria-hidden="true" className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url(${JSON.stringify(videoPoster)})` }} />}
+                                <span className="relative rounded bg-black/70 px-3 py-2">Video processing…</span>
+                            </div>
+                        ) : (
+                            <video
+                                src={videoStatus === 'ready' ? videoHls || displayVideo : displayVideo}
+                                poster={videoPoster}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                            />
+                        )
                     ) : isSharedJob ? (
                         <div className="w-full h-full bg-primary/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-card to-primary/5">
                             <Briefcase className="w-12 h-12 text-primary/70 mb-3" />
@@ -131,13 +181,14 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
             {!post.is_unlisted && (
                 <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                     <PostOptionsMenu
-                        postId={id.toString()}
+                        postId={postId}
                         isOwnPost={isOwnPost}
                         onDelete={onDelete}
                         className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
                         postType={post.poll ? 'poll' : (displayVideo ? 'video' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text')))}
                         visibility={post.visibility || 'public'}
                         companyId={companyId}
+                        menuAccess={menuAccess}
                     />
                 </div>
             )}
@@ -146,7 +197,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
                 <AppealModal
                     isOpen={isAppealModalOpen}
                     onOpenChange={setIsAppealModalOpen}
-                    postId={id.toString()}
+                    postId={postId}
                 />
             )}
         </div>

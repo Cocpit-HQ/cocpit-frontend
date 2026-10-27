@@ -5,13 +5,28 @@
 
 const isServer = typeof window === "undefined";
 
-// Local main API (cocpit-backend src/server.js). Keep in sync with next.config.ts.
-export const DEFAULT_INTERNAL_API_URL = process.env.INTERNAL_API_URL || (process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/api` : "http://localhost:5000/api");
+function normalizeApiUrl(rawUrl?: string): string {
+  if (!rawUrl) return "";
+  let trimmed = rawUrl.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  if (!trimmed.endsWith("/api")) {
+    trimmed = `${trimmed}/api`;
+  }
+  return trimmed;
+}
+
+const rawInternalUrl =
+  process.env.INTERNAL_API_URL ||
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  "http://localhost:5000/api";
+
+export const DEFAULT_INTERNAL_API_URL = normalizeApiUrl(rawInternalUrl);
 
 export const env = {
   // API
   API_URL: isServer 
-    ? (process.env.INTERNAL_API_URL || DEFAULT_INTERNAL_API_URL) 
+    ? (normalizeApiUrl(process.env.INTERNAL_API_URL) || DEFAULT_INTERNAL_API_URL) 
     : (process.env.NEXT_PUBLIC_API_URL || "/api"),
   API_KEY: process.env.NEXT_PUBLIC_API_KEY,
   

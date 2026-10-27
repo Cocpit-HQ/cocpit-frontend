@@ -23,27 +23,42 @@ const EXPRESS_AUTH_ROUTES = [
   "validate-password",
 ];
 
-// ── Backend URL ─────────────────────────────────────────────────────────────
-// rewrites() are evaluated at BUILD time and baked into the output, so the
-// backend address must be known when `next build` runs (Railway: set
-// INTERNAL_API_URL on the service before the first build).
-const DEFAULT_INTERNAL_API_URL = process.env.INTERNAL_API_URL || (process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/api` : "http://localhost:5000/api");
+function normalizeBackendUrl(rawUrl?: string): string {
+  if (!rawUrl) return "";
+  let trimmed = rawUrl.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  if (!trimmed.endsWith("/api")) {
+    trimmed = `${trimmed}/api`;
+  }
+  return trimmed;
+}
+
+const DEFAULT_INTERNAL_API_URL = normalizeBackendUrl(
+  process.env.INTERNAL_API_URL ||
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  "http://localhost:5000/api"
+);
 
 function resolveBackendUrl(): string {
-  const url =
+  const candidate =
     process.env.INTERNAL_API_URL ||
-    (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api` : "");
-  if (url) return url.replace(/\/+$/, "");
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    "";
+
+  const normalized = normalizeBackendUrl(candidate);
+  if (normalized) return normalized;
 
   // Fail the deploy build instead of silently proxying production traffic to localhost.
   // RAILWAY_ENVIRONMENT_NAME is set by Railway during builds; REQUIRE_INTERNAL_API_URL=true forces it elsewhere (CI).
   if (process.env.RAILWAY_ENVIRONMENT_NAME || process.env.REQUIRE_INTERNAL_API_URL === "true") {
     throw new Error(
       "INTERNAL_API_URL is not set. Set it to the backend URL including /api " +
-      "(Railway: http://main-api.railway.internal:8080/api) before building."
+      "(Railway: https://cocpit-backend-staging.up.railway.app/api) before building."
     );
   }
-  return DEFAULT_INTERNAL_API_URL;
+  return DEFAULT_INTERNAL_API_URL || "http://localhost:5000/api";
 }
 
 // ── Image optimiser allowlist ───────────────────────────────────────────────

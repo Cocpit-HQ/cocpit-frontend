@@ -84,6 +84,13 @@ export const postApi = {
       window.setTimeout(() => URL.revokeObjectURL(previewUrl), 5 * 60 * 1000);
       return [previewUrl];
     });
+    const localVideoPreview = files.find((file, index) => uploadRes[index]?.media_type === "video");
+    if (localVideoPreview && mappedPost.videoProcessingStatus === "processing") {
+      mappedPost.videoSrc = URL.createObjectURL(localVideoPreview);
+      window.setTimeout(() => {
+        if (mappedPost.videoSrc?.startsWith("blob:")) URL.revokeObjectURL(mappedPost.videoSrc);
+      }, 5 * 60 * 1000);
+    }
     if (localImagePreviews.length) {
       mappedPost.images = localImagePreviews;
       mappedPost.imageSrc = localImagePreviews[0];

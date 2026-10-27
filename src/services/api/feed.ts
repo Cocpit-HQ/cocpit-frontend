@@ -13,7 +13,7 @@ export interface FeedResponse {
 export interface EngineFeedItem {
   id: string;
   type: string;
-  content: any;
+  content: unknown;
   author: {
     id: string;
     name: string;
@@ -63,7 +63,7 @@ export interface TrackEventRequest {
   position: number;
   dwell_ms?: number;
   context?: 'home' | 'explore' | 'startup';
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BackendPost {
@@ -82,7 +82,7 @@ export interface BackendPost {
   is_organization_post?: boolean;
   category_name: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article' | null;
   location?: string | null;
-  tags?: any[];
+  tags?: unknown[];
   media: BackendMedia[];
   poll: BackendPoll | null;
   title?: string;
@@ -173,6 +173,12 @@ export interface BackendMedia {
   fallback_url?: string | null;
   avif_url?: string | null;
   processing_status?: "processing" | "ready" | "failed";
+  stream_uid?: string | null;
+  stream_hls_url?: string | null;
+  stream_dash_url?: string | null;
+  stream_thumbnail_url?: string | null;
+  hdr_manifest_url?: string | null;
+  hdr_processing_status?: "processing" | "ready" | "failed" | "not_applicable" | null;
 }
 
 export type PostMediaInput = string | {
@@ -182,6 +188,12 @@ export type PostMediaInput = string | {
   processing_status?: "processing" | "ready" | "failed";
   fallback_url?: string | null;
   avif_url?: string | null;
+  stream_uid?: string | null;
+  stream_hls_url?: string | null;
+  stream_dash_url?: string | null;
+  stream_thumbnail_url?: string | null;
+  hdr_manifest_url?: string | null;
+  hdr_processing_status?: "processing" | "ready" | "failed" | "not_applicable" | null;
   width?: number | null;
   height?: number | null;
 };

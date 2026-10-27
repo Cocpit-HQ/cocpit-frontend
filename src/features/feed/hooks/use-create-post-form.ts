@@ -313,8 +313,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
                 crop: { x: 0, y: 0 },
                 zoom: 1,
                 isExisting: true,
-                naturalWidth: dim?.width,
-                naturalHeight: dim?.height,
+                naturalWidth: dim?.width ?? undefined,
+                naturalHeight: dim?.height ?? undefined,
               };
             });
             media.setUploadedImages(initialUploaded);

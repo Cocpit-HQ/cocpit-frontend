@@ -931,6 +931,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         width?: number | null;
         height?: number | null;
         media_type?: 'image' | 'video';
+        stream_uid?: string | null;
+        stream_hls_url?: string | null;
+        stream_dash_url?: string | null;
+        stream_thumbnail_url?: string | null;
+        hdr_manifest_url?: string | null;
+        hdr_processing_status?: 'processing' | 'ready' | 'failed' | 'not_applicable' | null;
       } | null;
     }) => {
       // A media status change should update the existing card, not replace the
@@ -948,12 +954,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                 const media = Array.isArray(post.media) ? post.media : [];
                 const mediaIndex = media.findIndex((item: any) => String(item.media_id) === String(payload.mediaId));
                 if (mediaIndex < 0) return post;
+                const processingStatus = payload.processing_status || post.videoProcessingStatus || 'processing';
                 const updatedMedia = media.map((item: any, index: number) => index === mediaIndex
-                  ? { ...item, ...payload.media, processing_status: payload.processing_status }
+                  ? { ...item, ...payload.media, processing_status: payload.processing_status || item.processing_status,
+                    hdr_processing_status: payload.media?.hdr_processing_status ?? item.hdr_processing_status }
                   : item);
                 const updated = { ...post, media: updatedMedia };
                 if (payload.media?.media_type === 'video') {
-                  updated.videoSrc = payload.media.url || post.videoSrc;
+                  updated.videoHlsSrc = payload.media.stream_hls_url || post.videoHlsSrc;
+                  updated.videoHdrSrc = payload.media.hdr_manifest_url || post.videoHdrSrc;
+                  updated.videoPosterSrc = payload.media.stream_thumbnail_url || post.videoPosterSrc;
+                  updated.videoProcessingStatus = payload.processing_status || post.videoProcessingStatus;
+                  updated.videoHdrProcessingStatus = payload.media.hdr_processing_status || post.videoHdrProcessingStatus;
+                  if ((processingStatus === 'ready' || processingStatus === 'failed') && post.videoSrc?.startsWith('blob:')) {
+                    updated.videoSrc = media[mediaIndex].master_url || media[mediaIndex].url || post.videoSrc;
+                  }
                   return updated;
                 }
                 const imageIndex = media.slice(0, mediaIndex).filter((item: any) => item.media_type === 'image').length;

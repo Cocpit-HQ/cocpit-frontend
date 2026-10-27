@@ -164,6 +164,23 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
+interface AuthLoginResponse {
+  code?: string;
+  message?: string;
+  deletionDate?: string;
+  email?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: {
+    id: string;
+    full_name?: string | null;
+    email: string;
+    avatar_url?: string | null;
+    roles?: string[];
+    onboarding_complete?: boolean;
+  };
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -233,7 +250,14 @@ export const authOptions: NextAuthOptions = {
           });
           logger.debug(`${endpoint} API response status:`, res.status);
 
-          const data = await res.json();
+          const text = await res.text();
+          let data: AuthLoginResponse;
+          try {
+            data = JSON.parse(text) as AuthLoginResponse;
+          } catch {
+            logger.error(`${endpoint} returned non-JSON response (status ${res.status}):`, text.slice(0, 200));
+            throw new Error(`Authentication server returned an invalid response (${res.status}). Please try again later.`);
+          }
           // Response body contains accessToken/refreshToken — never log it.
 
           if (!res.ok) {
@@ -273,7 +297,7 @@ export const authOptions: NextAuthOptions = {
               name: data.user.full_name || data.user.email,
               email: data.user.email,
               image: data.user.avatar_url,
-              roles: data.user.roles,
+              roles: data.user.roles || [],
               accessToken: data.accessToken,
               refreshToken,
               onboarding_complete: data.user.onboarding_complete === true,

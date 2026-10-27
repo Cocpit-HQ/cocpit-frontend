@@ -28,7 +28,26 @@ export interface Experience {
   end_date: string | null;
   is_current: boolean;
   description: string | null;
-  skills?: string[] | any[];
+  skills?: Array<string | { id?: string | number; name?: string; skill_name?: string }>;
+}
+
+export interface PostMediaItem {
+  media_id?: string;
+  post_id?: string;
+  url?: string;
+  media_type?: 'image' | 'video' | string;
+  aspect_ratio?: string | null;
+  width?: number | null;
+  height?: number | null;
+  master_url?: string;
+  fallback_url?: string | null;
+  avif_url?: string | null;
+  processing_status?: "processing" | "ready" | "failed";
+  stream_uid?: string | null;
+  stream_hls_url?: string | null;
+  stream_dash_url?: string | null;
+  stream_thumbnail_url?: string | null;
+  hdr_manifest_url?: string | null;
 }
 
 /** Grouped structure returned by backend getExperiences() via groupByCompany() */
@@ -157,8 +176,13 @@ export interface Post {
   mediaWidth?: number;
   mediaHeight?: number;
   videoSrc?: string;
+  videoHlsSrc?: string;
+  videoHdrSrc?: string;
+  videoPosterSrc?: string;
+  videoProcessingStatus?: "processing" | "ready" | "failed";
+  videoHdrProcessingStatus?: "processing" | "ready" | "failed" | "not_applicable";
   aspectRatio?: string;
-  media?: any[];
+  media?: PostMediaItem[];
   likes: number;
   isLiked?: boolean;
   isReposted?: boolean;
@@ -203,7 +227,7 @@ export interface Post {
   // Broadcast fields
   is_broadcast?: boolean;
   broadcastOrgName?: string;
-  tags?: any[];
+  tags?: unknown[];
   location?: string;
 
   // Feed Engine Ranking fields

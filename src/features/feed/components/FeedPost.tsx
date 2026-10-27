@@ -81,6 +81,11 @@ export const FeedPost = (props: FeedPostProps) => {
     imageSrc: targetImageSrc,
     images: targetImages,
     videoSrc: targetVideoSrc,
+    videoHlsSrc: targetVideoHlsSrc,
+    videoHdrSrc: targetVideoHdrSrc,
+    videoPosterSrc: targetVideoPosterSrc,
+    videoProcessingStatus: targetVideoProcessingStatus,
+    videoHdrProcessingStatus: targetVideoHdrProcessingStatus,
     content: targetContent,
     timeAgo: targetTimeAgo,
     visibility: targetVisibility,
@@ -861,6 +866,11 @@ export const FeedPost = (props: FeedPostProps) => {
             {isVideoFeedCard ? (
               <PostMedia
                 videoSrc={targetVideoSrc}
+                videoHlsSrc={targetVideoHlsSrc}
+                videoHdrSrc={targetVideoHdrSrc}
+                videoPosterSrc={targetVideoPosterSrc}
+                videoProcessingStatus={targetVideoProcessingStatus}
+                videoHdrProcessingStatus={targetVideoHdrProcessingStatus}
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoRef={videoRef}
@@ -892,6 +902,11 @@ export const FeedPost = (props: FeedPostProps) => {
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoSrc={targetVideoSrc}
+                videoHlsSrc={targetVideoHlsSrc}
+                videoHdrSrc={targetVideoHdrSrc}
+                videoPosterSrc={targetVideoPosterSrc}
+                videoProcessingStatus={targetVideoProcessingStatus}
+                videoHdrProcessingStatus={targetVideoHdrProcessingStatus}
                 videoRef={videoRef}
                 onLoad={handleMediaLoad}
                 tags={targetTags}
@@ -971,6 +986,11 @@ export const FeedPost = (props: FeedPostProps) => {
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoSrc={targetVideoSrc}
+                videoHlsSrc={targetVideoHlsSrc}
+                videoHdrSrc={targetVideoHdrSrc}
+                videoPosterSrc={targetVideoPosterSrc}
+                videoProcessingStatus={targetVideoProcessingStatus}
+                videoHdrProcessingStatus={targetVideoHdrProcessingStatus}
                 videoRef={videoRef}
                 onLoad={handleMediaLoad}
                 tags={targetTags}

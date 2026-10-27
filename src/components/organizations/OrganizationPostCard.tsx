@@ -1,12 +1,9 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Post } from '@/types/entities';
-import { formatTimeAgo } from '@/lib/timeFormatter';
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
+import { ThumbsUp, MessageCircle, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -23,7 +20,7 @@ interface OrganizationPostCardProps {
     isOwner?: boolean;
 }
 
-export function OrganizationPostCard({ post, onLike, onDelete, onEdit, isOwner }: OrganizationPostCardProps) {
+export function OrganizationPostCard({ post, onDelete, onEdit, isOwner }: OrganizationPostCardProps) {
     const firstImage = post.images?.[0];
     const hasMedia = !!firstImage;
     const mediaUrl = firstImage || post.videoSrc || null;
@@ -36,7 +33,7 @@ export function OrganizationPostCard({ post, onLike, onDelete, onEdit, isOwner }
         return html.replace(/<[^>]*>?/gm, '');
     };
 
-    const handleCardClick = (e: React.MouseEvent) => {
+    const handleCardClick = () => {
         // Prevent navigation if selecting text
         if (window.getSelection()?.toString()) return;
         router.push(`/post/${post.id}`);
@@ -71,11 +68,22 @@ export function OrganizationPostCard({ post, onLike, onDelete, onEdit, isOwner }
             <div className="relative aspect-video bg-muted overflow-hidden">
                 {mediaUrl ? (
                     isVideo ? (
-                        <video
-                            src={mediaUrl}
-                            className="w-full h-full object-cover"
-                            preload="metadata"
-                        />
+                        post.videoProcessingStatus === 'processing' && !mediaUrl.startsWith('blob:') ? (
+                            <div className="flex h-full w-full items-center justify-center bg-black text-sm text-white" role="status">
+                                {post.videoPosterSrc && <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url(${JSON.stringify(post.videoPosterSrc)})` }} />}
+                                <span className="relative rounded bg-black/70 px-3 py-2">Video processing…</span>
+                            </div>
+                        ) : (
+                            <video
+                                src={post.videoProcessingStatus === 'ready' ? post.videoHlsSrc || mediaUrl : mediaUrl}
+                                poster={post.videoPosterSrc}
+                                muted
+                                loop
+                                playsInline
+                                preload="metadata"
+                                className="w-full h-full object-cover"
+                            />
+                        )
                     ) : (
                         <img
                             src={mediaUrl}
