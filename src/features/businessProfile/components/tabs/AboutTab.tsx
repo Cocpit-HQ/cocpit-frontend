@@ -384,7 +384,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
 
           {/* Headquarter */}
           {hasHeadquarter && (
-            <div className="w-full max-w-[780px] flex flex-col items-start py-1 sm:py-2 gap-2 sm:gap-2.5">
+            <div className="w-full max-w-[780px] flex flex-col items-start py-1 sm:py-2 gap-3">
               <h2 className="text-ds-text-primary text-base font-semibold font-['DM_Sans'] leading-6">
                 Headquarter
               </h2>
@@ -404,7 +404,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
                   latitude={hqLat}
                   longitude={hqLng}
                   readOnly={true}
-                  className="!w-full !h-full !rounded-2xl !border-0"
+                  className="!w-full !h-full !rounded-2xl !border-0 !shadow-none !bg-transparent"
                 />
 
                 {hqMapUrl && (
@@ -481,7 +481,7 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
                               latitude={office.latitude ? Number(office.latitude) : null}
                               longitude={office.longitude ? Number(office.longitude) : null}
                               readOnly={true}
-                              className="!w-full !h-full !rounded-2xl !border-0"
+                              className="!w-full !h-full !rounded-2xl !border-0 !shadow-none !bg-transparent"
                             />
 
                             {mapUrl && (

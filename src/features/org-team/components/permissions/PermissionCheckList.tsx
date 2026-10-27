@@ -14,7 +14,7 @@ interface PermissionCheckListProps {
 const DISABLED_PERMISSIONS: TeamPermission[] = ['ANALYTICS', 'JOBS', 'JOBS_CHAT', 'CHAT', 'SETTINGS'];
 
 const PERMISSION_GROUPS = [
-  { id: 'CREATE_POST', label: 'Post interactions', icon: 'lucide:plus' },
+  { id: 'CREATE_POST', label: 'Post & Interactions', icon: 'lucide:plus' },
   { id: 'MANAGE_COMPANY_DETAILS', label: 'Profile Management', icon: 'business-building' },
   { id: 'CHAT', label: 'Chat', icon: 'chat', disabled: true },
   { id: 'TEAMS', label: 'Teams', icon: 'teams', children: [

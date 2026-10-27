@@ -334,9 +334,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 ...(!formData.location.trim() ? [{ key: "location", label: "Location", fieldRef: "location" }] : []),
                 ...(!formData.status.trim() ? [{ key: "status", label: "Status", fieldRef: "status" }] : []),
                 ...(!formData.about.trim() ? [{ key: "about", label: "About", fieldRef: "about" }] : []),
-                ...(!formData.open_to.trim() ? [{ key: "open_to", label: "Looking for", fieldRef: "lookingFor" }] : []),
-                ...(!formData.availability.trim() ? [{ key: "availability", label: "Availability", fieldRef: "availability" }] : []),
-                ...(!formData.work_preference.trim() ? [{ key: "work_preference", label: "Work setup", fieldRef: "workSetup" }] : [])
+                // ...(!formData.open_to.trim() ? [{ key: "open_to", label: "Looking for", fieldRef: "lookingFor" }] : []),
+                // ...(!formData.availability.trim() ? [{ key: "availability", label: "Availability", fieldRef: "availability" }] : []),
+                // ...(!formData.work_preference.trim() ? [{ key: "work_preference", label: "Work setup", fieldRef: "workSetup" }] : [])
               ]}
               onChipClick={(chip) => {
                 const refMap: Record<string, any> = {

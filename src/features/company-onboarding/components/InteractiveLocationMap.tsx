@@ -20,6 +20,7 @@ interface InteractiveLocationMapProps {
   className?: string;
   readOnly?: boolean;
   showAddressBadge?: boolean;
+  theme?: "light" | "dark";
 }
 
 // Google Maps script loader singleton
@@ -63,6 +64,11 @@ const DARK_MAP_STYLES: any[] = [
     featureType: "administrative.locality",
     elementType: "labels.text.fill",
     stylers: [{ color: "#d9d0cb" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
   },
   {
     featureType: "poi",
@@ -110,6 +116,11 @@ const DARK_MAP_STYLES: any[] = [
     stylers: [{ color: "#24242d" }],
   },
   {
+    featureType: "transit",
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
+  },
+  {
     featureType: "water",
     elementType: "geometry",
     stylers: [{ color: "#0d1117" }],
@@ -121,6 +132,20 @@ const DARK_MAP_STYLES: any[] = [
   },
 ];
 
+// Clean light-mode styling for Google Maps (natural map colors with POI icon clutter disabled)
+const LIGHT_MAP_STYLES: any[] = [
+  {
+    featureType: "poi",
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "labels.icon",
+    stylers: [{ visibility: "off" }],
+  },
+];
+
 export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
   locationAddress,
   latitude,
@@ -129,6 +154,7 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
   className = "",
   readOnly = false,
   showAddressBadge = false,
+  theme = "light",
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -153,6 +179,17 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
   const effectiveLat = latitude ?? 16.705;
   const effectiveLng = longitude ?? 74.2433;
 
+  const currentStyles = theme === "dark" ? DARK_MAP_STYLES : LIGHT_MAP_STYLES;
+
+  // Dynamically update map theme styles if theme prop changes
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setOptions({
+        styles: currentStyles,
+      });
+    }
+  }, [currentStyles]);
+
   // Initialize Map
   useEffect(() => {
     let isCancelled = false;
@@ -174,7 +211,7 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
           scrollwheel: false, // Disables mouse wheel scroll zoom on map
           gestureHandling: readOnly ? "none" : "greedy", // Instant 1-finger / mouse drag without "use two fingers" prompt
           draggable: !readOnly,
-          styles: DARK_MAP_STYLES,
+          styles: currentStyles,
           clickableIcons: false, // Prevents clicking POIs from opening Google info cards
           zoomControl: false,
           mapTypeControl: false,
@@ -400,7 +437,8 @@ export const InteractiveLocationMap: React.FC<InteractiveLocationMapProps> = ({
   return (
     <div
       className={cn(
-        "relative w-full rounded-3xl border border-ds-border overflow-hidden bg-ds-surface-1 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] select-none",
+        "relative w-full rounded-2xl overflow-hidden bg-ds-surface-1 select-none",
+        !readOnly && "border border-ds-border shadow-[0px_1px_2px_rgba(0,0,0,0.05)]",
         !hasCustomHeight && "h-56 md:h-64",
         className
       )}
