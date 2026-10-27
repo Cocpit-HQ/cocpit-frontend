@@ -68,15 +68,17 @@ export function ManageEmailPage() {
             {userEmail || "@alex.viva********@gmail.com"}
           </div>
         </div>
-        <div className="self-stretch inline-flex justify-end items-center gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => setIsChangeEmailModalOpen(true)}
-            className="w-[126px] h-[36px] bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
-          >
-            Change Email
-          </button>
-        </div>
+        {!isOrg && (
+          <div className="self-stretch inline-flex justify-end items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setIsChangeEmailModalOpen(true)}
+              className="w-[126px] h-[36px] bg-ds-accent hover:opacity-90 text-ds-text-primary text-[16px] font-medium font-['DM_Sans'] leading-6 rounded-[100px] inline-flex justify-center items-center transition-opacity cursor-pointer ds-focus-ring whitespace-nowrap"
+            >
+              Change Email
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Recovery Email Section - User Accounts Only */}

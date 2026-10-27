@@ -141,7 +141,7 @@ export function LikesModal({ isOpen, onClose, postId }: LikesModalProps) {
                   {!liker.isSelf && !liker.isFollowing && (
                     isCompanyActor && !canFollow ? (
                       <TooltipProvider delayDuration={200}>
-                        <Tooltip>
+                        <Tooltip enableTouch>
                           <TooltipTrigger asChild>
                             <span className="inline-flex cursor-not-allowed">
                               <button 

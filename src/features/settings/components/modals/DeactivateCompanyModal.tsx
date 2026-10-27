@@ -56,7 +56,7 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
   const entityLabel = activeProfile.entityType === 'INSTITUTION' ? 'institution' : 'business';
   const isDeactivated = accountData?.isDeactivated;
 
-  if (isDeactivated) {
+  if (isDeactivated && !isSuccess) {
     return (
       <ReactivateCompanyModal
         isOpen={isOpen}
@@ -113,6 +113,9 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
     setIsLoading(true);
     setErrorMsg('');
     try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('cocpit_is_deactivating', 'true');
+      }
       await deactivateOrganization(activeProfile.id, code);
       setIsSuccess(true);
       toast.success(`Your ${entityLabel} account has been deactivated`);
@@ -130,6 +133,9 @@ export function DeactivateCompanyModal({ isOpen, onClose }: DeactivateCompanyMod
         window.location.replace('/feed');
       }, 500);
     } catch (err: any) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('cocpit_is_deactivating');
+      }
       const rawMsg = err.response?.data?.message || err.message;
       const message = (rawMsg === 'Incorrect code' || rawMsg === 'Invalid verification code')
         ? 'Invalid verification code'

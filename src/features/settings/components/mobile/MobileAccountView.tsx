@@ -153,8 +153,7 @@ export function MobileAccountView({
               </button>
             </div>
 
-            {/* Row 2: Deactivate account - Hidden per SCRUM-113 / SCRUM-1263 */}
-            {/*
+            {/* Row 2: Deactivate account */}
             <div
               onClick={() => setCurrentView('deactivate')}
               role="button"
@@ -171,10 +170,8 @@ export function MobileAccountView({
               </div>
               <ChevronRight className="w-5 h-5 text-ds-text-muted shrink-0" strokeWidth={1.5} />
             </div>
-            */}
 
-            {/* Row 3: Delete account - Hidden per SCRUM-113 / SCRUM-1263 */}
-            {/*
+            {/* Row 3: Delete account */}
             <div
               onClick={() => setCurrentView('delete')}
               role="button"
@@ -191,7 +188,6 @@ export function MobileAccountView({
               </div>
               <ChevronRight className="w-5 h-5 text-ds-text-muted shrink-0" strokeWidth={1.5} />
             </div>
-            */}
           </div>
         </div>
 

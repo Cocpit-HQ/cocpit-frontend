@@ -641,6 +641,15 @@ export default function BusinessEditAboutTab({
       return;
     }
 
+    if (description && description.length > 2000) {
+      toast({
+        title: "Validation Error",
+        description: "Description cannot exceed 2000 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formattedOfferings = keyOfferings
       .map((text, idx) => {
         const trimmed = text.trim().slice(0, 60);
@@ -719,7 +728,7 @@ export default function BusinessEditAboutTab({
             </label>
             <AutoResizeTextarea
               value={description}
-              maxLength={500}
+              maxLength={2000}
               onChange={(e) => {
                 setIsDirty(true);
                 setAboutDraft({ description: e.target.value });
@@ -732,7 +741,7 @@ export default function BusinessEditAboutTab({
             />
           </div>
           <div className="text-center justify-start text-ds-text-muted text-xs font-normal font-['DM_Sans'] leading-4">
-            {description?.length || 0}/500
+            {description?.length || 0}/2000
           </div>
         </div>
 

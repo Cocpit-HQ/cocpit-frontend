@@ -64,7 +64,7 @@ export const RepostMenu = ({
   if (disabled) {
     return (
       <TooltipProvider delayDuration={200}>
-        <Tooltip>
+        <Tooltip enableTouch>
           <TooltipTrigger asChild>
             <span className="inline-flex cursor-not-allowed">
               <button

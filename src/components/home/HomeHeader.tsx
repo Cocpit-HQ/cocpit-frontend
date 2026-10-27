@@ -868,7 +868,7 @@ export const HomeHeader = () => {
                                 {!pathname.startsWith('/channel') && !pathname.startsWith('/team') && (
                                     <FeatureDisabledTooltip featureKey="enablePostCreation" disabledMessage="Content posting is temporarily paused by admin.">
                                         <TooltipProvider delayDuration={0}>
-                                            <Tooltip>
+                                            <Tooltip enableTouch={isCompany && !checkPermission('create_post') && !checkPermission('CREATE_POST')}>
                                                 <TooltipTrigger asChild>
                                                     <button
                                                         onClick={(e) => {

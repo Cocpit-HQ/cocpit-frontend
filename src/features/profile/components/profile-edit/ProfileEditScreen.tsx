@@ -440,8 +440,8 @@ export function ProfileEditScreen({
       newErrors.headline = "Headline cannot exceed 120 characters";
     }
 
-    if (formData.about && formData.about.length > 500) {
-      newErrors.about = "About cannot exceed 500 characters";
+    if (formData.about && formData.about.length > 2000) {
+      newErrors.about = "About cannot exceed 2000 characters";
     }
 
     if (Object.keys(newErrors).length > 0) {

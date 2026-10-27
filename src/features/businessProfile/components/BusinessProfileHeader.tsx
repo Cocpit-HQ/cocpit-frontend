@@ -86,6 +86,8 @@ export default function BusinessProfileHeader({
     type: "avatar" | "banner";
     url: string;
   } | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
+  const [coverError, setCoverError] = useState(false);
 
   const { activeProfile } = useActiveProfile();
   const { toast } = useToast();
@@ -285,16 +287,17 @@ export default function BusinessProfileHeader({
           onClick={handleBannerClick}
           className={cn(
             "w-full max-w-[800px] h-[135px] sm:h-[200px] left-0 top-0 absolute rounded-none sm:rounded-2xl overflow-hidden select-none",
-            displayCover
+            displayCover && !coverError
               ? "cursor-pointer"
               : "bg-ds-surface-1 border-b sm:border border-ds-border flex flex-col justify-center items-center"
           )}
         >
-          {displayCover ? (
+          {displayCover && !coverError ? (
             <img
               src={displayCover}
               alt={`${data.name} Cover`}
               className="w-full h-full object-cover"
+              onError={() => setCoverError(true)}
             />
           ) : (isOwnProfile || canManageCompany) ? (
             <div className="w-full h-full flex flex-col justify-center items-center gap-2 p-[10px] select-none">
@@ -313,16 +316,17 @@ export default function BusinessProfileHeader({
           onClick={handleAvatarClick}
           className={cn(
             "w-[84px] h-[84px] sm:w-[120px] sm:h-[120px] left-4 sm:left-[20px] top-[90px] sm:top-[140px] absolute rounded-[16px] sm:rounded-[12px] overflow-hidden z-10 select-none border-4 border-ds-bg sm:border-0",
-            displayAvatar
+            displayAvatar && !avatarError
               ? "cursor-pointer bg-white"
               : "bg-white flex flex-col justify-center items-center p-[6px] sm:p-[10px]"
           )}
         >
-          {displayAvatar ? (
+          {displayAvatar && !avatarError ? (
             <img
               src={displayAvatar}
               alt={`${data.name} Logo`}
               className="w-full h-full object-cover rounded-[12px]"
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <BusinessBuildingIcon className="w-8 h-8 sm:w-10 sm:h-10 text-black flex-none order-0 grow-0" />
@@ -355,7 +359,7 @@ export default function BusinessProfileHeader({
                 </Link>
               ) : (
                 <TooltipProvider>
-                  <Tooltip delayDuration={100}>
+                  <Tooltip enableTouch delayDuration={100}>
                     <TooltipTrigger asChild>
                       <span className="inline-flex cursor-not-allowed" tabIndex={0}>
                         <button
@@ -388,7 +392,7 @@ export default function BusinessProfileHeader({
               {/* Follow Button */}
               {!actingCompanyCanFollow ? (
                 <TooltipProvider>
-                  <Tooltip delayDuration={200}>
+                  <Tooltip enableTouch delayDuration={200}>
                     <TooltipTrigger asChild>
                       <span className="inline-flex cursor-not-allowed">
                         <button
@@ -464,7 +468,7 @@ export default function BusinessProfileHeader({
                   </DropdownMenuItem>
                   {!canBlock ? (
                     <TooltipProvider>
-                      <Tooltip delayDuration={100}>
+                      <Tooltip enableTouch delayDuration={100}>
                         <TooltipTrigger asChild>
                           <div className="w-full">
                             <DropdownMenuItem
@@ -491,7 +495,7 @@ export default function BusinessProfileHeader({
                   )}
                   {!canReport ? (
                     <TooltipProvider>
-                      <Tooltip delayDuration={100}>
+                      <Tooltip enableTouch delayDuration={100}>
                         <TooltipTrigger asChild>
                           <div className="w-full">
                             <DropdownMenuItem
@@ -626,7 +630,7 @@ export default function BusinessProfileHeader({
                 </Link>
               ) : (
                 <TooltipProvider>
-                  <Tooltip delayDuration={100}>
+                  <Tooltip enableTouch delayDuration={100}>
                     <TooltipTrigger asChild>
                       <span className="inline-flex cursor-not-allowed">
                         <button
@@ -656,7 +660,7 @@ export default function BusinessProfileHeader({
             <div className="flex sm:hidden flex-row justify-start items-center gap-3 mt-3 w-full">
               {!actingCompanyCanFollow ? (
                 <TooltipProvider>
-                  <Tooltip delayDuration={200}>
+                  <Tooltip enableTouch delayDuration={200}>
                     <TooltipTrigger asChild>
                       <span className="inline-flex cursor-not-allowed">
                         <button

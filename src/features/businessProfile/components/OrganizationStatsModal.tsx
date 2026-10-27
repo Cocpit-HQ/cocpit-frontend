@@ -231,7 +231,7 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
       if (isCompanyActor && !canFollow) {
         return (
           <TooltipProvider delayDuration={200}>
-            <Tooltip>
+            <Tooltip enableTouch>
               <TooltipTrigger asChild>
                 <span className="inline-flex cursor-not-allowed">
                   <button
@@ -272,7 +272,7 @@ export const OrganizationStatsModal: React.FC<OrganizationStatsModalProps> = ({
     if (isCompanyActor && !canFollow) {
       return (
         <TooltipProvider delayDuration={200}>
-          <Tooltip>
+          <Tooltip enableTouch>
             <TooltipTrigger asChild>
               <span className="inline-flex cursor-not-allowed">
                 <button

@@ -245,7 +245,7 @@ export default function FeaturedPostsSection({
                 </button>
               ) : (
                 <TooltipProvider delayDuration={100}>
-                  <Tooltip>
+                  <Tooltip enableTouch>
                     <TooltipTrigger asChild>
                       <span className="inline-flex cursor-not-allowed" tabIndex={0}>
                         <button

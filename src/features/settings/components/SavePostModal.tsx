@@ -1,5 +1,29 @@
 "use client"
 
+/**
+ * NOTE:
+ * This component delegates directly to `@/shared/commonComponents/SavePostModal`,
+ * which is the single source of truth for the Save Collection popup matching
+ * the latest Figma design (used across FeedPost, ProfilePosts, ProfilePostCard, and ArticleViewPage).
+ *
+ * The legacy implementation is retained below in comments for reference.
+ */
+
+import React from 'react'
+import {
+    SavePostModal as SharedSavePostModal,
+    SavePostModalProps
+} from '@/shared/commonComponents/SavePostModal'
+
+export type { SavePostModalProps }
+
+export function SavePostModal(props: SavePostModalProps) {
+    return <SharedSavePostModal {...props} />
+}
+
+/*
+// Legacy implementation kept for reference:
+
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -15,14 +39,14 @@ import { SAVED_FOLDERS_QUERY_KEY } from '@/features/settings/hooks/useSavedFolde
 
 const isValidImageUrl = (url?: string | null): boolean => !!url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:'));
 
-interface SavePostModalProps {
+interface LegacySavePostModalProps {
     isOpen: boolean
     onClose: () => void
     postId: string
     onSaved: (isSaved: boolean) => void
 }
 
-export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModalProps) {
+export function LegacySavePostModal({ isOpen, onClose, postId, onSaved }: LegacySavePostModalProps) {
     const [folders, setFolders] = useState<SavedFolder[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -88,7 +112,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     const modalContent = (
         <AnimatePresence>
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 isolate">
-                {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -97,7 +120,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                     className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                 />
 
-                {/* Modal Container */}
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0, y: 15 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -106,7 +128,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                     className="relative w-full max-w-[420px] bg-ds-surface-2 border border-ds-border rounded-2xl shadow-2xl z-20 flex flex-col p-6 animate-in fade-in"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header with Close Button */}
                     <div className="flex justify-end w-full mb-1">
                         <button
                             onClick={onClose}
@@ -117,9 +138,7 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                         </button>
                     </div>
 
-                    {/* Main Content */}
                     <div className="flex flex-col items-center w-full flex-1 gap-4">
-                        {/* Title & Subtitle */}
                         <div className="flex flex-col items-center gap-1 text-center">
                             <h3 className="ds-text-body-2 text-ds-text-primary">
                                 Save post
@@ -129,7 +148,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                             </p>
                         </div>
 
-                        {/* General Item */}
                         <div className="w-full">
                             <button
                                 onClick={() => handleSaveToFolder(null)}
@@ -148,7 +166,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                             </button>
                         </div>
 
-                        {/* Collections List */}
                         <div className="w-full flex flex-col items-start gap-2">
                             <span className="ds-text-small-1 text-ds-text-secondary">Collections</span>
 
@@ -192,7 +209,6 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
                             </div>
                         </div>
 
-                        {/* New Collection Button */}
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
                             className="ds-btn ds-btn-secondary ds-text-body-1 w-full h-9 mt-2 flex items-center justify-center gap-2 border border-ds-border hover:border-ds-accent hover:text-ds-accent transition-colors"
@@ -215,3 +231,5 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     if (typeof document === 'undefined') return null;
     return createPortal(modalContent, document.body)
 }
+*/
+

@@ -248,7 +248,12 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
               vote_count: o.vote_count || 0
             })) || []
           } : undefined,
-          mentioned_users: (sp as any).mentioned_users
+          mentioned_users: (sp as any).mentioned_users,
+          authorHeadline: (sp.author as any)?.headline || (sp as any).authorHeadline || (sp as any).author_headline || undefined,
+          authorSlug: (sp.author as any)?.slug || (sp as any).authorSlug || (sp as any).author_slug || undefined,
+          author_org_id: (sp as any).author_org_id || (sp.author as any)?.org_id || undefined,
+          isCompanyPost: Boolean((sp as any).isCompanyPost ?? (sp.author as any)?.is_company ?? (sp as any).author_org_id),
+          post_type: (sp as any).post_type || undefined,
         } as Post & { isAvailable?: boolean };
       }
 

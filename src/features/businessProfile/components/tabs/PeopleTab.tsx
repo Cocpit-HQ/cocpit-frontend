@@ -369,7 +369,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
         {emp.action === "follow" && (
           isCompanyActor && !canFollow ? (
             <TooltipProvider delayDuration={200}>
-              <Tooltip>
+              <Tooltip enableTouch>
                 <TooltipTrigger asChild>
                   <span className="inline-flex cursor-not-allowed">
                     <button
@@ -403,7 +403,7 @@ export default function PeopleTab({ data, isOwnProfile }: PeopleTabProps) {
         {emp.action === "unfollow" && (
           isCompanyActor && !canFollow ? (
             <TooltipProvider delayDuration={200}>
-              <Tooltip>
+              <Tooltip enableTouch>
                 <TooltipTrigger asChild>
                   <span className="inline-flex cursor-not-allowed">
                     <button

@@ -25,7 +25,7 @@ interface SocialContextType {
   isBlocked: (id: string) => boolean;
 }
 
-const SocialContext = createContext<SocialContextType | undefined>(undefined);
+export const SocialContext = createContext<SocialContextType | undefined>(undefined);
 
 export const useSocial = () => {
   const context = useContext(SocialContext);

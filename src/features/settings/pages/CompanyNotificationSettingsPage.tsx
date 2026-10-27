@@ -78,7 +78,7 @@ const NotificationRow = React.memo(function NotificationRow({
 
   return (
     <div className="self-stretch py-2 flex flex-row justify-between items-center gap-3">
-      <div className="flex-1 min-w-0 pr-2 inline-flex flex-col justify-center items-start">
+      <div className={`flex-1 min-w-0 pr-2 inline-flex flex-col justify-center items-start ${disabled ? 'opacity-50' : ''}`}>
         <div className="justify-center text-ds-text-primary text-base font-medium font-['DM_Sans'] leading-6">
           {label}
         </div>
@@ -186,6 +186,10 @@ const SubNotificationRow = React.memo(function SubNotificationRow({
   );
 });
 
+// Feature flags: Set to false once Job Alerts and Message Notifications features are ready for Business Profiles (SCRUM-1480)
+const DISABLE_BUSINESS_JOB_ALERTS = true;
+const DISABLE_BUSINESS_MESSAGE_NOTIFICATIONS = true;
+
 export function CompanyNotificationSettingsPage() {
   const { settings, isLoading, updateSettings } = useCompanyNotificationSettings();
 
@@ -194,6 +198,14 @@ export function CompanyNotificationSettingsPage() {
 
   const handleToggle = useCallback(
     (key: PrimaryNotificationKey, nextVal: boolean) => {
+      // Prevent toggling when feature is disabled for business profiles
+      if (
+        (DISABLE_BUSINESS_JOB_ALERTS && key === 'jobs') ||
+        (DISABLE_BUSINESS_MESSAGE_NOTIFICATIONS && key === 'messages')
+      ) {
+        return;
+      }
+
       const current = settingsRef.current || {
         all: true,
         posts: true,
@@ -212,11 +224,11 @@ export function CompanyNotificationSettingsPage() {
 
       if (key === 'all') {
         updated.posts = nextVal;
-        updated.jobs = nextVal;
-        updated.messages = nextVal;
+        updated.jobs = DISABLE_BUSINESS_JOB_ALERTS ? false : nextVal;
+        updated.messages = DISABLE_BUSINESS_MESSAGE_NOTIFICATIONS ? false : nextVal;
         updated.emails = nextVal;
-        updated.messageChats = nextVal;
-        updated.messageJobs = nextVal;
+        updated.messageChats = DISABLE_BUSINESS_MESSAGE_NOTIFICATIONS ? false : nextVal;
+        updated.messageJobs = DISABLE_BUSINESS_MESSAGE_NOTIFICATIONS ? false : nextVal;
       } else if (key === 'messages') {
         if (nextVal) {
           // If enabling messages and both were false, restore both to true
@@ -230,10 +242,8 @@ export function CompanyNotificationSettingsPage() {
       // Upward cascade to Master "all"
       updated.all = !!(
         updated.posts &&
-        updated.jobs &&
-        updated.messages &&
-        (updated.messageChats ?? true) &&
-        (updated.messageJobs ?? true) &&
+        (DISABLE_BUSINESS_JOB_ALERTS ? true : updated.jobs) &&
+        (DISABLE_BUSINESS_MESSAGE_NOTIFICATIONS ? true : (updated.messages && (updated.messageChats ?? true) && (updated.messageJobs ?? true))) &&
         updated.emails
       );
 
@@ -336,6 +346,12 @@ export function CompanyNotificationSettingsPage() {
         {NOTIFICATION_ITEMS.map((item, index) => {
           const isLast = index === NOTIFICATION_ITEMS.length - 1;
           const isMessages = item.key === 'messages';
+          const isItemDisabledForBusiness = item.key === 'jobs' || item.key === 'messages';
+          const isChecked = item.key === 'all'
+            ? !!(settings.posts && settings.emails)
+            : isItemDisabledForBusiness
+            ? false
+            : !!settings[item.key];
 
           return (
             <div
@@ -346,13 +362,13 @@ export function CompanyNotificationSettingsPage() {
                 itemKey={item.key}
                 label={item.label}
                 description={item.description}
-                checked={settings[item.key]}
+                checked={isChecked}
                 onToggle={handleToggle}
-                disabled={isLoading}
+                disabled={isLoading || isItemDisabledForBusiness}
               />
 
               {/* Render dynamic Subsetting Branch for Message notifications */}
-              {isMessages && messagesEnabled && (
+              {isMessages && !isItemDisabledForBusiness && messagesEnabled && (
                 <div className="flex flex-col self-stretch pb-2 pt-0.5">
                   {MESSAGE_SUB_ITEMS.map((sub, subIdx) => (
                     <SubNotificationRow

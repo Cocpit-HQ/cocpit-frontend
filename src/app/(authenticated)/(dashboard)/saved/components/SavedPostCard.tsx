@@ -42,6 +42,9 @@ export function SavedPostCard({
     }
   };
 
+  // If the saved item has a shared_post (original post), display the original post
+  const displayPost = (post.shared_post && post.shared_post.id ? post.shared_post : post);
+
   const formatPostText = (text?: string | null) => {
     if (!text) return "";
     return text
@@ -58,14 +61,15 @@ export function SavedPostCard({
   };
 
   const isArticle =
-    post.category?.toLowerCase() === "article" ||
-    post.post_type?.toLowerCase() === "article" ||
-    post.type?.toLowerCase() === "article" ||
-    post.is_community_article ||
-    !!post.articleBody;
-  const isRepost = !!post.shared_post;
+    displayPost.category?.toLowerCase() === "article" ||
+    displayPost.post_type?.toLowerCase() === "article" ||
+    displayPost.type?.toLowerCase() === "article" ||
+    displayPost.is_community_article ||
+    !!displayPost.articleBody;
+
+  const isRepost = !!post.shared_post && !!post.shared_post.id;
   const isRepostWithThoughts =
-    isRepost && post.content && post.content.trim().length > 0;
+    isRepost && !!post.content && post.content.trim().length > 0;
 
   const sharedPostMedia =
     post.shared_post?.imageSrc ||
@@ -77,25 +81,25 @@ export function SavedPostCard({
       typeof sharedPostMedia === "string" &&
       sharedPostMedia.toLowerCase().match(/\.(mp4|mov|webm)$/i));
 
-  const postImage = post.videoSrc || post.imageSrc || post.images?.[0];
+  const postImage = displayPost.videoSrc || displayPost.imageSrc || displayPost.images?.[0];
   const isVideo =
-    !!post.videoSrc ||
+    !!displayPost.videoSrc ||
     (postImage &&
       typeof postImage === "string" &&
       postImage.toLowerCase().match(/\.(mp4|mov|webm)$/i));
 
   const cleanText = formatPostText(
-    post.content ||
-      (post as any).articleBody ||
-      (post as any).title ||
-      (post as any).caption ||
+    displayPost.content ||
+      (displayPost as any).articleBody ||
+      (displayPost as any).title ||
+      (displayPost as any).caption ||
       "",
   );
 
-  const isPoll = post.post_type === "poll" || (post as any).postType === "poll";
-  const pollVotes = (post as any).votes || 0;
+  const isPoll = displayPost.post_type === "poll" || (displayPost as any).postType === "poll" || !!displayPost.poll;
+  const pollVotes = (displayPost as any).votes || displayPost.poll?.total_votes || 0;
   const pollClosedText =
-    (post as any).isPollActive === false ? " • Poll closed" : "";
+    (displayPost as any).isPollActive === false || displayPost.poll?.is_active === false ? " • Poll closed" : "";
 
   const AuthorHeader = ({
     p,
@@ -186,11 +190,11 @@ export function SavedPostCard({
     return (
       <article
         className="flex w-full flex-col items-start gap-[12px] cursor-pointer"
-        onClick={() => handlePostClick(post.id)}
+        onClick={() => handlePostClick(displayPost.id || post.id)}
       >
         {/* Frame 2608569: Author Header */}
         <div className="flex h-[36px] w-full items-center justify-between gap-[8px]">
-          <AuthorHeader p={post} />
+          <AuthorHeader p={displayPost} />
           <BookmarkButton />
         </div>
 
@@ -204,7 +208,7 @@ export function SavedPostCard({
             />
           </div>
           <p className="h-[16px] w-[207px] overflow-hidden truncate text-[12px] leading-[16px] font-semibold text-[#FFECE6]">
-            {post.title || cleanText}
+            {displayPost.title || cleanText}
           </p>
         </div>
       </article>
@@ -319,34 +323,9 @@ export function SavedPostCard({
 
   // Frame 2608601: Simple Repost (pure repost without thoughts)
   if (isRepost) {
-    const sharedCleanText = formatPostText(
-      post.shared_post?.content ||
-        (post.shared_post as any)?.articleBody ||
-        (post.shared_post as any)?.title ||
-        post.content ||
-        ""
-    );
-    const sharedIsPoll =
-      post.shared_post?.post_type === "poll" ||
-      (post.shared_post as any)?.postType === "poll" ||
-      !!post.shared_post?.poll;
-    const sharedPollVotes =
-      (post.shared_post as any)?.votes ||
-      (post.shared_post?.poll as any)?.total_votes ||
-      0;
-    const sharedPollClosedText =
-      (post.shared_post as any)?.isPollActive === false ? " • Poll closed" : "";
-
-    const sharedIsArticle =
-      post.shared_post?.category?.toLowerCase() === "article" ||
-      post.shared_post?.post_type?.toLowerCase() === "article" ||
-      post.shared_post?.type?.toLowerCase() === "article" ||
-      post.shared_post?.is_community_article ||
-      !!post.shared_post?.articleBody;
-
     return (
       <article
-        className="flex w-full flex-col items-start gap-[12px] cursor-pointer rounded-lg transition-colors group"
+        className="flex w-full flex-col items-center gap-[12px] cursor-pointer"
         onClick={() => handlePostClick(post.id)}
       >
         {/* Frame 2609526: Repost indicator */}
@@ -357,79 +336,16 @@ export function SavedPostCard({
           </span>
         </div>
 
-        {/* Frame 2608569: Original author header + Bookmark */}
+        {/* Frame 2608569: Reposter header */}
         <div className="flex h-[36px] w-full items-center justify-between gap-[8px]">
-          <AuthorHeader p={(post.shared_post as Post) || post} />
+          <AuthorHeader p={post.shared_post as Post} />
           <BookmarkButton />
         </div>
 
-        {/* Content based on type */}
-        {sharedIsArticle ? (
-          <div className="box-border flex h-[126px] w-[232px] flex-col justify-center items-start gap-[12px] rounded-[8px] border-[0.5px] border-[#2C2C33] px-[12px] py-[8px]">
-            <div className="flex h-[81px] w-[207px] shrink-0 overflow-hidden rounded-[4px]">
-              <img
-                src={sharedPostMedia || ""}
-                alt=""
-                className="h-[81px] w-[207px] object-cover"
-              />
-            </div>
-            <p className="h-[16px] w-[207px] overflow-hidden truncate text-[12px] leading-[16px] font-semibold text-[#FFECE6]">
-              {post.shared_post?.title || sharedCleanText}
-            </p>
-          </div>
-        ) : sharedIsPoll ? (
-          <div className="self-stretch cursor-pointer group/poll w-full p-2 bg-[#030303] rounded-[12px] flex flex-col justify-center items-start gap-1">
-            <p className="w-full text-[#FFECE6] text-[14px] font-normal leading-[20px] line-clamp-4 break-words group-hover/poll:text-white transition-colors">
-              {(post.shared_post as any)?.title || sharedCleanText}
-            </p>
-            <span className="w-full text-[#B8ADA8] text-[10px] font-medium leading-[12px]">
-              {sharedPollVotes} votes{sharedPollClosedText}
-            </span>
-          </div>
-        ) : sharedPostMedia ? (
-          <div className="flex flex-row items-center gap-[16px] w-full h-[76px] group/media">
-            <div className="relative w-[76px] h-[76px] bg-ds-surface-2 border border-[#E5E7EB] rounded-[12px] overflow-hidden shrink-0">
-              {sharedIsVideo ? (
-                <>
-                  <video
-                    src={sharedPostMedia}
-                    className="size-full object-cover group-hover/media:scale-105 transition-transform"
-                    preload="metadata"
-                    muted
-                    playsInline
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover/media:bg-black/30 transition-colors">
-                    <div className="size-7 rounded-full bg-black/50 flex items-center justify-center border border-white/20">
-                      <Icon
-                        name="play"
-                        className="h-4 w-4 text-white ml-0.5"
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <img
-                  src={sharedPostMedia}
-                  alt="Post media"
-                  className="size-full object-cover group-hover/media:scale-105 transition-transform"
-                />
-              )}
-            </div>
-            {sharedCleanText && (
-              <div className="flex flex-col items-start gap-[8px] flex-1 min-w-0">
-                <p className="text-[14px] font-normal text-[#FFECE6] leading-[20px] line-clamp-3 group-hover/media:text-white transition-colors">
-                  {sharedCleanText}
-                </p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col justify-center items-start gap-[12px] w-full group/text">
-            <p className="text-[14px] font-normal text-[#FFECE6] leading-[20px] w-full line-clamp-3 group-hover/text:text-white transition-colors">
-              {sharedCleanText}
-            </p>
-          </div>
-        )}
+        {/* Content */}
+        <p className="w-full text-[12px] leading-[16px] font-normal text-[#FFECE6] line-clamp-2">
+          {formatPostText(post.shared_post?.content || post.content)}
+        </p>
       </article>
     );
   }
@@ -439,9 +355,10 @@ export function SavedPostCard({
     <div className="flex flex-col items-start p-0 gap-[12px] w-full cursor-pointer rounded-lg transition-colors group">
       {/* Header section (632x36px) */}
       <div className="flex flex-row justify-between items-center w-full h-[36px]">
-        <AuthorHeader p={post} />
+        <AuthorHeader p={displayPost} />
         <BookmarkButton />
       </div>
+
 
       {/* Frame 2609260: Poll Post */}
       {isPoll ? (

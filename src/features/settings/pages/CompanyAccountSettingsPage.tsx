@@ -84,6 +84,7 @@ export function CompanyAccountSettingsPage() {
                 {isLoading ? 'Loading...' : primaryEmail ? `Current: ${primaryEmail}` : 'No email address registered'}
               </p>
             </div>
+            {/* Change email button (Temporarily hidden per SCRUM-1482)
             <Link href={`${basePath}/account-email`} className="shrink-0 w-full sm:w-auto">
               <button
                 type="button"
@@ -94,9 +95,10 @@ export function CompanyAccountSettingsPage() {
                 </span>
               </button>
             </Link>
+            */}
           </div>
 
-          {/* Row 2: Manage phone number */}
+          {/* Row 2: Manage phone number (Temporarily hidden per SCRUM-1479)
           <div className="self-stretch py-2 border-t border-ds-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
               <span className="text-ds-text-primary ds-text-body-1">
@@ -117,6 +119,7 @@ export function CompanyAccountSettingsPage() {
               </button>
             </Link>
           </div>
+          */}
         </div>
       </div>
 

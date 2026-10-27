@@ -156,8 +156,7 @@ export function AccountSettingsPage() {
             </div>
           </div>
 
-          {/* Deactivate account - Hidden per SCRUM-113 / SCRUM-1263 */}
-          {/*
+          {/* Deactivate account */}
           <div className="self-stretch py-2 border-t border-ds-border flex flex-row justify-between items-center gap-4">
             <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
               <span className="text-ds-text-primary ds-text-body-1">
@@ -177,10 +176,8 @@ export function AccountSettingsPage() {
               </span>
             </button>
           </div>
-          */}
 
-          {/* Delete account - Hidden per SCRUM-113 / SCRUM-1263 */}
-          {/*
+          {/* Delete account */}
           <div className="self-stretch py-2 border-t border-ds-border flex flex-row justify-between items-center gap-4">
             <div className="flex-1 min-w-0 flex flex-col justify-center items-start">
               <span className="text-ds-text-primary ds-text-body-1">
@@ -200,7 +197,6 @@ export function AccountSettingsPage() {
               </span>
             </button>
           </div>
-          */}
         </div>
 
         {/* Desktop Modals */}

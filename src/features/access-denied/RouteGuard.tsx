@@ -52,6 +52,13 @@ export default function RouteGuard({
   // Personal profiles
   if (!isCompany) {
     if (requireCompany) {
+      if (
+        typeof window !== 'undefined' &&
+        (sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+          sessionStorage.getItem('cocpit_is_deleting') === 'true')
+      ) {
+        return <>{children}</>;
+      }
       return <AccessDenied />;
     }
     return <>{children}</>;

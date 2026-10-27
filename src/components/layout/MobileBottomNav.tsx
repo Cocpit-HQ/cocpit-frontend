@@ -10,6 +10,12 @@ import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
 import { Icon } from "@/components/icons"
 import { useFeatureFlags } from "@/context/FeatureFlagContext"
 import { useUIStore } from "@/store/ui.store"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -165,32 +171,43 @@ export function MobileBottomNav() {
 
         {/* Create Button (Central) */}
         <div className="flex flex-col items-center justify-center flex-1">
-          <button
-            onClick={(e) => {
-              if (!canCreatePost) {
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-              }
-              if (pathname !== "/feed" && pathname !== "/") {
-                if (typeof window !== "undefined") {
-                  sessionStorage.setItem("scroll-/feed", "0");
-                  sessionStorage.removeItem("cocpit_last_interacted_post_id");
-                  sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
-                }
-                router.push("/feed");
-              } else {
-                if (typeof window !== "undefined") {
-                  window.scrollTo({ top: 0, behavior: 'instant' });
-                }
-              }
-              setActiveModal('create-post');
-            }}
-            className={`w-[46px] h-[34px] rounded-[8px] flex items-center justify-center border border-ds-border bg-transparent ${canCreatePost ? 'text-ds-accent' : 'text-muted-foreground opacity-50 cursor-default'}`}
-            aria-label="Create Post"
-          >
-            <Icon name="plus" className="w-[20px] h-[20px]" />
-          </button>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip enableTouch={!canCreatePost}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    if (!canCreatePost) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      return;
+                    }
+                    if (pathname !== "/feed" && pathname !== "/") {
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("scroll-/feed", "0");
+                        sessionStorage.removeItem("cocpit_last_interacted_post_id");
+                        sessionStorage.removeItem("cocpit_last_interacted_post_viewport_top");
+                      }
+                      router.push("/feed");
+                    } else {
+                      if (typeof window !== "undefined") {
+                        window.scrollTo({ top: 0, behavior: 'instant' });
+                      }
+                    }
+                    setActiveModal('create-post');
+                  }}
+                  className={`w-[46px] h-[34px] rounded-[8px] flex items-center justify-center border border-ds-border bg-transparent text-ds-accent ${canCreatePost ? 'cursor-pointer' : 'cursor-default'}`}
+                  aria-label="Create Post"
+                >
+                  <Icon name="plus" className="w-[20px] h-[20px]" />
+                </button>
+              </TooltipTrigger>
+              {!canCreatePost && (
+                <TooltipContent side="top" sideOffset={8} className="text-xs font-['DM_Sans'] z-[9999]">
+                  You don't have access
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Jobs */}

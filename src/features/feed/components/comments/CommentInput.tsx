@@ -250,7 +250,7 @@ export default function CommentInput({
                             </button>
                         )}
                     </div>
-                    <div className="w-full border border-ds-border rounded-[16px] p-3 bg-ds-surface-1 focus-within:border-ds-text-secondary transition-all flex flex-col justify-between gap-2 relative">
+                    <div className="w-full border border-ds-border rounded-[16px] p-3 bg-ds-bg focus-within:border-ds-text-secondary transition-all flex flex-col justify-between gap-2 relative">
                         <div className="flex flex-col items-start w-full min-w-0">
                             <MentionTextarea
                                 ref={textareaRef as any}

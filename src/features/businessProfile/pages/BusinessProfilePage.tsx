@@ -19,6 +19,13 @@ import { BlockIcon } from "@/components/icons";
 import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
 import { useUIStore } from "@/store/ui.store";
 import { toast } from "sonner";
+import { useOrgBlockPermissions } from "@/hooks/useOrgBlockPermissions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BusinessProfilePageProps {
   isOwnProfile?: boolean;
@@ -49,6 +56,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   const [showUnblockModal, setShowUnblockModal] = React.useState(false);
 
   const derivedOrgId = profileResponse?.org?.company_id || profileResponse?.org?.org_id || null;
+  const { canManageBlock, noBlockMessage } = useOrgBlockPermissions(derivedOrgId);
 
   // Ensure Company Profile scrolls to top (0, 0) for all tabs
   React.useEffect(() => {
@@ -499,16 +507,40 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
                   Unblock this member to view their profile, posts, and professional information again.
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowUnblockModal(true)}
-                disabled={unblockMutation.isPending}
-                className="px-4 py-1.5 min-h-[36px] bg-ds-accent hover:opacity-90 active:scale-95 rounded-[100px] inline-flex justify-center items-center gap-2 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-50 disabled:pointer-events-none"
-              >
-                <span className="text-ds-text-primary text-sm sm:text-base font-medium font-['DM_Sans'] leading-6">
-                  {unblockMutation.isPending ? "Unblocking..." : "Unblock"}
-                </span>
-              </button>
+              {!canManageBlock ? (
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip enableTouch>
+                    <TooltipTrigger asChild>
+                      <span className="inline-block cursor-not-allowed">
+                        <button
+                          type="button"
+                          disabled
+                          className="px-4 py-1.5 min-h-[36px] bg-ds-accent opacity-50 rounded-[100px] inline-flex justify-center items-center gap-2 outline-none pointer-events-none"
+                          aria-label="Unblock disabled"
+                        >
+                          <span className="text-ds-text-primary text-sm sm:text-base font-medium font-['DM_Sans'] leading-6">
+                            Unblock
+                          </span>
+                        </button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+                      {noBlockMessage || "You don't have access to block/unblock on the behalf of company"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowUnblockModal(true)}
+                  disabled={unblockMutation.isPending}
+                  className="px-4 py-1.5 min-h-[36px] bg-ds-accent hover:opacity-90 active:scale-95 rounded-[100px] inline-flex justify-center items-center gap-2 transition-all cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-ds-accent disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  <span className="text-ds-text-primary text-sm sm:text-base font-medium font-['DM_Sans'] leading-6">
+                    {unblockMutation.isPending ? "Unblocking..." : "Unblock"}
+                  </span>
+                </button>
+              )}
             </div>
           </>
         ) : (

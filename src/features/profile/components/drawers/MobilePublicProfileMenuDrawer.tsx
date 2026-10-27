@@ -198,7 +198,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
 
             {!canBlockTarget ? (
               <TooltipProvider>
-                <Tooltip delayDuration={100}>
+                <Tooltip enableTouch delayDuration={100}>
                   <TooltipTrigger asChild>
                     <span className="w-full inline-block cursor-not-allowed">
                       <button
@@ -227,7 +227,7 @@ export const MobilePublicProfileMenuDrawer: React.FC<MobilePublicProfileMenuDraw
 
             {!canReportTarget ? (
               <TooltipProvider>
-                <Tooltip delayDuration={100}>
+                <Tooltip enableTouch delayDuration={100}>
                   <TooltipTrigger asChild>
                     <span className="w-full inline-block cursor-not-allowed">
                       <button

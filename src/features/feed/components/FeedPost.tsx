@@ -1071,7 +1071,7 @@ export const FeedPost = (props: FeedPostProps) => {
         />
 
         <SavePostModal
-          postId={(props.id || targetId).toString()}
+          postId={(shared_post?.id || targetId).toString()}
           isOpen={isSaveModalOpen}
           onClose={() => setIsSaveModalOpen(false)}
           onSaved={() => setIsSaved(true)}

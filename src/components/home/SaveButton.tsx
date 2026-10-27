@@ -88,7 +88,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
     if (disabled) {
         return (
             <TooltipProvider delayDuration={200}>
-                <Tooltip>
+                <Tooltip enableTouch>
                     <TooltipTrigger asChild>
                         <span className="inline-flex items-center justify-center cursor-not-allowed">
                             <button

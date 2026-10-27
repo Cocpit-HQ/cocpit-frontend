@@ -2,15 +2,25 @@
 
 import React from "react";
 import { BlockIcon } from "@/components/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileBlockedStateProps {
   onUnblock: () => void;
   isLoading?: boolean;
+  canManageBlock?: boolean;
+  noBlockMessage?: string;
 }
 
 export const ProfileBlockedState: React.FC<ProfileBlockedStateProps> = ({
   onUnblock,
   isLoading = false,
+  canManageBlock = true,
+  noBlockMessage,
 }) => {
   return (
     /* FullPageError: w: 800px, h: 306px, p: 40px 20px, gap: 24px */
@@ -38,16 +48,40 @@ export const ProfileBlockedState: React.FC<ProfileBlockedStateProps> = ({
       </div>
 
       {/* Primary emphasis button: w: 86px, h: 36px, p: 6px 12px, gap: 10px, bg: #EC6229, rounded: 100px */}
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={onUnblock}
-        className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 transition-all flex flex-row justify-center items-center gap-[10px] cursor-pointer focus:outline-none flex-none shadow-md disabled:opacity-50 disabled:cursor-default disabled:pointer-events-none"
-      >
-        <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none text-center">
-          {isLoading ? "..." : "Unblock"}
-        </span>
-      </button>
+      {!canManageBlock ? (
+        <TooltipProvider delayDuration={100}>
+          <Tooltip enableTouch>
+            <TooltipTrigger asChild>
+              <span className="inline-block cursor-not-allowed">
+                <button
+                  type="button"
+                  disabled
+                  className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] flex flex-row justify-center items-center gap-[10px] outline-none flex-none shadow-md opacity-50 pointer-events-none"
+                  aria-label="Unblock disabled"
+                >
+                  <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none text-center">
+                    Unblock
+                  </span>
+                </button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs font-['DM_Sans'] z-50">
+              {noBlockMessage || "You don't have access to block/unblock on the behalf of company"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <button
+          type="button"
+          disabled={isLoading}
+          onClick={onUnblock}
+          className="w-[86px] h-[36px] px-[12px] py-[6px] rounded-[100px] bg-[var(--ds-accent)] hover:opacity-90 active:scale-95 transition-all flex flex-row justify-center items-center gap-[10px] cursor-pointer focus:outline-none flex-none shadow-md disabled:opacity-50 disabled:cursor-default disabled:pointer-events-none"
+        >
+          <span className="font-['DM_Sans'] font-medium text-[16px] leading-[24px] text-[var(--ds-text-primary)] flex-none text-center">
+            {isLoading ? "..." : "Unblock"}
+          </span>
+        </button>
+      )}
     </div>
   );
 };

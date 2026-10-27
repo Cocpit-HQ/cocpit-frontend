@@ -262,6 +262,14 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             isCancelled = true;
         };
     }, [session, status]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            sessionStorage.removeItem("cocpit_is_deactivating");
+            sessionStorage.removeItem("cocpit_is_deleting");
+        }
+    }, []);
+
     const prevActorRef = useRef<string | null>(null);
 
     useEffect(() => {

@@ -53,7 +53,7 @@ const BlockedUserRow = memo(({ user, onUnblock, canManageBlock = true, noBlockMe
 
       {!canManageBlock ? (
         <TooltipProvider>
-          <Tooltip delayDuration={100}>
+          <Tooltip delayDuration={100} enableTouch>
             <TooltipTrigger asChild>
               <span className="inline-block cursor-not-allowed">
                 <button

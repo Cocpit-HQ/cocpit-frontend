@@ -127,14 +127,14 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         router.replace(errorData.redirect_url);
         return;
       }
-      if (errorData?.is_company && (errorData?.org_id || errorData?.slug)) {
-        router.replace(`/organization/${errorData.org_id || errorData.slug}`);
+      if (errorData?.is_company && (errorData?.slug || errorData?.org_id)) {
+        router.replace(`/organization/${errorData.slug || errorData.org_id}`);
         return;
       }
       companyService.getCompany(userId)
         .then((comp) => {
-          if (comp && (comp.org_id || comp.slug)) {
-            router.replace(`/organization/${comp.org_id || comp.slug}`);
+          if (comp && (comp.slug || comp.org_id)) {
+            router.replace(`/organization/${comp.slug || comp.org_id}`);
           }
         })
         .catch(() => {});
@@ -147,7 +147,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   }, [userId]);
 
   const targetUserId = user?.id || userId;
-  const { canBlockTarget, message: noBlockMessage, canReportTarget, noReportMessage } = useOrgBlockPermissions(targetUserId);
+  const { canBlockTarget, canManageBlock, message: noBlockMessage, canReportTarget, noReportMessage } = useOrgBlockPermissions(targetUserId);
 
   const experiences = useMemo(() => user?.experiences || [], [user?.experiences]);
   const educations = useMemo(() => user?.educations || [], [user?.educations]);
@@ -538,7 +538,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       {showFollow && (
         isCompanyActor && !actingCompanyCanFollow ? (
           <TooltipProvider>
-            <Tooltip delayDuration={200}>
+            <Tooltip enableTouch delayDuration={200}>
               <TooltipTrigger asChild>
                 <span className="inline-flex cursor-not-allowed">
                   <button
@@ -629,7 +629,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             {!showFollow && !isConnected && (
               isCompanyActor && !actingCompanyCanFollow ? (
                 <TooltipProvider>
-                  <Tooltip delayDuration={200}>
+                  <Tooltip enableTouch delayDuration={200}>
                     <TooltipTrigger asChild>
                       <span className="w-full inline-flex cursor-not-allowed">
                         <DropdownMenuItem
@@ -726,7 +726,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
             {!canBlockTarget ? (
               <TooltipProvider>
-                <Tooltip delayDuration={100}>
+                <Tooltip delayDuration={100} enableTouch>
                   <TooltipTrigger asChild>
                     <div className="w-full">
                       <DropdownMenuItem
@@ -753,7 +753,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
             {!canReportTarget ? (
               <TooltipProvider>
-                <Tooltip delayDuration={100}>
+                <Tooltip delayDuration={100} enableTouch>
                   <TooltipTrigger asChild>
                     <div className="w-full">
                       <DropdownMenuItem
@@ -836,7 +836,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         )}
 
         {blocked ? (
-          <ProfileBlockedState onUnblock={() => setShowBlockDialog(true)} isLoading={isBlockLoading} />
+          <ProfileBlockedState
+            onUnblock={() => setShowBlockDialog(true)}
+            isLoading={isBlockLoading}
+            canManageBlock={canManageBlock}
+            noBlockMessage={noBlockMessage}
+          />
         ) : (
           <>
             {/* Divider */}

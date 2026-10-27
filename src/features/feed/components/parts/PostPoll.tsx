@@ -128,7 +128,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
               >
                 {isVoteRestricted ? (
                   <TooltipProvider delayDuration={100}>
-                    <Tooltip>
+                    <Tooltip enableTouch>
                       <TooltipTrigger asChild>
                         <div className="flex-1 flex min-w-0 cursor-not-allowed">
                           {pillContent}
@@ -160,7 +160,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
           if (disabled && !isEnded) {
             return (
               <TooltipProvider key={option.option_id} delayDuration={100}>
-                <Tooltip>
+                <Tooltip enableTouch>
                   <TooltipTrigger asChild>
                     <span className="self-stretch w-full block cursor-not-allowed">
                       <button
@@ -250,7 +250,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
             <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
             {disabled ? (
               <TooltipProvider delayDuration={100}>
-                <Tooltip>
+                <Tooltip enableTouch>
                   <TooltipTrigger asChild>
                     <span className="inline-flex cursor-not-allowed">
                       <button
@@ -286,7 +286,7 @@ export const PostPoll: React.FC<PostPollProps> = ({
             <div className="w-1 h-1 bg-ds-text-muted rounded-full shrink-0" />
             {disabled ? (
               <TooltipProvider delayDuration={100}>
-                <Tooltip>
+                <Tooltip enableTouch>
                   <TooltipTrigger asChild>
                     <span className="inline-flex cursor-not-allowed">
                       <button

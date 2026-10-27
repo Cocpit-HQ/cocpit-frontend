@@ -84,7 +84,7 @@ export const MobileBusinessProfileMenuDrawer: React.FC<MobileBusinessProfileMenu
             {!isOwnProfile && onBlockToggle && (
               canBlock === false ? (
                 <TooltipProvider>
-                  <Tooltip delayDuration={100}>
+                  <Tooltip enableTouch delayDuration={100}>
                     <TooltipTrigger asChild>
                       <span className="w-full inline-block cursor-not-allowed">
                         <button
@@ -119,7 +119,7 @@ export const MobileBusinessProfileMenuDrawer: React.FC<MobileBusinessProfileMenu
             {!isOwnProfile && onReportCompany && (
               canReport === false ? (
                 <TooltipProvider>
-                  <Tooltip delayDuration={100}>
+                  <Tooltip enableTouch delayDuration={100}>
                     <TooltipTrigger asChild>
                       <span className="w-full inline-block cursor-not-allowed">
                         <button

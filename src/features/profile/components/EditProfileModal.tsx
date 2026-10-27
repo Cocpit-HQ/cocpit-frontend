@@ -248,6 +248,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       toast.error("Headline cannot exceed 200 characters");
       return;
     }
+    if (formData.about && formData.about.length > 2000) {
+      toast.error("About cannot exceed 2000 characters");
+      return;
+    }
     setLastClickTime(now)
     setIsSaving(true)
 
@@ -567,9 +571,15 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </div>
 
             <div className="flex flex-col" ref={aboutRef}>
-              <Label className={labelStyles}>About*</Label>
+              <div className="flex justify-between items-center mb-[8px]">
+                <Label className="text-[14px] font-normal text-foreground font-['DM_Sans'] leading-[20px] mb-0">About*</Label>
+                <span className={`text-[12px] font-normal leading-[16px] font-['DM_Sans'] ${(formData.about?.length || 0) > 2000 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                  {formData.about?.length || 0}/2000
+                </span>
+              </div>
               <Textarea
                 value={formData.about}
+                maxLength={2000}
                 onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
                 className="w-full min-h-[100px] bg-card border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-['DM_Sans'] text-[14px] leading-[20px] resize-none focus-visible:border-primary focus-visible:outline-none transition-all shadow-none"
                 placeholder="Tell us about yourself..."

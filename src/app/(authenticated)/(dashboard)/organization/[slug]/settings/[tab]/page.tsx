@@ -52,11 +52,13 @@ export default async function OrganizationSettingsTabPage({ params }: { params: 
       return <LegalSettingsPage />;
     case 'account-password':
     case 'account-add-password':
+    // Temporarily disabled for organizations per SCRUM-1479 (uncomment to re-enable when ready)
+    // case 'account-phone':
+    //   return <ManagePhonePage />;
+    case 'account-phone':
       redirect(`/organization/${resolvedParams.slug}/settings/account`);
     case 'account-email':
       return <ManageEmailPage />;
-    case 'account-phone':
-      return <ManagePhonePage />;
     default:
       redirect(`/organization/${resolvedParams.slug}/settings/account`);
   }

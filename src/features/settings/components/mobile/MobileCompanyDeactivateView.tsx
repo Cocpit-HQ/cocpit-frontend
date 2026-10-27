@@ -129,6 +129,9 @@ export function MobileCompanyDeactivateView({
         await refetch();
         if (onBack) onBack();
       } else {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('cocpit_is_deactivating', 'true');
+        }
         await deactivateOrganization(targetId, code);
         setIsSuccess(true);
         toast.success(`Your ${entityLabel} account has been deactivated`);
@@ -145,6 +148,9 @@ export function MobileCompanyDeactivateView({
         }, 500);
       }
     } catch (err: any) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('cocpit_is_deactivating');
+      }
       const rawMsg = err.response?.data?.message || err.message;
       const message = (rawMsg === 'Incorrect code' || rawMsg === 'Invalid verification code')
         ? 'Invalid verification code'

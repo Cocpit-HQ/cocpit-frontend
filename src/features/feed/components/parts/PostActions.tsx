@@ -59,7 +59,7 @@ export const PostActions = ({
         <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
           {disabled ? (
             <TooltipProvider delayDuration={200}>
-              <Tooltip>
+              <Tooltip enableTouch>
                 <TooltipTrigger asChild>
                   <span className="inline-flex items-center gap-2 cursor-not-allowed">
                     <button
@@ -109,7 +109,7 @@ export const PostActions = ({
         <FeatureDisabledTooltip featureKey="enableFeedPostInteractions">
           {disabled ? (
             <TooltipProvider delayDuration={200}>
-              <Tooltip>
+              <Tooltip enableTouch>
                 <TooltipTrigger asChild>
                   <span className="inline-flex items-center gap-2 cursor-not-allowed">
                     <button
@@ -175,7 +175,7 @@ export const PostActions = ({
         {/* Share */}
         {disabled ? (
           <TooltipProvider delayDuration={200}>
-            <Tooltip>
+            <Tooltip enableTouch>
               <TooltipTrigger asChild>
                 <span className="inline-flex items-center gap-2 cursor-not-allowed">
                   <button

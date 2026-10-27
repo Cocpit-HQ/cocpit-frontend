@@ -133,6 +133,7 @@ export default function EditProfilePage({ }: EditProfilePageProps) {
                 id="about"
                 value={formData.about}
                 onChange={handleChange}
+                maxLength={2000}
                 className={`${inputStyles} min-h-[150px]`}
               />
             </div>

@@ -801,6 +801,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       const currentProfile = activeProfileRef.current;
       if (currentProfile?.type === 'COMPANY' && currentProfile.id === payload.orgId) {
+        if (
+          typeof window !== 'undefined' &&
+          (sessionStorage.getItem('cocpit_is_deactivating') === 'true' ||
+            sessionStorage.getItem('cocpit_is_deleting') === 'true')
+        ) {
+          return;
+        }
         if (session?.user) {
           switchProfile('USER', (session.user as any).id || "user");
         }

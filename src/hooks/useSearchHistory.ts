@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useContext } from "react";
 import { useSession } from "next-auth/react";
 import api from "@/lib/axios";
 import { SearchedUser } from "@/types/user";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { SocialContext } from "@/context/SocialContext";
 
 export type HistoryItem = 
     | { type: 'QUERY', value: string, id: string }
@@ -11,6 +12,8 @@ export type HistoryItem =
 export const useSearchHistory = () => {
     const { data: session } = useSession();
     const { activeProfile, isCompany } = useActiveProfile();
+    const social = useContext(SocialContext);
+    const blockedIds = useMemo(() => social?.blockedIds || [], [social?.blockedIds]);
     const userId = session?.user?.id || session?.user?.email || 'guest';
 
     // Scope search history by active profile context (personal vs organization)
@@ -21,6 +24,12 @@ export const useSearchHistory = () => {
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const hasFetchedRef = useRef(false);
+
+    // Filter out blocked users & organizations
+    const filteredHistory = useMemo(() => 
+        history.filter(item => item.type !== 'USER' || !blockedIds.some(bid => String(bid) === String(item.value?.id))),
+        [history, blockedIds]
+    );
 
     // 1. Load from localStorage immediately, then fetch from API
     useEffect(() => {
@@ -77,6 +86,11 @@ export const useSearchHistory = () => {
     // Save search
     const saveSearch = (item: any) => {
         if (!item) return;
+
+        // Do not save blocked users or organizations
+        if (typeof item !== 'string' && item.id && blockedIds.some(bid => String(bid) === String(item.id))) {
+            return;
+        }
         
         let queryToSave = '';
         let profileSnapshot = null;
@@ -170,5 +184,5 @@ export const useSearchHistory = () => {
         }
     };
 
-    return { history, saveSearch, removeSearch, clearAll, isLoading };
+    return { history: filteredHistory, saveSearch, removeSearch, clearAll, isLoading };
 };

@@ -47,9 +47,9 @@ export const DynamicMention = ({ displayName, handle, mentionedUsers, disableLin
 
   const nameToShow = user?.full_name || displayName;
   const linkHref = isCompany
-    ? `/organization/${user?.org_id || user?.user_id || handle}`
+    ? `/organization/${user?.slug || user?.account_name || user?.org_id || user?.user_id || handle}`
     : user
-    ? `/profile/${user.user_id}`
+    ? `/profile/${user?.slug || user?.account_name || user?.user_id || handle}`
     : `/profile/${handle.toLowerCase()}`;
   
   const defaultClassName = "mention-link text-ds-accent text-[var(--ds-accent)] !text-[var(--ds-accent)] font-semibold";

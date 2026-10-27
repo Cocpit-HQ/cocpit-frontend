@@ -270,7 +270,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         />
       </div>
 
-      {/* 8. About (Frame 2609640: 800px width, counter 0/500) */}
+      {/* 8. About (Frame 2609640: 800px width, counter 0/2000) */}
       <ProfileEditField
         id="about"
         label="About"
@@ -279,7 +279,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         placeholder="Describe your work, impact, or achievements"
         isTextarea={true}
         rows={1}
-        maxLength={500}
+        maxLength={2000}
         showCounter={true}
         className="w-full max-w-[800px]"
         labelClassName="w-[35px] text-center"

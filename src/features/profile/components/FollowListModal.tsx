@@ -538,7 +538,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
           if (isCompanyActor && !canFollow) {
             return (
               <TooltipProvider delayDuration={200}>
-                <Tooltip>
+                <Tooltip enableTouch>
                   <TooltipTrigger asChild>
                     <span className="inline-flex cursor-not-allowed">
                       <button
@@ -572,7 +572,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         if (isCompanyActor && !canFollow) {
           return (
             <TooltipProvider delayDuration={200}>
-              <Tooltip>
+              <Tooltip enableTouch>
                 <TooltipTrigger asChild>
                   <span className="inline-flex cursor-not-allowed">
                     <button
@@ -607,7 +607,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
       if (isCompanyActor && !canFollow) {
         return (
           <TooltipProvider delayDuration={200}>
-            <Tooltip>
+            <Tooltip enableTouch>
               <TooltipTrigger asChild>
                 <span className="inline-flex cursor-not-allowed">
                   <button
@@ -662,7 +662,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         if (isCompanyActor && !canFollow) {
           return (
             <TooltipProvider delayDuration={200}>
-              <Tooltip>
+              <Tooltip enableTouch>
                 <TooltipTrigger asChild>
                   <span className="inline-flex cursor-not-allowed">
                     <button

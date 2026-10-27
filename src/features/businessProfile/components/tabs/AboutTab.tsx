@@ -3,10 +3,11 @@
 import React, { useState, useMemo } from "react";
 import { BusinessProfileData } from "../../types/business-profile.types";
 import { Icon, SVG_ICONS, GoogleIcon } from "@/components/icons";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { businessProfileService } from "../../services/businessProfile.service";
 import InteractiveLocationMap from "@/features/company-onboarding/components/InteractiveLocationMap";
+import { toast } from "@/shared/commonComponents/GlobalToast";
 
 const getGoogleMapsUrl = (
   locationQuery?: string,
@@ -50,6 +51,7 @@ interface AboutTabProps {
 
 export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
   const orgSlug = data.slug || data.id;
   const { data: aboutData, isLoading } = useQuery({
     queryKey: ["orgAbout", orgSlug],
@@ -72,6 +74,14 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
 
   // ── Email ──
   const email = (about.email || (aboutData as any)?.email || data.email || "").trim();
+
+  const handleCopyEmail = () => {
+    if (!email) return;
+    navigator.clipboard?.writeText(email);
+    setCopiedEmail(true);
+    toast.success("Email copied to clipboard");
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
 
   // ── Part 2: Row 1 (Website & Phone number) ──
   const websiteUrl = (about.website || data.websiteUrl || "").trim();
@@ -259,12 +269,21 @@ export default function AboutTab({ data, isOwnProfile }: AboutTabProps) {
                 <span className="text-ds-text-primary text-sm font-semibold font-['DM_Sans'] leading-5">
                   Email
                 </span>
-                <a
-                  href={`mailto:${email}`}
-                  className="profile-website-link text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 break-all max-w-full hover:no-underline hover:opacity-85 transition-opacity"
+                <button
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="group inline-flex items-center gap-2 text-[var(--ds-accent)] !text-[var(--ds-accent)] text-sm font-normal font-['DM_Sans'] leading-5 max-w-full hover:opacity-85 transition-opacity cursor-pointer bg-transparent border-0 p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)] rounded-sm"
+                  title={copiedEmail ? "Copied!" : "Click to copy email"}
+                  aria-label={`Copy email address ${email}`}
                 >
-                  {email}
-                </a>
+                  <span className="break-all">{email}</span>
+                  {copiedEmail && (
+                    <span className="inline-flex items-center gap-1 text-xs text-[var(--ds-success)] font-medium shrink-0 animate-in fade-in duration-200">
+                      <Check className="w-3.5 h-3.5 text-[var(--ds-success)]" />
+                      <span>Copied!</span>
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
           )}

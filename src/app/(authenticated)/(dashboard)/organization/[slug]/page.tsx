@@ -34,6 +34,14 @@ export default function CompanyPage() {
 
     const { data: session } = useSession();
 
+    // Normalize URL if visited via ID/UUID to canonical slug
+    React.useEffect(() => {
+        if (company?.slug && slug !== company.slug && !isLoading) {
+            const search = searchParams?.toString();
+            router.replace(`/organization/${company.slug}${search ? `?${search}` : ''}`);
+        }
+    }, [company?.slug, slug, isLoading, router, searchParams]);
+
     // Record organization profile view
     React.useEffect(() => {
         if (company?.org_id) {

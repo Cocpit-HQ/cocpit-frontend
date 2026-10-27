@@ -10,6 +10,7 @@ import { companyService } from '@/services/organization.service';
 import { SearchedUser } from '@/types/user';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useToast } from '@/hooks/use-toast';
+import { useBodyScrollLock } from '@/hooks/use-body-scroll-lock';
 import { MobileSearchScreen } from './MobileSearchScreen';
 
 interface GlobalSearchProps {
@@ -29,9 +30,18 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
   
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Lock background feed scrolling when search is opened on desktop
+  useBodyScrollLock(isFocused && variant === 'desktop');
+  
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (e.key === 'Escape') {
+        setIsFocused(false);
+        inputRef.current?.blur();
+      } else if (e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         setIsKeyboardNavigating(true);
       }
     };
@@ -47,8 +57,6 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
       window.removeEventListener('mousemove', handleMouseMove, true);
     };
   }, []);
-  
-  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const debouncedSearch = useDebounce(searchQuery, 600);
   const { history, saveSearch, removeSearch, clearAll } = useSearchHistory();
@@ -83,6 +91,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsFocused(false);
+        inputRef.current?.blur();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -92,6 +101,8 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   useEffect(() => {
     if (pathname && !pathname.startsWith('/search')) {
       setSearchQuery('');
+      setIsFocused(false);
+      inputRef.current?.blur();
     }
   }, [pathname]);
 
@@ -196,6 +207,7 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   const inputEl = (
     <>
       <input
+        ref={inputRef}
         type="text"
         placeholder="Search"
         value={searchQuery}
@@ -216,12 +228,13 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
             : "w-[20px] h-[20px] text-ds-text-primary shrink-0 cursor-pointer hover:text-ds-accent transition-colors"
         }
         onClick={() => {
-          if (searchQuery.trim()) {
-            setIsFocused(true);
-            // Outdated search page navigation commented out:
-            // setIsFocused(false);
-            // router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-          }
+          inputRef.current?.focus();
+          setIsFocused(true);
+          // Outdated search page navigation commented out:
+          // if (searchQuery.trim()) {
+          //   setIsFocused(false);
+          //   router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+          // }
         }}
       />
     </>
@@ -420,22 +433,35 @@ export function GlobalSearch({ hasSidebar = true, variant = 'desktop' }: GlobalS
   }
 
   return (
-    <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
-      <div 
-        ref={dropdownRef}
-        className={`w-full pointer-events-auto ${hasSidebar ? 'pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8' : 'px-4 sm:px-6'}`}
-      >
-        <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
-          <div className="relative w-full max-w-[442px]">
-            {/* Search Input Bar */}
-            <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
-              {inputEl}
+    <>
+      {/* Backdrop overlay to reduce background page (feed) opacity and capture outside clicks */}
+      {isFocused && (
+        <div 
+          className="fixed inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-[2px] z-[45] pointer-events-auto transition-opacity duration-200 ease-out"
+          onClick={() => {
+            setIsFocused(false);
+            inputRef.current?.blur();
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className={`fixed top-[40px] left-0 ${hasSidebar ? 'sm:left-[220px]' : ''} right-0 pointer-events-none z-50 ${paddingRightClass}`}>
+        <div 
+          className={`w-full pointer-events-none ${hasSidebar ? 'pl-4 sm:pl-6 md:pl-8 pr-[120px] md:pr-8' : 'px-4 sm:px-6'}`}
+        >
+          <div className="w-full max-w-[800px] mx-auto flex flex-col items-center">
+            <div ref={dropdownRef} className="relative w-full max-w-[442px] pointer-events-auto">
+              {/* Search Input Bar */}
+              <div className="box-border flex flex-row justify-between items-center px-[12px] py-[6px] gap-[10px] w-full h-[40px] border-b border-ds-text-primary bg-transparent">
+                {inputEl}
+              </div>
+              {dropdownEl}
             </div>
-            {dropdownEl}
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
