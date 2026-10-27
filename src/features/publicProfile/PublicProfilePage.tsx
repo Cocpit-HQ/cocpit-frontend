@@ -123,14 +123,18 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   useEffect(() => {
     if (userError && userId) {
       const errorData = (userError as any)?.response?.data;
-      if (errorData?.is_company && (errorData?.slug || errorData?.org_id)) {
-        router.replace(`/organization/${errorData.slug || errorData.org_id}`);
+      if (errorData?.redirect_url) {
+        router.replace(errorData.redirect_url);
+        return;
+      }
+      if (errorData?.is_company && (errorData?.org_id || errorData?.slug)) {
+        router.replace(`/organization/${errorData.org_id || errorData.slug}`);
         return;
       }
       companyService.getCompany(userId)
         .then((comp) => {
-          if (comp && (comp.slug || comp.org_id)) {
-            router.replace(`/organization/${comp.slug || comp.org_id}`);
+          if (comp && (comp.org_id || comp.slug)) {
+            router.replace(`/organization/${comp.org_id || comp.slug}`);
           }
         })
         .catch(() => {});

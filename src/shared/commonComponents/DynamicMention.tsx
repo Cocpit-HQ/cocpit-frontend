@@ -41,13 +41,13 @@ export const DynamicMention = ({ displayName, handle, mentionedUsers, disableLin
       user.is_company ||
       user.type?.toUpperCase() === 'COMPANY' ||
       user.account_type?.toUpperCase() === 'COMPANY' ||
-      Boolean(user.org_id && !user.user_id)
+      Boolean(user.org_id)
     )
   );
 
   const nameToShow = user?.full_name || displayName;
   const linkHref = isCompany
-    ? `/organization/${user?.slug || user?.account_name || user?.user_id || handle}`
+    ? `/organization/${user?.org_id || user?.user_id || handle}`
     : user
     ? `/profile/${user.user_id}`
     : `/profile/${handle.toLowerCase()}`;

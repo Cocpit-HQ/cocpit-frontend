@@ -15,6 +15,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useSocket } from "@/context/SocketContext";
 import { Icon } from "@iconify/react";
 import { ChevronLeft, X, Building2 } from "lucide-react";
+import { BlockIcon } from "@/components/icons";
 import { GlobalSearch } from "@/features/navigation/components/GlobalSearch";
 import { useUIStore } from "@/store/ui.store";
 import { toast } from "sonner";
@@ -188,29 +189,49 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
   const handleClose = () => {
     router.push("/feed");
   };
-  if (isError || !profileResponse || !profileResponse.org) {
+  const isBlockedByTarget = Boolean(
+    profileResponse?.relationship?.is_blocked && 
+    profileResponse?.relationship?.is_blocked_by_me === false
+  );
+
+  if (isError || !profileResponse || !profileResponse.org || isBlockedByTarget) {
     return (
-      <div className="min-h-screen bg-[var(--ds-bg)] flex flex-col items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-md mx-auto bg-[var(--ds-surface-1)] border border-[var(--ds-border)] p-8 rounded-[16px]">
-          <div className="w-16 h-16 bg-[var(--ds-surface-2)] rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon icon="lucide:ban" className="w-8 h-8 text-[var(--ds-text-muted)]" />
+      <div className="min-h-screen w-full bg-[var(--ds-bg)] flex flex-col items-center justify-center p-5 select-none">
+        <div className="w-full max-w-[800px] flex flex-col items-center justify-center gap-6 text-center animate-in fade-in duration-200">
+          <div className="w-16 h-16 rounded-full bg-[var(--ds-surface-1)] p-4 flex items-center justify-center shrink-0">
+            <BlockIcon
+              size={32}
+              className="w-8 h-8 text-[var(--ds-text-muted)] shrink-0"
+              fill="var(--ds-text-muted)"
+            />
           </div>
-          <h1 className="text-xl font-bold text-[var(--ds-text-primary)]">Profile Unavailable</h1>
-          <p className="text-[var(--ds-text-secondary)] text-sm leading-relaxed">
-            The profile you are looking for could not be found. They may have been removed or the link is incorrect.
-          </p>
+          <div className="w-full max-w-[760px] flex flex-col items-center gap-2">
+            <h1 className="text-[var(--ds-text-primary)] text-base font-semibold font-['DM_Sans'] leading-6 text-center">
+              Profile unavailable
+            </h1>
+            <p className="w-full max-w-[360px] text-[var(--ds-text-secondary)] text-sm font-normal font-['DM_Sans'] leading-5 text-center">
+              This profile could not be loaded or does not exist.
+            </p>
+          </div>
           <button
+            type="button"
             onClick={() => router.push('/feed')}
-            className="inline-flex items-center justify-center rounded-full text-sm font-medium transition-colors bg-[var(--ds-accent)] text-white hover:opacity-90 h-9 px-6 py-2 mt-4 cursor-pointer"
+            className="h-9 px-3 py-1.5 bg-[var(--ds-accent)] hover:opacity-90 active:scale-[0.98] rounded-[100px] flex items-center justify-center gap-2.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-accent)]"
           >
-            Return to Feed
+            <span className="text-[var(--ds-text-primary)] text-base font-medium font-['DM_Sans'] leading-6 whitespace-nowrap">
+              Back to Feed
+            </span>
           </button>
         </div>
       </div>
     );
   }
 
-  const isBlocked = Boolean(profileResponse?.relationship?.is_blocked);
+  const isBlocked = Boolean(
+    profileResponse?.relationship?.is_blocked_by_me ?? 
+    (profileResponse as any)?.is_blocked_by_me ?? 
+    profileResponse?.relationship?.is_blocked
+  );
 
   const renderTopNavigation = () => (
     <div className="fixed top-0 left-0 right-0 h-12 sm:h-[100px] bg-ds-bg z-40 px-4 flex items-center justify-between sm:block">
@@ -374,7 +395,7 @@ export function BusinessProfilePage({ isOwnProfile = false }: BusinessProfilePag
     entityType: isEdu ? "INSTITUTION" : "COMPANY",
     isFollowing: !isActorThisCompany && Boolean(profileResponse.relationship?.is_following),
     isSubscribed: profileResponse.relationship?.is_subscribed || false,
-    isBlocked: profileResponse.relationship?.is_blocked || false,
+    isBlocked: Boolean(profileResponse.relationship?.is_blocked_by_me ?? profileResponse.relationship?.is_blocked),
     employeeGrowth: (() => {
       const eg = profileResponse.relevance?.employee_growth || profileResponse.employee_growth;
       if (!eg) return undefined;
