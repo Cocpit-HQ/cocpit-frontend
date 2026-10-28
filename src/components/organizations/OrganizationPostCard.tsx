@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Post } from '@/types/entities';
 import { ThumbsUp, MessageCircle, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AdaptiveFeedVideo } from '@/features/feed/components/parts/AdaptiveFeedVideo';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -74,13 +75,14 @@ export function OrganizationPostCard({ post, onDelete, onEdit, isOwner }: Organi
                                 <span className="relative rounded bg-black/70 px-3 py-2">Video processing…</span>
                             </div>
                         ) : (
-                            <video
+                            <AdaptiveFeedVideo
                                 src={post.videoProcessingStatus === 'ready' ? post.videoHlsSrc || mediaUrl : mediaUrl}
+                                fallbackSrc={mediaUrl}
                                 poster={post.videoPosterSrc}
                                 muted
                                 loop
                                 playsInline
-                                preload="metadata"
+                                preload="none"
                                 className="w-full h-full object-cover"
                             />
                         )

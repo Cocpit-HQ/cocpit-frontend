@@ -4,6 +4,7 @@ import { updatePost, UpdatePostRequest, getPostById } from '@/services/api/posts
 import { uploadMedia } from '@/services/api/upload';
 import { companyService } from '@/services/organization.service';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
+import { rememberLocalMediaPreview } from '@/features/feed/utils/localMediaPreview';
 
 export const postApi = {
   create: async (
@@ -40,7 +41,10 @@ export const postApi = {
 
     // Upload originals to R2 and create the post while derivatives process asynchronously.
     console.log("[postApi.create] Uploading", files.length, "files directly to R2...");
-    const uploadRes = await uploadMedia(files);
+    const uploadRes = await uploadMedia(files, { registerWithPost: true });
+    files.forEach((file, index) => {
+      if (uploadRes[index]?.master_url) rememberLocalMediaPreview(uploadRes[index].master_url, file);
+    });
     const mediaUrls = uploadRes;
     const mediaMetadata = uploadRes.map((item) => ({
       width: item.width || undefined,
@@ -78,24 +82,6 @@ export const postApi = {
       ? response.data.post!
       : await getPostById(response.data.postId);
     const mappedPost = mapBackendPostToFrontend(createdPost);
-    const localImagePreviews = files.flatMap((file, index) => {
-      if (uploadRes[index]?.media_type !== "image" || mappedPost.imageProcessingStatuses?.[index] !== "processing") return [];
-      const previewUrl = URL.createObjectURL(file);
-      window.setTimeout(() => URL.revokeObjectURL(previewUrl), 5 * 60 * 1000);
-      return [previewUrl];
-    });
-    const localVideoPreview = files.find((file, index) => uploadRes[index]?.media_type === "video");
-    if (localVideoPreview && mappedPost.videoProcessingStatus === "processing") {
-      mappedPost.videoSrc = URL.createObjectURL(localVideoPreview);
-      window.setTimeout(() => {
-        if (mappedPost.videoSrc?.startsWith("blob:")) URL.revokeObjectURL(mappedPost.videoSrc);
-      }, 5 * 60 * 1000);
-    }
-    if (localImagePreviews.length) {
-      mappedPost.images = localImagePreviews;
-      mappedPost.imageSrc = localImagePreviews[0];
-      mappedPost.imageProcessingStatuses = localImagePreviews.map(() => "ready");
-    }
     return {
       postId: response.data.postId,
       mappedPost

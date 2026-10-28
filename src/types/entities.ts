@@ -172,6 +172,7 @@ export interface Post {
   images?: string[];
   avifImages?: Array<string | null>;
   imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
+  imageLocalPreviews?: Array<string | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
   mediaWidth?: number;
   mediaHeight?: number;
@@ -179,6 +180,7 @@ export interface Post {
   videoHlsSrc?: string;
   videoHdrSrc?: string;
   videoPosterSrc?: string;
+  videoLocalPreview?: string;
   videoProcessingStatus?: "processing" | "ready" | "failed";
   videoHdrProcessingStatus?: "processing" | "ready" | "failed" | "not_applicable";
   aspectRatio?: string;

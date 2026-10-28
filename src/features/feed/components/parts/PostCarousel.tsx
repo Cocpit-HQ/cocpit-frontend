@@ -12,6 +12,7 @@ export interface PostCarouselProps {
   images: string[];
   avifImages?: Array<string | null>;
   imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
+  imageLocalPreviews?: Array<string | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
   priority?: boolean;
   aspectRatio?: string | number;
@@ -83,6 +84,7 @@ export function PostCarousel({
   images,
   avifImages = [],
   imageProcessingStatuses = [],
+  imageLocalPreviews = [],
   imageDimensions,
   priority = false,
   onImageLoad,
@@ -317,15 +319,19 @@ export function PostCarousel({
                   className={slideCls}
                   style={slideStyle}
                 >
-                  {imageProcessingStatuses[index] === "processing" || failedImageUrls.includes(src) ? (
+                  {(imageProcessingStatuses[index] === "processing" && !imageLocalPreviews[index] && /\.(heic|heif)(\?|#|$)/i.test(src))
+                    || (failedImageUrls.includes(src) && !imageLocalPreviews[index]) ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">
-                      {imageProcessingStatuses[index] === "processing" ? "Image processing…" : "Image unavailable"}
+                      {imageProcessingStatuses[index] === "processing" ? "Preparing image…" : "Image unavailable"}
                     </div>
                   ) : (
                   <picture>
+                  {imageLocalPreviews[index] && imageLocalPreviews[index] !== src && (
+                    <img src={imageLocalPreviews[index]} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain" />
+                  )}
                   {avifImages[index] && <source srcSet={avifImages[index] || undefined} type="image/avif" />}
                   <Image
-                    src={src}
+                    src={failedImageUrls.includes(src) ? imageLocalPreviews[index] || src : src}
                     alt={`Post image ${index + 1}`}
                     fill
                     className={

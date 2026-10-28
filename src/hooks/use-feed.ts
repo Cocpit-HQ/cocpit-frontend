@@ -12,6 +12,36 @@ import React, { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
 type FeedPage = Omit<FeedResponse, 'posts'> & { posts: Post[] };
+type FeedData = InfiniteData<FeedPage>;
+type PostWithSharedId = Post & { shared_post_id?: string };
+const excludesPost = (post: Post, id: string) =>
+  post.id !== id && post.shared_post?.id !== id && (post as PostWithSharedId).shared_post_id !== id;
+
+// A ranked or cached slice may include a new post on one request and omit it
+// on the next. Keep its local identity and preview until the creator lane has
+// settled; a server copy of the same ID must not clear that identity.
+function reconcileCreatedPost(serverPost: Post, localPost?: Post): Post {
+  if (!localPost?._feedCreatedOptimistically) return serverPost;
+  const imageLocalPreviews = serverPost.imageLocalPreviews?.length
+    ? serverPost.imageLocalPreviews
+    : localPost.imageLocalPreviews;
+  const videoLocalPreview = serverPost.videoLocalPreview || localPost.videoLocalPreview;
+  const images = serverPost.images?.map((src, index) =>
+    serverPost.imageProcessingStatuses?.[index] === 'processing' && imageLocalPreviews?.[index]
+      ? imageLocalPreviews[index]!
+      : src
+  );
+  return {
+    ...serverPost,
+    _feedCreatedOptimistically: true,
+    imageLocalPreviews,
+    videoLocalPreview,
+    images,
+    imageSrc: images?.[0] || serverPost.imageSrc,
+    videoSrc: serverPost.videoProcessingStatus === 'processing' && videoLocalPreview
+      ? videoLocalPreview : serverPost.videoSrc,
+  };
+}
 
 export const useFeed = (enableInitialFetch = true) => {
   const { data: session } = useSession();
@@ -54,12 +84,15 @@ export const useFeed = (enableInitialFetch = true) => {
       // version replaces the optimistic copy naturally.
       if (!pageParam) {
         const cachedData = queryClient.getQueryData<InfiniteData<FeedPage>>(feedQueryKey);
-        const serverIds = new Set(serverPosts.map((post) => post.id));
-        const retainedPosts = (cachedData?.pages || []).flatMap((page) => page.posts)
+        const cachedPosts = (cachedData?.pages || []).flatMap((page) => page.posts);
+        const localById = new Map(cachedPosts.map((post) => [post.id, post]));
+        const reconciledPosts = serverPosts.map((post) => reconcileCreatedPost(post, localById.get(post.id)));
+        const serverIds = new Set(reconciledPosts.map((post) => post.id));
+        const retainedPosts = cachedPosts
           .filter((post) => post._feedCreatedOptimistically && !serverIds.has(post.id));
         return {
           ...response,
-          posts: [...retainedPosts, ...serverPosts],
+          posts: [...retainedPosts, ...reconciledPosts],
         };
       }
       return {
@@ -91,13 +124,13 @@ export const useFeed = (enableInitialFetch = true) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const deletePost = useCallback(async (id: string, companyId?: string) => {
-    queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedData>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
-          posts: page.posts.filter((p: Post) => p.id !== id && p.shared_post?.id !== id && (p as any).shared_post_id !== id)
+          posts: page.posts.filter((post) => excludesPost(post, id))
         }))
       };
     });
@@ -118,13 +151,13 @@ export const useFeed = (enableInitialFetch = true) => {
   }, [feedQueryKey, queryClient]);
 
   const togglePostVisibility = useCallback((id: string) => {
-    queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedData>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
-          posts: page.posts.map((post: Post) =>
+          posts: page.posts.map((post) =>
             post.id === id
               ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
               : post
@@ -136,11 +169,11 @@ export const useFeed = (enableInitialFetch = true) => {
 
   const addPost = useCallback((post: Post) => {
     const optimisticPost = { ...post, _feedCreatedOptimistically: true };
-    queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
-      if (!oldData) return oldData;
+    queryClient.setQueryData<FeedData>(feedQueryKey, (oldData) => {
+      if (!oldData) return { pages: [{ posts: [optimisticPost], nextCursor: null }], pageParams: [null] };
       // Prevent duplicates
-      const exists = oldData.pages.some((page: any) =>
-        page.posts.some((p: Post) => p.id === post.id)
+      const exists = oldData.pages.some((page) =>
+        page.posts.some((existing) => existing.id === post.id)
       );
       if (exists) return oldData;
 
@@ -156,13 +189,13 @@ export const useFeed = (enableInitialFetch = true) => {
   }, [feedQueryKey, queryClient]);
 
   const updatePostInFeed = useCallback((id: string, updates: Partial<Post>) => {
-    queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedData>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
-          posts: page.posts.map((post: Post) =>
+          posts: page.posts.map((post) =>
             post.id === id ? { ...post, ...updates } : post
           )
         }))
@@ -172,13 +205,13 @@ export const useFeed = (enableInitialFetch = true) => {
 
   const removePostFromFeed = useCallback((id: string) => {
     // 1. Remove from feed queries (infinite query format)
-    queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedData>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
-          posts: page.posts.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id)
+          posts: page.posts.filter((post) => excludesPost(post, id))
         }))
       };
     });
@@ -186,13 +219,13 @@ export const useFeed = (enableInitialFetch = true) => {
     // 2. Remove from profile-posts query (standard array format)
     queryClient.setQueriesData<Post[]>({ queryKey: ["profile-posts"] }, (oldData) => {
       if (!oldData || !Array.isArray(oldData)) return oldData;
-      return oldData.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id);
+      return oldData.filter((post) => excludesPost(post, id));
     });
 
     // 3. Remove from profile-posts-preview query (standard array format)
     queryClient.setQueriesData<Post[]>({ queryKey: ["profile-posts-preview"] }, (oldData) => {
       if (!oldData || !Array.isArray(oldData)) return oldData;
-      return oldData.filter((post: Post) => post.id !== id && post.shared_post?.id !== id && (post as any).shared_post_id !== id);
+      return oldData.filter((post) => excludesPost(post, id));
     });
   }, [feedQueryKey, queryClient]);
 
@@ -229,17 +262,17 @@ export const useFeed = (enableInitialFetch = true) => {
       const customEvent = e as CustomEvent;
       const { repostId, originalPostId } = customEvent.detail;
 
-      queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
+      queryClient.setQueryData<FeedData>(feedQueryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          pages: oldData.pages.map((page: any) => ({
+          pages: oldData.pages.map((page) => ({
             ...page,
-            posts: page.posts.filter((p: Post) => {
+            posts: page.posts.filter((p) => {
               if (repostId && p.id.toString() === repostId.toString()) return false;
               if (p.shared_post?.id?.toString() === originalPostId?.toString() && p.authorId === activeProfile?.id) return false;
               return true;
-            }).map((p: Post) => {
+            }).map((p) => {
               if (p.id.toString() === originalPostId?.toString()) {
                 return { ...p, isReposted: false, repostId: null, shares: Math.max(0, (Number(p.shares) || 1) - 1).toString() };
               }

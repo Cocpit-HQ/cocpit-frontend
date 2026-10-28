@@ -966,8 +966,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                   updated.videoPosterSrc = payload.media.stream_thumbnail_url || post.videoPosterSrc;
                   updated.videoProcessingStatus = payload.processing_status || post.videoProcessingStatus;
                   updated.videoHdrProcessingStatus = payload.media.hdr_processing_status || post.videoHdrProcessingStatus;
-                  if ((processingStatus === 'ready' || processingStatus === 'failed') && post.videoSrc?.startsWith('blob:')) {
-                    updated.videoSrc = media[mediaIndex].master_url || media[mediaIndex].url || post.videoSrc;
+                  if ((processingStatus === 'ready' || processingStatus === 'failed') &&
+                    (post.videoSrc?.startsWith('blob:') || payload.media.fallback_url)) {
+                    updated.videoSrc = payload.media.fallback_url || payload.media.url || media[mediaIndex].master_url || media[mediaIndex].url || post.videoSrc;
                   }
                   return updated;
                 }

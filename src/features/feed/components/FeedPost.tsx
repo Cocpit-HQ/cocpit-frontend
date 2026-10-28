@@ -6,6 +6,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { FeedPostProps } from '../types';
+import type { Poll } from '@/types/entities';
 import { usePostInteractions } from '../hooks/use-post-interactions';
 import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
@@ -43,12 +44,25 @@ const LikesModal = dynamic(() => import('@/shared/commonComponents/LikesModal').
 const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
 const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then(m => m.ReportModal), { ssr: false });
 
+type FeedPostData = FeedPostProps & {
+  companyId?: string;
+  author_id?: string;
+  created_by_user_id?: string;
+  post_id?: string;
+  _id?: string;
+  postId?: string;
+};
+type SessionUser = { id?: string; name?: string; username?: string; fullName?: string };
+type ProfileNames = { account_name?: string; full_name?: string };
+type LegacyPoll = Poll & { question?: string; poll_question?: string };
 
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, category, post_type, menuAccess, isOwnPost } = props;
   const { activeProfile, isCompany, userCompanies } = useActiveProfile();
   const { data: session } = useSession();
-  const currentUserId = (session?.user as any)?.id;
+  const sessionUser = session?.user as SessionUser | undefined;
+  const profileNames = activeProfile as (typeof activeProfile & ProfileNames);
+  const currentUserId = sessionUser?.id;
   const router = useRouter();
   const pathname = usePathname();
   const isArticlePost = category === 'Article' || post_type === 'article';
@@ -57,7 +71,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const { updatePostInFeed } = useFeed(false);
 
   const isRepostWithoutThoughts = !!shared_post && (!content || content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;|\u200B|\u00A0|&#8203;|&#160;|&zwnj;/g, '').replace(/\s/g, '').trim() === '');
-  const interactionTargetProps = isRepostWithoutThoughts ? {
+  const interactionTargetProps: FeedPostData = isRepostWithoutThoughts ? {
     ...props,
     ...shared_post,
     id: shared_post.id,
@@ -65,7 +79,7 @@ export const FeedPost = (props: FeedPostProps) => {
     shared_post: shared_post.shared_post,
     authorAvatar: shared_post.authorAvatar ?? undefined,
     authorHeadline: shared_post.authorHeadline ?? undefined,
-    authorRole: (shared_post as any).authorRole ?? undefined,
+    authorRole: (shared_post as Partial<FeedPostProps>).authorRole ?? undefined,
     authorSlug: shared_post.authorSlug ?? undefined,
     location: shared_post.location ?? undefined,
   } : props;
@@ -96,7 +110,7 @@ export const FeedPost = (props: FeedPostProps) => {
     title: targetTitle,
     sampleLikerUsername: targetSampleLikerUsername,
     likedUsers: targetLikedUsers
-  } = interactionTargetProps as any;
+  } = interactionTargetProps;
 
   const hasImages = Boolean(
     (targetImageSrc && typeof targetImageSrc === 'string' && targetImageSrc.trim() !== '') ||
@@ -105,12 +119,12 @@ export const FeedPost = (props: FeedPostProps) => {
   const hasVideo = Boolean(targetVideoSrc && typeof targetVideoSrc === 'string' && targetVideoSrc.trim() !== '');
   const hasMedia = hasImages || hasVideo || targetPost_type === 'image' || targetPost_type === 'video' || Boolean(interactionTargetProps.shared_post);
 
-  const targetIsCompanyPost = Boolean(interactionTargetProps.isCompanyPost || (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId);
-  const targetCompanyId = (interactionTargetProps as any).author_org_id || (interactionTargetProps as any).companyId;
+  const targetIsCompanyPost = Boolean(interactionTargetProps.isCompanyPost || interactionTargetProps.author_org_id || interactionTargetProps.companyId);
+  const targetCompanyId = interactionTargetProps.author_org_id || interactionTargetProps.companyId;
   const targetAuthorId = targetIsCompanyPost
-    ? (targetCompanyId || interactionTargetProps.authorId || (interactionTargetProps as any).author_id)
-    : (interactionTargetProps.authorId || (interactionTargetProps as any).author_id);
-  const targetCreatedByUserId = (interactionTargetProps as any).createdByUserId || (interactionTargetProps as any).created_by_user_id;
+    ? (targetCompanyId || interactionTargetProps.authorId || interactionTargetProps.author_id)
+    : (interactionTargetProps.authorId || interactionTargetProps.author_id);
+  const targetCreatedByUserId = interactionTargetProps.createdByUserId || interactionTargetProps.created_by_user_id;
 
   const isActorOrg = activeProfile?.type === 'COMPANY';
   const effectivePostOwnerId = targetIsCompanyPost
@@ -197,7 +211,7 @@ export const FeedPost = (props: FeedPostProps) => {
     isVoting, handleLike, handleVote, setIsSaved, setIsCommented, handleRepostToggle, setShareCount,
     repostId, incrementExternalShareCount, isRepostedWithThoughts,
     incrementCommentCount, decrementCommentCount
-  } = usePostInteractions(interactionTargetProps as any, shouldManageRoom);
+  } = usePostInteractions(interactionTargetProps, shouldManageRoom);
 
   const handleIncrementCommentCount = () => {
     incrementCommentCount();
@@ -230,7 +244,7 @@ export const FeedPost = (props: FeedPostProps) => {
     isReportModalOpen, setIsReportModalOpen,
     isDeleteDialogOpen, setIsDeleteDialogOpen, confirmDelete,
     handleToggleVisibility, handleDelete
-  } = usePostOptions(interactionTargetProps as any, (targetId, data) => {
+  } = usePostOptions(interactionTargetProps, (targetId, data) => {
     if (isRepostWithoutThoughts && shared_post) {
       updatePostInFeed(id.toString(), { shared_post: { ...shared_post, ...data } });
     } else {
@@ -255,7 +269,7 @@ export const FeedPost = (props: FeedPostProps) => {
   // Purpose of Bug Fix: Read from global UI store to correctly display snackbar on the Feed when redirected from post details page
   const { reportedPostIds, notInterestedPostIds, interestedPostIds, hiddenPostIds, addReportedPostId, addNotInterestedPostId, addInterestedPostId, addHiddenPostId } = useUIStore();
 
-  const embeddedOriginalId = (shared_post?.id || (shared_post as any)?.post_id || (shared_post as any)?._id || (shared_post as any)?.postId)?.toString();
+  const embeddedOriginalId = (shared_post?.id || (shared_post as FeedPostData)?.post_id || (shared_post as FeedPostData)?._id || (shared_post as FeedPostData)?.postId)?.toString();
   // targetOriginalId: holds the original post's ID only when this is a repost-without-thoughts.
   const targetOriginalId = isRepostWithoutThoughts ? embeddedOriginalId : undefined;
 
@@ -270,8 +284,8 @@ export const FeedPost = (props: FeedPostProps) => {
   const isInterestedInStore = interestedPostIds.includes(id.toString()) || (!!embeddedOriginalId && interestedPostIds.includes(embeddedOriginalId));
 
   const isBackendReported = isRepostWithoutThoughts
-    ? (!!props.is_reported || !!(props as any).isReported || !!(shared_post as any)?.is_reported)
-    : (!!props.is_reported || !!(props as any).isReported);
+    ? (!!props.is_reported || !!props.isReported || !!(shared_post as FeedPostData)?.is_reported)
+    : (!!props.is_reported || !!props.isReported);
 
   // --- Report Flow State ---
   // Tracks if the temporary 'Report submitted' UI is currently visible
@@ -279,13 +293,8 @@ export const FeedPost = (props: FeedPostProps) => {
   const isReportSubmitted = isReportSubmittedLocal || isReportedInStore || isBackendReported;
 
   // Tracks if the post was reported during this session or returned from backend hydration
-  const [hasBeenReported, setHasBeenReported] = useState(isReportedInStore || isBackendReported);
-
-  useEffect(() => {
-    if (isBackendReported || isReportedInStore) {
-      setHasBeenReported(true);
-    }
-  }, [isBackendReported, isReportedInStore]);
+  const [reportedDuringSession, setReportedDuringSession] = useState(false);
+  const hasBeenReported = reportedDuringSession || isBackendReported || isReportedInStore;
 
   const { removePostFromFeed } = useFeed(false);
   // Ref to hold the auto-removal timer so we can cancel it if the user clicks 'Show post'
@@ -319,7 +328,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const handleReportSuccess = () => {
     setIsReportSubmittedLocal(true);
-    setHasBeenReported(true);
+    setReportedDuringSession(true);
     // Always store the wrapper post's own ID as reported.
     // If this is a repost, also store and hide the original post.
     addReportedPostId(id.toString());
@@ -506,12 +515,12 @@ export const FeedPost = (props: FeedPostProps) => {
   const searchParams = useSearchParams();
   useEffect(() => {
     // Purpose of Bug Fix: Do not auto-expand comments on post detail view unless comments flag or commentId is present in URL
-    if (searchParams?.get("comments") === "true" || !!searchParams?.get("commentId") || props.initialShowComments) {
+    if (searchParams?.get("comments") !== "true" && !searchParams?.get("commentId") && !props.initialShowComments) return;
+    const frame = window.requestAnimationFrame(() => {
       setIsCommentSectionOpen(true);
-      if (typeof window !== 'undefined' && window.innerWidth < 768) {
-        setIsMobileDrawerOpen(true);
-      }
-    }
+      if (window.innerWidth < 768) setIsMobileDrawerOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [searchParams, props.initialShowComments]);
 
 
@@ -591,10 +600,10 @@ export const FeedPost = (props: FeedPostProps) => {
   const isCompanyProfile = activeProfile?.type === 'COMPANY';
   const currentUserHandle = isCompanyProfile
     ? activeProfile?.slug
-    : ((activeProfile as any)?.account_name || (session?.user as any)?.username);
+    : (profileNames?.account_name || sessionUser?.username);
   const currentUserName = isCompanyProfile
     ? activeProfile?.name
-    : ((activeProfile as any)?.full_name || (session?.user as any)?.name || (session?.user as any)?.fullName);
+    : (profileNames?.full_name || sessionUser?.name || sessionUser?.fullName);
 
   const isMentioned = useMemo(() => {
     if (!targetContent) return false;
@@ -732,7 +741,7 @@ export const FeedPost = (props: FeedPostProps) => {
           <NotInterestedIcon className="w-[40px] h-[40px] text-ds-text-primary" />
         </div>
         <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-primary">
-          We'll show you fewer posts like this
+          We&apos;ll show you fewer posts like this
         </span>
         <button
           onClick={handleUndoNotInterested}
@@ -855,7 +864,7 @@ export const FeedPost = (props: FeedPostProps) => {
               <div className="w-full">
                 <SharedPreview
                   sharedPost={interactionTargetProps.shared_post}
-                  sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
+                  sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as FeedPostData).post_id?.toString()}
                   isMobile={typeof window !== 'undefined' && window.innerWidth < 768}
                   onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 />
@@ -869,6 +878,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 videoHlsSrc={targetVideoHlsSrc}
                 videoHdrSrc={targetVideoHdrSrc}
                 videoPosterSrc={targetVideoPosterSrc}
+                videoLocalPreview={interactionTargetProps.videoLocalPreview}
                 videoProcessingStatus={targetVideoProcessingStatus}
                 videoHdrProcessingStatus={targetVideoHdrProcessingStatus}
                 mediaWidth={interactionTargetProps.mediaWidth}
@@ -880,7 +890,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 isLiked={isLiked}
                 sampleLikerUsername={targetSampleLikerUsername ?? undefined}
                 likedUsers={targetLikedUsers}
-                viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+                viewerUsername={profileNames?.account_name || sessionUser?.username}
                 onShowLikes={() => handleOpenLikesModal()}
                 videoOverlay={false}
                 hideOverlayLikeBar={true}
@@ -896,15 +906,17 @@ export const FeedPost = (props: FeedPostProps) => {
               <PostMedia
                 imageSrc={targetImageSrc}
                 images={targetImages}
-                avifImages={(interactionTargetProps as any).avifImages}
-                imageProcessingStatuses={(interactionTargetProps as any).imageProcessingStatuses}
-                imageDimensions={(interactionTargetProps as any).imageDimensions}
+                avifImages={interactionTargetProps.avifImages}
+                imageProcessingStatuses={interactionTargetProps.imageProcessingStatuses}
+                imageLocalPreviews={interactionTargetProps.imageLocalPreviews}
+                imageDimensions={interactionTargetProps.imageDimensions}
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoSrc={targetVideoSrc}
                 videoHlsSrc={targetVideoHlsSrc}
                 videoHdrSrc={targetVideoHdrSrc}
                 videoPosterSrc={targetVideoPosterSrc}
+                videoLocalPreview={interactionTargetProps.videoLocalPreview}
                 videoProcessingStatus={targetVideoProcessingStatus}
                 videoHdrProcessingStatus={targetVideoHdrProcessingStatus}
                 videoRef={videoRef}
@@ -914,7 +926,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 isLiked={isLiked}
                 sampleLikerUsername={targetSampleLikerUsername ?? undefined}
                 likedUsers={targetLikedUsers}
-                viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+                viewerUsername={profileNames?.account_name || sessionUser?.username}
                 onShowLikes={() => handleOpenLikesModal()}
                 hideOverlayLikeBar={true}
                 isFullContent={props.isFullContent}
@@ -962,7 +974,7 @@ export const FeedPost = (props: FeedPostProps) => {
               <div className="w-full">
                 <SharedPreview
                   sharedPost={interactionTargetProps.shared_post}
-                  sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as any).post_id?.toString()}
+                  sharedPostId={interactionTargetProps.shared_post.id?.toString() || (interactionTargetProps.shared_post as FeedPostData).post_id?.toString()}
                   isMobile={typeof window !== 'undefined' && window.innerWidth < 768}
                   onSeeMoreClick={props.isProfileView ? handleSeeMoreClick : undefined}
                 />
@@ -980,15 +992,17 @@ export const FeedPost = (props: FeedPostProps) => {
               <PostMedia
                 imageSrc={targetImageSrc}
                 images={targetImages}
-                avifImages={(interactionTargetProps as any).avifImages}
-                imageProcessingStatuses={(interactionTargetProps as any).imageProcessingStatuses}
-                imageDimensions={(interactionTargetProps as any).imageDimensions}
+                avifImages={interactionTargetProps.avifImages}
+                imageProcessingStatuses={interactionTargetProps.imageProcessingStatuses}
+                imageLocalPreviews={interactionTargetProps.imageLocalPreviews}
+                imageDimensions={interactionTargetProps.imageDimensions}
                 mediaWidth={interactionTargetProps.mediaWidth}
                 mediaHeight={interactionTargetProps.mediaHeight}
                 videoSrc={targetVideoSrc}
                 videoHlsSrc={targetVideoHlsSrc}
                 videoHdrSrc={targetVideoHdrSrc}
                 videoPosterSrc={targetVideoPosterSrc}
+                videoLocalPreview={interactionTargetProps.videoLocalPreview}
                 videoProcessingStatus={targetVideoProcessingStatus}
                 videoHdrProcessingStatus={targetVideoHdrProcessingStatus}
                 videoRef={videoRef}
@@ -998,7 +1012,7 @@ export const FeedPost = (props: FeedPostProps) => {
                 isLiked={isLiked}
                 sampleLikerUsername={targetSampleLikerUsername ?? undefined}
                 likedUsers={targetLikedUsers}
-                viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+                viewerUsername={profileNames?.account_name || sessionUser?.username}
                 onShowLikes={() => handleOpenLikesModal()}
                 hideOverlayLikeBar={isVideoFeedCard}
                 isFullContent={props.isFullContent}
@@ -1013,7 +1027,7 @@ export const FeedPost = (props: FeedPostProps) => {
           <PostPoll
             pollData={pollData}
             postId={id}
-            title={props.title || targetTitle || targetContent || (pollData as any)?.question || (pollData as any)?.poll_question}
+            title={props.title || targetTitle || targetContent || (pollData as LegacyPoll)?.question || (pollData as LegacyPoll)?.poll_question}
             isOwner={isTargetAuthorMe || Boolean(props.isOwnPost)}
             isVoting={isVoting}
             handleVote={(optionId) => handleVote(optionId, isCompany, activeProfile?.id)}
@@ -1027,7 +1041,7 @@ export const FeedPost = (props: FeedPostProps) => {
             isLiked={isLiked}
             sampleLikerUsername={targetSampleLikerUsername ?? undefined}
             likedUsers={targetLikedUsers}
-            viewerUsername={(activeProfile as any)?.account_name || (session?.user as any)?.username}
+            viewerUsername={profileNames?.account_name || sessionUser?.username}
             onShowLikes={() => handleOpenLikesModal()}
             variant="inline"
           />
@@ -1152,7 +1166,7 @@ export const FeedPost = (props: FeedPostProps) => {
               if (props.onEdit) {
                 props.onEdit(interactionTargetProps);
               } else {
-                useUIStore.getState().setEditMode(true, targetId.toString(), interactionTargetProps as any);
+                useUIStore.getState().setEditMode(true, targetId.toString(), interactionTargetProps);
               }
             }
           }}
@@ -1260,7 +1274,7 @@ export const FeedPost = (props: FeedPostProps) => {
             <InterestedIcon className="w-[40px] h-[40px] text-ds-text-primary" />
           </div>
           <span className="font-['DM_Sans'] font-normal text-[12px] leading-[16px] text-ds-text-primary">
-            We'll show you more posts like this
+          We&apos;ll show you more posts like this
           </span>
         </div>
       )}

@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Post, Comment } from "@/types/entities";
 import { BackendPost } from "@/services/api/feed";
+import { getLocalMediaPreview } from "@/features/feed/utils/localMediaPreview";
 
 export interface BackendComment {
   comment_id: string | number;
@@ -34,11 +35,13 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   const images: string[] = [];
   const avifImages: Array<string | null> = [];
   const imageProcessingStatuses: Array<"processing" | "ready" | "failed" | undefined> = [];
+  const imageLocalPreviews: Array<string | undefined> = [];
   const imageDimensions: Array<{ width: number; height: number } | null> = [];
   let videoSrc: string | undefined = undefined;
   let videoHlsSrc: string | undefined = undefined;
   let videoHdrSrc: string | undefined = undefined;
   let videoPosterSrc: string | undefined = undefined;
+  let videoLocalPreview: string | undefined = undefined;
   let videoProcessingStatus: "processing" | "ready" | "failed" | undefined;
   let videoHdrProcessingStatus: "processing" | "ready" | "failed" | "not_applicable" | undefined;
   //const primaryMediaAspectRatio = backendPost.media?.[0]?.aspect_ratio || undefined;
@@ -55,7 +58,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     const mediaType = isActuallyVideo ? "video" : item.media_type;
 
     if (mediaType === "image") {
-      images.push(item.url);
+      const localPreview = getLocalMediaPreview(item.master_url);
+      images.push(item.processing_status === "processing" && localPreview ? localPreview : item.url);
+      imageLocalPreviews.push(localPreview);
       avifImages.push(item.avif_url || null);
       imageProcessingStatuses.push(item.processing_status);
       imageDimensions.push(
@@ -64,7 +69,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       if (!mediaWidth && item.width) mediaWidth = item.width;
       if (!mediaHeight && item.height) mediaHeight = item.height;
     } else if (mediaType === "video") {
-      videoSrc = item.master_url || item.url;
+      videoLocalPreview = getLocalMediaPreview(item.master_url);
+      videoSrc = item.processing_status === "processing" && videoLocalPreview
+        ? videoLocalPreview : item.fallback_url || item.master_url || item.url;
       videoHlsSrc = item.stream_hls_url || undefined;
       videoHdrSrc = item.hdr_manifest_url || undefined;
       videoPosterSrc = item.stream_thumbnail_url || undefined;
@@ -380,6 +387,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     images: images.length > 0 ? images : undefined,
     avifImages,
     imageProcessingStatuses,
+    imageLocalPreviews,
     imageDimensions: imageDimensions.length > 0 ? imageDimensions : undefined,
     media: mediaList,
     mediaWidth: mediaWidth,
@@ -388,6 +396,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     videoHlsSrc,
     videoHdrSrc,
     videoPosterSrc,
+    videoLocalPreview,
     videoProcessingStatus,
     videoHdrProcessingStatus,
     //aspectRatio: primaryMediaAspectRatio,

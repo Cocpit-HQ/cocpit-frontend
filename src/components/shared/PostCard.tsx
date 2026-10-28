@@ -9,6 +9,7 @@ import { usePostImpression } from '@/hooks/usePostImpression';
 import { Briefcase, AlertTriangle } from 'lucide-react';
 import { AppealModal } from './AppealModal';
 import { PostVisibility } from '@/types/entities';
+import { AdaptiveFeedVideo } from '@/features/feed/components/parts/AdaptiveFeedVideo';
 
 
 interface PostCardProps {
@@ -126,13 +127,14 @@ export default function PostCard({ post, href, onDelete, isOwnPost, menuAccess, 
                                 <span className="relative rounded bg-black/70 px-3 py-2">Video processing…</span>
                             </div>
                         ) : (
-                            <video
+                            <AdaptiveFeedVideo
                                 src={videoStatus === 'ready' ? videoHls || displayVideo : displayVideo}
+                                fallbackSrc={displayVideo}
                                 poster={videoPoster}
                                 className="w-full h-full object-cover"
                                 muted
                                 playsInline
-                                preload="metadata"
+                                preload="none"
                             />
                         )
                     ) : isSharedJob ? (

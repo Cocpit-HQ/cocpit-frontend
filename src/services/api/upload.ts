@@ -23,6 +23,10 @@ export interface UploadedAsset {
   height?: number | null;
   format?: string;
   bit_depth?: number | null;
+  rawKey?: string;
+  filename?: string;
+  contentType?: string;
+  size?: number;
 }
 
 interface UploadTicket {
@@ -68,16 +72,35 @@ async function uploadBatchMultipart(files: File[], syncProcessing: boolean): Pro
 }
 
 /** Upload originals directly to R2, then return immediately while the worker builds display variants. */
-export async function uploadMedia(files: File[], options: { syncProcessing?: boolean } = {}): Promise<UploadedAsset[]> {
+export async function uploadMedia(files: File[], options: { syncProcessing?: boolean; registerWithPost?: boolean } = {}): Promise<UploadedAsset[]> {
   if (!files?.length) return [];
   const types = validateBatch(files);
   let tickets: UploadTicket[];
 
   try {
-    const { data } = await api.post<{ uploads: UploadTicket[] }>("/upload/presign-batch", {
+    const { data } = await api.post<{ uploads: UploadTicket[]; registerOnPost?: boolean }>("/upload/presign-batch", {
       files: files.map((file, index) => ({ filename: file.name, size: file.size, contentType: types[index].contentType })),
     });
     tickets = data.uploads;
+    // New backends verify the completed objects as part of post creation.
+    // Older backends still use /upload/process-batch below.
+    if (options.registerWithPost && data.registerOnPost === true) {
+      if (!tickets || tickets.length !== files.length) throw new Error("The server returned an incomplete upload batch.");
+      await Promise.all(tickets.map(async (ticket, index) => {
+        const response = await fetch(ticket.uploadUrl, { method: "PUT", body: files[index], headers: { "Content-Type": ticket.contentType } });
+        if (!response.ok) throw new Error(`Upload failed for ${files[index].name} (HTTP ${response.status}).`);
+      }));
+      return tickets.map((ticket, index) => ({
+        url: ticket.rawMasterUrl,
+        master_url: ticket.rawMasterUrl,
+        media_type: types[index].mediaType,
+        processing_status: "processing",
+        rawKey: ticket.rawKey,
+        filename: files[index].name,
+        contentType: ticket.contentType,
+        size: files[index].size,
+      }));
+    }
   } catch (error) {
     const responseStatus =
       typeof error === "object" && error !== null && "response" in error
@@ -111,7 +134,7 @@ export async function uploadMedia(files: File[], options: { syncProcessing?: boo
         uploads: processRequests,
       });
       if (!data.uploads || data.uploads.length !== files.length) {
-        throw new Error("The server did not queue every uploaded file for processing.");
+        throw new Error("The server did not register every uploaded file.");
       }
       return data.uploads;
     } catch (error) {

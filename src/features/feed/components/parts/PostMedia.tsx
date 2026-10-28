@@ -9,12 +9,14 @@ import { Play, Pause } from 'lucide-react';
 import { VideoScrubber } from './VideoScrubber';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { useAdaptiveHls } from '@/features/feed/hooks/use-adaptive-hls';
 
 interface PostMediaProps {
   imageSrc?: string;
   images?: string[];
   avifImages?: Array<string | null>;
   imageProcessingStatuses?: Array<"processing" | "ready" | "failed" | undefined>;
+  imageLocalPreviews?: Array<string | undefined>;
   imageDimensions?: Array<{ width: number; height: number } | null>;
   mediaWidth?: number;
   mediaHeight?: number;
@@ -22,6 +24,7 @@ interface PostMediaProps {
   videoHlsSrc?: string;
   videoHdrSrc?: string;
   videoPosterSrc?: string;
+  videoLocalPreview?: string;
   videoProcessingStatus?: 'processing' | 'ready' | 'failed';
   videoHdrProcessingStatus?: 'processing' | 'ready' | 'failed' | 'not_applicable';
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -45,7 +48,7 @@ interface PostMediaProps {
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], avifImages = [], imageProcessingStatuses = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoHlsSrc, videoHdrSrc, videoPosterSrc, videoProcessingStatus, videoHdrProcessingStatus, videoRef, onLoad, priority, onClick, tags = [],
+  imageSrc, images = [], avifImages = [], imageProcessingStatuses = [], imageLocalPreviews = [], imageDimensions, mediaWidth, mediaHeight, videoSrc, videoHlsSrc, videoHdrSrc, videoPosterSrc, videoLocalPreview, videoProcessingStatus, videoHdrProcessingStatus, videoRef, onLoad, priority, onClick, tags = [],
   likeCount = 0, isLiked = false, sampleLikerUsername, likedUsers = [], viewerUsername, onShowLikes,
   hideOverlayLikeBar = false, isFullContent = false, isProfileView = false,
   videoOverlay = false, overlayHeader, overlayCaption
@@ -63,6 +66,7 @@ export const PostMedia = ({
 
   const [imgDims, setImgDims] = useState<ImageDimensions | null>(null);
   const [failedImageSrc, setFailedImageSrc] = useState<string | null>(null);
+  const [loadedImageSrc, setLoadedImageSrc] = useState<string | null>(null);
   
   const activeDims = imgDims || fastDims;
 
@@ -72,6 +76,8 @@ export const PostMedia = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoFallback, setVideoFallback] = useState<{ from: string; to: string } | null>(null);
   const [failedVideoSrc, setFailedVideoSrc] = useState<string | null>(null);
+  const [loadedVideoSrc, setLoadedVideoSrc] = useState<string | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
   const isDraggingRef = useRef(false);
   const isMobile = useIsMobile();
 
@@ -89,13 +95,27 @@ export const PostMedia = ({
     return (supportsHdr ? videoHdrSrc : videoHlsSrc) || videoSrc || '';
   }, [videoHdrSrc, videoHdrProcessingStatus, videoHlsSrc, videoProcessingStatus, videoSrc]);
   const activeVideoSrc = videoFallback?.from === preferredVideoSrc ? videoFallback.to : preferredVideoSrc;
+  const isHlsSource = /\.m3u8(?:[?#]|$)/i.test(activeVideoSrc);
+  const isLocalProcessingPreview = videoProcessingStatus === 'processing' && activeVideoSrc.startsWith('blob:');
   const handleVideoError = () => {
     const nextSrc = activeVideoSrc === videoHdrSrc && videoHlsSrc
       ? videoHlsSrc
-      : activeVideoSrc !== videoSrc ? videoSrc : undefined;
-    if (nextSrc) setVideoFallback({ from: preferredVideoSrc, to: nextSrc });
+      : activeVideoSrc !== videoSrc ? videoSrc : videoLocalPreview;
+    if (nextSrc && nextSrc !== activeVideoSrc) setVideoFallback({ from: preferredVideoSrc, to: nextSrc });
     else setFailedVideoSrc(activeVideoSrc);
   };
+  useAdaptiveHls(videoRef, isHlsSource ? activeVideoSrc : undefined, handleVideoError);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isLocalProcessingPreview) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) void video.play().catch(() => {});
+      else video.pause();
+    }, { rootMargin: '150px' });
+    observer.observe(video);
+    return () => { observer.disconnect(); video.pause(); };
+  }, [isLocalProcessingPreview, videoRef]);
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -119,7 +139,25 @@ export const PostMedia = ({
   }, [videoRef, videoSrc]);
 
   const isVideoOverlayMode = videoOverlay && !!videoSrc;
-  const isVideoProcessingPlaceholder = videoProcessingStatus === 'processing' && !videoSrc?.startsWith('blob:');
+  const isVideoProcessingPlaceholder = videoProcessingStatus === 'processing'
+    && (failedVideoSrc === activeVideoSrc || (!videoSrc?.startsWith('blob:')
+      && !/\.(mp4|webm)(\?|#|$)/i.test(videoSrc || '')));
+  const showLocalVideo = Boolean(videoLocalPreview && videoLocalPreview !== activeVideoSrc && loadedVideoSrc !== activeVideoSrc);
+  useEffect(() => {
+    const video = localVideoRef.current;
+    if (!video || !showLocalVideo) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) void video.play().catch(() => {});
+      else video.pause();
+    }, { rootMargin: '150px' });
+    observer.observe(video);
+    return () => { observer.disconnect(); video.pause(); };
+  }, [showLocalVideo, videoOverlay]);
+  const localImagePreview = imageLocalPreviews[0];
+  const displayImageSrc = failedImageSrc === contentImgSrc && localImagePreview ? localImagePreview : contentImgSrc;
+  const isImageProcessingPlaceholder = imageProcessingStatuses[0] === 'processing'
+    && ((failedImageSrc === contentImgSrc && contentImgSrc === localImagePreview)
+      || (!localImagePreview && /\.(heic|heif)(\?|#|$)/i.test(contentImgSrc || '')));
 
   if (validImages.length === 0 && !videoSrc) return null;
 
@@ -192,6 +230,7 @@ export const PostMedia = ({
             images={validImages}
             avifImages={avifImages}
             imageProcessingStatuses={imageProcessingStatuses}
+            imageLocalPreviews={imageLocalPreviews}
             imageDimensions={imageDimensions}
             priority={priority}
             onImageLoad={onLoad}
@@ -221,27 +260,30 @@ export const PostMedia = ({
         >
           {videoSrc ? (
             isVideoProcessingPlaceholder ? (
-              <div className="relative flex min-h-[240px] w-full items-center justify-center bg-black text-sm text-white" role="status">
+              <div className="relative flex min-h-[240px] w-full items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">
                 {videoPosterSrc && <div aria-hidden="true" className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: `url(${JSON.stringify(videoPosterSrc)})` }} />}
-                <span className="relative rounded bg-black/70 px-3 py-2">Video processing…</span>
+                <span className="relative rounded bg-ds-surface-2/80 px-3 py-2">Preparing video…</span>
               </div>
             ) : (
             isVideoOverlayMode ? (
               /* Video overlay mode: no native controls, custom overlays */
               <>
+                {showLocalVideo && <video ref={localVideoRef} src={videoLocalPreview} preload="metadata" muted loop playsInline aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />}
                 <video
                   ref={videoRef}
-                  src={activeVideoSrc || videoSrc}
-                  muted={isMuted}
+                  src={isHlsSource ? undefined : activeVideoSrc || videoSrc}
+                  preload={isLocalProcessingPreview ? "metadata" : "none"}
+                  muted={isMuted || isLocalProcessingPreview}
                   loop
                   playsInline
                   poster={videoPosterSrc}
                   onLoadedMetadata={handleVideoLoad}
+                  onCanPlay={() => setLoadedVideoSrc(activeVideoSrc)}
                   onTimeUpdate={handleTimeUpdate}
                   onError={handleVideoError}
-                  className="w-full h-full object-cover max-h-[589px] rounded-[8px]"
+                  className={`relative w-full h-full object-cover max-h-[589px] rounded-[8px] ${showLocalVideo ? 'opacity-0' : ''}`}
                 />
-                {failedVideoSrc === activeVideoSrc && <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white" role="status">Video format is not supported on this device.</div>}
+                {failedVideoSrc === activeVideoSrc && <div className="absolute inset-0 flex items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">Video preview unavailable on this device.</div>}
 
                 {/* ── Top Header Overlay ── */}
                 {overlayHeader && (
@@ -305,10 +347,12 @@ export const PostMedia = ({
                   handleTogglePlay(e);
                 }}
               >
+                {showLocalVideo && <video ref={localVideoRef} src={videoLocalPreview} preload="metadata" muted loop playsInline aria-hidden="true" className="absolute inset-0 h-full w-full object-contain object-left" />}
                 <video
                   ref={videoRef}
-                  src={activeVideoSrc || videoSrc}
-                  muted={isMuted}
+                  src={isHlsSource ? undefined : activeVideoSrc || videoSrc}
+                  preload={isLocalProcessingPreview ? "metadata" : "none"}
+                  muted={isMuted || isLocalProcessingPreview}
                   loop
                   playsInline
                   poster={videoPosterSrc}
@@ -317,11 +361,12 @@ export const PostMedia = ({
                     handleTogglePlay(e);
                   }}
                   onLoadedMetadata={handleVideoLoad}
+                  onCanPlay={() => setLoadedVideoSrc(activeVideoSrc)}
                   onTimeUpdate={handleTimeUpdate}
                   onError={handleVideoError}
-                  className="w-full h-full object-contain object-left max-h-[589px] rounded-[8px] cursor-pointer"
+                  className={`relative w-full h-full object-contain object-left max-h-[589px] rounded-[8px] cursor-pointer ${showLocalVideo ? 'opacity-0' : ''}`}
                 />
-                {failedVideoSrc === activeVideoSrc && <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-sm text-white" role="status">Video format is not supported on this device.</div>}
+                {failedVideoSrc === activeVideoSrc && <div className="absolute inset-0 flex items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">Video preview unavailable on this device.</div>}
                 
                 {/* Center Play/Pause Button on Hover (Only on post details page) */}
                 {isFullContent && (
@@ -390,19 +435,25 @@ export const PostMedia = ({
               </div>
             )
             )
-          ) : imageProcessingStatuses[0] === "processing" || failedImageSrc === contentImgSrc ? (
+          ) : isImageProcessingPlaceholder || (failedImageSrc === contentImgSrc && !localImagePreview) ? (
             <div className="flex w-full min-h-[240px] items-center justify-center bg-ds-surface-2 text-sm text-ds-text-secondary" role="status">
-              {imageProcessingStatuses[0] === "processing" ? "Image processing…" : "Image unavailable"}
+              {isImageProcessingPlaceholder ? "Preparing image…" : "Image unavailable"}
             </div>
           ) : contentImgSrc ? (
             <picture className="contents">
-            {avifImages[0] && <source srcSet={avifImages[0]} type="image/avif" />}
+            {localImagePreview && localImagePreview !== displayImageSrc && loadedImageSrc !== displayImageSrc && (
+              <img src={localImagePreview} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain object-left" />
+            )}
+            {avifImages[0] && displayImageSrc === contentImgSrc && <source srcSet={avifImages[0]} type="image/avif" />}
             <img
-              src={contentImgSrc}
+              src={displayImageSrc}
               alt="Post content"
-              className={`w-full h-full object-contain object-left rounded-[8px] ${isFullContent ? 'max-w-full' : 'max-w-[442px]'} max-h-[589px]`}
-              onLoad={handleImageLoad}
-              onError={() => setFailedImageSrc(contentImgSrc)}
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={priority ? "high" : "auto"}
+              className={`relative w-full h-full object-contain object-left rounded-[8px] ${isFullContent ? 'max-w-full' : 'max-w-[442px]'} max-h-[589px] ${localImagePreview && localImagePreview !== displayImageSrc && loadedImageSrc !== displayImageSrc ? 'opacity-0' : ''}`}
+              onLoad={(event) => { setLoadedImageSrc(displayImageSrc); handleImageLoad(event); }}
+              onError={() => setFailedImageSrc(displayImageSrc)}
             />
             </picture>
           ) : null}
